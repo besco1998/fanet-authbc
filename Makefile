@@ -25,6 +25,11 @@ help:  ## list the supported targets
 
 # ---------------------------------------------------------------------------- real targets
 setup:  ## create venv (Python >=3.12) and install pinned deps + pre-commit hooks
+	@fstype=$$(df -T . | awk 'NR==2{print $$2}'); \
+	  case "$$fstype" in \
+	    drvfs|9p|cifs|v9fs|fuseblk) echo "ERROR: repo is on '$$fstype' (Windows/network FS). Move it to the Linux FS under ~/ — /mnt/c breaks NS-3 and is 10-50x slower (docs/06 §1)."; exit 1;; \
+	    *) echo "fs check: '$$fstype' OK (Linux FS)";; \
+	  esac
 	@$(PYTHON) -c 'import sys; raise SystemExit(0 if sys.version_info[:2] >= (3,12) else 1)' \
 	  || { echo "ERROR: $(PYTHON) = $$($(PYTHON) -V 2>&1); need Python >=3.12."; \
 	       echo "       Retry with:  make setup PYTHON=/usr/bin/python3.12"; exit 1; }
