@@ -1,0 +1,34 @@
+# CI — setup + lint + tests only (docs/03 §4, docs/06 §6). No NS-3, no benchmarks, no
+# experiments: those are machine-dependent and run locally, committing their CSVs.
+# Runs the REAL make targets (not a re-implementation) so green CI == green `make`.
+name: ci
+
+on:
+  push:
+    branches: ["**"]
+    tags-ignore: ["**"]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: setup (venv + pinned deps)
+        run: make setup PYTHON=python
+
+      - name: lint (ruff)
+        run: make lint
+
+      - name: test (pytest)
+        run: make test
