@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# virtual environments
+.venv/
+venv/
+
+# tooling caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
+# NS-3 build tree (built locally, never committed)
+ns3/ns-3.41/
+ns3/ns-allinone-*/
+
+# OS / editor
+.DS_Store
+*.swp
+
+# NOTE: results/raw/*.csv are data-of-record and ARE committed (docs/06 §6). Do not ignore.
