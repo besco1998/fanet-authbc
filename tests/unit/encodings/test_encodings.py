@@ -72,6 +72,19 @@ def test_delta_loss_then_keyframe_recovery() -> None:
     assert fresh.desync_count == 1
 
 
+def test_delta_multi_src_interleaved() -> None:
+    """Interleaved streams from different srcs keep independent per-src delta state."""
+    a = telemgen.samples(seed=21, n=40, src=11)
+    b = telemgen.samples(seed=22, n=40, src=22)
+    enc, dec = DeltaEncoder(), DeltaEncoder()
+    # interleave the two streams frame-by-frame
+    interleaved = [rec for pair in zip(a, b, strict=True) for rec in pair]
+    out = [dec.decode(enc.encode(r)) for r in interleaved]
+    assert out == interleaved
+    # each src still keyframes on its own K-cadence (src field is absolute in every frame)
+    assert {r.src for r in out} == {11, 22}
+
+
 def test_deterministic_flag_true_for_all() -> None:
     for name in ENCODER_NAMES:
         assert new_encoder(name).deterministic is True

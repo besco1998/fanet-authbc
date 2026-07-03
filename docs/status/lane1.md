@@ -70,6 +70,18 @@ CI (GitHub Actions) green on both pushed commits: run `28633005732` and `2863319
 `make setup`) + re-proven by fresh clone; 4 passed no-defect (pin check bites, CI runs real
 pytest, `lane.sh` clobber-safe, all ownership-map dirs present).
 
+## SYNC-1 — `p1a-code-done` (2026-07-03)
+P1a code complete: `bench/telemgen` (seeded integer-only records), `encodings/{json,cbor,
+msgpack,delta}` (round-trip + cross-subprocess determinism + delta recovery), `crypto/
+{ecdsa_p256,ed25519,bls}` (uniform API + vendored KATs: RFC 8032, Wycheproof, Chia AugScheme).
+**683 tests green**, lint clean, audit in `docs/audits/p1.md` (1 medium fixed). Tag
+`p1a-code-done` pushed → **P2 (ledger+wire) and P7b are now unblocked**.
+
+Post-SYNC-1 path: this Lane-1 session continues **P1b** (measurements) next, then **P2**
+(pipelined). Lane 2 runs P5 independently.
+
+Two byte-accounting ⚠️ carried into P1b (see audit): BLS 48-vs-96 B, and the T1 φ schema gap.
+
 ## Handoff 2026-07-03 — phase P0 (Lane 1, mode TBD)
 - Green baseline: commit `664cfc2`, tag `p0-done`, `make test` = PASS, CI = success.
 - Done this session: full repo skeleton + docs/prompts/CLAUDE.md; pinned pyproject
