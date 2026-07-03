@@ -49,12 +49,16 @@ def time_op(
     checksum: Callable[[Any], int] | None = None,
     min_ops: int = MIN_OPS,
     min_total_ns: int = MIN_TOTAL_NS,
+    max_total_ns: int | None = None,
 ) -> BenchResult:
     """Time ``fn()`` and return per-op samples (ns). ``reps`` batches of ``batch`` calls each.
 
     Auto-grows ``reps`` until both floors (``min_ops`` ops and ``min_total_ns`` wall time) are
     met, so callers can pass conservative defaults and still satisfy docs/06 §3. The floors are
-    overridable (the harness unit test lowers them to stay fast).
+    overridable (the harness unit test lowers them to stay fast). ``max_total_ns`` caps wall
+    time for expensive ops (e.g. BLS pairing verify, ~ms) where a literal 10k-iteration floor
+    would take minutes — the cap still yields hundreds of bootstrap samples; the reduced op
+    count is recorded per row and justified in the audit.
     """
     if warmup < 1000:
         raise ValueError("warmup must be >= 1000 (docs/06 §3)")
@@ -72,7 +76,9 @@ def time_op(
     gc.disable()
     try:
         rep = 0
-        while rep < reps or len(samples) * batch < min_ops or total_ns < min_total_ns:
+        while (rep < reps or len(samples) * batch < min_ops or total_ns < min_total_ns) and (
+            max_total_ns is None or total_ns < max_total_ns
+        ):
             t0 = perf_counter_ns()
             for _ in range(batch):
                 out = fn()

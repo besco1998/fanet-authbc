@@ -48,8 +48,8 @@ test:  ## run the test suite
 all: lint test  ## lint + test
 
 # --------------------------------------------------------------------------- guarded stubs
-bench-micro:
-	@echo "ERROR: 'bench-micro' is implemented in P1 (docs/prompts/P1_MICROBENCH.md)."; exit 1
+bench-micro:  ## P1 microbenchmarks -> results/raw/p1_{sizes,crypto}.csv
+	$(BIN)/python -m authbc.bench.micro --seed 1 --n 10000
 bench-macro:
 	@echo "ERROR: 'bench-macro' is implemented in P1 (docs/prompts/P1_MICROBENCH.md)."; exit 1
 exp-e1:

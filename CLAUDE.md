@@ -55,8 +55,8 @@ Small pure functions; every module docstring cites the docs section it implement
 type hints; no dead code; comments explain WHY, not what.
 
 ## Current status board (agent updates this section every session)
-- Phase: **P0 DONE** (tag `p0-done`) — repo, CI, Makefile, docs live; blocked on ⚠️ D7 before P1
-- Last green commit: `p0-done` on main — CI green (GitHub Actions); `/tmp` clean-clone passes setup+test+lint
-- Open ⚠️ decisions: **D7 exec mode (serial | 2-lane | 3-lane) — awaiting Mohamed**; D3/D4/D5 later. (D0 satisfied.)
-- Known issues: none — P0 audit (docs/audits/p0.md): 1 medium fixed (FS guard), 4 attacks clean
+- Phase: **P1 DONE** (tags `p1a-code-done`=SYNC-1, `p1-done`) — encoders+crypto+KATs+microbench; next P2. Mode: **2-lane** (Lane 2 worktree runs P5).
+- Last green commit: `p1-done` on main — CI green; 704 tests; T1 table in docs/audits/p1.md + results/raw/p1_*.csv
+- Open ⚠️ decisions: none blocking. Settled: D7=2-lane; BLS byte-accounting=96 B (T2/T4); CBOR=schema arrays; T1=measured φ. D4/D5 later.
+- Known issues: none. Note P7: ECDSA-verify at low edge of µs anchor on this CPU — re-confirm on RPi4.
 - Env note: `pyenv global system` makes `python3` = system 3.12.3; `make setup` defaults `PYTHON=python3`

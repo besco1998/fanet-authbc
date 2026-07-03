@@ -82,7 +82,24 @@ Post-SYNC-1 path: this Lane-1 session continues **P1b** (measurements) next, the
 
 Two byte-accounting ⚠️ carried into P1b (see audit): BLS 48-vs-96 B, and the T1 φ schema gap.
 
-## Handoff 2026-07-03 — phase P0 (Lane 1, mode TBD)
+## Handoff 2026-07-04 — phase P1 DONE (Lane 1, 2-lane mode)
+- Green baseline: tag `p1-done` on main; `make test` = 704 PASS; `make all` green; CI green.
+- Done: P1a (telemgen, encodings×4, crypto×3 + vendored KATs) + P1b (bench harness, size &
+  crypto-timing CSVs, T1 table). Tags `p1a-code-done` (SYNC-1) and `p1-done` pushed.
+- Results (results/raw/p1_*.csv, docs/audits/p1.md): **T1 φ = JSON 24.9 / CBOR 48.1 /
+  msgpack 48.2 / delta 58.7%** (g=64); scheme verify µs = ECDSA 78.5 / Ed25519 95.0 / BLS 1016;
+  BLS/Ed25519 verify ≈ 10.7×. All Law-6 gates pass.
+- Decisions applied: BLS byte accounting **= 96 B** (T2/T4 use 96 B, not the docs' 48 B); CBOR
+  compacted to schema arrays (110.9→68.9 B) per Mohamed; T1 numbers = measured (supersede archive).
+- Frozen this session: none new (wire vectors freeze at P2/D6). Makefile `bench-micro` wired.
+- Open ⚠️: none blocking. Note for P7: ECDSA-verify sits at the low edge of the µs anchor on
+  this fast CPU — re-confirm on RPi4.
+- Next 3 steps: (1) load `docs/prompts/P2_LEDGER_WIRE.md`; (2) P2 uses P1a encoders/signers to
+  build the chain + canonical CBOR wire format (freeze vectors — ⚠️ D6); (3) then P3.
+- Gotchas: size harness must reuse ONE stateful encoder across the stream (delta); timings are
+  wall-clock (vary within CI across runs) — sizes/KATs are deterministic.
+
+## SYNC-1 — `p1a-code-done` (2026-07-03)
 - Green baseline: commit `664cfc2`, tag `p0-done`, `make test` = PASS, CI = success.
 - Done this session: full repo skeleton + docs/prompts/CLAUDE.md; pinned pyproject
   (no drift, blspy wheel OK); Makefile (setup/lint/test + guarded stubs + FS guard); ruff +
