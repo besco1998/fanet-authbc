@@ -55,7 +55,8 @@ Small pure functions; every module docstring cites the docs section it implement
 type hints; no dead code; comments explain WHY, not what.
 
 ## Current status board (agent updates this section every session)
-- Phase: P0 not started
-- Last green commit: —
-- Open ⚠️ decisions: D0 (gh auth, before P0), D7 (exec mode, end of P0), D3/D4/D5 later
-- Known issues: —
+- Phase: **P0 DONE** (tag `p0-done`) — repo, CI, Makefile, docs live; blocked on ⚠️ D7 before P1
+- Last green commit: `p0-done` on main — CI green (GitHub Actions); `/tmp` clean-clone passes setup+test+lint
+- Open ⚠️ decisions: **D7 exec mode (serial | 2-lane | 3-lane) — awaiting Mohamed**; D3/D4/D5 later. (D0 satisfied.)
+- Known issues: none — P0 audit (docs/audits/p0.md): 1 medium fixed (FS guard), 4 attacks clean
+- Env note: `pyenv global system` makes `python3` = system 3.12.3; `make setup` defaults `PYTHON=python3`

@@ -48,5 +48,40 @@ build needed — the highest risk cleared). Verified with `packaging.SpecifierSe
 - `make test` → `9 passed` (8 stub-import params + version check), coverage reported.
 - `pre-commit` hook installed; rev pinned to `v0.15.20` via `pre-commit autoupdate`.
 
-## P0 — clean-clone proof (Steps 9–10)
-_(filled in after the GitHub repo exists)_
+## P0 — clean-clone proof (Steps 9–10): PASS (machine-independent)
+
+Repo: **https://github.com/besco1998/fanet-authbc** (private). Proven twice on `/tmp` (a
+path independent of the working tree), most recently at commit `664cfc2` (post FS-guard fix):
+
+```
+git clone https://github.com/besco1998/fanet-authbc.git /tmp/... && cd ... && \
+  make setup && make test && make lint
+→ fs check: 'ext4' OK (Linux FS)
+→ setup complete: Python 3.12.3 in .venv     (blspy-2.0.3, cbor2-5.8.0, cryptography-45.0.7)
+→ 9 passed
+→ All checks passed!
+```
+
+CI (GitHub Actions) green on both pushed commits: run `28633005732` and `28633198989`
+(`test (pytest)` step: `9 passed`, Python 3.12.13).
+
+## P0 — audit (Step 11)
+`docs/audits/p0.md`: 5 attacks. 1 medium finding **fixed** (persistent wrong-FS guard in
+`make setup`) + re-proven by fresh clone; 4 passed no-defect (pin check bites, CI runs real
+pytest, `lane.sh` clobber-safe, all ownership-map dirs present).
+
+## Handoff 2026-07-03 — phase P0 (Lane 1, mode TBD)
+- Green baseline: commit `664cfc2`, tag `p0-done`, `make test` = PASS, CI = success.
+- Done this session: full repo skeleton + docs/prompts/CLAUDE.md; pinned pyproject
+  (no drift, blspy wheel OK); Makefile (setup/lint/test + guarded stubs + FS guard); ruff +
+  pre-commit; CI (setup+lint+test); GitHub private repo created & pushed; `scripts/lane.sh`;
+  clean-clone proof; P0 audit; env switched to system Python 3.12 (`pyenv global system`).
+- Frozen this session: shared files (Makefile, pyproject, CLAUDE.md, docs/) per docs/07 §3.
+  Wire vectors NOT yet frozen (that is P2 / ⚠️ D6).
+- Open ⚠️ decisions awaiting Mohamed: **D7 execution mode** (serial | 2-lane | 3-lane).
+- Next 3 steps: (1) Mohamed answers D7; (2) serial → load `docs/prompts/P1_MICROBENCH.md`;
+  parallel → `scripts/lane.sh 2` (+3) then P1 as Lane 1; (3) begin P1a (encodings + crypto
+  + KATs).
+- Gotchas for next session: `python3` is 3.12 only because `pyenv global system` was set;
+  `make setup` defaults `PYTHON=python3` (override `PYTHON=/usr/bin/python3.12` if needed).
+  A stray `~/venv-ardupilot` sits on PATH but does not leak into the project venv.
