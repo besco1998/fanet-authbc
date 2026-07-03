@@ -1,0 +1,53 @@
+# pyproject.toml — dependency pins per docs/03 §2 (agent-verified at P0; drift ⇒ ⚠️).
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "authbc"
+version = "0.0.0"
+description = "Co-optimizing encoding × authentication placement × signature scheme × batching for FANET telemetry ledgers"
+readme = "README.md"
+requires-python = ">=3.12"
+authors = [{ name = "Mohamed A. Farouk", email = "mohamed.besco1998@gmail.com" }]
+
+# Runtime deps — pinned per docs/03 §2. cbor2 is pinned EXACTLY (5.8.1 regression, docs/06 §5).
+dependencies = [
+  "cryptography>=42,<46",   # Ed25519, ECDSA-P256 (docs/06 §4)
+  "blspy>=2.0",             # BLS12-381 min-sig, AugScheme (docs/06 §4); py_ecc fallback is ⚠️
+  "cbor2==5.8.0",           # DELIBERATE pin (docs/03 §2, docs/06 §5)
+  "msgpack>=1.0",
+  "numpy",
+  "scipy",
+  "pandas",
+  "matplotlib",
+  "pyyaml",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest",
+  "pytest-cov",
+  "hypothesis",
+  "ruff",
+  "pre-commit",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+# Conservative, high-signal rule set for P0; expanded as real code lands.
+select = ["E", "F", "I", "W", "UP", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+# Coverage reported now; the ≥90% release gate (docs/03 §4) is enforced from P1 once real
+# code exists — stubs alone would make a fail-under threshold meaningless.
+addopts = "-q --cov=authbc --cov-report=term-missing"

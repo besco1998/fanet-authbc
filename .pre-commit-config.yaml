@@ -1,0 +1,8 @@
+# Sole pre-commit hook: ruff lint (mirrors `make lint` and CI) — docs/03 §4.
+# rev is pinned to a real release and kept current via `pre-commit autoupdate`.
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.20
+    hooks:
+      - id: ruff
+        args: [--fix]
