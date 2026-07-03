@@ -46,6 +46,26 @@ def obj_to_record(obj: dict) -> TelemetryRecord:
     return TelemetryRecord(**fields)  # type: ignore[arg-type]
 
 
+def record_to_array(rec: TelemetryRecord) -> list:
+    """Record → fixed-order list of values (NO field names on the wire).
+
+    For a known, fixed telemetry schema, transmitting field names every record is pure
+    overhead (~42 B/record in canonical CBOR — measured); the binary encoders (CBOR,
+    MessagePack) therefore serialize this schema-implied array. Field order is FIELD_ORDER,
+    so decoding is unambiguous (docs/01 §1 fixes the schema).
+    """
+    d = rec.as_dict()
+    return [d[f] for f in FIELD_ORDER]
+
+
+def array_to_record(arr: list) -> TelemetryRecord:
+    """Inverse of :func:`record_to_array`. ``prev_hash`` is coerced to ``bytes``."""
+    fields = dict(zip(FIELD_ORDER, arr, strict=True))
+    ph = fields["prev_hash"]
+    fields["prev_hash"] = bytes(ph) if not isinstance(ph, bytes) else ph
+    return TelemetryRecord(**fields)  # type: ignore[arg-type]
+
+
 # --------------------------------------------------------------------------- varint helpers
 def zigzag(n: int) -> int:
     """Map a signed int to an unsigned one (small |n| ⇒ small result); 64-bit shift is safe
@@ -121,7 +141,9 @@ __all__ = [
     "INT_FIELD_ORDER",
     "KEYS",
     "Encoder",
+    "array_to_record",
     "obj_to_record",
+    "record_to_array",
     "record_to_obj",
     "svarint_decode",
     "svarint_encode",
