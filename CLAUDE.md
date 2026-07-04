@@ -55,8 +55,8 @@ Small pure functions; every module docstring cites the docs section it implement
 type hints; no dead code; comments explain WHY, not what.
 
 ## Current status board (agent updates this section every session)
-- Phase: **E5 DONE** (tags …`p6-done`, `e5-done`) — co-design headline validated; SYNC-4 integrated. Next: **P8** consolidation/paper; P7 hardware (⚠D5).
-- Last green commit: `e5-done` on main — 849 tests; audit docs/audits/e5.md. **T5: optimized cuts auth bytes 96.4% vs A+CBOR at V≥0.95, p=0.05 (PASS≥40%)**; energy nominal (⚠P7).
+- Phase: **P7a DONE** (tags …`e5-done`, `p7a-done`) — RPi4 hardware-prep scripts committed (hw/provision.sh, hw/run_micro.sh, hw/energy_protocol.md). Next gate: **P7b** (⚠needs 4×RPi4 + ⚠D5 meter) OR **P8** consolidation now.
+- Last green commit: `p7a-done` on main — 849 tests; make lint clean. E5 headline stands: **T5 optimized cuts auth bytes 96.4% vs A+CBOR at V≥0.95, p=0.05 (PASS)**; energy nominal (⚠P7).
 - Open ⚠️ decisions: none blocking. D6 wire freeze active (post-freeze changes → Mohamed; e.g. optional D fragment-header binding). Settled: D7=2-lane; BLS=96 B; CBOR=arrays; T1=measured φ. D4/D5 later.
 - Known issues: none. P7 note: ECDSA-verify at low edge of µs anchor — re-confirm on RPi4. e-axis-in-recs reconciliation deferred to P3.
 - Env note: `pyenv global system` makes `python3` = system 3.12.3; `make setup` defaults `PYTHON=python3`

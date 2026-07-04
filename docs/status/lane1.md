@@ -82,6 +82,24 @@ Post-SYNC-1 path: this Lane-1 session continues **P1b** (measurements) next, the
 
 Two byte-accounting ⚠️ carried into P1b (see audit): BLS 48-vs-96 B, and the T1 φ schema gap.
 
+## Handoff 2026-07-05 — P7a DONE (hardware-prep scripts, tag p7a-done)
+- Green baseline: tag `p7a-done` on main; `make lint` clean; CI green. No Python touched (test
+  count unchanged at 849). Lane: `hw/**` only.
+- Done: the three P7a deliverables — `hw/provision.sh` (RPi4 Bookworm: performance governor +
+  verify, pyenv-3.12 note, wifi power-save off, NTP, meta snapshot; **refuses on non-Pi**),
+  `hw/run_micro.sh` (reruns the P1 micro suite on-device, folds REAL governor/temp/throttle into
+  the CSV header, `--check` x86 self-test, thermal guard, never clobbers frozen x86
+  `results/raw/p1_*.csv`), `hw/energy_protocol.md` (calibrate → idle 60 s → op-loop 60 s →
+  energy/op=(P_loop−P_idle)·t_loop/n_ops, ≥5 reps median+CI, thermal guard; yields `p_cpu_w`,
+  `p_radio_w` that replace E5's nominal 3.0/0.7 W).
+- Verified on x86 (no hardware): `bash -n` clean; `run_micro.sh --check` → OK; `provision.sh`
+  refuses off-Pi (exit 1); energy formula matches docs/04 §4 char-for-char.
+- **P7b is the next gate — Mohamed owns it:** needs physical 4× RPi4 **and** ⚠️ **D5** (USB power
+  meter, UM25C-class ~$30). Until then the other executable path is **P8** consolidation (energy
+  tables flagged nominal-pending-P7).
+- Gotcha for P7b: on a fresh Pi clone, `results/raw/p1_*.csv` hold committed x86 numbers;
+  `run_micro.sh` backs them up and restores them so the Pi run lands only in `results/hw/`.
+
 ## Handoff 2026-07-05 — E5 DONE (SYNC-4 integrator, tag e5-done)
 - Green baseline: tag `e5-done` on main; `make all` green (849); CI green.
 - Done: `bench/experiments.run_e5` + `experiments/e5/config.yaml` + `analysis/figures_e5.py` +
