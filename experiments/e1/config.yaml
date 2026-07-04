@@ -1,0 +1,8 @@
+# E1 — overhead dominance (T1, docs/04 §2). Inline per-record signatures (placement A).
+experiment: e1
+seeds: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+        21, 22, 23, 24, 25, 26, 27, 28, 29, 30]
+records_per_seed: 1000
+encodings: [json, cbor, msgpack, delta]
+g: 64  # inline signature bytes (Ed25519/ECDSA), docs/02 T1
+baselines: [json, cbor]  # A+JSON (naive), A+CBOR (Pillar-1-only)

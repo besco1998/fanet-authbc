@@ -1,0 +1,15 @@
+# python=3.12.3
+# platform=Linux-6.6.114.1-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=e1_dominance
+# config_hash=76ff79f2376a6583
+encoding,placement,g,n_records,mean_bytes,ci_lo,ci_hi,phi_pct,baseline
+json,A_inline,64,30000,191.085,191.067,191.103,25.09,1
+cbor,A_inline,64,30000,66.252,66.239,66.266,49.14,1
+msgpack,A_inline,64,30000,65.16,65.141,65.179,49.55,0
+delta,A_inline,64,30000,44.998,44.955,45.043,58.72,0
