@@ -1,20 +1,25 @@
 // authbc-sat.cc — AUTHBC saturated-802.11a scenario for Bianchi validation (docs/04 §3, docs/06 §2).
 //
-// 802.11a ad-hoc, ConstantRateWifiManager @ OfdmRate6Mbps, RTS/CTS off, N saturated senders.
-// TWO modes, each compared ONLY to its matching analytic variant (never mixed — docs/06 §2):
-//   --mode=unicast   : node i -> node (i+1)%N, WITH ACKs  -> classic (ACK) Bianchi
-//   --mode=broadcast : all -> subnet broadcast, NO ACK/retry -> the no-ACK Bianchi variant
-// Frame application payload is a parameter (--frameSize); real sizes come from framesizes.csv at
-// P6b. Goodput is measured at PacketSinks (app-level Rx); unicast also serializes FlowMonitor.
+// 802.11a ad-hoc, ConstantRateWifiManager @ OfdmRate6Mbps, RTS/CTS off, N saturated senders,
+// ALL co-located in ONE collision domain (required for the Bianchi comparison — a spread layout
+// lets distant nodes reuse the channel and aggregate exceeds the 6 Mb/s PHY ceiling).
 //
-// Copy into the ns-3.41 scratch/ dir and run via `./ns3 run "authbc-sat --mode=..."`.
+// Uses **PacketSocket** (raw 802.11 frames, NO IP/UDP/ARP) so the scenario is an artifact-free
+// MAC-level Bianchi testbed: the MAC payload == --frameSize exactly, and unicast needs no ARP
+// (which otherwise collapses at high N under saturation).
+//
+// TWO modes, each compared ONLY to its matching analytic variant (never mixed — docs/06 §2):
+//   --mode=unicast   : node i -> node (i+1)%N MAC, WITH ACKs  -> classic (ACK) Bianchi
+//   --mode=broadcast : all -> broadcast MAC, NO ACK/retry     -> the no-ACK Bianchi variant
+// Broadcast is heard by all N-1 others in the single domain, so the analysis divides aggregate
+// broadcast Rx by (N-1) to get channel goodput. Copy into scratch/ and run via `./ns3 run`.
 
 #include "ns3/applications-module.h"
 #include "ns3/core-module.h"
-#include "ns3/flow-monitor-module.h"
-#include "ns3/internet-module.h"
 #include "ns3/mobility-module.h"
 #include "ns3/network-module.h"
+#include "ns3/packet-socket-address.h"
+#include "ns3/packet-socket-helper.h"
 #include "ns3/wifi-module.h"
 
 #include <fstream>
@@ -28,7 +33,7 @@ main(int argc, char* argv[])
 {
     uint32_t nNodes = 2;
     std::string mode = "unicast";
-    uint32_t frameSize = 200; // application payload bytes
+    uint32_t frameSize = 200; // MAC payload bytes (== Bianchi L)
     double simTime = 30.0;
     uint32_t seed = 1;
     std::string outPrefix = "ns3_out";
@@ -37,7 +42,7 @@ main(int argc, char* argv[])
     CommandLine cmd(__FILE__);
     cmd.AddValue("nNodes", "number of nodes", nNodes);
     cmd.AddValue("mode", "unicast | broadcast", mode);
-    cmd.AddValue("frameSize", "application payload bytes", frameSize);
+    cmd.AddValue("frameSize", "MAC payload bytes (== Bianchi L)", frameSize);
     cmd.AddValue("simTime", "simulated seconds", simTime);
     cmd.AddValue("seed", "RNG run number", seed);
     cmd.AddValue("outPrefix", "output file prefix", outPrefix);
@@ -64,75 +69,65 @@ main(int argc, char* argv[])
     mac.SetType("ns3::AdhocWifiMac");
     NetDeviceContainer devices = wifi.Install(phy, mac, nodes);
 
-    // RTS/CTS off (high threshold)
     Config::Set("/NodeList/*/DeviceList/*/$ns3::WifiNetDevice/RemoteStationManager/RtsCtsThreshold",
-                UintegerValue(4692480));
+                UintegerValue(4692480)); // RTS/CTS off
 
-    // single collision domain: nodes 1 m apart, constant position
+    // ONE collision domain: co-locate all nodes in a ~0.5 m cluster (1 cm spacing).
     MobilityHelper mobility;
     Ptr<ListPositionAllocator> posAlloc = CreateObject<ListPositionAllocator>();
     for (uint32_t i = 0; i < nNodes; ++i)
     {
-        posAlloc->Add(Vector(i * 1.0, 0.0, 0.0));
+        posAlloc->Add(Vector(i * 0.01, 0.0, 0.0));
     }
     mobility.SetPositionAllocator(posAlloc);
     mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel");
     mobility.Install(nodes);
 
-    InternetStackHelper stack;
-    stack.Install(nodes);
-    Ipv4AddressHelper address;
-    address.SetBase("10.1.1.0", "255.255.255.0");
-    Ipv4InterfaceContainer ifaces = address.Assign(devices);
+    PacketSocketHelper packetSocket;
+    packetSocket.Install(nodes);
 
-    const uint16_t port = 9;
+    const uint16_t protocol = 1;
     ApplicationContainer sinkApps;
     ApplicationContainer srcApps;
 
-    auto makeSource = [&](uint32_t node, Address dest) {
-        OnOffHelper onoff("ns3::UdpSocketFactory", dest);
+    for (uint32_t j = 0; j < nNodes; ++j)
+    {
+        PacketSocketAddress local;
+        local.SetSingleDevice(devices.Get(j)->GetIfIndex());
+        local.SetPhysicalAddress(devices.Get(j)->GetAddress());
+        local.SetProtocol(protocol);
+        PacketSinkHelper sink("ns3::PacketSocketFactory", Address(local));
+        sinkApps.Add(sink.Install(nodes.Get(j)));
+    }
+
+    for (uint32_t i = 0; i < nNodes; ++i)
+    {
+        Address destMac;
+        if (mode == "broadcast")
+        {
+            destMac = devices.Get(i)->GetBroadcast();
+        }
+        else
+        {
+            destMac = devices.Get((i + 1) % nNodes)->GetAddress();
+        }
+        PacketSocketAddress dest;
+        dest.SetSingleDevice(devices.Get(i)->GetIfIndex());
+        dest.SetPhysicalAddress(destMac);
+        dest.SetProtocol(protocol);
+
+        OnOffHelper onoff("ns3::PacketSocketFactory", Address(dest));
         onoff.SetAttribute("OnTime", StringValue("ns3::ConstantRandomVariable[Constant=1]"));
         onoff.SetAttribute("OffTime", StringValue("ns3::ConstantRandomVariable[Constant=0]"));
         onoff.SetAttribute("DataRate", DataRateValue(DataRate(offeredRate)));
         onoff.SetAttribute("PacketSize", UintegerValue(frameSize));
-        srcApps.Add(onoff.Install(nodes.Get(node)));
-    };
-    auto makeSink = [&](uint32_t node) {
-        PacketSinkHelper sink("ns3::UdpSocketFactory",
-                              InetSocketAddress(Ipv4Address::GetAny(), port));
-        sinkApps.Add(sink.Install(nodes.Get(node)));
-    };
-
-    if (mode == "broadcast")
-    {
-        Ipv4Address bcast = ifaces.GetAddress(0).GetSubnetDirectedBroadcast("255.255.255.0");
-        for (uint32_t i = 0; i < nNodes; ++i)
-        {
-            makeSink(i); // every node may receive broadcasts
-            makeSource(i, InetSocketAddress(bcast, port));
-        }
-    }
-    else // unicast
-    {
-        for (uint32_t i = 0; i < nNodes; ++i)
-        {
-            uint32_t dst = (i + 1) % nNodes;
-            makeSink(dst);
-            makeSource(i, InetSocketAddress(ifaces.GetAddress(dst), port));
-        }
+        srcApps.Add(onoff.Install(nodes.Get(i)));
     }
 
     srcApps.Start(Seconds(1.0));
     srcApps.Stop(Seconds(simTime + 1.0));
     sinkApps.Start(Seconds(0.5));
     sinkApps.Stop(Seconds(simTime + 1.5));
-
-    FlowMonitorHelper fmHelper;
-    Ptr<FlowMonitor> monitor;
-    if (mode == "unicast")
-    {
-        monitor = fmHelper.InstallAll();
-    }
 
     Simulator::Stop(Seconds(simTime + 2.0));
     Simulator::Run();
@@ -142,7 +137,9 @@ main(int argc, char* argv[])
     {
         rxBytes += DynamicCast<PacketSink>(sinkApps.Get(i))->GetTotalRx();
     }
-    double goodputMbps = (rxBytes * 8.0) / simTime / 1e6;
+    // Broadcast is heard by all N-1 others in the single domain -> divide to get channel goodput.
+    double rxScale = (mode == "broadcast" && nNodes > 1) ? (nNodes - 1.0) : 1.0;
+    double goodputMbps = (rxBytes / rxScale) * 8.0 / simTime / 1e6;
 
     std::ofstream stats(outPrefix + ".stats");
     stats << "key,value\n"
@@ -152,13 +149,9 @@ main(int argc, char* argv[])
           << "simTime," << simTime << "\n"
           << "seed," << seed << "\n"
           << "rx_bytes," << rxBytes << "\n"
+          << "rx_scale," << rxScale << "\n"
           << "goodput_mbps," << goodputMbps << "\n";
     stats.close();
-
-    if (mode == "unicast" && monitor)
-    {
-        monitor->SerializeToXmlFile(outPrefix + ".flowmon", false, false);
-    }
 
     Simulator::Destroy();
     return 0;
