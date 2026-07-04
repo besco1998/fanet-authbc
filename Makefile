@@ -54,8 +54,8 @@ bench-macro:
 	@echo "ERROR: 'bench-macro' is implemented in P1 (docs/prompts/P1_MICROBENCH.md)."; exit 1
 exp-e1:  ## E1 overhead dominance -> results/raw/e1_dominance.csv
 	$(BIN)/python -m authbc.bench.experiments --exp e1
-exp-e2:
-	@echo "ERROR: 'exp-e2' is implemented in P4 (docs/prompts/P4_EXPERIMENTS_E123.md)."; exit 1
+exp-e2:  ## E2 batching cure -> results/raw/e2_batching.csv
+	$(BIN)/python -m authbc.bench.experiments --exp e2
 exp-e3:
 	@echo "ERROR: 'exp-e3' is implemented in P4 (docs/prompts/P4_EXPERIMENTS_E123.md)."; exit 1
 exp-e4:

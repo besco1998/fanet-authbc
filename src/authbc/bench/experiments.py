@@ -17,9 +17,10 @@ from statistics import mean
 import numpy as np
 import yaml
 
-from authbc.bench import provenance, telemgen
+from authbc.bench import framesizes, provenance, telemgen
 from authbc.bench.stats import bootstrap_ci
 from authbc.encodings.registry import new_encoder
+from authbc.placement.framer import H_F, b_max, b_max_inline
 
 REPO = Path(__file__).resolve().parents[3]
 RESULTS = REPO / "results" / "raw"
@@ -68,7 +69,41 @@ def run_e1(cfg: dict) -> list[dict]:
     return rows
 
 
-_RUNNERS = {"e1": (run_e1, "e1_dominance")}
+# --------------------------------------------------------------------------- E2 (T2)
+def run_e2(cfg: dict) -> list[dict]:
+    """Batching cure: per-record on-air bytes vs b for A/B × encodings × M, with amplification.
+
+    A (self-batch, B) = M/(M−H_f−g_a) is the relaxed-floor formula; the discrete value at the
+    integer b_max approaches it as M grows (small M shows a documented discretization gap).
+    """
+    sizes = framesizes.measured_sizes(seed=cfg["size_seed"], n=cfg["size_n"])
+    g_a = cfg["g_a"]
+    rows: list[dict] = []
+    for m in cfg["mtu_values"]:
+        for placement in cfg["placements"]:
+            for enc in cfg["encodings"]:
+                s = sizes[enc]
+                bm = int(b_max(s, g_a, mtu=m) if placement == "B"
+                         else b_max_inline(s, g_a, mtu=m))  # s is a float mean → floor to int
+                if bm < 1:
+                    continue  # a single record does not fit this MTU
+                a_formula = m / (m - H_F - g_a) if placement == "B" else ""
+                for b in range(1, bm + 1):
+                    fb = framesizes.frame_bytes(placement, s, b)
+                    per_rec = fb / b
+                    phi_ov = 100.0 * (framesizes.auth_bytes(placement, b) + H_F) / fb
+                    rows.append({
+                        "mtu": m, "placement": placement, "encoding": enc, "s": round(s, 2),
+                        "b": b, "b_max": bm, "frame_bytes": round(fb, 2),
+                        "bytes_per_rec": round(per_rec, 3), "phi_overhead_pct": round(phi_ov, 2),
+                        "A_at_b": round(per_rec / s, 4),
+                        "A_formula": round(a_formula, 4) if a_formula != "" else "",
+                        "is_bmax": int(b == bm),
+                    })
+    return rows
+
+
+_RUNNERS = {"e1": (run_e1, "e1_dominance"), "e2": (run_e2, "e2_batching")}
 
 
 def main() -> None:

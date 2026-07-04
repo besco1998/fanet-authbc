@@ -1,0 +1,8 @@
+# E2 — batching cure (T2, docs/04 §2). Placement A vs B × encodings × MTU.
+experiment: e2
+mtu_values: [256, 576, 1500]
+placements: [A, B]
+encodings: [json, cbor, msgpack, delta]
+g_a: 64          # Ed25519 self-batch (B) / inline per-record (A)
+size_seed: 1     # measured s_e stream (same as the SYNC-3 framesizes export)
+size_n: 10000
