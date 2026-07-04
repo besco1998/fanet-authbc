@@ -39,6 +39,21 @@ TxBeginTrace(Ptr<const Packet>, double)
     ++g_txFrames;
 }
 
+// Time node 0's PHY sensed the channel IDLE (backoff-able) — lets us recover the ACTUAL average
+// slot duration and hence NS-3's true per-station tx probability τ, independent of the success
+// rate. If τ tracks the constant 2/(W+1) but success exceeds (1−τ)^(N−1), the excess is capture;
+// if τ itself drops with N, NS-3 broadcast adapts its access (not pure capture).
+static double g_idleTimeS = 0.0;
+
+void
+PhyStateTrace(Time, Time duration, WifiPhyState state)
+{
+    if (state == WifiPhyState::IDLE)
+    {
+        g_idleTimeS += duration.GetSeconds();
+    }
+}
+
 int
 main(int argc, char* argv[])
 {
@@ -137,6 +152,8 @@ main(int argc, char* argv[])
 
     Config::ConnectWithoutContext(
         "/NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Phy/PhyTxBegin", MakeCallback(&TxBeginTrace));
+    Config::ConnectWithoutContext(
+        "/NodeList/0/DeviceList/0/$ns3::WifiNetDevice/Phy/State/State", MakeCallback(&PhyStateTrace));
 
     srcApps.Start(Seconds(1.0));
     srcApps.Stop(Seconds(simTime + 1.0));
@@ -165,6 +182,7 @@ main(int argc, char* argv[])
           << "rx_bytes," << rxBytes << "\n"
           << "rx_scale," << rxScale << "\n"
           << "tx_frames," << g_txFrames << "\n"
+          << "idle_time_s," << g_idleTimeS << "\n"
           << "goodput_mbps," << goodputMbps << "\n";
     stats.close();
 
