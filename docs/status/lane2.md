@@ -1,5 +1,39 @@
 # Lane 2 (Models) — status / handoff log
 
+## Handoff 2026-07-04 — phase P5b / E4 (lane 2)
+- **Green baseline:** branch `lane2` **rebased on `p1-done` (e33a149)**, tag **`p5-done`** (this
+  commit); `make all` = **773 passed**, ruff clean; `models/crossover.py` 100 % coverage. `p5a-done`
+  tag still pins the pre-rebase P5a commits (history preserved).
+- **Done this session (P5b / E4 — from MEASURED P1 timings):**
+  - `models/crossover.py` — power-independent T4 crossover math (Δ(b), ΔRADIO, ΔCPU, κ\*=P_r/P_c,
+    verify-throughput). Pure, hand-checked (`tests/unit/models/test_crossover.py`, 13 tests).
+  - `experiments/e4/run_e4.py` — reads `p1_crypto.csv`+`p1_sizes.csv` → `results/raw/e4_crossover.csv`
+    (80 rows, ρ×b×Λ, κ\* med+CI, verify-feasibility, winner) + `e4_bytes.csv`; provenance headers
+    reuse `authbc.bench.provenance`.
+  - `analysis/figures_e4.py` → `results/figures/e4_crossover.png` (κ\*(b) per ρ vs the plausible band).
+  - Makefile `exp-e4` wired (**shared-file edit** — integrator confirms at the SYNC merge).
+  - `docs/audits/p5.md` — P5b §Audit + Law-6 results validation (hand cross-check of κ\*).
+- **Headline result (T4 confirmed):** **Ed25519 wins across the whole ρ×b×Λ grid on 802.11**;
+  break-even needs P_r/P_c > **3.13** (ρ=1,b=32) up to 43 (ρ=0) ≫ plausible ≈0.2–0.5. BLS is also
+  verify-throughput-**infeasible** below b=4 at Λ=2000. **Honest gap:** measured Ed25519 verify is
+  **10.7×** cheaper than BLS single-verify, below doc-02 T4's "20–60×" — reported, not massaged.
+- **Frozen this session (D6):** `results/raw/e4_crossover.csv`, `results/raw/e4_bytes.csv`
+  (data-of-record; regenerate-from-raw only).
+- **Open ⚠️ decisions awaiting Mohamed:** none new. Recorded decision: **absolute-joule E4 deferred
+  to P7** (powers P_c/P_r need the ⚠️ D5 meter) — `p5-done` marks the crossover deliverable.
+- **Next 3 steps:**
+  1. Integrator: at the SYNC point merge `lane2` → `main` (carries `models/**`, `experiments/e4/**`,
+     `results/raw/e4_*`, and the `exp-e4` Makefile edit), `make all`, tag, push.
+  2. P7: plug MEASURED P_c, P_r into `models.energy.per_record` → absolute-joule E4 re-run (no new
+     modeling; the model is already unit-tested).
+  3. P6b (SYNC-3): P5a Bianchi + P3 framer-exported frame sizes feed the NS-3 validation.
+- **Gotchas for next session:**
+  - `exp-e4` is the **only shared-file edit** on lane2 — confirm it at the integrator merge.
+  - κ\* is **Λ-independent** (Λ only gates verify-throughput feasibility) and **encoding-independent**
+    (data bytes cancel); `H_a=0` is the BLS-best case (larger only helps Ed25519).
+  - CI columns are monotone-propagated from P1 bootstrap CIs — the Ed25519 verdict holds even at the
+    CI lower bound (κ\*_lo=3.03 at the min point).
+
 ## Handoff 2026-07-03 — phase P5a (lane 2)
 - **Green baseline:** branch `lane2`, tag **`p5a-done`** (this commit), `make test` = **65 passed**,
   `make lint` = clean, **100 % line coverage** on `models/{bianchi,energy,optimizer}.py`.
