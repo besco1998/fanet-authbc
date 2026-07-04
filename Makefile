@@ -56,8 +56,8 @@ exp-e1:  ## E1 overhead dominance -> results/raw/e1_dominance.csv
 	$(BIN)/python -m authbc.bench.experiments --exp e1
 exp-e2:  ## E2 batching cure -> results/raw/e2_batching.csv
 	$(BIN)/python -m authbc.bench.experiments --exp e2
-exp-e3:
-	@echo "ERROR: 'exp-e3' is implemented in P4 (docs/prompts/P4_EXPERIMENTS_E123.md)."; exit 1
+exp-e3:  ## E3 loss frontier -> results/raw/e3_loss.csv
+	$(BIN)/python -m authbc.bench.experiments --exp e3
 exp-e4:
 	@echo "ERROR: 'exp-e4' is implemented in P5 (docs/prompts/P5_MODELS_OPTIMIZER.md)."; exit 1
 exp-e5:
