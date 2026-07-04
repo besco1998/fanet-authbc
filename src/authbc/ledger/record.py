@@ -63,6 +63,11 @@ class Record:
         return {"src": self.src, "seq": self.seq, "ts": self.ts, "ph": self.prev_hash,
                 "pl": dict(self.pl)}
 
+    @classmethod
+    def from_map(cls, m: dict) -> Record:
+        """Reconstruct a Record from its canonical map (inverse of ``to_map``)."""
+        return cls(src=m["src"], seq=m["seq"], ts=m["ts"], prev_hash=m["ph"], pl=dict(m["pl"]))
+
     def canonical(self) -> bytes:
         return canonical_bytes(self.to_map())
 
