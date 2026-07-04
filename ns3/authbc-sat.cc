@@ -54,6 +54,16 @@ PhyStateTrace(Time, Time duration, WifiPhyState state)
     }
 }
 
+// Frames node 0's PHY started decoding but dropped (collisions/interference) — the direct
+// per-receiver collision count for the capture study.
+static uint64_t g_rxDrop = 0;
+
+void
+RxDropTrace(Ptr<const Packet>, WifiPhyRxfailureReason)
+{
+    ++g_rxDrop;
+}
+
 int
 main(int argc, char* argv[])
 {
@@ -64,6 +74,8 @@ main(int argc, char* argv[])
     uint32_t seed = 1;
     std::string outPrefix = "ns3_out";
     std::string offeredRate = "12Mbps"; // per-node offered load >> capacity => saturation
+    bool capture = false;               // install a SimpleFrameCaptureModel (restart capture)
+    double powerSpreadDb = 0.0;         // per-node tx-power spread so capture can act on collisions
 
     CommandLine cmd(__FILE__);
     cmd.AddValue("nNodes", "number of nodes", nNodes);
@@ -73,6 +85,8 @@ main(int argc, char* argv[])
     cmd.AddValue("seed", "RNG run number", seed);
     cmd.AddValue("outPrefix", "output file prefix", outPrefix);
     cmd.AddValue("offeredRate", "per-node offered load", offeredRate);
+    cmd.AddValue("capture", "install SimpleFrameCaptureModel", capture);
+    cmd.AddValue("powerSpreadDb", "per-node tx power spread (dB, uniform)", powerSpreadDb);
     cmd.Parse(argc, argv);
 
     RngSeedManager::SetSeed(1);
@@ -84,6 +98,10 @@ main(int argc, char* argv[])
     YansWifiChannelHelper channel = YansWifiChannelHelper::Default();
     YansWifiPhyHelper phy;
     phy.SetChannel(channel.Create());
+    if (capture)
+    {
+        phy.SetFrameCaptureModel("ns3::SimpleFrameCaptureModel");
+    }
 
     WifiHelper wifi;
     wifi.SetStandard(WIFI_STANDARD_80211a);
@@ -97,6 +115,19 @@ main(int argc, char* argv[])
 
     Config::Set("/NodeList/*/DeviceList/*/$ns3::WifiNetDevice/RemoteStationManager/RtsCtsThreshold",
                 UintegerValue(4692480)); // RTS/CTS off
+
+    // Optional per-node tx-power spread so frame capture has stronger/weaker frames to act on
+    // (with equal power, capture is timing-only). Deterministic linear spread around 16 dBm.
+    if (powerSpreadDb > 0.0 && nNodes > 1)
+    {
+        for (uint32_t i = 0; i < nNodes; ++i)
+        {
+            double dbm = 16.0 + powerSpreadDb * (static_cast<double>(i) / (nNodes - 1) - 0.5);
+            Ptr<WifiPhy> p = DynamicCast<WifiNetDevice>(devices.Get(i))->GetPhy();
+            p->SetAttribute("TxPowerStart", DoubleValue(dbm));
+            p->SetAttribute("TxPowerEnd", DoubleValue(dbm));
+        }
+    }
 
     // ONE collision domain: co-locate all nodes in a ~0.5 m cluster (1 cm spacing).
     MobilityHelper mobility;
@@ -154,6 +185,8 @@ main(int argc, char* argv[])
         "/NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Phy/PhyTxBegin", MakeCallback(&TxBeginTrace));
     Config::ConnectWithoutContext(
         "/NodeList/0/DeviceList/0/$ns3::WifiNetDevice/Phy/State/State", MakeCallback(&PhyStateTrace));
+    Config::ConnectWithoutContext(
+        "/NodeList/0/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyRxDrop", MakeCallback(&RxDropTrace));
 
     srcApps.Start(Seconds(1.0));
     srcApps.Stop(Seconds(simTime + 1.0));
@@ -183,6 +216,9 @@ main(int argc, char* argv[])
           << "rx_scale," << rxScale << "\n"
           << "tx_frames," << g_txFrames << "\n"
           << "idle_time_s," << g_idleTimeS << "\n"
+          << "rx_drop_node0," << g_rxDrop << "\n"
+          << "capture," << (capture ? 1 : 0) << "\n"
+          << "power_spread_db," << powerSpreadDb << "\n"
           << "goodput_mbps," << goodputMbps << "\n";
     stats.close();
 
