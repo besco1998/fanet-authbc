@@ -32,6 +32,10 @@ _ED = Ed25519Scheme()
 _BLS = BlsScheme()
 
 
+class WireDecodeError(ValueError):
+    """Any malformed frame — the single exception decode raises (subclasses ValueError)."""
+
+
 class Placement(IntEnum):
     A = 0  # inline per-record
     B = 1  # self-batch, one signer
@@ -82,15 +86,47 @@ def encode_frame(frame: Frame) -> bytes:
     return canonical_bytes(obj)
 
 
+def _validate_auth_shape(t: Placement, auth: Any, n: int) -> None:
+    """Reject structurally wrong AuthBlocks so verifiers never crash on fuzzed input."""
+    b = (bytes, bytearray)
+    if t is Placement.A:
+        if not isinstance(auth, list) or len(auth) != n or not all(isinstance(s, b) for s in auth):
+            raise ValueError("A auth must be a list of n byte strings")
+    elif t is Placement.B:
+        if not isinstance(auth, b):
+            raise ValueError("B auth must be a byte string")
+    elif t is Placement.C:
+        if (not isinstance(auth, dict) or not isinstance(auth.get("agg"), b)
+                or not isinstance(auth.get("signers"), list)
+                or not all(isinstance(s, b) for s in auth["signers"])):
+            raise ValueError("C auth must be {agg:bytes, signers:[bytes]}")
+    else:  # D
+        if (not isinstance(auth, dict) or not isinstance(auth.get("sig"), b)
+                or not all(isinstance(auth.get(k), int) and not isinstance(auth.get(k), bool)
+                           for k in ("block_id", "frag_idx", "frag_total"))):
+            raise ValueError("D auth must be {sig:bytes, block_id/frag_idx/frag_total:int}")
+
+
 def decode_frame(data: bytes) -> Frame:
-    obj = cbor2.loads(data)
-    if obj.get("v") != WIRE_VERSION:
-        raise ValueError(f"unsupported wire version {obj.get('v')}")
-    recs = tuple(Record.from_map(m) for m in obj["recs"])
-    if obj["n"] != len(recs):
-        raise ValueError("frame n does not match number of records")
-    return Frame(t=Placement(obj["t"]), src=obj["src"], base_seq=obj["base_seq"],
-                 recs=recs, auth=obj["auth"], v=obj["v"])
+    """Decode + structurally validate a frame. Any malformed input ⇒ ``WireDecodeError``."""
+    try:
+        obj = cbor2.loads(data)
+        if not isinstance(obj, dict):
+            raise ValueError("frame must be a CBOR map")
+        if obj.get("v") != WIRE_VERSION:
+            raise ValueError(f"unsupported wire version {obj.get('v')}")
+        t = Placement(obj["t"])
+        recs = tuple(Record.from_map(m) for m in obj["recs"])
+        if obj["n"] != len(recs):
+            raise ValueError("frame n does not match number of records")
+        _validate_auth_shape(t, obj["auth"], len(recs))
+        return Frame(t=t, src=obj["src"], base_seq=obj["base_seq"],
+                     recs=recs, auth=obj["auth"], v=obj["v"])
+    except WireDecodeError:
+        raise
+    except (cbor2.CBORDecodeError, KeyError, IndexError, TypeError, ValueError, OverflowError,
+            AttributeError) as e:
+        raise WireDecodeError(f"malformed frame: {e}") from e
 
 
 # --------------------------------------------------------------------------- builders
@@ -140,7 +176,10 @@ def verify_B(frame: Frame, pk) -> bool:
 
 
 def verify_C(frame: Frame) -> bool:
-    pks = [_BLS.pk_from_bytes(b) for b in frame.auth["signers"]]
+    try:
+        pks = [_BLS.pk_from_bytes(b) for b in frame.auth["signers"]]
+    except (ValueError, RuntimeError):  # malformed G1 pubkey bytes (e.g. fuzzed)
+        return False
     if len(pks) != frame.n:
         return False
     msgs = covered_bytes(frame.recs, Placement.C)
