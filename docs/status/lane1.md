@@ -82,6 +82,22 @@ Post-SYNC-1 path: this Lane-1 session continues **P1b** (measurements) next, the
 
 Two byte-accounting ⚠️ carried into P1b (see audit): BLS 48-vs-96 B, and the T1 φ schema gap.
 
+## Handoff 2026-07-04 — phase P2 DONE (Lane 1, 2-lane mode)
+- Green baseline: tag `p2-done` on main; `make all` green (738 tests); CI green. **Unblocks P3.**
+- Done: `ledger/{record,chain,store,verify}` (hash chain, replay/equivocation/tamper counters,
+  seq-wrap policy), `placement/wire` (canonical CBOR Frame + A–D AuthBlocks + `covered_bytes`),
+  **wire vectors FROZEN (⚠️ D6)** in `tests/vectors/wire/` (12 frames + expected.json), golden
+  3-UAV exact-counter test, 1000-mutation fuzz gate. Audit + Law-6 in `docs/audits/p2.md`.
+- Golden result (Law 6, exact): `{stored:30, replay:5, equivocation:1, tampered:1}`.
+- ⚠️ D6: wire bytes are now FROZEN — any change needs Mohamed. One flagged (low-severity,
+  no-forgery) item: D fragment headers are unauthenticated (integrity still holds; DoS only,
+  out of scope) — optional future hardening = a D6 change → Mohamed.
+- Next 3 steps: (1) load `docs/prompts/P3_PLACEMENTS_CHANNEL.md`; (2) P3 builds the channel
+  emulator + framers consuming the frozen wire format; (3) reconcile the e-axis-in-recs question
+  (how encoding e appears inside frames) — flagged in `wire.py`.
+- Gotchas: `covered_bytes` is the signed region (A/C per-record, B/D whole array); frozen
+  vectors regenerate only via `python tests/unit/placement/test_frozen_vectors.py` (needs approval).
+
 ## Handoff 2026-07-04 — phase P1 DONE (Lane 1, 2-lane mode)
 - Green baseline: tag `p1-done` on main; `make test` = 704 PASS; `make all` green; CI green.
 - Done: P1a (telemgen, encodings×4, crypto×3 + vendored KATs) + P1b (bench harness, size &

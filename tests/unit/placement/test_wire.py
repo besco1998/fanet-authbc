@@ -132,6 +132,40 @@ def test_D_block_verify_and_tamper() -> None:
     assert wire.verify_D(tampered, pk) is False
 
 
+def test_decode_rejects_malformed_auth() -> None:
+    """Structurally wrong AuthBlocks are rejected on decode (WireDecodeError), per placement."""
+    recs = _records(src=1, seed=13, n=2)
+    base = {"v": 1, "src": 1, "base_seq": 0, "n": 2, "recs": [r.to_map() for r in recs]}
+    bad_auths = {
+        Placement.A: "not-a-list",             # A wants [bytes×n]
+        Placement.B: [b"x"],                     # B wants bytes
+        Placement.C: {"agg": b"x"},              # C missing signers
+        Placement.D: {"sig": b"x", "block_id": 1},  # D missing frag_idx/total
+    }
+    for t, auth in bad_auths.items():
+        data = cbor2.dumps({**base, "t": int(t), "auth": auth}, canonical=True)
+        try:
+            wire.decode_frame(data)
+        except wire.WireDecodeError:
+            continue
+        raise AssertionError(f"{t.name}: malformed auth should have been rejected")
+
+
+def test_decode_rejects_garbage_and_bad_version() -> None:
+    import pytest
+    with pytest.raises(wire.WireDecodeError):
+        wire.decode_frame(b"\xff\xff not cbor")
+    with pytest.raises(wire.WireDecodeError):
+        wire.decode_frame(cbor2.dumps({"v": 2}, canonical=True))
+
+
+def test_link_ok_helper() -> None:
+    from authbc.ledger.verify import link_ok
+    recs = _records(src=4, seed=14, n=2)
+    assert link_ok(recs[0], recs[0].prev_hash) is True
+    assert link_ok(recs[1], b"\x00" * 32) is False
+
+
 def test_encode_rejects_n_mismatch() -> None:
     recs = _records(src=1, seed=12, n=2)
     sk, _ = _ED.keygen(seed=bytes(range(32)))

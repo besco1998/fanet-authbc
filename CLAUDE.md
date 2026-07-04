@@ -55,8 +55,8 @@ Small pure functions; every module docstring cites the docs section it implement
 type hints; no dead code; comments explain WHY, not what.
 
 ## Current status board (agent updates this section every session)
-- Phase: **P1 DONE** (tags `p1a-code-done`=SYNC-1, `p1-done`) — encoders+crypto+KATs+microbench; next P2. Mode: **2-lane** (Lane 2 worktree runs P5).
-- Last green commit: `p1-done` on main — CI green; 704 tests; T1 table in docs/audits/p1.md + results/raw/p1_*.csv
-- Open ⚠️ decisions: none blocking. Settled: D7=2-lane; BLS byte-accounting=96 B (T2/T4); CBOR=schema arrays; T1=measured φ. D4/D5 later.
-- Known issues: none. Note P7: ECDSA-verify at low edge of µs anchor on this CPU — re-confirm on RPi4.
+- Phase: **P2 DONE** (tags …`p1-done`, `p2-done`) — ledger + canonical wire (A–D) + frozen vectors; next P3. Mode: **2-lane** (Lane 2 runs P5; `p5a-done` present).
+- Last green commit: `p2-done` on main — CI green; 738 tests; golden counters + audit in docs/audits/p2.md; wire vectors FROZEN (⚠️ D6).
+- Open ⚠️ decisions: none blocking. D6 wire freeze active (post-freeze changes → Mohamed; e.g. optional D fragment-header binding). Settled: D7=2-lane; BLS=96 B; CBOR=arrays; T1=measured φ. D4/D5 later.
+- Known issues: none. P7 note: ECDSA-verify at low edge of µs anchor — re-confirm on RPi4. e-axis-in-recs reconciliation deferred to P3.
 - Env note: `pyenv global system` makes `python3` = system 3.12.3; `make setup` defaults `PYTHON=python3`

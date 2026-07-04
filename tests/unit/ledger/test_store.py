@@ -92,6 +92,15 @@ def test_forged_contiguous_link_is_tampered() -> None:
     assert store.ingest(forged) is Outcome.TAMPERED
 
 
+def test_duplicate_record_in_frame() -> None:
+    """Same record twice in one frame: first stored, second is a replay (no double-count)."""
+    store = Store()
+    rec = Chain(src=8).append(_pl(10), ts=0)
+    outcomes = [store.ingest(r) for r in (rec, rec)]  # duplicate within one batch
+    assert outcomes == [Outcome.STORED, Outcome.REPLAY]
+    assert store.counters["stored"] == 1 and store.counters["replay"] == 1
+
+
 @settings(max_examples=200)
 @given(
     seed=st.integers(0, 2**31 - 1),
