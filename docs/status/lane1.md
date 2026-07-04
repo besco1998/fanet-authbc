@@ -82,6 +82,22 @@ Post-SYNC-1 path: this Lane-1 session continues **P1b** (measurements) next, the
 
 Two byte-accounting ⚠️ carried into P1b (see audit): BLS 48-vs-96 B, and the T1 φ schema gap.
 
+## Handoff 2026-07-04 — phase P3 DONE (Lane 1, 2-lane mode)
+- Green baseline: tag `p3-done` on main; `make all` green (767 tests); CI green. **Unblocks P4.**
+- Done: framers `A/B/C/D` (`placement/{inline,self_batch,relay_agg,block_agg}`), `channel/
+  {airtime,emulator}` (broadcast bus, seeded Bernoulli loss, sender-only airtime), `bench/macro`
+  end-to-end, `bench/framesizes` + **`make export-framesizes` → results/raw/framesizes.csv
+  (SYNC-3)**. Audit + Law-6 in `docs/audits/p3.md`.
+- **SYNC-3 artifact ready**: `results/raw/framesizes.csv` (placement×encoding×b→frame bytes,
+  measured s_e json 193.5/cbor 68.9/msgpack 68.8/delta 45.0, BLS g_a=96) — for L3/NS-3 (P6b).
+- Law-6: p=0 V=1 + airtime balance; p=0.1 receive fraction 0.902 within Binomial CI; loss
+  independent across receivers (corr≈0); determinism holds. Caught+fixed 2 efficiency bugs.
+- Flagged (carried): T_fx≈123µs vs exact components (broadcast 100.33/unicast 156µs) → revisit
+  at P6; b_max CBOR/g_a=64 reference off-by-one (inlined 9 vs formula 10).
+- Next 3 steps: (1) load `docs/prompts/P4_EXPERIMENTS_E123.md`; (2) P4 runs E1–E3 (dominance,
+  batching cure, loss frontier) → frozen CSVs + figures; (3) SYNC-4 later.
+- Gotchas: emulator uses BROADCAST airtime (no ACK); reuse ONE stateful encoder/stream for sizes.
+
 ## Handoff 2026-07-04 — phase P2 DONE (Lane 1, 2-lane mode)
 - Green baseline: tag `p2-done` on main; `make all` green (738 tests); CI green. **Unblocks P3.**
 - Done: `ledger/{record,chain,store,verify}` (hash chain, replay/equivocation/tamper counters,

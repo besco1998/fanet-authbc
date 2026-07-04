@@ -21,6 +21,18 @@ def _records(src, seed, n):
     return chain.records()
 
 
+def test_framer_guards() -> None:
+    import pytest
+
+    from authbc.placement.framer import _chunks
+    with pytest.raises(ValueError):
+        b_max(0, 64)
+    with pytest.raises(ValueError):
+        b_max_inline(0)
+    with pytest.raises(ValueError):
+        list(_chunks([], 0))
+
+
 def test_b_max_formula_against_inlined() -> None:
     """⌊(M−H_f−g_a)/s⌋ with M=1500, H_f=40 (docs/02 T2)."""
     assert b_max(130, 48) == 10   # 1412/130 = 10.86

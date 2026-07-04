@@ -55,8 +55,8 @@ Small pure functions; every module docstring cites the docs section it implement
 type hints; no dead code; comments explain WHY, not what.
 
 ## Current status board (agent updates this section every session)
-- Phase: **P2 DONE** (tags …`p1-done`, `p2-done`) — ledger + canonical wire (A–D) + frozen vectors; next P3. Mode: **2-lane** (Lane 2 runs P5; `p5a-done` present).
-- Last green commit: `p2-done` on main — CI green; 738 tests; golden counters + audit in docs/audits/p2.md; wire vectors FROZEN (⚠️ D6).
+- Phase: **P3 DONE** (tags …`p2-done`, `p3-done`) — framers A–D + broadcast emulator + framesizes (SYNC-3); next P4. Mode: **2-lane** (Lane 2 `p5a-done`).
+- Last green commit: `p3-done` on main — CI green; 767 tests; audit docs/audits/p3.md; SYNC-3 artifact results/raw/framesizes.csv ready for NS-3.
 - Open ⚠️ decisions: none blocking. D6 wire freeze active (post-freeze changes → Mohamed; e.g. optional D fragment-header binding). Settled: D7=2-lane; BLS=96 B; CBOR=arrays; T1=measured φ. D4/D5 later.
 - Known issues: none. P7 note: ECDSA-verify at low edge of µs anchor — re-confirm on RPi4. e-axis-in-recs reconciliation deferred to P3.
 - Env note: `pyenv global system` makes `python3` = system 3.12.3; `make setup` defaults `PYTHON=python3`
