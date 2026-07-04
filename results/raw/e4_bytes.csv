@@ -1,0 +1,71 @@
+# python=3.12.3
+# platform=Linux-6.6.114.1-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=e4_bytes
+# config_hash=8c3eedca616f8ccc
+encoding,scheme,b,own_selfbatch_bytes,relay_bytes
+json,ed25519,2,245.518,277.518
+json,ed25519,4,219.518,267.518
+json,ed25519,8,206.518,262.518
+json,ed25519,16,200.018,260.018
+json,ed25519,32,196.768,258.768
+json,ecdsa_p256,2,245.518,277.518
+json,ecdsa_p256,4,219.518,267.518
+json,ecdsa_p256,8,206.518,262.518
+json,ecdsa_p256,16,200.018,260.018
+json,ecdsa_p256,32,196.768,258.768
+json,bls,2,237.518,237.518
+json,bls,4,215.518,215.518
+json,bls,8,204.518,204.518
+json,bls,16,199.018,199.018
+json,bls,32,196.268,196.268
+cbor,ed25519,2,120.936,152.936
+cbor,ed25519,4,94.936,142.936
+cbor,ed25519,8,81.936,137.936
+cbor,ed25519,16,75.436,135.436
+cbor,ed25519,32,72.186,134.186
+cbor,ecdsa_p256,2,120.936,152.936
+cbor,ecdsa_p256,4,94.936,142.936
+cbor,ecdsa_p256,8,81.936,137.936
+cbor,ecdsa_p256,16,75.436,135.436
+cbor,ecdsa_p256,32,72.186,134.186
+cbor,bls,2,112.936,112.936
+cbor,bls,4,90.936,90.936
+cbor,bls,8,79.936,79.936
+cbor,bls,16,74.436,74.436
+cbor,bls,32,71.686,71.686
+msgpack,ed25519,2,120.836,152.836
+msgpack,ed25519,4,94.836,142.836
+msgpack,ed25519,8,81.836,137.836
+msgpack,ed25519,16,75.336,135.336
+msgpack,ed25519,32,72.086,134.086
+msgpack,ecdsa_p256,2,120.836,152.836
+msgpack,ecdsa_p256,4,94.836,142.836
+msgpack,ecdsa_p256,8,81.836,137.836
+msgpack,ecdsa_p256,16,75.336,135.336
+msgpack,ecdsa_p256,32,72.086,134.086
+msgpack,bls,2,112.836,112.836
+msgpack,bls,4,90.836,90.836
+msgpack,bls,8,79.836,79.836
+msgpack,bls,16,74.336,74.336
+msgpack,bls,32,71.586,71.586
+delta,ed25519,2,97.005,129.005
+delta,ed25519,4,71.005,119.005
+delta,ed25519,8,58.005,114.005
+delta,ed25519,16,51.505,111.505
+delta,ed25519,32,48.255,110.255
+delta,ecdsa_p256,2,97.005,129.005
+delta,ecdsa_p256,4,71.005,119.005
+delta,ecdsa_p256,8,58.005,114.005
+delta,ecdsa_p256,16,51.505,111.505
+delta,ecdsa_p256,32,48.255,110.255
+delta,bls,2,89.005,89.005
+delta,bls,4,67.005,67.005
+delta,bls,8,56.005,56.005
+delta,bls,16,50.505,50.505
+delta,bls,32,47.755,47.755

@@ -58,8 +58,9 @@ exp-e2:  ## E2 batching cure -> results/raw/e2_batching.csv
 	$(BIN)/python -m authbc.bench.experiments --exp e2
 exp-e3:  ## E3 loss frontier -> results/raw/e3_loss.csv
 	$(BIN)/python -m authbc.bench.experiments --exp e3
-exp-e4:
-	@echo "ERROR: 'exp-e4' is implemented in P5 (docs/prompts/P5_MODELS_OPTIMIZER.md)."; exit 1
+exp-e4:  ## P5b E4: Ed25519<->BLS crossover from measured P1 timings -> results/raw/e4_*.csv + figure
+	$(BIN)/python experiments/e4/run_e4.py
+	$(BIN)/python analysis/figures_e4.py
 exp-e5:
 	@echo "ERROR: 'exp-e5' is implemented in P6 (docs/prompts/P6_NS3_VALIDATION.md)."; exit 1
 sim-ns3:  ## [P6] build authbc-sat + 2-node both-modes smoke -> results/raw/ns3_smoke.csv
