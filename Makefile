@@ -66,5 +66,5 @@ sim-ns3:
 	@echo "ERROR: 'sim-ns3' is implemented in P6 (docs/prompts/P6_NS3_VALIDATION.md)."; exit 1
 export-framesizes:  ## P3 SYNC-3: placement×encoding×b frame sizes -> results/raw/framesizes.csv
 	$(BIN)/python -m authbc.bench.framesizes
-figures:
-	@echo "ERROR: 'figures' is implemented from P4 onward (docs/prompts/P4_EXPERIMENTS_E123.md)."; exit 1
+figures:  ## regenerate E1-E3 figures from frozen results/raw -> results/figures/
+	$(BIN)/python analysis/figures_e123.py
