@@ -61,8 +61,8 @@ exp-e3:  ## E3 loss frontier -> results/raw/e3_loss.csv
 exp-e4:  ## P5b E4: Ed25519<->BLS crossover from measured P1 timings -> results/raw/e4_*.csv + figure
 	$(BIN)/python experiments/e4/run_e4.py
 	$(BIN)/python analysis/figures_e4.py
-exp-e5:
-	@echo "ERROR: 'exp-e5' is implemented in P6 (docs/prompts/P6_NS3_VALIDATION.md)."; exit 1
+exp-e5:  ## E5 co-design: optimizer vs baselines -> results/raw/e5_codesign.csv
+	$(BIN)/python -m authbc.bench.experiments --exp e5
 sim-ns3:  ## [P6] build authbc-sat + 2-node both-modes smoke -> results/raw/ns3_smoke.csv
 	PY=$(BIN)/python bash ns3/sim_ns3.sh
 export-framesizes:  ## P3 SYNC-3: placement×encoding×b frame sizes -> results/raw/framesizes.csv

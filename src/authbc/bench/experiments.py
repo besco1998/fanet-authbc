@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import io
 import math
 from pathlib import Path
 from statistics import mean
@@ -22,6 +23,8 @@ from authbc.bench import framesizes, provenance, telemgen
 from authbc.bench.stats import bootstrap_ci
 from authbc.channel.airtime import DELTA_US, DIFS_US, MAC_HDR_B, T_PHY_US, tx_us
 from authbc.encodings.registry import new_encoder
+from authbc.models import energy, optimizer
+from authbc.models.energy import EnergyConfig, Measured, Placement
 from authbc.placement.framer import H_F, M_MTU, b_max, b_max_inline
 
 REPO = Path(__file__).resolve().parents[3]
@@ -40,7 +43,8 @@ def write_csv(name: str, rows: list[dict], config: dict) -> Path:
     with path.open("w", newline="") as fh:
         for k, v in meta.items():
             fh.write(f"# {k}={v}\n")
-        w = csv.DictWriter(fh, fieldnames=list(rows[0]))
+        fieldnames = list(dict.fromkeys(k for r in rows for k in r))  # union, first-seen order
+        w = csv.DictWriter(fh, fieldnames=fieldnames, restval="")
         w.writeheader()
         w.writerows(rows)
     return path
@@ -154,10 +158,101 @@ def run_e3(cfg: dict) -> list[dict]:
     return rows
 
 
+# --------------------------------------------------------------------------- E5 (T5 co-design)
+def _read_raw(name: str) -> list[dict]:
+    """Read a results/raw CSV, skipping the '# key=value' provenance header."""
+    lines = [ln for ln in (RESULTS / name).read_text().splitlines(keepends=True)
+             if not ln.startswith("#")]
+    return list(csv.DictReader(io.StringIO("".join(lines))))
+
+
+def _measured_inputs(cfg: dict) -> tuple[list, list]:
+    """Build optimizer EncodingSpec/SchemeSpec lists from the frozen E1 + P1b crypto CSVs."""
+    sizes = {r["encoding"]: float(r["mean_bytes"]) for r in _read_raw("e1_dominance.csv")}
+    t_enc = cfg["t_enc_ns"]
+    encs = [optimizer.EncodingSpec(name=e, record_bytes=sizes[e], t_enc_s=t_enc[e] / 1e9)
+            for e in cfg["encodings"]]
+
+    ct: dict[tuple[str, str, str], float] = {}
+    for r in _read_raw("p1_crypto.csv"):
+        ct[(r["scheme"], r["op"], r["agg_b"])] = float(r["median_ns"]) / 1e9
+    g_a = {"ecdsa_p256": 64.0, "ed25519": 64.0, "bls": 96.0}
+    b = str(cfg["bls_agg_ref_b"])
+    schemes = []
+    for s in cfg["schemes"]:
+        agg_build = ct.get((s, "aggregate", b)) if s == "bls" else None
+        agg_verify = ct.get((s, "agg_verify", b)) if s == "bls" else None
+        schemes.append(optimizer.SchemeSpec(
+            name=s, auth_bytes=g_a[s], t_sign_s=ct[(s, "sign", "")],
+            t_verify_s=ct[(s, "verify", "")], t_agg_build_s=agg_build, t_agg_verify_s=agg_verify))
+    return encs, schemes
+
+
+def _point(enc, sch, plc: Placement, batch: int, plat, con) -> dict:
+    """Metrics for one explicit config (used for the baselines), via the same models."""
+    n = optimizer.n_frames(batch, enc.record_bytes, sch.auth_bytes, plat.frame_hdr_bytes,
+                           plat.mtu_bytes) if plc is Placement.D else 1
+    bpr = optimizer.bytes_per_record(plc, batch, enc.record_bytes, sch.auth_bytes,
+                                     plat.frame_hdr_bytes, n)
+    ecfg = EnergyConfig(placement=plc, batch=batch, record_bytes=enc.record_bytes,
+                        auth_bytes=optimizer.frame_auth_bytes(plc, batch, sch.auth_bytes),
+                        frame_hdr_bytes=plat.frame_hdr_bytes, n_frames=n)
+    meas = Measured(t_enc_s=enc.t_enc_s, t_sign_s=sch.t_sign_s, t_verify_s=sch.t_verify_s,
+                    p_cpu_w=plat.p_cpu_w, p_radio_w=plat.p_radio_w,
+                    t_agg_build_s=sch.t_agg_build_s, t_agg_verify_s=sch.t_agg_verify_s)
+    return {"encoding": enc.name, "scheme": sch.name, "placement": str(plc), "batch": batch,
+            "n_frames": n, "s": round(enc.record_bytes, 2), "bytes_per_rec": round(bpr, 3),
+            "auth_overhead_bytes": round(bpr - enc.record_bytes, 3),
+            "V": round(optimizer.verifiability(plc, n, con.p_loss), 5),
+            "energy_uj": round(energy.per_record(ecfg, meas) * 1e6, 4)}
+
+
+def run_e5(cfg: dict) -> list[dict]:
+    """Optimizer byte-optimal config vs baselines; test the ≥40 % auth-byte-cut criterion (T5)."""
+    encs, schemes = _measured_inputs(cfg)
+    plat = optimizer.Platform(p_cpu_w=cfg["p_cpu_w"], p_radio_w=cfg["p_radio_w"],
+                              frame_hdr_bytes=cfg["h_f"], mtu_bytes=cfg["mtu"])
+    con = optimizer.Constraints(epsilon=cfg["epsilon"], p_loss=cfg["p_loss"], lam=cfg["lam"])
+    res = optimizer.solve(encs, schemes, list(Placement), cfg["batches"], plat, con)
+    if not res.feasible:
+        raise ValueError("E5: no feasible config — check constraints")
+    best = min(res.feasible, key=lambda c: c.bytes_per_record)
+
+    enc_by = {e.name: e for e in encs}
+    sch_by = {s.name: s for s in schemes}
+    rows: list[dict] = []
+    opt_row = {"role": "optimized", "encoding": best.encoding, "scheme": best.scheme,
+               "placement": str(best.placement), "batch": best.batch, "n_frames": best.n_frames,
+               "s": round(enc_by[best.encoding].record_bytes, 2),
+               "bytes_per_rec": round(best.bytes_per_record, 3),
+               "auth_overhead_bytes": round(best.bytes_per_record
+                                            - enc_by[best.encoding].record_bytes, 3),
+               "V": round(best.verifiability, 5), "energy_uj": round(best.energy_j * 1e6, 4)}
+    rows.append(opt_row)
+
+    base_rows: dict[str, dict] = {}
+    for label, spec in cfg["baselines"].items():
+        p = _point(enc_by[spec["encoding"]], sch_by[spec["scheme"]],
+                   Placement(spec["placement"]), spec["batch"], plat, con)
+        base_rows[label] = p
+        rows.append({"role": label, **p})
+
+    a_cbor = base_rows["A+CBOR"]["auth_overhead_bytes"]
+    cut_pct = 100.0 * (a_cbor - opt_row["auth_overhead_bytes"]) / a_cbor
+    rows.append({"role": "SUCCESS_CRITERION", "encoding": "", "scheme": "", "placement": "",
+                 "batch": "", "n_frames": "", "s": "", "bytes_per_rec": "",
+                 "auth_overhead_bytes": round(a_cbor - opt_row["auth_overhead_bytes"], 3),
+                 "V": round(opt_row["V"], 5), "energy_uj": "",
+                 "auth_cut_pct": round(cut_pct, 2),
+                 "pass": int(cut_pct >= cfg["success_target_pct"] and opt_row["V"] >= 0.95)})
+    return rows
+
+
 _RUNNERS = {
     "e1": (run_e1, "e1_dominance"),
     "e2": (run_e2, "e2_batching"),
     "e3": (run_e3, "e3_loss"),
+    "e5": (run_e5, "e5_codesign"),
 }
 
 

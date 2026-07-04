@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from authbc.bench.experiments import run_e1, run_e2, run_e3
+from authbc.bench.experiments import load_config, run_e1, run_e2, run_e3, run_e5
 
 _E1_SMALL = {
     "g": 64,
@@ -108,3 +108,30 @@ def test_e3_B_pareto_dominates_D_above_threshold() -> None:
 def test_e3_deterministic() -> None:
     assert run_e3(_E3_SMALL) == run_e3(_E3_SMALL)
 
+
+
+def _e5():
+    return run_e5(load_config("e5"))
+
+
+def test_e5_success_criterion_met() -> None:
+    rows = _e5()
+    sc = next(r for r in rows if r["role"] == "SUCCESS_CRITERION")
+    assert sc["pass"] == 1
+    assert sc["auth_cut_pct"] >= 40.0
+    opt = next(r for r in rows if r["role"] == "optimized")
+    assert opt["V"] >= 0.95
+    assert opt["bytes_per_rec"] >= opt["s"]
+
+
+def test_e5_a_cbor_baseline_and_optimized_placement() -> None:
+    rows = _e5()
+    acbor = next(r for r in rows if r["role"] == "A+CBOR")
+    assert acbor["auth_overhead_bytes"] == pytest.approx(104.0)  # g_a 64 + H_f 40, inline b=1
+    assert acbor["placement"] == "A" and acbor["encoding"] == "cbor"
+    opt = next(r for r in rows if r["role"] == "optimized")
+    assert opt["placement"] == "B"  # self-batch amortizes the signature (T5)
+
+
+def test_e5_deterministic() -> None:
+    assert _e5() == _e5()

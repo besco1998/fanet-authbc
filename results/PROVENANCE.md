@@ -6,3 +6,4 @@
 | fig_e2_batching.png | results/raw/e2_batching.csv | 97ae8325d8e033bf |
 | fig_e3_frontier.png | results/raw/e3_loss.csv | fe7d2ec442488901 |
 | fig_ns3_bianchi.png | results/raw/ns3_matrix.csv | 6dadb031999e16a1 |
+| fig_e5_codesign.png | results/raw/e5_codesign.csv | 62a2214fc4093f3b |

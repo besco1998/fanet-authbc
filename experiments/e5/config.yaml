@@ -1,0 +1,21 @@
+# E5 — co-design end-to-end (T5, docs/04 §2). Optimizer vs baselines; success criterion.
+experiment: e5
+encodings: [json, cbor, msgpack, delta]
+schemes: [ecdsa_p256, ed25519, bls]
+batches: [1, 2, 3, 4, 5, 6, 8, 10, 12, 14, 16, 20, 24, 28, 32, 36, 40]
+h_f: 40            # frame header bytes H_f (docs/01 §2)
+mtu: 1500          # M
+epsilon: 0.05      # V >= 1-eps = 0.95
+p_loss: 0.05       # p (docs/04 §2 success criterion)
+lam: 20            # records/s (docs/01 §1 default Lambda)
+# nominal (NOT measured) — keeps the frozen CSV deterministic; the auth-byte headline is
+# power-free. Energy numbers are model estimates pending RPi4 measurement at P7.
+p_cpu_w: 3.0
+p_radio_w: 0.7
+t_enc_ns: {json: 2000, cbor: 1200, msgpack: 1100, delta: 1500}
+bls_agg_ref_b: 8   # representative batch for BLS aggregate timings (placement C)
+baselines:
+  A+JSON:   {placement: A, encoding: json, scheme: ed25519, batch: 1}   # naive
+  A+CBOR:   {placement: A, encoding: cbor, scheme: ed25519, batch: 1}   # Pillar-1-only
+  D-overagg: {placement: D, encoding: cbor, scheme: ed25519, batch: 40} # over-aggregated
+success_target_pct: 40.0   # optimized must cut on-air auth bytes >= this vs A+CBOR

@@ -82,6 +82,22 @@ Post-SYNC-1 path: this Lane-1 session continues **P1b** (measurements) next, the
 
 Two byte-accounting ⚠️ carried into P1b (see audit): BLS 48-vs-96 B, and the T1 φ schema gap.
 
+## Handoff 2026-07-05 — E5 DONE (SYNC-4 integrator, tag e5-done)
+- Green baseline: tag `e5-done` on main; `make all` green (849); CI green.
+- Done: `bench/experiments.run_e5` + `experiments/e5/config.yaml` + `analysis/figures_e5.py` +
+  `make exp-e5` → frozen `results/raw/e5_codesign.csv` + byte-stable `fig_e5_codesign.png`. Audit
+  `docs/audits/e5.md`.
+- **HEADLINE (T5 co-design, docs/04 §2 success criterion):** optimized config = **delta + ECDSA
+  + self-batch B + b=28** → on-air auth overhead **3.7 B/rec** at **V=0.95**; **96.4 % auth-byte
+  cut vs A+CBOR** (104 B) at p=0.05 ⇒ **PASS** (target ≥40 %). D-over-agg fails V≥0.95 (=(1−p)²,
+  T3). Inputs are the frozen measured E1 sizes + P1b timings; **energy uses nominal power ⚠ P7**.
+- Next 3 steps: (1) **P8** consolidation — analysis notebook + paper skeleton pulling T1–T5 +
+  E1–E5 + NS-3 validation together (all on main now). (2) **P7** RPi4 hardware (needs board + ⚠ D5
+  meter) → re-run E4/E5 energy with measured power. (3) Optional broadcast-DCF deep study (P6b
+  open item).
+- Gotchas: E5 auth-byte headline is power-free (grounded); energy is nominal pending P7. Optimized
+  scheme is a byte-tie ECDSA≈Ed25519 (D2 default) — either meets the criterion.
+
 ## Handoff 2026-07-05 — phase P6 DONE (Lane 1 integrator)
 - Green baseline: tags `p6a-done`, `p6-done` on main; `make all` green (846; NS-3 not in CI).
 - Done: SYNC merge of Lane 2 (P5 Bianchi/energy/optimizer/crossover + E4) → main; P6b NS-3
