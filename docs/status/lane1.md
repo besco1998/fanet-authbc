@@ -82,6 +82,22 @@ Post-SYNC-1 path: this Lane-1 session continues **P1b** (measurements) next, the
 
 Two byte-accounting ⚠️ carried into P1b (see audit): BLS 48-vs-96 B, and the T1 φ schema gap.
 
+## Handoff 2026-07-04 — phase P4 DONE (Lane 1, 2-lane mode)
+- Green baseline: tag `p4-done` on main; `make all` green (777 tests); CI green.
+- Done: `bench/experiments` (run_e1/e2/e3) + `experiments/e{1,2,3}/config.yaml` +
+  `analysis/figures_e123`. **First thesis figures** in `results/figures/`; frozen raw
+  `results/raw/e{1,2,3}_*.csv` (⚠️ D6); audit + Law-6 in `docs/audits/p4.md`; `results/
+  PROVENANCE.md`. Wired `make exp-e1/e2/e3` + `make figures`.
+- Results (measured): **E1** φ JSON 25.1/CBOR 49.1/msgpack 49.6/delta 58.7% (auth≈½ a CBOR
+  record). **E2** at M=1500 measured A matches M/(M−H_f−g_a) within 0.25%; batching → φ≈6.9%.
+  **E3** V_B flat at 1−p; V_D=(1−p)^n drops when a block spans >1 frame (b≥21) → B Pareto-
+  dominates D above V=(1−p)². All Law-6 gates pass.
+- ⚠️ D6: E1–E3 raw frozen; figures regenerate byte-stable via `make figures`.
+- Next 3 steps: (1) SYNC-4 territory — Lane 2 is at `p5-done` (E4). Options: load
+  `docs/prompts/P6_NS3_VALIDATION.md` (needs SYNC-3 framesizes + P5a Bianchi — both ready) OR
+  integrate Lane 2's E4 for the P8 narrative; (2) then P8 consolidation. (3) Mohamed picks.
+- Gotchas: reuse ONE stateful encoder/stream for sizes; E1/E2/E3 raw are D6-frozen.
+
 ## Handoff 2026-07-04 — phase P3 DONE (Lane 1, 2-lane mode)
 - Green baseline: tag `p3-done` on main; `make all` green (767 tests); CI green. **Unblocks P4.**
 - Done: framers `A/B/C/D` (`placement/{inline,self_batch,relay_agg,block_agg}`), `channel/
