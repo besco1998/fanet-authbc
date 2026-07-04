@@ -82,6 +82,22 @@ Post-SYNC-1 path: this Lane-1 session continues **P1b** (measurements) next, the
 
 Two byte-accounting ⚠️ carried into P1b (see audit): BLS 48-vs-96 B, and the T1 φ schema gap.
 
+## Handoff 2026-07-04 — phase P6a DONE (Lane 1 as Lane 3)
+- Green baseline: tag `p6a-done` on main; `make all` green (777 tests, NS-3 not in CI); build
+  tree git-ignored.
+- Done: **NS-3 3.41 built** (optimized+Ninja; ⚠️ D4 settled=3.41); `ns3/authbc-sat.cc` (802.11a
+  ad-hoc, both unicast+broadcast modes, size param), `ns3/parse_ns3.py`, `ns3/sim_ns3.sh`,
+  `ns3/README.md`; wired `make sim-ns3`. Smoke (2 nodes, both modes) → `results/raw/ns3_smoke.csv`:
+  unicast 3.27 Mb/s (FlowMonitor 3.39), broadcast 3.71 Mb/s — ≤6 Mb/s ceiling, >0, broadcast>unicast.
+- Gate note: `hello-simulator` is silent in optimized (NS_LOG=OFF compiles out NS_LOG_UNCOND); it
+  runs exit 0. Scenario uses ofstream/FlowMonitor, unaffected.
+- ⚠️ **P6b BLOCKED**: needs P5a `bianchi.py` on main (SYNC merge of `origin/lane2`) before the
+  full N∈{5,10,20,35,50}×10-seed matrix + Bianchi-vs-NS-3 gap analysis (per-mode, no mixing) +
+  E5 contention export. Real frame sizes for P6b come from `results/raw/framesizes.csv` (SYNC-3).
+- Next 3 steps: (1) merge `origin/lane2` (P5a Bianchi/optimizer/energy + E4) to main; (2) P6b
+  matrix + gap analysis; (3) SYNC-4 → P8.
+- Gotchas: NS-3 build tree not committed (rebuild via ns3/README); machine-specific, not in CI.
+
 ## Handoff 2026-07-04 — phase P4 DONE (Lane 1, 2-lane mode)
 - Green baseline: tag `p4-done` on main; `make all` green (777 tests); CI green.
 - Done: `bench/experiments` (run_e1/e2/e3) + `experiments/e{1,2,3}/config.yaml` +
