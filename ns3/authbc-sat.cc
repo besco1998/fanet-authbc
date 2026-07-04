@@ -28,6 +28,17 @@ using namespace ns3;
 
 NS_LOG_COMPONENT_DEFINE("AuthbcSat");
 
+// Total data frames handed to the PHY for transmission (PhyTxBegin) — lets us measure NS-3's
+// REAL per-transmission success rate (delivered / transmitted) and compare it to the ideal
+// binary-collision model's p_s: if NS-3 delivers far more, that is the capture effect.
+static uint64_t g_txFrames = 0;
+
+void
+TxBeginTrace(Ptr<const Packet>, double)
+{
+    ++g_txFrames;
+}
+
 int
 main(int argc, char* argv[])
 {
@@ -124,6 +135,9 @@ main(int argc, char* argv[])
         srcApps.Add(onoff.Install(nodes.Get(i)));
     }
 
+    Config::ConnectWithoutContext(
+        "/NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Phy/PhyTxBegin", MakeCallback(&TxBeginTrace));
+
     srcApps.Start(Seconds(1.0));
     srcApps.Stop(Seconds(simTime + 1.0));
     sinkApps.Start(Seconds(0.5));
@@ -150,6 +164,7 @@ main(int argc, char* argv[])
           << "seed," << seed << "\n"
           << "rx_bytes," << rxBytes << "\n"
           << "rx_scale," << rxScale << "\n"
+          << "tx_frames," << g_txFrames << "\n"
           << "goodput_mbps," << goodputMbps << "\n";
     stats.close();
 
