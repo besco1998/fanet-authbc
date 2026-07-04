@@ -58,8 +58,9 @@ exp-e2:
 	@echo "ERROR: 'exp-e2' is implemented in P4 (docs/prompts/P4_EXPERIMENTS_E123.md)."; exit 1
 exp-e3:
 	@echo "ERROR: 'exp-e3' is implemented in P4 (docs/prompts/P4_EXPERIMENTS_E123.md)."; exit 1
-exp-e4:
-	@echo "ERROR: 'exp-e4' is implemented in P5 (docs/prompts/P5_MODELS_OPTIMIZER.md)."; exit 1
+exp-e4:  ## P5b E4: Ed25519<->BLS crossover from measured P1 timings -> results/raw/e4_*.csv + figure
+	$(BIN)/python experiments/e4/run_e4.py
+	$(BIN)/python analysis/figures_e4.py
 exp-e5:
 	@echo "ERROR: 'exp-e5' is implemented in P6 (docs/prompts/P6_NS3_VALIDATION.md)."; exit 1
 sim-ns3:
