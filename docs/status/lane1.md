@@ -82,6 +82,24 @@ Post-SYNC-1 path: this Lane-1 session continues **P1b** (measurements) next, the
 
 Two byte-accounting ⚠️ carried into P1b (see audit): BLS 48-vs-96 B, and the T1 φ schema gap.
 
+## Handoff 2026-07-05 — phase P6 DONE (Lane 1 integrator)
+- Green baseline: tags `p6a-done`, `p6-done` on main; `make all` green (846; NS-3 not in CI).
+- Done: SYNC merge of Lane 2 (P5 Bianchi/energy/optimizer/crossover + E4) → main; P6b NS-3
+  matrix (`ns3/run_matrix.py` → `results/raw/ns3_matrix.csv`) + `analysis/figures_ns3.py`
+  (byte-stable `fig_ns3_bianchi.png`) + `results/raw/ns3_contention.csv`. Audit `docs/audits/p6.md`.
+- **Result (Law-6, honest):** **UNICAST validates Bianchi (+1.8…+5.3 %)** — the model's primary
+  use. **BROADCAST** matches the no-ACK variant at N≤10 and is a **capture-limited lower bound**
+  at high N; mechanism **confirmed = frame capture** via a toggle+power-spread experiment (12 dB
+  spread → +17–48 % goodput; SimpleFrameCaptureModel inert at equal power). An early "~18×
+  capture" over-claim was **retracted** (wrong metric/timing) — kept visible for integrity.
+- Scenario hardening: rewrote to **PacketSocket** (ARP-free, single collision domain) after
+  Law-6 gates caught spatial-reuse / broadcast-multi-count / ARP artifacts.
+- ⚠️ NS-3 build tree git-ignored (rebuild via ns3/README); machine-local, not in CI.
+- Next 3 steps: (1) **E5** integration (SYNC-4) — optimizer configs vs baselines A+JSON/A+CBOR/
+  D-over-agg using P4 E1–E3 + P5b optimizer/crossover + P6b `ns3_contention.csv`; test the ≥40 %
+  auth-byte-cut success criterion. (2) P8 consolidation/paper. (3) P7 hardware (needs RPi4/⚠️D5).
+- Gotchas: broadcast goodput = aggregate/(N−1); unicast↔ACK-Bianchi, broadcast↔no-ACK — never mix.
+
 ## Handoff 2026-07-04 — phase P6a DONE (Lane 1 as Lane 3)
 - Green baseline: tag `p6a-done` on main; `make all` green (777 tests, NS-3 not in CI); build
   tree git-ignored.
