@@ -64,7 +64,7 @@ exp-e5:
 	@echo "ERROR: 'exp-e5' is implemented in P6 (docs/prompts/P6_NS3_VALIDATION.md)."; exit 1
 sim-ns3:
 	@echo "ERROR: 'sim-ns3' is implemented in P6 (docs/prompts/P6_NS3_VALIDATION.md)."; exit 1
-export-framesizes:
-	@echo "ERROR: 'export-framesizes' is implemented in P3 (docs/prompts/P3_PLACEMENTS_CHANNEL.md)."; exit 1
+export-framesizes:  ## P3 SYNC-3: placement×encoding×b frame sizes -> results/raw/framesizes.csv
+	$(BIN)/python -m authbc.bench.framesizes
 figures:
 	@echo "ERROR: 'figures' is implemented from P4 onward (docs/prompts/P4_EXPERIMENTS_E123.md)."; exit 1
