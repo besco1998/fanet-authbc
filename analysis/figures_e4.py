@@ -9,6 +9,7 @@ P_r/P_c ≲ 0.5). Every κ* curve sits far above the band ⇒ Ed25519 wins acros
 from __future__ import annotations
 
 import csv
+import math
 from collections import defaultdict
 from pathlib import Path
 
@@ -52,15 +53,25 @@ def main() -> None:
                label=f"plausible $P_r/P_c \\leq {plausible}$ (Ed25519 wins)")
     ax.axhline(plausible, color="tab:red", lw=1, ls="--")
 
+    inf_rhos: list[float] = []
     for rho in sorted(series):
-        bs = sorted(series[rho])
+        # At g_agg=96 B, pure-own traffic (ρ=0) has κ*=+∞ (BLS carries more bytes than Ed25519,
+        # so it can never win) — plot only the finite (relay-mixed) crossovers, note the rest.
+        bs = [b for b in sorted(series[rho]) if math.isfinite(series[rho][b][0])]
+        if not bs:
+            inf_rhos.append(rho)
+            continue
         med = [series[rho][b][0] for b in bs]
-        if rho == 1.0:  # annotate CI on the closest-to-crossover (most BLS-favourable) curve
+        if rho == max(r for r in series if any(math.isfinite(series[r][b][0])
+                                               for b in series[r])):
             lo = [series[rho][b][0] - series[rho][b][1] for b in bs]
             hi = [series[rho][b][2] - series[rho][b][0] for b in bs]
             ax.errorbar(bs, med, yerr=[lo, hi], marker="o", capsize=3, label=f"ρ={rho} (95% CI)")
         else:
             ax.plot(bs, med, marker="o", label=f"ρ={rho}")
+    if inf_rhos:
+        ax.plot([], [], " ",
+                label=f"ρ={','.join(f'{r:g}' for r in inf_rhos)}: κ*=∞ (BLS costs bytes on own)")
 
     ax.set_yscale("log")
     ax.set_xscale("log", base=2)

@@ -25,9 +25,16 @@ from __future__ import annotations
 
 import math
 
-# Auth-object sizes, bytes (docs/02 T4): Ed25519/ECDSA raw sig 64 B; BLS min-sig aggregate 48 B.
+# Auth-object sizes, bytes (docs/02 T4): Ed25519/ECDSA raw sig 64 B; BLS aggregate 96 B.
+# g_agg=96 is the ACCEPTED decision (blspy AugSchemeMPL G2 signatures are 96 B) and is what the
+# p1_crypto BLS timings actually measure — mixing a 48 B min-sig SIZE with 96 B-mode TIMINGS would
+# be physically incoherent. At 96 B, BLS carries MORE auth bytes than Ed25519's 64 B on OWN
+# self-batched traffic (both fold b records under one sig) ⇒ BLS saves negative bytes there
+# (κ*→+∞); it only saves bytes on RELAYED traffic for b≥2, where one 96 B aggregate replaces
+# b·64 B individual sigs. Either way BLS's 10.7× verify cost keeps Ed25519 the plausible-power
+# winner (see e4_crossover.csv) — g_agg=48 merely over-stated a byte advantage BLS never needed.
 G_OWN_BYTES: float = 64.0
-G_AGG_BYTES: float = 48.0
+G_AGG_BYTES: float = 96.0
 R_BPS: float = 6e6  # 802.11a OFDM data rate (docs/02 §6)
 
 # Above this power ratio κ=P_r/P_c a radio-heavy platform could favour BLS. Wi-Fi receive power is

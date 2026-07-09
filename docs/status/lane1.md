@@ -82,6 +82,19 @@ Post-SYNC-1 path: this Lane-1 session continues **P1b** (measurements) next, the
 
 Two byte-accounting ⚠️ carried into P1b (see audit): BLS 48-vs-96 B, and the T1 φ schema gap.
 
+## Handoff 2026-07-05 — FULL AUDIT (pre-P7b), F1 fixed
+- Whole-repo Law-5/Law-6 pass: docs/audits/full_audit_pre_p7b.md. Baseline stays 849 green / 90 %.
+- **Fixed F1** (MED): E4/T4 modelled BLS at the stale 48 B vs the accepted 96 B — corrected
+  crossover.py + 3 tests + E4 figure (κ*=∞-tolerant), re-ran/re-froze e4_crossover.csv + e4_bytes.csv.
+  Conclusion **unchanged**: Ed25519 wins all 80 grid points (min κ*=3.21); at 96 B BLS only saves
+  bytes on relay b≥2, never on own self-batch (κ*=∞) — aligns T4 with D2's cross-signer intent.
+- Verified sound: all T1–T5 + Bianchi + airtime + energy formulas re-derived vs code; E5 energy
+  hand-checked to 64.24 µJ = frozen; unicast Bianchi ±1.8–5.3 %; real KATs; determinism gates.
+- Documented (no code change): F2 energy unicast-T_FX ~1 % over-count (P7 re-run), F3 E5 b=28
+  grid-quantized (PASS either way), F4 cross-experiment size sampling (P8 standardize), F5 32 B
+  prev_hash/record (assumption), F6 ECDSA<Ed on x86 may flip on ARM (P7 watch), F7 broadcast=capture.
+- Nothing blocks P7b except its hardware + ⚠️ D5 meter.
+
 ## Handoff 2026-07-05 — P7a DONE (hardware-prep scripts, tag p7a-done)
 - Green baseline: tag `p7a-done` on main; `make lint` clean; CI green. No Python touched (test
   count unchanged at 849). Lane: `hw/**` only.

@@ -104,6 +104,13 @@ def radio_airtime_s(cfg: EnergyConfig) -> float:
     = n·T_fx + 8·(b·s + g_a + n·H_f)/R. For n_frames=1 this reduces EXACTLY to
     T_air(b·s+g_a+H_f) — the single-frame §7 form; for D it counts one T_fx + one header per
     frame the block occupies, so D's per-frame overhead is not silently undercounted.
+
+    NOTE (P7 reconciliation, audit F2): `bianchi.T_FX`≈122 µs is the UNICAST fixed part (includes
+    SIFS+ACK). The telemetry substrate is 802.11 BROADCAST (no ACK), whose fixed part is ≈100 µs
+    (channel/airtime.airtime_broadcast(0)). Using the unicast T_FX over-counts the receiver radio
+    term by ~22 µs/frame (≈1 % of E5 energy). Energy is nominal-power and re-derived at P7 with the
+    measured meter powers — reconcile the fixed part to the broadcast value in that re-run. The
+    auth-byte headline is power-free and unaffected.
     """
     n = cfg.n_frames
     data_bytes = cfg.batch * cfg.record_bytes + cfg.auth_bytes + n * cfg.frame_hdr_bytes

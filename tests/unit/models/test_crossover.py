@@ -27,9 +27,12 @@ T_AV = {  # bls agg_verify median per batch b (ns → s)
 
 
 def test_delta_bytes_hand_values() -> None:
-    assert x.delta_relay_bytes(32) == pytest.approx(64 - 48 / 32)   # 62.5
-    assert x.delta_relay_bytes(2) == pytest.approx(40.0)
-    assert x.delta_own_bytes(32) == pytest.approx(16 / 32)          # 0.5
+    # g_agg = 96 B (accepted BLS G2 size). Relay: one 96 B aggregate replaces b·64 B sigs.
+    assert x.delta_relay_bytes(32) == pytest.approx(64 - 96 / 32)   # 61.0
+    assert x.delta_relay_bytes(2) == pytest.approx(16.0)            # 64 − 96/2
+    # OWN self-batch: both schemes carry ONE sig/frame ⇒ BLS (96) costs 32 B MORE than Ed (64):
+    assert x.delta_own_bytes(32) == pytest.approx(-32 / 32)         # −1.0 (negative = BLS costs)
+    assert x.delta_own_bytes(8) < 0.0                               # never a saving on own traffic
     # H_a>0 only shrinks BLS's saving (helps Ed25519):
     assert x.delta_relay_bytes(16, h_a=16) < x.delta_relay_bytes(16, h_a=0)
 
@@ -44,23 +47,23 @@ def test_extra_cpu_relay_hand_value() -> None:
 
 
 def test_kappa_star_relay_b32_matches_prestated_expectation() -> None:
-    """The most BLS-favourable point (ρ=1, b=32): κ*≈3.13 — still ≫ plausible 0.5."""
+    """The most BLS-favourable point (ρ=1, b=32): κ*≈3.21 at g_agg=96 — still ≫ plausible 0.5."""
     dt = x.extra_cpu_relay_s(T_AV[32], 32, T_VF_ED)
-    dr = x.radio_saving_s(x.delta_relay_bytes(32))
+    dr = x.radio_saving_s(x.delta_relay_bytes(32))   # relay_bytes(32)=61.0 at g_agg=96
     kstar = x.kappa_star(dt, dr)
-    assert kstar == pytest.approx(3.133, abs=0.01)
+    assert kstar == pytest.approx(3.21, abs=0.01)
     assert x.winner_for_plausible_powers(kstar) == "ed25519"
 
 
-def test_kappa_star_own_is_independent_of_b() -> None:
-    """Own-record κ* has b cancel out (≈43.2 for every b) — Ed25519 dominates self-batch."""
-    vals = []
+def test_kappa_star_own_is_infinite_at_g_agg_96() -> None:
+    """OWN self-batch at g_agg=96: BLS carries MORE bytes than Ed (ΔRADIO<0) so it can never
+    win regardless of power ratio ⇒ κ*=+∞ for every b (the corrected T4 finding)."""
     for b in (2, 8, 32):
-        dt = x.extra_cpu_own_s(T_VF_BLS, T_VF_ED, b)
-        dr = x.radio_saving_s(x.delta_own_bytes(b))
-        vals.append(x.kappa_star(dt, dr))
-    assert vals[0] == pytest.approx(vals[1]) == pytest.approx(vals[2])
-    assert vals[0] == pytest.approx(43.2, abs=0.1)
+        dt = x.extra_cpu_own_s(T_VF_BLS, T_VF_ED, b)   # >0: BLS verify costlier
+        dr = x.radio_saving_s(x.delta_own_bytes(b))     # <0: BLS uses MORE radio at 96 B
+        assert dr < 0.0
+        assert x.kappa_star(dt, dr) == math.inf
+        assert x.winner_for_plausible_powers(x.kappa_star(dt, dr)) == "ed25519"
 
 
 @pytest.mark.parametrize("b", [2, 4, 8, 16, 32])
