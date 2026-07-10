@@ -54,13 +54,19 @@ frozen artifact isn't re-run. That is **exactly what produced F1** — the BLS=9
 E5 was updated, but the frozen E4 kept the old 48 B. Freezing buys reproducibility at the price of
 silent-staleness risk.
 
-**How we solve it (the discipline going forward):**
-1. Every decision change ⇒ list the **downstream** frozen artifacts and re-run + re-freeze **all**
-   of them, bump the config-hash, and re-run the Law-6 validation. (A "decision → experiments" map
-   below makes the blast radius explicit.)
-2. The **config-hash header** makes staleness *detectable*: a frozen CSV whose hash no longer matches
-   the current config is a flag.
-3. Periodic **whole-repo audits** (like the pre-P7b pass) catch anything the map missed.
+**How we solve it (now enforced, not just documented):**
+1. **Automated reproduction gate** — `tests/integration/test_frozen_reproducibility.py` (run via
+   `make verify-frozen`, in CI on every push and in `make all`). It re-derives **every deterministic
+   frozen artifact** (E1–E5, framesizes, p1_sizes, e4_crossover, e4_bytes, ns3_contention) from the
+   CURRENT code + configs + frozen measured inputs and asserts the data rows byte-match the committed
+   CSV. **Any drift ⇒ red CI failure** that forces a deliberate re-freeze — silent staleness (F1) can
+   no longer be committed. Verified to catch the exact F1 regression (BLS 96→48 B ⇒ the gate fails).
+   The gate is `-m frozen`, deselected from the fast local `make test`, so it doesn't slow the TDD
+   loop. The genuinely MEASURED fixtures (`p1_crypto`, `ns3_matrix`) are never re-measured, only
+   checked for presence/shape.
+2. Every decision change ⇒ use the **decision→artifact blast-radius map** below to re-run + re-freeze
+   all downstream artifacts; the gate then confirms nothing was missed.
+3. Periodic **whole-repo audits** (like the pre-P7b pass) as a backstop.
 
 ## Formal decisions (docs/00 §6)
 | id | decision | why | shortage / limitation | how to solve / status |

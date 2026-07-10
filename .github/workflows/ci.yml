@@ -32,3 +32,6 @@ jobs:
 
       - name: test (pytest)
         run: make test
+
+      - name: verify frozen data (reproduction gate)
+        run: make verify-frozen

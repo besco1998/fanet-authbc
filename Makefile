@@ -10,7 +10,7 @@ VENV   := .venv
 BIN    := $(VENV)/bin
 
 .DEFAULT_GOAL := help
-.PHONY: help setup lint test all \
+.PHONY: help setup lint test verify-frozen all \
         bench-micro bench-macro exp-e1 exp-e2 exp-e3 exp-e4 exp-e5 \
         sim-ns3 export-framesizes figures
 
@@ -42,10 +42,13 @@ setup:  ## create venv (Python >=3.12) and install pinned deps + pre-commit hook
 lint:  ## ruff check
 	$(BIN)/ruff check src tests
 
-test:  ## run the test suite
-	$(BIN)/pytest
+test:  ## run the fast test suite (excludes the slow frozen-reproduction gate)
+	$(BIN)/pytest -m "not frozen"
 
-all: lint test  ## lint + test
+verify-frozen:  ## re-derive every deterministic frozen artifact; fail on staleness (docs/DECISIONS.md)
+	$(BIN)/pytest -m frozen -p no:cov -o addopts="-q"
+
+all: lint test verify-frozen  ## lint + fast tests + frozen-reproduction gate
 
 # --------------------------------------------------------------------------- guarded stubs
 bench-micro:  ## P1 microbenchmarks -> results/raw/p1_{sizes,crypto}.csv
