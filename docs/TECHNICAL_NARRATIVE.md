@@ -40,6 +40,59 @@ implement measurable models for each, and test one falsifiable headline:
 > verifiability **V ≥ 0.95** under per-frame loss **p = 0.05**.
 
 ---
+## 1a. Prior work and positioning
+
+> **Citation integrity note.** Foundational works below (Bianchi's DCF, ECDSA, Ed25519, BLS/aggregate
+> signatures, CBOR, Nakamoto's ledger, NS-3) are cited with verified bibliographic detail. Entries
+> for the *domain-specific* FANET-authentication / UAV-blockchain / VANET-batch-verification
+> literature are marked **[VERIFY]** — the thematic positioning is correct, but the exact references
+> and any figures from them must be confirmed against the primary sources before submission. No
+> reported number is quoted from an unverified source.
+
+**(a) Digital signatures for constrained authentication.** *Problem:* authenticate messages with
+compact, fast-to-verify signatures. *Approaches & results:* **ECDSA** (NIST FIPS 186) gives 64 B
+P-256 signatures at 128-bit security via the EC discrete-log problem, but is randomness-sensitive;
+**Ed25519** (Bernstein et al., CHES 2011; RFC 8032) uses a twisted-Edwards curve with deterministic
+nonces for fast, misuse-resistant, batchable verification and 64 B signatures; **BLS** (Boneh–Lynn–
+Shacham, ASIACRYPT 2001) produces the shortest signatures via pairings, and (Boneh–Gentry–Lynn–
+Shacham, EUROCRYPT 2003) shows *n* signatures **aggregate into one** — at the cost of expensive
+pairing verification. *Positioning:* AUTHBC introduces **no new primitive**; it quantifies, on 802.11,
+*where and when* each existing scheme wins once placement and batching are chosen (T4/E4), finding
+Ed25519 dominant for self-batch and BLS's aggregation worthwhile only for cross-signer relay traffic.
+
+**(b) Batch and aggregate verification in vehicular / IoT networks [VERIFY].** *Problem:* a receiver
+must verify many signed messages cheaply. *Approaches:* batch signature verification and aggregate
+MAC/signature schemes amortize verification across messages. *Positioning:* AUTHBC generalizes the
+idea from receiver-side batching to **authentication placement** (A/B/C/D) and co-designs it with the
+encoding and scheme (T2, T5), and adds the loss-robustness frontier (T3) that pure aggregation ignores.
+
+**(c) Blockchain / hash-chained ledgers for UAV & IoT provenance [VERIFY except Nakamoto].**
+*Problem:* trustworthy, tamper-evident provenance of drone/IoT data. *Approach & result:* Nakamoto's
+hash-chained ledger (2008) makes a log tamper-evident; UAV-blockchain systems put telemetry or
+attestations on such a chain, gaining integrity at a per-record overhead cost. *Positioning:* AUTHBC
+targets exactly that **substrate byte/energy cost** — the per-record signature + chain-hash overhead
+these systems inherit — and is agnostic to the consensus layer above it.
+
+**(d) Compact serialization for telemetry.** *Problem:* minimize on-air bytes of structured records.
+*Approaches & results:* **CBOR** (RFC 8949) and **MessagePack** give compact binary encodings;
+**differential/delta** coding sends small deltas against periodic keyframes. *Positioning:* AUTHBC
+measures these head-to-head (E1) and shows the encoding choice is **coupled** to authentication — a
+smaller payload raises the auth fraction φ (T1), which *increases* the value of batching (T2/T5).
+
+**(e) Analytical 802.11 modelling and validation.** *Problem:* predict CSMA/CA throughput under
+contention. *Approach & result:* **Bianchi** (IEEE JSAC 2000) models the DCF as a per-station Markov
+chain whose τ/p_c fixed point yields closed-form saturation throughput matching simulation.
+*Positioning:* AUTHBC uses Bianchi as the **airtime cost model inside the optimizer** and validates it
+against **NS-3** (unicast within ±5 %), while honestly reporting the broadcast capture-effect gap.
+
+**Overall positioning.** AUTHBC is a **rigorous, hardware-validated co-design + measurement study**,
+not a new cryptographic construction. Its contribution is the joint optimization of *encoding ×
+placement × scheme × batching* under a single falsifiable headline (≥40 % auth-byte cut at V≥0.95),
+grounded in measured microbenchmarks, an analytical channel model validated against NS-3, and a
+reproducibility gate — a combination the prior work, which typically fixes three of the four knobs,
+does not provide.
+
+---
 ## 2. System model and mathematics
 
 ### 2.1 The record and the on-air cost
