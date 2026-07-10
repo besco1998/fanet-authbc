@@ -1,0 +1,227 @@
+# P7b hardware setup & configuration — start-to-finish runbook
+
+Follow this top-to-bottom to take a bare board to "ready to run the P7b campaign" (micro timings +
+INA219 energy + 2-node 802.11 link), then feed the measured numbers back into the E4/E5 model.
+Companion to `hw/provision.sh`, `hw/run_micro.sh`, `hw/energy_protocol.md`, and docs/DECISIONS.md
+(⚠️ D5 = the meter). Nothing here runs until you have the boards + meter in hand.
+
+---
+## 0. Plan: which board does what
+Your inventory ≠ the docs' "4× RPi4" assumption, so the campaign is tiered (docs/DECISIONS.md, D5):
+
+| tier | boards | role | notes |
+|---|---|---|---|
+| **Primary (headline)** | 2× **RPi4 B** | micro timing + energy tables; 2-node Wi-Fi link | matches the thesis "RPi4"; do these first |
+| **Secondary (bonus)** | 2× **RPi3 B / B+** | cross-platform timing/energy points | A53 64-bit; weaker cooling; B is 2.4 GHz-only |
+| **Stretch (optional)** | 2× **BeagleBone Black** | single-core Cortex-A8 timing points | 32-bit, no Wi-Fi, **BLS may not build** — see §9 |
+
+**Minimum to complete P7b:** the 2× RPi4 (one is the DUT for timing/energy, both form the link).
+RPi3/BBB only add generalization breadth.
+
+### Shopping / bench checklist
+- Per board: a **quality 5.1 V supply** (RPi4: official 5.1 V/3 A USB-C; RPi3: 5.1 V/2.5 A micro-USB).
+  A weak supply causes under-voltage throttling that silently corrupts timing **and** energy.
+- **Cooling** for RPi4 & RPi3: heatsink **+ fan** (Argon case / official fan). A 60 s crypto loop
+  heats the SoC; throttling invalidates the run.
+- microSD ≥ 16 GB (A1/A2) per Pi; an SD card reader.
+- **INA219 breakout** (your SparkFun one) + Dupont jumpers. **Check its shunt resistor** — the value
+  printed on the board (`R100` = 0.1 Ω, `R010` = 0.01 Ω) sets range/resolution/burden (§6).
+- A **known resistive load** for meter calibration (a USB constant-current dummy load, or a measured
+  ~10 Ω / ≥5 W power resistor).
+- The **meter-host**: a 2nd Pi or a laptop that reads the INA219 over I²C (keeps logging off the DUT).
+- (Optional, BBB link) a USB Wi-Fi dongle.
+
+---
+## 1. Flash the OS
+### RPi4 & RPi3 → Raspberry Pi OS **Bookworm 64-bit *Lite***
+Lite = no desktop (a desktop adds idle-power noise and background CPU). 64-bit: RPi4 and RPi3 B/B+
+are all ARMv8.
+
+1. Install **Raspberry Pi Imager** on your laptop.
+2. Choose device → OS: *Raspberry Pi OS (other)* → **Raspberry Pi OS Lite (64-bit)**.
+3. **⚙ / Ctrl-Shift-X (advanced options)** before writing — set:
+   - hostname: `authbc-pi4a`, `authbc-pi4b`, `authbc-pi3a`, `authbc-pi3b` (one per board);
+   - **enable SSH** (password or, better, your public key);
+   - username + password;
+   - **Wi-Fi** SSID + password + **country code** (needed to unlock the radio);
+   - locale / timezone.
+4. Write to the microSD. Repeat per board with its own hostname.
+
+### BeagleBone Black → see §9 (different toolchain; do it last, if at all).
+
+---
+## 2. First boot + headless SSH
+1. Insert the SD, connect the **official/quality supply**, power on. First boot resizes the FS + reboots (~2 min).
+2. From your laptop: `ssh <user>@authbc-pi4a.local` (mDNS). If `.local` fails, find the IP on your
+   router or `ping authbc-pi4a.local`.
+3. Update once: `sudo apt-get update && sudo apt-get -y full-upgrade && sudo reboot`.
+
+---
+## 3. Provision (governor, deps, radio hygiene, cooling)
+```bash
+ssh <user>@authbc-pi4a.local
+git clone <your-repo-url> ~/fanet-authbc && cd ~/fanet-authbc
+sudo ./hw/provision.sh
+```
+`hw/provision.sh` (idempotent; refuses to run on a non-Pi so it can't touch your dev box) does:
+- installs build deps (build-essential, cpufrequtils, and the libs to compile CPython 3.12);
+- sets the CPU governor to **performance** and **verifies** it (aborts if it didn't take — a
+  silently-ignored governor invalidates every timing);
+- disables **Wi-Fi power-save** on `wlan0` (power-save duty-cycles the NIC and skews airtime);
+- sets **headless** boot (console, no desktop) and enables **NTP**;
+- snapshots `lscpu` / temp / `get_throttled` / governor to `results/hw/meta/`.
+
+**Cooling check now:** attach the heatsink + fan before any timed run. Confirm idle temp is sane:
+`vcgencmd measure_temp` (aim < 55 °C idle) and `vcgencmd get_throttled` → `throttled=0x0`.
+
+---
+## 4. Python 3.12 + repo environment
+Bookworm ships Python 3.11; the repo pins ≥ 3.12, so build 3.12 with pyenv (provision.sh already
+installed the build deps):
+```bash
+curl -fsSL https://pyenv.run | bash
+# add the 3 lines pyenv prints to ~/.bashrc, then: exec $SHELL
+pyenv install 3.12          # ~15-20 min on RPi4, ~30-40 min on RPi3 (single-threaded compile)
+pyenv local 3.12            # pins 3.12 for this repo dir
+make setup PYTHON="$(pyenv which python)"   # venv + pinned deps (cryptography, blspy, cbor2, msgpack…)
+```
+If `blspy` has no aarch64 wheel and builds from source, it needs cmake + gmp (already pulled by the
+build deps); the build is slow but works on 64-bit Pi. Verify the env:
+```bash
+make test        # fast suite should pass on-device (proves crypto/encoders/KATs work here)
+```
+
+---
+## 5. Micro timing run (P1 suite on hardware)
+```bash
+./hw/run_micro.sh --check      # sanity: venv python + micro suite import + paths
+./hw/run_micro.sh              # the real run
+```
+This reruns the exact P1 micro suite and writes `results/hw/p1_{sizes,crypto}.<host>.csv` with the
+**real** governor/temp/`get_throttled` folded into the header; it backs up + restores the committed
+x86 CSVs (never clobbers them) and **flags** any throttled run with a `.THROTTLED` filename.
+
+**Sanity gates (docs/04 §1, expect RPi4 ≈ 5–15× the x86 numbers):**
+- Ed25519 sign ≈ 0.1–0.9 ms, verify ≈ 0.3–1.4 ms; BLS verify ≈ 5–45 ms.
+- `verify ≥ sign` per scheme; BLS-verify ≫ Ed25519-verify still holds on ARM.
+- **Watch F6:** on ARM, Ed25519 may now beat ECDSA (the x86 OpenSSL-asm edge is gone) — if so, the
+  E5 scheme pick flips ECDSA→Ed25519 (both 64 B, identical % cut). That is a *finding*, record it.
+- If any op is far outside the band, STOP and check the governor / throttling before recording.
+
+Repeat §3–§5 on the second RPi4 and (bonus) the RPi3s.
+
+---
+## 6. INA219 energy rig (⚠️ D5)
+Goal: measure whole-board power so `energy/op = (P_loop − P_idle)·t_loop/n_ops` (hw/energy_protocol.md).
+
+### 6.1 Wire it (high-side, shunt inline with the DUT's 5 V)
+```
+  PSU 5V(+) ──► INA219 Vin+        (shunt)        INA219 Vin− ──► DUT 5V in
+  PSU GND  ─────────────────────── common GND ─────────────────► DUT GND
+  INA219  SDA / SCL / GND / Vcc ──► METER-HOST (2nd Pi or laptop)   ← logging lives here, NOT the DUT
+```
+- **Feed the DUT through the shunt** one of two ways:
+  - *cut USB cable:* open a USB-A→C (RPi4) / →micro (RPi3) cable, route the **red 5 V** wire through
+    the INA219 shunt (PSU side → Vin+, Pi side → Vin−); leave GND/data intact. Simplest, keeps the
+    Pi's input fuse.
+  - *GPIO 5 V feed:* power the Pi from a bench supply into **GPIO pin 2 (5 V)** and **pin 6 (GND)**
+    via the shunt. Bypasses the Pi's USB input fuse — fine for a controlled bench measurement, but
+    use a clean current-limited supply.
+- **I²C to the meter-host** (Pi pins: SDA = pin 3, SCL = pin 5, GND = pin 6, logic Vcc = 3.3 V pin 1).
+  Reading the INA219 from a **separate** host keeps the DUT's CPU doing only the benchmark.
+- INA219 default I²C address **0x40**.
+
+### 6.2 ⚠️ Three caveats (from the D5 assessment)
+1. **Shunt burden voltage.** 0.1 Ω × 1.4 A ≈ 0.14 V drop (≈ 0.2 V at 2 A peaks). RPi4 throttles if
+   its rail sags below ~4.7 V. **Mitigate:** feed **5.1–5.25 V**, keep peripherals off the DUT, and
+   **watch `get_throttled`** every run — non-zero invalidates it. (Lower-shunt boards trade burden
+   for resolution; an INA260 with a 2 mΩ integrated shunt removes this entirely if you hit trouble.)
+2. **Don't let the logger load the DUT** — read the INA219 from the meter-host (above), not the DUT.
+3. **Calibrate first** (§6.4).
+
+### 6.3 Enable I²C + a driver on the meter-host
+```bash
+sudo raspi-config nonint do_i2c 0        # enable I2C (or dtparam=i2c_arm=on in /boot/firmware/config.txt)
+sudo apt-get install -y i2c-tools python3-pip
+i2cdetect -y 1                            # expect a device at 0x40
+pip install pi-ina219                     # or adafruit-circuitpython-ina219
+```
+
+### 6.4 Calibrate against a known load (before touching the Pi)
+1. Put the INA219 inline with your **known resistive load** (not the DUT).
+2. Read V and I; compute expected `P = V²/R`. `offset% = 100·(P_meter − P_expected)/P_expected`.
+3. **If |offset%| > 2 %, stop** and re-seat/re-cable before measuring. Record the offset in the run header.
+4. Set the INA219 calibration for your actual shunt + expected max current:
+   `Current_LSB = Max_Expected_A / 2^15`, `Cal = trunc(0.04096 / (Current_LSB × R_shunt))`.
+
+### 6.5 Run the energy protocol
+The P7b tight-loop driver (`hw/energy_loop.py`, written at P7b start per hw/energy_protocol.md) runs
+each op continuously for a wall-clock window using the **P1 timing rules** (perf_counter_ns, GC off,
+warmup, checksum, fixed 200 B seeded input). Per op:
+1. **idle 60 s** on the meter-host → `P_idle` = mean.
+2. run the op in a **60 s** loop, count `n_ops`, sample power → `P_loop` = mean.
+3. `energy/op = (P_loop − P_idle)·t_loop / n_ops`; **≥ 5 reps** → median + bootstrap CI.
+4. Derive `p_cpu_w = median(P_loop − P_idle)`; get `p_radio_w` from a saturated receive/decode loop (§7).
+Op set: sign/verify per scheme; BLS aggregate/agg_verify(b∈{2,4,8,16,32}); encode per encoding
+(delta = one **stateful** encoder — the keyframe pitfall). **Thermal guard:** log temp every 5 s and
+`get_throttled` before/after every window; discard/flag any `≠ 0x0`. Write to
+`results/hw/energy/<host>-<UTCstamp>.csv` with meter model, calibration offset, temp min/max, throttle.
+
+**Cross-check (Law 6):** `energy/op ≈ p_cpu_w · t_op` (t_op from §5). A > 10 % gap = STOP, reconcile.
+
+---
+## 7. Two-node 802.11 broadcast link (both RPi4)
+Qualitative sanity of the golden scenario with **measured** (not injected) loss + the `p_radio_w`
+receive-power measurement. State small-N (2-node) honesty explicitly.
+
+On **both** RPi4 (IBSS / ad-hoc, same cell + frequency):
+```bash
+sudo ip link set wlan0 down
+sudo iw dev wlan0 set type ibss
+sudo ip link set wlan0 up
+sudo iw dev wlan0 ibss join authbc-mesh 2412 fixed-freq   # same SSID+freq on both; 2412=ch1
+sudo ip addr add 10.0.0.1/24 dev wlan0                     # .2 on the other node
+```
+Then broadcast UDP telemetry frames from one, count received on the other → **measured** frame loss.
+While saturating the link, log the receiver's INA219 → `p_radio_w`. (brcmfmac IBSS can be finicky;
+if it won't hold the cell, fall back to a monitor-mode + `packet` inject/capture, and note it.)
+Confirm with `iw dev wlan0 link` / `iw dev wlan0 station dump`.
+
+---
+## 8. Feed measured numbers back into the model + re-freeze safely
+1. Put the measured RPi4 `t_enc / t_sign / t_verify / t_agg*` and `p_cpu_w / p_radio_w` into the E5
+   config (replacing the nominal `p_cpu_w=3.0`, `p_radio_w=0.7`) and reconcile the energy fixed part
+   to the **broadcast** airtime (audit F2).
+2. Re-run E4/E5: `make exp-e4 exp-e5 figures`.
+3. **The reproduction gate will now fail** (`make verify-frozen`) because the derived numbers changed
+   — that is expected and correct. Review the diff, then **commit the new frozen CSVs** as a
+   deliberate re-freeze (docs/DECISIONS.md); the gate goes green on the new baseline.
+4. Write `docs/audits/p7.md` with the Law-6 validation (expected ranges, thermal-clean runs, meter
+   calibration, x86↔ARM ratios). Tag `p7-done`.
+
+---
+## 9. Per-platform gotchas
+**RPi3 B / B+:** same Bookworm 64-bit Lite; pyenv 3.12 build is slower (~30–40 min); weaker cooling
+(heatsink + fan matters more); micro-USB power path is more under-voltage-prone (use 5.1 V/2.5 A);
+RPi3 **B** Wi-Fi is 2.4 GHz-only. Expect ~1.5–2× slower than RPi4.
+
+**BeagleBone Black (stretch, expect friction):**
+- **32-bit** (ARMv7) → *cannot* run 64-bit Bookworm. Flash the **BeagleBoard.org Debian 12** armhf image.
+- **BLS may not build:** `blspy` has no armhf wheel and building it (cmake + gmp + relic) on a
+  single-core A8 / 512 MB RAM is slow-to-infeasible. Plan for **Ed25519 + ECDSA + encoders only** on
+  BBB; skip BLS there (note it in the writeup).
+- **No `vcgencmd`** → no `get_throttled`/`measure_temp`. But the A8 @ 1 GHz draws ~1–2 W and runs
+  cool, so throttling is a non-issue; read temp (if exposed) via `/sys/class/thermal/thermal_zone*`.
+- **No built-in Wi-Fi** → skip the 2-node link on BBB (or add a USB dongle). Use BBB only for
+  CPU-timing (and, if wired, energy) points on a single-core in-order core.
+
+---
+## 10. Pre-flight checklist (per board, before recording anything)
+- [ ] Quality 5.1 V+ supply; `vcgencmd get_throttled` = `0x0` at idle and after a warmup loop.
+- [ ] Heatsink + fan on; idle temp < 55 °C.
+- [ ] `hw/provision.sh` run → governor = **performance** (verified), Wi-Fi power-save off, NTP on.
+- [ ] Python 3.12 via pyenv; `make setup`; `make test` green on-device.
+- [ ] `hw/run_micro.sh --check` OK; timings inside the 5–15× band; no `.THROTTLED` file.
+- [ ] INA219 calibrated (|offset| < 2 %); logged from the **meter-host**, not the DUT.
+- [ ] Device metadata (`lscpu`, temp, governor) captured to `results/hw/meta/`.
+- [ ] Every energy CSV carries meter model + calibration offset + temp min/max + throttle flags.
