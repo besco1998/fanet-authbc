@@ -37,6 +37,25 @@ RPi3/BBB only add generalization breadth.
 Lite = no desktop (a desktop adds idle-power noise and background CPU). 64-bit: RPi4 and RPi3 B/B+
 are all ARMv8.
 
+#### ⚠️ Imager shows "Trixie" (newest) and "Bookworm (legacy)" — use **Bookworm**
+"Legacy" in Imager means *previous stable*, **not** unsupported: Bookworm is Debian 12, security-
+supported well past this thesis's timeline. Choose it because:
+1. **Interpreter must stay constant.** The x86 baseline was measured on **Python 3.12.3** (see the
+   `# python=` header in every frozen CSV). Trixie (Debian 13) ships a newer Python. If the Pi runs a
+   different interpreter, the x86↔ARM timing ratio confounds *platform* with *Python version* — and
+   the P7 protocol is explicit that "only the platform changes". We therefore pin **Python 3.12 via
+   pyenv on either OS** (§4); Bookworm simply makes that the obvious path.
+2. **Toolchain risk.** `blspy` is the fragile dependency (no guaranteed wheels for the newest CPython;
+   source builds need cmake+gmp). Building it for 3.12 is the known-good path; a newer interpreter
+   invites a packaging fight instead of measurements.
+3. **These scripts are written and reasoned against Bookworm** (`provision.sh`, package names,
+   `/boot/firmware` paths).
+
+*If you prefer Trixie anyway:* it will most likely work, but still install **pyenv 3.12** (do **not**
+use the system Python), and re-verify `provision.sh`'s governor/`raspi-config` steps — they are
+untested there. Whichever you pick, **record it** in `results/hw/meta/` (provision.sh does this
+automatically) so the thesis states the exact platform.
+
 1. Install **Raspberry Pi Imager** on your laptop.
 2. Choose device → OS: *Raspberry Pi OS (other)* → **Raspberry Pi OS Lite (64-bit)**.
 3. **⚙ / Ctrl-Shift-X (advanced options)** before writing — set:
@@ -142,9 +161,10 @@ Goal: measure whole-board power so `energy/op = (P_loop − P_idle)·t_loop/n_op
 ### 6.3 Enable I²C + a driver on the meter-host
 ```bash
 sudo raspi-config nonint do_i2c 0        # enable I2C (or dtparam=i2c_arm=on in /boot/firmware/config.txt)
-sudo apt-get install -y i2c-tools python3-pip
-i2cdetect -y 1                            # expect a device at 0x40
-pip install pi-ina219                     # or adafruit-circuitpython-ina219
+sudo apt-get install -y i2c-tools python3-smbus
+i2cdetect -y 1                            # expect a device at 0x40 (and 0x41 with 2 sensors)
+.venv/bin/pip install pi-ina219           # into the repo venv: PEP 668 blocks system pip on
+                                          # Bookworm AND Trixie (see hw/INA219_wiring.md §6)
 ```
 
 ### 6.4 Calibrate against a known load (before touching the Pi)

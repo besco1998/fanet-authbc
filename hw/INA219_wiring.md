@@ -92,10 +92,19 @@ seated. `UU` at 0x40 means a driver already claimed it (fine).
 ---
 ## 6. Install the driver + smoke test
 ```bash
-pip install pi-ina219                       # pure-smbus INA219 driver
-python3 hw/ina219_smoke.py --once           # one V / I / P reading
-python3 hw/ina219_smoke.py --watch          # live stream (Ctrl-C to stop)
+sudo apt-get install -y i2c-tools python3-smbus   # system I2C tooling
+.venv/bin/pip install pi-ina219                   # INTO THE REPO VENV -- see the PEP 668 note below
+.venv/bin/python hw/ina219_smoke.py --once        # one V / I / P reading
+.venv/bin/python hw/ina219_smoke.py --watch       # live stream (Ctrl-C to stop)
 ```
+
+> **⚠️ PEP 668 (Bookworm and Trixie both):** a bare `pip install` into the system Python fails with
+> `error: externally-managed-environment`. Install into the repo venv as above. If the driver cannot
+> reach the kernel I²C bindings from inside the venv, recreate it with
+> `python -m venv --system-site-packages .venv` (so it can see `python3-smbus`), or as a last resort
+> use `pip install --break-system-packages pi-ina219` — acceptable on a dedicated measurement box.
+> Your user must be in the `i2c` group (`sudo usermod -aG i2c $USER`, then log out/in) to open
+> `/dev/i2c-1` without sudo.
 Expected at idle (headless, no peripherals): **V ≈ 5.0–5.1 V, I ≈ 0.5–0.7 A, P ≈ 2.5–3.5 W.**
 
 ---

@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """INA219 bring-up / windowed power reader for the RPi4 energy rig (P7b; hw/INA219_wiring.md).
 
-Runs ONLY on the Pi with an INA219 wired per hw/INA219_wiring.md and `pip install pi-ina219`.
+Runs ONLY on the Pi with an INA219 wired per hw/INA219_wiring.md. Install the driver INTO THE REPO
+VENV (`.venv/bin/pip install pi-ina219`) -- a bare system `pip install` fails with PEP 668
+`externally-managed-environment` on both Bookworm and Trixie.
   --once            one V / I / P reading (smoke test / calibration check)
   --watch           live stream until Ctrl-C
   --window SECONDS  sample for N s and report mean/median/min/max power (idle or load window)
@@ -28,7 +30,8 @@ def _open_ina():
     try:
         from ina219 import INA219  # type: ignore[import-not-found]
     except ImportError:
-        sys.exit("pi-ina219 not installed — run:  pip install pi-ina219  (on the Pi)")
+        sys.exit("pi-ina219 not installed — run:  .venv/bin/pip install pi-ina219  (on the Pi; a "
+                 "bare system pip fails with PEP 668 externally-managed-environment)")
     ina = INA219(SHUNT_OHMS, MAX_AMPS, address=ADDRESS)
     ina.configure(ina.RANGE_16V, ina.GAIN_8_320MV, ina.ADC_12BIT, ina.ADC_12BIT)
     return ina
