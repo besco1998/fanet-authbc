@@ -173,6 +173,30 @@ def device_state() -> dict[str, str]:
     }
 
 
+def throttle_bits(raw: str) -> tuple[int, int]:
+    """(now, sticky) nibbles of `throttled=0x...`.
+
+    bits 0-3 = state NOW (under-volt / freq-capped / throttled / soft-temp-limit);
+    bits 16-19 = HAS OCCURRED since boot (sticky, cleared only by reboot).
+    """
+    try:
+        val = int(raw.split("=")[-1], 16)
+    except (ValueError, IndexError):
+        return 0, 0
+    return val & 0xF, (val >> 16) & 0xF
+
+
+def window_is_clean(before: str, after: str) -> bool:
+    """True unless throttling happened DURING this window.
+
+    A sticky bit already set before the window is history (the board throttled earlier in this
+    boot); it is reported separately. Testing `!= 0x0` would invalidate every run until reboot.
+    """
+    now_b, stk_b = throttle_bits(before)
+    now_a, stk_a = throttle_bits(after)
+    return now_b == 0 and now_a == 0 and stk_a == stk_b
+
+
 # ----------------------------------------------------------------------------- op set
 def build_ops(selected: str | None) -> dict[str, Callable[[], object]]:
     """name -> zero-arg callable returning a value that feeds the anti-DCE checksum."""
@@ -256,7 +280,7 @@ def timed_window(sync: SyncLine, label: str, fn, seconds: float, rep: int) -> di
         n_ops, checksum = run_window(fn, seconds)
     t1, t1_utc = time.perf_counter(), datetime.now(UTC).isoformat()
     after = device_state()
-    thr_ok = before["throttled"].endswith("0x0") and after["throttled"].endswith("0x0")
+    thr_ok = window_is_clean(before["throttled"], after["throttled"])
     row = {"op": label, "rep": rep, "kind": "idle" if fn is None else "load",
            "t_start_utc": t0_utc, "t_end_utc": t1_utc, "duration_s": round(t1 - t0, 6),
            "n_ops": n_ops, "checksum": checksum,

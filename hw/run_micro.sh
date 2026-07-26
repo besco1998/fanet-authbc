@@ -64,16 +64,32 @@ echo "== running P1 micro suite on $MODEL (seed=$SEED n=$N) =="
 "$PY" -m authbc.bench.micro --seed "$SEED" --n "$N"
 
 T_AFTER="$(temp)"; THR_AFTER="$(throt)"
-# THERMAL GUARD: get_throttled is a bitmask; anything other than 0x0 means throttling/undervolt.
+# THERMAL GUARD. get_throttled is a bitmask with TWO halves (raspberrypi.com docs):
+#   bits 0-3  = state NOW      : 0x1 under-volt, 0x2 freq-capped, 0x4 throttled, 0x8 soft-temp-limit
+#   bits 16-19 = HAS OCCURRED since boot (STICKY — only cleared by a reboot)
+# The old "!= 0x0" test conflated the two, so once a board had ever throttled EVERY later run was
+# flagged until reboot. The precise question is whether throttling happened during THIS run:
+#   invalid  <=> any NOW bit set at either sample, OR the sticky half CHANGED across the run.
+# A sticky bit that was already set before the run and did not change is history, not this run —
+# it still earns a loud warning (the board demonstrably throttles under load) but not an invalid tag.
+bits()   { [ "$1" = "NA" ] && echo 0 || echo $(( $1 )); }
+now_b=$(( $(bits "$THR_BEFORE") & 0xF ));     now_a=$(( $(bits "$THR_AFTER") & 0xF ))
+stk_b=$(( ($(bits "$THR_BEFORE") >> 16) & 0xF )); stk_a=$(( ($(bits "$THR_AFTER") >> 16) & 0xF ))
 FLAG=""
-case "$THR_BEFORE$THR_AFTER" in
-  *0x0*0x0*|NANA) : ;;                                   # clean (0x0 both) or off-Pi (NA)
-  *) if [ "$THR_BEFORE" != "0x0" ] || [ "$THR_AFTER" != "0x0" ]; then
-       FLAG=".THROTTLED"
-       echo "!! THERMAL/THROTTLE FLAG: get_throttled before=$THR_BEFORE after=$THR_AFTER" >&2
-       echo "!! this run is FLAGGED (filename tagged $FLAG) — do NOT use for the paper tables." >&2
-     fi ;;
-esac
+if [ "$now_b" -ne 0 ] || [ "$now_a" -ne 0 ] || [ "$stk_a" -ne "$stk_b" ]; then
+  FLAG=".THROTTLED"
+  echo "!! THROTTLED DURING THIS RUN: before=$THR_BEFORE after=$THR_AFTER ($T_BEFORE -> $T_AFTER)" >&2
+  [ $(( (stk_a | now_a) & 0x1 )) -ne 0 ] \
+    && echo "!!   UNDER-VOLTAGE -> power problem: use 5.15-5.2 V, check the shunt/cable." >&2
+  [ $(( (stk_a | now_a) & 0xE )) -ne 0 ] \
+    && echo "!!   THERMAL -> cooling problem: fit a heatsink + fan and re-run." >&2
+  echo "!! this run is FLAGGED (filename tagged $FLAG) — do NOT use for the paper tables." >&2
+elif [ "$stk_b" -ne 0 ]; then
+  echo "WARNING: sticky throttle bits were ALREADY set before this run (before=$THR_BEFORE)." >&2
+  echo "         No NEW throttling was recorded during the run, so the data is usable — but the" >&2
+  echo "         board throttles under load. REBOOT to clear the sticky bits and re-run for a" >&2
+  echo "         pristine baseline before recording paper numbers." >&2
+fi
 
 # --- harvest fresh CSVs to results/hw/ with real device-meta prepended, then restore x86 data --
 prepend_meta() {  # $1=src csv  $2=dest csv

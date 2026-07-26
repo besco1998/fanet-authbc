@@ -23,6 +23,18 @@ coverage.xml
 ns3/ns-3.41/
 ns3/ns-allinone-*/
 
+# SECRETS — never commit, not even to a private repo. A private key in git history is a
+# permanent credential leak (clones, forks, CI logs, future visibility changes all expose it).
+# Keep SSH keys in ~/.ssh on each machine; see hw/keys/README.md.
+hw/keys/*
+!hw/keys/README.md
+**/id_rsa
+**/id_ed25519
+**/id_ecdsa
+*.pem
+*.key
+*_key
+
 # OS / editor
 .DS_Store
 *.swp
