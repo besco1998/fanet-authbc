@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""INA219 bring-up / windowed power reader for the RPi4 energy rig (P7b; hw/INA219_wiring.md).
+"""INA219 bring-up / windowed power reader -- PATH B only (P7b; hw/INA219_wiring.md).
+
+PATH B = the Pi reads the sensor itself (bring-up / fallback). The FINAL thesis numbers use PATH A
+(hw/RIG.md): two INA219s read by an Arduino meter-host, so the benchmarked Pi spends zero CPU on
+logging. The paths are alternative WIRINGS -- the INA219's SDA/SCL go to the Arduino or to the Pi,
+never both -- so this script is unused once Path A is wired.
+
 
 Runs ONLY on the Pi with an INA219 wired per hw/INA219_wiring.md. Install the driver INTO THE REPO
 VENV (`.venv/bin/pip install pi-ina219`) -- a bare system `pip install` fails with PEP 668

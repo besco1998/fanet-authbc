@@ -133,32 +133,45 @@ Repeat §3–§5 on the second RPi4 and (bonus) the RPi3s.
 ## 6. INA219 energy rig (⚠️ D5)
 Goal: measure whole-board power so `energy/op = (P_loop − P_idle)·t_loop/n_ops` (hw/energy_protocol.md).
 
-### 6.1 Wire it (high-side, shunt inline with the DUT's 5 V)
-```
-  PSU 5V(+) ──► INA219 Vin+        (shunt)        INA219 Vin− ──► DUT 5V in
-  PSU GND  ─────────────────────── common GND ─────────────────► DUT GND
-  INA219  SDA / SCL / GND / Vcc ──► METER-HOST (2nd Pi or laptop)   ← logging lives here, NOT the DUT
-```
-- **Feed the DUT through the shunt** one of two ways:
-  - *cut USB cable:* open a USB-A→C (RPi4) / →micro (RPi3) cable, route the **red 5 V** wire through
-    the INA219 shunt (PSU side → Vin+, Pi side → Vin−); leave GND/data intact. Simplest, keeps the
-    Pi's input fuse.
-  - *GPIO 5 V feed:* power the Pi from a bench supply into **GPIO pin 2 (5 V)** and **pin 6 (GND)**
-    via the shunt. Bypasses the Pi's USB input fuse — fine for a controlled bench measurement, but
-    use a clean current-limited supply.
-- **I²C to the meter-host** (Pi pins: SDA = pin 3, SCL = pin 5, GND = pin 6, logic Vcc = 3.3 V pin 1).
-  Reading the INA219 from a **separate** host keeps the DUT's CPU doing only the benchmark.
-- INA219 default I²C address **0x40**.
+### 6.1 Two MUTUALLY EXCLUSIVE wirings — pick one
+The INA219's **SDA/SCL physically go to exactly one host**, so these are alternative wirings, not
+complementary steps. The shunt side is identical in both; only the I²C destination differs.
+
+| | **Path A — Arduino meter-host (RECOMMENDED, final numbers)** | **Path B — Pi self-logging (bring-up / fallback)** |
+|---|---|---|
+| I²C goes to | the **Arduino** | the **DUT Pi** (SDA pin 3, SCL pin 5) |
+| reader | `hw/arduino/ina219_logger/` sketch → CSV over USB serial | `hw/ina219_smoke.py` on the Pi |
+| Python's role | **not** reading the sensor — it drives the benchmark + raises the GPIO sync line on the Pi, and parses the Arduino's serial stream on the host | reads the sensor directly |
+| contamination | **zero** (DUT runs only the benchmark) | small; use `taskset -c 0` sampler vs `-c 1-3` benchmark, and it largely cancels in `P_loop − P_idle` |
+| both Pis free for the 2-node link test | **yes** | yes (each Pi logs its own sensor) |
+| sync | GPIO17 → Arduino D2 tags the window | automatic (same machine) |
+
+**Use Path A for the numbers that go in the thesis** — the full topology, 0x40/0x41 addressing,
+star-grounding rule and bring-up order are in **`hw/RIG.md`**. Path B exists so you can sanity-check a
+sensor before the Arduino is wired, and as a fallback if the Arduino path stalls.
+
+**Feed the DUT through the shunt** (same for both paths), one of two ways:
+- *cut USB cable:* open a USB-A→C (RPi4) / →micro (RPi3) cable, route the **red 5 V** wire through the
+  INA219 shunt (PSU side → Vin+, Pi side → Vin−); leave GND/data intact. Keeps the Pi's input fuse.
+- *GPIO 5 V feed:* bench supply into **GPIO pin 2 (5 V)** and **pin 6 (GND)** via the shunt. Bypasses
+  the Pi's input protection — use a clean current-limited supply and double-check polarity.
 
 ### 6.2 ⚠️ Three caveats (from the D5 assessment)
 1. **Shunt burden voltage.** 0.1 Ω × 1.4 A ≈ 0.14 V drop (≈ 0.2 V at 2 A peaks). RPi4 throttles if
-   its rail sags below ~4.7 V. **Mitigate:** feed **5.1–5.25 V**, keep peripherals off the DUT, and
+   its rail sags below ~4.7 V. **Mitigate:** feed **5.15–5.2 V**, keep peripherals off the DUT, and
    **watch `get_throttled`** every run — non-zero invalidates it. (Lower-shunt boards trade burden
    for resolution; an INA260 with a 2 mΩ integrated shunt removes this entirely if you hit trouble.)
-2. **Don't let the logger load the DUT** — read the INA219 from the meter-host (above), not the DUT.
+2. **Don't let the logger load the DUT** — Path A removes this by construction; Path B minimizes it
+   with `taskset` core-pinning.
 3. **Calibrate first** (§6.4).
 
-### 6.3 Enable I²C + a driver on the meter-host
+### 6.3 Host software
+**Path A (Arduino):** install the *Adafruit INA219* library via Library Manager, flash
+`hw/arduino/ina219_logger/ina219_logger.ino`, read the serial port at 115200 baud. Nothing is
+installed on the Pi for sensing; the Pi only needs `gpiod` for the sync line (`sudo apt-get install -y
+gpiod`). See `hw/RIG.md` §5–§6.
+
+**Path B (Pi) only:**
 ```bash
 sudo raspi-config nonint do_i2c 0        # enable I2C (or dtparam=i2c_arm=on in /boot/firmware/config.txt)
 sudo apt-get install -y i2c-tools python3-smbus

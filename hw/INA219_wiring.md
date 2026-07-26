@@ -1,8 +1,15 @@
 # INA219 ↔ Raspberry Pi 4 Model B — wiring & bring-up (P7b energy rig)
 
+> **⚠️ This document is PATH B — the Pi reads the sensor directly (bring-up / fallback).**
+> For the **final thesis numbers** use **Path A** in **`hw/RIG.md`**: two INA219s read by an
+> **Arduino** meter-host, which contaminates the DUT with zero logging CPU and instruments both link
+> nodes at once. The two are **alternative wirings** — the INA219's SDA/SCL go to the Arduino *or* to
+> the Pi, never both. Everything below (shunt side, supply/burden, calibration, safety) applies to
+> **both** paths; only the I²C destination and the reader software differ.
+
 Step-by-step to connect your INA219 breakout, read whole-board RPi4 power over I²C, calibrate it, and
 validate the rig before any real measurement. Companion to `hw/energy_protocol.md` (the protocol) and
-`hw/ina219_smoke.py` (the bring-up reader). Read the safety box first.
+`hw/ina219_smoke.py` (the Path-B reader). Read the safety box first.
 
 > ## ⚠️ SAFETY — read before wiring
 > - **Polarity is unforgiving.** You will feed 5 V into the RPi4's **GPIO 5 V pin**, which is *after*
