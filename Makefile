@@ -10,7 +10,7 @@ VENV   := .venv
 BIN    := $(VENV)/bin
 
 .DEFAULT_GOAL := help
-.PHONY: help setup lint test verify-frozen all \
+.PHONY: help setup lint test verify-frozen all hw-capture hw-reduce \
         bench-micro bench-macro exp-e1 exp-e2 exp-e3 exp-e4 exp-e5 \
         sim-ns3 export-framesizes figures
 
@@ -70,5 +70,11 @@ sim-ns3:  ## [P6] build authbc-sat + 2-node both-modes smoke -> results/raw/ns3_
 	PY=$(BIN)/python bash ns3/sim_ns3.sh
 export-framesizes:  ## P3 SYNC-3: placement×encoding×b frame sizes -> results/raw/framesizes.csv
 	$(BIN)/python -m authbc.bench.framesizes
+hw-capture:  ## P7b (this host): capture the Arduino INA219 stream -> results/hw/energy/samples-*.csv
+	$(BIN)/python hw/ina219_capture.py --port $${PORT:-/dev/ttyACM0}
+
+hw-reduce:  ## P7b (this host): reduce MANIFEST=… SAMPLES=… -> energy/op + CI
+	$(BIN)/python hw/ina219_capture.py --reduce "$(MANIFEST)" "$(SAMPLES)"
+
 figures:  ## regenerate E1-E3 figures from frozen results/raw -> results/figures/
 	$(BIN)/python analysis/figures_e123.py

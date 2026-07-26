@@ -72,13 +72,19 @@ the paper's discussion, but the model field is the receive value.)
   encoder reused across the stream — a fresh-per-record encoder emits all keyframes, the Law-6
   pitfall from the P1 audit).
 
-## Tight-loop driver (P7b implements as `hw/energy_loop.py`; spec here)
-Reuse the P1 harness rules verbatim (docs/06 §3): `time.perf_counter_ns`, `gc.disable()` around the
-loop, ≥1000 warmup iters, accumulate a **checksum** of outputs and assert it (defeats dead-code
-elimination), fixed 200 B seeded input. Difference from P1: run each op **for a wall-clock window**
-(60 s) rather than a fixed iteration count, emitting `n_ops` and `t_loop` so it aligns with the meter
-window. Driver reuses `authbc.crypto.registry` / `authbc.encodings.registry` — the same code paths
-`hw/run_micro.sh` times, so `t_op` is consistent across the timing and energy runs.
+## Tight-loop driver — **implemented** as `hw/energy_loop.py`
+Reuses the P1 harness rules verbatim (docs/06 §3): `time.perf_counter_ns`, `gc.disable()` around the
+loop, ≥1000 warmup iters, an accumulated **checksum** of outputs (defeats dead-code elimination),
+fixed 200 B seeded input. Difference from P1: each op runs **for a wall-clock window** (60 s) rather
+than a fixed iteration count, emitting `n_ops` and `t_loop` so it aligns with the meter window. It
+reuses `authbc.crypto.registry` / `authbc.encodings.registry` — the same code paths `hw/run_micro.sh`
+times, so `t_op` is consistent across the timing and energy runs.
+
+It also **drives the GPIO17 sync line in-process** around every window (libgpiod v2 → v1 → sysfs, with
+release guaranteed by `finally` + `atexit` + SIGINT/SIGTERM), and writes a manifest JSON that
+`hw/ina219_capture.py --reduce` merges with the Arduino sample stream. See `hw/RIG.md` §7 for the run
+order. Throttled windows are excluded and reported; a window/segment mismatch aborts the reduction
+rather than guessing an alignment.
 
 ## Thermal guard (binding)
 `get_throttled` is a bitmask; **any value other than `0x0` invalidates the run** (undervolt or

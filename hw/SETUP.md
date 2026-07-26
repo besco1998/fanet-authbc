@@ -133,24 +133,23 @@ Repeat §3–§5 on the second RPi4 and (bonus) the RPi3s.
 ## 6. INA219 energy rig (⚠️ D5)
 Goal: measure whole-board power so `energy/op = (P_loop − P_idle)·t_loop/n_ops` (hw/energy_protocol.md).
 
-### 6.1 Two MUTUALLY EXCLUSIVE wirings — pick one
-The INA219's **SDA/SCL physically go to exactly one host**, so these are alternative wirings, not
-complementary steps. The shunt side is identical in both; only the I²C destination differs.
+### 6.1 ✅ DECIDED: Path A — Arduino meter-host
+**`hw/RIG.md` is the authoritative rig document.** Two INA219s (0x40 / 0x41) are read by an
+**Arduino**, so the benchmarked Pi spends **zero CPU** on logging and both link nodes are measured on
+one timebase. Three programs:
 
-| | **Path A — Arduino meter-host (RECOMMENDED, final numbers)** | **Path B — Pi self-logging (bring-up / fallback)** |
+| where | program | job |
 |---|---|---|
-| I²C goes to | the **Arduino** | the **DUT Pi** (SDA pin 3, SCL pin 5) |
-| reader | `hw/arduino/ina219_logger/` sketch → CSV over USB serial | `hw/ina219_smoke.py` on the Pi |
-| Python's role | **not** reading the sensor — it drives the benchmark + raises the GPIO sync line on the Pi, and parses the Arduino's serial stream on the host | reads the sensor directly |
-| contamination | **zero** (DUT runs only the benchmark) | small; use `taskset -c 0` sampler vs `-c 1-3` benchmark, and it largely cancels in `P_loop − P_idle` |
-| both Pis free for the 2-node link test | **yes** | yes (each Pi logs its own sensor) |
-| sync | GPIO17 → Arduino D2 tags the window | automatic (same machine) |
+| Arduino | `hw/arduino/ina219_logger/` | sample both sensors at 50 Hz, tag each with the sync line, stream CSV |
+| DUT Pi | `hw/energy_loop.py` | run each op in a timed window, **drive GPIO17 in-process**, emit a manifest |
+| this WSL2 box | `hw/ina219_capture.py` | capture the stream; `--reduce` → energy/op + CI |
 
-**Use Path A for the numbers that go in the thesis** — the full topology, 0x40/0x41 addressing,
-star-grounding rule and bring-up order are in **`hw/RIG.md`**. Path B exists so you can sanity-check a
-sensor before the Arduino is wired, and as a fallback if the Arduino path stalls.
+The INA219's SDA/SCL go to the **Arduino**, so nothing is installed on the Pi for sensing (only
+`gpiod` for the sync line). `hw/INA219_wiring.md` documents the older **Path B** (Pi reads its own
+sensor via `hw/ina219_smoke.py`) — kept **only** as a bring-up fallback; the two are alternative
+wirings, never both at once.
 
-**Feed the DUT through the shunt** (same for both paths), one of two ways:
+**Feed the DUT through the shunt** (identical in both paths), one of two ways:
 - *cut USB cable:* open a USB-A→C (RPi4) / →micro (RPi3) cable, route the **red 5 V** wire through the
   INA219 shunt (PSU side → Vin+, Pi side → Vin−); leave GND/data intact. Keeps the Pi's input fuse.
 - *GPIO 5 V feed:* bench supply into **GPIO pin 2 (5 V)** and **pin 6 (GND)** via the shunt. Bypasses
@@ -188,17 +187,31 @@ i2cdetect -y 1                            # expect a device at 0x40 (and 0x41 wi
    `Current_LSB = Max_Expected_A / 2^15`, `Cal = trunc(0.04096 / (Current_LSB × R_shunt))`.
 
 ### 6.5 Run the energy protocol
-The P7b tight-loop driver (`hw/energy_loop.py`, written at P7b start per hw/energy_protocol.md) runs
-each op continuously for a wall-clock window using the **P1 timing rules** (perf_counter_ns, GC off,
-warmup, checksum, fixed 200 B seeded input). Per op:
-1. **idle 60 s** on the meter-host → `P_idle` = mean.
-2. run the op in a **60 s** loop, count `n_ops`, sample power → `P_loop` = mean.
-3. `energy/op = (P_loop − P_idle)·t_loop / n_ops`; **≥ 5 reps** → median + bootstrap CI.
-4. Derive `p_cpu_w = median(P_loop − P_idle)`; get `p_radio_w` from a saturated receive/decode loop (§7).
-Op set: sign/verify per scheme; BLS aggregate/agg_verify(b∈{2,4,8,16,32}); encode per encoding
-(delta = one **stateful** encoder — the keyframe pitfall). **Thermal guard:** log temp every 5 s and
-`get_throttled` before/after every window; discard/flag any `≠ 0x0`. Write to
-`results/hw/energy/<host>-<UTCstamp>.csv` with meter model, calibration offset, temp min/max, throttle.
+`hw/energy_loop.py` implements the protocol and is **already written** — it runs each op for a
+wall-clock window under the **P1 timing rules** (perf_counter_ns, GC off, ≥1000 warmup, checksum,
+fixed 200 B seeded input) and **drives GPIO17 itself** around every window, so there is nothing to
+time by hand. Per op it alternates a 60 s **idle** and a 60 s **load** window, ≥5 reps, and records
+temp/`get_throttled` before and after each window.
+
+```bash
+# 1) HERE (WSL2) — start the capture FIRST and leave it running (see hw/RIG.md §6 for usbipd):
+./hw/ina219_capture.py --port /dev/ttyACM0
+
+# 2) ON THE DUT PI:
+sudo apt-get install -y gpiod        # sync-line access (nothing else is needed for sensing)
+./hw/energy_loop.py --quick          # 5 s x2 reps: proves sync + sensors end-to-end
+./hw/energy_loop.py                  # full campaign
+
+# 3) HERE — Ctrl-C the capture, then reduce:
+./hw/ina219_capture.py --reduce results/hw/energy/manifest-*.json \
+                                results/hw/energy/samples-*.csv
+```
+Reduction yields `energy/op = (P_loop − P_idle)·t_loop/n_ops`, median + bootstrap CI over reps, and
+`ΔP` → `p_cpu_w`. Get `p_radio_w` from the saturated receive loop of §7 (channel 2 = the RX Pi:
+`--channel 2`). Op set: sign/verify per scheme; BLS aggregate/agg_verify(b∈{2,4,8,16,32}); encode per
+encoding (delta uses one **stateful** encoder — the keyframe pitfall). **Throttled windows are
+excluded and reported**, never averaged in; a window/segment mismatch **stops** the reduction rather
+than guessing an alignment.
 
 **Cross-check (Law 6):** `energy/op ≈ p_cpu_w · t_op` (t_op from §5). A > 10 % gap = STOP, reconcile.
 
