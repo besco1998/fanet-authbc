@@ -134,13 +134,25 @@ def _read_samples(path: Path) -> list[dict[str, str]]:
     """
     body = [ln for ln in path.read_text().splitlines() if not ln.startswith("#")]
     rows = list(csv.DictReader(io.StringIO("\n".join(body))))
+    # A RESTART is a jump back to near zero (the Arduino's millis() begins again). Small backward
+    # blips of a few tens of ms are out-of-order/duplicated serial lines, NOT restarts — treating
+    # them as such once discarded an entire 150 s capture, so require the clock to land near zero.
+    RESTART_MS = 5000
     start = 0
     for i in range(1, len(rows)):
-        if int(rows[i]["ms"]) < int(rows[i - 1]["ms"]):
+        if int(rows[i]["ms"]) < int(rows[i - 1]["ms"]) and int(rows[i]["ms"]) < RESTART_MS:
             start = i                                   # stream restarted here
     if start:
         print(f"  (discarded {start} stale pre-reset sample(s) — Arduino resets on port open)")
-    return rows[start:]
+    kept, last = [], -1
+    for r in rows[start:]:                              # drop out-of-order serial stragglers
+        v = int(r["ms"])
+        if v >= last:
+            kept.append(r)
+            last = v
+    if len(kept) != len(rows) - start:
+        print(f"  (dropped {len(rows) - start - len(kept)} out-of-order sample(s))")
+    return kept
 
 
 # Samples dropped from the START of every window. The CPU takes a moment to reach steady state after
