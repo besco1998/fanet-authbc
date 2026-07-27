@@ -16,6 +16,7 @@
 
 #include "ns3/applications-module.h"
 #include "ns3/core-module.h"
+#include <cmath>
 #include "ns3/mobility-module.h"
 #include "ns3/network-module.h"
 #include "ns3/packet-socket-address.h"
@@ -76,6 +77,9 @@ main(int argc, char* argv[])
     std::string offeredRate = "12Mbps"; // per-node offered load >> capacity => saturation
     bool capture = false;               // install a SimpleFrameCaptureModel (restart capture)
     bool equalPower = false;            // identical path loss on EVERY link (Bianchi assumption)
+    bool realistic = false;             // FANET deployment scenario (Friis + 3D cluster + fading)
+    double clusterM = 150.0;            // realistic-mode cluster radius, metres
+    double nakagamiM = 0.0;             // >0 installs Nakagami fading with this m parameter
     double powerSpreadDb = 0.0;         // per-node tx-power spread so capture can act on collisions
 
     CommandLine cmd(__FILE__);
@@ -88,6 +92,9 @@ main(int argc, char* argv[])
     cmd.AddValue("offeredRate", "per-node offered load", offeredRate);
     cmd.AddValue("capture", "install SimpleFrameCaptureModel", capture);
     cmd.AddValue("equalPower", "constant path loss on every link (no near-far, no capture)", equalPower);
+    cmd.AddValue("realistic", "FANET deployment scenario: Friis free-space + 3D cluster", realistic);
+    cmd.AddValue("clusterM", "realistic-mode cluster radius in metres", clusterM);
+    cmd.AddValue("nakagamiM", "realistic-mode Nakagami fading m (0 = none)", nakagamiM);
     cmd.AddValue("powerSpreadDb", "per-node tx power spread (dB, uniform)", powerSpreadDb);
     cmd.Parse(argc, argv);
 
@@ -105,7 +112,25 @@ main(int argc, char* argv[])
     // i.e. all stations are electrically equidistant, capture is impossible, and the model is
     // tested on its own assumptions.
     YansWifiChannelHelper channel;
-    if (equalPower)
+    if (realistic)
+    {
+        // DEPLOYMENT scenario. Air-to-air UAV links are line-of-sight, so free-space (Friis,
+        // exponent 2) is the right model -- NOT the log-distance n=3 default, which describes
+        // cluttered indoor/urban propagation and, with d0=1 m, even returns negative loss (gain)
+        // for the sub-metre spacings used by the validation scenario. Optional Nakagami fading
+        // models multipath/airframe shadowing (m=3 ~ strong LoS, m=1 ~ Rayleigh).
+        channel.SetPropagationDelay("ns3::ConstantSpeedPropagationDelayModel");
+        channel.AddPropagationLoss("ns3::FriisPropagationLossModel",
+                                   "Frequency", DoubleValue(5.18e9));
+        if (nakagamiM > 0.0)
+        {
+            channel.AddPropagationLoss("ns3::NakagamiPropagationLossModel",
+                                       "m0", DoubleValue(nakagamiM),
+                                       "m1", DoubleValue(nakagamiM),
+                                       "m2", DoubleValue(nakagamiM));
+        }
+    }
+    else if (equalPower)
     {
         // Build from scratch: Default() would already have installed a log-distance model
         // and AddPropagationLoss CHAINS models (losses add), so we must not call it here.
@@ -153,9 +178,25 @@ main(int argc, char* argv[])
     // ONE collision domain: co-locate all nodes in a ~0.5 m cluster (1 cm spacing).
     MobilityHelper mobility;
     Ptr<ListPositionAllocator> posAlloc = CreateObject<ListPositionAllocator>();
-    for (uint32_t i = 0; i < nNodes; ++i)
+    if (realistic)
     {
-        posAlloc->Add(Vector(i * 0.01, 0.0, 0.0));
+        // A 3D UAV cluster: nodes on a spiral within clusterM radius at 50-120 m altitude, so
+        // every pair is separated by tens of metres (link budget stays above 6 Mb/s sensitivity
+        // out to ~300 m) and altitudes differ, as in a real formation.
+        for (uint32_t i = 0; i < nNodes; ++i)
+        {
+            double frac = (nNodes > 1) ? double(i) / double(nNodes - 1) : 0.0;
+            double ang = 2.0 * M_PI * 2.5 * frac;          // 2.5 turns
+            double r = clusterM * std::sqrt(frac);         // area-uniform in the disc
+            posAlloc->Add(Vector(r * std::cos(ang), r * std::sin(ang), 50.0 + 70.0 * frac));
+        }
+    }
+    else
+    {
+        for (uint32_t i = 0; i < nNodes; ++i)
+        {
+            posAlloc->Add(Vector(i * 0.01, 0.0, 0.0));
+        }
     }
     mobility.SetPositionAllocator(posAlloc);
     mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel");
