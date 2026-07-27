@@ -72,25 +72,36 @@ def capture(port: str, out: Path, limit: float | None) -> None:
     started = datetime.now(UTC)
     stamp = started.strftime("%Y%m%dT%H%M%SZ")
     n = 0
-    banner: list[str] = []
+    dropped = 0
     print(f"capturing {port} -> {out}   (Ctrl-C to stop)")
     with out.open("w", newline="") as fh:
         for key, val in (("schema", "authbc.energy.samples/1"), ("capture_host", platform.node()),
                          ("platform", platform.platform()), ("port", port), ("baud", BAUD),
                          ("capture_start_utc", stamp)):
             fh.write(f"# {key}={val}\n")
+        # Write the canonical header OURSELVES. Attaching to an already-running sketch means the
+        # first line is usually a fragment and the sketch's own header may never arrive, so the file
+        # must be self-describing regardless of when capture started.
+        fh.write(",".join(SAMPLE_COLS) + "\n")
         fh.flush()
         try:
             for line in _serial_lines(port):
                 if not line:
                     continue
                 if line.startswith("#"):                      # sketch banner -> provenance
-                    banner.append(line)
                     fh.write(f"{line}\n")
                     print(f"  {line}")
                     continue
-                if line.startswith("ms,"):                    # sketch header row
-                    fh.write(f"{line}\n")
+                if line.startswith("ms,"):                    # sketch header: ours already written
+                    continue
+                parts = line.split(",")
+                if len(parts) != len(SAMPLE_COLS):            # fragment or noise
+                    dropped += 1
+                    continue
+                try:
+                    [float(x) for x in parts]
+                except ValueError:
+                    dropped += 1
                     continue
                 fh.write(f"{line}\n")
                 n += 1
@@ -104,15 +115,32 @@ def capture(port: str, out: Path, limit: float | None) -> None:
             print("\n  stopped by user")
         finally:
             fh.flush()
-    print(f"\nwrote {out}  ({n} samples)")
+    print(f"\nwrote {out}  ({n} samples, {dropped} malformed line(s) dropped)")
     if n == 0:
         print("!! no samples — check the port, the sketch, and (on WSL2) usbipd attach")
+    if dropped > 5:
+        print(f"!! {dropped} dropped lines is more than the 1-2 expected from a mid-stream attach "
+              "— check the baud rate and cabling")
 
 
 # ----------------------------------------------------------------------------- reduce
 def _read_samples(path: Path) -> list[dict[str, str]]:
+    """Parse the samples file, keeping only the FINAL monotonic run of `ms`.
+
+    Opening the serial port toggles DTR and RESETS the Arduino, so a capture typically begins with a
+    few stale samples buffered from before the reset, after which `ms` restarts at ~0. Any backward
+    jump in `ms` therefore marks a stream restart; everything before the last one is stale and must
+    be discarded or it would corrupt the window segmentation.
+    """
     body = [ln for ln in path.read_text().splitlines() if not ln.startswith("#")]
-    return list(csv.DictReader(io.StringIO("\n".join(body))))
+    rows = list(csv.DictReader(io.StringIO("\n".join(body))))
+    start = 0
+    for i in range(1, len(rows)):
+        if int(rows[i]["ms"]) < int(rows[i - 1]["ms"]):
+            start = i                                   # stream restarted here
+    if start:
+        print(f"  (discarded {start} stale pre-reset sample(s) — Arduino resets on port open)")
+    return rows[start:]
 
 
 def _segments(rows: list[dict[str, str]], channel: int) -> list[list[float]]:
