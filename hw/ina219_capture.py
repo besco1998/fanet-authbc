@@ -143,8 +143,14 @@ def _read_samples(path: Path) -> list[dict[str, str]]:
     return rows[start:]
 
 
+# Samples dropped from the START of every window. The CPU takes a moment to reach steady state after
+# the load starts (and to settle after it stops), so the leading samples straddle the transition and
+# would bias both the idle and the load mean. 5 samples @50 Hz = 100 ms, <0.2 % of a 60 s window.
+EDGE_TRIM = 5
+
+
 def _segments(rows: list[dict[str, str]], channel: int) -> list[list[float]]:
-    """Contiguous runs of window==1, each as the list of that channel's power samples."""
+    """Contiguous runs of window==1, each as that channel's power samples (leading edge trimmed)."""
     col = f"P{channel}_W"
     out: list[list[float]] = []
     cur: list[float] = []
@@ -152,10 +158,10 @@ def _segments(rows: list[dict[str, str]], channel: int) -> list[list[float]]:
         if r.get("window") == "1":
             cur.append(float(r[col]))
         elif cur:
-            out.append(cur)
+            out.append(cur[EDGE_TRIM:] or cur)
             cur = []
     if cur:
-        out.append(cur)
+        out.append(cur[EDGE_TRIM:] or cur)
     return out
 
 

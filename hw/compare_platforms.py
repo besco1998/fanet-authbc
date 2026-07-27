@@ -31,6 +31,16 @@ HW = REPO / "results" / "hw"
 
 RATIO_LO, RATIO_HI = 5.0, 15.0     # docs/04 §1 anchor: RPi4 is ~5-15x slower than x86
 
+# Clock speeds for CYCLE normalisation. A wall-clock ratio conflates two effects: the clock
+# frequency difference and the per-cycle instruction efficiency; only the latter says anything
+# about the code. The clock ratio is a hard FLOOR: nothing can be slower by less, so the 5-15x
+# anchor is unreachable for any primitive equally optimised on both platforms (measured: Ed25519
+# needs ~1.05-1.16x the cycles on ARM, so its wall ratio is ~the clock ratio and lands below 5x).
+# f_x86 is the i5-14400F max turbo; the true sustained frequency during the x86 run is unknown under
+# WSL2, so cycle counts are APPROXIMATE and only their ordering/magnitude should be relied on.
+F_X86_HZ = 4.7e9
+F_ARM_HZ = 1.8e9
+
 
 def read_csv(path: Path) -> tuple[dict[str, str], list[dict[str, str]]]:
     meta: dict[str, str] = {}
@@ -88,14 +98,19 @@ def compare_crypto(arm_path: Path) -> None:
     print(f"\n== timings: {ameta.get('device_model', 'ARM')} vs {xmeta.get('cpu', 'x86')} ==")
     print(f"   governor={ameta.get('device_governor')} "
           f"temp {ameta.get('device_temp_before')} -> {ameta.get('device_temp_after')}")
-    print(f"\n{'op':<24}{'x86 (us)':>12}{'ARM (us)':>12}{'ratio':>9}   band {RATIO_LO}-{RATIO_HI}x")
+    clock_ratio = F_X86_HZ / F_ARM_HZ
+    print(f"   clock floor = {clock_ratio:.2f}x  (x86 {F_X86_HZ / 1e9:.1f} GHz / ARM "
+          f"{F_ARM_HZ / 1e9:.1f} GHz) — no wall ratio can fall below this")
+    print(f"\n{'op':<24}{'x86 (us)':>11}{'ARM (us)':>11}{'wall':>8}{'cyc ARM/x86':>13}  band")
     out_of_band = []
     for k in sorted(as_.keys() & xs.keys()):
         ratio = as_[k] / xs[k]
+        cyc = ratio / clock_ratio          # per-cycle efficiency: 1.0 = identical work per cycle
         mark = "ok" if RATIO_LO <= ratio <= RATIO_HI else "OUT"
         if mark == "OUT":
-            out_of_band.append((k, ratio))
-        print(f"{k:<24}{xs[k] / 1e3:>12.1f}{as_[k] / 1e3:>12.1f}{ratio:>8.2f}x   {mark}")
+            out_of_band.append((k, ratio, cyc))
+        print(f"{k:<24}{xs[k] / 1e3:>11.1f}{as_[k] / 1e3:>11.1f}"
+              f"{ratio:>7.2f}x{cyc:>12.2f}x  {mark}")
 
     print("\n== ordering gates (must hold on both platforms) ==")
     for scheme in ("ed25519", "ecdsa_p256", "bls"):
@@ -126,10 +141,18 @@ def compare_crypto(arm_path: Path) -> None:
               "  => order preserved; E5's ECDSA pick still holds on ARM.")
 
     if out_of_band:
-        print(f"\n!! {len(out_of_band)} op(s) outside the {RATIO_LO}-{RATIO_HI}x band:")
-        for k, r in out_of_band:
-            print(f"     {k:<24}{r:6.2f}x")
-        print("   Investigate BEFORE recording (governor? throttling? a different BLAS/asm path?)")
+        print(f"\n== {len(out_of_band)} op(s) outside the {RATIO_LO}-{RATIO_HI}x band ==")
+        for k, r, c in out_of_band:
+            print(f"     {k:<24}wall {r:5.2f}x   cycles {c:5.2f}x")
+        below = [x for x in out_of_band if x[1] < RATIO_LO]
+        if below and all(c < 2.2 for _, _, c in below):
+            print(f"   EXPLAINED, not a fault: these sit at ~{clock_ratio:.1f}x because ARM needs "
+                  "only ~1-2x the CYCLES,\n   i.e. the primitive is about as well optimised on ARM "
+                  "as on x86, so the wall ratio collapses\n   to the clock floor. The 5-15x anchor "
+                  "is unreachable for such primitives and should be\n   restated per-cycle (raise "
+                  "with Mohamed; do NOT silently widen the band).")
+        else:
+            print("   Investigate BEFORE recording (governor? throttling? thermal?).")
     else:
         print(f"\nAll ratios inside the {RATIO_LO}-{RATIO_HI}x band.")
 

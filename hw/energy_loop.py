@@ -47,6 +47,11 @@ sys.path.insert(0, str(REPO / "src"))
 DEFAULT_CHIP = "gpiochip0"   # RPi4 (BCM2711) main bank
 DEFAULT_LINE = 17            # BCM GPIO17 = header pin 11
 WARMUP = 1000
+# Guard gap held LOW between windows. Without it the gap is only the device_state() calls (~20 ms),
+# which at the meter's 50 Hz is a single sample — so adjacent windows merged into one segment and
+# the reducer could not tell them apart (observed: 12 windows -> 3 segments). 1.0 s guarantees ~50
+# low samples between windows, and lets power settle so neither window captures the other's edge.
+GAP_S = 1.0
 MSG_BYTES = 200              # same fixed message as P1 (docs/04 §1)
 AGG_BATCHES = (2, 4, 8, 16, 32)
 
@@ -274,6 +279,7 @@ def run_window(fn: Callable[[], object] | None, seconds: float) -> tuple[int, in
 
 
 def timed_window(sync: SyncLine, label: str, fn, seconds: float, rep: int) -> dict:
+    time.sleep(GAP_S)                       # line LOW: separates this window from the previous one
     before = device_state()
     t0_utc, t0 = datetime.now(UTC).isoformat(), time.perf_counter()
     with sync.window():
