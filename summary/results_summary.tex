@@ -132,6 +132,25 @@ microarchitectural mechanism is \textbf{not} established.
 \textbf{Consequence:} on the real deployment platform the optimum selects \textbf{Ed25519} (the D2
 architectural default). Both are 64\,B, so the 96.4\,\% headline is \textbf{unchanged}.
 
+\subsection{Measured per-op energy (RPi4, 60\,s windows, 5 reps)}
+\begin{center}\begin{tabular}{lrrr}
+\toprule op & energy/op (\textmu J) & 95\,\% CI & $\Delta P$ (W) \\ \midrule
+ed25519 sign & \textbf{70.62} & 70.11--71.24 & 0.771 \\
+ed25519 verify & \textbf{186.84} & 184.37--188.38 & 0.712 \\
+ecdsa sign & 87.29 & 86.73--88.69 & 0.630 \\
+ecdsa verify & 203.51 & 201.77--206.80 & 0.617 \\
+bls sign & 1464.61 & 1442.80--1489.06 & 0.514 \\
+bls verify & 5121.91 & 5068.33--5205.19 & 0.520 \\
+delta encode & 36.19 & 35.89--36.60 & 0.726 \\
+cbor encode & 40.11 & 39.65--40.58 & 0.753 \\ \bottomrule
+\end{tabular}\end{center}
+\textbf{Ed25519 is cheaper than ECDSA in energy as well as time on ARM} (70.6 vs 87.3\,\textmu J
+sign; 186.8 vs 203.5 verify), consistent with the timing flip. Independent cross-check against
+$\Delta P \times t_{op}$ (micro suite) agrees within 1--4.4\,\% for seven of eight ops;
+\textbf{bls:verify is 14.4\,\% off} and is flagged for investigation under Law 7 (sustained 60\,s
+loop versus the micro suite's short bursts is the leading hypothesis). Measured
+$p_{cpu}$ median \textbf{0.712\,W} (range 0.514--0.771).
+
 \subsection{Reproducibility and energy}
 Two boards, independent runs: worst-case divergence \textbf{0.5\,\%} across all 16 timed ops. The
 energy chain validated end-to-end (12 windows $\to$ 12 segments) with two independent cross-checks
