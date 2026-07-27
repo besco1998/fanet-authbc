@@ -20,6 +20,27 @@ if ! printf '%s' "$MODEL" | grep -qi "raspberry pi"; then
 fi
 echo "== provisioning: $MODEL =="
 
+# --- guard: 64-bit (arm64) USERLAND, not just a 64-bit kernel ---------------------------------
+# The 32-bit image reports uname -m = aarch64 (64-bit kernel) but dpkg arch = armhf, and its wheel
+# platform tag is armv8l. PyPI publishes NO armhf/armv8l wheels for scipy (and several others), so
+# `make setup` dies with "metadata-generation-failed x scipy" ~30 min in. Catch it here instead.
+# It also matters scientifically: both nodes must be the SAME architecture or the cross-node and
+# x86-vs-ARM comparisons are confounded.
+DEB_ARCH="$(dpkg --print-architecture 2>/dev/null || echo unknown)"
+if [ "$DEB_ARCH" != "arm64" ]; then
+  echo "ERROR: 32-bit userland detected — dpkg architecture is '$DEB_ARCH', expected 'arm64'." >&2
+  echo "       ($(. /etc/os-release 2>/dev/null; echo "$PRETTY_NAME"); kernel $(uname -m).)" >&2
+  echo "       'Raspbian GNU/Linux' = the 32-bit image; the 64-bit one reports 'Debian GNU/Linux'." >&2
+  echo "" >&2
+  echo "       FIX: reflash with Raspberry Pi Imager ->" >&2
+  echo "            Raspberry Pi OS (other) -> 'Raspberry Pi OS Lite (64-bit)'" >&2
+  echo "            (NOT the 32-bit or 'Legacy, 32-bit' entries)." >&2
+  echo "       Verify after boot:  dpkg --print-architecture   # must print arm64" >&2
+  echo "       Aborting: scipy/numpy have no 32-bit ARM wheels and would fail to build." >&2
+  exit 1
+fi
+echo "   userland arch = $DEB_ARCH (64-bit) OK"
+
 # --- apt deps (build-essential + pyenv build deps so we can build CPython 3.12) ---------------
 echo "-- installing apt dependencies (sudo) --"
 sudo apt-get update -qq

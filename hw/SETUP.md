@@ -58,6 +58,20 @@ automatically) so the thesis states the exact platform.
 
 1. Install **Raspberry Pi Imager** on your laptop.
 2. Choose device → OS: *Raspberry Pi OS (other)* → **Raspberry Pi OS Lite (64-bit)**.
+
+   > **⚠️ It must say (64-bit).** Imager also offers *Raspberry Pi OS Lite (32-bit)* and
+   > *(Legacy, 32-bit)* right next to it. The 32-bit image still shows `uname -m = aarch64` (the
+   > kernel is 64-bit), so that is **not** a valid check — it reports `dpkg --print-architecture
+   > = armhf` and calls itself **"Raspbian GNU/Linux"**, while the 64-bit image reports **arm64**
+   > and **"Debian GNU/Linux"**. PyPI ships **no scipy/numpy wheels for 32-bit ARM**, so `make
+   > setup` dies with `metadata-generation-failed × scipy` after the ~30 min pyenv build. Both Pis
+   > must also match, or the cross-node comparison is confounded.
+   >
+   > **Verify immediately after first boot — before anything else:**
+   > ```bash
+   > dpkg --print-architecture      # MUST print: arm64
+   > ```
+   > `hw/provision.sh` enforces this and aborts with reflash instructions if it is wrong.
 3. **⚙ / Ctrl-Shift-X (advanced options)** before writing — set:
    - hostname: `authbc-pi4a`, `authbc-pi4b`, `authbc-pi3a`, `authbc-pi3b` (one per board);
    - **enable SSH** (password or, better, your public key);
