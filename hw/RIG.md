@@ -38,6 +38,9 @@ kept only as a bring-up fallback if the Arduino path stalls. The INA219's SDA/SC
 
    Both INA219  SDA/SCL/VCC/GND ──► ARDUINO (I²C bus, 5 V logic)
    RPi4-A GPIO17 (pin 11) ─────────► ARDUINO D2   ── plus a 10 kΩ pulldown D2→GND  (REQUIRED)
+        ^^^^^^ the sync wire is on **pi-A ONLY**. energy_loop.py must therefore run on pi-A,
+        or the wire must be moved first — running it on pi-B drives an unconnected pin, the
+        meter never sees a window, and the reducer finds 0 segments (verified the hard way).
    RPi4-A GND (pin 39) ────────────► ARDUINO GND  (shared reference — REQUIRED)
    ARDUINO USB ────────────────────► this WSL2 machine (CSV over serial @115200)
 ```
