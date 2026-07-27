@@ -1,0 +1,33 @@
+# device_model=Raspberry Pi 4 Model B Rev 1.4
+# device_host=authbc-pi4b
+# device_governor=performance
+# device_temp_before=temp=44.8'C
+# device_temp_after=temp=51.6'C
+# device_throttled_before=0x0
+# device_throttled_after=0x0
+# run_utc=20260727T190353Z
+# python=3.12.13
+# platform=Linux-6.12.93+rpt-rpi-v8-aarch64-with-glibc2.36
+# cpu=unknown
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=p1_sizes
+# seed=1
+# n=10000
+# config_hash=9371019d4cb6b7ce
+encoding,seed,n,metric,value,ci_lo,ci_hi
+json,1,10000,mean_bytes,193.518,193.5,193.536
+json,1,10000,max_bytes,195,,
+json,1,10000,phi_pct_g64,24.85,,
+cbor,1,10000,mean_bytes,68.936,68.916,68.956
+cbor,1,10000,max_bytes,71,,
+cbor,1,10000,phi_pct_g64,48.14,,
+msgpack,1,10000,mean_bytes,68.836,68.812,68.859
+msgpack,1,10000,max_bytes,70,,
+msgpack,1,10000,phi_pct_g64,48.18,,
+delta,1,10000,mean_bytes,45.005,44.93,45.083
+delta,1,10000,max_bytes,61,,
+delta,1,10000,phi_pct_g64,58.71,,
