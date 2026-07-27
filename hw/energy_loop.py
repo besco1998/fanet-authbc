@@ -257,13 +257,29 @@ def build_ops(selected: str | None) -> dict[str, Callable[[], object]]:
 
 
 # ----------------------------------------------------------------------------- windows
+def warmup(fn: Callable[[], object] | None) -> None:
+    """Warm caches/JIT-free code paths BEFORE the sync window opens.
+
+    This MUST happen outside the measured window. Previously the 1000 warmup iterations ran inside
+    it: `duration_s` (t1-t0) then covered warmup + timed loop while `n_ops` counted only the timed
+    loop, so energy/op = dP*duration_s/n_ops was inflated by warmup_time/window_time. For BLS verify
+    (1000 x 8.61 ms = 8.61 s against a 60 s window) that is +14.4 % -- exactly the discrepancy the
+    Law-6 cross-check flagged, and +4.5 % for BLS sign (observed 4.4 %).
+    """
+    if fn is None:
+        return
+    for _ in range(WARMUP):
+        fn()
+
+
 def run_window(fn: Callable[[], object] | None, seconds: float) -> tuple[int, int]:
-    """Run `fn` in a tight loop for `seconds` (or idle if None). Returns (n_ops, checksum)."""
+    """Run `fn` in a tight loop for `seconds` (or idle if None). Returns (n_ops, checksum).
+
+    Assumes `warmup()` has already run; does NOT warm up here (see the note above).
+    """
     if fn is None:
         time.sleep(seconds)
         return 0, 0
-    for _ in range(WARMUP):
-        fn()
     checksum = 0
     n = 0
     gc.disable()
@@ -279,6 +295,7 @@ def run_window(fn: Callable[[], object] | None, seconds: float) -> tuple[int, in
 
 
 def timed_window(sync: SyncLine, label: str, fn, seconds: float, rep: int) -> dict:
+    warmup(fn)                              # OUTSIDE the window: see warmup() docstring
     time.sleep(GAP_S)                       # line LOW: separates this window from the previous one
     before = device_state()
     t0_utc, t0 = datetime.now(UTC).isoformat(), time.perf_counter()
