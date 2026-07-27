@@ -1,0 +1,169 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{xcolor}
+\usepackage[hidelinks]{hyperref}
+\usepackage{fancyhdr}
+
+\pagestyle{fancy}\fancyhf{}
+\lhead{AUTHBC — Running Results Summary}\rhead{\thepage}
+\newcommand{\ok}{\textcolor{green!55!black}{\textbf{PASS}}}
+\newcommand{\bad}{\textcolor{red!80!black}{\textbf{FAIL}}}
+\newcommand{\pend}{\textcolor{orange!85!black}{\textbf{pending}}}
+
+\title{\textbf{AUTHBC — Running Results Summary}\\[2mm]
+\large Co-optimizing encoding $\times$ authentication placement $\times$ signature scheme $\times$
+batching\\ for blockchain-grade UAV telemetry over 802.11}
+\author{Mohamed A. Farouk \\ \small (living document --- regenerated as each step completes)}
+\date{\today}
+
+\begin{document}
+\maketitle
+\thispagestyle{fancy}
+
+\begin{abstract}
+\noindent This document tracks every measured result in the AUTHBC project and is updated at each
+step. All numbers trace to a frozen CSV in \texttt{results/} and are guarded by the reproduction gate
+(\texttt{make verify-frozen}). The headline is established: the co-optimized configuration cuts
+on-air authentication bytes by \textbf{96.4\,\%} versus the inline-CBOR baseline while holding
+verifiability $V\ge0.95$ at loss $p=0.05$ --- criterion met. The hardware campaign has confirmed the
+one predicted anomaly (the signature-scheme ordering flips on ARM) and has shown the energy model's
+assumed CPU power to be $4.1\times$ too high.
+\end{abstract}
+
+\section{The problem}
+Telemetry records are tiny (45--190\,B) but a signature is 64--96\,B, so authentication overhead
+rivals the payload. Four knobs --- record \emph{encoding}, authentication \emph{placement} (A inline,
+B self-batch, C relay-aggregate, D block), signature \emph{scheme}, and \emph{batch} size $b$ --- are
+coupled and must be co-optimized. The falsifiable criterion: the co-optimized configuration must cut
+on-air authentication bytes by $\ge 40\,\%$ versus inline-CBOR at $V\ge0.95$, $p=0.05$.
+
+\section{Software layer (frozen, reproducible)}
+
+\subsection{E1 --- overhead dominance (T1)}
+$\varphi = g/(s+g)$ is the fraction of on-air bytes that is pure signature ($g=64$\,B).
+\begin{center}\begin{tabular}{lrr}
+\toprule encoding & mean record $s$ & $\varphi$ \\ \midrule
+JSON & 191.1\,B & 25.1\,\% \\ CBOR & 66.25\,B & 49.1\,\% \\ MessagePack & 65.16\,B & 49.6\,\% \\
+\textbf{delta} & \textbf{45.00\,B} & \textbf{58.7\,\%} \\ \bottomrule
+\end{tabular}\end{center}
+\textbf{Reading.} The better the compression, the \emph{worse} the relative overhead: delta is the
+best encoder and leaves 59\,\% of the frame as signature. Compression alone cannot solve this --- the
+motivation for the other three knobs.
+
+\subsection{E2 --- batching cure (T2)}
+Folding $b$ records under one signature gives $s+(g_a+H_f)/b$ per record; packing to the MTU bottoms
+out at $A = M/(M-H_f-g_a) = 1.0745$ at $M=1500$. Measured: delta reaches $b_{\max}=31$ and attains
+$A=1.0745$ exactly; other encodings within 5\,\% (integer-$b$ slack). Inline placement \emph{never}
+amortizes its per-record signature --- only the header shrinks.
+
+\subsection{E3 --- loss frontier (T3)}
+Self-batch frames verify independently, so $V_B = 1-p$, \emph{flat in $b$}. A block signature
+spanning $n$ frames needs all fragments: $V_D=(1-p)^n$. Measured at $p=0.10$, $b=40$:
+$V_B=0.90$ versus $V_D=0.81=0.9^2$. This is the wall that stops over-aggregation.
+
+\subsection{E4 --- scheme crossover (T4)}
+BLS aggregates but its pairing verify is $10.7\times$ costlier than Ed25519. Which wins depends on the
+powers only through $\kappa=P_r/P_c$, so the break-even $\kappa^\star$ is found without measuring
+watts. \textbf{Result: Ed25519 wins all 80 grid points}, $\min\kappa^\star=3.21$. At the accepted
+96\,B, BLS carries \emph{more} bytes than Ed25519's 64\,B on own traffic ($\kappa^\star=\infty$);
+its aggregation pays off only for cross-signer relay traffic.
+
+\subsection{E5 --- the headline (T5) \ok}
+\begin{center}\begin{tabular}{llllrr}
+\toprule config & enc & scheme & placement & auth B/rec & $V$ \\ \midrule
+\textbf{optimized} & delta & ECDSA & B, $b{=}28$ & \textbf{3.71} & 0.95 \\
+A+CBOR (baseline) & cbor & Ed25519 & A inline & 104.0 & 0.95 \\
+A+JSON (naive) & json & Ed25519 & A inline & 104.0 & 0.95 \\
+D-over-agg & cbor & Ed25519 & D, $b{=}40$ & 3.60 & \textbf{0.9025} \bad \\ \bottomrule
+\end{tabular}\end{center}
+\[ \text{cut}=\frac{104-3.71}{104}=\mathbf{96.4\,\%}\ \ge 40\,\%\quad\Rightarrow\quad \ok \]
+Hand-checked: $45.0+104/28=48.71$\,B/record. \textbf{The last row is the co-design argument in
+miniature}: over-aggregation is byte-competitive (3.60\,B) yet \emph{fails} $V\ge0.95$ because
+$0.9025=(1-p)^2$. The byte-optimal answer is not the correct answer.
+
+\subsection{NS-3 channel validation}
+\begin{center}\begin{tabular}{rrr}
+\toprule $N$ & unicast gap & broadcast gap \\ \midrule
+5 & 5.1\,\% & 4.4\,\% \\ 20 & 5.2\,\% & 37\,\% \\ 50 & \textbf{1.8\,\%} & 1735\,\% \\ \bottomrule
+\end{tabular}\end{center}
+Unicast validates the Bianchi DCF model to $\pm1.8$--$5.3\,\%$. The broadcast column is discussed in
+\S\ref{sec:open} --- part real capture effect, part an artefact of node placement.
+
+\section{Hardware layer (Raspberry Pi 4B, measured)}
+
+\subsection{Cross-platform determinism}
+All \textbf{12/12} encoded-size metrics are byte-identical between x86 and ARM, as deterministic
+integer-only encoders require.
+
+\subsection{Timings and cycle normalisation}
+\begin{center}\begin{tabular}{lrrrr}
+\toprule op & x86 & RPi4 & wall ratio & \textbf{cycles ARM/x86} \\ \midrule
+ed25519 sign & 29.1\,\textmu s & 88.1 & 3.03$\times$ & \textbf{1.16$\times$} \\
+ed25519 verify & 95.0 & 259.5 & 2.73$\times$ & \textbf{1.05$\times$} \\
+ecdsa sign & 26.2 & 135.5 & 5.17$\times$ & 1.98$\times$ \\
+ecdsa verify & 78.5 & 326.9 & 4.16$\times$ & 1.60$\times$ \\
+bls verify & 1016.5 & 8611.8 & 8.47$\times$ & 3.25$\times$ \\ \bottomrule
+\end{tabular}\end{center}
+Wall-clock ratio conflates clock speed with per-cycle efficiency. The clock floor is
+$4.7/1.8=2.61\times$. Normalising shows Ed25519 needs only $1.05\times$ the cycles on ARM (equally
+optimised on both ISAs) while BLS needs $3.25\times$ (heavily x86-tuned). \textbf{Consequence: the
+docs/04 §1 ``5--15$\times$'' anchor is unreachable} for an equally-optimised primitive and must be
+restated per-cycle.
+
+\subsection{F6 --- the scheme ordering flips on ARM}
+\begin{center}\begin{tabular}{lrrl}
+\toprule platform & ECDSA verify & Ed25519 verify & winner \\ \midrule
+x86 & 78.5\,\textmu s & 95.0\,\textmu s & ECDSA \\
+\textbf{RPi4} & \textbf{326.9} & \textbf{259.5} & \textbf{Ed25519} \\ \bottomrule
+\end{tabular}\end{center}
+Three candidate causes were separated:
+\begin{itemize}\itemsep2pt
+\item \textbf{Library --- ruled out.} Byte-identical versions on both (\texttt{cryptography} 45.0.7).
+\item \textbf{Our wrapper --- real but not the cause.} Our ECDSA path does ASN.1 DER conversion in
+Python every op (Ed25519 does not): 1.05\,\textmu s on x86, \textbf{12.58\,\textmu s on ARM}
+($\sim12\times$ worse). Flipping the result would have required $64\times$. Core-only on ARM: ECDSA
+312.4 versus Ed25519 263.3 --- \textbf{Ed25519 still wins}.
+\item \textbf{Hardware --- the operative cause}, but see \S\ref{sec:open}: the \emph{specific}
+microarchitectural mechanism is \textbf{not} established.
+\end{itemize}
+\textbf{Consequence:} on the real deployment platform the optimum selects \textbf{Ed25519} (the D2
+architectural default). Both are 64\,B, so the 96.4\,\% headline is \textbf{unchanged}.
+
+\subsection{Reproducibility and energy}
+Two boards, independent runs: worst-case divergence \textbf{0.5\,\%} across all 16 timed ops. The
+energy chain validated end-to-end (12 windows $\to$ 12 segments) with two independent cross-checks
+(loop throughput versus micro suite within 5--6\,\%; single-core $\Delta P$ 0.728\,W versus 4-core
+stress 0.690\,W/core). \textbf{Measured $p_{cpu}\approx0.73$\,W against the nominal 3.0\,W used in
+E5 --- $4.1\times$ too high.} The auth-byte headline is power-free and unaffected.
+
+\section{Open items and inconsistencies}\label{sec:open}
+\begin{longtable}{p{3.2cm}p{11.5cm}}
+\toprule \textbf{item} & \textbf{status} \\ \midrule
+F6 mechanism & \textbf{Claim retracted.} Masking ADX/BMI2 on x86 via
+\texttt{OPENSSL\_ia32cap} did \emph{not} slow ECDSA (61.1 $\to$ 56.8\,\textmu s; ECDSA still won), so
+the ADX explanation is \textbf{unsupported}. What remains established: the ordering is ISA-dependent
+and Ed25519 is markedly more portable (1.05$\times$ versus 1.60$\times$ cycles). The specific
+mechanism is an open question. \\ \addlinespace
+NS-3 broadcast & Nodes sit on a \emph{line} at 1\,cm spacing under a log-distance model ($n=3$,
+$d_0=1$\,m), giving a \textbf{50.7\,dB} near--far power spread. Capture needs only a few dB, so the
+geometry manufactures the very effect blamed for the gap. Needs an equal-power channel to test the
+model on its own assumptions. \\ \addlinespace
+$\kappa$ plausible band & E4 assumes $\kappa=P_r/P_c\lesssim0.5$ from ``radio below CPU power''. With
+$p_{cpu}$ measured at 0.73\,W (not 3.0\,W), $\kappa$ could approach or exceed 1. The E4 verdict is
+unchanged ($\min\kappa^\star=3.21$) but the stated band must be re-derived from measured powers. \\
+\addlinespace
+$p_{radio}$ & \pend{} --- needs the 2-node link run; both boards now healthy. \\
+E4/E5 re-run & \pend{} --- deliberately deferred until both powers are measured, so the energy column
+stays internally consistent rather than half-measured. \\
+5--15$\times$ anchor & Needs restating per-cycle (decision required). \\ \bottomrule
+\end{longtable}
+
+\section*{Provenance}
+Every number above traces to a frozen CSV under \texttt{results/}; derived artefacts are regenerated
+byte-identically by \texttt{make verify-frozen}, which fails loudly on any drift. Full audit:
+\texttt{docs/audits/p7.md}; decisions and their limitations: \texttt{docs/DECISIONS.md}.
+
+\end{document}
