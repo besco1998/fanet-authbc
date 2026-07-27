@@ -75,6 +75,7 @@ main(int argc, char* argv[])
     std::string outPrefix = "ns3_out";
     std::string offeredRate = "12Mbps"; // per-node offered load >> capacity => saturation
     bool capture = false;               // install a SimpleFrameCaptureModel (restart capture)
+    bool equalPower = false;            // identical path loss on EVERY link (Bianchi assumption)
     double powerSpreadDb = 0.0;         // per-node tx-power spread so capture can act on collisions
 
     CommandLine cmd(__FILE__);
@@ -86,6 +87,7 @@ main(int argc, char* argv[])
     cmd.AddValue("outPrefix", "output file prefix", outPrefix);
     cmd.AddValue("offeredRate", "per-node offered load", offeredRate);
     cmd.AddValue("capture", "install SimpleFrameCaptureModel", capture);
+    cmd.AddValue("equalPower", "constant path loss on every link (no near-far, no capture)", equalPower);
     cmd.AddValue("powerSpreadDb", "per-node tx power spread (dB, uniform)", powerSpreadDb);
     cmd.Parse(argc, argv);
 
@@ -95,7 +97,26 @@ main(int argc, char* argv[])
     NodeContainer nodes;
     nodes.Create(nNodes);
 
-    YansWifiChannelHelper channel = YansWifiChannelHelper::Default();
+    // Channel. DEFAULT (near-far): log-distance n=3 over the 1 cm-spaced line below gives a
+    // ~50 dB spread between the nearest and farthest node -- ample for a receiver to CAPTURE
+    // the strongest of several colliding frames. That violates the Bianchi assumption of
+    // symmetric stations, so the analytic no-ACK model cannot be compared against it fairly.
+    // --equalPower sets the path-loss exponent to 0: every link then has identical loss (L0),
+    // i.e. all stations are electrically equidistant, capture is impossible, and the model is
+    // tested on its own assumptions.
+    YansWifiChannelHelper channel;
+    if (equalPower)
+    {
+        // Build from scratch: Default() would already have installed a log-distance model
+        // and AddPropagationLoss CHAINS models (losses add), so we must not call it here.
+        channel.SetPropagationDelay("ns3::ConstantSpeedPropagationDelayModel");
+        channel.AddPropagationLoss("ns3::LogDistancePropagationLossModel",
+                                   "Exponent", DoubleValue(0.0));
+    }
+    else
+    {
+        channel = YansWifiChannelHelper::Default();
+    }
     YansWifiPhyHelper phy;
     phy.SetChannel(channel.Create());
     if (capture)
