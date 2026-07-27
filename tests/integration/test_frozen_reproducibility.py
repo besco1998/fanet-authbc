@@ -81,7 +81,10 @@ _CASES = {
     "e5_codesign.csv": lambda: run_e5(load_config("e5")),
     "framesizes.csv": lambda: framesizes.build_rows(framesizes.measured_sizes()),
     "p1_sizes.csv": lambda: micro.measure_sizes(1, 10000),
-    "e4_crossover.csv": lambda: _run_e4.crossover_rows(_run_e4.load_crypto(RAW / "p1_crypto.csv")),
+    # must read the SAME source main() does (D8: ARM timings), or the gate reports false drift
+    "e4_crossover.csv": lambda: _run_e4.crossover_rows(
+        _run_e4.load_crypto(_run_e4.CRYPTO_CSV if _run_e4.CRYPTO_CSV.exists()
+                            else RAW / "p1_crypto.csv")),
     "e4_bytes.csv": lambda: _run_e4.bytes_rows(_run_e4.load_sizes(RAW / "p1_sizes.csv")),
 }
 

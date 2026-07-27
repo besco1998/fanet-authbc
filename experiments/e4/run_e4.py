@@ -156,8 +156,16 @@ def bytes_rows(sizes: dict[str, float]) -> list[dict]:
     return rows
 
 
+# Decision D8: the thesis platform is ARM (RPi4), so T4's crossover uses the hardware timings.
+# Falls back to the x86 baseline only if the hardware run is absent.
+HW = REPO / "results" / "hw"
+CRYPTO_CSV = HW / "p1_crypto.authbc-pi4a.csv"
+
+
 def main() -> None:
-    cy = load_crypto(RAW / "p1_crypto.csv")
+    crypto_path = CRYPTO_CSV if CRYPTO_CSV.exists() else RAW / "p1_crypto.csv"
+    print(f"crypto timings: {crypto_path.name}")
+    cy = load_crypto(crypto_path)
     sizes = load_sizes(RAW / "p1_sizes.csv")
 
     ed_med = cy["t_vf_ed"][0]

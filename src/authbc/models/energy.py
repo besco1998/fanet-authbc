@@ -34,6 +34,14 @@ from enum import StrEnum
 
 from authbc.models import bianchi
 
+# Fixed (payload-independent) channel-busy time of ONE BROADCAST frame (audit finding F2).
+# bianchi.T_FX is the UNICAST value: it includes SIFS + ACK because a unicast exchange is
+# DATA->SIFS->ACK. The telemetry substrate is 802.11 BROADCAST, which never ACKs, so the correct
+# fixed part is T_phy + 8*MAC_OVH/R + DIFS + delta. Using the unicast figure over-counted the
+# receiver radio term by ~22 us per frame. Matches channel/airtime.T_FX_BROADCAST_US.
+T_FX_BROADCAST: float = (bianchi.T_PHY + 8.0 * bianchi.MAC_OVH_BYTES / bianchi.R_BPS
+                         + bianchi.DIFS + bianchi.DELTA)
+
 
 class Placement(StrEnum):
     """Authentication placement (docs/01 §4): A inline, B self-batch, C relay, D block."""
@@ -105,16 +113,12 @@ def radio_airtime_s(cfg: EnergyConfig) -> float:
     T_air(b·s+g_a+H_f) — the single-frame §7 form; for D it counts one T_fx + one header per
     frame the block occupies, so D's per-frame overhead is not silently undercounted.
 
-    NOTE (P7 reconciliation, audit F2): `bianchi.T_FX`≈122 µs is the UNICAST fixed part (includes
-    SIFS+ACK). The telemetry substrate is 802.11 BROADCAST (no ACK), whose fixed part is ≈100 µs
-    (channel/airtime.airtime_broadcast(0)). Using the unicast T_FX over-counts the receiver radio
-    term by ~22 µs/frame (≈1 % of E5 energy). Energy is nominal-power and re-derived at P7 with the
-    measured meter powers — reconcile the fixed part to the broadcast value in that re-run. The
-    auth-byte headline is power-free and unaffected.
+    Uses T_FX_BROADCAST (≈100 µs), NOT bianchi.T_FX (≈122 µs, unicast incl. SIFS+ACK) — audit
+    finding F2, RESOLVED in the P7 re-run.
     """
     n = cfg.n_frames
     data_bytes = cfg.batch * cfg.record_bytes + cfg.auth_bytes + n * cfg.frame_hdr_bytes
-    return n * bianchi.T_FX + 8.0 * data_bytes / bianchi.R_BPS
+    return n * T_FX_BROADCAST + 8.0 * data_bytes / bianchi.R_BPS
 
 
 def _sign_cpu_per_record(cfg: EnergyConfig, m: Measured) -> float:

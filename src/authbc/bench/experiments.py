@@ -160,9 +160,16 @@ def run_e3(cfg: dict) -> list[dict]:
 
 # --------------------------------------------------------------------------- E5 (T5 co-design)
 def _read_raw(name: str) -> list[dict]:
-    """Read a results/raw CSV, skipping the '# key=value' provenance header."""
-    lines = [ln for ln in (RESULTS / name).read_text().splitlines(keepends=True)
-             if not ln.startswith("#")]
+    """Read a frozen CSV by name, skipping the '# key=value' provenance header.
+
+    Looks in results/raw first, then results/hw — so a config can name a hardware-measured file
+    (e.g. p1_crypto.authbc-pi4a.csv) without any path handling in the runner (decision D8: the
+    thesis platform is ARM, so E5 consumes the RPi4 timings rather than the x86 baseline).
+    """
+    path = RESULTS / name
+    if not path.exists():
+        path = REPO / "results" / "hw" / name
+    lines = [ln for ln in path.read_text().splitlines(keepends=True) if not ln.startswith("#")]
     return list(csv.DictReader(io.StringIO("".join(lines))))
 
 
@@ -174,7 +181,7 @@ def _measured_inputs(cfg: dict) -> tuple[list, list]:
             for e in cfg["encodings"]]
 
     ct: dict[tuple[str, str, str], float] = {}
-    for r in _read_raw("p1_crypto.csv"):
+    for r in _read_raw(cfg.get("crypto_csv", "p1_crypto.csv")):
         ct[(r["scheme"], r["op"], r["agg_b"])] = float(r["median_ns"]) / 1e9
     g_a = {"ecdsa_p256": 64.0, "ed25519": 64.0, "bls": 96.0}
     b = str(cfg["bls_agg_ref_b"])
@@ -216,7 +223,11 @@ def run_e5(cfg: dict) -> list[dict]:
     res = optimizer.solve(encs, schemes, list(Placement), cfg["batches"], plat, con)
     if not res.feasible:
         raise ValueError("E5: no feasible config — check constraints")
-    best = min(res.feasible, key=lambda c: c.bytes_per_record)
+    # Byte-minimal, then LOWEST ENERGY among the byte-ties. Ed25519 and ECDSA-P256 are both 64 B,
+    # so bytes alone leave the pick to iteration order (i.e. the order schemes appear in the config)
+    # — which is not a scientific criterion. Tie-breaking on measured energy makes the choice follow
+    # the platform: ECDSA wins on x86, Ed25519 on ARM (audit F6 / decision D8).
+    best = min(res.feasible, key=lambda c: (c.bytes_per_record, c.energy_j))
 
     enc_by = {e.name: e for e in encs}
     sch_by = {s.name: s for s in schemes}
