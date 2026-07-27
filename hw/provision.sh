@@ -97,6 +97,9 @@ EOF
 esac
 
 # --- snapshot baseline device metadata --------------------------------------------------------
+# This script runs under sudo (apt + governor), so anything it creates in the repo would be
+# root-owned and the normal user could no longer write there — which breaks hw/run_micro.sh with
+# "Permission denied" on results/hw/meta. Create as root, then hand ownership back.
 mkdir -p "$META"
 {
   echo "model=$MODEL"
@@ -108,5 +111,11 @@ mkdir -p "$META"
 } >"$META/provision.env"
 lscpu >"$META/lscpu.txt" 2>/dev/null || true
 cp /etc/os-release "$META/os-release.txt" 2>/dev/null || true
+
+# hand the repo back to the invoking user (see the note above)
+if [ -n "${SUDO_USER:-}" ]; then
+  chown -R "$SUDO_USER":"$(id -gn "$SUDO_USER")" "$REPO/results" 2>/dev/null || true
+  echo "   repo results/ ownership returned to $SUDO_USER"
+fi
 
 echo "== provisioned. metadata -> $META ; next: hw/run_micro.sh =="
