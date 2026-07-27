@@ -308,9 +308,29 @@ def main() -> None:
     ap.add_argument("--line", type=int, default=DEFAULT_LINE)
     ap.add_argument("--quick", action="store_true", help="5 s windows x2 reps (rig validation)")
     ap.add_argument("--out", type=Path, help="manifest path (default results/hw/energy/…)")
+    ap.add_argument("--force", action="store_true",
+                    help="run even if the governor/throttle pre-flight fails")
     args = ap.parse_args()
     if args.quick:
         args.duration, args.reps = 5.0, 2
+
+    # PRE-FLIGHT. A multi-hour campaign run under the wrong clock policy or a sagging rail produces
+    # numbers that look plausible and are worthless — we lost one that way when a board rebooted
+    # mid-run and silently reverted to ondemand. Refuse up front instead (--force to override).
+    st = device_state()
+    now_bits, _ = throttle_bits(st["throttled"])
+    problems = []
+    if st["governor"] not in ("performance", "NA"):
+        problems.append(f"governor is '{st['governor']}', expected 'performance' "
+                        f"(run: sudo bash hw/provision.sh)")
+    if now_bits:
+        kind = "UNDER-VOLTAGE (power)" if now_bits & 0x1 else "thermal"
+        problems.append(f"actively throttled right now: {st['throttled']} — {kind}")
+    if problems and not args.force:
+        for p in problems:
+            print(f"ABORT: {p}")
+        sys.exit("Refusing to start a long campaign in this state (--force to override).")
+    print(f"pre-flight: governor={st['governor']} throttled={st['throttled']} temp={st['temp']}")
 
     ops = build_ops(args.ops)
     sync = SyncLine(args.chip, args.line)

@@ -65,6 +65,29 @@ if [ "$GOV" != "performance" ]; then
 fi
 echo "   governor = $GOV (verified on all cores)"
 
+# PERSIST it. `cpufreq-set` is RUNTIME-ONLY: after a reboot the governor silently reverts to
+# ondemand, and any measurement taken then is invalid (this cost us a full energy campaign — the
+# board rebooted mid-run and every later window was measured at the wrong clock policy). Install a
+# systemd unit so the setting survives reboots, and also write the cpufrequtils default.
+echo 'GOVERNOR="performance"' > /etc/default/cpufrequtils 2>/dev/null || true
+cat >/etc/systemd/system/authbc-governor.service <<'UNIT'
+[Unit]
+Description=AUTHBC: pin CPU governor to performance (measurement validity)
+After=multi-user.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/sh -c 'for g in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do echo performance > $g; done'
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+systemctl daemon-reload >/dev/null 2>&1 || true
+systemctl enable --now authbc-governor.service >/dev/null 2>&1 \
+  && echo "   governor PERSISTED across reboots (authbc-governor.service)" \
+  || echo "   (warn: could not enable authbc-governor.service — governor will revert on reboot)"
+
 # --- radio + headless hygiene -----------------------------------------------------------------
 # wifi power-save duty-cycles the NIC and skews the P7b 802.11 airtime measurement — turn it off.
 if command -v iw >/dev/null 2>&1 && [ -d /sys/class/net/wlan0 ]; then
