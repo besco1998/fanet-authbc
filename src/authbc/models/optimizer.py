@@ -187,6 +187,62 @@ def pareto_front(candidates: list[Candidate]) -> list[Candidate]:
     return [c for c in candidates if not any(_dominates(o, c) for o in candidates if o is not c)]
 
 
+# --- which constraint binds, and what compression is therefore worth (docs/02 T2a) ----------
+def freshness_batch_bound(lam: float, d_max_s: float) -> int:
+    """Largest batch whose fill time alone fits the freshness budget: ⌊Λ·D_max⌋.
+
+    Fill time b/Λ dominates D(b) at telemetry rates (airtime and queueing are microseconds against
+    a 250 ms budget), so this is the freshness ceiling on b — and it depends on NEITHER the
+    encoding nor the scheme.
+    """
+    if lam <= 0 or d_max_s <= 0:
+        raise ValueError(f"lam and d_max_s must be > 0, got {lam}, {d_max_s}")
+    return int(lam * d_max_s)
+
+
+def mtu_batch_bound(record_bytes: float, auth_bytes: int, frame_hdr_bytes: int,
+                    mtu_bytes: int) -> int:
+    """Largest single-frame batch: b_max = ⌊(M − H_f − g_a)/s⌋ (docs/02 T2)."""
+    usable = mtu_bytes - frame_hdr_bytes - auth_bytes
+    return int(usable // record_bytes) if record_bytes > 0 else 0
+
+
+def binding_constraint(record_bytes: float, auth_bytes: int, frame_hdr_bytes: int,
+                       mtu_bytes: int, lam: float, d_max_s: float) -> str:
+    """Which ceiling binds the batch: ``"freshness"`` or ``"mtu"`` (docs/02 T2a).
+
+    Freshness binds ⇔ ⌊Λ·D_max⌋ < ⌊(M − H_f − g_a)/s⌋. Both ceilings are integers, so the exact
+    boundary is s < (M − H_f − g_a)/(⌊Λ·D_max⌋+1) — the continuous form s < (M−H_f−g_a)/(Λ·D_max)
+    is an approximation that is off by one batch step (232.7 B vs 279.2 B on 802.11 at Λ=20).
+    """
+    b_fresh = freshness_batch_bound(lam, d_max_s)
+    b_mtu = mtu_batch_bound(record_bytes, auth_bytes, frame_hdr_bytes, mtu_bytes)
+    return "freshness" if b_fresh < b_mtu else "mtu"
+
+
+def effective_amplification(record_bytes: float, auth_bytes: int, frame_hdr_bytes: int,
+                            mtu_bytes: int, lam: float, d_max_s: float) -> float:
+    """What one saved payload byte is actually worth on air, dC/ds (docs/02 T2a).
+
+    T2's amplification law A = M/(M−H_f−g_a) is derived AT the MTU limit, where b_max = usable/s
+    makes the overhead term proportional to s. It therefore holds only in the MTU-limited regime.
+
+    When **freshness** binds, b ≈ Λ·D_max is independent of s, so
+    C(s) = s + (g_a+H_f)/(Λ·D_max)  ⇒  **dC/ds = 1 exactly**: compression pays 1×, not A×, and the
+    residual authentication cost is a floor (g_a+H_f)/(Λ·D_max) that compression cannot touch.
+
+    Measured consequence: on 802.11 (M=1500, Λ=20, D_max=250 ms) freshness binds for every s below
+    232.7 B — i.e. for every encoding in this study (45–191 B) — so A is never operative here. On
+    a low-rate link (LoRa, M=222) the MTU binds and A≈1.88 IS operative, which is where the
+    "compression pays A-times" leverage actually lives.
+    """
+    if binding_constraint(record_bytes, auth_bytes, frame_hdr_bytes, mtu_bytes,
+                          lam, d_max_s) == "freshness":
+        return 1.0
+    usable = mtu_bytes - frame_hdr_bytes - auth_bytes
+    return mtu_bytes / usable
+
+
 # --- the search ---------------------------------------------------------------------------
 def _evaluate(enc: EncodingSpec, sch: SchemeSpec, plc: Placement, batch: int,
               plat: Platform, con: Constraints) -> tuple[Candidate | None, bool]:
@@ -218,11 +274,9 @@ def _evaluate(enc: EncodingSpec, sch: SchemeSpec, plc: Placement, batch: int,
 
     v = verifiability(plc, n, con.p_loss)
     verify_t = energy.verify_time_per_record_s(cfg, meas)
-    # Freshness of the OLDEST record in the batch: it waits for the batch to fill, then flies.
-    # docs/02 §7 also names an M/M/1 queueing term; it is not implemented (see docs/audits/
-    # model_provenance.md P3) and is omitted rather than approximated, which makes D(b) a LOWER
-    # bound on the true delay — the conservative direction for a constraint.
-    latency = batch / con.lam + energy.radio_airtime_s(cfg)
+    # Freshness of the OLDEST record in the batch: fill + flight + M/M/1 queueing, the full
+    # docs/02 §7 model (the queueing term was specified but unimplemented until audit P3).
+    latency = energy.freshness_delay_s(cfg, con.lam)
     cand = Candidate(
         encoding=enc.name,
         scheme=sch.name,

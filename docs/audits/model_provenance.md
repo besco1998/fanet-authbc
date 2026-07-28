@@ -61,7 +61,7 @@ hard constraint and a Pareto objective in the optimizer.
 
 ---
 
-## F11 — T3's loss model assumes independence, and is self-consistent rather than validated
+## F11 — RESOLVED analytically: independence is the WORST case for D, so T3 is unconditional
 
 V_D = (1−p)^n is exact **iff** frame losses are independent. Our emulator implements independent
 Bernoulli draws, so E3 measures V against a channel built on the same assumption the theorem makes:
@@ -72,19 +72,37 @@ block-level D relative to the independent prediction — losses cluster into few
 conclusion (B Pareto-dominates D) is **conservative** under burstiness rather than wrong, which is
 the safe direction. It should nonetheless be stated as an assumption, not left implicit.
 
-Not fixed here: measuring a real loss process needs the hardware link and is P8/future work.
+**Resolved 2026-07-28 — the conclusion needs no independence assumption at all.** For *any*
+stationary loss process of mean rate p, whatever its correlation:
+
+> V_D(n) = P(all n frames arrive) ≤ P(one given frame arrives) = 1−p = V_B,
+
+because a joint probability cannot exceed a marginal. Equality only at n=1. So block-level can never
+out-verify frame-level, and when ε ≤ p it can never become feasible at n ≥ 2 — **T3's direction is
+correlation-independent**, and the (1−p)^n form is merely the *tightest* (worst-for-D) case.
+
+Quantified by Gilbert–Elliott simulation at matched mean p=0.05: V_D(n=2) rises 0.9025 (independent)
+→ 0.9447 (mean burst 10 frames) → 0.9498 (burst 160), asymptotic to 1−p and never reaching the 0.95
+threshold. Pinned by `test_block_verifiability_can_never_exceed_frame_verifiability_under_any_loss_model`.
+Measuring a real loss process on hardware remains useful for *quantifying* the gap, not for the verdict.
 
 ---
 
 ## Positioning fixes (no numbers change)
 
-* **P1 — "amplification law" (T2).** Calling A = M/(M−H_f−g_a) a *law* invites the reading that it
-  is a new result. It is MTU-efficiency algebra. Recommend presenting it as a lemma/observation used
-  to quantify the coupling, not as a contribution.
-* **P2 — T5 "separable" (above).** Say "verified by exhaustive search over the 1536-point grid",
-  not "the joint optimum is separable" stated as a theorem.
-* **P3 — §7 latency.** Either implement the M/M/1 term the docs specify or amend the docs to the
-  model actually used (fill time + airtime). Do not leave them disagreeing.
+* **P1 — "amplification law" (T2) — FIXED.** Reworded to "amplification, see T2a for when it
+  applies", with an explicit note that it is MTU-efficiency algebra rather than a new law. The
+  investigation also produced **T2a**, a genuine refinement: A applies only in the MTU-limited
+  regime, and on 802.11 that regime is never reached (see below). The stale A values were
+  recomputed and one (LoRa ≈1.35) could not be reproduced at any g_a — flagged in docs/02.
+* **P2 — T5 "separable" — FIXED.** Now reads "empirically separable — verified by exhaustive search
+  over the full 1536-point grid, not proven".
+* **P3 — §7 latency — FIXED.** The M/M/1 term is implemented (`energy.queueing_delay_s`,
+  `energy.freshness_delay_s`) and used by the optimizer and by E5's baseline rows. Measured
+  W_q ≈ 1.2 µs against a 250 ms budget, so it does not move the optimum — but docs and code now
+  agree, and implementing it exposed a real gap: the model had **no transmit-throughput constraint
+  at all**, so a station whose frame queue was 12× oversubscribed (ρ ≈ 11.9) was previously
+  reported as feasible. ρ ≥ 1 now yields W_q = ∞ and is filtered.
 
 ---
 
@@ -127,3 +145,28 @@ long before the MTU does** — which reframes T2/T5: the MTU knee is not the ope
 
 Still open: the M/M/1 queueing term docs/02 §7 specifies is not implemented (P3 above). Omitting it
 makes D(b) a **lower** bound on true delay, so the constraint is conservative — the safe direction.
+
+
+---
+
+## T2a — the regime finding (arose from F10, 2026-07-28)
+
+Enforcing freshness raised a question the provenance sweep had to answer: **T2's amplification law
+A = M/(M−H_f−g_a) is derived AT the MTU limit. Does it survive when freshness caps the batch first?**
+
+**It does not.** With b fixed by freshness at ⌊Λ·D_max⌋ — independent of s — per-record cost is
+C(s) = s + (g_a+H_f)/b and **dC/ds = 1 exactly**. Compression pays 1×, not A×, and the residual
+authentication cost becomes a **floor that compression cannot touch**.
+
+Verified numerically: on 802.11 the marginal rate between adjacent encodings is **1.0000** to 12
+decimal places, against T2's predicted A = 1.0745.
+
+| link | boundary s < (M−H_f−g_a)/(⌊Λ·D_max⌋+1) | encodings in study | binds | A operative? |
+|---|---|---|---|---|
+| 802.11 (M=1500) | 232.7 B | 45 – 191 B | **freshness** | **no** — dC/ds = 1 |
+| LoRa (M=222) | 19.7 B | 45 – 66 B feasible | **MTU** | **yes** — A = 1.881 |
+
+**This sharpens the thesis rather than weakening it.** The "compression pays ×A" leverage that
+motivates the LoRa arm (docs/30) is real *and exclusive to it*: on 802.11 at telemetry rates the MTU
+knee is simply never reached. Implemented as `optimizer.binding_constraint` /
+`effective_amplification`; four tests pin the regimes and the boundary.

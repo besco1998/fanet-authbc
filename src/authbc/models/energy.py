@@ -120,6 +120,35 @@ def radio_airtime_s(cfg: EnergyConfig) -> float:
     return n * bianchi.t_broadcast(data_bytes / n)
 
 
+def queueing_delay_s(cfg: EnergyConfig, lam: float) -> float:
+    """M/M/1 mean waiting time in the frame queue [s] (docs/02 §7).
+
+    The station emits one frame per *b* records, so frames arrive at λ_f = Λ/b and are served in
+    `radio_airtime_s` each; the offered load is ρ = Λ·T_air(b)/b, exactly as docs/02 §7 states.
+    Mean waiting time of an M/M/1 queue is W_q = ρ·T_air / (1−ρ).
+
+    Saturating the frame queue (ρ ≥ 1) means the station cannot clear its own telemetry, so the
+    configuration is unusable rather than merely slow; we return infinity so any latency bound
+    rejects it instead of reporting a large-but-finite delay.
+    """
+    if lam <= 0:
+        raise ValueError(f"lam must be > 0 records/s, got {lam}")
+    t_air = radio_airtime_s(cfg)
+    rho = lam * t_air / cfg.batch
+    if rho >= 1.0:
+        return float("inf")
+    return rho * t_air / (1.0 - rho)
+
+
+def freshness_delay_s(cfg: EnergyConfig, lam: float) -> float:
+    """D(b) — freshness of the OLDEST record in a batch [s] (docs/02 §7).
+
+    D(b) = b/Λ (fill) + T_air (flight) + W_q (queueing). Fill time dominates at telemetry rates,
+    which is why the admissible batch obeys b ≲ Λ·D_max almost independently of everything else.
+    """
+    return cfg.batch / lam + radio_airtime_s(cfg) + queueing_delay_s(cfg, lam)
+
+
 def _sign_cpu_per_record(cfg: EnergyConfig, m: Measured) -> float:
     """Signing CPU time attributable to one record [s], per placement (docs/02 §7)."""
     b = cfg.batch

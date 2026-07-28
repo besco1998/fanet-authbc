@@ -151,3 +151,45 @@ def test_config_and_measured_reject_bad_inputs() -> None:
 def test_determinism() -> None:
     cfg = EnergyConfig(Placement.B, batch=8, record_bytes=130, auth_bytes=64, frame_hdr_bytes=40)
     assert per_record(cfg, M) == per_record(cfg, M)
+
+
+# --- freshness / queueing (docs/02 §7, audit P3) --------------------------------------------
+def test_queueing_delay_matches_the_mm1_formula_by_hand() -> None:
+    """W_q = ρ·T_air/(1−ρ) with ρ = Λ·T_air/b — recomputed here from raw arithmetic."""
+    from authbc.models.energy import queueing_delay_s, radio_airtime_s
+
+    cfg = EnergyConfig(Placement.B, batch=4, record_bytes=45.0, auth_bytes=64, frame_hdr_bytes=40)
+    lam = 20.0
+    t_air = _air(4 * 45.0 + 64 + 40)
+    assert radio_airtime_s(cfg) == pytest.approx(t_air, abs=1e-18)
+    rho = lam * t_air / 4
+    assert queueing_delay_s(cfg, lam) == pytest.approx(rho * t_air / (1 - rho), abs=1e-18)
+
+
+def test_freshness_is_fill_plus_flight_plus_queueing() -> None:
+    from authbc.models.energy import freshness_delay_s, queueing_delay_s, radio_airtime_s
+
+    cfg = EnergyConfig(Placement.B, batch=4, record_bytes=45.0, auth_bytes=64, frame_hdr_bytes=40)
+    lam = 20.0
+    assert freshness_delay_s(cfg, lam) == pytest.approx(
+        4 / lam + radio_airtime_s(cfg) + queueing_delay_s(cfg, lam), abs=1e-18)
+    # fill time dominates utterly at telemetry rates — this is why b ≲ Λ·D_max holds
+    assert (4 / lam) / freshness_delay_s(cfg, lam) > 0.99
+
+
+def test_a_saturated_frame_queue_is_infinitely_stale_not_merely_slow() -> None:
+    """ρ ≥ 1 means the station cannot clear its own telemetry; any bound must reject it."""
+    from authbc.models.energy import freshness_delay_s, queueing_delay_s
+
+    cfg = EnergyConfig(Placement.B, batch=1, record_bytes=1400.0, auth_bytes=64,
+                       frame_hdr_bytes=40)
+    assert queueing_delay_s(cfg, lam=1e6) == float("inf")
+    assert freshness_delay_s(cfg, lam=1e6) == float("inf")
+
+
+def test_queueing_rejects_a_nonpositive_arrival_rate() -> None:
+    from authbc.models.energy import queueing_delay_s
+
+    cfg = EnergyConfig(Placement.B, batch=4, record_bytes=45.0, auth_bytes=64, frame_hdr_bytes=40)
+    with pytest.raises(ValueError, match="lam must be > 0"):
+        queueing_delay_s(cfg, lam=0.0)

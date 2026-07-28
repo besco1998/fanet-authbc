@@ -136,13 +136,34 @@ def test_mtu_constraint_filters_oversize_single_frame() -> None:
     assert res.infeasible == 1
 
 
-def test_verify_throughput_constraint_filters_high_rate() -> None:
-    """At Λ=60000 rec/s, ed25519 B needs b≥10 to keep up (t_vf/b·Λ ≤ 1); b=5 is filtered."""
-    fast = Constraints(epsilon=0.05, p_loss=0.02, lam=60_000, d_max_s=0.250)
-    res = solve([ENCODINGS[0]], [SCHEMES[0]], [Placement.B], [5, 10], PLATFORM, fast)
+def test_verify_throughput_constraint_filters_slow_verification() -> None:
+    """t_verify/b · Λ ≤ 1: a slow verifier needs a bigger batch to keep up.
+
+    Exercised with a deliberately slow scheme rather than an extreme Λ. The earlier version of
+    this test used Λ=60000 rec/s, at which the frame queue is ~12× oversubscribed — the station
+    cannot physically transmit its own telemetry — but the model had no transmit-throughput
+    constraint, so it happily called that configuration feasible. Adding the M/M/1 term (audit P3)
+    exposed it; see `test_frame_queue_saturation_is_infeasible`.
+    """
+    slow = SchemeSpec("slow", auth_bytes=64, t_sign_s=60e-6, t_verify_s=20e-3)
+    con = Constraints(epsilon=0.05, p_loss=0.02, lam=300, d_max_s=10.0)
+    res = solve([ENCODINGS[1]], [slow], [Placement.B], [5, 10], PLATFORM, con)
     kept = {c.batch for c in res.feasible}
-    assert 5 not in kept       # 100µs/5 · 60000 = 1.2 > 1  → infeasible
-    assert 10 in kept          # 100µs/10 · 60000 = 0.6 ≤ 1 → feasible
+    assert 5 not in kept       # 20ms/5 · 300 = 1.2 > 1  → infeasible
+    assert 10 in kept          # 20ms/10 · 300 = 0.6 ≤ 1 → feasible
+
+
+def test_frame_queue_saturation_is_infeasible() -> None:
+    """A station that cannot clear its own telemetry (ρ ≥ 1) must be rejected, not merely slow.
+
+    New capability from implementing docs/02 §7's M/M/1 term: at Λ=60000 rec/s the frame queue is
+    ~12× oversubscribed, W_q → ∞, and the freshness constraint filters it. Before P3 the model
+    checked only whether the RECEIVER could verify fast enough, never whether the SENDER could
+    transmit at all.
+    """
+    flood = Constraints(epsilon=0.05, p_loss=0.02, lam=60_000, d_max_s=0.250)
+    res = solve([ENCODINGS[0]], [SCHEMES[0]], [Placement.B], [5, 10], PLATFORM, flood)
+    assert res.feasible == [], "an oversubscribed radio cannot be a feasible operating point"
 
 
 def test_verifiability_constraint_filters_over_aggregated_D() -> None:
@@ -213,3 +234,72 @@ def test_freshness_is_a_pareto_objective_so_small_batches_survive() -> None:
     # and freshness must be monotone in batch, which is what makes the trade-off real
     by_b = {c.batch: c.latency_s for c in res.feasible}
     assert [by_b[b] for b in sorted(by_b)] == sorted(by_b[b] for b in sorted(by_b))
+
+
+# --- T2a: which ceiling binds, and what compression is worth (audit, 2026-07-28) ------------
+def test_freshness_ceiling_is_lambda_times_dmax_and_ignores_encoding() -> None:
+    """b ≲ Λ·D_max — the point is that it depends on neither the encoding nor the scheme."""
+    from authbc.models.optimizer import freshness_batch_bound
+
+    assert freshness_batch_bound(lam=20, d_max_s=0.250) == 5
+    assert freshness_batch_bound(lam=100, d_max_s=0.250) == 25
+    with pytest.raises(ValueError, match="must be > 0"):
+        freshness_batch_bound(lam=0, d_max_s=0.250)
+
+
+def test_on_80211_freshness_binds_for_every_encoding_in_the_study() -> None:
+    """The regime finding: at Λ=20, D_max=250 ms the MTU knee is unreachable on 802.11."""
+    from authbc.models.optimizer import binding_constraint, mtu_batch_bound
+
+    for s in (45.0, 65.16, 66.25, 191.09):           # delta, msgpack, cbor, json
+        assert binding_constraint(s, 64, 40, 1500, lam=20, d_max_s=0.250) == "freshness"
+        assert mtu_batch_bound(s, 64, 40, 1500) > 5   # …and the MTU would have allowed more
+    # The EXACT boundary is integer, not continuous: b_max is floored, so freshness binds iff
+    # ⌊usable/s⌋ > ⌊Λ·D_max⌋, i.e. s < usable/(b_fresh+1) = 1396/6 = 232.67 B. The continuous
+    # form s < usable/(Λ·D_max) = 279.2 B is the approximation and is off by one batch step.
+    assert binding_constraint(232.0, 64, 40, 1500, lam=20, d_max_s=0.250) == "freshness"
+    assert binding_constraint(233.0, 64, 40, 1500, lam=20, d_max_s=0.250) == "mtu"
+    assert binding_constraint(279.0, 64, 40, 1500, lam=20, d_max_s=0.250) == "mtu"
+
+
+def test_amplification_collapses_to_one_when_freshness_binds() -> None:
+    """T2's A = M/(M−H_f−g_a) is derived AT the MTU limit and does not survive outside it.
+
+    Verified as a marginal rate: with b fixed by freshness, C(s) = s + (g_a+H_f)/b, so moving
+    between two encodings changes on-air bytes by exactly the payload difference.
+    """
+    from authbc.models.optimizer import effective_amplification
+
+    b = 5  # = Λ·D_max at Λ=20, D_max=250 ms
+    cost = lambda s: s + (64 + 40) / b   # noqa: E731 — inline for the marginal-rate check
+    assert (cost(66.25) - cost(45.0)) / (66.25 - 45.0) == pytest.approx(1.0, abs=1e-12)
+    assert effective_amplification(45.0, 64, 40, 1500, lam=20, d_max_s=0.250) == 1.0
+
+
+def test_amplification_is_recovered_on_a_low_rate_link_where_the_mtu_binds() -> None:
+    """On LoRa (M=222) the MTU binds again and A≈1.88 IS operative — the low-rate leverage."""
+    from authbc.models.optimizer import binding_constraint, effective_amplification
+
+    assert binding_constraint(45.0, 64, 40, 222, lam=20, d_max_s=0.250) == "mtu"
+    assert effective_amplification(45.0, 64, 40, 222, lam=20, d_max_s=0.250) == pytest.approx(
+        222 / 118, abs=1e-12)
+    assert effective_amplification(45.0, 64, 40, 222, lam=20, d_max_s=0.250) > 1.8
+
+
+def test_block_verifiability_can_never_exceed_frame_verifiability_under_any_loss_model() -> None:
+    """T3 robustness (audit F11): the independence assumption is the WORST case for block-level D.
+
+    V_D(n) = P(all n frames of the block arrive) ≤ P(one given frame arrives) = 1−p = V_B, for any
+    stationary loss process whatever its correlation. So D can never out-verify B, and when ε ≤ p
+    it can never become feasible at n ≥ 2 — T3's conclusion is correlation-independent.
+
+    Monte-Carlo Gilbert-Elliott at matched mean p=0.05 confirms the direction: V_D(n=2) rises from
+    0.9025 (independent) toward but never past 0.95 even at a mean burst of 160 frames.
+    """
+    p = 0.05
+    v_b = verifiability(Placement.B, 1, p)
+    assert v_b == pytest.approx(1 - p)
+    for n in range(1, 8):
+        assert verifiability(Placement.D, n, p) <= v_b + 1e-12
+    # strict below V_B for every multi-frame block under independence
+    assert verifiability(Placement.D, 2, p) < v_b

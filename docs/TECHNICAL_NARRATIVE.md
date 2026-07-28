@@ -354,6 +354,14 @@ Every 50 ms of freshness spent buys auth-byte reduction, with sharply diminishin
 freshness-feasible batch is bounded by **b ≲ Λ·D_max** (=5 here; airtime pushes b=5 just over, so
 b=4 binds) — a bound that is independent of encoding and scheme.
 
+**And that changes what compression is worth (T2a).** T2's amplification A = M/(M−H_f−g_a) is
+derived *at the MTU limit*. When freshness caps the batch first, b no longer depends on s, so
+C(s) = s + (g_a+H_f)/b and **dC/ds = 1 exactly** — compression pays 1×, not A×, and the residual
+auth cost is a floor compression cannot touch. On 802.11 the regime boundary is s < 232.7 B, and
+*every* encoding here (45–191 B) is below it, so **A = 1.0745 is never operative on this arm**
+(measured marginal rate: 1.0000 to 12 dp). On LoRa (M=222) the boundary falls to 19.7 B, the MTU
+binds again, and **A = 1.881 is** operative — the low-rate leverage is real and exclusive to it.
+
 
 ### NS-3 validation (Bianchi vs NS-3 3.41)
 *(All NS-3 numbers below are the F8-corrected re-measurement: the sinks used to outlive the sources by

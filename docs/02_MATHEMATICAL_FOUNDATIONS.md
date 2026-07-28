@@ -15,14 +15,50 @@ bottleneck to authentication — the thesis motivation. **Validate:** E1.
 one frame: feasibility b ≤ b_max(s) = ⌊(M − H_f − g_a)/s⌋.
 **Claim (i).** Per-record auth overhead ω(b) = (g_a+H_f)/b is strictly decreasing, so the
 byte-minimal feasible batch is b = b_max(s).
-**Claim (ii) (amplification law).** Relaxing the floor, per-record on-air bytes are
+**Claim (ii) (amplification, see T2a for when it applies).** Relaxing the floor, per-record on-air bytes are
 C(s) = s + (g_a+H_f)·s/(M−H_f−g_a) = **s · A**, with **A = M/(M − H_f − g_a) ≥ 1**.
-Hence every payload byte saved by compression saves A on-air bytes, and A grows as M
-shrinks (802.11: A≈1.06; LoRa M=222: A≈1.35 — the low-rate leverage, doc 30).
+Hence every payload byte saved by compression saves A on-air bytes **in the MTU-limited regime**,
+and A grows as M shrinks (802.11: A≈1.07; LoRa M=222: A≈1.88 — the low-rate leverage, doc 30).
+This is MTU-efficiency algebra, not a new law; ⚠️ **and on 802.11 the regime is never reached —
+see T2a.**
+> *Provenance of the A values (2026-07-28):* both were recomputed at the current g_a = 64 B
+> (Ed25519). The previous figures were 1.06 and 1.35; 1.06 reproduces exactly at the superseded
+> g_a = 48 B assumption (1500/1412 = 1.0623), but **1.35 could not be reproduced at g_a ∈ {48, 64,
+> 96}** — the LoRa value at g_a=48 is 222/134 = 1.657. Treat the old LoRa figure as unsourced; the
+> current one is 222/118 = 1.881.
 **Proof.** (i) ω′(b)<0. (ii) substitute b=(M−H_f−g_a)/s into s+ω(b) and factor. ∎
 **Numbers (M=1500, H_f=40, g_a=48):** CBOR b_max=10 → 138.8 B/rec, φ=6.3%; JSON b_max=3 →
 387.3 B/rec, φ=7.6%; delta b_max=35 → 42.5 B/rec, φ=5.9%. Batching restores auth overhead
 to O((g_a+H_f)/M) regardless of encoding. **Validate:** E2.
+
+## T2a — Which ceiling binds, and what compression is therefore worth ⚠️ (2026-07-28)
+**Motivation.** T2 derives A **at the MTU limit**, where b = b_max(s) = (M−H_f−g_a)/s makes the
+overhead term proportional to s. Once freshness is enforced (docs/02 §7, audit F10) the batch may
+be capped *before* the MTU, and then the derivation no longer applies.
+
+**Two ceilings.** b* = min(b_MTU, b_fresh) with b_MTU = ⌊(M−H_f−g_a)/s⌋ and **b_fresh = ⌊Λ·D_max⌋**
+(fill time dominates D(b), so the freshness ceiling depends on **neither the encoding nor the
+scheme**). Freshness binds ⇔ ⌊Λ·D_max⌋ < ⌊(M−H_f−g_a)/s⌋, i.e. exactly when
+**s < (M−H_f−g_a)/(⌊Λ·D_max⌋+1)**.
+
+**Claim (marginal value of compression).**
+- *MTU-limited:* C(s) = s·A, so **dC/ds = A = M/(M−H_f−g_a)** — T2 as written.
+- *Freshness-limited:* b is independent of s, so C(s) = s + (g_a+H_f)/b_fresh and
+  **dC/ds = 1 exactly**. Compression pays 1×, not A×, and the residual authentication cost is a
+  **floor (g_a+H_f)/(Λ·D_max) that compression cannot touch at all.**
+**Proof.** Differentiate C in each regime; b is constant in s in the second. ∎
+
+**Measured consequence (802.11, M=1500, H_f=40, g_a=64, Λ=20 rec/s, D_max=250 ms).** The boundary
+is s < 232.7 B. Every encoding in this study is below it — delta 45, msgpack 65.2, cbor 66.3, json
+191.1 — so **freshness binds for all of them and A = 1.0745 is never operative on the 802.11 arm.**
+Verified numerically: the marginal rate between adjacent encodings is 1.0000 to 12 decimal places.
+
+**Contrast — the low-rate link is where the leverage actually lives.** On LoRa (M=222) the boundary
+falls to s < 19.7 B, so the **MTU binds** for every feasible encoding and **A = 222/118 = 1.881 IS
+operative**. The "compression pays ×A" leverage that motivates docs/30 is real — and this analysis
+shows it is *exclusive* to the low-rate arm, which strengthens rather than weakens that motivation.
+
+Implemented as `optimizer.binding_constraint` / `effective_amplification`. **Validate:** E2/E5.
 
 ## T3 — Loss-robustness frontier (frame-level Pareto-dominates block-level)
 **Setup.** Frame-level (B/C): each frame self-verifiable ⇒ V_B = 1−p; a loss costs b
@@ -38,6 +74,20 @@ the loss rate, frame-level batching is forced**.
 B Pareto-dominates D for all V > (1−p)^2.
 **Proof.** (i) solve (1−p)^n ≥ 1−ε. (ii) ω differences telescope; bound at b_max; V_D
 monotone decreasing in n. ∎  **Validate:** E3 (measured V and goodput vs b, p).
+
+**Claim (iii) — robustness to correlated loss (audit F11, 2026-07-28).** The (1−p)^n form assumes
+*independent* frame loss, which our emulator also implements — so E3's V_meas≈V_theory agreement is
+a consistency check, not a validation. The conclusion nonetheless holds for **any** loss process:
+
+> V_D(n) = P(all n frames of the block arrive) ≤ P(one given frame arrives) = 1−p = V_B,
+
+for any stationary loss process of mean rate p, whatever its correlation — because a joint
+probability cannot exceed a marginal. **Equality only at n=1.** So block-level can never
+out-verify frame-level, and when ε ≤ p it can never become feasible at n ≥ 2. **Independence is the
+worst case for D**; correlation narrows the gap but cannot invert it.
+Quantified by Gilbert–Elliott simulation at matched mean p=0.05: V_D(n=2) rises from 0.9025
+(independent) to 0.9447 at a mean burst of 10 frames and 0.9498 at 160 — asymptotically 1−p, never
+past it, and never reaching the 0.95 feasibility threshold.
 
 ## T4 — Scheme selection: Ed25519 self-batch vs BLS cross-signer aggregation
 **Own records (self-batch).** One ordinary signature covers b own records, so for
@@ -55,8 +105,11 @@ regime-dependent rule the hardware measurements (E4/P7) will pin down.
 **Proof.** Energy difference per record = P_r·8Δ/R − P_c·Δt; sign at the stated point. ∎
 
 ## T5 — Co-design theorem ("compression pays A-times, then binds")
-Combining T1–T4: the joint optimum is separable — pick the smallest deterministic
-encoding e* (min s), placement B (self) / C (relay) at b_max(s), scheme per T4; total
+Combining T1–T4: the joint optimum is **empirically separable** — *verified by exhaustive search
+over the full grid (4 encodings × 3 schemes × 4 placements × 32 batches = 1536 points), not proven*;
+a non-separable optimum would be found if one existed. Pick the smallest deterministic
+encoding e* (min s), placement B (self) / C (relay) at **b\* = min(b_max(s), ⌊Λ·D_max⌋)** (T2a — on 802.11 the second
+term binds), scheme per T4; total
 on-air bytes per record = s·A (T2), so compression's benefit is amplified by A and grows
 as b_max(s) rises, until either the verify-throughput constraint t_verify(b)·Λ ≤ 1 or the
 MTU binds. **Validate:** E5 end-to-end vs baselines {A+JSON, A+CBOR, D-overagg}.

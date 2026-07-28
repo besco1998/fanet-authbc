@@ -215,9 +215,9 @@ def _point(enc, sch, plc: Placement, batch: int, plat, con) -> dict:
             "auth_overhead_bytes": round(bpr - enc.record_bytes, 3),
             "V": round(optimizer.verifiability(plc, n, con.p_loss), 5),
             "energy_uj": round(energy.per_record(ecfg, meas) * 1e6, 4),
-            # freshness of the oldest record in the batch (docs/02 §7): fill time + on-air.
-            "latency_ms": round((batch / con.lam + energy.radio_airtime_s(ecfg)) * 1e3, 2),
-            "meets_d_max": int(batch / con.lam + energy.radio_airtime_s(ecfg) <= con.d_max_s)}
+            # freshness of the oldest record (docs/02 §7): fill + on-air + M/M/1 queueing.
+            "latency_ms": round(energy.freshness_delay_s(ecfg, con.lam) * 1e3, 2),
+            "meets_d_max": int(energy.freshness_delay_s(ecfg, con.lam) <= con.d_max_s)}
 
 
 def run_e5(cfg: dict) -> list[dict]:
