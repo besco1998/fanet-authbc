@@ -16,7 +16,7 @@ KEY FACTS INLINED (802.11a OFDM, base rate R = 6 Mb/s):
   (T_phy+8·14/R)+DIFS+δ. Fixed part T_fx ≈ 123 µs. **BROADCAST has NO ACK/SIFS/retry** — for
   the broadcast airtime use T_air = T_phy + 8(L+34)/R + DIFS + δ (document which you use where;
   do not mix — this is a scientific-integrity trap revisited in P6).
-- MTU application budget M = 1500 B. Frame header H_f = 40 B. b_max(s) = ⌊(M − H_f − g_a)/s⌋.
+- MTU application budget M = 1500 B. Frame header H_f = 44 B (measured, B1). b_max(s) = ⌊(M − H_f − g_a)/s⌋.
   EXPECTED b_max (M=1500, H_f=40): with g_a=48 (BLS) — CBOR s=130→10, JSON s=358→3, delta
   s=40→35; with g_a=64 (Ed25519 self-batch) — CBOR→9, delta→34. Unit-test b_max against these.
 - Loss model: per-receiver i.i.d. Bernoulli(p), p∈{0.02,0.05,0.10}, seeded RNG per run.

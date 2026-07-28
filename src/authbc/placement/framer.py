@@ -15,7 +15,7 @@ from authbc.ledger.record import Record
 from authbc.placement.wire import Frame
 
 M_MTU = 1500  # application MTU budget (docs/01 §1, docs/02 §6)
-H_F = 40      # ledger frame header bytes (docs/01 §2 notation)
+H_F = 44      # ledger frame header bytes — MEASURED from wire.py (B1, docs/01 §2a)
 
 
 def b_max(s: int, g_a: int, *, mtu: int = M_MTU, h_f: int = H_F) -> int:

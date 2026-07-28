@@ -146,15 +146,15 @@ inconvenience.
 | **framing** | g_a ≤ M < H_f + g_a | a leaner frame header | the encoding |
 | **encoding** | H_f + g_a ≤ M < H_f + g_a + s_min | a smaller record encoding — **and here T2a's A applies** | — |
 
-**Applied to EU868** (H_f = 40 B, g_a = 64 B for Ed25519/ECDSA; s_min = 13 B, the delta record under
-the adopted per-frame chaining of §9b):
+**Applied to EU868** (H_f = 44 B **measured**, docs/01 §2a; g_a = 64 B for Ed25519/ECDSA; s_min =
+13 B, the delta record under the adopted per-frame chaining of §9b):
 
 | DR | M (RP002 T.13) | s_max | tier | note |
 |---|---|---|---|---|
-| 0, 1, 2 | 51 B | −53 | **signature** | 64 B signature alone overflows a 51 B payload |
-| 3 | 115 B | **11 B** | **encoding** | misses by **2 bytes** — 11 B of room, 13 B record |
-| 4, 5, 6 | 242 B | 138 B | — feasible | |
-| *802.11* | 1500 B | 1396 B | — feasible | |
+| 0, 1, 2 | 51 B | −57 | **signature** | 64 B signature alone overflows a 51 B payload |
+| 3 | 115 B | **7 B** | **encoding** | misses by **6 bytes** — 7 B of room, 13 B record |
+| 4, 5, 6 | 242 B | 134 B | — feasible | |
+| *802.11* | 1500 B | 1392 B | — feasible | |
 
 **The tier-1 result is the strong one.** DR0/DR1/DR2 stay excluded *with a zero-byte header and a
 zero-byte record*: it is the signature alone that does not fit. The only escape is a smaller

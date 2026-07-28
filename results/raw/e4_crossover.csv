@@ -7,7 +7,7 @@
 # cbor2=5.8.0
 # msgpack=1.2.1
 # run=e4_crossover
-# config_hash=5e8d7eb6ae0eba70
+# config_hash=7e3a9e01195a7ca1
 # ed25519_verify_speedup_vs_bls=33.186
 # plausible_kappa_max=0.5
 # R_bps=6000000

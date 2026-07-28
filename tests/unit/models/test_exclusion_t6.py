@@ -20,7 +20,7 @@ from authbc.models.optimizer import (
     max_record_bytes,
 )
 
-H_F = 40        # AUTHBC frame header, docs/01 §2
+H_F = 44        # AUTHBC frame header — MEASURED from wire.py (B1, docs/01 §2a)
 G_A = 64        # Ed25519 / ECDSA-P256 signature (both 64 B; the E1/E3 measured schemes)
 S_DELTA_PER_RECORD = 45.0    # measured delta record, 802.11 wire format (E1)
 S_DELTA_PER_FRAME = 13.0     # same record minus the 32 B chain hash (F5, adopted on LoRa)
@@ -57,10 +57,10 @@ def test_fragment_bound_rejects_out_of_range_probabilities(eps: float, p: float)
 
 # --- the threshold itself ---------------------------------------------------------------------
 def test_max_record_bytes_is_the_payload_left_after_header_and_signature() -> None:
-    assert max_record_bytes(1500, G_A, H_F) == 1500 - 40 - 64          # 802.11: 1396 B of room
-    assert max_record_bytes(242, G_A, H_F) == 138                      # LoRa DR4-6
-    assert max_record_bytes(115, G_A, H_F) == 11                       # LoRa DR3 — 11 B
-    assert max_record_bytes(51, G_A, H_F) == -53                       # LoRa DR0-2 — negative
+    assert max_record_bytes(1500, G_A, H_F) == 1500 - 44 - 64          # 802.11: 1392 B of room
+    assert max_record_bytes(242, G_A, H_F) == 134                      # LoRa DR4-6
+    assert max_record_bytes(115, G_A, H_F) == 7                        # LoRa DR3 — 7 B
+    assert max_record_bytes(51, G_A, H_F) == -57                       # LoRa DR0-2 — negative
 
 
 def test_tier_1_signature_exclusion_on_the_three_longest_range_lora_rates() -> None:
@@ -96,18 +96,18 @@ def test_tier_2_framing_exclusion_is_the_best_case_for_the_smallest_signature() 
     assert max_record_bytes(51, 48, frame_hdr_bytes=0) == 3
 
 
-def test_tier_3_encoding_exclusion_at_dr3_misses_by_two_bytes() -> None:
-    """DR3 (115 B) leaves 11 B for a record; the smallest AUTHBC record is 13 B. Excluded — barely.
+def test_tier_3_encoding_exclusion_at_dr3_misses_by_six_bytes() -> None:
+    """DR3 (115 B) leaves 7 B for a record; the smallest AUTHBC record is 13 B. Excluded.
 
-    This is the only tier compression can attack, and DR3 is where it comes closest: two bytes.
+    This is the only tier compression can attack, and DR3 is where it comes closest: six bytes.
     """
     m = lora.EU868_DATA_RATES[3].max_app_payload
     assert m == 115
-    assert max_record_bytes(m, G_A, H_F) == 11.0
+    assert max_record_bytes(m, G_A, H_F) == 7.0
     assert exclusion_tier(m, G_A, H_F, S_DELTA_PER_FRAME) == "encoding"
     assert exclusion_tier(m, G_A, H_F, S_DELTA_PER_RECORD) == "encoding"
-    # an 11 B record would clear it — the threshold is exact, not approximate
-    assert exclusion_tier(m, G_A, H_F, 11.0) is None
+    # a 7 B record would clear it — the threshold is exact, not approximate
+    assert exclusion_tier(m, G_A, H_F, 7.0) is None
 
 
 def test_the_fast_lora_rates_and_80211_are_not_excluded() -> None:

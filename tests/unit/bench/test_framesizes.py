@@ -15,12 +15,13 @@ def test_auth_bytes_per_placement() -> None:
 
 
 def test_frame_bytes_hand_values() -> None:
-    # B, s=100, b=8: 40 + 8·100 + 64 = 904 ; bytes/rec = 113
-    assert frame_bytes("B", 100, 8) == pytest.approx(904)
-    # A, s=100, b=8: 40 + 800 + 512 = 1352
-    assert frame_bytes("A", 100, 8) == pytest.approx(1352)
-    # amplification B, s=100, b=8 = (904/8)/100 = 1.13
-    assert amplification("B", 100, 8) == pytest.approx(1.13)
+    """Hand values at the MEASURED H_f = 44 B (B1, docs/01 §2a) — was an assumed 40 B."""
+    # B, s=100, b=8: 44 + 8·100 + 64 = 908 ; bytes/rec = 113.5
+    assert frame_bytes("B", 100, 8) == pytest.approx(908)
+    # A, s=100, b=8: 44 + 800 + 8·64 = 1356
+    assert frame_bytes("A", 100, 8) == pytest.approx(1356)
+    # amplification B, s=100, b=8 = (908/8)/100 = 1.135
+    assert amplification("B", 100, 8) == pytest.approx(1.135)
 
 
 def test_bytes_per_rec_decreases_with_b_for_single_auth() -> None:

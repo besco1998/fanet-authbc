@@ -94,7 +94,7 @@ def test_e2_inline_A_sig_never_amortizes() -> None:
                    and x["encoding"] == "cbor"), key=lambda r: r["b"])
     per = [x["bytes_per_rec"] for x in rows]
     # only the frame header H_f/b amortizes; the per-record 64 B sig does not ⇒ small change
-    assert per[0] - per[-1] < 40
+    assert per[0] - per[-1] <= 44   # A amortizes only H_f (44 B measured), never the signature
 
 
 _E3_SMALL = {
@@ -156,7 +156,7 @@ def test_e5_success_criterion_met() -> None:
 def test_e5_a_cbor_baseline_and_optimized_placement() -> None:
     rows = _e5()
     acbor = next(r for r in rows if r["role"] == "A+CBOR")
-    assert acbor["auth_overhead_bytes"] == pytest.approx(104.0)  # g_a 64 + H_f 40, inline b=1
+    assert acbor["auth_overhead_bytes"] == pytest.approx(108.0)  # g_a 64 + H_f 44, inline b=1
     assert acbor["placement"] == "A" and acbor["encoding"] == "cbor"
     opt = next(r for r in rows if r["role"] == "optimized")
     assert opt["placement"] == "B"  # self-batch amortizes the signature (T5)

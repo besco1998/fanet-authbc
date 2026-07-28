@@ -7,10 +7,10 @@
 # cbor2=5.8.0
 # msgpack=1.2.1
 # run=e5_codesign
-# config_hash=6330327e7f2009f3
+# config_hash=558e9099bfa5a6a5
 role,encoding,scheme,placement,batch,n_frames,s,bytes_per_rec,auth_overhead_bytes,V,energy_uj,latency_ms,meets_d_max,channel_util,auth_cut_pct,pass
-optimized,delta,ed25519,B,4,1,45.0,70.998,26.0,0.95,111.8638,200.49,1,0.553,,
-A+JSON,json,ed25519,A,1,1,191.09,295.085,104.0,0.95,362.395,50.51,1,2.2838,,
-A+CBOR,cbor,ed25519,A,1,1,66.25,170.252,104.0,0.95,325.1604,50.34,1,1.5295,,
-D-overagg,cbor,ed25519,D,40,2,66.25,69.852,3.6,0.9025,58.9408,2003.95,0,0.4248,,
-SUCCESS_CRITERION,,,,,,,,78.0,0.95,,,,,75.0,1
+optimized,delta,ed25519,B,4,1,45.0,71.998,27.0,0.95,112.0818,200.49,1,0.5575,,
+A+JSON,json,ed25519,A,1,1,191.09,299.085,108.0,0.95,363.267,50.51,1,2.3017,,
+A+CBOR,cbor,ed25519,A,1,1,66.25,174.252,108.0,0.95,326.9044,50.34,1,1.5654,,
+D-overagg,cbor,ed25519,D,40,2,66.25,70.052,3.8,0.9025,58.9844,2003.96,0,0.4257,,
+SUCCESS_CRITERION,,,,,,,,81.0,0.95,,,,,75.0,1

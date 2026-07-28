@@ -15,7 +15,7 @@ duty_cycle: 0.01        # RP002-1.0.3 regional summary: EU868 "Duty Cycle < 1%"
 encodings: [json, cbor, msgpack, delta]
 schemes: [ed25519, ecdsa_p256]   # both 64 B; BLS's 96 B is worse on a payload-starved link
 g_a: 64                 # Ed25519 signature (D2 default, and the ARM winner per D8/F6)
-h_f: 40                 # frame header, same as the 802.11 arm (docs/01 §2)
+h_f: 44                 # frame header, same as the 802.11 arm — MEASURED (B1, docs/01 §2a)
 chain_hash_bytes: 32    # SHA-256 prev_hash (docs/01 §4) - carried per record today
 
 # Batch sweep. Capped in code by the regional payload limit; the duty cycle then fixes both the

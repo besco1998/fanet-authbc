@@ -6,7 +6,7 @@
 experiment: capacity
 encoding: delta          # the co-design optimum (E5)
 g_a: 64                  # Ed25519
-h_f: 40
+h_f: 44  # MEASURED from the implemented wire format (B1, 2026-07-29), not assumed — see docs/01 §2a
 mtu: 1500
 d_max_s: 0.250           # freshness bound (docs/02 §7) - sets b = min(b_mtu, floor(Λ·D_max))
 n_local_values: [5, 10, 20, 35, 50, 75, 100]

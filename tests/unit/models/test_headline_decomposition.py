@@ -20,7 +20,7 @@ from authbc.bench.experiments import REPO
 from authbc.models.energy import Placement
 from authbc.models.optimizer import frame_auth_bytes, freshness_batch_bound
 
-H_F, G_A = 40, 64
+H_F, G_A = 44, 64
 ENCODINGS = ("json", "cbor", "msgpack", "delta")
 
 
@@ -38,7 +38,7 @@ def _e2_rows() -> list[dict[str, str]]:
 # --- the claim: the metric does not depend on the encoding ------------------------------------
 def test_auth_overhead_is_identical_across_every_encoding_in_frozen_e2() -> None:
     """Derived from the frozen artifact as bytes_per_rec − s, so this is data, not model output."""
-    for placement, batch, expected in (("A", "1", 104.0), ("B", "4", 26.0)):
+    for placement, batch, expected in (("A", "1", 108.0), ("B", "4", 27.0)):
         seen = {r["encoding"]: float(r["bytes_per_rec"]) - float(r["s"])
                 for r in _e2_rows()
                 if r["placement"] == placement and r["b"] == batch and r["mtu"] == "1500"}
@@ -55,9 +55,11 @@ def test_auth_overhead_is_identical_across_every_encoding_in_frozen_e2() -> None
 
 def test_the_closed_form_carries_no_record_size_term() -> None:
     """auth(b) = (H_f + g_a)/b. Feeding wildly different record sizes cannot move it."""
-    assert _auth_overhead_per_record(Placement.A, 1) == 104.0
-    assert _auth_overhead_per_record(Placement.B, 4) == 26.0
-    assert (104.0 - 26.0) / 104.0 == pytest.approx(0.75, abs=1e-12)   # the headline, exactly
+    assert _auth_overhead_per_record(Placement.A, 1) == 108.0
+    assert _auth_overhead_per_record(Placement.B, 4) == 27.0
+    assert (108.0 - 27.0) / 108.0 == pytest.approx(0.75, abs=1e-12)   # the headline, exactly
+    # B1 moved H_f 40 -> 44 and the headline did NOT move: 104/26 and 108/27 both give 75.00 %
+    assert (104.0 - 26.0) / 104.0 == (108.0 - 27.0) / 108.0
 
 
 def test_the_headline_is_algebraically_one_minus_one_over_b() -> None:
@@ -99,27 +101,27 @@ def test_the_scheme_axis_is_byte_neutral_for_the_headline() -> None:
     ed = ecdsa = 64
     bls = 96
     assert ed == ecdsa
-    assert (H_F + ed) / 4 == (H_F + ecdsa) / 4 == 26.0
-    assert (H_F + bls) / 4 > 26.0
+    assert (H_F + ed) / 4 == (H_F + ecdsa) / 4 == 27.0
+    assert (H_F + bls) / 4 > 27.0
 
 
 # --- what the encoding DOES buy, so the correction is not read as "encoding is useless" --------
 def test_encoding_moves_payload_bytes_and_therefore_total_bytes() -> None:
-    """A+CBOR 170.252 → delta/B/b=4 70.998 B/record: 58.3 % of TOTAL bytes, of which 21.4 % is
-    attributable to the encoding and 78.6 % to placement × batching."""
-    base_total, base_s = 170.252, 66.25
-    opt_total, opt_s = 70.998, 45.0
-    assert base_total - base_s == pytest.approx(104.0, abs=0.01)
-    assert opt_total - opt_s == pytest.approx(26.0, abs=0.01)
+    """A+CBOR 174.252 → delta/B/b=4 71.998 B/record: 58.68 % of TOTAL bytes, of which 20.8 % is
+    attributable to the encoding and 79.2 % to placement × batching (H_f = 44 measured, B1)."""
+    base_total, base_s = 174.252, 66.25
+    opt_total, opt_s = 71.998, 45.0
+    assert base_total - base_s == pytest.approx(108.0, abs=0.01)
+    assert opt_total - opt_s == pytest.approx(27.0, abs=0.01)
 
     total_saving = base_total - opt_total
     auth_saving = (base_total - base_s) - (opt_total - opt_s)
     payload_saving = base_s - opt_s
     assert auth_saving + payload_saving == pytest.approx(total_saving, abs=0.01)
-    assert 100 * total_saving / base_total == pytest.approx(58.3, abs=0.1)
+    assert 100 * total_saving / base_total == pytest.approx(58.68, abs=0.05)
     assert 100 * payload_saving / base_s == pytest.approx(32.1, abs=0.1)
-    assert 100 * auth_saving / total_saving == pytest.approx(78.6, abs=0.1)
-    assert 100 * payload_saving / total_saving == pytest.approx(21.4, abs=0.1)
+    assert 100 * auth_saving / total_saving == pytest.approx(79.2, abs=0.1)
+    assert 100 * payload_saving / total_saving == pytest.approx(20.8, abs=0.1)
 
 
 def test_frozen_e2_still_shows_the_encoding_spread_it_is_credited_for() -> None:

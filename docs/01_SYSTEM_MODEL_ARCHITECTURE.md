@@ -65,30 +65,52 @@ sig 96 B in G2). Accepted and applied everywhere — see DECISIONS.md.
 MessagePack, delta-CBOR (canonical delta vs previous record with periodic keyframes;
 keyframe interval fixed K=16 in this arm — optimizing K is the doc-30/LoRa question).
 
-## 2a. ⚠️ H_f = 40 B is a modelling assumption (added 2026-07-28, pre-P8 audit)
-`H_f` appears in T2, T2a, T6, `b_max`, every byte-accounting formula and the channel-utilisation
-constraint, but **it was never derived and is not measured**. It is an indicative budget for a
-ledger frame header — version + flags, source node id, frame sequence, timestamp, batch count,
-payload length, and the first chain link's context — and no wire-format implementation pins it.
+## 2a. H_f = 44 B — MEASURED from the implemented wire format (B1, 2026-07-29)
+`H_f` feeds T2, T2a, T6, `b_max`, the channel-utilisation constraint and the energy model. It was
+previously an **undocumented assumption of 40 B**. It is now measured directly from
+`placement/wire.py` — the canonical-CBOR frame that this project actually serialises — by encoding
+real frames and subtracting the record and authentication bytes:
 
-**Stated plainly:** it is an assumption, and the thesis must say so rather than let a bare table
-default read as a measurement. Two things bound the damage:
+        H_f = len(encode_frame(F)) − Σ len(record canonical bytes) − len(auth)
 
-* **The auth-byte headline is invariant to it.** The cut is 1 − 1/b (audit F13); H_f cancels
-  identically. Substituting H_f ∈ {20, 40, 80, 200} B changes the headline by **0.0000 %**.
-* **It does bias:** T6's exclusion tiers (a leaner header moves DR3 from excluded to feasible),
-  `b_max` under an MTU, total bytes/record, and therefore channel utilisation and energy.
+**Result: H_f = 44 B** for placement B at every batch 1 ≤ b ≤ 23, stepping to 46 B at b ≥ 24 where
+the CBOR array-length and byte-string-length prefixes widen. The empty frame skeleton alone is
+43 B; most of it is CBOR *text* keys (`v`, `t`, `src`, `base_seq`, `n`, `recs`, `auth`), which an
+integer-keyed profile would shrink substantially — that is a wire-format optimisation this thesis
+does not claim.
 
-**Open action for P8:** either derive H_f from an implemented wire format (`placement/wire.py`
-already serialises frames — measure it) or report T6 and the byte tables against a *range* of H_f.
-Tracked in the open-items list.
+**The model uses a single H_f, but the real value is placement-dependent.** Measured:
+
+| placement | H_f measured | note |
+|---|---|---|
+| **B** (self-batch — *the optimized configuration*) | **44 B** (46 at b ≥ 24) | the adopted model constant |
+| A (inline) | 45 B at b=1, 51 B at b=4 | grows ≈2 B per record: each of the b signatures carries its own CBOR byte-string header |
+| D (block) | 81 B | the auth block adds `block_id` / `frag_idx` / `frag_total` keys and names |
+
+**Direction of the remaining bias, stated rather than hidden.** Using 44 B everywhere
+(i) matches the optimized configuration exactly; (ii) understates the A baseline by 1 B at b=1
+(45 measured), which makes the reported improvement *slightly conservative*; and (iii) understates
+placement D by 37 B, which is **conservative in the direction that matters** — D is already
+rejected on verifiability (T3), and a truer D would look worse still, not better.
+
+**What changed when 40 → 44 was adopted** (no verdict moved):
+
+| quantity | at H_f=40 | at H_f=44 |
+|---|---|---|
+| auth-byte cut | 75.00 % | **75.00 %** — invariant, H_f cancels (F13) |
+| T6 exclusion tiers | DR0–2 signature, DR3 encoding | **identical**; DR3's headroom tightens 11 B → 7 B |
+| T2a binding ceiling | freshness binds | **freshness binds** |
+| `b_max` at MTU 1500 (delta) | 31 | 30 |
+| total bytes/record cut | 58.30 % | **58.68 %** |
+
+*Closes open item B1.*
 
 ## 2. Notation (single source of truth — use everywhere, incl. code comments)
 | Symbol | Meaning | Default |
 |---|---|---|
 | s | encoded record payload bytes | measured (E1) |
 | g | signature bytes (scheme σ) | 64 / 64 / **96** (BLS: blspy AugScheme G2 — DECISIONS) |
-| H_f | ledger frame header bytes | 40 — ⚠️ **modelling assumption, not measured** (see §2a) |
+| H_f | ledger frame header bytes | **44 — measured** from `wire.py` (§2a) |
 | M | application MTU budget | 1500 |
 | b | records per frame (batch) | decision var |
 | p | frame loss probability | {.02,.05,.10} |

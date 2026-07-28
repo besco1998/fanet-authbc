@@ -342,8 +342,9 @@ optimization outcome either — it is ⌊Λ·D_max⌋ = ⌊20 × 0.25⌋ = 5, re
 time at exactly 250.0 ms and the airtime term pushes it over the bound. **b is fixed by two model
 inputs, Λ and D_max.** The optimizer confirms it; it does not discover it.
 
-*(Corollary, useful elsewhere: because H_f cancels, the unreferenced H_f = 40 B assumption cannot
-bias the headline. It still matters for T6, b_max, total bytes and channel utilisation.)*
+*(Corollary, useful elsewhere: because H_f cancels, the headline is immune to it. This was later
+confirmed the hard way — B1 measured H_f = 44 B, not the assumed 40, and the headline did not move
+at all. H_f still matters for T6, b_max, total bytes and channel utilisation.)*
 
 **Why this was not visible earlier.** T2a is the same fact seen from the other side: when freshness
 binds, b = ⌊Λ·D_max⌋ is *independent of s*, so dC/ds = 1 and the encoding decouples from the batch.

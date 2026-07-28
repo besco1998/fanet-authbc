@@ -90,7 +90,7 @@ class LoRaConstraints:
     p_loss: float = 0.05
     duty_cycle: float = lora.DUTY_CYCLE
     chain_hash_bytes: int = 32
-    frame_hdr_bytes: int = 40
+    frame_hdr_bytes: int = 44        # MEASURED (B1, docs/01 §2a)
 
 
 @dataclass(frozen=True)

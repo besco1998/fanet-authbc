@@ -31,7 +31,7 @@ RAW = REPO / "results" / "raw"
 RHOS = (0.0, 0.25, 0.5, 1.0)
 LAMBDAS = (50, 200, 800, 2000)
 BATCHES = (2, 4, 8, 16, 32)
-H_F = 40.0   # frame header bytes (docs/02 T2)
+H_F = 44.0   # frame header bytes — MEASURED from wire.py (B1, docs/01 §2a); was assumed 40.0
 H_A = 0.0    # BLS aggregate header (parameter; 0 = BLS-best case, docs/audits/p5)
 SCHEME_G = {"ed25519": 64.0, "ecdsa_p256": 64.0, "bls": x.G_AGG_BYTES}
 
