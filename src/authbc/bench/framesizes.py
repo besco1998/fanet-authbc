@@ -39,15 +39,38 @@ def amplification(placement: str, s: float, b: int) -> float:
     return (frame_bytes(placement, s, b) / b) / s
 
 
-def measured_sizes(seed: int = 1, n: int = 10_000) -> dict[str, float]:
-    """Mean per-encoding record size s_e. ONE stateful encoder per encoding across the whole
-    stream — a fresh-per-record encoder would make delta emit all keyframes (the P1b pitfall)."""
-    recs = telemgen.samples(seed=seed, n=n)
-    out: dict[str, float] = {}
+# The single sampling protocol for record sizes, shared by E1 and every downstream experiment
+# (audit F4). docs/02 §8 requires ≥30 seeded repetitions with a bootstrap CI, so the 30×1000 form
+# is the standard and single-seed sampling is gone: it produced a 4.1 % disagreement (cbor 68.94 B
+# single-seed vs 66.25 B over 30 seeds) because the telemetry generator random-walks, so one long
+# stream drifts to larger magnitudes than the average of thirty short ones.
+SIZE_SEEDS: tuple[int, ...] = tuple(range(1, 31))
+RECORDS_PER_SEED: int = 1000
+
+
+def size_samples(seeds: tuple[int, ...] = SIZE_SEEDS,
+                 records_per_seed: int = RECORDS_PER_SEED) -> dict[str, list[int]]:
+    """Raw per-record encoded sizes per encoding, pooled over *seeds*.
+
+    ONE stateful encoder per (encoding, seed) stream — a fresh-per-record encoder would make delta
+    emit all keyframes (the P1b pitfall), and a single encoder spanning seeds would carry state
+    across unrelated streams. E1 computes its mean and bootstrap CI from exactly this.
+    """
+    out: dict[str, list[int]] = {}
     for name in ENCODINGS:
-        enc = new_encoder(name)
-        out[name] = mean(len(enc.encode(r)) for r in recs)
+        sizes: list[int] = []
+        for seed in seeds:
+            enc = new_encoder(name)
+            sizes.extend(len(enc.encode(r))
+                         for r in telemgen.samples(seed=seed, n=records_per_seed))
+        out[name] = sizes
     return out
+
+
+def measured_sizes(seeds: tuple[int, ...] = SIZE_SEEDS,
+                   records_per_seed: int = RECORDS_PER_SEED) -> dict[str, float]:
+    """Mean per-encoding record size s_e over the standard 30-seed protocol (audit F4)."""
+    return {k: mean(v) for k, v in size_samples(seeds, records_per_seed).items()}
 
 
 def build_rows(sizes: dict[str, float]) -> list[dict]:

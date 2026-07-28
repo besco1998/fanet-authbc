@@ -19,10 +19,9 @@ from statistics import mean
 import numpy as np
 import yaml
 
-from authbc.bench import framesizes, provenance, telemgen
+from authbc.bench import framesizes, provenance
 from authbc.bench.stats import bootstrap_ci
 from authbc.channel.airtime import airtime_broadcast
-from authbc.encodings.registry import new_encoder
 from authbc.models import energy, optimizer
 from authbc.models.energy import EnergyConfig, Measured, Placement
 from authbc.placement.framer import H_F, M_MTU, b_max, b_max_inline
@@ -57,12 +56,12 @@ def run_e1(cfg: dict) -> list[dict]:
     Same seeds ⇒ same records across encodings (baseline fairness by construction).
     """
     g, n, seeds = cfg["g"], cfg["records_per_seed"], cfg["seeds"]
+    # One sampling implementation for the whole repo (audit F4) — E1's mean/CI and every
+    # downstream experiment's s_e now come from the same call.
+    samples = framesizes.size_samples(tuple(seeds), n)
     rows: list[dict] = []
     for enc_name in cfg["encodings"]:
-        sizes: list[int] = []
-        for seed in seeds:
-            enc = new_encoder(enc_name)  # one stateful encoder per (encoding, seed) stream
-            sizes.extend(len(enc.encode(r)) for r in telemgen.samples(seed=seed, n=n))
+        sizes = samples[enc_name]
         mean_s = mean(sizes)
         lo, hi = bootstrap_ci([float(x) for x in sizes], seed=CI_SEED, statistic=np.mean)
         rows.append({
@@ -89,7 +88,7 @@ def run_e2(cfg: dict) -> list[dict]:
     construction: at Λ=20 rec/s and D_max=250 ms the M=256 rows are MTU-limited (A operative) while
     M=576 and M=1500 are freshness-limited (A = 1).
     """
-    sizes = framesizes.measured_sizes(seed=cfg["size_seed"], n=cfg["size_n"])
+    sizes = framesizes.measured_sizes()
     g_a = cfg["g_a"]
     rows: list[dict] = []
     for m in cfg["mtu_values"]:
@@ -146,7 +145,7 @@ def run_e3(cfg: dict) -> list[dict]:
     (B) / all its block fragments (D) arrived — measured by seeded Bernoulli draws (the emulator's
     model, P3-validated). D's on-air model carries the signature ONCE (byte-optimal, T3 (ii)).
     """
-    s = framesizes.measured_sizes(seed=cfg["size_seed"], n=cfg["size_n"])[cfg["encoding"]]
+    s = framesizes.measured_sizes()[cfg["encoding"]]
     g_a, n_blk, seeds, base = cfg["g_a"], cfg["blocks_per_seed"], cfg["seeds"], cfg["base_seed"]
     bmax_b = int(b_max(s, g_a, mtu=M_MTU))
     rows: list[dict] = []

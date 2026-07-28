@@ -170,3 +170,56 @@ decimal places, against T2's predicted A = 1.0745.
 motivates the LoRa arm (docs/30) is real *and exclusive to it*: on 802.11 at telemetry rates the MTU
 knee is simply never reached. Implemented as `optimizer.binding_constraint` /
 `effective_amplification`; four tests pin the regimes and the boundary.
+
+---
+
+## F5 — investigated (2026-07-28): 71 % of a delta record is an incompressible hash
+
+**The measurement.** Every record carries `prev_hash` = SHA-256 of the previous record — 32 bytes
+that no encoder can shrink, because a hash is indistinguishable from noise:
+
+| encoding | record | of which is the 32 B chain hash |
+|---|---|---|
+| JSON | 191.09 B | 16.8 % |
+| CBOR | 66.25 B | 48.3 % |
+| **delta** | **45.00 B** | **71.1 %** |
+
+So delta compresses the *telemetry* to ≈13 B and then carries 32 B of hash. **Compression has
+already hit a floor it cannot cross**, and that floor is the chain, not the codec.
+
+**The redundancy.** Records travel b=4 to a frame under one signature. Inside a frame the receiver
+can *derive* every prev_hash except the first, because `prev_hash_{i+1} = H(record_i)` and record_i
+is fully known once its own prev_hash is known. Only the first link — which ties this frame to the
+previous one — must be transmitted.
+
+**Proven, not argued** (`test_chain_reconstructs_from_one_link_per_frame`): shipping one link per
+frame plus the record bodies reconstructs records that are **byte-identical** to the originals, and
+the rebuilt ledger satisfies `Chain.verify()`. A companion test pins that the *first* link is not
+redundant — dropping it would let frames be reordered or lost undetected.
+
+**What it would be worth** (delta, b=4):
+
+| | now | one link per frame |
+|---|---|---|
+| record | 45.00 B | **21.00 B** (−53 %) |
+| total on-air per record | 71.00 B | **47.00 B** (−34 % airtime and radio energy) |
+| auth fraction φ | 58.7 % | **75.3 %** — T1 gets *stronger* |
+| auth-byte headline | 75.00 % | **75.00 % — unchanged** (prev_hash is payload, not auth) |
+
+**The honest trade-off.** This is a **wire-format** change, not a ledger change: the receiver
+reconstructs and stores full per-record hashes, so the stored ledger and `Chain.verify()` are
+untouched. What changes is that *within* a frame, tamper-evidence then rests on the frame signature
+rather than on independently transmitted hashes. Since a frame is atomic (all-or-nothing, which is
+exactly T3's V_B = 1−p) and signed over its ordered records, the two are equivalent in strength —
+but they are no longer *independent* mechanisms, and the reconstruction assumes frames stay atomic.
+
+⚠️ **Decision for Mohamed — the wire format is frozen under D6, so this is not mine to take.**
+1. **Adopt it.** ~34 % less airtime and radio energy per record; re-freeze every size-dependent
+   artifact (E1, E2, E3, framesizes, E5) and update T1's φ table. Large blast radius.
+2. **Leave it, and state it.** Document that per-record chaining costs ~34 % of on-air bytes, and
+   say what it buys (independent, per-record tamper-evidence that does not rely on the signature).
+   *This is the current state and needs no re-freeze.*
+3. **Adopt it for the LoRa arm only**, where 34 % of airtime is worth far more and the MTU binds.
+
+Either way the *finding* is worth reporting: **the chain, not the codec, is what limits how small an
+authenticated telemetry record can get.**

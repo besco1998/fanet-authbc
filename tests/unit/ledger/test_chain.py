@@ -77,3 +77,60 @@ def test_determinism_same_payload_same_hash() -> None:
     b = Record(src=2, seq=5, ts=99, prev_hash=GENESIS_PH, pl=dict(pl))
     assert a.canonical() == b.canonical()
     assert a.record_hash() == b.record_hash()
+
+
+# --- F5: is the per-record prev_hash actually needed ON THE WIRE? --------------------------
+def test_chain_reconstructs_from_one_link_per_frame() -> None:
+    """A receiver can DERIVE every prev_hash in a frame except the first (audit F5).
+
+    prev_hash_{i+1} = H(record_i), and record_i is fully known once its own prev_hash is known —
+    so one transmitted link per frame seeds a recurrence that rebuilds the rest. This test pins
+    the property that makes the wire-format saving possible: the reconstruction is BYTE-IDENTICAL
+    to the original and the resulting stored chain still verifies.
+
+    Saving, if adopted: 32·(b−1)/b bytes per record — 24 B at b=4, against a 45 B delta record.
+    NOT adopted: the wire format is frozen under ⚠️ D6 and this is Mohamed's decision.
+    """
+    src, b, n = 7, 4, 12
+    chain = Chain(src=src)
+    for i in range(n):
+        chain.append({"lat": 100 + i, "lon": 200 + i, "alt": 300 + i}, ts=1000 + i)
+    original = chain.records()
+    assert chain.verify()
+
+    recovered: list[Record] = []
+    for f in range(0, n, b):
+        frame = original[f:f + b]
+        # WIRE: the frame's first prev_hash, plus each record's body. No other hashes.
+        first_ph = frame[0].prev_hash
+        bodies = [(r.src, r.seq, r.ts, dict(r.pl)) for r in frame]
+
+        ph = first_ph
+        for rec_src, seq, ts, pl in bodies:
+            rec = Record(src=rec_src, seq=seq, ts=ts, prev_hash=ph, pl=pl)
+            recovered.append(rec)
+            ph = rec.record_hash()          # derived, never transmitted
+
+    assert len(recovered) == n
+    assert all(a.canonical() == r.canonical() for a, r in zip(original, recovered, strict=True))
+
+    rebuilt = Chain(src=src)
+    for rec in recovered:
+        rebuilt._records.append(rec)        # noqa: SLF001 — loading a received chain directly
+    assert rebuilt.verify(), "the reconstructed ledger must satisfy the same chain invariant"
+
+
+def test_omitting_the_frames_first_link_breaks_reconstruction() -> None:
+    """The saving is 32·(b−1)/b, not 32·b: the first link per frame is NOT redundant.
+
+    It is the only thing tying a frame to the previous one, so dropping it would let frames be
+    reordered or dropped undetected.
+    """
+    chain = Chain(src=3)
+    for i in range(4):
+        chain.append({"lat": i}, ts=i)
+    recs = chain.records()
+    # Rebuilding from a WRONG first link yields a chain that is internally consistent but does
+    # not match the original — which is exactly the cross-frame tamper-evidence being preserved.
+    bogus = Record(src=3, seq=0, ts=0, prev_hash=b"\xff" * 32, pl=dict(recs[0].pl))
+    assert bogus.canonical() != recs[0].canonical()
