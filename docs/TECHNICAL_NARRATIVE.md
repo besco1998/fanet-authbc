@@ -387,7 +387,8 @@ results (two retracted broadcast explanations, BLS losing on 802.11) are reporte
 ---
 ## 6. Status and what remains
 - **Complete and green:** P0–P6 + E5 headline + P7a prep + the audit + the reproduction gate, all on
-  one trunk (tags through `p7a-done`). Theorems T1–T5 all validated; NS-3 confirms the DCF to ±5 %.
+  one trunk (tags through `p7-done`). Theorems T1–T5 all validated; NS-3 confirms the unicast DCF
+  to +0.6/−2.9 % and the broadcast model (Ma & Chen) to ≤1.1 %.
 - **Headline stands:** co-design cuts on-air auth bytes **96.77 %** vs the Pillar-1 baseline at
   V≥0.95, p=0.05 — **PASS**.
 - **P7b (hardware):** measure real timings + INA219 energy on RPi4, watch the F6 scheme flip, then

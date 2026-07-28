@@ -26,7 +26,10 @@ KEY FACTS INLINED:
   way to fabricate a fake "model gap" — forbidden.
 - Legit Bianchi-vs-NS-3 gap sources to enumerate & QUANTIFY (never silently correct): EIFS
   after errored frames, capture effect, retry/CW-reset details, propagation-delay defaults.
-- Campaign: N∈{5,10,20,35,50} × 10 seeds × both modes; 30 s runs. Frame sizes come from
+- Campaign: N∈{5,10,20,35,50} × 10 seeds × both modes; **10 s runs as executed** (decision C,
+  2026-07-28 — 10 s already gives ~5000 busy periods/run; the written 30 s was never used).
+  ⚠️ **Superseded guidance below:** broadcast must NOT be compared to a reduction of the unicast
+  model — use Ma & Chen (docs/02 §6a). Transport is PacketSocket + PacketSink, not FlowMonitor. Frame sizes come from
   results/raw/framesizes.csv (real framer output from P3, imported at SYNC-3); until then use
   spec-level sizes. Runtime budget: full matrix < 2 h on WSL.
 

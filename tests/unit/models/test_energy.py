@@ -2,24 +2,28 @@
 
 Every expected energy is recomputed here by INDEPENDENT plain arithmetic (not by calling the
 module's internal helpers) and asserted against per_record() — the Law-6 hand-check. Airtime is
-built from the trusted, separately-tested bianchi affine form T_air(L) = T_FX + 8L/R.
+recomputed here from raw 802.11a constants, quantised to whole OFDM symbols (decision D9).
 """
 
 from __future__ import annotations
 
+import math
+
 import pytest
 
-from authbc.models import bianchi, energy
+from authbc.models import bianchi
 from authbc.models.energy import EnergyConfig, Measured, Placement, frame_bytes, per_record
 
 
 def _air(nbytes: float) -> float:
-    """Independent airtime: T_air(L) = T_FX + 8L/R (docs/02 §6).
+    """Independent broadcast airtime, from raw constants: PPDU(L + 36 B) + DIFS.
 
-    Uses the BROADCAST fixed part (audit F2): the telemetry substrate never ACKs, so bianchi.T_FX
-    (unicast, incl. SIFS+ACK) would over-count by ~22 us/frame.
+    BROADCAST, never unicast (audit F2): the telemetry substrate never ACKs, so no SIFS + ACK.
+    Quantised to whole 4 µs OFDM symbols (decision D9) — airtime is a step function of L, so
+    there is no fixed part plus linear term to shortcut with.
     """
-    return energy.T_FX_BROADCAST + 8.0 * nbytes / bianchi.R_BPS
+    symbols = math.ceil((16 + 8.0 * (nbytes + 36) + 6) / 24)
+    return 20e-6 + symbols * 4e-6 + 34e-6
 
 
 # A representative measured set (synthetic but order-of-magnitude realistic, docs/04 §1):
@@ -72,26 +76,24 @@ def test_placement_D_amortizes_like_block() -> None:
 
 
 def test_placement_D_multiframe_airtime_hand_calc() -> None:
-    """D over n frames: radio counts n·T_FX + one header per frame (not one giant frame)."""
+    """D over n frames: radio counts n PPDUs + one header per frame (not one giant frame)."""
     cfg = EnergyConfig(
         Placement.D, batch=35, record_bytes=42, auth_bytes=64, frame_hdr_bytes=40, n_frames=3
     )
     n = 3
-    air = n * energy.T_FX_BROADCAST + 8.0 * (35 * 42 + 64 + n * 40) / bianchi.R_BPS
+    air = n * _air((35 * 42 + 64 + n * 40) / n)
     e_cpu = 2.0 * (50e-6 + 60e-6 / 35 + 100e-6 / 35)
     e_radio = 0.8 * air / 35
     assert per_record(cfg, M) == pytest.approx(e_cpu + e_radio, abs=1e-15)
 
 
 def test_n_frames_one_reduces_to_single_frame_form() -> None:
-    """n_frames=1 must be byte-identical to the single-frame §7 airtime T_air(frame_bytes)."""
+    """n_frames=1 must be byte-identical to the single-frame §7 broadcast airtime."""
     cfg = EnergyConfig(Placement.B, batch=10, record_bytes=130, auth_bytes=64, frame_hdr_bytes=40)
     from authbc.models.energy import radio_airtime_s
 
-    # bianchi.t_air uses the UNICAST T_FX; the broadcast form differs by exactly that delta.
-    delta = bianchi.T_FX - energy.T_FX_BROADCAST
-    assert radio_airtime_s(cfg) == pytest.approx(bianchi.t_air(frame_bytes(cfg)) - delta,
-                                                 abs=1e-18)
+    assert radio_airtime_s(cfg) == pytest.approx(_air(frame_bytes(cfg)), abs=1e-18)
+    assert radio_airtime_s(cfg) == pytest.approx(bianchi.t_broadcast(frame_bytes(cfg)), abs=1e-18)
 
 
 def test_batching_reduces_energy_monotonically() -> None:

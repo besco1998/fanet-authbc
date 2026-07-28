@@ -1,5 +1,16 @@
 # Full project audit — scientific + engineering, pre-P7b (2026-07-05)
 
+> # ⚠️ PARTIALLY SUPERSEDED — correction added 2026-07-28
+> Finding **F7** ("broadcast gap → 1735 % at N=50 is the capture effect; unicast ±5 % is the
+> quantitative validation") is **RETRACTED on both halves**:
+> * capture was later measured at **0 %** — the cause is the backoff counter Consecutive Freeze
+>   Process, and the corrected broadcast model is Ma & Chen's published one (2007/2008);
+> * the unicast ±1.8–5.3 % was mostly measurement bug **F8** (sinks outliving sources) plus the
+>   0.41 %/12.1 % airtime approximation fixed by decision **D9**. Unicast now agrees to
+>   **+0.6 … −2.9 %**, and broadcast to **≤1.1 %** against the published model.
+> Kept unedited below as the audit trail. **Current state: docs/audits/p7.md + docs/02 §6/§6a.**
+
+
 Whole-repo Law-5 (audit–attack–fix) + Law-6 (results-check) pass across every layer built P0→E5+P7a,
 requested before opening the hardware gate. Baseline: `p7a-done`, **849 tests / 90 % coverage green**.
 Method: re-derive each formula from docs/01–02 and check against code; hand-cross-check one point per

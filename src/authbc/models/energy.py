@@ -34,13 +34,10 @@ from enum import StrEnum
 
 from authbc.models import bianchi
 
-# Fixed (payload-independent) channel-busy time of ONE BROADCAST frame (audit finding F2).
-# bianchi.T_FX is the UNICAST value: it includes SIFS + ACK because a unicast exchange is
-# DATA->SIFS->ACK. The telemetry substrate is 802.11 BROADCAST, which never ACKs, so the correct
-# fixed part is T_phy + 8*MAC_OVH/R + DIFS + delta. Using the unicast figure over-counted the
-# receiver radio term by ~22 us per frame. Matches channel/airtime.T_FX_BROADCAST_US.
-T_FX_BROADCAST: float = (bianchi.T_PHY + 8.0 * bianchi.MAC_OVH_BYTES / bianchi.R_BPS
-                         + bianchi.DIFS + bianchi.DELTA)
+# The telemetry substrate is 802.11 BROADCAST, which never ACKs (audit F2), so a frame's
+# channel-busy time is its PPDU plus DIFS — `bianchi.t_broadcast`. There is deliberately no
+# "T_fx" constant here any more: since decision D9 airtime is computed from the exact OFDM symbol
+# count, which is a STEP function of the frame size, so no fixed part plus linear term exists.
 
 
 class Placement(StrEnum):
@@ -107,18 +104,20 @@ def frame_bytes(cfg: EnergyConfig) -> float:
 
 
 def radio_airtime_s(cfg: EnergyConfig) -> float:
-    """Total channel-busy airtime of the batch [s] (docs/02 §6): n frames, each T_fx + its data.
+    """Total channel-busy airtime of the batch [s] (docs/02 §6/§7): n broadcast frames.
 
-    = n·T_fx + 8·(b·s + g_a + n·H_f)/R. For n_frames=1 this reduces EXACTLY to
-    T_air(b·s+g_a+H_f) — the single-frame §7 form; for D it counts one T_fx + one header per
+    The batch occupies n frames carrying b·s + g_a + n·H_f payload bytes in total; the model has
+    no per-frame split, so the payload is charged evenly across the n frames and each frame's
+    airtime is computed EXACTLY (`bianchi.t_broadcast` = OFDM PPDU + DIFS). For n_frames=1 this is
+    the single-frame §7 form. For block-level D it charges one PPDU + one DIFS + one header per
     frame the block occupies, so D's per-frame overhead is not silently undercounted.
 
-    Uses T_FX_BROADCAST (≈100 µs), NOT bianchi.T_FX (≈122 µs, unicast incl. SIFS+ACK) — audit
-    finding F2, RESOLVED in the P7 re-run.
+    Broadcast, never unicast (audit F2): no SIFS, no ACK. Airtime is quantised to whole 4 µs OFDM
+    symbols (decision D9), so it is NOT linear in the payload.
     """
     n = cfg.n_frames
     data_bytes = cfg.batch * cfg.record_bytes + cfg.auth_bytes + n * cfg.frame_hdr_bytes
-    return n * T_FX_BROADCAST + 8.0 * data_bytes / bianchi.R_BPS
+    return n * bianchi.t_broadcast(data_bytes / n)
 
 
 def _sign_cpu_per_record(cfg: EnergyConfig, m: Measured) -> float:

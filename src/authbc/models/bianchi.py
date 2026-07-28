@@ -35,7 +35,7 @@ SLOT: float = 9e-6        # empty (idle) backoff slot σ, s
 DIFS: float = 34e-6       # DCF interframe space, s
 DELTA: float = 1e-6       # propagation delay δ, s
 ACK_BYTES: int = 14       # ACK frame length, bytes
-MAC_OVH_BYTES: int = 34   # MAC header + FCS carried with every data frame, bytes
+MAC_OVH_BYTES: int = 36   # LLC/SNAP 8 + MAC header 24 + FCS 4, carried with every data frame
 R_BPS: float = 6e6        # OFDM data rate, bits/s
 
 # tol/budget for the damped fixed-point iteration
@@ -43,64 +43,12 @@ _TOL: float = 1e-12
 _MAX_ITER: int = 100_000
 
 
-def _airtime(nbytes: float) -> float:
-    """On-air time for *nbytes* bytes at the PHY data rate R (seconds)."""
-    return 8.0 * nbytes / R_BPS
-
-
-# ACK airtime includes its own PHY preamble (physically correct; docs/02 §6 lists T_ack).
-T_ACK: float = T_PHY + _airtime(ACK_BYTES)
-
-
-def t_success(payload_bytes: float) -> float:
-    """T_s(L): channel time of a *successful* DATA→SIFS→ACK exchange (docs/02 §6), seconds.
-
-    T_s = T_phy + 8(L+MAC_OVH)/R + SIFS + δ + T_ack + DIFS + δ.
-    """
-    return (
-        T_PHY
-        + _airtime(payload_bytes + MAC_OVH_BYTES)
-        + SIFS
-        + DELTA
-        + T_ACK
-        + DIFS
-        + DELTA
-    )
-
-
-def t_collision(payload_bytes: float) -> float:
-    """T_c(L): channel time of a *collision* (no ACK; sender waits DIFS), seconds (docs/02 §6).
-
-    T_c = T_phy + 8(L+MAC_OVH)/R + DIFS + δ.
-    """
-    return T_PHY + _airtime(payload_bytes + MAC_OVH_BYTES) + DIFS + DELTA
-
-
-# Fixed airtime overhead of a frame for the energy/latency model (docs/02 §6: T_fx ≈ 123 µs).
-# T_air(L) = T_fx + 8L/R with T_fx = channel-busy part of a successful exchange minus the DIFS
-# idle deferral = T_s(0) − DIFS = T_phy + 8·MAC_OVH/R + SIFS + T_ack + 2δ = 122.0 µs. This
-# reconciles with the doc's "≈123 µs" anchor (the doc rounds the 8·34/6 and δ terms).
-T_FX: float = T_PHY + _airtime(MAC_OVH_BYTES) + SIFS + T_ACK + 2 * DELTA
-
-
-def t_air(payload_bytes: float) -> float:
-    """T_air(L) = T_fx + 8L/R: channel-busy airtime of one frame (docs/02 §6), seconds.
-
-    Used by the energy model (docs/02 §7) as the receiver on-air time per frame.
-    """
-    return T_FX + _airtime(payload_bytes)
-
-
-# --- EXACT 802.11a OFDM airtime (audit A1/A10: for comparison against a real PHY) ------------
-# The constants above model airtime as continuous 8N/R. A real 802.11a PHY sends whole 4 µs OFDM
-# symbols and prepends 16 SERVICE + 6 TAIL bits, and the MAC prepends LLC/SNAP. Measured against
-# NS-3 3.41 the continuous form is 0.41 % short on a 1400 B data frame (1932 vs 1940 µs) and
-# **12.1 % short on an ACK** (38.67 vs 44 µs), because a 14 B ACK needs 6 whole symbols.
-#
-# These helpers are SEPARATE from the constants above on purpose: T_PHY/MAC_OVH_BYTES/R_BPS feed
-# `models.energy` (and hence the frozen E5 energy column), so quantising them is a docs/02 §6 spec
-# change and Mohamed's call (Law 8). Nothing here is used by the energy path — only by the NS-3
-# comparison, which must be apples-to-apples with the simulator's real PHY.
+# --- EXACT 802.11a OFDM airtime (docs/02 §6, decision D9) -----------------------------------
+# Airtime is NOT linear in the payload: an 802.11a PHY transmits whole 4 µs OFDM symbols and
+# prepends 16 SERVICE + 6 TAIL bits. Modelling it as continuous 8N/R understated a 1400 B data
+# frame by 0.41 % and an ACK by 12.1 % against NS-3 3.41 (audit A1). Because airtime is a step
+# function of L, there is no meaningful constant "T_fx" and no linear `t_air(L)` — every airtime
+# below is computed from the frame's actual size.
 OFDM_SYMBOL: float = 4e-6       # 802.11a OFDM symbol duration, s
 SERVICE_BITS: int = 16          # PLCP SERVICE field prepended to the PSDU
 TAIL_BITS: int = 6              # convolutional-code tail
@@ -108,37 +56,48 @@ LLC_SNAP_BYTES: int = 8         # 802.2 LLC/SNAP header carried under the MSDU
 MAC_HDR_FCS_BYTES: int = 28     # non-QoS 3-address MAC header (24) + FCS (4)
 
 
-def ofdm_ppdu(nbytes: int, rate_bps: float = R_BPS) -> float:
+def ofdm_ppdu(nbytes: float, rate_bps: float = R_BPS) -> float:
     """Exact 802.11a PPDU duration for an *nbytes* PSDU (seconds).
 
-    T_phy + ceil((16 + 8N + 6) / bits-per-symbol) · 4 µs. Verified against NS-3: 1940 µs for the
-    1436 B MPDU of a 1400 B payload, 44 µs for a 14 B ACK.
+    T_phy + ceil((16 + 8N + 6) / bits-per-symbol) · 4 µs. Verified against NS-3 3.41: 1940 µs for
+    the 1436 B MPDU of a 1400 B payload, and 44 µs for a 14 B ACK.
     """
     bits_per_symbol = rate_bps * OFDM_SYMBOL
-    n_symbols = -(-(SERVICE_BITS + 8 * nbytes + TAIL_BITS) // int(bits_per_symbol))
+    n_symbols = -(-(SERVICE_BITS + 8.0 * nbytes + TAIL_BITS) // bits_per_symbol)
     return T_PHY + n_symbols * OFDM_SYMBOL
 
 
-def mpdu_bytes(payload_bytes: float) -> int:
-    """On-air MPDU size for an *payload_bytes* MAC-SDU: payload + LLC/SNAP + MAC header + FCS."""
-    return int(payload_bytes) + LLC_SNAP_BYTES + MAC_HDR_FCS_BYTES
+def mpdu_bytes(payload_bytes: float) -> float:
+    """On-air MPDU size for a *payload_bytes* MAC-SDU: payload + LLC/SNAP + MAC header + FCS."""
+    return payload_bytes + MAC_OVH_BYTES
 
 
-T_ACK_EXACT: float = ofdm_ppdu(ACK_BYTES)  # 44 µs, vs the continuous model's 38.67 µs
+# ACK airtime includes its own PHY preamble. 14 B needs 6 whole symbols ⇒ 44 µs, not 38.67 µs.
+T_ACK: float = ofdm_ppdu(ACK_BYTES)
 
 
-def t_success_exact(payload_bytes: float) -> float:
-    """T_s with a real OFDM PHY: DATA + SIFS + ACK + DIFS. Measured NS-3 floor: 94 µs after DATA."""
-    return ofdm_ppdu(mpdu_bytes(payload_bytes)) + SIFS + T_ACK_EXACT + DIFS
+def t_success(payload_bytes: float) -> float:
+    """T_s(L): channel time of a *successful* DATA→SIFS→ACK exchange (docs/02 §6), seconds.
+
+    T_s = PPDU(L+MAC_OVH) + SIFS + T_ack + DIFS. NS-3 measures the deferral floor after a
+    successful unicast exchange at exactly SIFS + T_ack + DIFS = 94 µs past the data frame.
+    """
+    return ofdm_ppdu(mpdu_bytes(payload_bytes)) + SIFS + T_ACK + DIFS
 
 
-def t_collision_exact(payload_bytes: float) -> float:
-    """T_c with a real OFDM PHY: DATA + DIFS. NS-3 gap floor after a collision: DIFS + one slot."""
+def t_collision(payload_bytes: float) -> float:
+    """T_c(L): channel time of a *collision* (no ACK; the field waits DIFS), seconds.
+
+    T_c = PPDU(L+MAC_OVH) + DIFS. NS-3's measured post-collision gap floor is DIFS + one slot.
+    """
     return ofdm_ppdu(mpdu_bytes(payload_bytes)) + DIFS
 
 
-def t_broadcast_exact(payload_bytes: float) -> float:
-    """Busy-period time of one broadcast frame (never ACKed): DATA + DIFS."""
+def t_broadcast(payload_bytes: float) -> float:
+    """Channel-busy time of one BROADCAST frame (never ACKed): PPDU(L+MAC_OVH) + DIFS, seconds.
+
+    This is the energy model's per-frame on-air time (docs/02 §7) and Ma & Chen's `T`.
+    """
     return ofdm_ppdu(mpdu_bytes(payload_bytes)) + DIFS
 
 
@@ -188,9 +147,8 @@ def solve(
     Damped iteration p_c ← 0.7·p_c + 0.3·p_c_new from p_c=0, converging on |Δp_c| < 1e-12
     (docs/02 §6). Returns τ, p_c, the success/transmit probabilities, E[slot], and throughput.
 
-    *t_s*/*t_c* override the success/collision slot times. They exist so the NS-3 comparison can
-    supply the EXACT OFDM airtimes (`t_success_exact`/`t_collision_exact`) without changing the
-    docs/02 §6 constants that the energy model depends on. Defaults reproduce the doc's model.
+    *t_s*/*t_c* override the success/collision slot times; the defaults are the exact OFDM
+    airtimes and are what docs/02 §6 specifies. The overrides exist for sensitivity studies.
 
     Raises ValueError for n < 1 and ConvergenceError if the iteration exceeds the budget.
     """

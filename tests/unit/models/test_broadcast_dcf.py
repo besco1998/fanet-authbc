@@ -17,7 +17,7 @@ from authbc.models import bianchi, broadcast_dcf
 from authbc.sim import dcf_ladder
 
 _L = 1400.0
-_T_BUSY = bianchi.t_broadcast_exact(_L)      # 1974 µs — measured NS-3 PPDU + DIFS
+_T_BUSY = bianchi.t_broadcast(_L)      # 1974 µs — measured NS-3 PPDU + DIFS
 _W0 = 16
 
 

@@ -21,7 +21,7 @@ import yaml
 
 from authbc.bench import framesizes, provenance, telemgen
 from authbc.bench.stats import bootstrap_ci
-from authbc.channel.airtime import DELTA_US, DIFS_US, MAC_HDR_B, T_PHY_US, tx_us
+from authbc.channel.airtime import airtime_broadcast
 from authbc.encodings.registry import new_encoder
 from authbc.models import energy, optimizer
 from authbc.models.energy import EnergyConfig, Measured, Placement
@@ -111,9 +111,12 @@ def run_e2(cfg: dict) -> list[dict]:
 
 # --------------------------------------------------------------------------- E3 (T3)
 def _airtime_multiframe(n_frames: int, total_payload_bytes: float) -> float:
-    """Broadcast airtime for n frames carrying total_payload_bytes (excl. MAC hdr)."""
-    fixed = n_frames * (T_PHY_US + DIFS_US + DELTA_US)
-    return fixed + tx_us(total_payload_bytes + n_frames * MAC_HDR_B)
+    """Broadcast airtime (µs) for n frames carrying total_payload_bytes (excl. MAC overhead).
+
+    Airtime is quantised to whole OFDM symbols (decision D9), so it is computed per frame with
+    the payload charged evenly across the n frames — not as a fixed part plus a linear term.
+    """
+    return n_frames * airtime_broadcast(total_payload_bytes / n_frames)
 
 
 def run_e3(cfg: dict) -> list[dict]:

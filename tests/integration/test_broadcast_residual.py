@@ -30,7 +30,7 @@ RAW = Path(__file__).resolve().parents[2] / "results" / "raw"
 _PERIODS = 100_000
 _L = 1400.0
 # Exact 802.11a OFDM busy-period time (audit A1): DATA PPDU + DIFS = 1974 us, measured.
-_T_BUSY = bianchi.t_broadcast_exact(_L)
+_T_BUSY = bianchi.t_broadcast(_L)
 
 
 def _measured() -> dict[int, dict[str, float]]:

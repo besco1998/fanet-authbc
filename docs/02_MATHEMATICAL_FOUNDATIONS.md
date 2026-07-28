@@ -64,13 +64,30 @@ MTU binds. **Validate:** E5 end-to-end vs baselines {A+JSON, A+CBOR, D-overagg}.
 ## 6. Channel model — Bianchi DCF (802.11, saturation)
 Fixed point over (τ, p_c): τ = 2(1−2p_c) / [(1−2p_c)(W+1) + p_c·W(1−(2p_c)^m)],
 p_c = 1−(1−τ)^{N−1}; W=16, m=6. **Solve with damped iteration** p←0.7p+0.3p_new,
-tol 1e−12 (undamped oscillates at high N — verified). Slot durations (OFDM, 6 Mb/s):
-T_s(L) = T_phy + 8(L+34)/R + SIFS + δ + T_ack + DIFS + δ; T_c(L) = T_phy + 8(L+34)/R +
-DIFS + δ, with T_phy=20 µs, SIFS=16 µs, slot=9 µs, DIFS=34 µs, ACK 14 B, δ=1 µs.
-Fixed overhead **T_fx ≈ 123 µs**. Throughput S = P_tr·P_s·E[payload]/E[slot] as standard.
-Airtime per frame: T_air(L) = T_fx + 8L/R. **Validate:** E5 vs NS-3; expect and *report*
-known gaps rather than force-fitting. Measured against NS-3 3.41: unicast agrees to
-**+0.6 … −2.9 %** across N=5–50 (audit F8/F9).
+tol 1e−12 (undamped oscillates at high N — verified).
+
+**Slot durations — airtime is QUANTISED, not linear (decision D9, 2026-07-28).** An 802.11a PHY
+transmits whole 4 µs OFDM symbols and prepends 16 SERVICE + 6 TAIL bits; the MAC carries 36 B of
+overhead (LLC/SNAP 8 + MAC header 24 + FCS 4). Therefore:
+
+    PPDU(N) = T_phy + ceil((16 + 8N + 6) / (R·4 µs)) · 4 µs        [N = PSDU bytes]
+    T_s(L)  = PPDU(L+36) + SIFS + T_ack + DIFS                     [unicast success]
+    T_c(L)  = PPDU(L+36) + DIFS                                    [collision]
+    T_air(L)= PPDU(L+36) + DIFS                                    [broadcast; the energy model]
+    T_ack   = PPDU(14) = 44 µs
+
+with T_phy=20 µs, SIFS=16 µs, slot=9 µs, DIFS=34 µs. Throughput S = P_tr·P_s·E[payload]/E[slot].
+
+**There is deliberately no "T_fx ≈ 123 µs" constant and no affine `T_air(L) = T_fx + 8L/R`.**
+Airtime is a *step* function of L, so no fixed part plus linear term exists. The superseded
+continuous form understated a 1400 B data frame by **0.41 %** and an ACK by **12.1 %** measured
+against NS-3 3.41 (audit A1); it also used 34 B of MAC overhead instead of the real 36 B.
+
+Verified: PPDU(1436) = 1940 µs and PPDU(14) = 44 µs, both matching NS-3 3.41 exactly, and the
+post-success deferral floor SIFS+T_ack+DIFS = 94 µs matching the measured trace.
+
+**Validate:** E5 vs NS-3; expect and *report* known gaps rather than force-fitting. Measured
+against NS-3 3.41: unicast agrees to **+0.6 … −2.9 %** across N=5–50 (audit F8/F9).
 
 ### 6a. Broadcast is a DIFFERENT model — do not reduce the unicast one ⚠️
 The above is the **ACK/unicast** model. AUTHBC's telemetry substrate is **broadcast**, which never
@@ -108,11 +125,15 @@ papers did not test (they used W₀ = 32 and 128 at 1 Mb/s).
   Function Modeling Approaches," *IEEE Trans. Veh. Technol.* 59(3):1055–1067, Mar. 2010 —
   the unicast counterpart ("anomalous slots"); confirms consecutive channel slots are correlated.
 
-**⚠️ Known approximation in the airtime constants above (audit A1):** they model airtime as
-continuous 8N/R, whereas a real 802.11a PHY sends whole 4 µs OFDM symbols and carries 36 B of
-overhead (LLC/SNAP 8 + MAC 24 + FCS 4). Measured error: **0.41 %** on a 1400 B data frame and
-**12.1 %** on an ACK. `models.bianchi.ofdm_ppdu` / `t_*_exact` implement the exact form and are
-used for every NS-3 comparison; the constants above still feed `models.energy` pending decision.
+**Decision D9 applied (2026-07-28):** the exact quantised form above is now normative and is used
+by **every** consumer — the NS-3 comparison, `models.energy`, and `channel.airtime` — so the repo
+has exactly one airtime implementation. Re-freeze consequences: E5's energy column moved
+**+0.096 %** (52.1487 → 52.1985 µJ) and E3's goodput **−2.1 %** (small frames pay proportionally
+more for symbol rounding). The **auth-byte headline is byte-based and did not move: 96.77 %, PASS.**
+
+*Scope note:* T4/E4's ΔRADIO = 8·Δbytes/R is a byte *difference*, which quantisation makes
+frame-size dependent (±5 % on ~43 µs). E4 is left on the continuous form: the verdict has ~90×
+margin (min κ\* = 31.64 vs plausible κ = 0.34), so no conclusion is sensitive to it.
 
 ## 7. Energy and latency models
 Energy/record: **E = P_c·(t_enc + t_sg/b + t_ver_amort(b)) + P_r·T_air(frame)/b**, where

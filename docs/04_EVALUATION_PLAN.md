@@ -39,11 +39,18 @@ predicted regime.
 
 ## 3. NS-3 campaign (P6)
 Scenario `authbc-sat.cc`: 802.11a ad-hoc, ConstantRateWifiManager OfdmRate6Mbps, RTS/CTS
-off, N saturated broadcast senders with frame sizes taken from the real framer outputs
-(read from a CSV the Python side exports), 30 s runs × 10 seeds, FlowMonitor + PHY-state
-trace → CSV. Compare saturation throughput and airtime share vs Bianchi across N; report
-the gap and its known causes (EIFS, capture, retries) — correction factors documented,
-never silently applied. Runtime budget: full matrix < 2 h on WSL.
+off, N saturated senders in **both** modes (unicast with ACKs, broadcast without), frame
+sizes taken from the real framer outputs, **10 s runs × 10 seeds** over N∈{5,10,20,35,50}.
+Transport is **PacketSocket + PacketSink**, not FlowMonitor: we need MAC-level goodput with no
+ARP/IP artifacts, and the accounting is provably exact (audit A12). Parse via the committed
+`ns3/parse_ns3.py` / `ns3/run_matrix.py`; never hand-copy numbers.
+
+Compare each mode ONLY to its matching analytic variant: unicast ↔ ACK-Bianchi, broadcast ↔
+**Ma & Chen** (docs/02 §6a) — *not* the unicast model with the ACK removed, which fails by 16×.
+Report the gap and its causes; correction factors documented, never silently applied. Measured
+causes to date: **F8** sinks outliving sources (~4.8 %), **D9** airtime quantisation (0.41 %/12.1 %),
+and the Consecutive Freeze Process (the 16×). Frame **capture is measured at 0 %** in this
+scenario and is not a gap source. `make sim-ns3-matrix` / `make sim-ns3-dcf`; runtime ≪ 2 h.
 
 ## 4. RPi4 hardware campaign (P7, schedule-flexible)
 4× RPi4 (Bookworm 64-bit, performance governor, headless). Steps: (i) rerun P1 micro

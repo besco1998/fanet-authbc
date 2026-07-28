@@ -44,7 +44,7 @@ def broadcast_maachen_mbps(n: int, payload_bytes: float) -> float:
     doubles and a station that has just transmitted may redraw 0 and seize the next slot.
     """
     return broadcast_dcf.solve(
-        n, payload_bytes, bianchi.t_broadcast_exact(payload_bytes), w0=bianchi.W,
+        n, payload_bytes, bianchi.t_broadcast(payload_bytes), w0=bianchi.W,
         slot_s=bianchi.SLOT,
     ).throughput_bps / 1e6
 
@@ -52,7 +52,7 @@ def broadcast_maachen_mbps(n: int, payload_bytes: float) -> float:
 def broadcast_naive_mbps(n: int, payload_bytes: float) -> float:
     """The DISCARDED in-house reduction (τ = 2/(W+1)), plotted only to show that it fails."""
     return broadcast_dcf.naive_reduction_mbps(
-        n, payload_bytes, bianchi.t_broadcast_exact(payload_bytes), w=bianchi.W,
+        n, payload_bytes, bianchi.t_broadcast(payload_bytes), w=bianchi.W,
         slot_s=bianchi.SLOT,
     )
 
@@ -87,8 +87,8 @@ def summarize(rows: list[dict]) -> dict:
                 # not against a 0.4–12 % airtime approximation (audit A1/A10).
                 analytic = bianchi.solve(
                     n, payload,
-                    t_s=bianchi.t_success_exact(payload),
-                    t_c=bianchi.t_collision_exact(payload),
+                    t_s=bianchi.t_success(payload),
+                    t_c=bianchi.t_collision(payload),
                 ).throughput_bps / 1e6
                 naive = None
             else:

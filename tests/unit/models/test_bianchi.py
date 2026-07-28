@@ -131,15 +131,13 @@ def test_non_convergence_raises_not_silent(monkeypatch: pytest.MonkeyPatch) -> N
 
 
 # --- airtime / T_fx reconciliation (docs/02 §6 "T_fx ≈ 123 µs") ---------------------------
-def test_tfx_reconciles_with_doc_anchor() -> None:
-    assert b.T_FX == pytest.approx(122e-6, abs=1e-9)     # exact term breakdown
-    assert b.T_FX == pytest.approx(123e-6, abs=1.5e-6)   # within rounding of the doc anchor
-    assert b.T_FX == pytest.approx(b.t_success(0) - b.DIFS)  # = successful exchange − DIFS idle
-
-
-def test_t_air_is_affine_in_payload() -> None:
-    for length in (0, 100, 1000):
-        assert b.t_air(length) == pytest.approx(b.T_FX + 8.0 * length / b.R_BPS)
+def test_airtime_is_a_step_function_so_no_fixed_part_exists() -> None:
+    """Decision D9 removed T_FX and t_air deliberately: with OFDM symbol quantisation there is
+    no constant overhead plus linear term, so keeping either would invite the old error back."""
+    assert not hasattr(b, "T_FX")
+    assert not hasattr(b, "t_air")
+    jumps = {round((b.t_broadcast(x + 1) - b.t_broadcast(x)) * 1e6, 6) for x in range(100, 130)}
+    assert jumps <= {0.0, 4.0}, "each extra byte costs either nothing or one whole 4 µs symbol"
 
 
 # --- exact 802.11a OFDM airtime (audit A1/A10) ---------------------------------------------
@@ -150,38 +148,42 @@ def test_ofdm_ppdu_matches_measured_ns3_durations() -> None:
     exactly 1 940 000 ns and every ACK exactly 44 000 ns.
     """
     assert b.ofdm_ppdu(b.mpdu_bytes(1400)) == pytest.approx(1940e-6, abs=1e-12)
-    assert b.T_ACK_EXACT == pytest.approx(44e-6, abs=1e-12)
+    assert b.T_ACK == pytest.approx(44e-6, abs=1e-12)
     assert b.mpdu_bytes(1400) == 1436  # 1400 payload + 8 LLC/SNAP + 24 MAC hdr + 4 FCS
 
 
-def test_ofdm_quantisation_is_what_the_continuous_model_misses() -> None:
-    """Records the size of the approximation the docs/02 §6 constants carry."""
+def test_quantisation_is_what_the_superseded_continuous_model_missed() -> None:
+    """Records the size of the error decision D9 removed, so it cannot silently return.
+
+    The old model used a continuous 8N/R airtime and a 34 B MAC overhead. Against the exact
+    form it was 0.41 % short on a 1400 B data frame and 12.1 % short on an ACK.
+    """
+    old_data = b.T_PHY + 8 * (1400 + 34) / b.R_BPS          # superseded continuous form
     exact_data = b.ofdm_ppdu(b.mpdu_bytes(1400))
-    cont_data = b.T_PHY + 8 * (1400 + b.MAC_OVH_BYTES) / b.R_BPS
-    assert cont_data < exact_data
-    assert (exact_data - cont_data) / exact_data == pytest.approx(0.0041, abs=5e-4)  # 0.41 %
-    # The ACK is the bad one: 14 B needs 6 whole symbols, so continuous 8N/R is 12 % short.
-    assert (b.T_ACK_EXACT - b.T_ACK) / b.T_ACK_EXACT == pytest.approx(
-        0.121, abs=5e-3)
+    assert exact_data == pytest.approx(1940e-6, abs=1e-12)
+    assert (exact_data - old_data) / exact_data == pytest.approx(0.0041, abs=5e-4)
+
+    old_ack = b.T_PHY + 8 * b.ACK_BYTES / b.R_BPS           # 38.67 µs
+    assert (b.T_ACK - old_ack) / b.T_ACK == pytest.approx(0.121, abs=5e-3)
 
 
 def test_exact_slot_times_match_measured_ns3_deferral_floors() -> None:
     """NS-3 gap floors: 94 µs after a success (SIFS+ACK+DIFS) and 43 µs = DIFS+slot after a
     collision, both measured from the busy-period trace at N=50 unicast."""
     data = b.ofdm_ppdu(b.mpdu_bytes(1400))
-    assert b.t_success_exact(1400) - data == pytest.approx(94e-6, abs=1e-12)
-    assert b.t_collision_exact(1400) - data == pytest.approx(b.DIFS, abs=1e-12)
-    assert b.t_broadcast_exact(1400) == pytest.approx(1974e-6, abs=1e-12)
+    assert b.t_success(1400) - data == pytest.approx(94e-6, abs=1e-12)
+    assert b.t_collision(1400) - data == pytest.approx(b.DIFS, abs=1e-12)
+    assert b.t_broadcast(1400) == pytest.approx(1974e-6, abs=1e-12)
 
 
-def test_solve_airtime_overrides_leave_the_default_model_untouched() -> None:
-    """The override exists for the NS-3 comparison; omitting it must reproduce docs/02 §6."""
+def test_solve_airtime_overrides_default_to_the_exact_model() -> None:
+    """Defaults are now the exact OFDM airtimes; the override remains for sensitivity studies."""
     base = b.solve(20, 1400.0)
-    same = b.solve(20, 1400.0,
-                         t_s=b.t_success(1400.0), t_c=b.t_collision(1400.0))
+    same = b.solve(20, 1400.0, t_s=b.t_success(1400.0), t_c=b.t_collision(1400.0))
     assert same.throughput_bps == pytest.approx(base.throughput_bps, rel=1e-15)
-    exact = b.solve(20, 1400.0,
-                          t_s=b.t_success_exact(1400.0), t_c=b.t_collision_exact(1400.0))
-    # Longer real slots ⇒ strictly lower predicted throughput, and τ/p_c are unaffected.
-    assert exact.throughput_bps < base.throughput_bps
-    assert exact.tau == pytest.approx(base.tau, rel=1e-15)
+
+    # A deliberately longer slot must lower throughput and leave the backoff fixed point alone.
+    slower = b.solve(20, 1400.0, t_s=b.t_success(1400.0) * 1.10,
+                     t_c=b.t_collision(1400.0) * 1.10)
+    assert slower.throughput_bps < base.throughput_bps
+    assert slower.tau == pytest.approx(base.tau, rel=1e-15)

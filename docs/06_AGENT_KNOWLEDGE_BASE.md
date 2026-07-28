@@ -24,10 +24,16 @@ cd ns-3.41 && ./ns3 configure --build-profile=optimized --enable-examples -- -G 
   saturated *unicast* to match classic Bianchi (with ACKs), or (b) broadcast + the
   no-ACK Bianchi variant (remove ACK/SIFS from T_s, no retransmission). Mixing them is
   the #1 way to fabricate a fake "model gap". Recommended: run BOTH, report both.
-- Known legit Bianchi-vs-NS-3 gap sources: EIFS after errors, capture effect, retry/CW
-  reset details, propagation delay defaults. List, quantify, do not silently correct.
-- FlowMonitor for unicast; for broadcast count PHY RX-OK per node via trace sources.
-  Parse XML/traces with a committed `parse_flowmon.py`; never hand-copy numbers.
+- Bianchi-vs-NS-3 gap sources, as MEASURED at P6/P7 (list, quantify, never silently correct):
+  **backoff counter Consecutive Freeze Process** (the big one — 16× on broadcast; use Ma & Chen's
+  model, docs/02 §6a, not a reduction of the unicast one); **F8** sinks outliving sources
+  (~4.8 %); **D9** OFDM symbol quantisation (0.41 % on data, 12.1 % on an ACK). Frame **capture is
+  0 %** in the validation scenario — NS-3 clamps log-distance below d₀=1 m, so the co-located
+  cluster is already equal-power and `--equalPower` is byte-identical. Also note EIFS is NOT
+  triggered by broadcast collisions (the PHY drops at preamble detection, so no RX-error).
+- Use **PacketSocket + PacketSink** for both modes, not FlowMonitor: MAC-level goodput with no
+  ARP/IP artifacts. Parse with the committed `ns3/parse_ns3.py` / `ns3/run_matrix.py`; never
+  hand-copy numbers. Instrumented twin for slot statistics: `ns3/authbc-dcf-trace.cc`.
 
 ## 3. Timing methodology traps
 - Disable GC around timed loops (`gc.disable()`), re-enable after; warmup ≥1k iters.

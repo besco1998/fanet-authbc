@@ -75,7 +75,7 @@ fanet-authbc/
 │   └── bench/                 # timers.py micro.py macro.py stats.py (bootstrap CIs)
 ├── experiments/               # e1..e5/config.yaml + runner.py  → results/raw/*.csv (committed)
 ├── analysis/                  # figures.py tables.py (reads only results/raw)
-├── ns3/                       # authbc-sat.cc scenario, run_matrix.sh, parse_flowmon.py
+├── ns3/                       # authbc-sat.cc + authbc-dcf-trace.cc, run_matrix.py, parse_ns3.py
 ├── tests/                     # unit/ property/ integration/ (mirrors src layout)
 ├── results/{raw,figures}/     # raw CSVs committed; figures regenerable via make figures
 └── paper/                     # IEEEtran skeleton (P8)

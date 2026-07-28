@@ -97,7 +97,7 @@ def solve(
 
     *t_busy_s* is the channel time of one transmission including the following DIFS —
     Ma & Chen's ``T = T_H + E[P] + DIFS + δ``, which is success/collision symmetric because
-    broadcast never ACKs. Use `bianchi.t_broadcast_exact` for real 802.11a OFDM timing.
+    broadcast never ACKs. Use `bianchi.t_broadcast` for real 802.11a OFDM timing.
 
     Raises ValueError for n < 1 or a degenerate window.
     """
