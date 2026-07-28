@@ -214,7 +214,10 @@ def _point(enc, sch, plc: Placement, batch: int, plat, con) -> dict:
             "n_frames": n, "s": round(enc.record_bytes, 2), "bytes_per_rec": round(bpr, 3),
             "auth_overhead_bytes": round(bpr - enc.record_bytes, 3),
             "V": round(optimizer.verifiability(plc, n, con.p_loss), 5),
-            "energy_uj": round(energy.per_record(ecfg, meas) * 1e6, 4)}
+            "energy_uj": round(energy.per_record(ecfg, meas) * 1e6, 4),
+            # freshness of the oldest record in the batch (docs/02 §7): fill time + on-air.
+            "latency_ms": round((batch / con.lam + energy.radio_airtime_s(ecfg)) * 1e3, 2),
+            "meets_d_max": int(batch / con.lam + energy.radio_airtime_s(ecfg) <= con.d_max_s)}
 
 
 def run_e5(cfg: dict) -> list[dict]:
@@ -235,13 +238,18 @@ def run_e5(cfg: dict) -> list[dict]:
     enc_by = {e.name: e for e in encs}
     sch_by = {s.name: s for s in schemes}
     rows: list[dict] = []
+    # Freshness is reported, not filtered (docs/02 §7 calls it a SOFT bound). It was previously
+    # computed and discarded, which hid the fact that the byte-optimal batch violates it by 6x —
+    # audit finding F10. Batching trades freshness for bytes; the trade must be visible.
     opt_row = {"role": "optimized", "encoding": best.encoding, "scheme": best.scheme,
                "placement": str(best.placement), "batch": best.batch, "n_frames": best.n_frames,
                "s": round(enc_by[best.encoding].record_bytes, 2),
                "bytes_per_rec": round(best.bytes_per_record, 3),
                "auth_overhead_bytes": round(best.bytes_per_record
                                             - enc_by[best.encoding].record_bytes, 3),
-               "V": round(best.verifiability, 5), "energy_uj": round(best.energy_j * 1e6, 4)}
+               "V": round(best.verifiability, 5), "energy_uj": round(best.energy_j * 1e6, 4),
+               "latency_ms": round(best.latency_s * 1e3, 2),
+               "meets_d_max": int(best.meets_latency)}
     rows.append(opt_row)
 
     base_rows: dict[str, dict] = {}
