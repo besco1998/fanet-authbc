@@ -62,6 +62,7 @@ class DataRate:
     bw_hz: int
     bitrate_bps: int          # "indicative physical bit rate", Table 8
     max_app_payload: int      # N, non-repeater-compatible, Table 13
+    sensitivity_dbm: float    # SX1276 Rev.7 RFS_L125_HF / RFS_L250_HF, Band 1, LnaBoost
 
     @property
     def low_data_rate_optimize(self) -> int:
@@ -71,15 +72,32 @@ class DataRate:
 
 # RP002-1.0.3 Table 8 (SF/BW, indicative bit rate) × Table 13 (max application payload N).
 # LoRa modulation only: DR7 is FSK and DR8–11 are LR-FHSS, neither of which this model covers.
+# Sensitivity is the LINK-BUDGET axis: it is what a higher spreading factor buys in exchange for
+# airtime, and without it a duty-cycle optimizer trivially selects the fastest rate every time.
+# SX1276 Rev.7 electrical spec, Long-Range Mode, highest LNA gain + LnaBoost, Band 1 (862-1020 MHz,
+# which is where EU868 sits): RFS_L125_HF gives SF7..SF12 = -123/-126/-129/-132/-133/-136 dBm at
+# 125 kHz, and RFS_L250_HF gives SF7 = -120 dBm at 250 kHz.
 EU868_DATA_RATES: dict[int, DataRate] = {
-    0: DataRate(0, 12, 125_000, 250, 51),
-    1: DataRate(1, 11, 125_000, 440, 51),
-    2: DataRate(2, 10, 125_000, 980, 51),
-    3: DataRate(3, 9, 125_000, 1_760, 115),
-    4: DataRate(4, 8, 125_000, 3_125, 242),
-    5: DataRate(5, 7, 125_000, 5_470, 242),
-    6: DataRate(6, 7, 250_000, 11_000, 242),
+    0: DataRate(0, 12, 125_000, 250, 51, -136.0),
+    1: DataRate(1, 11, 125_000, 440, 51, -133.0),
+    2: DataRate(2, 10, 125_000, 980, 51, -132.0),
+    3: DataRate(3, 9, 125_000, 1_760, 115, -129.0),
+    4: DataRate(4, 8, 125_000, 3_125, 242, -126.0),
+    5: DataRate(5, 7, 125_000, 5_470, 242, -123.0),
+    6: DataRate(6, 7, 250_000, 11_000, 242, -120.0),
 }
+
+
+def relative_range(dr: int, reference_dr: int = 6, path_loss_exponent: float = 2.0) -> float:
+    """Range of *dr* relative to *reference_dr*, from the sensitivity difference alone.
+
+    A link closes when received power ≥ sensitivity, so a sensitivity improvement of Δ dB buys
+    10^(Δ/(10·n)) in range under a path-loss exponent n (n=2 is free space, the right choice for
+    air-to-ground/air-to-air LoS). TX power, antennas and fading are identical across data rates
+    and therefore cancel — this is a *ratio*, not an absolute range, and needs no link budget.
+    """
+    delta_db = _rate(reference_dr).sensitivity_dbm - _rate(dr).sensitivity_dbm
+    return 10.0 ** (delta_db / (10.0 * path_loss_exponent))
 
 
 def symbol_time_s(sf: int, bw_hz: int) -> float:

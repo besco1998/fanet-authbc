@@ -178,6 +178,58 @@ def run_lora(cfg: dict) -> list[dict]:
     return rows
 
 
+def run_lora_codesign(cfg: dict) -> list[dict]:
+    """LoRa co-design Pareto front — the LoRa arm as a joint optimization (docs/02 §9, T5).
+
+    Same method as E5: exhaustive enumeration, hard constraints, full Pareto set. Two differences
+    from the 802.11 arm, both forced by the medium:
+
+      * **the data rate is a fifth design variable** — spreading factor trades airtime against
+        link budget, and airtime is what the regulator rations;
+      * **Λ and freshness are objectives, not inputs** — the duty cycle derives both, so there is
+        no D_max to respect and no Λ to be given.
+
+    Range enters as a *ratio* between data rates from the SX1276 sensitivity table, so no link
+    budget is assumed. Energy is deliberately absent: the only measured radio power in this project
+    is a Wi-Fi figure (⚠️ a LoRa energy column needs a LoRa measurement).
+    """
+    from authbc.models import lora, lora_codesign
+    from authbc.models.optimizer import EncodingSpec
+
+    sizes = framesizes.measured_sizes()
+    encs, schemes = _measured_inputs(cfg)
+    encs = [EncodingSpec(e.name, sizes[e.name], e.t_enc_s) for e in encs]
+    con = lora_codesign.LoRaConstraints(
+        epsilon=cfg["epsilon"], p_loss=cfg["p_loss"], duty_cycle=cfg["duty_cycle"],
+        chain_hash_bytes=cfg["chain_hash_bytes"], frame_hdr_bytes=cfg["h_f"])
+    res = lora_codesign.solve(
+        encs, schemes, [Placement(p) for p in cfg["placements"]], cfg["batches"],
+        cfg["data_rates"], con, chain_modes=tuple(cfg["chain_modes"]))
+    if not res.feasible:
+        raise ValueError("LoRa co-design: nothing feasible — check the config")
+
+    rows = [{
+        "on_pareto": int(c in res.pareto), "dr": c.dr,
+        "sf": lora.EU868_DATA_RATES[c.dr].sf,
+        "bw_khz": lora.EU868_DATA_RATES[c.dr].bw_hz // 1000,
+        "sensitivity_dbm": c.sensitivity_dbm, "relative_range": round(c.relative_range, 4),
+        "encoding": c.encoding, "scheme": c.scheme, "placement": str(c.placement),
+        "batch": c.batch, "chain_mode": c.chain_mode,
+        "frame_bytes": round(c.frame_bytes, 1),
+        "bytes_per_rec": round(c.bytes_per_record, 3),
+        "toa_ms": round(c.toa_s * 1e3, 2),
+        "duty_interval_s": round(c.duty_interval_s, 2),
+        "lambda_rec_per_s": round(c.lambda_max, 5),
+        "freshness_s": round(c.freshness_s, 2),
+        "airtime_per_rec_ms": round(c.airtime_per_record_s * 1e3, 2),
+        "V": round(c.verifiability, 5),
+    } for c in res.feasible]
+    rows.sort(key=lambda r: (-r["on_pareto"], -r["relative_range"], -r["lambda_rec_per_s"]))
+    print(f"  LoRa co-design: {res.evaluated} evaluated, {res.skipped} do not fit the regional "
+          f"limit, {len(res.feasible)} feasible, {len(res.pareto)} on the Pareto front")
+    return rows
+
+
 # --------------------------------------------------------------------------- E3 (T3)
 def _airtime_multiframe(n_frames: int, total_payload_bytes: float) -> float:
     """Broadcast airtime (µs) for n frames carrying total_payload_bytes (excl. MAC overhead).
@@ -344,7 +396,9 @@ _RUNNERS = {
     "e2": (run_e2, "e2_batching"),
     "e3": (run_e3, "e3_loss"),
     "e5": (run_e5, "e5_codesign"),
-    "lora": (run_lora, "lora_eu868"),   # the LoRa arm, docs/02 §9 — its own parameters
+    # The two LoRa runners share experiments/lora/config.yaml: one arm, one parameter set.
+    "lora": (run_lora, "lora_eu868", "lora"),
+    "lora-codesign": (run_lora_codesign, "lora_codesign", "lora"),
 }
 
 
@@ -352,8 +406,9 @@ def main() -> None:
     ap = argparse.ArgumentParser(description="run an AUTHBC experiment → results/raw/")
     ap.add_argument("--exp", required=True, choices=sorted(_RUNNERS))
     args = ap.parse_args()
-    runner, out_name = _RUNNERS[args.exp]
-    cfg = load_config(args.exp)
+    entry = _RUNNERS[args.exp]
+    runner, out_name = entry[0], entry[1]
+    cfg = load_config(entry[2] if len(entry) > 2 else args.exp)
     rows = runner(cfg)
     path = write_csv(out_name, rows, cfg)
     print(f"{args.exp}: wrote {path} ({len(rows)} rows)")

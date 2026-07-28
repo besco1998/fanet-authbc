@@ -245,6 +245,51 @@ because the regional payload limit binds — so smaller records convert into *mo
 **2.7× the sustainable telemetry rate for the same regulatory budget**, versus a 26 % airtime saving
 and *no* extra records on 802.11 (where freshness, not size, is the wall).
 
+### 9a. The LoRa arm as a joint optimization (T5 on the LoRa side)
+The LoRa arm is solved the same way as 802.11 — exhaustive enumeration, hard constraints, **full
+Pareto set, no hand-picked configuration** (`models/lora_codesign.py`, `make exp-lora-codesign`).
+Two structural differences, both forced by the medium:
+
+**(i) The data rate is a fifth design variable.** Spreading factor trades airtime against link
+budget, and airtime is exactly what the regulator rations, so DR cannot be fixed in advance without
+begging the question. Range enters as a **ratio** between data rates derived from the SX1276
+receiver-sensitivity table (Rev. 7, RFS_L125_HF/RFS_L250_HF, Band 1): TX power, antennas and fading
+are identical across DRs and cancel, so no link budget is assumed.
+
+    DR6 −120 dBm (1.00×) · DR5 −123 (1.41×) · DR4 −126 (2.00×) · DR3 −129 (2.82×)
+    DR2 −132 (3.98×) · DR1 −133 (4.47×) · DR0 −136 dBm (6.31×)
+
+*Without this objective the optimization degenerates:* DR6 has the shortest airtime, so it dominates
+on both Λ and D and the entire DR axis collapses to a single point. A test pins that it does not.
+
+**(ii) Λ and freshness are objectives, not inputs.** The duty cycle derives both — Λ = b·duty/T and
+D = T/duty — so there is no D_max to respect and no Λ to be given. A larger batch raises Λ (the
+preamble and signature amortise) but lengthens T and therefore *worsens* freshness. **That tension
+is the LoRa co-design problem and has no 802.11 counterpart.**
+
+Objectives: min bytes/record · **max Λ** · min freshness · max V · **max range**.
+Constraints: frame ≤ N(DR) · V ≥ 1−ε · t_verify(b)·Λ ≤ 1.
+
+**Result (`results/raw/lora_codesign.csv`): 3414 of 3696 design points do not physically exist** —
+they exceed the regional payload limit — leaving 282 feasible and **108 on the Pareto front,
+spanning DR4/DR5/DR6**. Representative front (delta, placement B, chain per-frame):
+
+| DR | range | b | B/record | Λ (rec/s) | freshness |
+|---|---|---|---|---|---|
+| 4 | **2.00×** | 8 | 30.0 | 0.1148 | 69.7 s |
+| 5 | 1.41× | 8 | 30.0 | 0.2028 | 39.5 s |
+| 6 | 1.00× | 8 | 30.0 | **0.4056** | **19.7 s** |
+| 6 | 1.00× | 1 | 149.0 | 0.0765 | 13.1 s |
+
+Reading: **doubling range costs ~3.5× the record rate**; within a data rate, batching to b=8 buys
+5× the record rate and 5× fewer bytes but 1.5× worse freshness. Every row is a defensible operating
+point — the frontier *is* the result.
+
+⚠️ **No energy column.** The only measured radio power in this project (`p_radio_w = 0.218 W`) is a
+Wi-Fi figure from the RPi4 rig; reusing it for a LoRa transceiver would be fabrication. Airtime per
+record is reported instead — it is what the regulator rations, and it is computed, not assumed.
+A LoRa energy column needs a LoRa radio measurement.
+
 ## 7. Energy and latency models
 Energy/record: **E = P_c·(t_enc + t_sg/b + t_ver_amort(b)) + P_r·T_air(frame)/b**, where
 t_ver_amort = t_vf (A/B receiver-side per record… receiver verifies once per frame in B:

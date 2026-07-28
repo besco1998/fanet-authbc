@@ -13,6 +13,7 @@ data_rates: [0, 1, 2, 3, 4, 5, 6]
 duty_cycle: 0.01        # RP002-1.0.3 regional summary: EU868 "Duty Cycle < 1%"
 
 encodings: [json, cbor, msgpack, delta]
+schemes: [ed25519, ecdsa_p256]   # both 64 B; BLS's 96 B is worse on a payload-starved link
 g_a: 64                 # Ed25519 signature (D2 default, and the ARM winner per D8/F6)
 h_f: 40                 # frame header, same as the 802.11 arm (docs/01 §2)
 chain_hash_bytes: 32    # SHA-256 prev_hash (docs/01 §4) - carried per record today
@@ -25,3 +26,13 @@ batches: [1, 2, 3, 4, 5, 6, 8, 10, 12, 16, 20]
 #   per_record - every record carries its own 32 B prev_hash (the current wire format, D6-frozen)
 #   per_frame  - only the frame's first link is sent; the receiver derives the rest
 chain_modes: [per_record, per_frame]
+
+# --- co-design optimization (make exp-lora-codesign) ---------------------------------------
+# Objectives: min bytes/record, MAX sustainable Lambda, min freshness, max V, MAX relative range.
+# Lambda and freshness are DERIVED from the duty cycle, so neither is an input here.
+placements: [A, B, D]        # C needs an aggregate scheme; BLS is not in the LoRa scheme set
+epsilon: 0.05                # V >= 1-eps
+p_loss: 0.05
+crypto_csv: p1_crypto.authbc-pi4a.csv   # ARM timings (D8), same platform as the 802.11 arm
+bls_agg_ref_b: 8
+t_enc_ns: {json: 51370, cbor: 50407, msgpack: 24018, delta: 47759}   # measured on authbc-pi4a
