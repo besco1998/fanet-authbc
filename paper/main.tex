@@ -31,9 +31,10 @@ measurable models for each, and test one falsifiable criterion: the co-optimized
 on-air authentication bytes by $\geq 40\%$ versus an inline-signature CBOR baseline while keeping
 verifiability $V \geq 0.95$ under per-frame loss $p = 0.05$. Driven by measured microbenchmarks, the
 optimizer selects a delta encoding under self-batch placement, cutting authentication overhead by
-\textbf{96.4\%} (to $\approx 3.7$\,B/record) at $V = 0.95$---criterion met. The airtime model is
-validated against NS-3 3.41 (unicast within $\pm5\%$; the broadcast gap is attributed to the capture
-effect and reported as a lower bound). All results are reproduced deterministically from frozen data by
+\textbf{96.8\%} (to $\approx 3.36$\,B/record) at $V = 0.95$---criterion met. The airtime model is
+validated against NS-3 3.41: unicast matches Bianchi within $+0.6$/$-2.9\%$, while the common
+reduction of that model to broadcast fails by $16\times$ at $N{=}50$ and is replaced by Ma and Chen's
+broadcast model~\cite{machen2007,machen2008}, which our measurements confirm to within $0.36\%$. All results are reproduced deterministically from frozen data by
 an automated staleness gate. AUTHBC introduces no new primitive; its contribution is the rigorous,
 reproducible co-design and its quantified trade-offs.
 \end{abstract}
@@ -244,35 +245,46 @@ PASS is robust.
 \begin{figure}[t]\centering
 \includegraphics[width=\columnwidth]{fig_e5_codesign.png}
 \caption{E5: on-air bytes/record (payload + authentication) for the optimized configuration versus the
-baselines. Authentication overhead falls from 104\,B to $\approx 3.7$\,B.}
+baselines. Authentication overhead falls from 104\,B to $\approx 3.36$\,B.}
 \label{fig:e5}
 \end{figure}
 
-\textbf{NS-3 validation (Table~\ref{tab:ns3}, Fig.~\ref{fig:ns3}).} Unicast validates the Bianchi model
-to $\pm1.8$--$5.3\%$ across $N=5$--$50$. The broadcast gap grows because the no-ACK model assumes all
-colliding frames are lost, whereas real 802.11 capture decodes the stronger frame (broadcast goodput
-plateaus near 1.3\,Mb/s); the broadcast model is thus a conservative lower bound, reported honestly.
+\textbf{NS-3 validation (Table~\ref{tab:ns3}, Fig.~\ref{fig:ns3}).} Unicast validates the Bianchi
+model~\cite{bianchi2000} to $+0.6$/$-2.9\%$ across $N=5$--$50$. Broadcast requires a \emph{different}
+model, not the same one with the ACK removed. Reducing the unicast model by fixing $\tau=2/(W{+}1)$
+under-predicts NS-3 by $16\times$ at $N{=}50$. PHY-trace instrumentation shows the cause is not frame
+capture---which we measure at \textbf{0\%}, every successful decode arriving from a single-transmitter
+busy period---but the \emph{backoff counter consecutive freeze process}: with no ACK the contention
+window never doubles, so a station that has just transmitted may redraw a zero backoff and seize the
+medium one slot ahead of every deferring station, whose counter is necessarily $\geq 1$. This is
+precisely the effect analysed by Ma and Chen~\cite{machen2007,machen2008}, whose closed form reproduces
+our measurements to within $0.36\%$ on throughput, success probability and idle-slot occupancy; the
+unicast counterpart is the ``anomalous slot'' analysis of Tinnirello \emph{et al.}~\cite{tinnirello2010},
+which our unicast traces independently confirm. We claim no novelty for the mechanism; our contribution
+is its validation at $W_0{=}16$ under 802.11a timing (the original studies used $W_0{=}32,128$ at
+1\,Mb/s) and a direct slot-level measurement of it.
 
 \begin{table}[t]\centering\footnotesize
-\caption{Bianchi vs. NS-3 3.41 relative gap.}
+\caption{Analytic DCF models vs.\ NS-3 3.41, relative gap.}
 \label{tab:ns3}
-\begin{tabular}{rrr}
+\begin{tabular}{rrrr}
 \toprule
-$N$ & unicast gap & broadcast gap \\
+$N$ & unicast vs.~\cite{bianchi2000} & broadcast vs.~naive reduction & broadcast vs.~\cite{machen2008} \\
 \midrule
-5 & 5.1\% & 4.4\% \\
-10 & 5.3\% & 8.0\% \\
-20 & 5.2\% & 37\% \\
-35 & 3.2\% & 292\% \\
-50 & \textbf{1.8\%} & 1735\% \\
+5 & $+0.6\%$ & $-0.2\%$ & $-0.3\%$ \\
+10 & $+0.9\%$ & $+3.1\%$ & $-0.4\%$ \\
+20 & $+0.6\%$ & $+31.3\%$ & $-0.7\%$ \\
+35 & $-1.4\%$ & $+273.1\%$ & $+0.9\%$ \\
+50 & $\mathbf{-2.9\%}$ & $\mathbf{+1654\%}$ & $\mathbf{+1.1\%}$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \begin{figure}[t]\centering
 \includegraphics[width=\columnwidth]{fig_ns3_bianchi.png}
-\caption{Bianchi vs. NS-3 3.41 saturation throughput. Unicast matches within $\pm5\%$; broadcast is
-capture-limited above the no-ACK analytic lower bound.}
+\caption{Analytic DCF models vs.\ NS-3 3.41 saturation throughput. Unicast matches Bianchi within
+$+0.6$/$-2.9\%$; broadcast matches Ma and Chen~\cite{machen2008} within $1.1\%$, while the naive
+reduction of the unicast model (dashed) fails by $16\times$ at $N{=}50$.}
 \label{fig:ns3}
 \end{figure}
 
@@ -280,21 +292,26 @@ capture-limited above the no-ACK analytic lower bound.}
 Beyond the results, the project's second product is its discipline. Anomalies were root-caused, not
 patched over: a stateful delta codec used statelessly (60$\to$45\,B); string-keyed CBOR replaced by
 canonical arrays (110$\to$66\,B); the BLS size corrected 48$\to$96\,B (with the T4 model updated); and
-an early ``capture'' over-claim \emph{retracted in writing} and later confirmed by a power-spread
-experiment. A whole-repo audit re-derived every formula against the code and hand-checked one point per
+and, on the broadcast channel, three successive explanations retracted in writing---an ``18$\times$
+capture'' over-claim, then the capture effect itself (PHY instrumentation measured it at 0\%), and
+finally our own claim to have discovered the responsible mechanism, which a literature check showed had
+been published in 2007~\cite{machen2007}. A whole-repo audit re-derived every formula against the code and hand-checked one point per
 experiment. Finally, freezing raw data risks \emph{silent staleness}, so an automated gate re-derives
 every deterministic frozen artifact from the current code and fails on any drift---verified to catch the
 exact regression it was built for. No result is fabricated, no test skipped, no tolerance widened.
 
 \section{Limitations and Future Work}
-Results are 802.11-only (a LoRa arm is future work); energy is nominal-power pending a Raspberry Pi 4
-campaign with an INA219 meter (the auth-byte headline is power-free and final); the broadcast channel is
-validated only qualitatively (capture-limited); and the hardware validation will be small-$N$. On ARM,
-the scheme tie may break toward Ed25519 rather than ECDSA (identical auth-byte cut).
+Results are 802.11-only (a LoRa arm is future work). Energy is now measured on a Raspberry~Pi~4 with
+INA219 meters ($P_\mathrm{cpu}=0.634$\,W, $P_\mathrm{radio}=0.218$\,W---both nominal values were
+$3$--$5\times$ too high), and the byte-based headline is power-free either way. The channel models are
+validated only in the idealised single-collision-domain regime they describe: a spread, mobile
+formation introduces hidden terminals and spatial reuse that neither model represents, which we leave
+as future work. The hardware validation is two-node. On ARM the scheme tie breaks toward Ed25519
+rather than ECDSA, with an identical auth-byte cut.
 
 \section{Conclusion}
 Authentication overhead dominates tiny UAV telemetry, but it is a \emph{co-design} problem. Jointly
-optimizing encoding, placement, scheme, and batching cuts on-air authentication by 96.4\% at
+optimizing encoding, placement, scheme, and batching cuts on-air authentication by 96.8\% at
 $V\geq0.95$---meeting the falsifiable criterion---while an NS-3-validated channel model and an automated
 reproducibility gate keep the study honest and repeatable.
 

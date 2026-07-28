@@ -69,7 +69,50 @@ T_s(L) = T_phy + 8(L+34)/R + SIFS + δ + T_ack + DIFS + δ; T_c(L) = T_phy + 8(L
 DIFS + δ, with T_phy=20 µs, SIFS=16 µs, slot=9 µs, DIFS=34 µs, ACK 14 B, δ=1 µs.
 Fixed overhead **T_fx ≈ 123 µs**. Throughput S = P_tr·P_s·E[payload]/E[slot] as standard.
 Airtime per frame: T_air(L) = T_fx + 8L/R. **Validate:** E5 vs NS-3; expect and *report*
-known gaps (EIFS handling, capture, retry limit) rather than force-fitting.
+known gaps rather than force-fitting. Measured against NS-3 3.41: unicast agrees to
+**+0.6 … −2.9 %** across N=5–50 (audit F8/F9).
+
+### 6a. Broadcast is a DIFFERENT model — do not reduce the unicast one ⚠️
+The above is the **ACK/unicast** model. AUTHBC's telemetry substrate is **broadcast**, which never
+ACKs, never retransmits, and therefore never doubles CW. The obvious reduction — keep the formula,
+drop the ACK, fix τ = 2/(W+1) — is **WRONG**: it under-predicts NS-3 by **16× at N=50** (audit F9).
+This project used that reduction until P7; it is retained in code only as a labelled failure.
+
+Use instead **Ma & Chen's broadcast model** (`models.broadcast_dcf`), which accounts for the
+**backoff counter Consecutive Freeze Process (CFP)**: with CW frozen at W₀, a station that has
+just transmitted redraws its backoff and may draw **0**, taking the medium immediately after DIFS,
+while every station that deferred necessarily holds a counter ≥ 1. In unicast the ACK timeout
+(> DIFS) blocks colliders from doing this, so CFP can only follow a success; **in broadcast there
+is no ACK timeout, so every collider can seize the next slot**, and with W₀ small relative to N
+this becomes the dominant way any frame succeeds alone.
+
+    τ_s = 2/W₀                                  (NOT 2/(W+1))
+    τ_f(i) = τ_s / W₀^i                          (i-th freeze stage)
+    p_bs = 1−(1−τ_s)^n ,  p_ss = n·τ_s(1−τ_s)^{n−1}
+    E[N_sf] = Σ_i n·τ_f(i)(1−τ_f(i))^{n−1} ,  E[N_bf] = Σ_i 1−(1−τ_f(i))^n
+    S = (p_ss + E[N_sf])·8L / (σ + (p_bs + E[N_bf])·T),  T = T_phy + 8(L+MAC)/R + DIFS + δ
+
+Verified against our own NS-3 3.41 runs (802.11a, 6 Mb/s, W₀=16, L=1400 B): throughput, p_s and
+idle-slots-per-busy-period all within **≤0.36 %** at N = 5, 10, 20, 35, 50 — a regime the original
+papers did not test (they used W₀ = 32 and 128 at 1 Mb/s).
+
+**References (verified from primary sources, docs/literature/):**
+- G. Bianchi, "Performance Analysis of the IEEE 802.11 Distributed Coordination Function,"
+  *IEEE JSAC* 18(3):535–547, 2000. doi:10.1109/49.840210
+- X. Ma and X. Chen, "Saturation Performance of IEEE 802.11 Broadcast Networks,"
+  *IEEE Communications Letters* 11(8):686–688, Aug. 2007. doi:10.1109/LCOMM.2007.070040
+  *(the letter's eq. (6) misprints p_ss; use the journal's eq. (8))*
+- X. Ma and X. Chen, "Performance Analysis of IEEE 802.11 Broadcast Scheme in Ad Hoc Wireless
+  LANs," *IEEE Trans. Veh. Technol.* 57(6):3757–3768, Nov. 2008. doi:10.1109/TVT.2008.918731
+- I. Tinnirello, G. Bianchi, Y. Xiao, "Refinements on IEEE 802.11 Distributed Coordination
+  Function Modeling Approaches," *IEEE Trans. Veh. Technol.* 59(3):1055–1067, Mar. 2010 —
+  the unicast counterpart ("anomalous slots"); confirms consecutive channel slots are correlated.
+
+**⚠️ Known approximation in the airtime constants above (audit A1):** they model airtime as
+continuous 8N/R, whereas a real 802.11a PHY sends whole 4 µs OFDM symbols and carries 36 B of
+overhead (LLC/SNAP 8 + MAC 24 + FCS 4). Measured error: **0.41 %** on a 1400 B data frame and
+**12.1 %** on an ACK. `models.bianchi.ofdm_ppdu` / `t_*_exact` implement the exact form and are
+used for every NS-3 comparison; the constants above still feed `models.energy` pending decision.
 
 ## 7. Energy and latency models
 Energy/record: **E = P_c·(t_enc + t_sg/b + t_ver_amort(b)) + P_r·T_air(frame)/b**, where

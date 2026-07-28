@@ -86,19 +86,23 @@ $0.9025=(1-p)^2$. The byte-optimal answer is not the correct answer.
 
 \subsection{NS-3 channel validation}
 \begin{center}\begin{tabular}{rrrr}
-\toprule $N$ & unicast vs ACK-Bianchi & broadcast vs no-ACK Bianchi & broadcast vs slot-exact \\ \midrule
-5 & $+0.08$\,\% & $-0.5$\,\% & $-0.62$\,\% \\
-20 & $+0.14$\,\% & $+30.8$\,\% & $-1.10$\,\% \\
-50 & $\mathbf{-3.31}$\,\% & $\mathbf{+1647.9}$\,\% & $\mathbf{+0.79}$\,\% \\ \bottomrule
+\toprule $N$ & unicast vs ACK-Bianchi & broadcast vs naive reduction & broadcast vs Ma \& Chen \\ \midrule
+5 & $+0.61$\,\% & $-0.2$\,\% & $-0.33$\,\% \\
+20 & $+0.64$\,\% & $+31.3$\,\% & $-0.71$\,\% \\
+50 & $\mathbf{-2.85}$\,\% & $\mathbf{+1654.1}$\,\% & $\mathbf{+1.06}$\,\% \\ \bottomrule
 \end{tabular}\end{center}
-Unicast validates the Bianchi DCF model to $+0.08$--$-3.31\,\%$ (tightened from the previously
+Unicast validates the Bianchi DCF model to $+0.6$--$-2.9\,\%$ (tightened from the previously
 reported $\pm1.8$--$5.3\,\%$ by fixing F8, a $\sim$4.8\,\% goodput over-count in which the NS-3 sinks
-outlived the sources by 0.5\,s on a 10\,s window). The broadcast column fails not because of capture
---- measured at \textbf{0\,\%} --- but because the no-ACK Bianchi variant omits the
-\emph{post-transmission head start}: a station that has just transmitted may redraw backoff 0 and
-seize the medium one slot before any deferring station, whose counter is necessarily $\ge1$. With
-broadcast's frozen contention window that channel dominates at high $N$. A slot-exact simulation
-adding only this asymmetry reproduces NS-3 to $\le1.1\,\%$ at every $N$ (F9).
+outlived the sources by 0.5\,s on a 10\,s window, and by using exact OFDM symbol timing). The middle
+column is our former in-house \emph{reduction} of the unicast model to broadcast ($\tau=2/(W{+}1)$);
+it fails not because of capture --- measured at \textbf{0\,\%} --- but because it ignores the
+\textbf{backoff counter Consecutive Freeze Process}: with no ACK the contention window never doubles,
+so a station that has just transmitted may redraw backoff 0 and seize the medium one slot before any
+deferring station, whose counter is necessarily $\ge1$. That is \textbf{Ma \& Chen's published
+broadcast model} (IEEE Comm.\ Lett.\ 11(8):686--688, 2007; IEEE TVT 57(6):3757--3768, 2008), whose
+abstract warns that unicast models ``cannot simply be reduced'' to broadcast --- exactly our error.
+Their closed form reproduces our measurement to $\le0.36\,\%$ (F9). \textbf{No novelty is claimed for
+the mechanism.}
 
 \section{Hardware layer (Raspberry Pi 4B, measured)}
 
@@ -178,9 +182,11 @@ and Ed25519 is markedly more portable (1.05$\times$ versus 1.60$\times$ cycles).
 mechanism is an open question. \\ \addlinespace
 NS-3 broadcast & \textbf{CLOSED (F9).} PHY instrumentation shows capture contributes
 \textbf{0\,\%}: all 1149 successful decodes at the monitored receiver came from single-transmitter
-busy periods, and an equal-power channel is byte-identical to the default. The measured cause is the
-post-transmission head start; a slot-exact model carrying only that asymmetry matches NS-3 to
-$\le1.1\,\%$, while reproducing Bianchi exactly when the asymmetry is switched off. \\ \addlinespace
+busy periods, and an equal-power channel is byte-identical to the default. The cause is the
+Consecutive Freeze Process, and the corrected model is \textbf{published} (Ma \& Chen 2007/2008):
+their closed form matches our NS-3 measurement to $\le0.36\,\%$ at every $N$. Our contribution here
+is validation at $W_0{=}16$ / 802.11a (they tested $W_0{=}32,128$ at 1\,Mb/s) and a direct PHY-trace
+measurement of the mechanism. \\ \addlinespace
 $\kappa$ plausible band & E4 assumes $\kappa=P_r/P_c\lesssim0.5$ from ``radio below CPU power''. With
 $p_{cpu}$ measured at 0.73\,W (not 3.0\,W), $\kappa$ could approach or exceed 1. The E4 verdict is
 unchanged ($\min\kappa^\star=3.21$) but the stated band must be re-derived from measured powers. \\

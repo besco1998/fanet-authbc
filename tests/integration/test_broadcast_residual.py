@@ -1,8 +1,12 @@
-"""Gate on the P7 broadcast-residual finding (docs/audits/p7.md F9).
+"""Gate on the P7 broadcast finding (docs/audits/p7.md F9, docs/literature/f9_broadcast_dcf.md).
 
-Guards the conclusion, not just the code: NS-3's measured DCF internals must keep agreeing with
-the slot-exact model and keep disagreeing with the no-ACK Bianchi variant. If someone "fixes" the
-ladder back into an independence approximation, or the NS-3 scenario drifts, these fail.
+Guards the conclusion, not just the code. NS-3's measured DCF internals must keep agreeing with
+**Ma & Chen's published broadcast model** (IEEE TVT 57(6):3757-3768, 2008) and keep disagreeing
+with the naive reduction of unicast Bianchi that this project used until P7. If the model is
+quietly swapped back, or the NS-3 scenario drifts, these fail.
+
+`sim.dcf_ladder` is retained as an INDEPENDENT cross-check: it was written before the paper was
+located, simulates counters only, and agrees with the closed form to <2 %.
 
 Reads the measured fixture results/raw/ns3_dcf_residual.csv (produced by ns3/dcf_residual.py) —
 never re-runs NS-3.
@@ -17,7 +21,7 @@ from pathlib import Path
 
 import pytest
 
-from authbc.models import bianchi
+from authbc.models import bianchi, broadcast_dcf
 from authbc.sim import dcf_ladder
 
 RAW = Path(__file__).resolve().parents[2] / "results" / "raw"
@@ -51,14 +55,37 @@ def _bianchi_no_ack_p_s(n: int) -> float:
     return n * tau * (1.0 - tau) ** (n - 1) / p_tr
 
 
+def _model(n: int) -> broadcast_dcf.BroadcastResult:
+    """Ma & Chen's published broadcast model at our measured 802.11a parameters."""
+    return broadcast_dcf.solve(n, _L, _T_BUSY, w0=bianchi.W, slot_s=bianchi.SLOT)
+
+
 def _ladder(n: int) -> dcf_ladder.LadderResult:
     return dcf_ladder.run(n, w=bianchi.W, busy_periods=_PERIODS, head_start=True,
                           t_busy_s=_T_BUSY, slot_s=bianchi.SLOT, payload_bytes=_L, seed=1)
 
 
 @pytest.mark.parametrize("n", [5, 10, 20, 35, 50])
+def test_published_model_reproduces_measured_p_success(n: int) -> None:
+    """The whole finding in one line: Ma & Chen predict NS-3's collision statistics."""
+    assert _model(n).p_success == pytest.approx(_measured()[n]["p_s_measured"], rel=0.01)
+
+
+@pytest.mark.parametrize("n", [5, 10, 20, 35, 50])
+def test_published_model_reproduces_measured_goodput(n: int) -> None:
+    assert _model(n).throughput_bps / 1e6 == pytest.approx(
+        _measured()[n]["goodput_window_mbps"], rel=0.01)
+
+
+@pytest.mark.parametrize("n", [5, 10, 20, 35, 50])
+def test_published_model_reproduces_measured_idle_slots(n: int) -> None:
+    assert _model(n).idle_slots_per_busy_period == pytest.approx(
+        _measured()[n]["idle_slots_per_busy"], rel=0.02)
+
+
+@pytest.mark.parametrize("n", [5, 10, 20, 35, 50])
 def test_slot_exact_model_reproduces_measured_p_success(n: int) -> None:
-    """The whole finding in one line: the corrected model predicts NS-3's collision statistics."""
+    """Independent cross-check: our own simulator, written before the paper was found."""
     assert _ladder(n).p_success == pytest.approx(_measured()[n]["p_s_measured"], rel=0.05)
 
 
@@ -86,8 +113,12 @@ def test_slot_exact_model_reproduces_measured_idle_slots(n: int) -> None:
         _measured()[n]["idle_slots_per_busy"], rel=0.05)
 
 
-def test_no_ack_bianchi_still_fails_at_high_n_and_is_not_quietly_fixed() -> None:
-    """The negative result, kept explicit (Law 7): the textbook variant is out by >10× at N=50."""
+def test_naive_reduction_still_fails_at_high_n_and_is_not_quietly_fixed() -> None:
+    """The negative result, kept explicit (Law 7): the in-house reduction is out by >10x at N=50.
+
+    Ma & Chen open by warning that unicast models "cannot simply be reduced" to broadcast; this
+    test is that warning, made executable against our own measurement.
+    """
     m = _measured()
     assert m[50]["p_s_measured"] / _bianchi_no_ack_p_s(50) > 10.0
     assert m[5]["p_s_measured"] / _bianchi_no_ack_p_s(5) == pytest.approx(1.0, abs=0.05)

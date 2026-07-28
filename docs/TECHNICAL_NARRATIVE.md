@@ -83,9 +83,9 @@ smaller payload raises the auth fraction φ (T1), which *increases* the value of
 contention. *Approach & result:* **Bianchi** (IEEE JSAC 2000) models the DCF as a per-station Markov
 chain whose τ/p_c fixed point yields closed-form saturation throughput matching simulation.
 *Positioning:* AUTHBC uses Bianchi as the **airtime cost model inside the optimizer** and validates it
-against **NS-3** (unicast within +0.08…−3.31 %). Its no-ACK *broadcast* variant is shown to fail by
-up to 16×, root-caused to the post-transmission head start, and replaced by a slot-exact model that
-matches NS-3 to ≤1.1 % (docs/audits/p7.md F9).
+against **NS-3** (unicast within +0.6…−2.9 %). Its no-ACK *broadcast* variant is shown to fail by
+up to 16×, root-caused to the Consecutive Freeze Process, and replaced by Ma & Chen's published
+broadcast model, which matches NS-3 to ≤0.36 % (docs/audits/p7.md F9).
 
 **Overall positioning.** AUTHBC is a **rigorous, hardware-validated co-design + measurement study**,
 not a new cryptographic construction. Its contribution is the joint optimization of *encoding ×
@@ -253,10 +253,12 @@ to its own analytic variant (never crossed unicast↔broadcast).
   probability; retracted in writing (docs/audits/p6.md). (2) "the capture effect" — also **wrong**,
   and retracted at P7: instrumenting NS-3's PHY showed **0 %** of successful decodes came from a
   collided busy period, and forcing equal power changes nothing byte-for-byte. (3) The measured
-  cause is the **post-transmission head start**: a station that just transmitted may redraw backoff
-  0 and take the medium one slot ahead of every deferring station (whose counter is necessarily
-  ≥ 1). With broadcast's frozen CW that channel dominates at high N. A slot-exact simulator that
-  adds only this asymmetry reproduces NS-3 to **≤1.1 %** at every N (docs/audits/p7.md F9).
+  cause is the **backoff counter Consecutive Freeze Process**: with no ACK the contention window
+  never doubles, so a station that just transmitted may redraw backoff 0 and take the medium a slot
+  before any deferring station (whose counter is necessarily ≥ 1). (4) A literature check then showed
+  this is **published** — Ma & Chen, IEEE Comm. Lett. 11(8):686–688, 2007 — so the novelty claim was
+  retracted as well; their closed form reproduces our measurement to **≤0.36 %**
+  (docs/audits/p7.md F9).
   Verdict: **both** arms are now quantitatively validated — unicast against ACK-Bianchi, broadcast
   against the slot-exact model; the textbook no-ACK Bianchi variant is the thing that fails.
 
@@ -336,20 +338,24 @@ in F3 by densifying the grid through the MTU knee. PASS either way.)*
 *(All NS-3 numbers below are the F8-corrected re-measurement: the sinks used to outlive the sources by
 0.5 s on a 10 s window, inflating every goodput by ~4.8 %.)*
 
-| N | unicast vs ACK-Bianchi | broadcast vs no-ACK Bianchi | broadcast vs **slot-exact DCF** |
+| N | unicast vs ACK-Bianchi | broadcast vs naive reduction | broadcast vs **Ma & Chen** |
 |---|---|---|---|
-| 5 | +0.08 % | −0.5 % | −0.62 % |
-| 10 | +0.33 % | +2.8 % | −0.74 % |
-| 20 | +0.14 % | +30.8 % | −1.10 % |
-| 35 | −1.87 % | +271.8 % | +0.57 % |
-| 50 | **−3.31 %** | **+1647.9 %** | **+0.79 %** |
+| 5 | +0.61 % | −0.2 % | −0.33 % |
+| 10 | +0.85 % | +3.1 % | −0.39 % |
+| 20 | +0.64 % | +31.3 % | −0.71 % |
+| 35 | −1.39 % | +273.1 % | +0.93 % |
+| 50 | **−2.85 %** | **+1654.1 %** | **+1.06 %** |
 
-**Unicast validates the DCF model to +0.08…−3.31 %** across N=5–50. The broadcast column explodes not
-because of capture — measured at **0 %** — but because the no-ACK Bianchi variant omits the
-**post-transmission head start** (docs/audits/p7.md F9): a station that just transmitted may redraw
-backoff 0 and take the medium a slot before any deferring station can. Adding exactly that one
-asymmetry to a slot-exact simulation reproduces NS-3 to **≤1.1 %** (rightmost column). So the failure
-is a located, corrected modelling error rather than a lower bound we shrug at.
+**Unicast validates the DCF model to +0.6…−2.9 %** across N=5–50. The broadcast column explodes not
+because of capture — measured at **0 %** — but because reducing the unicast model to broadcast
+(τ = 2/(W+1)) omits the **backoff counter Consecutive Freeze Process**: with no ACK the contention
+window never doubles, so a station that just transmitted may redraw backoff 0 and take the medium a
+slot before any deferring station can. That is **Ma & Chen's published broadcast model** (IEEE Comm.
+Lett. 11(8):686–688, 2007; IEEE TVT 57(6):3757–3768, 2008), whose abstract warns that unicast models
+"cannot simply be reduced" to broadcast — exactly the error we made. Their closed form reproduces our
+measurement to **≤0.36 %** (rightmost column). We claim **no novelty** for the mechanism; what is ours
+is validation at W₀=16 / 802.11a (they tested W₀=32, 128 at 1 Mb/s) and a direct PHY-trace measurement
+of the mechanism rather than curve-fitting.
 
 ---
 ## 5. How we thought about correctness (scientific integrity)
@@ -361,8 +367,11 @@ The project's second product (after the results) is the *discipline*. The anomal
   we corrected it (conclusion unchanged, strengthened).
 - **"18× capture" over-claim** — a wrong metric comparison; **retracted in writing**. Its replacement
   ("the capture effect") was **also wrong and also retracted**, at P7, when PHY instrumentation
-  measured capture at **0 %**; the third and measured explanation is the post-transmission head start
-  (**F9**). Two retractions on one question, both kept visible.
+  measured capture at **0 %**. The third and measured explanation is the **backoff counter
+  Consecutive Freeze Process** — and a literature check then showed it was **published in 2007**
+  (Ma & Chen), so our "discovery" was a rediscovery and the novelty claim was retracted too.
+  Three retractions on one question, all kept visible. The result is stronger for it: the broadcast
+  arm now rests on a cited IEEE model that our measurement validates to 0.36 %.
 - **Pre-P7b whole-repo audit** (docs/audits/full_audit_pre_p7b.md) — re-derived every formula against
   the code, hand-checked one point per experiment (E5 energy = 64.24 µJ = frozen), and produced seven
   findings F1–F7 (one fixed, six documented as P7/P8 items).

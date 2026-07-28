@@ -1,9 +1,9 @@
 # F9 — literature positioning of the broadcast DCF head start
 
-Prepared 2026-07-28 so the finding can be checked against the published record before P8.
-Citation discipline (CLAUDE.md): entries below are marked **[VERIFIED-PRIMARY]** only where the
-paper itself was retrieved and read. Everything else is **[VERIFY]** and must be confirmed by
-Mohamed against the primary source before it appears in the thesis.
+**RESOLVED 2026-07-28 — outcome (a): the mechanism is published. F9 is a rediscovery.**
+All three papers were obtained by Mohamed and read in full; the Ma & Chen letter's bibliographic
+record was confirmed from IEEE Xplore. Ma & Chen's closed form reproduces our NS-3 measurement to
+**≤0.36 %** at every N. No novelty is claimed for the mechanism; see §2.3 and §3 below.
 
 ---
 
@@ -82,32 +82,47 @@ refinement, which makes it the authoritative statement of the effect.
 | post-success slot accessible only to the successful STA | gap floor **94 µs = SIFS + T_Ack + DIFS**, taken 220×; everyone else at 103 µs (+1 slot) ✓ |
 | post-collision slot accessible to nobody (ACK timeout) | only **30 of 1099** transitions took the immediate slot; 1069 at DIFS+1 ✓ |
 
-### 2.2 Why broadcast is a different regime — and why it is ours
+### 2.2 Why broadcast is a different regime (Ma & Chen reach the same conclusion, §2.3)
 
 Their post-collision result depends entirely on the **ACK timeout** holding the colliders back.
 **Broadcast has no ACK and therefore no ACK timeout.** The colliders resume after DIFS like everyone
 else, except that they alone can hold index 0. So in broadcast the post-collision slot is not
 inaccessible — it is *exclusively* accessible to the stations that just collided. That is the
-opposite of the unicast conclusion, and it is the regime that produces the 16× error.
+opposite of the unicast conclusion, and it is the regime that produces the 16× error. Ma & Chen
+state exactly this in §II-C of their 2008 paper; the derivation below was ours, the result was not.
 
 Our broadcast measurement: **1315** post-collision winners at DIFS+0 (all previous colliders) against
 a hard **DIFS+1** floor for everyone else.
 
-### 2.3 The broadcast literature exists and warns against exactly our error [VERIFY]
+### 2.3 The broadcast model was already published — and warns against our exact error
 
 > **X. Ma and X. Chen, "Saturation Performance of IEEE 802.11 Broadcast Networks," IEEE
-> Communications Letters, vol. 11, no. 5, May 2007.** *(page range unconfirmed)*
-> Companion/journal version: **X. Ma and X. Chen, "Performance Analysis of IEEE 802.11 Broadcast
-> Scheme in Ad Hoc Wireless LANs," IEEE Trans. Veh. Technol., vol. 57, pp. 3757–3768** *(2008,
-> unconfirmed)*.
+> Communications Letters, vol. 11, no. 8, pp. 686–688, Aug. 2007,
+> doi:10.1109/LCOMM.2007.070040.** [VERIFIED-PRIMARY + Xplore record]
+> **X. Ma and X. Chen, "Performance Analysis of IEEE 802.11 Broadcast Scheme in Ad Hoc Wireless
+> LANs," IEEE Trans. Veh. Technol., vol. 57, no. 6, pp. 3757–3768, Nov. 2008,
+> doi:10.1109/TVT.2008.918731.** [VERIFIED-PRIMARY]
 
-Reported key claim (from search abstracts, **not** the primary source): the paper argues that
-*analytic models for saturation performance evaluation of IEEE 802.11 unicast communication cannot
-be simply reduced for analysis of broadcast service*, and builds a model of the broadcast backoff
-counter yielding closed-form saturation throughput and packet delivery ratio.
+*(Note: the author-copy PDF of the letter carries a placeholder header "vol. 11, no. 5, May 2007".
+The Xplore record — vol. 11, no. 8, pp. 686–688, August 2007 — is authoritative.)*
+
+Verbatim from the abstract: analytic models for unicast *"**cannot simply be reduced** for the
+analysis of broadcast service."* They name the mechanism the **backoff counter Consecutive Freeze
+Process (CFP)** and state the unicast/broadcast asymmetry in §II-C of the journal version. Their
+model splits the backoff counter into the sequential backoff process and the CFP, and yields a
+closed form for saturation throughput and packet delivery ratio.
+
+**Their closed form vs our NS-3 measurement: ≤0.36 % on p_s, idle-slots-per-busy-period and
+throughput at N = 5, 10, 20, 35, 50.** Implemented in `models/broadcast_dcf.py`. Their
+τ_s = 2/W₀ = 0.125; our discarded reduction used 2/(W+1) = 0.1176.
+
+**Caution for implementers:** the 2007 letter's eq. (6) prints `pss = 1−(1−τs)^(n−1)`, which is a
+collision probability and cannot be a success probability. The 2008 journal eq. (8) gives the
+correct `pss = n·τs·(1−τs)^(n−1)`. Use the journal.
 
 **That is precisely the error this project made**: `analysis/figures_ns3.py` reduced the unicast
-model to broadcast by setting τ = 2/(W+1), and it failed by 16×.
+model to broadcast by setting τ = 2/(W+1), and it failed by 16×. It has been replaced by
+`models/broadcast_dcf.py`.
 
 Also surfaced, unread: *"Comments on IEEE 802.11 saturation throughput analysis with freezing of
 backoff counters"* (IEEE Xplore doc 1388729) — part of the backoff-freezing debate that Tinnirello
@@ -115,21 +130,24 @@ et al. resolve. **[VERIFY]**
 
 ---
 
-## 3. What Mohamed must check, and what each outcome means
+## 3. Resolution
 
-**The single question:** does Ma & Chen's broadcast backoff model treat consecutive channel slots as
-*independent*, or does it carry the anomalous-slot correlation?
+**The question was:** does Ma & Chen's broadcast backoff model treat consecutive channel slots as
+*independent*, or does it carry the anomalous-slot correlation? (Chronology suggested independence —
+Ma & Chen 2007 predates Tinnirello et al. 2010 — which turned out to be wrong.)
 
-Chronology suggests it does not — Ma & Chen (2007) predates Tinnirello et al. (2010) — but this must
-be read, not inferred.
+**ANSWERED: outcome (a).** Ma & Chen's model carries the correlation explicitly — the CFP *is*
+the correlation. Actions taken: `models/broadcast_dcf.py` implements their equations with citation;
+our in-house reduction is deleted from the analysis path and kept only as a labelled failure curve;
+`sim/dcf_ladder.py` is retained as an independent cross-check (agrees to <2 %); docs/02 §6a now
+specifies the broadcast model normatively.
 
-| outcome | what it means | action |
-|---|---|---|
-| **(a)** their model already carries the correlation | the corrected broadcast model is published; our slot-exact simulator becomes an *independent validation* of it | cite Ma & Chen as the model; drop our own derivation; strongest possible footing |
-| **(b)** their model assumes independence *(most likely)* | the state of the art for broadcast still decouples; the anomalous-slot insight exists only for unicast | cite Ma & Chen as prior art, Tinnirello et al. for the mechanism, and claim the **extension to broadcast with a measured 16× magnitude** as the contribution |
-| **(c)** neither model applies | broader search needed (VANET safety-broadcast literature) | — |
+**What remains ours, stated conservatively:** independent validation at W₀=16 / 802.11a / 6 Mb/s
+(they tested W₀=32 and 128 at 1 Mb/s — and they conclude CFP matters *most* at small W₀); direct
+PHY-trace measurement of the mechanism rather than curve-fitting; and reproduction of the
+non-monotonic throughput reversal near N≈40 that the naive reduction cannot produce.
 
-Under (b) the honest and defensible framing is:
+The superseded framing follows, kept visible:
 
 > Tinnirello et al. showed that DCF's backoff decrement rules make consecutive slots correlated, and
 > that in unicast the ACK timeout blocks the post-collision slot. We show that in **broadcast**,

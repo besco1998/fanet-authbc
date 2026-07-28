@@ -3,14 +3,15 @@
 Reads results/raw/ns3_matrix.csv (frozen) ONLY. For each N compares each NS-3 mode to its
 MATCHING analytic variant — never crossed (the docs' scientific-integrity trap):
   unicast   ↔ ACK-Bianchi  = models.bianchi.solve(N, L)
-  broadcast ↔ no-ACK/no-retry variant (τ = 2/(W+1), no ACK in the busy slot)
-              AND the slot-exact reference `sim.dcf_ladder`, which is the same process WITHOUT
-              Bianchi's decoupling approximation.
+  broadcast ↔ **Ma & Chen's broadcast model** (`models.broadcast_dcf`), which accounts for the
+              backoff counter Consecutive Freeze Process that broadcast's frozen contention
+              window makes dominant.
 Writes fig_ns3_bianchi.png (byte-stable), results/raw/ns3_contention.csv, and a PROVENANCE row.
 
-The no-ACK Bianchi curve is kept — it is the textbook variant and the figure's point is that it
-fails — but it is no longer the only broadcast reference: it under-predicts NS-3 by up to 16× at
-N=50, whereas the slot-exact model tracks it to ≈1 % (docs/audits/p7.md, finding F9).
+The figure also plots the **naive reduction** (unicast Bianchi with the ACK removed, τ = 2/(W+1)).
+That is NOT a published model — it is the in-house adaptation this project used until P7, and it
+under-predicts NS-3 by 16× at N=50. It is drawn only to show that failure explicitly; Ma & Chen
+warned against exactly this reduction (docs/audits/p7.md F9, docs/literature/f9_broadcast_dcf.md).
 """
 
 from __future__ import annotations
@@ -27,8 +28,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
 from authbc.bench.stats import bootstrap_ci  # noqa: E402
-from authbc.models import bianchi  # noqa: E402
-from authbc.sim import dcf_ladder  # noqa: E402
+from authbc.models import bianchi, broadcast_dcf  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[1]
 RAW = REPO / "results" / "raw"
@@ -36,51 +36,25 @@ FIGS = REPO / "results" / "figures"
 _SAVE = {"dpi": 110, "bbox_inches": "tight", "metadata": {"Software": None}}
 
 
-def _airtime_s(nbytes: float) -> float:
-    return 8.0 * nbytes / bianchi.R_BPS
+def broadcast_maachen_mbps(n: int, payload_bytes: float) -> float:
+    """Broadcast saturation throughput per Ma & Chen (IEEE TVT 57(6):3757–3768, 2008), Mbit/s.
 
-
-def broadcast_bianchi_mbps(n: int, payload_bytes: float) -> float:
-    """No-ACK/no-retry broadcast saturation throughput (matches NS-3 broadcast), Mbit/s.
-
-    Broadcast never ACKs, retransmits, or grows CW, so τ is the single-stage value 2/(W+1)
-    (N-independent). A busy slot costs T_air_b = T_phy + 8(L+34)/R + DIFS + δ (no ACK/SIFS) for
-    both success and collision. Successful (non-colliding) payload carries the throughput.
+    The published broadcast model: it splits the backoff counter into the sequential backoff
+    process and the Consecutive Freeze Process, because with no ACK the contention window never
+    doubles and a station that has just transmitted may redraw 0 and seize the next slot.
     """
-    tau = 2.0 / (bianchi.W + 1)
-    p_tr = 1.0 - (1.0 - tau) ** n
-    p_s = n * tau * (1.0 - tau) ** (n - 1) / p_tr
-    e_slot = (1.0 - p_tr) * bianchi.SLOT + p_tr * bianchi.t_broadcast_exact(payload_bytes)
-    return p_tr * p_s * (8.0 * payload_bytes) / e_slot / 1e6
-
-
-# Slot-exact reference run length. p_s is stable to 4 decimals from 2e5 busy periods; 3e5 costs
-# ~1 s per N. Seeded, so the figure and ns3_contention.csv re-derive byte-identically.
-_LADDER_PERIODS = 300_000
-_LADDER_SEED = 1
-
-
-def broadcast_slotexact_mbps(n: int, payload_bytes: float) -> float:
-    """Broadcast saturation throughput from the slot-exact DCF process (sim.dcf_ladder), Mbit/s.
-
-    Identical physics to `broadcast_bianchi_mbps` — same W, same busy-period airtime, same slot —
-    except that the backoff process is simulated rather than approximated as independent per-slot
-    Bernoulli trials. The difference is the post-transmission head start: a station that has just
-    transmitted may redraw backoff 0 and take the medium one slot before any deferring station,
-    which with a frozen CW (no ACK ⇒ no retry ⇒ no CW doubling) is the dominant success channel
-    at large N.
-    """
-    t_busy = bianchi.t_broadcast_exact(payload_bytes)
-    return dcf_ladder.run(
-        n,
-        w=bianchi.W,
-        busy_periods=_LADDER_PERIODS,
-        head_start=True,
-        t_busy_s=t_busy,
+    return broadcast_dcf.solve(
+        n, payload_bytes, bianchi.t_broadcast_exact(payload_bytes), w0=bianchi.W,
         slot_s=bianchi.SLOT,
-        payload_bytes=payload_bytes,
-        seed=_LADDER_SEED,
     ).throughput_bps / 1e6
+
+
+def broadcast_naive_mbps(n: int, payload_bytes: float) -> float:
+    """The DISCARDED in-house reduction (τ = 2/(W+1)), plotted only to show that it fails."""
+    return broadcast_dcf.naive_reduction_mbps(
+        n, payload_bytes, bianchi.t_broadcast_exact(payload_bytes), w=bianchi.W,
+        slot_s=bianchi.SLOT,
+    )
 
 
 def load_matrix() -> tuple[list[dict], dict]:
@@ -116,17 +90,17 @@ def summarize(rows: list[dict]) -> dict:
                     t_s=bianchi.t_success_exact(payload),
                     t_c=bianchi.t_collision_exact(payload),
                 ).throughput_bps / 1e6
-                slotexact = None
+                naive = None
             else:
-                analytic = broadcast_bianchi_mbps(n, payload)
-                slotexact = broadcast_slotexact_mbps(n, payload)
+                analytic = broadcast_maachen_mbps(n, payload)
+                naive = broadcast_naive_mbps(n, payload)
             cell = {
                 "ns3": round(med, 4), "ci_lo": round(lo, 4), "ci_hi": round(hi, 4),
                 "analytic": round(analytic, 4),
                 "gap_pct": round(100 * (med - analytic) / analytic, 2),
-                "slotexact": None if slotexact is None else round(slotexact, 4),
-                "slotexact_gap_pct": (None if slotexact is None
-                                      else round(100 * (med - slotexact) / slotexact, 2)),
+                "naive": None if naive is None else round(naive, 4),
+                "naive_gap_pct": (None if naive is None
+                                  else round(100 * (med - naive) / naive, 2)),
             }
             out["cells"][(mode, n)] = cell
     return out
@@ -143,15 +117,16 @@ def make_figure(s: dict) -> str:
         an = [s["cells"][(mode, n)]["analytic"] for n in ns]
         ax.errorbar(ns, ns3, yerr=[lo, hi], fmt="o", color=colors[mode], capsize=3,
                     label=f"NS-3 {mode}")
-        ax.plot(ns, an, "-", color=colors[mode], lw=1.2,
-                label=f"Bianchi {'ACK' if mode == 'unicast' else 'no-ACK'} {mode}")
-        if all(s["cells"][(mode, n)]["slotexact"] is not None for n in ns):
-            ax.plot(ns, [s["cells"][(mode, n)]["slotexact"] for n in ns], "--",
-                    color="#282", lw=1.4, label=f"slot-exact DCF {mode}")
+        label = "Bianchi ACK (unicast)" if mode == "unicast" else "Ma & Chen (broadcast)"
+        ax.plot(ns, an, "-", color=colors[mode], lw=1.2, label=label)
+        if all(s["cells"][(mode, n)]["naive"] is not None for n in ns):
+            ax.plot(ns, [s["cells"][(mode, n)]["naive"] for n in ns], "--",
+                    color="#888", lw=1.4,
+                    label="naive no-ACK reduction (fails, 16x at N=50)")
     ax.axhline(6.0, ls=":", color="gray", label="6 Mb/s PHY ceiling")
     ax.set_xlabel("N saturated stations")
     ax.set_ylabel("saturation throughput [Mb/s]")
-    ax.set_title(f"Bianchi vs NS-3 3.41 (L={int(s['L'])} B, per-mode matched)")
+    ax.set_title(f"Analytic DCF models vs NS-3 3.41 (L={int(s['L'])} B, per-mode matched)")
     ax.legend(fontsize=7)
     out = FIGS / "fig_ns3_bianchi.png"
     fig.savefig(out, **_SAVE)
@@ -166,13 +141,13 @@ def write_contention(s: dict) -> None:
         for n in s["N"]:
             c = s["cells"][(mode, n)]
             rows.append({"N": n, "mode": mode, "ns3_goodput_mbps": c["ns3"],
-                         "bianchi_mbps": c["analytic"], "gap_pct": c["gap_pct"],
-                         "slotexact_mbps": c["slotexact"],
-                         "slotexact_gap_pct": c["slotexact_gap_pct"],
+                         "analytic_mbps": c["analytic"], "gap_pct": c["gap_pct"],
+                         "naive_reduction_mbps": c["naive"],
+                         "naive_gap_pct": c["naive_gap_pct"],
                          "airtime_share": round(c["ns3"] / 6.0, 4)})
     with (RAW / "ns3_contention.csv").open("w", newline="") as fh:
-        w = csv.DictWriter(fh, fieldnames=["N", "mode", "ns3_goodput_mbps", "bianchi_mbps",
-                                           "gap_pct", "slotexact_mbps", "slotexact_gap_pct",
+        w = csv.DictWriter(fh, fieldnames=["N", "mode", "ns3_goodput_mbps", "analytic_mbps",
+                                           "gap_pct", "naive_reduction_mbps", "naive_gap_pct",
                                            "airtime_share"])
         w.writeheader()
         w.writerows(rows)
@@ -193,10 +168,10 @@ def main() -> None:
     for mode in s["modes"]:
         for n in s["N"]:
             c = s["cells"][(mode, n)]
-            extra = ("" if c["slotexact"] is None else
-                     f"  slot-exact={c['slotexact']:.3f} gap={c['slotexact_gap_pct']:+.2f}%")
+            extra = ("" if c["naive"] is None else
+                     f"  naive={c['naive']:.3f} gap={c['naive_gap_pct']:+.1f}%")
             print(f"  {mode:9} N={n:<2} NS3={c['ns3']:.3f} "
-                  f"Bianchi={c['analytic']:.3f} gap={c['gap_pct']:+.1f}%{extra}")
+                  f"model={c['analytic']:.3f} gap={c['gap_pct']:+.2f}%{extra}")
 
 
 if __name__ == "__main__":
