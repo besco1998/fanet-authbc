@@ -292,8 +292,9 @@ a **whole-repo audit** (§5) that found and fixed the T4/BLS inconsistency, and 
 ---
 ## 4. Results in detail
 
-All values from frozen `results/raw/*.csv`; x86 host = Intel i5-14400F (energy uses nominal power,
-⚠️ pending P7).
+All values from frozen `results/raw/*.csv`. Model/byte results derived on x86 (Intel i5-14400F);
+the energy column's crypto timings, encode timings **and both powers are MEASURED on the RPi4**
+(D8) — `p_cpu_w`=0.634 W, `p_radio_w`=0.218 W. Energy is no longer nominal.
 
 ### E1 — overhead dominance (T1), 30 seeds
 | encoding | mean bytes s | φ = 64/(s+64) | notes |
@@ -347,7 +348,7 @@ not self-batch.**
 ### E5 — the co-design headline (T5) — **PASS**
 | configuration | encoding | scheme | placement | on-air auth B/rec | V |
 |---|---|---|---|---|---|
-| **optimized** | delta | ECDSA | **B, b=28** | **3.71** | 0.95 |
+| **optimized** | delta | Ed25519 | **B, b=4** | **26.00** | 0.95 |
 | A+CBOR (Pillar-1) | cbor | Ed25519 | A (inline) | 104.0 | 0.95 |
 | A+JSON (naive) | json | Ed25519 | A | 104.0 | 0.95 |
 | D-over-agg | cbor | Ed25519 | D, b=40 | 3.60 | **0.9025** ✗ |
@@ -433,8 +434,8 @@ The project's second product (after the results) is the *discipline*. The anomal
   deterministic frozen artifact from current code and fails loudly on any drift, verified to catch the
   F1 regression. Staleness can no longer be committed.
 
-Every energy number remains **nominal-power pending P7**; the auth-byte headline is **power-free** and
-final. Nothing is fabricated, no test is skipped, no tolerance is widened, and negative/limiting
+Every energy number is now **measured** (P7b: `p_cpu_w`=0.634 W, `p_radio_w`=0.218 W, both 3–5x
+below the retired nominal values); the auth-byte headline is **power-free** either way. Nothing is fabricated, no test is skipped, no tolerance is widened, and negative/limiting
 results (two retracted broadcast explanations, BLS losing on 802.11) are reported plainly.
 
 ---
@@ -448,4 +449,4 @@ results (two retracted broadcast explanations, BLS losing on 802.11) are reporte
 - **P7b (hardware):** measure real timings + INA219 energy on RPi4, watch the F6 scheme flip, then
   re-run E4/E5 with measured power and re-freeze through the gate. Setup: hw/SETUP.md.
 - **P8 (paper):** condense this narrative into the IEEEtran write-up with an honest limitations section
-  (802.11-only, small-N hardware, emulated vs real loss, nominal→measured power).
+  (small-N hardware, emulated vs real loss, no mobility, H_f assumed — see the open-items list).

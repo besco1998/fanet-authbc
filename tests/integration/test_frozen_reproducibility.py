@@ -23,7 +23,16 @@ from types import ModuleType
 import pytest
 
 from authbc.bench import framesizes, micro
-from authbc.bench.experiments import load_config, run_e1, run_e2, run_e3, run_e5
+from authbc.bench.experiments import (
+    load_config,
+    run_capacity,
+    run_e1,
+    run_e2,
+    run_e3,
+    run_e5,
+    run_lora,
+    run_lora_codesign,
+)
 
 # Slow (re-runs the encode-heavy generators): deselected from the fast local `make test`, run in
 # CI + `make all` via `make verify-frozen` (-m frozen). This is the frozen-staleness gate.
@@ -86,6 +95,12 @@ _CASES = {
         _run_e4.load_crypto(_run_e4.CRYPTO_CSV if _run_e4.CRYPTO_CSV.exists()
                             else RAW / "p1_crypto.csv")),
     "e4_bytes.csv": lambda: _run_e4.bytes_rows(_run_e4.load_sizes(RAW / "p1_sizes.csv")),
+    # Added 2026-07-28 (pre-P8 audit): these three were UNGATED, which is precisely the F1 hole
+    # the gate exists to close — three runnable experiments producing frozen artifacts that
+    # nothing re-derived. The LoRa pair in particular moved on the F5 decision the same day.
+    "lora_eu868.csv": lambda: run_lora(load_config("lora")),
+    "lora_codesign.csv": lambda: run_lora_codesign(load_config("lora")),
+    "capacity_envelope.csv": lambda: run_capacity(load_config("capacity")),
 }
 
 

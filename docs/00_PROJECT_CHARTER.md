@@ -7,8 +7,9 @@ signature is 33% of a CBOR record's bytes and 62% of a delta record's. This thes
 formulates and solves the **joint optimization of encoding × authentication placement ×
 signature scheme × batching granularity** for per-UAV hash-chained telemetry ledgers over
 802.11 FANET links, under **security, wireless-loss-robustness, and verification-throughput
-constraints** — with closed-form results (T1–T5), validation in an instrumented channel
-emulator and NS-3, and hardware ground truth on 4× Raspberry Pi 4. The LoRa arm (doc 30)
+constraints** — with closed-form results (T1–T6), validation in an instrumented channel
+emulator and NS-3, and hardware ground truth on **2× Raspberry Pi 4** (the docs' original
+"4× RPi4" exceeds the actual inventory; the campaign is tiered in `hw/SETUP.md`). The LoRa arm (doc 30)
 extends the same framework to low-rate links afterward.
 
 ## 2. Research questions
@@ -44,7 +45,9 @@ Target venues: Ad Hoc Networks / MDPI Drones primary; IEEE IoT Journal if result
 ## 4. Explicit non-goals (guard rails against scope creep)
 - No new cryptographic primitive, no new consensus protocol, no PQC implementation
   (PQ sizes appear only as analytical datapoints), no mobility modeling (loss p is a
-  channel parameter), no multi-hop routing research, no LoRa in this arm (doc 30 later).
+  channel parameter), no multi-hop routing research. ⚠️ **LoRa: superseded 2026-07-28** — the arm
+  now ships in THIS thesis as a scoped *modelling* chapter ("Generalisation: the low-rate regime"),
+  carrying **T6**. Analysis only: no hardware, no energy column, no measured validation.
 
 ## 5. Timeline & first-results milestones (calendar-fast, correctness-first)
 | Phase | Weeks | Deliverable | First numbers |
@@ -66,7 +69,8 @@ if time allows, else becomes the journal extension.
   manual setup step; everything after (including repo creation) is agent-executed.
 - ⚠️ D7: execution mode after P0 — serial, 2-lane, or 3-lane parallel (see
   docs/07_PARALLEL_EXECUTION_PLAN.md; parallel compresses ~8 weeks to ~5).
-- D1 (settled): 802.11 arm first; LoRa arm deferred to doc 30.
+- D1 (settled, **amended 2026-07-28**): 802.11 arm first; the LoRa arm ships as a scoped modelling
+  chapter in this thesis (not deferred to doc 30). See DECISIONS.md.
 - D2 (settled): Ed25519 self-batch is the frame-batching default; BLS reserved for
   cross-signer aggregation (relay/attestation) — the audit-corrected architecture.
 - ⚠️ D3: true Ed25519 *batch verification* needs a native binding (see doc 06 §4);

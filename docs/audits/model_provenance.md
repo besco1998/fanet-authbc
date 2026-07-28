@@ -299,3 +299,87 @@ always evaluated at the configuration's own frame size, and a test pins that sma
 ⚠️ **Open: DCF access delay is not modelled.** D(b) covers fill + airtime + the node's own frame
 queue, not waiting for a contended medium. At U → 1 real latency rises far above D(b) invisibly, so
 the freshness figure is credible only at low U. `channel_util` is now reported next to it.
+
+---
+
+## F13 — the auth-byte headline is placement×batching ALONE; encoding and scheme contribute zero ⚠️
+*Found 2026-07-28 during the pre-P8 full audit. **Not a bug — a framing error.** No number changes;
+what changes is what we are allowed to claim.*
+
+**The arithmetic.** On-air authentication overhead per record is
+
+        auth(b) = (H_f + g_a) / b            for placements B/C/D
+        auth(1) = H_f + g_a                  for placement A (inline, b=1)
+
+`s` — the encoded record — **does not appear**. So the headline metric is a function of placement
+and batch only. Ed25519 and ECDSA-P256 are both 64 B, so the *scheme* axis cannot move it either
+(BLS's 96 B moves it the wrong way).
+
+**Verified against frozen E2, independently of the model code** (`bytes_per_rec − s`, M=1500):
+
+| | JSON | CBOR | MessagePack | delta |
+|---|---|---|---|---|
+| placement A, b=1 | 103.995 | 104.002 | 104.000 | 103.998 |
+| **placement B, b=4** | **25.995** | **26.002** | **26.000** | **25.998** |
+
+**Identical to three decimal places across all four encodings.** The 75.00 % cut is
+(104 − 26)/104 — it would be reported unchanged if the encoding axis were deleted from the study.
+
+### The sharpest form: the headline is algebraically **1 − 1/b**
+
+Both the baseline and the optimized configuration carry the *same* per-frame cost H_f + g_a. The
+baseline divides it by 1, the optimized by b. So the reported cut is
+
+        cut = [(H_f+g_a) − (H_f+g_a)/b] / (H_f+g_a)  =  **1 − 1/b**
+
+**Every symbol cancels.** Verified by substitution over H_f ∈ {20,40,80,200} × g_a ∈ {48,64,96}:
+all twelve give **75.0000 %**. The number is invariant to the header size, the signature size, the
+encoding and the scheme. At b = 4, 1 − 1/4 = 0.75 exactly — which is why the headline reads
+75.00 % and not 74.8 % or 75.3 %.
+
+**So the headline carries exactly one piece of information: b = 4.** And b = 4 is not an
+optimization outcome either — it is ⌊Λ·D_max⌋ = ⌊20 × 0.25⌋ = 5, reduced to 4 because b=5 puts fill
+time at exactly 250.0 ms and the airtime term pushes it over the bound. **b is fixed by two model
+inputs, Λ and D_max.** The optimizer confirms it; it does not discover it.
+
+*(Corollary, useful elsewhere: because H_f cancels, the unreferenced H_f = 40 B assumption cannot
+bias the headline. It still matters for T6, b_max, total bytes and channel utilisation.)*
+
+**Why this was not visible earlier.** T2a is the same fact seen from the other side: when freshness
+binds, b = ⌊Λ·D_max⌋ is *independent of s*, so dC/ds = 1 and the encoding decouples from the batch.
+T2a stated the consequence for compression leverage; it did not state the consequence for **the
+headline metric's attribution**, which is stronger and more damaging to the claim as written.
+
+**What each axis actually buys** (A+CBOR baseline 170.252 B/rec → optimized delta/B/b=4 70.998):
+
+| axis | metric it moves | magnitude |
+|---|---|---|
+| placement × batching | **auth bytes** 104 → 26.0 | 75.00 % — the headline; **78.6 %** of the total saving |
+| encoding | **payload bytes** 66.25 → 45.0 | 32.1 % — **21.4 %** of the total saving |
+| scheme | *neither* (64 B either way) | selected on **energy / verify-throughput / feasibility**, not bytes |
+| | **total bytes/record** | **58.3 %** |
+
+**The honest claim, and the dishonest one.**
+
+* ✗ *"Co-optimizing encoding × authentication placement × signature scheme × batching cuts on-air
+  authentication by 75 %"* — implies four contributing axes. **Two of them contribute nothing to
+  that number, and the number itself is 1 − 1/b.** This phrasing is in docs/00, the abstract and
+  the conclusion, and must go. Presented as a headline it invites the fatal reviewer question
+  *"is your main result just the definition of batching?"* — to which, for this metric alone, the
+  answer is yes.
+* ✓ *"Authentication placement and batching cut on-air **authentication** bytes 75.0 %; encoding
+  cuts **payload** bytes a further 32.1 %; together, **total** on-air bytes fall 58.3 %. The scheme
+  axis is byte-neutral and is decided on energy and verify-throughput."*
+
+**This does not weaken the thesis — it relocates the contribution.** The defensible co-design claim
+is the *joint feasibility* one, which genuinely needs all four axes plus the channel: **at N=50 and
+Λ=20 the baselines are not merely wasteful, they are unrunnable** (U = 2.28 for A+JSON, 1.53 for
+A+CBOR, vs 0.55 optimized — F12/§6b), and the frontier is 4-objective (bytes, freshness, V, energy)
+with hard constraints from three different physical sources. A single-axis study cannot produce that
+result. The error was compressing a four-objective feasibility result into a one-number byte claim
+and then attributing that number to all four axes.
+
+**Actions.** (i) headline sentence corrected in docs/00, docs/TECHNICAL_NARRATIVE, paper abstract +
+conclusion; (ii) the decomposition table above added to the results section — it is *more*
+informative than the single number; (iii) `test_headline_decomposition.py` pins the encoding-
+independence so the claim cannot silently regress.

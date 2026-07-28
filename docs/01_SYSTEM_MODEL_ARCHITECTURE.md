@@ -52,23 +52,43 @@ metric, not a security claim.
   Self-contained ⇒ loss-local.
 - **C. Cross-signer aggregate (relay/attestation):** a frame carries b records from
   DIFFERENT originators, each originally signed; BLS aggregates the b signatures into one
-  48 B signature. Required only when forwarding others' records or combining attestations.
+  96 B signature (see below). Required only when forwarding others' records or combining attestations.
 - **D. Block-level aggregate:** one signature over b records spanning n>1 frames.
   All-or-nothing under loss (T3 shows when it's dominated).
 
 **Signature schemes σ:** ECDSA-P256 (64 B, legacy baseline), Ed25519 (64 B, fast),
-BLS12-381 min-sig (48 B, aggregatable; AugScheme for distinct messages — doc 06 §5).
+BLS12-381 (aggregatable; AugScheme for distinct messages — doc 06 §5). ⚠️ **96 B, not the 48 B
+min-sig this doc originally specified**: blspy ships only the min-pubkey Chia scheme (pk 48 B in G1,
+sig 96 B in G2). Accepted and applied everywhere — see DECISIONS.md.
 
 **Encodings e:** JSON (stdlib, Pillar-1 baseline), CBOR canonical (RFC 8949 §4.2),
 MessagePack, delta-CBOR (canonical delta vs previous record with periodic keyframes;
 keyframe interval fixed K=16 in this arm — optimizing K is the doc-30/LoRa question).
 
+## 2a. ⚠️ H_f = 40 B is a modelling assumption (added 2026-07-28, pre-P8 audit)
+`H_f` appears in T2, T2a, T6, `b_max`, every byte-accounting formula and the channel-utilisation
+constraint, but **it was never derived and is not measured**. It is an indicative budget for a
+ledger frame header — version + flags, source node id, frame sequence, timestamp, batch count,
+payload length, and the first chain link's context — and no wire-format implementation pins it.
+
+**Stated plainly:** it is an assumption, and the thesis must say so rather than let a bare table
+default read as a measurement. Two things bound the damage:
+
+* **The auth-byte headline is invariant to it.** The cut is 1 − 1/b (audit F13); H_f cancels
+  identically. Substituting H_f ∈ {20, 40, 80, 200} B changes the headline by **0.0000 %**.
+* **It does bias:** T6's exclusion tiers (a leaner header moves DR3 from excluded to feasible),
+  `b_max` under an MTU, total bytes/record, and therefore channel utilisation and energy.
+
+**Open action for P8:** either derive H_f from an implemented wire format (`placement/wire.py`
+already serialises frames — measure it) or report T6 and the byte tables against a *range* of H_f.
+Tracked in the open-items list.
+
 ## 2. Notation (single source of truth — use everywhere, incl. code comments)
 | Symbol | Meaning | Default |
 |---|---|---|
 | s | encoded record payload bytes | measured (E1) |
-| g | signature bytes (scheme σ) | 64 / 64 / 48 |
-| H_f | ledger frame header bytes | 40 |
+| g | signature bytes (scheme σ) | 64 / 64 / **96** (BLS: blspy AugScheme G2 — DECISIONS) |
+| H_f | ledger frame header bytes | 40 — ⚠️ **modelling assumption, not measured** (see §2a) |
 | M | application MTU budget | 1500 |
 | b | records per frame (batch) | decision var |
 | p | frame loss probability | {.02,.05,.10} |
@@ -77,7 +97,7 @@ keyframe interval fixed K=16 in this arm — optimizing K is the doc-30/LoRa que
 | N_local | neighbours in the collision domain | 50 |
 | U | channel utilisation, offered/deliverable frames | ≤1 required |
 | R | PHY data rate | 6 Mb/s |
-| T_fx | fixed MAC/PHY airtime per frame | ≈123 µs (doc 02 §6) |
+| ~~T_fx~~ | ~~fixed MAC/PHY airtime per frame~~ | **REMOVED by D9** — airtime is an OFDM-symbol *step* function, not affine; use `bianchi.ofdm_ppdu` (docs/02 §6) |
 | t_enc,t_dec | encode/decode time per record | measured |
 | t_sg,t_vf | sign / verify time | measured |
 | t_ag,t_av(b) | aggregate / aggregate-verify time | measured |

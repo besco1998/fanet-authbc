@@ -185,8 +185,10 @@ headline. \textbf{P7a} produced the hardware-measurement scripts; a whole-repo a
 inconsistency and added an automated frozen-data reproduction gate (Sec.~\ref{sec:repro}).
 
 \section{Results}\label{sec:results}
-All values are from frozen CSVs (x86 host, Intel i5-14400F; energy uses nominal power pending hardware
-measurement).
+All values are from frozen CSVs. Byte and model results were derived on an x86 host
+(Intel~i5-14400F); the crypto timings, encode timings and both power figures feeding the energy
+column are \emph{measured on the Raspberry~Pi~4} thesis platform (decision D8), so the energy
+column is platform-consistent ARM throughout.
 
 \begin{table}[t]\centering\footnotesize
 \caption{E1: overhead dominance (T1), 30 seeds. $\varphi = 64/(s+64)$.}
