@@ -29,7 +29,9 @@ REPO = Path(__file__).resolve().parents[1]
 RAW = REPO / "results" / "raw"
 HW = REPO / "results" / "hw"
 
-RATIO_LO, RATIO_HI = 5.0, 15.0     # docs/04 §1 anchor: RPi4 is ~5-15x slower than x86
+# docs/04 §1 anchor, REVISED at P7b: the old 5-15x WALL-CLOCK band was arithmetically unreachable
+# (the clock ratio alone is a 2.61x floor). The anchor is now per-CYCLE and clock-independent.
+CYC_LO, CYC_HI = 1.0, 4.0
 
 # Clock speeds for CYCLE normalisation. A wall-clock ratio conflates two effects: the clock
 # frequency difference and the per-cycle instruction efficiency; only the latter says anything
@@ -101,12 +103,13 @@ def compare_crypto(arm_path: Path) -> None:
     clock_ratio = F_X86_HZ / F_ARM_HZ
     print(f"   clock floor = {clock_ratio:.2f}x  (x86 {F_X86_HZ / 1e9:.1f} GHz / ARM "
           f"{F_ARM_HZ / 1e9:.1f} GHz) — no wall ratio can fall below this")
-    print(f"\n{'op':<24}{'x86 (us)':>11}{'ARM (us)':>11}{'wall':>8}{'cyc ARM/x86':>13}  band")
+    print(f"\n{'op':<24}{'x86 (us)':>11}{'ARM (us)':>11}{'wall':>8}"
+          f"{'cyc ARM/x86':>13}  band {CYC_LO}-{CYC_HI}x cycles")
     out_of_band = []
     for k in sorted(as_.keys() & xs.keys()):
         ratio = as_[k] / xs[k]
         cyc = ratio / clock_ratio          # per-cycle efficiency: 1.0 = identical work per cycle
-        mark = "ok" if RATIO_LO <= ratio <= RATIO_HI else "OUT"
+        mark = "ok" if CYC_LO <= cyc <= CYC_HI else "OUT"
         if mark == "OUT":
             out_of_band.append((k, ratio, cyc))
         print(f"{k:<24}{xs[k] / 1e3:>11.1f}{as_[k] / 1e3:>11.1f}"
@@ -141,20 +144,16 @@ def compare_crypto(arm_path: Path) -> None:
               "  => order preserved; E5's ECDSA pick still holds on ARM.")
 
     if out_of_band:
-        print(f"\n== {len(out_of_band)} op(s) outside the {RATIO_LO}-{RATIO_HI}x band ==")
+        print(f"\n== {len(out_of_band)} op(s) outside the {CYC_LO}-{CYC_HI}x CYCLE band ==")
         for k, r, c in out_of_band:
             print(f"     {k:<24}wall {r:5.2f}x   cycles {c:5.2f}x")
-        below = [x for x in out_of_band if x[1] < RATIO_LO]
-        if below and all(c < 2.2 for _, _, c in below):
-            print(f"   EXPLAINED, not a fault: these sit at ~{clock_ratio:.1f}x because ARM needs "
-                  "only ~1-2x the CYCLES,\n   i.e. the primitive is about as well optimised on ARM "
-                  "as on x86, so the wall ratio collapses\n   to the clock floor. The 5-15x anchor "
-                  "is unreachable for such primitives and should be\n   restated per-cycle (raise "
-                  "with Mohamed; do NOT silently widen the band).")
-        else:
-            print("   Investigate BEFORE recording (governor? throttling? thermal?).")
+        print("   Investigate BEFORE recording (governor? throttling? a different code path?).")
     else:
-        print(f"\nAll ratios inside the {RATIO_LO}-{RATIO_HI}x band.")
+        print(f"\nAll ops inside the {CYC_LO}-{CYC_HI}x cycle band (docs/04 §1, revised at P7b).")
+        print(f"   Wall-clock ratios span {min(as_[k] / xs[k] for k in as_.keys() & xs.keys()):.2f}"
+              f"-{max(as_[k] / xs[k] for k in as_.keys() & xs.keys()):.2f}x; that spread is the"
+              f" clock floor ({clock_ratio:.2f}x) times per-cycle efficiency, not a fault.")
+
 
 
 def main() -> None:

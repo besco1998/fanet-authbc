@@ -74,13 +74,13 @@ its aggregation pays off only for cross-signer relay traffic.
 \subsection{E5 --- the headline (T5) \ok}
 \begin{center}\begin{tabular}{llllrr}
 \toprule config & enc & scheme & placement & auth B/rec & $V$ \\ \midrule
-\textbf{optimized} & delta & ECDSA & B, $b{=}28$ & \textbf{3.71} & 0.95 \\
+\textbf{optimized} & delta & \textbf{Ed25519} & B, $b{=}31$ & \textbf{3.36} & 0.95 \\
 A+CBOR (baseline) & cbor & Ed25519 & A inline & 104.0 & 0.95 \\
 A+JSON (naive) & json & Ed25519 & A inline & 104.0 & 0.95 \\
 D-over-agg & cbor & Ed25519 & D, $b{=}40$ & 3.60 & \textbf{0.9025} \bad \\ \bottomrule
 \end{tabular}\end{center}
-\[ \text{cut}=\frac{104-3.71}{104}=\mathbf{96.4\,\%}\ \ge 40\,\%\quad\Rightarrow\quad \ok \]
-Hand-checked: $45.0+104/28=48.71$\,B/record. \textbf{The last row is the co-design argument in
+\[ \text{cut}=\frac{104-3.355}{104}=\mathbf{96.8\,\%}\ \ge 40\,\%\quad\Rightarrow\quad \ok \]
+Hand-checked: $45.0+104/31=48.35$\,B/record ($b_{\max}=\lfloor(1500-64-40)/45\rfloor=31$). \textbf{The last row is the co-design argument in
 miniature}: over-aggregation is byte-competitive (3.60\,B) yet \emph{fails} $V\ge0.95$ because
 $0.9025=(1-p)^2$. The byte-optimal answer is not the correct answer.
 
@@ -109,9 +109,9 @@ bls verify & 1016.5 & 8611.8 & 8.47$\times$ & 3.25$\times$ \\ \bottomrule
 \end{tabular}\end{center}
 Wall-clock ratio conflates clock speed with per-cycle efficiency. The clock floor is
 $4.7/1.8=2.61\times$. Normalising shows Ed25519 needs only $1.05\times$ the cycles on ARM (equally
-optimised on both ISAs) while BLS needs $3.25\times$ (heavily x86-tuned). \textbf{Consequence: the
-docs/04 §1 ``5--15$\times$'' anchor is unreachable} for an equally-optimised primitive and must be
-restated per-cycle.
+optimised on both ISAs) while BLS needs $3.25\times$ (heavily x86-tuned). \textbf{The docs/04 §1 ``5--15$\times$'' wall-clock anchor was therefore withdrawn} as
+arithmetically unreachable and \textbf{restated per-cycle: expect 1--4$\times$ the CYCLES on ARM}
+(clock- and platform-independent). All measured ops now sit inside that band.
 
 \subsection{F6 --- the scheme ordering flips on ARM}
 \begin{center}\begin{tabular}{lrrl}

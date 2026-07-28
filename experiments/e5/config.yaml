@@ -2,7 +2,12 @@
 experiment: e5
 encodings: [json, cbor, msgpack, delta]
 schemes: [ecdsa_p256, ed25519, bls]
-batches: [1, 2, 3, 4, 5, 6, 8, 10, 12, 14, 16, 20, 24, 28, 32, 36, 40]
+# Dense through the MTU knee. The coarse grid stopped at 28 while the true single-frame limit
+# for delta is b_max = floor((M - g_a - H_f)/s) = floor((1500-64-40)/45.0) = 31, so the reported
+# optimum was grid-quantized (audit F3). Integers 20..40 cover every knee across all encodings
+# (cbor/msgpack b_max=21, json b_max=7) without inflating the search space.
+batches: [1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 14, 16, 18, 20, 21, 22, 23, 24, 25, 26, 27, 28,
+          29, 30, 31, 32, 33, 34, 35, 36, 38, 40]
 h_f: 40            # frame header bytes H_f (docs/01 §2)
 mtu: 1500          # M
 epsilon: 0.05      # V >= 1-eps = 0.95
