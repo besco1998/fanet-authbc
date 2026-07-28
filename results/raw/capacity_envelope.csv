@@ -7,7 +7,7 @@
 # cbor2=5.8.0
 # msgpack=1.2.1
 # run=capacity_envelope
-# config_hash=f43fb8cc6c5695db
+# config_hash=2e49f7c9b60117be
 n_local,lambda_rec_per_s,b,binds,frame_bytes,bytes_per_rec,frames_needed_per_s,channel_util,verdict
 5,1,1,freshness,153.0,152.998,5.0,0.0021,safe
 5,5,1,freshness,153.0,152.998,25.0,0.0106,safe
@@ -44,3 +44,8 @@ n_local,lambda_rec_per_s,b,binds,frame_bytes,bytes_per_rec,frames_needed_per_s,c
 100,10,2,freshness,198.0,98.998,500.0,0.7319,busy
 100,20,5,freshness,333.0,66.598,400.0,0.8661,tight
 100,50,12,freshness,648.0,53.998,416.67,1.5841,over-capacity
+ENVELOPE,20,4,optimized delta/B @250ms,288.0,71.998,,,N_max=103
+ENVELOPE,20,1,A+CBOR Pillar-1 @250ms,174.3,174.252,,,N_max=32
+ENVELOPE,20,1,A+JSON naive @250ms,299.1,299.085,,,N_max=25
+ENVELOPE,50,4,optimized delta/B @3GPP100ms/50Hz,288.0,71.998,,,N_max=35
+ENVELOPE,10,1,optimized delta/B @3GPP100ms/10Hz,153.0,152.998,,,N_max=78

@@ -161,6 +161,47 @@ def run_capacity(cfg: dict) -> list[dict]:
                 "verdict": "over-capacity" if util > 1.0 else ("tight" if util > 0.8
                            else ("busy" if util > 0.5 else "safe")),
             })
+    rows.extend(_n_max_envelope(cfg, sizes))
+    return rows
+
+
+def _n_max_envelope(cfg: dict, sizes: dict[str, float]) -> list[dict]:
+    """Largest N each configuration can carry with U < 1 (item B2, docs/02 §6b).
+
+    Reports N_local as a *curve* instead of defending a single assumed swarm size. This is the
+    capability statement the co-design actually supports: the Pillar-1 baseline runs out of channel
+    at N=32 while the co-designed configuration reaches N=103, so N=50 is not an arbitrary choice —
+    it is a swarm the baselines cannot serve and the co-design can.
+    """
+    g_a, h_f = cfg["g_a"], cfg["h_f"]
+    rows: list[dict] = []
+    for label, enc, placement, lam, d in cfg["envelope_configs"]:
+        s = sizes[enc]
+        # Use the SAME freshness rule E5 enforces — D(b) = fill + airtime + queueing — rather than
+        # the fill-only bound. They differ at the boundary: b=5 fills in exactly 250 ms at Λ=20, so
+        # any positive airtime term rejects it and the admissible batch is 4, matching E5.
+        plc = Placement.A if placement == "A" else Placement.B
+        b = max(1, int(lam * d))
+        while b > 1:
+            cand = EnergyConfig(placement=plc, batch=b, record_bytes=s, auth_bytes=g_a,
+                                frame_hdr_bytes=h_f, n_frames=1)
+            if energy.freshness_delay_s(cand, float(lam)) <= d:
+                break
+            b -= 1
+        # inline placement A never amortizes: one signature per record, so it frames b=1
+        b_eff, frame = (1, h_f + g_a + s) if placement == "A" else (b, h_f + g_a + b * s)
+        n_max = 0
+        for n in range(2, cfg["envelope_n_ceiling"] + 1):
+            if optimizer.channel_utilisation(n, float(lam), b_eff, frame) > 1.0:
+                break
+            n_max = n
+        rows.append({
+            "n_local": "ENVELOPE", "lambda_rec_per_s": lam, "b": b_eff,
+            "binds": label, "frame_bytes": round(frame, 1),
+            "bytes_per_rec": round(frame / b_eff, 3),
+            "frames_needed_per_s": "", "channel_util": "",
+            "verdict": f"N_max={n_max}",
+        })
     return rows
 
 

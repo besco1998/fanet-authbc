@@ -20,24 +20,56 @@ velocity, battery, mode). **Aggregate neighbourhood arrival Λ = Λ_i·N_local**
 batches its OWN records (freshness uses Λ_i) but verifies EVERYONE's (verify-throughput uses Λ).
 Conflating them was audit finding **F12**.
 
-**Λ_i = 20 rec/s — sourced, not assumed (2026-07-28).** An AUTHBC record maps onto MAVLink
-`GLOBAL_POSITION_INT` plus part of `SYS_STATUS`. Autopilot stream rates for exactly that content:
+**Λ_i = 20 rec/s and D_max = 250 ms — sources VERIFIED at source (2026-07-29, items A4/B3).**
+An AUTHBC record maps onto MAVLink `GLOBAL_POSITION_INT` plus part of `SYS_STATUS`. The rates below
+were read from the autopilot source, not from secondary summaries:
 
 | link class | position stream | source |
 |---|---|---|
-| ArduPilot default, 57k SiK radio | 1 Hz | `GCS_MAVLink_Parameters.cpp` |
-| PX4 `MAVLINK_MODE_NORMAL` (telemetry radio) | 5 Hz | `mavlink_main.cpp` |
-| PX4 `MAVLINK_MODE_OSD` / `CONFIG` (USB) | 10 Hz | ″ |
+| ArduPilot **Copter/Heli/Blimp** default | **0 Hz** — GCS requests on demand | `GCS_MAVLink_Parameters.cpp`, `default_rates[]` |
+| ArduPilot Plane / Rover default | 1 Hz | ″ |
+| ArduPilot Sub default | 3 Hz | ″ |
+| PX4 `MAVLINK_MODE_NORMAL` (telemetry radio) | 5 Hz | `mavlink_main.cpp`, `configure_streams_to_default` |
+| PX4 `MAVLINK_MODE_OSD` / `CONFIG` | 10 Hz | ″ |
 | **PX4 `MAVLINK_MODE_ONBOARD`** (companion computer) | **50 Hz** | ″ |
+| PX4 `LOW_BANDWIDTH` | 2 Hz | ″ |
 
-802.11 is a **companion-computer-class link**, so 20 Hz sits between the OSD and ONBOARD rates —
-not an inflated figure. It is *also* the ≤50 % channel-utilisation limit at N_local=50
-(`results/raw/capacity_envelope.csv`), so the pair **(N_local=50, Λ_i=20)** is the stated
-operating point rather than two independent defaults.
+⚠️ **Correction to the previous version of this table.** It listed "ArduPilot default 1 Hz" without
+qualification. ArduPilot's default is **vehicle-specific**, and for multirotors — the typical FANET
+node — the default is **0 Hz**: streams are requested by the GCS rather than pushed. The 1 Hz figure
+is the Plane/Rover default only.
+
+**The independent standards anchor.** 3GPP TS 22.125 §5.2.2 specifies the *direct UAV-to-UAV local
+broadcast* service — which is precisely this system, not a cellular uplink:
+
+* **R-5.2.2-010:** "at least **10 messages per second**"
+* **R-5.2.2-011:** "end-to-end latency of at most **100 ms**"
+* **R-5.2.2-008:** "variable message payloads of **50–1500 bytes, not including security-related
+  message component(s)**" ← the standard itself accounts for authentication bytes *separately from*
+  payload, which is exactly the φ metric this thesis optimises.
+* R-5.2.2-009: range up to 600 m; R-5.2.2-007: relative speeds to 320 km/h.
+
+So Λ_i = 20 rec/s sits **above the standard's 10 msg/s floor and below PX4's 50 Hz companion rate** —
+defensible from both directions.
+
+⚠️ **D_max = 250 ms EXCEEDS the standard's 100 ms bound. This is a declared deviation, not an
+oversight.** See docs/02 §7a for the full sweep and the ⚠️ decision it raises. In short: batching
+obeys **b ≤ Λ_i·D_max**, so only the *product* matters. Our (20 Hz, 250 ms) gives Λ·D = 5 ⇒ b = 4 —
+**identical** to the standards-compliant (50 Hz PX4 ONBOARD, 100 ms) point, which also gives b = 4.
+The co-design result is therefore reproduced at a compliant operating point; what changes is the
+channel load, and that is where it becomes interesting (docs/02 §6b).
 
 **Structural coupling:** any batching at all needs `b/Λ_i ≤ D_max` with b ≥ 1, hence
-**Λ_i ≥ 1/D_max**. At D_max = 250 ms that means Λ_i ≥ 4 rec/s — the co-design result depends on
-being on a fast link, and at a 1 Hz SiK rate no batching is possible at all.
+**Λ_i ≥ 1/D_max**. At D_max = 250 ms that means Λ_i ≥ 4 rec/s; at the 3GPP 100 ms bound it means
+Λ_i ≥ 10 rec/s — exactly the standard's own minimum message rate. **At an ArduPilot Copter default
+of 0 Hz or a 1 Hz SiK link, no batching is possible at all** and this thesis's mechanism does not
+apply.
+
+**N_local = 50 neighbours (item B2).** Not an assumption to be justified in isolation — it is
+*reported as a curve*. The largest single collision domain each configuration can carry at
+Λ_i = 20 rec/s, D_max = 250 ms (802.11a, 6 Mb/s, U < 1) is **N ≤ 25** for A+JSON, **N ≤ 32** for the
+A+CBOR Pillar-1 baseline and **N ≤ 103** for the co-designed configuration. N = 50 is quoted because
+it lies *between* those: a swarm the baselines cannot serve and the co-design can. See docs/02 §6b.
 
 **Security model.** Adversary may inject, replay, modify, or forge frames but does not
 hold any honest UAV's private key (key compromise out of scope, per charter). Required:

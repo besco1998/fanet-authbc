@@ -134,3 +134,47 @@
   number      = {RP002-1.0.3}, year = {2021},
   note        = {EU863-870: Table 8 (data rates), Table 13 (max payload), duty cycle < 1\%}
 }
+
+@techreport{3gpp_ts22125,
+  author      = {{3GPP}},
+  title       = {Unmanned Aerial System ({UAS}) support in {3GPP}},
+  institution = {3rd Generation Partnership Project},
+  type        = {Technical Specification}, number = {TS 22.125},
+  edition     = {V17.6.0}, year = {2022}, month = apr,
+  note        = {Published as ETSI TS 122 125 V17.6.0. Direct UAV-to-UAV local broadcast:
+                 R-5.2.2-008 payload 50--1500 B \emph{excluding security-related components},
+                 R-5.2.2-010 $\geq$10 messages/s, R-5.2.2-011 end-to-end latency $\leq$100 ms.
+                 C2 KPIs: Table 7.2-1}
+}
+
+@techreport{cfrg_bls,
+  author      = {Boneh, Dan and Gorbunov, Sergey and Wahby, Riad S. and Wee, Hoeteck and
+                 Wood, Christopher A. and Zhang, Zhenfei},
+  title       = {{BLS} Signatures},
+  institution = {IRTF Crypto Forum Research Group},
+  type        = {Internet-Draft}, number = {draft-irtf-cfrg-bls-signature-05},
+  year        = {2022}, month = jun,
+  note        = {BLS12-381 targets 126-bit security. minimal-signature-size: 48 B signature
+                 (G1) with 96 B public key (G2); minimal-pubkey-size: 96 B signature (G2) with
+                 48 B public key (G1) --- the variant blspy implements}
+}
+
+@misc{px4_mavlink_streams,
+  author       = {{PX4 Development Team}},
+  title        = {{PX4-Autopilot}: \texttt{mavlink\_main.cpp}, \texttt{configure\_streams\_to\_default}},
+  howpublished = {Source code, \url{https://github.com/PX4/PX4-Autopilot}},
+  year         = {2026},
+  note         = {GLOBAL\_POSITION\_INT stream rates by MAVLINK\_MODE: NORMAL 5 Hz,
+                  OSD 10 Hz, CONFIG 10 Hz, ONBOARD 50 Hz, LOW\_BANDWIDTH 2 Hz.
+                  SYS\_STATUS: NORMAL 1 Hz, ONBOARD 5 Hz. Verified 2026-07-29}
+}
+
+@misc{ardupilot_stream_rates,
+  author       = {{ArduPilot Development Team}},
+  title        = {{ArduPilot}: \texttt{GCS\_MAVLink\_Parameters.cpp}, \texttt{default\_rates[]}},
+  howpublished = {Source code, \url{https://github.com/ArduPilot/ardupilot}},
+  year         = {2026},
+  note         = {SRx\_POSITION default is vehicle-specific: Plane and Rover 1 Hz, Sub 3 Hz,
+                  Copter/Heli/Blimp 0 Hz (streams requested on demand by the GCS).
+                  Range 0--50 Hz. Verified 2026-07-29}
+}

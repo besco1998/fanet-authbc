@@ -11,3 +11,14 @@ mtu: 1500
 d_max_s: 0.250           # freshness bound (docs/02 §7) - sets b = min(b_mtu, floor(Λ·D_max))
 n_local_values: [5, 10, 20, 35, 50, 75, 100]
 lambda_values: [1, 5, 10, 20, 50]
+
+# --- N_max envelope (item B2): report N_local as a CURVE, not an assumed constant.
+# Each entry: [label, encoding, placement, Lambda, D_max_s]. The last two rows are the
+# 3GPP TS 22.125 R-5.2.2-011 compliant points (<=100 ms) — see docs/02 §7a.
+envelope_configs:
+  - ["optimized delta/B @250ms",    "delta", "B", 20, 0.250]
+  - ["A+CBOR Pillar-1 @250ms",      "cbor",  "A", 20, 0.250]
+  - ["A+JSON naive @250ms",         "json",  "A", 20, 0.250]
+  - ["optimized delta/B @3GPP100ms/50Hz", "delta", "B", 50, 0.100]
+  - ["optimized delta/B @3GPP100ms/10Hz", "delta", "B", 10, 0.100]
+envelope_n_ceiling: 400

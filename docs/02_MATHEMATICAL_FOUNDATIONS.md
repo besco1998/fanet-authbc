@@ -158,8 +158,11 @@ inconvenience.
 
 **The tier-1 result is the strong one.** DR0/DR1/DR2 stay excluded *with a zero-byte header and a
 zero-byte record*: it is the signature alone that does not fit. The only escape is a smaller
-authentication object, and 128-bit security floors that at **48 B** (a compressed BLS12-381 G1
-point) — which does fit 51 B, but leaves **3 bytes** for the header and the record together. So the
+authentication object, and the smallest standardised one is **48 B** — a compressed BLS12-381 G1
+point in the `minimal-signature-size` variant of draft-irtf-cfrg-bls-signature-05, which the draft
+states targets **126-bit security** (not 128 — corrected 2026-07-29, item A5). The same draft records
+ECDSA at 64 B, so 48 B is genuinely the short end of the standardised range. It *does* fit 51 B, but
+leaves **3 bytes** for the header and the record together. So the
 exclusion is not an artifact of this design: **the four longest-range LoRa modes cannot carry
 per-frame-verifiable telemetry at 128-bit security, period.**
 
@@ -405,6 +408,57 @@ point — the frontier *is* the result.
 Wi-Fi figure from the RPi4 rig; reusing it for a LoRa transceiver would be fabrication. Airtime per
 record is reported instead — it is what the regulator rations, and it is computed, not assumed.
 A LoRa energy column needs a LoRa radio measurement.
+
+## 7a. The operating point, and where it sits against the standard ⚠️ (2026-07-29, items B3/B4)
+
+**D_max is now cited, and the citation is stricter than our operating point.** 3GPP TS 22.125
+R-5.2.2-011 requires direct UAV-to-UAV local broadcast to deliver with **end-to-end latency ≤ 100 ms**;
+R-5.2.2-010 requires **≥10 messages/s**. We run at **250 ms**.
+
+**Why this is recoverable: only the product Λ·D_max matters.** Batching obeys b ≤ ⌊Λ·D_max⌋ (T2a),
+so freshness and rate trade off exactly. Sweeping both (H_f = 44 B, g_a = 64 B, delta s = 45 B):
+
+| Λ (rec/s) | D_max | Λ·D_max | b | auth B/rec | auth cut | total B/rec | total cut | U at N=50 |
+|---|---|---|---|---|---|---|---|---|
+| 20 | 50 ms | 1.0 | 1 | 108.00 | 0 % | 153.00 | 12.2 % | — |
+| 20 | **100 ms** *(3GPP)* | 2.0 | **1** | 108.00 | **0 %** | 153.00 | 12.2 % | **1.42 ✗** |
+| 20 | 150 ms | 3.0 | 2 | 54.00 | 50.0 % | 99.00 | 43.2 % | — |
+| 20 | 200 ms | 4.0 | 3 | 36.00 | 66.7 % | 81.00 | 53.5 % | — |
+| **20** | **250 ms** *(operating point)* | **5.0** | **4** | **27.00** | **75.0 %** | **72.00** | **58.7 %** | **0.56 ✓** |
+| **50** *(PX4 ONBOARD)* | **100 ms** *(3GPP)* | **5.0** | **4** | **27.00** | **75.0 %** | **72.00** | **58.7 %** | **1.39 ✗** |
+| 10 *(3GPP min)* | 100 ms | 1.0 | 1 | 108.00 | 0 % | 153.00 | 12.2 % | 0.71 ✓ |
+| 20 | 1 s | 20.0 | 19 | 5.68 | 94.7 % | 50.68 | 70.9 % | — |
+
+Two things follow, and the second is the interesting one.
+
+**(1) The co-design result is reproduced at a compliant operating point.** (Λ=50 Hz, D=100 ms) —
+PX4's `MAVLINK_MODE_ONBOARD` rate at the 3GPP latency bound — gives Λ·D = 5, b = 4, and **exactly the
+same 75.0 % / 58.7 %**. The mechanism does not depend on the relaxed latency; only b does, and b
+depends only on the product.
+
+**(2) At N = 50 the 3GPP latency bound is not satisfiable on 802.11a at all.** Every 100 ms row
+either saturates the channel (U = 1.42 / 1.39 > 1) or forbids batching entirely (b = 1). The single
+compliant, runnable point is the standard's *minimum* message rate with no batching. **This is an
+802.11-side impossibility statement of the same kind as T6**, and it is a finding, not a
+configuration failure: the medium, not the cryptography, is what forecloses it.
+
+⚠️ **Open decision (Mohamed).** Either (a) keep 250 ms and declare the deviation from
+TS 22.125 R-5.2.2-011 with this table as the justification; or (b) re-anchor the headline operating
+point to (Λ=50 Hz, D=100 ms), which is standards-compliant and PX4-real, gives identical byte
+results, but requires reporting N ≤ 35 rather than N = 50. Recorded in docs/OPEN_ITEMS.md.
+
+### Loss probability p — mechanism, not a borrowed number (item B4)
+p ∈ {0.02, 0.05, 0.10} is a **declared sensitivity range**, and the reason it is not tied to a
+single measured PER is structural: **802.11 broadcast frames carry no ACK and are never
+retransmitted** (docs/02 §6a — the same fact that makes T_air = PPDU + DIFS with no SIFS/ACK). A
+broadcast receiver therefore sees the *raw* channel error rate, with none of the ARQ that hides loss
+on a unicast link. For contrast, TS 22.125 Table 7.2-1 sets 99.9 % reliability (p = 10⁻³) for
+managed C2 links *with* retransmission — so our grid is deliberately one to two orders of magnitude
+more pessimistic, which is conservative for every claim that depends on it.
+
+**T6 does not depend on the particular value.** Its no-fragmentation step needs only **ε ≤ p**, not
+p = 0.05: whenever the verifiability target is no looser than the loss rate, n_max = 1. Every
+exclusion in T6 therefore holds across the whole grid.
 
 ## 7. Energy and latency models
 Energy/record: **E = P_c·(t_enc + t_sg/b + t_ver_amort(b)) + P_r·T_air(frame)/b**, where
