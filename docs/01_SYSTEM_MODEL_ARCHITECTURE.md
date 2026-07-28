@@ -14,8 +14,30 @@ Only the owner appends to chain i (owned-object model); tampering or equivocatio
 (src,seq) is detectable by chain verification. Finality/witnessing semantics are OUT of
 scope for this arm (no consensus); the deliverable is authenticated dissemination.
 
-**Traffic.** Records are generated at rate Λ_i per UAV (default 20 rec/s, payload =
-telemetry tuple: position, velocity, battery, mode). Aggregate neighborhood arrival Λ.
+**Traffic.** Records are generated at rate **Λ_i per UAV** (payload = telemetry tuple: position,
+velocity, battery, mode). **Aggregate neighbourhood arrival Λ = Λ_i·N_local** — the rate a
+*receiver* must verify. ⚠️ These are different quantities and must not be interchanged: a node
+batches its OWN records (freshness uses Λ_i) but verifies EVERYONE's (verify-throughput uses Λ).
+Conflating them was audit finding **F12**.
+
+**Λ_i = 20 rec/s — sourced, not assumed (2026-07-28).** An AUTHBC record maps onto MAVLink
+`GLOBAL_POSITION_INT` plus part of `SYS_STATUS`. Autopilot stream rates for exactly that content:
+
+| link class | position stream | source |
+|---|---|---|
+| ArduPilot default, 57k SiK radio | 1 Hz | `GCS_MAVLink_Parameters.cpp` |
+| PX4 `MAVLINK_MODE_NORMAL` (telemetry radio) | 5 Hz | `mavlink_main.cpp` |
+| PX4 `MAVLINK_MODE_OSD` / `CONFIG` (USB) | 10 Hz | ″ |
+| **PX4 `MAVLINK_MODE_ONBOARD`** (companion computer) | **50 Hz** | ″ |
+
+802.11 is a **companion-computer-class link**, so 20 Hz sits between the OSD and ONBOARD rates —
+not an inflated figure. It is *also* the ≤50 % channel-utilisation limit at N_local=50
+(`results/raw/capacity_envelope.csv`), so the pair **(N_local=50, Λ_i=20)** is the stated
+operating point rather than two independent defaults.
+
+**Structural coupling:** any batching at all needs `b/Λ_i ≤ D_max` with b ≥ 1, hence
+**Λ_i ≥ 1/D_max**. At D_max = 250 ms that means Λ_i ≥ 4 rec/s — the co-design result depends on
+being on a fast link, and at a 1 Hz SiK rate no batching is possible at all.
 
 **Security model.** Adversary may inject, replay, modify, or forge frames but does not
 hold any honest UAV's private key (key compromise out of scope, per charter). Required:
@@ -50,7 +72,10 @@ keyframe interval fixed K=16 in this arm — optimizing K is the doc-30/LoRa que
 | M | application MTU budget | 1500 |
 | b | records per frame (batch) | decision var |
 | p | frame loss probability | {.02,.05,.10} |
-| Λ | record arrival rate (rec/s) | 20·N_local |
+| Λ_i | per-UAV record rate (rec/s) | 20 (PX4 companion-class, docs/01 §1) |
+| Λ | **aggregate** arrival a receiver verifies (rec/s) | Λ_i·N_local = 20·50 |
+| N_local | neighbours in the collision domain | 50 |
+| U | channel utilisation, offered/deliverable frames | ≤1 required |
 | R | PHY data rate | 6 Mb/s |
 | T_fx | fixed MAC/PHY airtime per frame | ≈123 µs (doc 02 §6) |
 | t_enc,t_dec | encode/decode time per record | measured |

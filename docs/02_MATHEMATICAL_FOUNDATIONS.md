@@ -142,6 +142,44 @@ post-success deferral floor SIFS+T_ack+DIFS = 94 µs matching the measured trace
 **Validate:** E5 vs NS-3; expect and *report* known gaps rather than force-fitting. Measured
 against NS-3 3.41: unicast agrees to **+0.6 … −2.9 %** across N=5–50 (audit F8/F9).
 
+### 6b. Channel capacity as a co-design constraint (2026-07-28, audit F12)
+The channel model was validated against NS-3 but never *used* by the optimizer. It is now a hard
+constraint, which turns "how many bytes?" into the question an operator actually asks —
+**how many UAVs, at what telemetry rate?**
+
+    U = frames offered / frames deliverable
+      = (N_local·Λ_i / b) ÷ (S(N_local, frame) / 8·frame)          [S from §6a, Ma & Chen]
+
+Capacity is **strongly frame-size dependent** — small frames pay the preamble and signature
+overhead more often — so U must be evaluated at each configuration's own frame size. Evaluating a
+284 B design against the 1400 B figure the NS-3 matrix happens to use overstates headroom by ~2× at
+the critical corner.
+
+**Envelope** (`results/raw/capacity_envelope.csv`, `make exp-capacity`), delta + Ed25519 + B:
+
+| N_local | 1 Hz | 5 Hz | 10 Hz | **20 Hz** | 50 Hz |
+|---|---|---|---|---|---|
+| 20 | 0.02 | 0.10 | 0.12 | 0.14 | 0.26 |
+| 35 | 0.05 | 0.25 | 0.30 | 0.35 | 0.65 |
+| **50** | 0.07 | 0.35 | 0.42 | **0.50** | 0.91 |
+| 75 | 0.09 | 0.47 | 0.57 | 0.67 | **over** |
+| 100 | 0.12 | 0.61 | 0.72 | 0.86 | **over** |
+
+PX4's companion-computer rate (50 Hz) is supported to ~50 UAVs; the chosen (50, 20 Hz) point sits
+at exactly 50 % utilisation.
+
+**A result, not just a constraint: the baselines cannot physically run at fleet scale.** At
+N_local=50, Λ_i=20 the inline baselines demand more frames than the medium delivers —
+**A+JSON U = 2.28, A+CBOR U = 1.53** — against the co-design optimum's **U = 0.55**. The
+optimisation is not merely more efficient than the Pillar-1 baseline; at this fleet size it is the
+difference between working and not working.
+
+⚠️ **This is a THROUGHPUT envelope only.** D(b) in §7 carries no channel-access delay — its M/M/1
+term covers a node's own frame queue (ρ ≈ 0.002 here), not waiting for a contended medium. As U
+approaches 1 the DCF saturates and real latency rises far above the modelled D(b), *invisibly*.
+Read `channel_util` alongside any freshness figure; treat D(b) as credible only at low U. Modelling
+DCF access delay is open work.
+
 ### 6a. Broadcast is a DIFFERENT model — do not reduce the unicast one ⚠️
 The above is the **ACK/unicast** model. AUTHBC's telemetry substrate is **broadcast**, which never
 ACKs, never retransmits, and therefore never doubles CW. The obvious reduction — keep the formula,

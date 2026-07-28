@@ -223,3 +223,68 @@ but they are no longer *independent* mechanisms, and the reconstruction assumes 
 
 Either way the *finding* is worth reporting: **the chain, not the codec, is what limits how small an
 authenticated telemetry record can get.**
+
+---
+
+## F12 — the arrival rate was one number doing two jobs (2026-07-28, FIXED)
+
+**The defect.** docs/01 §5 defines the aggregate arrival **Λ = Λ_i·N_local**, but
+`experiments/e5/config.yaml` set `lam: 20` and the optimizer used that single value for two
+different quantities:
+
+| constraint | correct rate | what it got |
+|---|---|---|
+| freshness `b/Λ ≤ D_max` | **per-node** — a UAV batches its own records | 20 ✓ |
+| verify throughput `t_vf·Λ ≤ 1` | **aggregate** — a receiver verifies everyone's | 20 ✗ (should be 1000) |
+
+The verify-throughput constraint was under-counted by a factor of N_local: it was silently testing
+a **one-sender network**.
+
+**It changed results.** With the aggregate rate counted, verification capacity scales with fleet
+size and slow verifiers drop out:
+
+| N_local | Λ aggregate | schemes still feasible | placements |
+|---|---|---|---|
+| 1 *(the old behaviour)* | 20 | bls, ecdsa, ed25519 | A,B,C,D |
+| 10 | 200 | bls, ecdsa, ed25519 | A,B,D — **C gone** |
+| 25 | 500 | **ecdsa, ed25519 — BLS gone** | A,B,D |
+| 50 | 1000 | ecdsa, ed25519 | A,B,D |
+
+**This strengthens T4.** Ed25519 does not merely win on energy: beyond ~17 neighbours BLS
+cross-signer aggregation is **not verifiable at all** — the receiver cannot keep up. The previous
+model hid that by checking against one sender's output.
+
+**Fixed:** `Constraints` now carries `lam` (per-node) and `n_local`, with `lam_aggregate` as a
+derived property used only by the verify-throughput constraint. `n_local: 50` added to the E5
+config. Two tests pin the split and the fleet-size behaviour.
+
+---
+
+## Channel capacity is now a constraint, and the baselines fail it
+
+The NS-3-validated broadcast model was used to *check* the airtime model but never to *constrain*
+the optimizer. It now is (docs/02 §6b): `channel_utilisation` computes offered ÷ deliverable frames
+at each configuration's own frame size, and U ≤ 1 is hard.
+
+**The finding this produced.** At the stated operating point (N_local=50, Λ_i=20 rec/s):
+
+| configuration | frames needed | channel delivers | U | |
+|---|---|---|---|---|
+| A+JSON (naive) | 1000 /s | 438 /s | **2.28** | **cannot run** |
+| A+CBOR (Pillar-1) | 1000 /s | 654 /s | **1.53** | **cannot run** |
+| optimized delta+Ed25519 B b=4 | 250 /s | 452 /s | **0.55** | fits |
+
+**The baselines are not merely wasteful at fleet scale — they are unrunnable.** That reframes the
+headline: the co-design is the difference between a system that works at 50 UAVs and one that does
+not, which is a stronger claim than "75 % fewer authentication bytes".
+
+**Method note (Law 6).** My first version of this calculation compared 284–644 B configurations
+against the goodput measured at 1400 B frames and concluded everything fitted with ~2× headroom.
+Capacity is strongly frame-size dependent, so that was wrong by about 2× at the critical corner. It
+was caught because the frame-rate arithmetic disagreed with the byte arithmetic. Capacity is now
+always evaluated at the configuration's own frame size, and a test pins that smaller frames get
+*less* capacity.
+
+⚠️ **Open: DCF access delay is not modelled.** D(b) covers fill + airtime + the node's own frame
+queue, not waiting for a contended medium. At U → 1 real latency rises far above D(b) invisibly, so
+the freshness figure is credible only at low U. `channel_util` is now reported next to it.

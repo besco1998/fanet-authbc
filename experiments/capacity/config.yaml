@@ -1,0 +1,13 @@
+# (N, Λ) capacity envelope for the 802.11 arm (docs/02 §6a).
+# Answers "how many UAVs, at what telemetry rate?" by connecting the NS-3-validated broadcast
+# channel model to the co-design. The Λ range spans every real autopilot operating point:
+#   1 Hz  ArduPilot default over a 57k SiK radio      5 Hz  PX4 MAVLINK_MODE_NORMAL
+#   10 Hz PX4 OSD / USB                               50 Hz PX4 MAVLINK_MODE_ONBOARD (companion)
+experiment: capacity
+encoding: delta          # the co-design optimum (E5)
+g_a: 64                  # Ed25519
+h_f: 40
+mtu: 1500
+d_max_s: 0.250           # freshness bound (docs/02 §7) - sets b = min(b_mtu, floor(Λ·D_max))
+n_local_values: [5, 10, 20, 35, 50, 75, 100]
+lambda_values: [1, 5, 10, 20, 50]

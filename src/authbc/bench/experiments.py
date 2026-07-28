@@ -128,6 +128,42 @@ def run_e2(cfg: dict) -> list[dict]:
     return rows
 
 
+def run_capacity(cfg: dict) -> list[dict]:
+    """(N, Λ) capacity envelope for the 802.11 arm (docs/02 §6a).
+
+    Answers the question an operator actually has — *how many UAVs, at what telemetry rate?* — by
+    connecting the NS-3-validated broadcast channel model to the co-design for the first time.
+
+    For each fleet size and per-node rate: pick the batch the constraints allow, compute the frames
+    the neighbourhood offers and the frames the medium can deliver AT THAT FRAME SIZE, and report
+    the ratio. Capacity is strongly frame-size dependent, so it must be evaluated per configuration
+    rather than at a fixed reference size.
+
+    ⚠️ This is a THROUGHPUT envelope. The freshness model carries no channel-access delay, so the
+    latency limit is tighter than the U<1 line and is not modelled here (docs/02 §6a).
+    """
+    sizes = framesizes.measured_sizes()
+    s = sizes[cfg["encoding"]]
+    g_a, h_f, mtu, d_max = cfg["g_a"], cfg["h_f"], cfg["mtu"], cfg["d_max_s"]
+    b_mtu = int((mtu - h_f - g_a) // s)
+    rows: list[dict] = []
+    for n in cfg["n_local_values"]:
+        for lam in cfg["lambda_values"]:
+            b = max(1, min(b_mtu, int(lam * d_max)))
+            frame = b * s + g_a + h_f
+            util = optimizer.channel_utilisation(n, lam, b, frame)
+            rows.append({
+                "n_local": n, "lambda_rec_per_s": lam, "b": b,
+                "binds": "mtu" if b_mtu <= int(lam * d_max) else "freshness",
+                "frame_bytes": round(frame, 1), "bytes_per_rec": round(frame / b, 3),
+                "frames_needed_per_s": round(n * lam / b, 2),
+                "channel_util": round(util, 4),
+                "verdict": "over-capacity" if util > 1.0 else ("tight" if util > 0.8
+                           else ("busy" if util > 0.5 else "safe")),
+            })
+    return rows
+
+
 # --------------------------------------------------------------------------- LoRa arm (docs/02 §9)
 def run_lora(cfg: dict) -> list[dict]:
     """LoRa EU868 feasibility and duty-cycle budget — the LoRa arm's OWN numbers (docs/02 §9).
@@ -338,7 +374,11 @@ def _point(enc, sch, plc: Placement, batch: int, plat, con) -> dict:
             "energy_uj": round(energy.per_record(ecfg, meas) * 1e6, 4),
             # freshness of the oldest record (docs/02 §7): fill + on-air + M/M/1 queueing.
             "latency_ms": round(energy.freshness_delay_s(ecfg, con.lam) * 1e3, 2),
-            "meets_d_max": int(energy.freshness_delay_s(ecfg, con.lam) <= con.d_max_s)}
+            "meets_d_max": int(energy.freshness_delay_s(ecfg, con.lam) <= con.d_max_s),
+            "channel_util": round(optimizer.channel_utilisation(
+                con.n_local, con.lam, batch,
+                batch * enc.record_bytes + optimizer.frame_auth_bytes(plc, batch, sch.auth_bytes)
+                + plat.frame_hdr_bytes), 4)}
 
 
 def run_e5(cfg: dict) -> list[dict]:
@@ -346,7 +386,8 @@ def run_e5(cfg: dict) -> list[dict]:
     encs, schemes = _measured_inputs(cfg)
     plat = optimizer.Platform(p_cpu_w=cfg["p_cpu_w"], p_radio_w=cfg["p_radio_w"],
                               frame_hdr_bytes=cfg["h_f"], mtu_bytes=cfg["mtu"])
-    con = optimizer.Constraints(epsilon=cfg["epsilon"], p_loss=cfg["p_loss"], lam=cfg["lam"])
+    con = optimizer.Constraints(epsilon=cfg["epsilon"], p_loss=cfg["p_loss"], lam=cfg["lam"],
+                                n_local=cfg["n_local"])
     res = optimizer.solve(encs, schemes, list(Placement), cfg["batches"], plat, con)
     if not res.feasible:
         raise ValueError("E5: no feasible config — check constraints")
@@ -370,7 +411,10 @@ def run_e5(cfg: dict) -> list[dict]:
                                             - enc_by[best.encoding].record_bytes, 3),
                "V": round(best.verifiability, 5), "energy_uj": round(best.energy_j * 1e6, 4),
                "latency_ms": round(best.latency_s * 1e3, 2),
-               "meets_d_max": int(best.meets_latency)}
+               "meets_d_max": int(best.meets_latency),
+               # Offered/deliverable frames across the neighbourhood. D(b) above excludes
+               # channel-access delay, so it is only credible while this stays well below 1.
+               "channel_util": round(best.channel_util, 4)}
     rows.append(opt_row)
 
     base_rows: dict[str, dict] = {}
@@ -396,6 +440,7 @@ _RUNNERS = {
     "e2": (run_e2, "e2_batching"),
     "e3": (run_e3, "e3_loss"),
     "e5": (run_e5, "e5_codesign"),
+    "capacity": (run_capacity, "capacity_envelope"),        # (N, Λ) envelope, docs/02 §6a
     # The two LoRa runners share experiments/lora/config.yaml: one arm, one parameter set.
     "lora": (run_lora, "lora_eu868", "lora"),
     "lora-codesign": (run_lora_codesign, "lora_codesign", "lora"),

@@ -11,7 +11,7 @@ BIN    := $(VENV)/bin
 
 .DEFAULT_GOAL := help
 .PHONY: help setup lint test verify-frozen all hw-capture hw-reduce \
-        bench-micro bench-macro exp-e1 exp-e2 exp-e3 exp-e4 exp-e5 exp-lora exp-lora-codesign \
+        bench-micro bench-macro exp-e1 exp-e2 exp-e3 exp-e4 exp-e5 exp-capacity exp-lora exp-lora-codesign \
         sim-ns3 sim-ns3-matrix sim-ns3-dcf sim-ns3-sensitivity export-framesizes figures
 
 help:  ## list the supported targets
@@ -66,6 +66,8 @@ exp-e4:  ## P5b E4: Ed25519<->BLS crossover from measured P1 timings -> results/
 	$(BIN)/python analysis/figures_e4.py
 exp-e5:  ## E5 co-design: optimizer vs baselines -> results/raw/e5_codesign.csv
 	$(BIN)/python -m authbc.bench.experiments --exp e5
+exp-capacity:  ## (N, Lambda) channel capacity envelope (docs/02 §6b) -> results/raw/capacity_envelope.csv
+	$(BIN)/python -m authbc.bench.experiments --exp capacity
 exp-lora:  ## LoRa arm feasibility + duty budget (docs/02 §9) -> results/raw/lora_eu868.csv
 	$(BIN)/python -m authbc.bench.experiments --exp lora
 exp-lora-codesign:  ## LoRa arm as a joint optimization -> results/raw/lora_codesign.csv

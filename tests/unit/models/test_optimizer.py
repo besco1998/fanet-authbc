@@ -30,11 +30,15 @@ from authbc.models.optimizer import (
 
 # --- 5-point hand-checkable Pareto toy ----------------------------------------------------
 def _toy(bytes_pr: float, energy: float, v: float, tag: str) -> Candidate:
-    """A Candidate carrying only the three objectives that matter for domination."""
+    """A Candidate carrying only the objectives that matter for domination.
+
+    Diagnostics (verify time, channel utilisation) are pinned to 0 so the toy exercises the
+    domination rule alone.
+    """
     return Candidate(
         encoding=tag, scheme="σ", placement=Placement.B, batch=1, n_frames=1,
         bytes_per_record=bytes_pr, energy_j=energy, verifiability=v,
-        verify_time_s=0.0, latency_s=0.0, meets_latency=True,
+        verify_time_s=0.0, channel_util=0.0, latency_s=0.0, meets_latency=True,
     )
 
 
@@ -303,3 +307,67 @@ def test_block_verifiability_can_never_exceed_frame_verifiability_under_any_loss
         assert verifiability(Placement.D, n, p) <= v_b + 1e-12
     # strict below V_B for every multi-frame block under independence
     assert verifiability(Placement.D, 2, p) < v_b
+
+
+# --- per-node vs aggregate arrival rate, and channel capacity (audit F12) -------------------
+def test_verify_throughput_uses_the_AGGREGATE_rate_not_the_per_node_one() -> None:
+    """docs/01 §5: Λ = Λ_i·N_local. A node batches its OWN records but verifies EVERYONE's.
+
+    Regression guard for F12: the constraint previously used Λ_i for both, which silently tested
+    a one-sender network and made slow-verify schemes look feasible at any fleet size.
+    """
+    con = Constraints(epsilon=0.05, p_loss=0.05, lam=20, n_local=50)
+    assert con.lam_aggregate == 1000
+    assert Constraints(epsilon=0.05, p_loss=0.05, lam=20).lam_aggregate == 20  # default N_local=1
+
+
+def test_a_slow_verifier_becomes_infeasible_as_the_neighbourhood_grows() -> None:
+    """The behaviour the bug hid: verification capacity is per RECEIVER, so it scales with N."""
+    slow = SchemeSpec("slow_agg", auth_bytes=64, t_sign_s=60e-6, t_verify_s=3_000e-6)
+    kept = {}
+    for n_local in (1, 50):
+        con = Constraints(epsilon=0.05, p_loss=0.05, lam=20, n_local=n_local, u_max=10.0)
+        res = solve([ENCODINGS[1]], [slow], [Placement.B], [1, 2, 4], PLATFORM, con)
+        kept[n_local] = len(res.feasible)
+    assert kept[1] > 0, "a lone sender can be kept up with"
+    assert kept[50] < kept[1], "a 50-neighbour fleet must exclude what one sender allows"
+
+
+def test_channel_utilisation_is_evaluated_at_the_configuration_s_own_frame_size() -> None:
+    """Capacity is strongly frame-size dependent, so a fixed reference size understates demand.
+
+    Smaller frames pay the preamble/signature overhead more often, so they deliver FEWER bytes per
+    second — evaluating a 284 B configuration against a 1400 B capacity figure overstates headroom
+    by roughly 2x at the critical corner.
+    """
+    from authbc.models.optimizer import channel_utilisation
+
+    small = channel_utilisation(50, 20, 1, 170.0)
+    large = channel_utilisation(50, 20, 4, 284.0)
+    assert small > large, "b=1 needs 4x the frames AND gets less capacity per frame"
+    assert channel_utilisation(1, 20, 1, 170.0) == 0.0, "a lone sender never contends"
+    with pytest.raises(ValueError, match="channel_utilisation needs"):
+        channel_utilisation(0, 20, 1, 170.0)
+
+
+def test_the_inline_baselines_cannot_physically_run_at_fleet_scale() -> None:
+    """A finding, not just a constraint: at N=50 and 20 rec/s the naive and Pillar-1 baselines
+    demand more frames than the medium can deliver (U = 2.28 and 1.53), while the co-design
+    optimum sits at U = 0.55. The optimisation is the difference between working and not."""
+    from authbc.models.optimizer import channel_utilisation
+
+    a_json = channel_utilisation(50, 20, 1, 191.09 + 64 + 40)
+    a_cbor = channel_utilisation(50, 20, 1, 66.25 + 64 + 40)
+    optimum = channel_utilisation(50, 20, 4, 4 * 45.0 + 64 + 40)
+    assert a_json > 2.0 and a_cbor > 1.4
+    assert optimum < 0.6
+
+
+def test_over_capacity_configurations_are_filtered() -> None:
+    """U ≤ u_max is a hard constraint: a design the medium cannot carry is not a design."""
+    con = Constraints(epsilon=0.05, p_loss=0.05, lam=20, n_local=100, u_max=1.0)
+    res = solve(ENCODINGS, SCHEMES, [Placement.A, Placement.B], [1, 2, 4, 10], PLATFORM, con)
+    assert all(c.channel_util <= 1.0 for c in res.feasible)
+    loose = solve(ENCODINGS, SCHEMES, [Placement.A, Placement.B], [1, 2, 4, 10], PLATFORM,
+                  Constraints(epsilon=0.05, p_loss=0.05, lam=20, n_local=100, u_max=99.0))
+    assert len(loose.feasible) > len(res.feasible)
