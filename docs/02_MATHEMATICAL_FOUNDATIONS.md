@@ -189,6 +189,62 @@ more for symbol rounding). The **auth-byte headline is byte-based and did not mo
 frame-size dependent (±5 % on ~43 µs). E4 is left on the continuous form: the verdict has ~90×
 margin (min κ\* = 31.64 vs plausible κ = 0.34), so no conclusion is sensitive to it.
 
+## 9. LoRa arm — EU868, its OWN parameter set (2026-07-28) ⚠️
+**The 802.11 arm's numbers do not transfer.** They differ by two to three orders of magnitude and
+the binding constraint is different *in kind*: a regulatory airtime quota, not a frame size or a
+latency budget. `models/lora.py` implements this arm; `experiments/lora/` runs it separately.
+
+**Sources (both retrieved and read in full, not recalled):**
+- **Semtech SX1276/77/78/79 datasheet, Rev. 7, May 2020** — §4.1.1.5 (Rs = BW/2^SF) and §4.1.1.7
+  "Time on air", p. 32:
+
+      Tsym      = 2^SF / BW
+      Tpreamble = (npreamble + 4.25)·Tsym
+      npayload  = 8 + max(ceil((8·PL − 4·SF + 28 + 16·CRC − 20·IH)/(4·(SF − 2·DE)))·(CR+4), 0)
+      Tpacket   = Tpreamble + npayload·Tsym
+
+- **LoRa Alliance RP002-1.0.3 Regional Parameters (2021)** — Table 8 (EU863-870 DR→SF/BW/bitrate),
+  Table 13 (max application payload N, *non*-repeater-compatible), regional summary: EU868
+  **Duty Cycle < 1 %**. *(docs/02's earlier "LoRa M=222" is Table 12, the **repeater-compatible**
+  figure; the non-repeater limit is **242 B**. Provenance now stated.)*
+
+**Λ and D are DERIVED here, not configured.** A frame of airtime T may repeat only every T/duty, so
+the sustainable rate is Λ = b·duty/T and the freshness of the oldest record in a batch is that same
+interval. **Duty cycle fixes both**, so this arm has no independent D_max to trade against bytes the
+way 802.11 does (T2a). This is the **third regime**:
+
+| regime | what caps the batch | where |
+|---|---|---|
+| MTU-limited | frame size | — |
+| freshness-limited | Λ·D_max | **802.11** |
+| **duty-cycle-limited** | regulatory airtime quota | **LoRa** |
+
+### Two findings (measured, `results/raw/lora_eu868.csv`)
+
+**(1) Authentication does not fit at all below DR4.** Per-frame overhead is H_f 40 + signature 64 =
+**104 B**, against a regional limit of 51 B at DR0–DR2 and 115 B at DR3 — which leaves 11 B, less
+than one 45 B delta record. **The four longest-range LoRa modes cannot carry an authenticated
+telemetry frame in this design at all.** Only DR4/5/6 are feasible, and JSON never fits.
+
+**(2) The sustainable rate is 130–470× below the 802.11 arm.** At DR5, delta, b=3: frame 239 B,
+airtime 394.5 ms, so one frame per **39.4 s** and **Λ = 0.076 rec/s** — a record every 13 s, against
+the 802.11 arm's 20 rec/s. Freshness is likewise **39.4 s**, i.e. **158× the 802.11 D_max of 250 ms**.
+
+### Where the F5 chain optimisation actually pays
+
+Moving the chain hash from per-record to per-frame (audit F5) is worth far more here than on 802.11,
+because the regional payload limit binds — so smaller records convert into *more records per frame*:
+
+| DR | chain mode | b | bytes/record | **Λ (rec/s)** |
+|---|---|---|---|---|
+| 5 | per_record *(today)* | 3 | 79.7 | 0.0760 |
+| 5 | **per_frame** | **8** | **30.0** | **0.2028** — **2.7×** |
+| 6 | per_record | 3 | 79.7 | 0.1521 |
+| 6 | **per_frame** | **8** | **30.0** | **0.4056** — **2.7×** |
+
+**2.7× the sustainable telemetry rate for the same regulatory budget**, versus a 26 % airtime saving
+and *no* extra records on 802.11 (where freshness, not size, is the wall).
+
 ## 7. Energy and latency models
 Energy/record: **E = P_c·(t_enc + t_sg/b + t_ver_amort(b)) + P_r·T_air(frame)/b**, where
 t_ver_amort = t_vf (A/B receiver-side per record… receiver verifies once per frame in B:

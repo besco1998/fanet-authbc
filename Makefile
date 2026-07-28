@@ -11,7 +11,7 @@ BIN    := $(VENV)/bin
 
 .DEFAULT_GOAL := help
 .PHONY: help setup lint test verify-frozen all hw-capture hw-reduce \
-        bench-micro bench-macro exp-e1 exp-e2 exp-e3 exp-e4 exp-e5 \
+        bench-micro bench-macro exp-e1 exp-e2 exp-e3 exp-e4 exp-e5 exp-lora \
         sim-ns3 sim-ns3-matrix sim-ns3-dcf sim-ns3-sensitivity export-framesizes figures
 
 help:  ## list the supported targets
@@ -66,6 +66,8 @@ exp-e4:  ## P5b E4: Ed25519<->BLS crossover from measured P1 timings -> results/
 	$(BIN)/python analysis/figures_e4.py
 exp-e5:  ## E5 co-design: optimizer vs baselines -> results/raw/e5_codesign.csv
 	$(BIN)/python -m authbc.bench.experiments --exp e5
+exp-lora:  ## LoRa arm (EU868, own parameters, docs/02 §9) -> results/raw/lora_eu868.csv
+	$(BIN)/python -m authbc.bench.experiments --exp lora
 sim-ns3:  ## [P6] build authbc-sat + 2-node both-modes smoke -> results/raw/ns3_smoke.csv
 	PY=$(BIN)/python bash ns3/sim_ns3.sh
 sim-ns3-matrix:  ## [P6b] N x mode x seed saturation matrix -> results/raw/ns3_matrix.csv

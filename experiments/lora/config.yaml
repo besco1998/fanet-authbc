@@ -1,0 +1,27 @@
+# LoRa arm — EU868, its OWN parameter set (docs/02 §9). Nothing here is inherited from 802.11.
+#
+# The 802.11 config assumes Lambda = 20 rec/s and D_max = 250 ms. Neither survives here: EU868's
+# 1 % duty cycle makes a full DR5 frame repeatable only every ~40 s, so the sustainable record rate
+# is ~0.08 rec/s (250x lower) and the freshness of a batch is ~40 s (160x the 802.11 budget).
+# Lambda and D are therefore DERIVED from the duty cycle, not configured.
+experiment: lora
+
+region: EU868
+# Data rates to sweep. RP002-1.0.3 Table 8 (SF/BW) x Table 13 (max application payload, NOT
+# repeater-compatible). DR7 is FSK and DR8-11 are LR-FHSS, so neither is a LoRa PHY.
+data_rates: [0, 1, 2, 3, 4, 5, 6]
+duty_cycle: 0.01        # RP002-1.0.3 regional summary: EU868 "Duty Cycle < 1%"
+
+encodings: [json, cbor, msgpack, delta]
+g_a: 64                 # Ed25519 signature (D2 default, and the ARM winner per D8/F6)
+h_f: 40                 # frame header, same as the 802.11 arm (docs/01 §2)
+chain_hash_bytes: 32    # SHA-256 prev_hash (docs/01 §4) - carried per record today
+
+# Batch sweep. Capped in code by the regional payload limit; the duty cycle then fixes both the
+# sustainable Lambda and the freshness, so there is no independent D_max to configure.
+batches: [1, 2, 3, 4, 5, 6, 8, 10, 12, 16, 20]
+
+# Chain placement variants compared (audit F5):
+#   per_record - every record carries its own 32 B prev_hash (the current wire format, D6-frozen)
+#   per_frame  - only the frame's first link is sent; the receiver derives the rest
+chain_modes: [per_record, per_frame]

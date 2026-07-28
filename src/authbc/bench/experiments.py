@@ -128,6 +128,56 @@ def run_e2(cfg: dict) -> list[dict]:
     return rows
 
 
+# --------------------------------------------------------------------------- LoRa arm (docs/02 §9)
+def run_lora(cfg: dict) -> list[dict]:
+    """LoRa EU868 feasibility and duty-cycle budget — the LoRa arm's OWN numbers (docs/02 §9).
+
+    Nothing is inherited from the 802.11 arm. Λ and freshness are **derived** from the regulatory
+    airtime quota rather than configured: a frame of airtime T may repeat only every T/duty, so the
+    sustainable record rate is b·duty/T and the freshness of the oldest record in a batch is that
+    same interval. Duty cycle therefore fixes *both*, which is why the LoRa arm has no independent
+    D_max to trade against bytes the way 802.11 does (T2a).
+
+    Two chain modes are compared (audit F5): `per_record` is the current D6-frozen wire format;
+    `per_frame` sends only the frame's first prev_hash and lets the receiver derive the rest.
+    """
+    from authbc.models import lora
+
+    sizes = framesizes.measured_sizes()
+    g_a, h_f, hash_b = cfg["g_a"], cfg["h_f"], cfg["chain_hash_bytes"]
+    duty = cfg["duty_cycle"]
+    rows: list[dict] = []
+    for dr in cfg["data_rates"]:
+        rate = lora.EU868_DATA_RATES[dr]
+        for enc in cfg["encodings"]:
+            s_full = sizes[enc]                      # record INCLUDING its 32 B chain hash
+            for mode in cfg["chain_modes"]:
+                # per_frame moves the hash out of the record and charges it once per frame
+                per_rec = s_full if mode == "per_record" else s_full - hash_b
+                fixed = h_f + g_a + (0 if mode == "per_record" else hash_b)
+                for b in cfg["batches"]:
+                    frame = fixed + b * per_rec
+                    if frame > rate.max_app_payload:
+                        continue                      # will not fit this DR's regional limit
+                    toa = lora.frame_time_on_air_s(int(math.ceil(frame)), dr)
+                    interval = lora.duty_cycle_interval_s(toa, duty)
+                    rows.append({
+                        "dr": dr, "sf": rate.sf, "bw_khz": rate.bw_hz // 1000,
+                        "max_app_payload": rate.max_app_payload,
+                        "encoding": enc, "chain_mode": mode, "b": b,
+                        "s_record": round(per_rec, 2), "frame_bytes": round(frame, 1),
+                        "toa_ms": round(toa * 1e3, 2),
+                        "duty_interval_s": round(interval, 2),
+                        "lambda_rec_per_s": round(b / interval, 5),
+                        "freshness_s": round(interval, 2),
+                        "auth_overhead_per_rec": round((fixed) / b, 3),
+                        "bytes_per_rec": round(frame / b, 3),
+                    })
+    if not rows:
+        raise ValueError("LoRa: no feasible (DR, encoding, batch) combination — check the config")
+    return rows
+
+
 # --------------------------------------------------------------------------- E3 (T3)
 def _airtime_multiframe(n_frames: int, total_payload_bytes: float) -> float:
     """Broadcast airtime (µs) for n frames carrying total_payload_bytes (excl. MAC overhead).
@@ -294,6 +344,7 @@ _RUNNERS = {
     "e2": (run_e2, "e2_batching"),
     "e3": (run_e3, "e3_loss"),
     "e5": (run_e5, "e5_codesign"),
+    "lora": (run_lora, "lora_eu868"),   # the LoRa arm, docs/02 §9 — its own parameters
 }
 
 
