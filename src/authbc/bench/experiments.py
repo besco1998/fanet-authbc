@@ -208,6 +208,9 @@ def run_lora(cfg: dict) -> list[dict]:
                         "freshness_s": round(interval, 2),
                         "auth_overhead_per_rec": round((fixed) / b, 3),
                         "bytes_per_rec": round(frame / b, 3),
+                        # F5 (Mohamed, 2026-07-28): per_frame is the ADOPTED LoRa wire format;
+                        # per_record rows are the 802.11-format counterfactual.
+                        "adopted": int(mode == cfg["adopted_chain_mode"]),
                     })
     if not rows:
         raise ValueError("LoRa: no feasible (DR, encoding, batch) combination — check the config")
@@ -259,6 +262,7 @@ def run_lora_codesign(cfg: dict) -> list[dict]:
         "freshness_s": round(c.freshness_s, 2),
         "airtime_per_rec_ms": round(c.airtime_per_record_s * 1e3, 2),
         "V": round(c.verifiability, 5),
+        "adopted": int(c.chain_mode == cfg["adopted_chain_mode"]),
     } for c in res.feasible]
     rows.sort(key=lambda r: (-r["on_pareto"], -r["relative_range"], -r["lambda_rec_per_s"]))
     print(f"  LoRa co-design: {res.evaluated} evaluated, {res.skipped} do not fit the regional "

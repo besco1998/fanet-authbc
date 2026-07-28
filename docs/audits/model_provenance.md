@@ -173,7 +173,18 @@ knee is simply never reached. Implemented as `optimizer.binding_constraint` /
 
 ---
 
-## F5 — investigated (2026-07-28): 71 % of a delta record is an incompressible hash
+## F5 — DECIDED (2026-07-28): adopted on the LoRa arm only; 802.11 keeps per-record chaining
+
+> **Outcome.** Mohamed adopted per-frame chaining **on LoRa only**. The analysis below stands as
+> written; what changed is the verdict. On LoRa the regional payload limit binds, so the saving
+> converts into **2.7× the sustainable record rate** (b 3→8 at DR5, Λ 0.076→0.203 rec/s) — worth the
+> trade. On 802.11 freshness binds (T2a, dC/ds = 1), so the same change buys ~6 % total energy and
+> **no extra records**, which does not pay for losing independent per-record tamper-evidence.
+> The "−34 % airtime" row below is the **802.11** figure and is the one now declined.
+> See docs/02 §9b and DECISIONS.md.
+
+### The original investigation, unchanged
+
 
 **The measurement.** Every record carries `prev_hash` = SHA-256 of the previous record — 32 bytes
 that no encoder can shrink, because a hash is indistinguishable from noise:

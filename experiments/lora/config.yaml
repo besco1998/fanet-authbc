@@ -22,10 +22,17 @@ chain_hash_bytes: 32    # SHA-256 prev_hash (docs/01 §4) - carried per record t
 # sustainable Lambda and the freshness, so there is no independent D_max to configure.
 batches: [1, 2, 3, 4, 5, 6, 8, 10, 12, 16, 20]
 
-# Chain placement variants compared (audit F5):
-#   per_record - every record carries its own 32 B prev_hash (the current wire format, D6-frozen)
-#   per_frame  - only the frame's first link is sent; the receiver derives the rest
+# Chain placement (audit F5 — DECIDED 2026-07-28 by Mohamed: adopt per_frame on the LoRa arm ONLY).
+#   per_frame  - ADOPTED HERE. Only the frame's first prev_hash is sent; the receiver derives the
+#                rest from prev_hash_{i+1}=H(record_i). Proven byte-identical on reconstruction.
+#                Worth 2.7x the sustainable record rate on LoRa, where the regional payload limit
+#                binds so smaller records convert into MORE records per frame.
+#   per_record - the 802.11 wire format, retained in the sweep as the counterfactual (it is what
+#                the arm would cost if the 802.11 format were reused unchanged).
+# The 802.11 arm KEEPS per_record: there freshness binds, not size, so the same change buys only
+# ~6 % energy and would trade away independent per-record tamper-evidence for it.
 chain_modes: [per_record, per_frame]
+adopted_chain_mode: per_frame
 
 # --- co-design optimization (make exp-lora-codesign) ---------------------------------------
 # Objectives: min bytes/record, MAX sustainable Lambda, min freshness, max V, MAX relative range.

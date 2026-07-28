@@ -48,6 +48,9 @@ from authbc.models.energy import EnergyConfig, Measured, Placement
 # is almost certainly a mis-specified sweep — fail loudly rather than churn.
 MAX_GRID_POINTS: int = 5000
 
+# `max_fragments` with p=0: no loss, so nothing bounds n. A sentinel keeps the return type int.
+_UNBOUNDED_FRAGMENTS: int = 1 << 30
+
 _SINGLE_FRAME = (Placement.A, Placement.B, Placement.C)
 
 
@@ -221,6 +224,67 @@ def mtu_batch_bound(record_bytes: float, auth_bytes: int, frame_hdr_bytes: int,
     """Largest single-frame batch: b_max = ⌊(M − H_f − g_a)/s⌋ (docs/02 T2)."""
     usable = mtu_bytes - frame_hdr_bytes - auth_bytes
     return int(usable // record_bytes) if record_bytes > 0 else 0
+
+
+# --- T6: the authentication-exclusion threshold (docs/02 §10) --------------------------------
+# T2/T2a ask what a saved byte BUYS. T6 asks the prior question: whether the link admits
+# authenticated telemetry at all. It is the result that makes the LoRa arm a theorem rather than
+# a table, and it is link-agnostic — nothing below is LoRa-specific.
+
+def max_fragments(epsilon: float, p_loss: float) -> int:
+    """n_max: the most frames a verifiable unit may span, from T3's V = (1−p)^n ≥ 1−ε.
+
+    n_max = ⌊ln(1−ε)/ln(1−p)⌋. **At ε ≤ p this is 1**: the verifiability target is spent entirely
+    on the first frame, so a block that spans two frames already misses it. This is what closes
+    the fragmentation escape from T6 — you cannot split an oversized signature across frames and
+    still verify at the required rate. Returns a very large n when p=0 (nothing to lose).
+    """
+    if not 0.0 <= p_loss < 1.0:
+        raise ValueError(f"p_loss must be in [0, 1), got {p_loss}")
+    if not 0.0 < epsilon < 1.0:
+        raise ValueError(f"epsilon must be in (0, 1), got {epsilon}")
+    if p_loss == 0.0:
+        return _UNBOUNDED_FRAGMENTS
+    return max(0, int(math.log1p(-epsilon) / math.log1p(-p_loss)))
+
+
+def max_record_bytes(mtu_bytes: float, auth_bytes: float, frame_hdr_bytes: float) -> float:
+    """s_max = M − H_f − g_a: the largest record a *single* authenticated frame can carry.
+
+    A frame that is self-verifiable (placements A/B/C, or D with n=1) must hold the header, the
+    auth object and at least one record. Everything else in the design space — batching, chain
+    placement, aggregation — only decides how the space ABOVE this floor is used; none of it
+    lowers the floor. May be ≤ 0, which is precisely the excluded case.
+    """
+    return mtu_bytes - frame_hdr_bytes - auth_bytes
+
+
+def exclusion_tier(mtu_bytes: float, auth_bytes: float, frame_hdr_bytes: float,
+                   min_record_bytes: float) -> str | None:
+    """Why a link cannot carry authenticated telemetry, or ``None`` if it can (docs/02 T6).
+
+    Three nested tiers, from strongest exclusion to weakest — the tier matters because each one
+    tells you what a redesign would have to change:
+
+    * ``"signature"`` — M < g_a. The auth object alone overflows the frame. No header design, no
+      encoding, no batching and no chain placement can help; only a **smaller signature scheme**
+      can, and 128-bit security floors that at 48 B (compressed BLS12-381 G1). This is the
+      cryptographic exclusion.
+    * ``"framing"`` — g_a ≤ M < H_f + g_a. The signature fits but leaves no room for the frame
+      header. A leaner header could in principle rescue it; the *encoding* cannot.
+    * ``"encoding"`` — H_f + g_a ≤ M < H_f + g_a + s_min. The framing fits and the link is
+      authenticable in principle, but no available record encoding is small enough. This is the
+      only tier that compression can attack, and T2a says the payoff there is amplified by A.
+
+    Fragmentation does not escape any tier: `max_fragments` is 1 whenever ε ≤ p (T3).
+    """
+    if mtu_bytes < auth_bytes:
+        return "signature"
+    if mtu_bytes < frame_hdr_bytes + auth_bytes:
+        return "framing"
+    if max_record_bytes(mtu_bytes, auth_bytes, frame_hdr_bytes) < min_record_bytes:
+        return "encoding"
+    return None
 
 
 def binding_constraint(record_bytes: float, auth_bytes: int, frame_hdr_bytes: int,

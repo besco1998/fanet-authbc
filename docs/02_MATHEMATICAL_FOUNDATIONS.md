@@ -114,6 +114,60 @@ on-air bytes per record = s·A (T2), so compression's benefit is amplified by A 
 as b_max(s) rises, until either the verify-throughput constraint t_verify(b)·Λ ≤ 1 or the
 MTU binds. **Validate:** E5 end-to-end vs baselines {A+JSON, A+CBOR, D-overagg}.
 
+## T6 — Authentication-exclusion threshold (2026-07-28) ⚠️
+*Implemented: `models/optimizer.py` (`max_fragments`, `max_record_bytes`, `exclusion_tier`);
+pinned: `tests/unit/models/test_exclusion_t6.py`.*
+
+T1–T5 ask what a saved byte **buys**. T6 asks the prior question: **whether the link admits
+authenticated telemetry at all.** It is a closed form, needs no simulation, and is link-agnostic —
+LoRa is just where it bites.
+
+**Statement.** A frame that is independently verifiable must carry the frame header H_f, the
+authentication object g_a, and at least one record s. So a link of maximum payload M admits
+authenticated telemetry **iff**
+
+        s_max(M) = M − H_f − g_a  ≥  s_min                                        (T6)
+
+and no choice of batch size, chain placement, or aggregation changes this: those decide only how
+the space *above* the floor is used.
+
+**Fragmentation does not escape it.** The obvious objection is to split an oversized signature
+across frames. T3 forecloses that: a unit spanning n frames verifies with probability (1−p)^n, so
+V ≥ 1−ε requires n ≤ ⌊ln(1−ε)/ln(1−p)⌋. **At ε ≤ p this is exactly n = 1** — the entire
+verifiability budget is spent on the first frame. At the study's ε = p = 0.05, fragmenting is
+already a constraint violation, so (T6) is evaluated at n = 1 and is an exclusion, not an
+inconvenience.
+
+**Three tiers, because each one names a different escape route** (`exclusion_tier`):
+
+| tier | condition | what could fix it | what cannot |
+|---|---|---|---|
+| **signature** | M < g_a | a smaller signature scheme only | header design, *any* encoding, batching, chaining |
+| **framing** | g_a ≤ M < H_f + g_a | a leaner frame header | the encoding |
+| **encoding** | H_f + g_a ≤ M < H_f + g_a + s_min | a smaller record encoding — **and here T2a's A applies** | — |
+
+**Applied to EU868** (H_f = 40 B, g_a = 64 B for Ed25519/ECDSA; s_min = 13 B, the delta record under
+the adopted per-frame chaining of §9b):
+
+| DR | M (RP002 T.13) | s_max | tier | note |
+|---|---|---|---|---|
+| 0, 1, 2 | 51 B | −53 | **signature** | 64 B signature alone overflows a 51 B payload |
+| 3 | 115 B | **11 B** | **encoding** | misses by **2 bytes** — 11 B of room, 13 B record |
+| 4, 5, 6 | 242 B | 138 B | — feasible | |
+| *802.11* | 1500 B | 1396 B | — feasible | |
+
+**The tier-1 result is the strong one.** DR0/DR1/DR2 stay excluded *with a zero-byte header and a
+zero-byte record*: it is the signature alone that does not fit. The only escape is a smaller
+authentication object, and 128-bit security floors that at **48 B** (a compressed BLS12-381 G1
+point) — which does fit 51 B, but leaves **3 bytes** for the header and the record together. So the
+exclusion is not an artifact of this design: **the four longest-range LoRa modes cannot carry
+per-frame-verifiable telemetry at 128-bit security, period.**
+
+**Why this matters to the thesis.** It converts the LoRa arm from a table of numbers into a
+*negative result with a proof*: co-design has a domain of validity, and T6 is its boundary. It also
+locates exactly where compression is worth pursuing — tier 3 (DR3) is the only regime an encoder can
+attack, and T2a says that is precisely where the amplification A is operative.
+
 ## 6. Channel model — Bianchi DCF (802.11, saturation)
 Fixed point over (τ, p_c): τ = 2(1−2p_c) / [(1−2p_c)(W+1) + p_c·W(1−(2p_c)^m)],
 p_c = 1−(1−τ)^{N−1}; W=16, m=6. **Solve with damped iteration** p←0.7p+0.3p_new,
@@ -259,16 +313,18 @@ way 802.11 does (T2a). This is the **third regime**:
 
 ### Two findings (measured, `results/raw/lora_eu868.csv`)
 
-**(1) Authentication does not fit at all below DR4.** Per-frame overhead is H_f 40 + signature 64 =
-**104 B**, against a regional limit of 51 B at DR0–DR2 and 115 B at DR3 — which leaves 11 B, less
-than one 45 B delta record. **The four longest-range LoRa modes cannot carry an authenticated
-telemetry frame in this design at all.** Only DR4/5/6 are feasible, and JSON never fits.
+**(1) Authentication does not fit at all below DR4 — and this is a theorem, not a measurement.**
+Per-frame overhead is H_f 40 + signature 64 = **104 B**, against a regional limit of 51 B at DR0–DR2
+and 115 B at DR3, which leaves 11 B — under the 13 B smallest AUTHBC record. Only DR4/5/6 are
+feasible, and JSON never fits. **See T6** for the general form, the proof that fragmenting cannot
+escape it, and the tier structure: DR0–DR2 fail on the *signature alone* (64 B > 51 B payload, so no
+encoding or header design can rescue them), while DR3 fails on the encoding by **two bytes**.
 
 **(2) The sustainable rate is 130–470× below the 802.11 arm.** At DR5, delta, b=3: frame 239 B,
 airtime 394.5 ms, so one frame per **39.4 s** and **Λ = 0.076 rec/s** — a record every 13 s, against
 the 802.11 arm's 20 rec/s. Freshness is likewise **39.4 s**, i.e. **158× the 802.11 D_max of 250 ms**.
 
-### Where the F5 chain optimisation actually pays
+### 9b. Per-frame chaining is the adopted LoRa wire format (F5, decided 2026-07-28) ⚠️
 
 Moving the chain hash from per-record to per-frame (audit F5) is worth far more here than on 802.11,
 because the regional payload limit binds — so smaller records convert into *more records per frame*:
@@ -282,6 +338,28 @@ because the regional payload limit binds — so smaller records convert into *mo
 
 **2.7× the sustainable telemetry rate for the same regulatory budget**, versus a 26 % airtime saving
 and *no* extra records on 802.11 (where freshness, not size, is the wall).
+
+**Decision (Mohamed, 2026-07-28): adopt per-frame chaining on the LoRa arm only.** The two arms now
+carry the same ledger in two framings, and that asymmetry is the point rather than an inconsistency:
+
+* **LoRa adopts it** because the regional payload limit binds (T2a), so the 32 B saved per record
+  becomes *more records per frame*, which the duty cycle converts directly into sustainable rate.
+* **802.11 keeps per-record chaining** because freshness binds there (T2a: dC/ds = 1 exactly), so
+  the same change buys ~6 % total energy and **no extra records** — too little to pay for losing
+  independently-transmitted per-record tamper-evidence.
+
+**This is a wire-format decision, not a ledger change.** `prev_hash_{i+1} = H(record_i)`, so a
+receiver holding the frame's first link and the ordered records derives every omitted hash; the
+stored ledger is byte-identical either way and `Chain.verify()` is untouched. What changes on the
+LoRa wire is that *within* a frame, tamper-evidence rests on the frame signature rather than on
+independent hashes — equivalent in strength, since a frame is atomic and signed over its ordered
+records, but no longer two independent mechanisms. The first link is **not** redundant and is always
+sent: without it, frames could be reordered or dropped undetected.
+
+*Since D6 froze the wire format, this is a recorded deviation, scoped to the LoRa arm. It does not
+touch E1–E5 or the 75.00 % headline.* Config: `experiments/lora/config.yaml:adopted_chain_mode`.
+Pinned by `tests/unit/models/test_lora_chain_adoption.py`, which also fails if the 802.11 configs
+ever acquire a chain-mode key.
 
 ### 9a. The LoRa arm as a joint optimization (T5 on the LoRa side)
 The LoRa arm is solved the same way as 802.11 — exhaustive enumeration, hard constraints, **full
