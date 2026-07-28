@@ -12,7 +12,7 @@ BIN    := $(VENV)/bin
 .DEFAULT_GOAL := help
 .PHONY: help setup lint test verify-frozen all hw-capture hw-reduce \
         bench-micro bench-macro exp-e1 exp-e2 exp-e3 exp-e4 exp-e5 \
-        sim-ns3 sim-ns3-matrix sim-ns3-dcf export-framesizes figures
+        sim-ns3 sim-ns3-matrix sim-ns3-dcf sim-ns3-sensitivity export-framesizes figures
 
 help:  ## list the supported targets
 	@echo "fanet-authbc — supported targets:"
@@ -72,6 +72,8 @@ sim-ns3-matrix:  ## [P6b] N x mode x seed saturation matrix -> results/raw/ns3_m
 	$(BIN)/python ns3/run_matrix.py --seeds 10
 sim-ns3-dcf:  ## [P7 F9] measure NS-3's DCF slot statistics -> results/raw/ns3_dcf_residual.csv
 	$(BIN)/python ns3/dcf_residual.py --seeds 5
+sim-ns3-sensitivity:  ## [P7] deployment-geometry sensitivity -> results/raw/ns3_sensitivity.csv
+	$(BIN)/python ns3/sensitivity.py --seeds 3
 export-framesizes:  ## P3 SYNC-3: placement×encoding×b frame sizes -> results/raw/framesizes.csv
 	$(BIN)/python -m authbc.bench.framesizes
 hw-capture:  ## P7b (this host): capture the Arduino INA219 stream -> results/hw/energy/samples-*.csv

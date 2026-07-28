@@ -305,8 +305,11 @@ Results are 802.11-only (a LoRa arm is future work). Energy is now measured on a
 INA219 meters ($P_\mathrm{cpu}=0.634$\,W, $P_\mathrm{radio}=0.218$\,W---both nominal values were
 $3$--$5\times$ too high), and the byte-based headline is power-free either way. The channel models are
 validated only in the idealised single-collision-domain regime they describe: a spread, mobile
-formation introduces hidden terminals and spatial reuse that neither model represents, which we leave
-as future work. The hardware validation is two-node. On ARM the scheme tie breaks toward Ed25519
+formation introduces spatial reuse and, at long range, hidden terminals that neither model
+represents. We bound this: sweeping a realistic air-to-air scenario (Friis, 3D cluster, Nakagami
+fading) shows the idealised model is a \emph{conservative} lower bound up to a ${\approx}300$--400\,m
+cluster (goodput $+43$ to $+51\%$ from spatial reuse) but becomes \emph{optimistic} by $15.7\%$ at
+500\,m, where links break down; fading costs a further 5--13 points. The hardware validation is two-node. On ARM the scheme tie breaks toward Ed25519
 rather than ECDSA, with an identical auth-byte cut.
 
 \section{Conclusion}

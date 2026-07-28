@@ -1,0 +1,19 @@
+# python=3.12.3
+# platform=Linux-6.6.114.1-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=ns3_sensitivity
+# ns3_version=3.41
+# config_hash=0abe3466eb7125ff
+scenario,N,frameSize,simTime,seeds,goodput_mbps_median,goodput_mbps_min,goodput_mbps_max,delta_vs_controlled_pct
+controlled,20,1400,10.0,3,1.7752,1.7584,1.8189,0.0
+realistic_50m,20,1400,10.0,3,2.537,2.5221,2.5563,42.92
+realistic_150m,20,1400,10.0,3,2.6768,2.674,2.7012,50.79
+realistic_300m,20,1400,10.0,3,2.0223,2.0164,2.0282,13.92
+realistic_500m,20,1400,10.0,3,1.4964,1.4923,1.5049,-15.7
+realistic_150m_nakagami3,20,1400,10.0,3,2.5912,2.5746,2.6276,45.97
+realistic_150m_nakagami1,20,1400,10.0,3,2.4391,2.426,2.4508,37.4
