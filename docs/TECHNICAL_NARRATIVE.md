@@ -130,6 +130,24 @@ Self-batch (B) folds `b` records under **one** signature, so the per-record auth
 A  =  ─────────────────         (asymptotic, at the batch b_max that fills the MTU)
       M − H_f − g_a
 ```
+
+**⚠️ T2a — when does A actually apply?** The derivation above assumes the batch is capped by the
+**MTU**. Once freshness is enforced (docs/02 §7) the cap may instead be `b = ⌊Λ·D_max⌋`, which does
+**not depend on `s`** — and then `C(s) = s + (g_a+H_f)/b`, so `dC/ds = 1` exactly: **compression
+pays 1×, not A×**, and the residual auth cost is a floor compression cannot touch. The regime
+boundary is `s < (M−H_f−g_a)/(⌊Λ·D_max⌋+1)`.
+
+E2's own MTU sweep straddles it (Λ=20 rec/s, D_max=250 ms, delta s=45):
+
+| MTU | b_max (MTU) | b ceiling | binds | A formula | **A effective** |
+|---|---|---|---|---|---|
+| 256 (LoRa-like) | 3 | 3 | **MTU** | 1.6842 | **1.6842** |
+| 576 | 10 | 5 | freshness | 1.2203 | **1.0000** |
+| 1500 (802.11) | 31 | 5 | freshness | 1.0745 | **1.0000** |
+
+So on 802.11 **A is never operative**; on a low-rate link it is. The "compression pays ×A" leverage
+is real and **exclusive to the low-rate arm** — which is the strongest form of the LoRa motivation.
+
 *Derivation:* at `b_max` the frame ≈ `M`, so bytes/rec ≈ `M/b_max`, and the data filling it is
 `b_max·s ≈ M − H_f − g_a`; hence `(bytes/rec)/s = M/(M−H_f−g_a) = A`. Inline (A) can **never**
 amortize its per-record signature — only the header `H_f/b` shrinks — which is exactly why A is the
@@ -306,6 +324,12 @@ At MTU 1500, self-batch, at the MTU-filling `b_max`, the measured amplification 
 matches the formula `A = M/(M−H_f−g_a)` to **< 5 %** (the small gap is integer-`b` slack, which shrinks
 as `s` shrinks): delta reaches `b_max = 31` with `A_at_b = A = 1.0745` exactly. Inline (A) never
 amortizes its signature (`bytes/rec` barely moves with `b`), confirming the placement distinction.
+
+**But T2a: that `b_max = 31` is unreachable.** Freshness caps the batch at `⌊Λ·D_max⌋ = 5` long
+before the MTU does, so the realised amplification at M=1500 is **1.0000, not 1.0745**. E2 now
+records `binds` and `A_effective` per row: **MTU-limited at M=256 (A=1.68 operative), freshness-
+limited at M=576 and M=1500 (A=1)**. The formula is verified — and shown to apply only on low-rate
+links.
 
 ### E3 — loss frontier (T3), p=0.05 & 0.10
 `V_B ≈ 1−p` flat in `b` (e.g. 0.90 at p=0.10, any b); `V_D = (1−p)^n` drops the moment a block spans

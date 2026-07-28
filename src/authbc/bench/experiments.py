@@ -81,6 +81,13 @@ def run_e2(cfg: dict) -> list[dict]:
 
     A (self-batch, B) = M/(M−H_f−g_a) is the relaxed-floor formula; the discrete value at the
     integer b_max approaches it as M grows (small M shows a documented discretization gap).
+
+    **T2a (docs/02):** A is derived AT the MTU limit and therefore only applies when the MTU is what
+    caps the batch. Once freshness is enforced the cap may be ⌊Λ·D_max⌋ instead, which does not
+    depend on s — and then compression pays 1×, not A×. Each row therefore records which ceiling
+    binds and the amplification that is ACTUALLY realised. This sweep straddles the boundary by
+    construction: at Λ=20 rec/s and D_max=250 ms the M=256 rows are MTU-limited (A operative) while
+    M=576 and M=1500 are freshness-limited (A = 1).
     """
     sizes = framesizes.measured_sizes(seed=cfg["size_seed"], n=cfg["size_n"])
     g_a = cfg["g_a"]
@@ -98,6 +105,12 @@ def run_e2(cfg: dict) -> list[dict]:
                     fb = framesizes.frame_bytes(placement, s, b)
                     per_rec = fb / b
                     phi_ov = 100.0 * (framesizes.auth_bytes(placement, b) + H_F) / fb
+                    binds = (optimizer.binding_constraint(s, g_a, H_F, m, cfg["lam"],
+                                                          cfg["d_max_s"])
+                             if placement == "B" else "")
+                    a_eff = (optimizer.effective_amplification(s, g_a, H_F, m, cfg["lam"],
+                                                               cfg["d_max_s"])
+                             if placement == "B" else "")
                     rows.append({
                         "mtu": m, "placement": placement, "encoding": enc, "s": round(s, 2),
                         "b": b, "b_max": bm, "frame_bytes": round(fb, 2),
@@ -105,6 +118,13 @@ def run_e2(cfg: dict) -> list[dict]:
                         "A_at_b": round(per_rec / s, 4),
                         "A_formula": round(a_formula, 4) if a_formula != "" else "",
                         "is_bmax": int(b == bm),
+                        # T2a: which ceiling actually caps the batch, and what compression is
+                        # therefore worth per byte. A_formula is the MTU-limit value; A_effective
+                        # is 1.0 wherever freshness binds first.
+                        "binds": binds,
+                        "b_ceiling": (min(bm, optimizer.freshness_batch_bound(
+                            cfg["lam"], cfg["d_max_s"])) if placement == "B" else ""),
+                        "A_effective": round(a_eff, 4) if a_eff != "" else "",
                     })
     return rows
 

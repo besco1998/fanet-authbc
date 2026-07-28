@@ -43,14 +43,43 @@ _E2_SMALL = {
     "g_a": 64,
     "size_seed": 1,
     "size_n": 2000,
+    "lam": 20,          # T2a: needed to compute the freshness ceiling ⌊Λ·D_max⌋
+    "d_max_s": 0.250,
 }
 
 
 def test_e2_amplification_matches_formula_at_mtu_1500() -> None:
+    """T2's algebra is correct AT the MTU limit — which is what A_formula describes."""
     for x in run_e2(_E2_SMALL):
         if x["is_bmax"] and x["placement"] == "B":
             gap = abs(x["A_at_b"] - x["A_formula"]) / x["A_formula"]
             assert gap < 0.05, f"{x['encoding']}: A gap {gap:.3f} > 5% at M=1500"
+
+
+def test_e2_records_that_the_mtu_limit_is_unreachable_at_1500() -> None:
+    """T2a: at M=1500 freshness caps the batch first, so the REALISED amplification is 1.
+
+    Guards the distinction the frozen data now carries: A_formula is the MTU-limit value and
+    stays 1.0745; A_effective is what compression is actually worth and is 1.0.
+    """
+    rows = [x for x in run_e2(_E2_SMALL) if x["placement"] == "B" and x["is_bmax"]]
+    assert rows
+    for x in rows:
+        assert x["binds"] == "freshness"
+        assert x["A_effective"] == 1.0
+        assert x["A_formula"] > 1.0            # the formula still says otherwise
+        assert x["b_ceiling"] < x["b_max"]     # …because the MTU batch is unreachable
+
+
+def test_e2_low_mtu_stays_mtu_limited_so_amplification_survives() -> None:
+    """The other side of the T2a boundary: a LoRa-like MTU is capped by size, not freshness."""
+    cfg = {**_E2_SMALL, "mtu_values": [256]}
+    rows = [x for x in run_e2(cfg) if x["placement"] == "B" and x["is_bmax"]]
+    assert rows
+    for x in rows:
+        assert x["binds"] == "mtu"
+        assert x["A_effective"] == x["A_formula"] > 1.5
+        assert x["b_ceiling"] == x["b_max"]
 
 
 def test_e2_phi_decreases_with_b_for_self_batch() -> None:

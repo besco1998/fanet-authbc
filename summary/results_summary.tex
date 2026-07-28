@@ -91,6 +91,20 @@ a single number is not. \textbf{The last row is the co-design argument in
 miniature}: over-aggregation is byte-competitive (3.60\,B) yet \emph{fails} $V\ge0.95$ because
 $0.9025=(1-p)^2$. The byte-optimal answer is not the correct answer.
 
+\subsection{T2a: where ``compression pays $\times A$'' actually applies}
+T2's amplification $A=M/(M-H_f-g_a)$ is derived \emph{at the MTU limit}. Under the freshness bound
+the batch is capped at $\lfloor\Lambda D_{\max}\rfloor$ instead, which does not depend on the record
+size --- so $dC/ds=1$ \textbf{exactly} and compression pays $1\times$. E2's MTU sweep straddles the
+boundary:
+\begin{center}\begin{tabular}{rrrl r}
+\toprule MTU & $b_{\max}$(MTU) & ceiling & binds & $A$ realised \\ \midrule
+256 (LoRa-like) & 3 & 3 & MTU & \textbf{1.684} \\
+576 & 10 & 5 & freshness & 1.000 \\
+1500 (802.11) & 31 & 5 & freshness & 1.000 \\ \bottomrule
+\end{tabular}\end{center}
+On 802.11 the MTU knee is never reached, so $A$ never operates; on a low-rate link it does. The
+leverage motivating the LoRa arm is real \emph{and exclusive to it}.
+
 \subsection{NS-3 channel validation}
 \begin{center}\begin{tabular}{rrrr}
 \toprule $N$ & unicast vs ACK-Bianchi & broadcast vs naive reduction & broadcast vs Ma \& Chen \\ \midrule

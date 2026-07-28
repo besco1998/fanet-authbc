@@ -6,3 +6,7 @@ encodings: [json, cbor, msgpack, delta]
 g_a: 64          # Ed25519 self-batch (B) / inline per-record (A)
 size_seed: 1     # measured s_e stream (same as the SYNC-3 framesizes export)
 size_n: 10000
+# T2a (docs/02): the batch ceiling is min(MTU, freshness). These make the freshness ceiling
+# explicit in E2 so the regime boundary is visible in the frozen data, not just asserted.
+lam: 20          # records/s (docs/01 §1 default Lambda)
+d_max_s: 0.250   # freshness bound D_max (docs/02 §7)

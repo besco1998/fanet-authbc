@@ -25,7 +25,8 @@ and hash-chained into a tamper-evident ledger. Because a cryptographic signature
 exceeds the payload (45--190\,B), naive per-record signing wastes airtime, energy, and goodput on a
 shared, lossy 802.11 channel. We argue that four design knobs---record \emph{encoding}, authentication
 \emph{placement}, signature \emph{scheme}, and \emph{batch} size---are coupled and must be
-\emph{co-optimized}. We formalize this with five theorems (overhead dominance, batching amplification,
+\emph{co-optimized}. We formalize this with five theorems (overhead dominance, batching amplification and its
+regime boundary,
 a loss-robustness frontier, a power-independent scheme crossover, and the co-design optimum), implement
 measurable models for each, and test one falsifiable criterion: the co-optimized configuration must cut
 on-air authentication bytes by $\geq 40\%$ versus an inline-signature CBOR baseline while keeping
@@ -126,6 +127,16 @@ A = \frac{M}{M - H_f - \ba},
 since at the MTU-filling batch $b_{\max}$ the frame $\approx M$ and $b_{\max}s \approx M-H_f-\ba$.
 Inline (A) can \emph{never} amortize its per-record signature (only $H_f/b$ shrinks).
 
+\textbf{T2a: when does $A$ apply?} The derivation assumes the \emph{MTU} caps the batch. Under a
+freshness bound the cap is instead $b=\lfloor\Lambda D_{\max}\rfloor$, which does not depend on $s$;
+then $C(s)=s+(\ba+H_f)/b$ and $dC/ds=1$ \emph{exactly}---compression pays $1\times$, not $A\times$,
+and the residual authentication cost is a floor compression cannot reach. The boundary is
+$s<(M-H_f-\ba)/(\lfloor\Lambda D_{\max}\rfloor+1)$. At $\Lambda{=}20$\,rec/s and
+$D_{\max}{=}250$\,ms this is $232.7$\,B on 802.11, above every encoding studied, so
+\textbf{$A$ is never operative there}; on a low-rate link ($M{=}222$) the MTU binds again and
+$A{=}1.88$ \emph{is} operative. The ``compression pays $\times A$'' leverage is therefore real and
+\emph{exclusive to low-rate links}.
+
 \subsection{T3: loss-robustness frontier}
 Let $p$ be per-frame loss and $V=\Pr[\text{a received record is independently verifiable}]$. Self-batch
 frames self-verify, so $V_B = 1-p$, \emph{independent of $b$}. A block signature spanning
@@ -200,9 +211,12 @@ $324.6/1016.5${\us}; BLS aggregate-verify$(b{=}8)$ $3445${\us}. Notably, ECDSA \
 x86 (OpenSSL P-256 assembly)---the reverse of the usual ordering, and the reason the optimizer breaks a
 byte-tie toward ECDSA on the energy metric; this edge is expected to vanish on ARM.
 
-\textbf{E2 (T2).} At MTU 1500, self-batch, the measured amplification $A_{@b}=(\text{bytes/rec})/s$
-matches $A = M/(M-H_f-\ba)$ within $5\%$ (integer-$b$ slack, shrinking with $s$); delta reaches
-$b_{\max}=31$ with $A_{@b}=A=1.0745$ exactly.
+\textbf{E2 (T2/T2a).} At MTU 1500, self-batch, the measured amplification
+$A_{@b}=(\text{bytes/rec})/s$ matches $A = M/(M-H_f-\ba)$ within $5\%$ (integer-$b$ slack, shrinking
+with $s$); delta reaches $b_{\max}=31$ with $A_{@b}=A=1.0745$ exactly. The MTU sweep also straddles
+the T2a boundary: $M{=}256$ is MTU-limited ($A{=}1.68$ realised), while $M{=}576$ and $M{=}1500$ are
+freshness-limited and realise $A{=}1.0000$---i.e.\ the $b_{\max}{=}31$ above is \emph{unreachable}
+at telemetry rates.
 
 \textbf{E3 (T3).} $V_B \approx 1-p$ flat in $b$ (0.90 at $p{=}0.10$); $V_D=(1-p)^n$ drops the moment a
 block spans $n>1$ frames (0.81 at $p{=}0.10$, $b{=}40$)---the frontier is exactly T3.

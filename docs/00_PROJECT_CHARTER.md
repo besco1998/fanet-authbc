@@ -28,7 +28,10 @@ extends the same framework to low-rate links afterward.
 1. Quantified **overhead-dominance characterization** for compressed authenticated
    FANET ledgers (T1) — the motivating result.
 2. **Placement theory**: self-batch vs cross-signer aggregation distinction; frame-level
-   optimum and the "compression pays ×A" amplification (T2, T5); the **loss-robustness
+   optimum and the "compression pays ×A" amplification (T2), **with its regime boundary (T2a): A
+   applies only where the MTU caps the batch — under a freshness bound the cap is ⌊Λ·D_max⌋, which
+   is independent of record size, and compression then pays exactly 1×. On 802.11 A is never
+   operative; on low-rate links it is** (T5); the **loss-robustness
    frontier** proving frame-level Pareto-dominates block-level under realistic loss (T3).
 3. **Scheme-selection rule** with the measured Ed25519↔BLS crossover (T4) — regime-dependent,
    hardware-grounded.
