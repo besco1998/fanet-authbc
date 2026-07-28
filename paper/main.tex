@@ -25,16 +25,25 @@ and hash-chained into a tamper-evident ledger. Because a cryptographic signature
 exceeds the payload (45--190\,B), naive per-record signing wastes airtime, energy, and goodput on a
 shared, lossy 802.11 channel. We argue that four design knobs---record \emph{encoding}, authentication
 \emph{placement}, signature \emph{scheme}, and \emph{batch} size---are coupled and must be
-\emph{co-optimized}. We formalize this with five theorems (overhead dominance, batching amplification and its
-regime boundary,
-a loss-robustness frontier, a power-independent scheme crossover, and the co-design optimum), implement
+\emph{co-optimized}. We formalize this with six theorems (overhead dominance, batching amplification and its
+regime boundary, a loss-robustness frontier, a power-independent scheme crossover, the co-design
+optimum, and an authentication-exclusion threshold that bounds where co-design is possible at all),
+implement
 measurable models for each, and test one falsifiable criterion: the co-optimized configuration must cut
 on-air authentication bytes by $\geq 40\%$ versus an inline-signature CBOR baseline while keeping
 verifiability $V \geq 0.95$ under per-frame loss $p = 0.05$. Driven by measured microbenchmarks, the
-optimizer selects a delta encoding under self-batch placement, cutting authentication overhead by
-\textbf{75.0\%} (to $26.0$\,B/record) at $V = 0.95$ \emph{and} a 250\,ms freshness bound---criterion
-met. Freshness, not the MTU, is what binds: the byte-optimal batch cuts 96.8\% but incurs 1.55\,s of
-staleness, so a co-design optimizer blind to freshness solves the wrong problem. The airtime model is
+optimizer selects a delta encoding under self-batch placement, cutting \emph{total} on-air bytes by
+\textbf{58.7\%} (to $72.0$\,B/record) at $V = 0.95$ and a 250\,ms freshness bound---criterion met.
+We report this as a decomposition rather than a single figure, because the axes do not contribute
+equally: placement and batching cut \emph{authentication} bytes by 75.0\% (108$\to$27\,B/record) and
+encoding cuts \emph{payload} bytes by 32.1\%, contributing 79\% and 21\% of the saving respectively.
+The authentication term alone reduces to $1-1/b$, invariant to header size, signature size and
+encoding---so the co-design claim rests not on that ratio but on \emph{joint feasibility}: coupling
+the byte model to an NS-3-validated broadcast channel shows the inline baselines exhaust a single
+collision domain at $N{=}32$ (CBOR) and $N{=}25$ (JSON) neighbours, while the co-designed
+configuration reaches $N{=}103$---a $3.2\times$ larger swarm. Freshness, not the MTU, is what binds:
+the byte-optimal batch cuts 96.7\% of authentication but incurs 1.50\,s of staleness, so a co-design
+optimizer blind to freshness solves the wrong problem. The airtime model is
 validated against NS-3 3.41: unicast matches Bianchi within $+0.6$/$-2.9\%$, while the common
 reduction of that model to broadcast fails by $16\times$ at $N{=}50$ and is replaced by Ma and Chen's
 broadcast model~\cite{machen2007,machen2008}, which our measurements confirm to within $0.36\%$. All results are reproduced deterministically from frozen data by
@@ -225,9 +234,9 @@ block spans $n>1$ frames (0.81 at $p{=}0.10$, $b{=}40$)---the frontier is exactl
 
 \textbf{E4 (T4, Fig.~\ref{fig:e4}).} Ed25519 verify is $10.7\times$ cheaper than BLS verify. Across the
 full relay-fraction $\times$ batch $\times$ rate grid (80 points), Ed25519 wins \emph{every} one
-(minimum $\kappa^\ast = 3.21 \gg 0.5$). At 96\,B, BLS carries more auth bytes than Ed25519 on own
+(minimum $\kappa^\ast = 31.6 \gg 0.5$). At 96\,B, BLS carries more auth bytes than Ed25519 on own
 self-batch traffic ($\kappa^\ast=\infty$) and saves bytes only on relay traffic for $b\geq 2$; its
-$10.7\times$ verify cost keeps Ed25519 optimal for any plausible power ratio.
+$33.2\times$ verify cost on ARM keeps Ed25519 optimal for any plausible power ratio.
 
 \begin{figure}[t]\centering
 \includegraphics[width=\columnwidth]{e4_crossover.png}
@@ -239,28 +248,88 @@ costs bytes on own traffic).}
 
 \begin{table}[t]\centering\footnotesize
 \caption{E5: co-design headline (T5) under $V\geq0.95$, $p{=}0.05$ and $D\leq250$\,ms.
-Auth cut $=(104-26.0)/104=75.0\% \geq 40\% \Rightarrow$ PASS.}
+Total-byte cut $=(174.3-72.0)/174.3=58.7\%$; auth cut $=(108-27.0)/108=75.0\% \geq 40\% \Rightarrow$ PASS.
+$H_f{=}44$\,B is measured from the implemented wire format, not assumed.}
 \label{tab:e5}
-\begin{tabular}{llll r r r}
+\begin{tabular}{llll r r r r}
 \toprule
-config & enc & $\sigma$ & place & auth B/rec & $V$ & $D$ (ms) \\
+config & enc & $\sigma$ & place & auth B/rec & total B/rec & $V$ & $D$ (ms) \\
 \midrule
-\textbf{optimized} & delta & Ed & B,$b{=}4$ & \textbf{26.00} & 0.95 & 200 \\
-A+CBOR (Pillar-1) & cbor & Ed & A & 104.0 & 0.95 & 50 \\
-A+JSON (naive) & json & Ed & A & 104.0 & 0.95 & 51 \\
-D-over-agg & cbor & Ed & D,$b{=}40$ & 3.60 & 0.9025 & 2004 \\
+\textbf{optimized} & delta & Ed & B,$b{=}4$ & \textbf{27.00} & \textbf{72.00} & 0.95 & 200 \\
+A+CBOR (Pillar-1) & cbor & Ed & A & 108.0 & 174.25 & 0.95 & 50 \\
+A+JSON (naive) & json & Ed & A & 108.0 & 299.09 & 0.95 & 51 \\
+D-over-agg & cbor & Ed & D,$b{=}40$ & 3.80 & 70.05 & 0.9025 & 2004 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]\centering\footnotesize
+\caption{Attribution of the E5 saving. The authentication term is $1-1/b$ and is invariant to $H_f$,
+$g_a$, encoding and scheme; the encoding term moves payload only. Reporting the single 75.0\% figure
+would credit four axes for what two produce.}
+\label{tab:decomp}
+\begin{tabular}{l l r r}
+\toprule
+axis & moves & reduction & share of saving \\
+\midrule
+placement $\times$ batching & auth bytes 108$\to$27.0 & 75.0\% & 79.2\% \\
+encoding & payload bytes 66.25$\to$45.0 & 32.1\% & 20.8\% \\
+scheme & neither (both 64\,B) & --- & --- \\
+\midrule
+\textbf{combined} & \textbf{total bytes 174.3$\to$72.0} & \textbf{58.7\%} & 100\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]\centering\footnotesize
+\caption{Feasibility envelope: largest single collision domain each configuration can serve
+($U<1$, 802.11a 6\,Mb/s, broadcast model of~\cite{machen2007}). This is the result that requires all
+four axes \emph{and} the channel model; $N{=}50$ is quoted because it lies between the baseline and
+co-design limits.}
+\label{tab:envelope}
+\begin{tabular}{l r r r}
+\toprule
+configuration & $\Lambda$ (rec/s) & $D_{\max}$ & $N_{\max}$ \\
+\midrule
+\textbf{optimized} delta/B, $b{=}4$ & 20 & 250\,ms & \textbf{103} \\
+A+CBOR (Pillar-1) & 20 & 250\,ms & 32 \\
+A+JSON (naive) & 20 & 250\,ms & 25 \\
+\midrule
+optimized, 3GPP bound~\cite{3gpp_ts22125} & 50 & 100\,ms & 35 \\
+optimized, 3GPP min rate & 10 & 100\,ms & 78 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \textbf{E5 (Table~\ref{tab:e5}, Fig.~\ref{fig:e5}).} The optimizer selects delta + Ed25519 +
-self-batch at $b{=}4$, cutting on-air authentication from 104\,B/record to \textbf{26.0\,B/record}---a
-\textbf{75.0\%} reduction versus the Pillar-1 baseline at $V=0.95$, $p=0.05$ and a 250\,ms freshness
-bound. Hand-checked: $45.0+104/4=71.0$\,B/record, freshness $4/20=200$\,ms.
+self-batch at $b{=}4$, cutting total on-air bytes from 174.3 to \textbf{72.0\,B/record}---a
+\textbf{58.7\%} reduction versus the Pillar-1 baseline at $V=0.95$, $p=0.05$ and a 250\,ms freshness
+bound. Hand-checked: $45.0+108/4=72.0$\,B/record, freshness $4/20=200$\,ms.
+
+\textbf{Attributing the saving (Table~\ref{tab:decomp}).} We separate the axes rather than report one
+figure, because they are not equal contributors. Authentication overhead per record is
+$(H_f+g_a)/b$; the record size does not appear, so the auth-byte reduction
+$\bigl[(H_f{+}g_a)-(H_f{+}g_a)/b\bigr]/(H_f{+}g_a) = 1-1/b$ is invariant to header size, signature
+size, encoding and scheme. We verified this by substitution over $H_f\in\{20,40,80,200\}$\,B
+$\times\,g_a\in\{48,64,96\}$\,B: all twelve give 75.0000\%, and measuring $H_f$ at 44\,B rather than
+the assumed 40\,B moved it not at all. Independently, the frozen E2 data gives the same auth overhead
+to three decimals for all four encodings. The encoding axis is nonetheless load-bearing---it spans
+$3\times$ on total bytes---but it acts on payload, contributing 20.8\% of the saving against
+placement and batching's 79.2\%. The scheme axis is byte-neutral here (Ed25519 and ECDSA are both
+64\,B) and is decided on energy and verification throughput instead (T4).
+
+\textbf{Feasibility is the co-design result (Table~\ref{tab:envelope}).} Because the byte ratio alone
+reduces to $1-1/b$, we take the substantive claim to be which configurations \emph{can run}. Coupling
+the byte model to the broadcast channel model gives the largest neighbourhood each configuration
+sustains: the naive and Pillar-1 baselines exhaust a single collision domain at 25 and 32 neighbours,
+while the co-designed configuration reaches 103---a $3.2\times$ larger swarm for the same medium. At
+$N{=}50$ the baselines are not merely wasteful but \emph{unrunnable} ($U=2.28$ and $1.53$). This
+statement needs the encoding (frame size), the placement and batch (frames per second), the scheme
+(auth bytes) and the channel model together; no single axis produces it.
 
 \textbf{Which constraint binds is itself the result.} Ignoring freshness, the byte-optimal batch is
-$b{=}31$ at the MTU knee, cutting 96.8\%---but the oldest record in such a batch waits
-\textbf{1.55\,s}, $6.2\times$ over $D_{\max}$. Because fill time dominates the delay, the admissible
+$b{=}30$ at the MTU knee, cutting 96.7\%---but the oldest record in such a batch waits
+\textbf{1.50\,s}, $6.0\times$ over $D_{\max}$. Because fill time dominates the delay, the admissible
 batch obeys $b\lesssim\Lambda D_{\max}$ \emph{independent of encoding and scheme}, so freshness binds
 long before the MTU does at telemetry rates. The co-design answer is therefore a frontier, not a
 point: $b{=}1{\rightarrow}4$ trades $0/50/66.7/75\%$ auth-byte reduction against $50/100/150/200$\,ms
@@ -340,8 +409,20 @@ rather than ECDSA, with an identical auth-byte cut.
 
 \section{Conclusion}
 Authentication overhead dominates tiny UAV telemetry, but it is a \emph{co-design} problem. Jointly
-optimizing encoding, placement, scheme, and batching cuts on-air authentication by 75.0\% at
-$V\geq0.95$---meeting the falsifiable criterion---while an NS-3-validated channel model and an automated
+optimizing encoding, placement, scheme, and batching cuts total on-air bytes by 58.7\% at
+$V\geq0.95$ under a 250\,ms freshness bound---meeting the falsifiable criterion.
+
+We are deliberate about where that result comes from. The authentication component, taken alone,
+reduces to $1-1/b$: the header and signature sizes cancel, and neither the encoding nor the scheme
+appears. Reported as a headline percentage it would overstate what four coupled axes contribute. The
+contribution that genuinely requires the coupling is \emph{feasibility}---which configurations can
+run at all. Joining the byte model to the channel model shows the inline baselines exhaust a single
+collision domain at 25--32 neighbours while the co-designed configuration reaches 103, and that at
+the 100\,ms latency bound of 3GPP TS~22.125~\cite{3gpp_ts22125} no 802.11a configuration serves 50
+neighbours at all. The same reasoning, pushed to the low-rate regime, yields an exclusion theorem:
+a link whose payload cannot hold one header, one signature and one record carries no
+per-frame-verifiable telemetry at any encoding or batch size, which removes the four longest-range
+LoRa modes from consideration outright. An NS-3-validated channel model and an automated
 reproducibility gate keep the study honest and repeatable.
 
 \bibliographystyle{IEEEtran}

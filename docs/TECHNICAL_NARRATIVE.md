@@ -338,29 +338,32 @@ links.
 single-frame threshold — the frontier is exactly T3.
 
 ### E4 — scheme crossover (T4), corrected to BLS=96 B
-Ed25519 verify is **10.7×** cheaper than BLS verify. Across the full ρ (relay fraction) × b × Λ grid
-(**80 points**), **Ed25519 wins every one** — minimum `κ* = 3.21 ≫ 0.5`. At 96 B, BLS carries *more*
+Ed25519 verify is **33.2×** cheaper than BLS verify on ARM (10.7× on x86 — the thesis platform is the Pi, D8). Across the full ρ (relay fraction) × b × Λ grid
+(**80 points**), **Ed25519 wins every one** — minimum `κ* = 31.6 ≫ 0.5`. At 96 B, BLS carries *more*
 auth bytes than Ed25519's 64 B on own self-batch traffic (`κ*=∞`, it can never win there) and saves
-bytes only on relay traffic for `b≥2` — but its 10.7× verify cost keeps Ed25519 optimal for any
+bytes only on relay traffic for `b≥2` — but its 33.2× verify cost keeps Ed25519 optimal for any
 plausible power ratio. This aligns T4 with the D2 architecture: **BLS is for cross-signer aggregation,
 not self-batch.**
 
 ### E5 — the co-design headline (T5) — **PASS**
 | configuration | encoding | scheme | placement | on-air auth B/rec | V |
 |---|---|---|---|---|---|
-| **optimized** | delta | Ed25519 | **B, b=4** | **26.00** | 0.95 |
-| A+CBOR (Pillar-1) | cbor | Ed25519 | A (inline) | 104.0 | 0.95 |
-| A+JSON (naive) | json | Ed25519 | A | 104.0 | 0.95 |
-| D-over-agg | cbor | Ed25519 | D, b=40 | 3.60 | **0.9025** ✗ |
+| **optimized** | delta | Ed25519 | **B, b=4** | **27.00** | 0.95 |
+| A+CBOR (Pillar-1) | cbor | Ed25519 | A (inline) | 108.0 | 0.95 |
+| A+JSON (naive) | json | Ed25519 | A | 108.0 | 0.95 |
+| D-over-agg | cbor | Ed25519 | D, b=40 | 3.80 | **0.9025** ✗ |
 
-**Auth-byte cut = (104 − 26.0)/104 = 75.00 % ≥ 40 % ⇒ PASS**, at V = 0.95, p = 0.05 and freshness
-D ≤ 250 ms. Hand-checked: `45.0 + 104/4 = 71.0 B/rec` at b=4, whose freshness is
+**Headline (reframed 2026-07-29, audit F13 + item A1): total on-air bytes 174.25 → 72.00 B/record
+= 58.68 %**, of which placement×batching contributes 79.2 % (auth 108 → 27.0, a 75.00 % cut) and the
+encoding 20.8 % (payload 66.25 → 45.0, a 32.1 % cut). **PASS** against the ≥40 % criterion at
+V = 0.95, p = 0.05, D ≤ 250 ms. Hand-checked: `45.0 + 108/4 = 72.0 B/rec` at b=4, whose freshness is
 `4/20 + 0.49 ms = 200.5 ms`. D-over-aggregation is byte-competitive (3.60 B) but **fails** the
 V≥0.95 constraint (0.9025 = (1−p)²) — a live demonstration of the T3 frontier — *and* misses
 freshness by 8×.
 
-*(Earlier drafts reported 96.77 % at b=31. That configuration is byte-optimal but sits at **1552 ms**
-of staleness, 6.2× over the D_max = 250 ms bound docs/02 §7 requires the optimizer to enforce; the
+*(Earlier drafts reported 96.77 % at b=31, under the then-assumed H_f = 40 B; at the measured 44 B
+the MTU knee is b=30 and 96.67 %. Either way that configuration is byte-optimal but sits at
+**~1.5 s** of staleness, 6× over the D_max = 250 ms bound docs/02 §7 requires the optimizer to enforce; the
 optimizer computed the violation and discarded it — audit **F10**. Freshness is now a hard constraint
 AND a fourth Pareto objective, so the reported optimum is the byte-best configuration that a UAV
 telemetry system could actually deploy.)*
@@ -444,8 +447,8 @@ results (two retracted broadcast explanations, BLS losing on 802.11) are reporte
   one trunk (tags through `p7-done`). Theorems T1–T5 all validated; NS-3 confirms the unicast DCF
   to +0.6/−2.9 % and the broadcast model (Ma & Chen) to ≤1.1 %.
 - **Headline:** co-design cuts on-air auth bytes **75.00 %** vs the Pillar-1 baseline at V≥0.95,
-  p=0.05 **and freshness ≤ 250 ms** — **PASS**. (Byte-optimal ignoring freshness is 96.77 % at
-  b=31, but that costs 1.55 s of staleness — audit F10.)
+  p=0.05 **and freshness ≤ 250 ms** — **PASS**. (Byte-optimal ignoring freshness is 96.67 % at
+  b=30, but that costs 1.50 s of staleness — audit F10.)
 - **P7b (hardware):** measure real timings + INA219 energy on RPi4, watch the F6 scheme flip, then
   re-run E4/E5 with measured power and re-freeze through the gate. Setup: hw/SETUP.md.
 - **P8 (paper):** condense this narrative into the IEEEtran write-up with an honest limitations section

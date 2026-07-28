@@ -38,7 +38,17 @@ extends the same framework to low-rate links afterward.
    hardware-grounded.
 4. **Validated models**: Bianchi-based airtime/throughput and the energy model, checked
    against NS-3 and RPi4, with honest corrections where they miss.
-5. **Reproducible open testbed + dataset** (repo, seeds, raw CSVs, figures pipeline).
+5. **Feasibility envelope (the load-bearing co-design claim, reframed 2026-07-29).** Joining the byte
+   model to the NS-3-validated broadcast model gives the largest neighbourhood each configuration can
+   serve: **N ≤ 25** (A+JSON), **N ≤ 32** (A+CBOR Pillar-1), **N ≤ 103** (co-designed) — a **3.2×**
+   larger swarm on the same medium. ⚠️ **This, not the auth-byte percentage, is the contribution that
+   requires all four axes**: the auth-byte ratio reduces algebraically to **1 − 1/b**, invariant to
+   H_f, g_a, encoding and scheme (audit **F13**). Report the *decomposition* (total bytes −58.7 %:
+   placement×batching 79.2 %, encoding 20.8 %, scheme byte-neutral), never the bare 75 %.
+6. **Authentication-exclusion threshold (T6)**: a link admits per-frame-verifiable telemetry only if
+   M ≥ H_f + g_a + s_min, and T3 (n_max = 1 at ε ≤ p) closes the fragmentation escape — bounding
+   where co-design is possible at all, and excluding the four longest-range LoRa modes outright.
+7. **Reproducible open testbed + dataset** (repo, seeds, raw CSVs, figures pipeline).
 
 Target venues: Ad Hoc Networks / MDPI Drones primary; IEEE IoT Journal if results are strong.
 
