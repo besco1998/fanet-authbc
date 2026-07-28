@@ -8,12 +8,24 @@ three objectives, not a single argmin:
     minimize on-air bytes/record   (T1/T2)
     minimize energy/record         (docs/02 §7 via models.energy)
     maximize verifiability V       (T3)
+    minimize freshness delay D(b)  (docs/02 §7)
 
 Hard constraints filter a candidate out entirely:
   * MTU:            single-frame placements (A/B/C) must fit b·s+g_a+H_f ≤ M.
   * verifiability:  V ≥ 1−ε  (T3; via n(b) for block-level D).
   * verify-throughput: t_verify(b)·Λ ≤ 1  (T4/T5 — receiver must keep up at record rate Λ).
-Soft constraint (annotated, not filtered): freshness D(b) ≤ D_max=250 ms (docs/02 §7).
+  * freshness:      D(b) ≤ D_max  (docs/02 §7 — "enforce ... in the optimizer").
+
+**Freshness was previously computed and discarded** (audit F10). It was read as "soft = annotated,
+not filtered", and then not annotated either — so the byte-optimal batch violated the 250 ms bound
+by 6.2× with nothing in any artifact to show it. Batching buys bytes with staleness, so a co-design
+optimizer that cannot see freshness is not optimizing the actual problem. It is now BOTH a hard
+constraint (a config that misses the freshness requirement is inadmissible, exactly like one that
+misses V) and a fourth Pareto objective (so the bytes↔freshness trade-off is visible inside the
+feasible region).
+
+Closed form worth noting: fill time dominates D(b), so the freshness-feasible batch is
+**b ≲ Λ·D_max** — at Λ=20 records/s and D_max=250 ms that is b ≤ 5, independent of encoding.
 
 Byte / frame-span model (docs/02 §6, T2, T3):
   * A/B/C span one frame: bytes/rec = s + (g_a+H_f)/b.
@@ -84,7 +96,7 @@ class Constraints:
     epsilon: float           # verifiability target: require V ≥ 1−ε
     p_loss: float            # per-frame loss probability p
     lam: float               # record arrival rate Λ [records/s]
-    d_max_s: float = 0.250   # soft freshness bound, seconds
+    d_max_s: float = 0.250   # freshness bound D_max, seconds (docs/02 §7 — enforced)
 
 
 @dataclass(frozen=True)
@@ -147,19 +159,21 @@ def bytes_per_record(placement: Placement, batch: int, s: float, g_a: float, h_f
 
 
 def _dominates(a: Candidate, b: Candidate) -> bool:
-    """a Pareto-dominates b: no worse on all 3 objectives, strictly better on ≥ 1.
+    """a Pareto-dominates b: no worse on all 4 objectives, strictly better on ≥ 1.
 
-    Objectives: min bytes, min energy, max verifiability.
+    Objectives: min bytes, min energy, max verifiability, min freshness delay (audit F10).
     """
     no_worse = (
         a.bytes_per_record <= b.bytes_per_record
         and a.energy_j <= b.energy_j
         and a.verifiability >= b.verifiability
+        and a.latency_s <= b.latency_s
     )
     strictly_better = (
         a.bytes_per_record < b.bytes_per_record
         or a.energy_j < b.energy_j
         or a.verifiability > b.verifiability
+        or a.latency_s < b.latency_s
     )
     return no_worse and strictly_better
 
@@ -204,7 +218,11 @@ def _evaluate(enc: EncodingSpec, sch: SchemeSpec, plc: Placement, batch: int,
 
     v = verifiability(plc, n, con.p_loss)
     verify_t = energy.verify_time_per_record_s(cfg, meas)
-    latency = batch / con.lam + energy.radio_airtime_s(cfg)  # fill time + on-air (queueing: P5b)
+    # Freshness of the OLDEST record in the batch: it waits for the batch to fill, then flies.
+    # docs/02 §7 also names an M/M/1 queueing term; it is not implemented (see docs/audits/
+    # model_provenance.md P3) and is omitted rather than approximated, which makes D(b) a LOWER
+    # bound on the true delay — the conservative direction for a constraint.
+    latency = batch / con.lam + energy.radio_airtime_s(cfg)
     cand = Candidate(
         encoding=enc.name,
         scheme=sch.name,
@@ -231,6 +249,7 @@ def _evaluate(enc: EncodingSpec, sch: SchemeSpec, plc: Placement, batch: int,
         single_frame_fits
         and v >= 1.0 - con.epsilon              # verifiability (T3)
         and verify_t * con.lam <= 1.0           # verify-throughput (T4/T5)
+        and latency <= con.d_max_s              # freshness (docs/02 §7, audit F10)
     )
     return cand, feasible
 

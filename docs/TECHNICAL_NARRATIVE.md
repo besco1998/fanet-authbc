@@ -328,11 +328,32 @@ not self-batch.**
 | A+JSON (naive) | json | Ed25519 | A | 104.0 | 0.95 |
 | D-over-agg | cbor | Ed25519 | D, b=40 | 3.60 | **0.9025** ✗ |
 
-**Auth-byte cut = (104 − 3.355)/104 = 96.77 % ≥ 40 % ⇒ PASS**, at V = 0.95, p = 0.05. Hand-checked:
-`45.0 + 104/31 = 48.35 B/rec`, with `b_max = ⌊(1500−64−40)/45.0⌋ = 31`. D-over-aggregation is
-byte-competitive (3.60 B) but **fails** the V≥0.95 constraint (0.9025 = (1−p)²) — a live demonstration
-of the T3 frontier. *(Earlier drafts reported 96.4 % at b=28; that optimum was grid-quantized, fixed
-in F3 by densifying the grid through the MTU knee. PASS either way.)*
+**Auth-byte cut = (104 − 26.0)/104 = 75.00 % ≥ 40 % ⇒ PASS**, at V = 0.95, p = 0.05 and freshness
+D ≤ 250 ms. Hand-checked: `45.0 + 104/4 = 71.0 B/rec` at b=4, whose freshness is
+`4/20 + 0.49 ms = 200.5 ms`. D-over-aggregation is byte-competitive (3.60 B) but **fails** the
+V≥0.95 constraint (0.9025 = (1−p)²) — a live demonstration of the T3 frontier — *and* misses
+freshness by 8×.
+
+*(Earlier drafts reported 96.77 % at b=31. That configuration is byte-optimal but sits at **1552 ms**
+of staleness, 6.2× over the D_max = 250 ms bound docs/02 §7 requires the optimizer to enforce; the
+optimizer computed the violation and discarded it — audit **F10**. Freshness is now a hard constraint
+AND a fourth Pareto objective, so the reported optimum is the byte-best configuration that a UAV
+telemetry system could actually deploy.)*
+
+**The freshness-constrained co-design frontier** (delta + Ed25519, placement B, Λ=20 rec/s,
+D_max=250 ms) — this, not a single number, is the co-design result:
+
+| b | auth B/record | auth cut | freshness | energy/record |
+|---|---|---|---|---|
+| 1 | 103.998 | 0.00 % | 50.3 ms | 317.38 µJ |
+| 2 | 51.998 | 50.00 % | 100.4 ms | 180.37 µJ |
+| 3 | 34.665 | 66.67 % | 150.4 ms | 134.70 µJ |
+| **4** | **25.998** | **75.00 %** | **200.5 ms** | **111.86 µJ** |
+
+Every 50 ms of freshness spent buys auth-byte reduction, with sharply diminishing returns. The
+freshness-feasible batch is bounded by **b ≲ Λ·D_max** (=5 here; airtime pushes b=5 just over, so
+b=4 binds) — a bound that is independent of encoding and scheme.
+
 
 ### NS-3 validation (Bianchi vs NS-3 3.41)
 *(All NS-3 numbers below are the F8-corrected re-measurement: the sinks used to outlive the sources by
@@ -389,8 +410,9 @@ results (two retracted broadcast explanations, BLS losing on 802.11) are reporte
 - **Complete and green:** P0–P6 + E5 headline + P7a prep + the audit + the reproduction gate, all on
   one trunk (tags through `p7-done`). Theorems T1–T5 all validated; NS-3 confirms the unicast DCF
   to +0.6/−2.9 % and the broadcast model (Ma & Chen) to ≤1.1 %.
-- **Headline stands:** co-design cuts on-air auth bytes **96.77 %** vs the Pillar-1 baseline at
-  V≥0.95, p=0.05 — **PASS**.
+- **Headline:** co-design cuts on-air auth bytes **75.00 %** vs the Pillar-1 baseline at V≥0.95,
+  p=0.05 **and freshness ≤ 250 ms** — **PASS**. (Byte-optimal ignoring freshness is 96.77 % at
+  b=31, but that costs 1.55 s of staleness — audit F10.)
 - **P7b (hardware):** measure real timings + INA219 energy on RPi4, watch the F6 scheme flip, then
   re-run E4/E5 with measured power and re-freeze through the gate. Setup: hw/SETUP.md.
 - **P8 (paper):** condense this narrative into the IEEEtran write-up with an honest limitations section

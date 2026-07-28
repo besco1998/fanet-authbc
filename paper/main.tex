@@ -31,7 +31,9 @@ measurable models for each, and test one falsifiable criterion: the co-optimized
 on-air authentication bytes by $\geq 40\%$ versus an inline-signature CBOR baseline while keeping
 verifiability $V \geq 0.95$ under per-frame loss $p = 0.05$. Driven by measured microbenchmarks, the
 optimizer selects a delta encoding under self-batch placement, cutting authentication overhead by
-\textbf{96.8\%} (to $\approx 3.36$\,B/record) at $V = 0.95$---criterion met. The airtime model is
+\textbf{75.0\%} (to $26.0$\,B/record) at $V = 0.95$ \emph{and} a 250\,ms freshness bound---criterion
+met. Freshness, not the MTU, is what binds: the byte-optimal batch cuts 96.8\% but incurs 1.55\,s of
+staleness, so a co-design optimizer blind to freshness solves the wrong problem. The airtime model is
 validated against NS-3 3.41: unicast matches Bianchi within $+0.6$/$-2.9\%$, while the common
 reduction of that model to broadcast fails by $16\times$ at $N{=}50$ and is replaced by Ma and Chen's
 broadcast model~\cite{machen2007,machen2008}, which our measurements confirm to within $0.36\%$. All results are reproduced deterministically from frozen data by
@@ -220,32 +222,40 @@ costs bytes on own traffic).}
 \end{figure}
 
 \begin{table}[t]\centering\footnotesize
-\caption{E5: co-design headline (T5). Auth cut $=(104-3.71)/104=96.4\% \geq 40\% \Rightarrow$ PASS.}
+\caption{E5: co-design headline (T5) under $V\geq0.95$, $p{=}0.05$ and $D\leq250$\,ms.
+Auth cut $=(104-26.0)/104=75.0\% \geq 40\% \Rightarrow$ PASS.}
 \label{tab:e5}
-\begin{tabular}{llll r r}
+\begin{tabular}{llll r r r}
 \toprule
-config & enc & $\sigma$ & place & auth B/rec & $V$ \\
+config & enc & $\sigma$ & place & auth B/rec & $V$ & $D$ (ms) \\
 \midrule
-\textbf{optimized} & delta & ECDSA & B,$b{=}28$ & \textbf{3.71} & 0.95 \\
-A+CBOR (Pillar-1) & cbor & Ed & A & 104.0 & 0.95 \\
-A+JSON (naive) & json & Ed & A & 104.0 & 0.95 \\
-D-over-agg & cbor & Ed & D,$b{=}40$ & 3.60 & 0.9025 \\
+\textbf{optimized} & delta & Ed & B,$b{=}4$ & \textbf{26.00} & 0.95 & 200 \\
+A+CBOR (Pillar-1) & cbor & Ed & A & 104.0 & 0.95 & 50 \\
+A+JSON (naive) & json & Ed & A & 104.0 & 0.95 & 51 \\
+D-over-agg & cbor & Ed & D,$b{=}40$ & 3.60 & 0.9025 & 2004 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\textbf{E5 (Table~\ref{tab:e5}, Fig.~\ref{fig:e5}).} The optimizer selects delta + ECDSA + self-batch
-($b{=}28$), cutting on-air authentication from 104\,B/record to \textbf{3.71\,B/record}---a
-\textbf{96.4\%} reduction versus the Pillar-1 baseline at $V=0.95$, $p=0.05$. Hand-checked:
-$45.0+104/28=48.71$\,B/record; energy $15.72+48.52=64.24$\,$\mu$J. Over-aggregation (D) is byte-
-competitive (3.60\,B) but \emph{fails} $V\geq0.95$ ($0.9025=(1-p)^2$), a live demonstration of the T3
-frontier. The reported $b{=}28$ is grid-quantized; the true MTU limit $b{=}31$ gives 96.8\%, so the
-PASS is robust.
+\textbf{E5 (Table~\ref{tab:e5}, Fig.~\ref{fig:e5}).} The optimizer selects delta + Ed25519 +
+self-batch at $b{=}4$, cutting on-air authentication from 104\,B/record to \textbf{26.0\,B/record}---a
+\textbf{75.0\%} reduction versus the Pillar-1 baseline at $V=0.95$, $p=0.05$ and a 250\,ms freshness
+bound. Hand-checked: $45.0+104/4=71.0$\,B/record, freshness $4/20=200$\,ms.
+
+\textbf{Which constraint binds is itself the result.} Ignoring freshness, the byte-optimal batch is
+$b{=}31$ at the MTU knee, cutting 96.8\%---but the oldest record in such a batch waits
+\textbf{1.55\,s}, $6.2\times$ over $D_{\max}$. Because fill time dominates the delay, the admissible
+batch obeys $b\lesssim\Lambda D_{\max}$ \emph{independent of encoding and scheme}, so freshness binds
+long before the MTU does at telemetry rates. The co-design answer is therefore a frontier, not a
+point: $b{=}1{\rightarrow}4$ trades $0/50/66.7/75\%$ auth-byte reduction against $50/100/150/200$\,ms
+of staleness, with sharply diminishing returns. Over-aggregation (D) is byte-competitive (3.60\,B)
+but \emph{fails} $V\geq0.95$ ($0.9025=(1-p)^2$)---a live demonstration of the T3 frontier---and misses
+freshness by $8\times$.
 
 \begin{figure}[t]\centering
 \includegraphics[width=\columnwidth]{fig_e5_codesign.png}
 \caption{E5: on-air bytes/record (payload + authentication) for the optimized configuration versus the
-baselines. Authentication overhead falls from 104\,B to $\approx 3.36$\,B.}
+baselines. Authentication overhead falls from 104\,B to $26.0$\,B under the 250\,ms freshness bound.}
 \label{fig:e5}
 \end{figure}
 
@@ -314,7 +324,7 @@ rather than ECDSA, with an identical auth-byte cut.
 
 \section{Conclusion}
 Authentication overhead dominates tiny UAV telemetry, but it is a \emph{co-design} problem. Jointly
-optimizing encoding, placement, scheme, and batching cuts on-air authentication by 96.8\% at
+optimizing encoding, placement, scheme, and batching cuts on-air authentication by 75.0\% at
 $V\geq0.95$---meeting the falsifiable criterion---while an NS-3-validated channel model and an automated
 reproducibility gate keep the study honest and repeatable.
 

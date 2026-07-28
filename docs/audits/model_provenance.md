@@ -45,20 +45,19 @@ docs/02 §7 specifies a soft freshness bound **D(b) ≤ D_max = 250 ms** and a l
 
 | configuration | auth cut | freshness | meets 250 ms? |
 |---|---|---|---|
-| **current headline** — delta+Ed25519, B, **b=31** | **96.77 %** | **1552 ms** | ❌ **6.2× over** |
-| byte-optimal *subject to* D ≤ 250 ms — delta+Ed25519, B, **b=4** | **75.00 %** | 200 ms | ✓ |
+| byte-optimal ignoring freshness — delta+Ed25519, B, **b=31** *(the headline until F10)* | **96.77 %** | **1552 ms** | ❌ **6.2× over** |
+| **the headline now** — byte-optimal *subject to* D ≤ 250 ms, **b=4** | **75.00 %** | 200 ms | ✓ |
 | A+CBOR baseline | — | 50 ms | ✓ |
 
 Only **160 of 521** feasible configurations meet the freshness bound.
 
-**The success criterion passes either way** (75 % ≫ 40 %), so no headline is retracted. But
-"96.77 %" and "1.55 s of staleness on the oldest record in a batch" belong in the same sentence, and
-until now they were not. For UAV telemetry that is an operational fact, not a footnote.
+**The success criterion passes either way** (75 % ≫ 40 %), so nothing is retracted. But "96.77 %"
+and "1.55 s of staleness on the oldest record in a batch" belong in the same sentence, and until now
+they were not. For UAV telemetry that is an operational fact, not a footnote.
 
-**Fixed:** `e5_codesign.csv` now carries `latency_ms` and `meets_d_max` for every row, so the
-batching trade-off is visible in the artifact itself. **Not fixed (⚠️ Mohamed's call):** whether
-D_max should become a *hard* constraint, be revised, or stay soft-and-reported — see the decision
-at the end.
+**Resolved by Mohamed the same day — see the F10 resolution at the end of this document.**
+`e5_codesign.csv` now carries `latency_ms` and `meets_d_max` for every row, and freshness is both a
+hard constraint and a Pareto objective in the optimizer.
 
 ---
 
@@ -97,16 +96,34 @@ model nobody has checked against the literature — and that is exactly the F9 s
 
 ---
 
-## ⚠️ Decision for Mohamed — how should freshness be treated?
+## F10 — RESOLVED (Mohamed, 2026-07-28): freshness is enforced and optimized
 
-1. **Keep soft, now reported (recommended, already implemented).** Headline stays 96.77 % and the
-   artifact carries `latency_ms = 1552, meets_d_max = 0`. The paper states the trade-off explicitly.
-   *Why:* the ≥40 % criterion never mentioned freshness, and the batching/freshness trade-off is
-   itself a co-design result worth showing rather than hiding behind a filter.
-2. **Make D_max hard.** Headline becomes **75.00 %** at b=4 with 200 ms freshness and 2.1× the
-   energy (111.9 vs 52.2 µJ/record). Still a comfortable PASS, and arguably the more defensible
-   operating point for real UAV telemetry.
-3. **Revise D_max.** 250 ms was a spec-level assumption; if the real freshness requirement is
-   looser, say so and re-derive.
+Mohamed's ruling: *"we must take freshness into the optimization problem and must optimize all the
+parameters."* The spec supports it — docs/02 §7's verb is **enforce**, and the optimizer's own
+docstring had softened that to "annotated, not filtered".
 
-Option 1 is implemented pending your answer, because it is the only one that changes no numbers.
+Applied, both ways:
+
+* **Hard constraint.** A configuration that misses D_max is inadmissible, exactly like one that
+  misses V. Feasible set 521 → **160**.
+* **Fourth Pareto objective.** Alongside bytes, energy and verifiability, so the bytes↔freshness
+  trade-off is visible *inside* the feasible region. Frontier 82 → **18** points. Without this the
+  largest admissible batch dominates every smaller one and the trade-off disappears.
+
+**Headline: 96.77 % → 75.00 %** (b=31 → b=4, 200 ms, 111.86 µJ). Still ≫ the 40 % criterion.
+
+The co-design frontier this exposes is a better result than the single number was:
+
+| b | auth B/record | cut | freshness | energy |
+|---|---|---|---|---|
+| 1 | 103.998 | 0.00 % | 50.3 ms | 317.38 µJ |
+| 2 | 51.998 | 50.00 % | 100.4 ms | 180.37 µJ |
+| 3 | 34.665 | 66.67 % | 150.4 ms | 134.70 µJ |
+| **4** | **25.998** | **75.00 %** | **200.5 ms** | **111.86 µJ** |
+
+And a closed form worth stating in the thesis: since fill time dominates D(b), the admissible batch
+obeys **b ≲ Λ·D_max**, *independent of encoding and scheme*. At telemetry rates **freshness binds
+long before the MTU does** — which reframes T2/T5: the MTU knee is not the operative limit.
+
+Still open: the M/M/1 queueing term docs/02 §7 specifies is not implemented (P3 above). Omitting it
+makes D(b) a **lower** bound on true delay, so the constraint is conservative — the safe direction.

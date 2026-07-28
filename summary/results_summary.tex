@@ -27,7 +27,7 @@ batching\\ for blockchain-grade UAV telemetry over 802.11}
 \noindent This document tracks every measured result in the AUTHBC project and is updated at each
 step. All numbers trace to a frozen CSV in \texttt{results/} and are guarded by the reproduction gate
 (\texttt{make verify-frozen}). The headline is established: the co-optimized configuration cuts
-on-air authentication bytes by \textbf{96.8\,\%} versus the inline-CBOR baseline while holding
+on-air authentication bytes by \textbf{75.0\,\%} versus the inline-CBOR baseline while holding
 verifiability $V\ge0.95$ at loss $p=0.05$ --- criterion met. The hardware campaign has confirmed the
 one predicted anomaly (the signature-scheme ordering flips on ARM) and has shown the energy model's
 assumed CPU power to be $4.1\times$ too high.
@@ -74,13 +74,20 @@ its aggregation pays off only for cross-signer relay traffic.
 \subsection{E5 --- the headline (T5) \ok}
 \begin{center}\begin{tabular}{llllrr}
 \toprule config & enc & scheme & placement & auth B/rec & $V$ \\ \midrule
-\textbf{optimized} & delta & \textbf{Ed25519} & B, $b{=}31$ & \textbf{3.36} & 0.95 \\
+\textbf{optimized} & delta & \textbf{Ed25519} & B, $b{=}4$ & \textbf{26.00} & 0.95 \\
 A+CBOR (baseline) & cbor & Ed25519 & A inline & 104.0 & 0.95 \\
 A+JSON (naive) & json & Ed25519 & A inline & 104.0 & 0.95 \\
 D-over-agg & cbor & Ed25519 & D, $b{=}40$ & 3.60 & \textbf{0.9025} \bad \\ \bottomrule
 \end{tabular}\end{center}
-\[ \text{cut}=\frac{104-3.355}{104}=\mathbf{96.8\,\%}\ \ge 40\,\%\quad\Rightarrow\quad \ok \]
-Hand-checked: $45.0+104/31=48.35$\,B/record ($b_{\max}=\lfloor(1500-64-40)/45\rfloor=31$). \textbf{The last row is the co-design argument in
+\[ \text{cut}=\frac{104-26.0}{104}=\mathbf{75.0\,\%}\ \ge 40\,\%\quad\Rightarrow\quad \ok \]
+Hand-checked: $45.0+104/4=71.0$\,B/record at $b{=}4$, freshness $4/20=200$\,ms.
+\textbf{Freshness binds before the MTU does}: the byte-optimal batch is $b{=}31$ (96.8\,\%) but sits
+at \textbf{1552\,ms} of staleness, $6.2\times$ over the $D_{\max}{=}250$\,ms bound docs/02 §7
+requires the optimizer to enforce --- which it computed and discarded until audit \textbf{F10}.
+Freshness is now a hard constraint and a fourth Pareto objective. The freshness-feasible batch obeys
+$b\lesssim\Lambda D_{\max}$, independent of encoding and scheme. The resulting frontier
+($b{=}1{\rightarrow}4$: $0/50/66.7/75\,\%$ cut at $50/100/150/200$\,ms) is the co-design result;
+a single number is not. \textbf{The last row is the co-design argument in
 miniature}: over-aggregation is byte-competitive (3.60\,B) yet \emph{fails} $V\ge0.95$ because
 $0.9025=(1-p)^2$. The byte-optimal answer is not the correct answer.
 
@@ -142,7 +149,7 @@ Python every op (Ed25519 does not): 1.05\,\textmu s on x86, \textbf{12.58\,\text
 microarchitectural mechanism is \textbf{not} established.
 \end{itemize}
 \textbf{Consequence:} on the real deployment platform the optimum selects \textbf{Ed25519} (the D2
-architectural default). Both are 64\,B, so the 96.8\,\% headline is \textbf{unchanged}.
+architectural default). Both are 64\,B, so the auth-byte headline is \textbf{unchanged} by the scheme flip.
 
 \subsection{Measured per-op energy (RPi4, 60\,s windows, 5 reps)}
 \begin{center}\begin{tabular}{lrrr}

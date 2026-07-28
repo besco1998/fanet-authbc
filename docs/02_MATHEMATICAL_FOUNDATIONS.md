@@ -129,7 +129,8 @@ papers did not test (they used W₀ = 32 and 128 at 1 Mb/s).
 by **every** consumer — the NS-3 comparison, `models.energy`, and `channel.airtime` — so the repo
 has exactly one airtime implementation. Re-freeze consequences: E5's energy column moved
 **+0.096 %** (52.1487 → 52.1985 µJ) and E3's goodput **−2.1 %** (small frames pay proportionally
-more for symbol rounding). The **auth-byte headline is byte-based and did not move: 96.77 %, PASS.**
+more for symbol rounding). The **auth-byte headline is byte-based and did not move under D9**.
+(It later changed for an unrelated reason — freshness enforcement, audit F10 — to **75.00 %, PASS**.)
 
 *Scope note:* T4/E4's ΔRADIO = 8·Δbytes/R is a byte *difference*, which quantisation makes
 frame-size dependent (±5 % on ~43 µs). E4 is left on the continuous form: the verdict has ~90×
@@ -140,7 +141,22 @@ Energy/record: **E = P_c·(t_enc + t_sg/b + t_ver_amort(b)) + P_r·T_air(frame)/
 t_ver_amort = t_vf (A/B receiver-side per record… receiver verifies once per frame in B:
 t_vf/b) — implement exactly per placement; document each term. Latency/freshness of the
 oldest record in a batch: D(b) = b/Λ_i + T_air + queueing (M/M/1 approx at load ρ =
-Λ·T_air(b)/b) — report, and enforce D ≤ D_max=250 ms as a soft constraint in the optimizer.
+Λ·T_air(b)/b) — report, and **enforce D ≤ D_max=250 ms in the optimizer**.
+
+**Enforcement is real (audit F10, 2026-07-28).** "Soft constraint" had been read as
+"annotated, not filtered", and was then not annotated either: the optimizer computed
+`meets_latency` and discarded it, so the byte-optimal b=31 was reported as the optimum while
+sitting at **1552 ms — 6.2× over the bound**. Freshness is now BOTH a hard constraint (a stale
+configuration is inadmissible, exactly like one that misses V) and a **fourth Pareto objective**
+alongside bytes, energy and verifiability — batching buys bytes with staleness, so an optimizer
+blind to freshness is not solving the co-design problem.
+
+Since fill time dominates D(b), the freshness-feasible batch obeys **b ≲ Λ·D_max**, independent of
+encoding and scheme (Λ=20, D_max=250 ms ⇒ b ≤ 5; airtime makes b=4 bind).
+
+*Caveat:* the M/M/1 queueing term above is **not implemented** (docs/audits/model_provenance.md P3).
+It is omitted rather than approximated, which makes D(b) a **lower bound** on the true delay — the
+conservative direction for a constraint.
 
 ## 8. Statistical methodology (binding for ALL experiments)
 ≥30 seeded repetitions per config (seeds 1..30 logged in CSV); report **median and

@@ -159,3 +159,57 @@ def test_grid_guard_rejects_oversize_and_empty() -> None:
         solve(ENCODINGS, SCHEMES, PLACEMENTS, many_batches, PLATFORM, CON)
     with pytest.raises(ValueError):
         solve([], SCHEMES, PLACEMENTS, BATCHES, PLATFORM, CON)
+
+
+# --- freshness is a real constraint and a real objective (audit F10) ------------------------
+def _fresh_setup():
+    """A grid whose byte-optimal batch is far outside the freshness bound."""
+    encs = [EncodingSpec(name="delta", record_bytes=45.0, t_enc_s=48e-6)]
+    schemes = [SchemeSpec(name="ed25519", auth_bytes=64, t_sign_s=88e-6, t_verify_s=260e-6)]
+    plat = Platform(p_cpu_w=0.634, p_radio_w=0.218, frame_hdr_bytes=40, mtu_bytes=1500)
+    return encs, schemes, plat
+
+
+def test_freshness_is_enforced_not_merely_annotated() -> None:
+    """docs/02 §7: "enforce D ≤ D_max in the optimizer". A stale config is INADMISSIBLE.
+
+    Regression guard for F10: the byte-optimal batch b=31 sits at 1552 ms, 6.2× over the 250 ms
+    bound, and was previously returned as the optimum with the violation computed and discarded.
+    """
+    encs, schemes, plat = _fresh_setup()
+    batches = [1, 2, 4, 5, 10, 31]
+    con = Constraints(epsilon=0.05, p_loss=0.05, lam=20, d_max_s=0.250)
+    res = solve(encs, schemes, [Placement.B], batches, plat, con)
+
+    assert res.feasible, "some batch must remain feasible"
+    assert all(c.latency_s <= con.d_max_s for c in res.feasible)
+    assert all(c.meets_latency for c in res.feasible)
+    assert max(c.batch for c in res.feasible) == 4, "b≤Λ·D_max ⇒ 4 at Λ=20, D_max=250 ms"
+    assert 31 not in {c.batch for c in res.feasible}
+
+
+def test_relaxing_d_max_readmits_the_large_batches() -> None:
+    """The constraint must bind on D_max itself, not on some unrelated limit."""
+    encs, schemes, plat = _fresh_setup()
+    batches = [1, 4, 31]
+    loose = solve(encs, schemes, [Placement.B], batches, plat,
+                  Constraints(epsilon=0.05, p_loss=0.05, lam=20, d_max_s=10.0))
+    assert 31 in {c.batch for c in loose.feasible}
+
+
+def test_freshness_is_a_pareto_objective_so_small_batches_survive() -> None:
+    """With freshness as a 4th objective, a fresher-but-bytier config is NOT dominated.
+
+    Under the old 3-objective set (bytes, energy, V) the largest feasible batch dominated every
+    smaller one outright, hiding the bytes↔freshness trade-off that co-design is about.
+    """
+    encs, schemes, plat = _fresh_setup()
+    con = Constraints(epsilon=0.05, p_loss=0.05, lam=20, d_max_s=10.0)
+    res = solve(encs, schemes, [Placement.B], [1, 2, 4, 8, 16, 31], plat, con)
+    pareto_batches = sorted(c.batch for c in res.pareto)
+    assert len(pareto_batches) > 1, "the frontier must expose the trade-off, not collapse to one"
+    assert 1 in pareto_batches, "b=1 is the freshest point and cannot be dominated"
+    assert 31 in pareto_batches, "b=31 is the byte-optimal point and cannot be dominated"
+    # and freshness must be monotone in batch, which is what makes the trade-off real
+    by_b = {c.batch: c.latency_s for c in res.feasible}
+    assert [by_b[b] for b in sorted(by_b)] == sorted(by_b[b] for b in sorted(by_b))
