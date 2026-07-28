@@ -250,10 +250,15 @@ main(int argc, char* argv[])
     Config::ConnectWithoutContext(
         "/NodeList/0/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyRxDrop", MakeCallback(&RxDropTrace));
 
+    // The sinks must stop WITH the sources, not after them. Under saturation the MAC queues are
+    // backlogged (500 packets deep), so they keep draining at the full channel rate after the
+    // sources stop; a sink that outlives them credits that extra airtime to rxBytes while the
+    // goodput denominator is still simTime. Measured at N=50 broadcast: 0.5 s of drain on a 10 s
+    // window = +5.4 % on every goodput number (docs/audits/p7.md, finding F8).
     srcApps.Start(Seconds(1.0));
     srcApps.Stop(Seconds(simTime + 1.0));
     sinkApps.Start(Seconds(0.5));
-    sinkApps.Stop(Seconds(simTime + 1.5));
+    sinkApps.Stop(Seconds(simTime + 1.0));
 
     Simulator::Stop(Seconds(simTime + 2.0));
     Simulator::Run();

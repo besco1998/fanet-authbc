@@ -27,7 +27,7 @@ batching\\ for blockchain-grade UAV telemetry over 802.11}
 \noindent This document tracks every measured result in the AUTHBC project and is updated at each
 step. All numbers trace to a frozen CSV in \texttt{results/} and are guarded by the reproduction gate
 (\texttt{make verify-frozen}). The headline is established: the co-optimized configuration cuts
-on-air authentication bytes by \textbf{96.4\,\%} versus the inline-CBOR baseline while holding
+on-air authentication bytes by \textbf{96.8\,\%} versus the inline-CBOR baseline while holding
 verifiability $V\ge0.95$ at loss $p=0.05$ --- criterion met. The hardware campaign has confirmed the
 one predicted anomaly (the signature-scheme ordering flips on ARM) and has shown the energy model's
 assumed CPU power to be $4.1\times$ too high.
@@ -85,12 +85,20 @@ miniature}: over-aggregation is byte-competitive (3.60\,B) yet \emph{fails} $V\g
 $0.9025=(1-p)^2$. The byte-optimal answer is not the correct answer.
 
 \subsection{NS-3 channel validation}
-\begin{center}\begin{tabular}{rrr}
-\toprule $N$ & unicast gap & broadcast gap \\ \midrule
-5 & 5.1\,\% & 4.4\,\% \\ 20 & 5.2\,\% & 37\,\% \\ 50 & \textbf{1.8\,\%} & 1735\,\% \\ \bottomrule
+\begin{center}\begin{tabular}{rrrr}
+\toprule $N$ & unicast vs ACK-Bianchi & broadcast vs no-ACK Bianchi & broadcast vs slot-exact \\ \midrule
+5 & $+0.08$\,\% & $-0.5$\,\% & $-0.62$\,\% \\
+20 & $+0.14$\,\% & $+30.8$\,\% & $-1.10$\,\% \\
+50 & $\mathbf{-3.31}$\,\% & $\mathbf{+1647.9}$\,\% & $\mathbf{+0.79}$\,\% \\ \bottomrule
 \end{tabular}\end{center}
-Unicast validates the Bianchi DCF model to $\pm1.8$--$5.3\,\%$. The broadcast column is discussed in
-\S\ref{sec:open} --- part real capture effect, part an artefact of node placement.
+Unicast validates the Bianchi DCF model to $+0.08$--$-3.31\,\%$ (tightened from the previously
+reported $\pm1.8$--$5.3\,\%$ by fixing F8, a $\sim$4.8\,\% goodput over-count in which the NS-3 sinks
+outlived the sources by 0.5\,s on a 10\,s window). The broadcast column fails not because of capture
+--- measured at \textbf{0\,\%} --- but because the no-ACK Bianchi variant omits the
+\emph{post-transmission head start}: a station that has just transmitted may redraw backoff 0 and
+seize the medium one slot before any deferring station, whose counter is necessarily $\ge1$. With
+broadcast's frozen contention window that channel dominates at high $N$. A slot-exact simulation
+adding only this asymmetry reproduces NS-3 to $\le1.1\,\%$ at every $N$ (F9).
 
 \section{Hardware layer (Raspberry Pi 4B, measured)}
 
@@ -130,7 +138,7 @@ Python every op (Ed25519 does not): 1.05\,\textmu s on x86, \textbf{12.58\,\text
 microarchitectural mechanism is \textbf{not} established.
 \end{itemize}
 \textbf{Consequence:} on the real deployment platform the optimum selects \textbf{Ed25519} (the D2
-architectural default). Both are 64\,B, so the 96.4\,\% headline is \textbf{unchanged}.
+architectural default). Both are 64\,B, so the 96.8\,\% headline is \textbf{unchanged}.
 
 \subsection{Measured per-op energy (RPi4, 60\,s windows, 5 reps)}
 \begin{center}\begin{tabular}{lrrr}
@@ -168,10 +176,11 @@ F6 mechanism & \textbf{Claim retracted.} Masking ADX/BMI2 on x86 via
 the ADX explanation is \textbf{unsupported}. What remains established: the ordering is ISA-dependent
 and Ed25519 is markedly more portable (1.05$\times$ versus 1.60$\times$ cycles). The specific
 mechanism is an open question. \\ \addlinespace
-NS-3 broadcast & Nodes sit on a \emph{line} at 1\,cm spacing under a log-distance model ($n=3$,
-$d_0=1$\,m), giving a \textbf{50.7\,dB} near--far power spread. Capture needs only a few dB, so the
-geometry manufactures the very effect blamed for the gap. Needs an equal-power channel to test the
-model on its own assumptions. \\ \addlinespace
+NS-3 broadcast & \textbf{CLOSED (F9).} PHY instrumentation shows capture contributes
+\textbf{0\,\%}: all 1149 successful decodes at the monitored receiver came from single-transmitter
+busy periods, and an equal-power channel is byte-identical to the default. The measured cause is the
+post-transmission head start; a slot-exact model carrying only that asymmetry matches NS-3 to
+$\le1.1\,\%$, while reproducing Bianchi exactly when the asymmetry is switched off. \\ \addlinespace
 $\kappa$ plausible band & E4 assumes $\kappa=P_r/P_c\lesssim0.5$ from ``radio below CPU power''. With
 $p_{cpu}$ measured at 0.73\,W (not 3.0\,W), $\kappa$ could approach or exceed 1. The E4 verdict is
 unchanged ($\min\kappa^\star=3.21$) but the stated band must be re-derived from measured powers. \\

@@ -12,7 +12,7 @@ BIN    := $(VENV)/bin
 .DEFAULT_GOAL := help
 .PHONY: help setup lint test verify-frozen all hw-capture hw-reduce \
         bench-micro bench-macro exp-e1 exp-e2 exp-e3 exp-e4 exp-e5 \
-        sim-ns3 export-framesizes figures
+        sim-ns3 sim-ns3-matrix sim-ns3-dcf export-framesizes figures
 
 help:  ## list the supported targets
 	@echo "fanet-authbc — supported targets:"
@@ -21,7 +21,7 @@ help:  ## list the supported targets
 	@echo "  test              pytest (unit/property/integration)"
 	@echo "  all               lint + test"
 	@echo "  bench-micro/-macro [P1]  exp-e1..e3 [P4]  exp-e4 [P5]  exp-e5/sim-ns3 [P6]"
-	@echo "  export-framesizes [P3]   figures [P4]"
+	@echo "  export-framesizes [P3]   figures [P4]   sim-ns3-matrix/-dcf [P6b/P7]"
 
 # ---------------------------------------------------------------------------- real targets
 setup:  ## create venv (Python >=3.12) and install pinned deps + pre-commit hooks
@@ -68,6 +68,10 @@ exp-e5:  ## E5 co-design: optimizer vs baselines -> results/raw/e5_codesign.csv
 	$(BIN)/python -m authbc.bench.experiments --exp e5
 sim-ns3:  ## [P6] build authbc-sat + 2-node both-modes smoke -> results/raw/ns3_smoke.csv
 	PY=$(BIN)/python bash ns3/sim_ns3.sh
+sim-ns3-matrix:  ## [P6b] N x mode x seed saturation matrix -> results/raw/ns3_matrix.csv
+	$(BIN)/python ns3/run_matrix.py --seeds 10
+sim-ns3-dcf:  ## [P7 F9] measure NS-3's DCF slot statistics -> results/raw/ns3_dcf_residual.csv
+	$(BIN)/python ns3/dcf_residual.py --seeds 5
 export-framesizes:  ## P3 SYNC-3: placement×encoding×b frame sizes -> results/raw/framesizes.csv
 	$(BIN)/python -m authbc.bench.framesizes
 hw-capture:  ## P7b (this host): capture the Arduino INA219 stream -> results/hw/energy/samples-*.csv

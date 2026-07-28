@@ -4,7 +4,13 @@ Reads results/raw/ns3_matrix.csv (frozen) ONLY. For each N compares each NS-3 mo
 MATCHING analytic variant — never crossed (the docs' scientific-integrity trap):
   unicast   ↔ ACK-Bianchi  = models.bianchi.solve(N, L)
   broadcast ↔ no-ACK/no-retry variant (τ = 2/(W+1), no ACK in the busy slot)
+              AND the slot-exact reference `sim.dcf_ladder`, which is the same process WITHOUT
+              Bianchi's decoupling approximation.
 Writes fig_ns3_bianchi.png (byte-stable), results/raw/ns3_contention.csv, and a PROVENANCE row.
+
+The no-ACK Bianchi curve is kept — it is the textbook variant and the figure's point is that it
+fails — but it is no longer the only broadcast reference: it under-predicts NS-3 by up to 16× at
+N=50, whereas the slot-exact model tracks it to ≈1 % (docs/audits/p7.md, finding F9).
 """
 
 from __future__ import annotations
@@ -22,6 +28,7 @@ import matplotlib.pyplot as plt  # noqa: E402
 
 from authbc.bench.stats import bootstrap_ci  # noqa: E402
 from authbc.models import bianchi  # noqa: E402
+from authbc.sim import dcf_ladder  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[1]
 RAW = REPO / "results" / "raw"
@@ -49,6 +56,36 @@ def broadcast_bianchi_mbps(n: int, payload_bytes: float) -> float:
     return p_tr * p_s * (8.0 * payload_bytes) / e_slot / 1e6
 
 
+# Slot-exact reference run length. p_s is stable to 4 decimals from 2e5 busy periods; 3e5 costs
+# ~1 s per N. Seeded, so the figure and ns3_contention.csv re-derive byte-identically.
+_LADDER_PERIODS = 300_000
+_LADDER_SEED = 1
+
+
+def broadcast_slotexact_mbps(n: int, payload_bytes: float) -> float:
+    """Broadcast saturation throughput from the slot-exact DCF process (sim.dcf_ladder), Mbit/s.
+
+    Identical physics to `broadcast_bianchi_mbps` — same W, same busy-period airtime, same slot —
+    except that the backoff process is simulated rather than approximated as independent per-slot
+    Bernoulli trials. The difference is the post-transmission head start: a station that has just
+    transmitted may redraw backoff 0 and take the medium one slot before any deferring station,
+    which with a frozen CW (no ACK ⇒ no retry ⇒ no CW doubling) is the dominant success channel
+    at large N.
+    """
+    t_busy = (bianchi.T_PHY + _airtime_s(payload_bytes + bianchi.MAC_OVH_BYTES)
+              + bianchi.DIFS + bianchi.DELTA)
+    return dcf_ladder.run(
+        n,
+        w=bianchi.W,
+        busy_periods=_LADDER_PERIODS,
+        head_start=True,
+        t_busy_s=t_busy,
+        slot_s=bianchi.SLOT,
+        payload_bytes=payload_bytes,
+        seed=_LADDER_SEED,
+    ).throughput_bps / 1e6
+
+
 def load_matrix() -> tuple[list[dict], dict]:
     meta: dict[str, str] = {}
     data: list[str] = []
@@ -72,15 +109,23 @@ def summarize(rows: list[dict]) -> dict:
             g = [float(r["goodput_mbps"]) for r in rows if r["mode"] == mode and int(r["N"]) == n]
             med = float(median(g))
             lo, hi = bootstrap_ci(g, seed=12345)
+            # The slot-exact model is a no-RETRY process, so it applies to broadcast only;
+            # unicast's CW doubling is what the ACK-Bianchi solver already models.
             if mode == "unicast":
                 analytic = bianchi.solve(n, payload).throughput_bps / 1e6
+                slotexact = None
             else:
                 analytic = broadcast_bianchi_mbps(n, payload)
-            out["cells"][(mode, n)] = {
+                slotexact = broadcast_slotexact_mbps(n, payload)
+            cell = {
                 "ns3": round(med, 4), "ci_lo": round(lo, 4), "ci_hi": round(hi, 4),
                 "analytic": round(analytic, 4),
                 "gap_pct": round(100 * (med - analytic) / analytic, 2),
+                "slotexact": None if slotexact is None else round(slotexact, 4),
+                "slotexact_gap_pct": (None if slotexact is None
+                                      else round(100 * (med - slotexact) / slotexact, 2)),
             }
+            out["cells"][(mode, n)] = cell
     return out
 
 
@@ -97,6 +142,9 @@ def make_figure(s: dict) -> str:
                     label=f"NS-3 {mode}")
         ax.plot(ns, an, "-", color=colors[mode], lw=1.2,
                 label=f"Bianchi {'ACK' if mode == 'unicast' else 'no-ACK'} {mode}")
+        if all(s["cells"][(mode, n)]["slotexact"] is not None for n in ns):
+            ax.plot(ns, [s["cells"][(mode, n)]["slotexact"] for n in ns], "--",
+                    color="#282", lw=1.4, label=f"slot-exact DCF {mode}")
     ax.axhline(6.0, ls=":", color="gray", label="6 Mb/s PHY ceiling")
     ax.set_xlabel("N saturated stations")
     ax.set_ylabel("saturation throughput [Mb/s]")
@@ -116,10 +164,13 @@ def write_contention(s: dict) -> None:
             c = s["cells"][(mode, n)]
             rows.append({"N": n, "mode": mode, "ns3_goodput_mbps": c["ns3"],
                          "bianchi_mbps": c["analytic"], "gap_pct": c["gap_pct"],
+                         "slotexact_mbps": c["slotexact"],
+                         "slotexact_gap_pct": c["slotexact_gap_pct"],
                          "airtime_share": round(c["ns3"] / 6.0, 4)})
     with (RAW / "ns3_contention.csv").open("w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=["N", "mode", "ns3_goodput_mbps", "bianchi_mbps",
-                                           "gap_pct", "airtime_share"])
+                                           "gap_pct", "slotexact_mbps", "slotexact_gap_pct",
+                                           "airtime_share"])
         w.writeheader()
         w.writerows(rows)
 
@@ -139,8 +190,10 @@ def main() -> None:
     for mode in s["modes"]:
         for n in s["N"]:
             c = s["cells"][(mode, n)]
+            extra = ("" if c["slotexact"] is None else
+                     f"  slot-exact={c['slotexact']:.3f} gap={c['slotexact_gap_pct']:+.2f}%")
             print(f"  {mode:9} N={n:<2} NS3={c['ns3']:.3f} "
-                  f"Bianchi={c['analytic']:.3f} gap={c['gap_pct']:+.1f}%")
+                  f"Bianchi={c['analytic']:.3f} gap={c['gap_pct']:+.1f}%{extra}")
 
 
 if __name__ == "__main__":

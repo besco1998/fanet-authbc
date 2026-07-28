@@ -83,7 +83,9 @@ smaller payload raises the auth fraction φ (T1), which *increases* the value of
 contention. *Approach & result:* **Bianchi** (IEEE JSAC 2000) models the DCF as a per-station Markov
 chain whose τ/p_c fixed point yields closed-form saturation throughput matching simulation.
 *Positioning:* AUTHBC uses Bianchi as the **airtime cost model inside the optimizer** and validates it
-against **NS-3** (unicast within ±5 %), while honestly reporting the broadcast capture-effect gap.
+against **NS-3** (unicast within +0.08…−3.31 %). Its no-ACK *broadcast* variant is shown to fail by
+up to 16×, root-caused to the post-transmission head start, and replaced by a slot-exact model that
+matches NS-3 to ≤1.1 % (docs/audits/p7.md F9).
 
 **Overall positioning.** AUTHBC is a **rigorous, hardware-validated co-design + measurement study**,
 not a new cryptographic construction. Its contribution is the joint optimization of *encoding ×
@@ -246,11 +248,17 @@ Validated the Bianchi model against NS-3 3.41 (built from source). Used a **Pack
 avoid ARP/IP artifacts, co-located nodes to avoid spatial-reuse inflation, and matched each NS-3 mode
 to its own analytic variant (never crossed unicast↔broadcast).
 - *The hardest anomaly, handled honestly:* broadcast goodput did **not** collapse at high N the way
-  the no-ACK model predicts. Our first explanation ("18× capture") was **wrong** — it compared a
-  per-transmission success against a per-busy-slot probability using ideal slot timing. We **retracted
-  it in writing** (kept visible in docs/audits/p6.md), ran an isolation + power-spread experiment, and
-  confirmed the real cause is the **capture effect** (a stronger colliding frame is decoded). Verdict:
-  unicast is the quantitative validation; broadcast is a capture-limited lower bound.
+  the no-ACK model predicts. This took **three** explanations to get right, and the first two were
+  wrong. (1) "18× capture" — wrong, it compared a per-transmission success against a per-busy-slot
+  probability; retracted in writing (docs/audits/p6.md). (2) "the capture effect" — also **wrong**,
+  and retracted at P7: instrumenting NS-3's PHY showed **0 %** of successful decodes came from a
+  collided busy period, and forcing equal power changes nothing byte-for-byte. (3) The measured
+  cause is the **post-transmission head start**: a station that just transmitted may redraw backoff
+  0 and take the medium one slot ahead of every deferring station (whose counter is necessarily
+  ≥ 1). With broadcast's frozen CW that channel dominates at high N. A slot-exact simulator that
+  adds only this asymmetry reproduces NS-3 to **≤1.1 %** at every N (docs/audits/p7.md F9).
+  Verdict: **both** arms are now quantitatively validated — unicast against ACK-Bianchi, broadcast
+  against the slot-exact model; the textbook no-ACK Bianchi variant is the thing that fails.
 
 ### E5 — the co-design headline (T5)
 Fed the optimizer the **measured** E1 sizes and P1 crypto timings, extracted the byte-optimal feasible
@@ -318,26 +326,30 @@ not self-batch.**
 | A+JSON (naive) | json | Ed25519 | A | 104.0 | 0.95 |
 | D-over-agg | cbor | Ed25519 | D, b=40 | 3.60 | **0.9025** ✗ |
 
-**Auth-byte cut = (104 − 3.71)/104 = 96.4 % ≥ 40 % ⇒ PASS**, at V = 0.95, p = 0.05. Hand-checked:
-`45.0 + 104/28 = 48.71 B/rec`; energy `15.72 (cpu) + 48.52 (radio) = 64.24 µJ`. D-over-aggregation is
+**Auth-byte cut = (104 − 3.355)/104 = 96.77 % ≥ 40 % ⇒ PASS**, at V = 0.95, p = 0.05. Hand-checked:
+`45.0 + 104/31 = 48.35 B/rec`, with `b_max = ⌊(1500−64−40)/45.0⌋ = 31`. D-over-aggregation is
 byte-competitive (3.60 B) but **fails** the V≥0.95 constraint (0.9025 = (1−p)²) — a live demonstration
-of the T3 frontier. *(The optimum b=28 is grid-quantized; the true MTU limit is b=31 → 96.8 %, so the
-PASS is robust either way.)*
+of the T3 frontier. *(Earlier drafts reported 96.4 % at b=28; that optimum was grid-quantized, fixed
+in F3 by densifying the grid through the MTU knee. PASS either way.)*
 
 ### NS-3 validation (Bianchi vs NS-3 3.41)
-| N | unicast gap | broadcast gap |
-|---|---|---|
-| 5 | 5.1 % | 4.4 % |
-| 10 | 5.3 % | 8.0 % |
-| 20 | 5.2 % | 37 % |
-| 35 | 3.2 % | 292 % |
-| 50 | **1.8 %** | **1735 %** |
+*(All NS-3 numbers below are the F8-corrected re-measurement: the sinks used to outlive the sources by
+0.5 s on a 10 s window, inflating every goodput by ~4.8 %.)*
 
-**Unicast validates the DCF model to ±1.8–5.3 %** across N=5–50 — a strong, quantitative confirmation.
-The broadcast gap explodes because the no-ACK model assumes *all* colliding frames are lost, while real
-802.11 **capture** decodes the stronger of two colliding frames (broadcast goodput correctly plateaus
-at ~1.3 Mb/s). So the broadcast model is a **conservative lower bound**, and we validate quantitatively
-on unicast — reported honestly, not hidden.
+| N | unicast vs ACK-Bianchi | broadcast vs no-ACK Bianchi | broadcast vs **slot-exact DCF** |
+|---|---|---|---|
+| 5 | +0.08 % | −0.5 % | −0.62 % |
+| 10 | +0.33 % | +2.8 % | −0.74 % |
+| 20 | +0.14 % | +30.8 % | −1.10 % |
+| 35 | −1.87 % | +271.8 % | +0.57 % |
+| 50 | **−3.31 %** | **+1647.9 %** | **+0.79 %** |
+
+**Unicast validates the DCF model to +0.08…−3.31 %** across N=5–50. The broadcast column explodes not
+because of capture — measured at **0 %** — but because the no-ACK Bianchi variant omits the
+**post-transmission head start** (docs/audits/p7.md F9): a station that just transmitted may redraw
+backoff 0 and take the medium a slot before any deferring station can. Adding exactly that one
+asymmetry to a slot-exact simulation reproduces NS-3 to **≤1.1 %** (rightmost column). So the failure
+is a located, corrected modelling error rather than a lower bound we shrug at.
 
 ---
 ## 5. How we thought about correctness (scientific integrity)
@@ -347,8 +359,10 @@ The project's second product (after the results) is the *discipline*. The anomal
 - **CBOR 110→66 B** — string keys are waste for a fixed schema; switched to canonical arrays.
 - **BLS 48→96 B** — accepted the real `blspy` size; a later audit found T4 still used 48 B (**F1**) and
   we corrected it (conclusion unchanged, strengthened).
-- **"18× capture" over-claim** — a wrong metric comparison; **retracted in writing**, then confirmed
-  the real capture effect with an isolation + power-spread experiment.
+- **"18× capture" over-claim** — a wrong metric comparison; **retracted in writing**. Its replacement
+  ("the capture effect") was **also wrong and also retracted**, at P7, when PHY instrumentation
+  measured capture at **0 %**; the third and measured explanation is the post-transmission head start
+  (**F9**). Two retractions on one question, both kept visible.
 - **Pre-P7b whole-repo audit** (docs/audits/full_audit_pre_p7b.md) — re-derived every formula against
   the code, hand-checked one point per experiment (E5 energy = 64.24 µJ = frozen), and produced seven
   findings F1–F7 (one fixed, six documented as P7/P8 items).
@@ -359,14 +373,14 @@ The project's second product (after the results) is the *discipline*. The anomal
 
 Every energy number remains **nominal-power pending P7**; the auth-byte headline is **power-free** and
 final. Nothing is fabricated, no test is skipped, no tolerance is widened, and negative/limiting
-results (broadcast capture, BLS losing on 802.11) are reported plainly.
+results (two retracted broadcast explanations, BLS losing on 802.11) are reported plainly.
 
 ---
 ## 6. Status and what remains
 - **Complete and green:** P0–P6 + E5 headline + P7a prep + the audit + the reproduction gate, all on
   one trunk (tags through `p7a-done`). Theorems T1–T5 all validated; NS-3 confirms the DCF to ±5 %.
-- **Headline stands:** co-design cuts on-air auth bytes **96.4 %** vs the Pillar-1 baseline at V≥0.95,
-  p=0.05 — **PASS**.
+- **Headline stands:** co-design cuts on-air auth bytes **96.77 %** vs the Pillar-1 baseline at
+  V≥0.95, p=0.05 — **PASS**.
 - **P7b (hardware):** measure real timings + INA219 energy on RPi4, watch the F6 scheme flip, then
   re-run E4/E5 with measured power and re-freeze through the gate. Setup: hw/SETUP.md.
 - **P8 (paper):** condense this narrative into the IEEEtran write-up with an honest limitations section
