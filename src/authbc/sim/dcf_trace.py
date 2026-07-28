@@ -195,8 +195,8 @@ def matched_binomial_p_success(n_stations: int, mean_mult: float) -> float:
 class HeadStart:
     """Evidence on whether the next transmitter came from the previous busy period's colliders."""
 
-    transitions: int          # consecutive busy-period pairs examined
-    winner_was_participant: int  # …whose next FIRST transmitter was in the previous period
+    transitions: int          # consecutive busy-period pairs whose winner is UNAMBIGUOUS
+    winner_was_participant: int  # …whose winner transmitted in the previous period
     expected_uniform: float   # Σ k_prev/N over the same pairs — the model's prediction
     successes_after_collision: int
     collisions_seen: int
@@ -212,6 +212,12 @@ class HeadStart:
         return self.expected_uniform / self.transitions if self.transitions else 0.0
 
     @property
+    def enrichment(self) -> float:
+        """Observed ÷ uniform. 1.0 means the previous busy period carried no information."""
+        exp = self.expected_fraction
+        return self.observed_fraction / exp if exp else 0.0
+
+    @property
     def p_success_after_collision(self) -> float:
         if not self.collisions_seen:
             return 0.0
@@ -225,10 +231,15 @@ class HeadStart:
 def winner_was_participant(periods: Sequence[BusyPeriod], n_stations: int) -> HeadStart:
     """Test the EIFS head-start mechanism on consecutive busy periods.
 
-    For every adjacent pair, ask whether the station that starts the NEXT busy period first was
-    one of the stations that transmitted in the previous one. Bianchi's independent stations give
-    k_prev/N; a DIFS-vs-EIFS head start gives far more. Also splits the next period's success rate
-    by whether the previous period was a collision or a success.
+    For every adjacent pair, ask whether the station that took the medium NEXT was one of the
+    stations that transmitted in the previous busy period. Bianchi's independent stations give
+    k_prev/N; the post-transmission head start gives far more.
+
+    **Only pairs whose next period is a success are counted** (audit A7). When the next period is
+    itself a collision there is no single winner, and picking one — e.g. the lowest-numbered of the
+    simultaneous starters — is arbitrary; at N=50 that describes 78 % of transitions and dilutes the
+    statistic from 7.6× to 3.1×. The conditional success-rate counters below are unaffected and use
+    every pair.
     """
     if n_stations < 2:
         raise ValueError(f"n_stations must be ≥ 2, got {n_stations}")
@@ -236,10 +247,11 @@ def winner_was_participant(periods: Sequence[BusyPeriod], n_stations: int) -> He
     expected = 0.0
     succ_after_coll = colls = succ_after_succ = succs = 0
     for prev, nxt in zip(periods, periods[1:], strict=False):
-        transitions += 1
-        if nxt.nodes[0] in set(prev.nodes):
-            hits += 1
-        expected += len(set(prev.nodes)) / n_stations
+        if nxt.is_success:
+            transitions += 1
+            if nxt.nodes[0] in set(prev.nodes):
+                hits += 1
+            expected += len(set(prev.nodes)) / n_stations
         if prev.is_success:
             succs += 1
             succ_after_succ += int(nxt.is_success)

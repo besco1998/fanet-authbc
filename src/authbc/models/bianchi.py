@@ -91,6 +91,57 @@ def t_air(payload_bytes: float) -> float:
     return T_FX + _airtime(payload_bytes)
 
 
+# --- EXACT 802.11a OFDM airtime (audit A1/A10: for comparison against a real PHY) ------------
+# The constants above model airtime as continuous 8N/R. A real 802.11a PHY sends whole 4 µs OFDM
+# symbols and prepends 16 SERVICE + 6 TAIL bits, and the MAC prepends LLC/SNAP. Measured against
+# NS-3 3.41 the continuous form is 0.41 % short on a 1400 B data frame (1932 vs 1940 µs) and
+# **12.1 % short on an ACK** (38.67 vs 44 µs), because a 14 B ACK needs 6 whole symbols.
+#
+# These helpers are SEPARATE from the constants above on purpose: T_PHY/MAC_OVH_BYTES/R_BPS feed
+# `models.energy` (and hence the frozen E5 energy column), so quantising them is a docs/02 §6 spec
+# change and Mohamed's call (Law 8). Nothing here is used by the energy path — only by the NS-3
+# comparison, which must be apples-to-apples with the simulator's real PHY.
+OFDM_SYMBOL: float = 4e-6       # 802.11a OFDM symbol duration, s
+SERVICE_BITS: int = 16          # PLCP SERVICE field prepended to the PSDU
+TAIL_BITS: int = 6              # convolutional-code tail
+LLC_SNAP_BYTES: int = 8         # 802.2 LLC/SNAP header carried under the MSDU
+MAC_HDR_FCS_BYTES: int = 28     # non-QoS 3-address MAC header (24) + FCS (4)
+
+
+def ofdm_ppdu(nbytes: int, rate_bps: float = R_BPS) -> float:
+    """Exact 802.11a PPDU duration for an *nbytes* PSDU (seconds).
+
+    T_phy + ceil((16 + 8N + 6) / bits-per-symbol) · 4 µs. Verified against NS-3: 1940 µs for the
+    1436 B MPDU of a 1400 B payload, 44 µs for a 14 B ACK.
+    """
+    bits_per_symbol = rate_bps * OFDM_SYMBOL
+    n_symbols = -(-(SERVICE_BITS + 8 * nbytes + TAIL_BITS) // int(bits_per_symbol))
+    return T_PHY + n_symbols * OFDM_SYMBOL
+
+
+def mpdu_bytes(payload_bytes: float) -> int:
+    """On-air MPDU size for an *payload_bytes* MAC-SDU: payload + LLC/SNAP + MAC header + FCS."""
+    return int(payload_bytes) + LLC_SNAP_BYTES + MAC_HDR_FCS_BYTES
+
+
+T_ACK_EXACT: float = ofdm_ppdu(ACK_BYTES)  # 44 µs, vs the continuous model's 38.67 µs
+
+
+def t_success_exact(payload_bytes: float) -> float:
+    """T_s with a real OFDM PHY: DATA + SIFS + ACK + DIFS. Measured NS-3 floor: 94 µs after DATA."""
+    return ofdm_ppdu(mpdu_bytes(payload_bytes)) + SIFS + T_ACK_EXACT + DIFS
+
+
+def t_collision_exact(payload_bytes: float) -> float:
+    """T_c with a real OFDM PHY: DATA + DIFS. NS-3 gap floor after a collision: DIFS + one slot."""
+    return ofdm_ppdu(mpdu_bytes(payload_bytes)) + DIFS
+
+
+def t_broadcast_exact(payload_bytes: float) -> float:
+    """Busy-period time of one broadcast frame (never ACKed): DATA + DIFS."""
+    return ofdm_ppdu(mpdu_bytes(payload_bytes)) + DIFS
+
+
 def tau_of_pc(pc: float) -> float:
     """τ(p_c) — the Bianchi tx probability given conditional collision prob (docs/02 §6)."""
     two_pc = 2.0 * pc
@@ -125,11 +176,21 @@ class BianchiResult:
     iterations: int     # damped iterations to converge (diagnostic)
 
 
-def solve(n: int, payload_bytes: float) -> BianchiResult:
+def solve(
+    n: int,
+    payload_bytes: float,
+    *,
+    t_s: float | None = None,
+    t_c: float | None = None,
+) -> BianchiResult:
     """Solve the Bianchi DCF fixed point for *n* saturated stations, *payload_bytes* payload.
 
     Damped iteration p_c ← 0.7·p_c + 0.3·p_c_new from p_c=0, converging on |Δp_c| < 1e-12
     (docs/02 §6). Returns τ, p_c, the success/transmit probabilities, E[slot], and throughput.
+
+    *t_s*/*t_c* override the success/collision slot times. They exist so the NS-3 comparison can
+    supply the EXACT OFDM airtimes (`t_success_exact`/`t_collision_exact`) without changing the
+    docs/02 §6 constants that the energy model depends on. Defaults reproduce the doc's model.
 
     Raises ValueError for n < 1 and ConvergenceError if the iteration exceeds the budget.
     """
@@ -159,11 +220,9 @@ def solve(n: int, payload_bytes: float) -> BianchiResult:
     p_tr = 1.0 - (1.0 - tau) ** n
     # P_s is well-defined only when a transmission occurs; p_tr>0 for τ>0, n≥1.
     p_s = n * tau * (1.0 - tau) ** (n - 1) / p_tr
-    e_slot = (
-        (1.0 - p_tr) * SLOT
-        + p_tr * p_s * t_success(payload_bytes)
-        + p_tr * (1.0 - p_s) * t_collision(payload_bytes)
-    )
+    ts = t_success(payload_bytes) if t_s is None else t_s
+    tc = t_collision(payload_bytes) if t_c is None else t_c
+    e_slot = (1.0 - p_tr) * SLOT + p_tr * p_s * ts + p_tr * (1.0 - p_s) * tc
     throughput_bps = p_tr * p_s * (8.0 * payload_bytes) / e_slot
 
     return BianchiResult(

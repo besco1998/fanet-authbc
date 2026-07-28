@@ -35,11 +35,11 @@ N_VALUES = (5, 10, 20, 35, 50)
 GUARD_S = 0.5
 
 FIELDS = [
-    "N", "mode", "seed", "frameSize", "simTime", "goodput_mbps",
-    "busy_periods", "busy_per_s", "transmissions", "mean_multiplicity",
-    "p_s_measured", "p_s_independent", "tau_matched",
-    "winner_participant_frac", "winner_uniform_frac",
-    "p_succ_after_collision", "p_succ_after_success",
+    "N", "mode", "seed", "frameSize", "simTime", "goodput_mbps", "goodput_window_mbps",
+    "window_s", "busy_periods", "busy_per_s", "transmissions", "mean_multiplicity",
+    "p_s_measured", "p_s_independent", "tau_matched", "idle_slots_per_busy",
+    "winner_participant_frac", "winner_uniform_frac", "winner_enrichment",
+    "winner_pairs", "p_succ_after_collision", "p_succ_after_success",
     "rx_ok_node0", "rx_drop_node0",
 ]
 
@@ -66,9 +66,21 @@ def _run_one(n: int, mode: str, seed: int, frame_size: int, sim_time: float,
 
     mean_mult = dt.mean_multiplicity(window)
     hs = dt.winner_was_participant(window, n)
+    successes = sum(1 for p in window if p.is_success)
+    # Idle backoff slots between busy periods, from the gaps: (gap − DIFS) / slot. Bianchi puts
+    # this at ~0.002 per busy period at N=50; the real process spends ~0.74 (audit A2).
+    difs_ns, slot_ns = 34_000, 9_000
+    gaps = dt.deferral_gaps(window)
+    idle = sum(round((g - difs_ns) / slot_ns) for g, _, _ in gaps) / len(gaps) if gaps else 0.0
     return {
         "N": n, "mode": mode, "seed": seed, "frameSize": frame_size, "simTime": sim_time,
+        # `goodput_mbps` is the scenario's own PacketSink figure over [1, simTime+1] — the number
+        # the frozen matrix carries. `goodput_window_mbps` is derived from the SAME busy periods as
+        # every other column here, so the row is internally consistent: p_s × busy_per_s × 8L must
+        # reproduce it exactly. Comparing a model against a mixed-window row was audit finding A11.
         "goodput_mbps": stats["goodput_mbps"],
+        "goodput_window_mbps": round(successes * 8.0 * frame_size / span_s / 1e6, 6),
+        "window_s": span_s,
         "busy_periods": len(window),
         "busy_per_s": round(len(window) / span_s, 3),
         "transmissions": sum(p.multiplicity for p in window),
@@ -76,8 +88,11 @@ def _run_one(n: int, mode: str, seed: int, frame_size: int, sim_time: float,
         "p_s_measured": round(dt.measured_p_success(window), 6),
         "p_s_independent": round(dt.matched_binomial_p_success(n, mean_mult), 6),
         "tau_matched": round(dt.tau_matching_mean(n, mean_mult), 6),
+        "idle_slots_per_busy": round(idle, 5),
         "winner_participant_frac": round(hs.observed_fraction, 6),
         "winner_uniform_frac": round(hs.expected_fraction, 6),
+        "winner_enrichment": round(hs.enrichment, 4),
+        "winner_pairs": hs.transitions,
         "p_succ_after_collision": round(hs.p_success_after_collision, 6),
         "p_succ_after_success": round(hs.p_success_after_success, 6),
         "rx_ok_node0": stats["rx_ok_node0"],

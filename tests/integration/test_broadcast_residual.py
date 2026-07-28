@@ -25,8 +25,8 @@ RAW = Path(__file__).resolve().parents[2] / "results" / "raw"
 # factors of 3–17, so the tolerances below are never Monte-Carlo limited.
 _PERIODS = 100_000
 _L = 1400.0
-_T_BUSY = (bianchi.T_PHY + 8 * (_L + bianchi.MAC_OVH_BYTES) / bianchi.R_BPS
-           + bianchi.DIFS + bianchi.DELTA)
+# Exact 802.11a OFDM busy-period time (audit A1): DATA PPDU + DIFS = 1974 us, measured.
+_T_BUSY = bianchi.t_broadcast_exact(_L)
 
 
 def _measured() -> dict[int, dict[str, float]]:
@@ -37,8 +37,10 @@ def _measured() -> dict[int, dict[str, float]]:
     for n in sorted({int(r["N"]) for r in rows}):
         rs = [r for r in rows if int(r["N"]) == n]
         out[n] = {k: st.median(float(r[k]) for r in rs)
-                  for k in ("goodput_mbps", "busy_per_s", "mean_multiplicity", "p_s_measured",
-                            "p_s_independent", "winner_participant_frac", "winner_uniform_frac",
+                  for k in ("goodput_mbps", "goodput_window_mbps", "busy_per_s",
+                            "mean_multiplicity", "p_s_measured", "p_s_independent",
+                            "idle_slots_per_busy", "winner_participant_frac",
+                            "winner_uniform_frac", "winner_enrichment",
                             "p_succ_after_collision", "p_succ_after_success")}
     return out
 
@@ -62,8 +64,26 @@ def test_slot_exact_model_reproduces_measured_p_success(n: int) -> None:
 
 @pytest.mark.parametrize("n", [5, 10, 20, 35, 50])
 def test_slot_exact_model_reproduces_measured_goodput(n: int) -> None:
+    """Compared against the window-consistent goodput (audit A11): `goodput_mbps` is the
+    PacketSink figure over [1, simTime+1] while every slot statistic here comes from the guarded
+    steady-state window, and mixing the two costs ~1 % of spurious disagreement."""
     assert _ladder(n).throughput_bps / 1e6 == pytest.approx(
-        _measured()[n]["goodput_mbps"], rel=0.03)
+        _measured()[n]["goodput_window_mbps"], rel=0.02)
+
+
+@pytest.mark.parametrize("n", [5, 10, 20, 35, 50])
+def test_measured_row_is_internally_consistent(n: int) -> None:
+    """p_s x busy_per_s x 8L must reproduce the row's own windowed goodput exactly."""
+    m = _measured()[n]
+    assert m["p_s_measured"] * m["busy_per_s"] * 8 * _L / 1e6 == pytest.approx(
+        m["goodput_window_mbps"], rel=0.005)
+
+
+@pytest.mark.parametrize("n", [5, 10, 20, 35, 50])
+def test_slot_exact_model_reproduces_measured_idle_slots(n: int) -> None:
+    """The other half of the timing: how long the medium stays idle between busy periods."""
+    assert _ladder(n).idle_slots_per_busy_period == pytest.approx(
+        _measured()[n]["idle_slots_per_busy"], rel=0.05)
 
 
 def test_no_ack_bianchi_still_fails_at_high_n_and_is_not_quietly_fixed() -> None:
@@ -93,7 +113,7 @@ def test_head_start_signature_is_present_in_the_measurement() -> None:
     """The mechanism's fingerprints: at N=50 the next transmitter is disproportionately a station
     from the previous busy period, and a collision makes the NEXT period more likely to succeed."""
     m = _measured()[50]
-    assert m["winner_participant_frac"] > 2.5 * m["winner_uniform_frac"]
+    assert m["winner_enrichment"] > 5.0
     assert m["p_succ_after_collision"] > 3.0 * m["p_succ_after_success"]
     # At N=5 collisions are rare, so the mechanism must be essentially absent.
     low = _measured()[5]

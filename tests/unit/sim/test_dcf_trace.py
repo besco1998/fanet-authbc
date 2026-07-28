@@ -147,3 +147,38 @@ def test_deferral_gaps() -> None:
         dt.BusyPeriod(900, 1000, (7,)),
     ]
     assert dt.deferral_gaps(periods) == [(200, True, True), (500, False, False)]
+
+
+def test_winner_statistic_skips_pairs_with_an_ambiguous_winner() -> None:
+    """Audit A7: when the next busy period is itself a collision there is no single winner, so the
+    pair must not be counted — picking the lowest-numbered simultaneous starter is arbitrary and
+    dilutes the statistic (measured: 7.6× → 3.1× at N=50)."""
+    periods = [
+        dt.BusyPeriod(0, 100, (1, 2)),
+        dt.BusyPeriod(200, 300, (3, 4)),   # collision ⇒ this transition is skipped
+        dt.BusyPeriod(400, 500, (4,)),     # success   ⇒ counted, winner 4 was in the previous
+    ]
+    hs = dt.winner_was_participant(periods, n_stations=10)
+    assert hs.transitions == 1
+    assert hs.winner_was_participant == 1
+    assert hs.expected_uniform == pytest.approx(0.2)
+    assert hs.enrichment == pytest.approx(5.0)
+    # the conditional success-rate counters still see BOTH transitions
+    assert hs.collisions_seen + hs.successes_seen == 2
+
+
+def test_enrichment_is_zero_when_the_winner_is_never_a_previous_participant() -> None:
+    """Round-robin winners: no station ever repeats, so the head-start signal must be absent."""
+    periods = [dt.BusyPeriod(i * 1000, i * 1000 + 500, (i,)) for i in range(1, 11)]
+    hs = dt.winner_was_participant(periods, n_stations=10)
+    assert hs.transitions == 9
+    assert hs.winner_was_participant == 0
+    assert hs.enrichment == 0.0
+
+
+def test_head_start_statistics_are_zero_safe_on_a_degenerate_trace() -> None:
+    """A single busy period yields no transitions; the properties must not divide by zero."""
+    hs = dt.winner_was_participant([dt.BusyPeriod(0, 100, (1,))], n_stations=10)
+    assert (hs.transitions, hs.observed_fraction, hs.expected_fraction, hs.enrichment) == (
+        0, 0.0, 0.0, 0.0)
+    assert (hs.p_success_after_collision, hs.p_success_after_success) == (0.0, 0.0)

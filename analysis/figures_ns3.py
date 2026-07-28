@@ -50,9 +50,7 @@ def broadcast_bianchi_mbps(n: int, payload_bytes: float) -> float:
     tau = 2.0 / (bianchi.W + 1)
     p_tr = 1.0 - (1.0 - tau) ** n
     p_s = n * tau * (1.0 - tau) ** (n - 1) / p_tr
-    t_air_b = (bianchi.T_PHY + _airtime_s(payload_bytes + bianchi.MAC_OVH_BYTES)
-               + bianchi.DIFS + bianchi.DELTA)
-    e_slot = (1.0 - p_tr) * bianchi.SLOT + p_tr * t_air_b
+    e_slot = (1.0 - p_tr) * bianchi.SLOT + p_tr * bianchi.t_broadcast_exact(payload_bytes)
     return p_tr * p_s * (8.0 * payload_bytes) / e_slot / 1e6
 
 
@@ -72,8 +70,7 @@ def broadcast_slotexact_mbps(n: int, payload_bytes: float) -> float:
     which with a frozen CW (no ACK ⇒ no retry ⇒ no CW doubling) is the dominant success channel
     at large N.
     """
-    t_busy = (bianchi.T_PHY + _airtime_s(payload_bytes + bianchi.MAC_OVH_BYTES)
-              + bianchi.DIFS + bianchi.DELTA)
+    t_busy = bianchi.t_broadcast_exact(payload_bytes)
     return dcf_ladder.run(
         n,
         w=bianchi.W,
@@ -112,7 +109,13 @@ def summarize(rows: list[dict]) -> dict:
             # The slot-exact model is a no-RETRY process, so it applies to broadcast only;
             # unicast's CW doubling is what the ACK-Bianchi solver already models.
             if mode == "unicast":
-                analytic = bianchi.solve(n, payload).throughput_bps / 1e6
+                # Exact OFDM airtimes, so the comparison is against the simulator's real PHY and
+                # not against a 0.4–12 % airtime approximation (audit A1/A10).
+                analytic = bianchi.solve(
+                    n, payload,
+                    t_s=bianchi.t_success_exact(payload),
+                    t_c=bianchi.t_collision_exact(payload),
+                ).throughput_bps / 1e6
                 slotexact = None
             else:
                 analytic = broadcast_bianchi_mbps(n, payload)

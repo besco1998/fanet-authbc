@@ -140,3 +140,48 @@ def test_tfx_reconciles_with_doc_anchor() -> None:
 def test_t_air_is_affine_in_payload() -> None:
     for length in (0, 100, 1000):
         assert b.t_air(length) == pytest.approx(b.T_FX + 8.0 * length / b.R_BPS)
+
+
+# --- exact 802.11a OFDM airtime (audit A1/A10) ---------------------------------------------
+def test_ofdm_ppdu_matches_measured_ns3_durations() -> None:
+    """Pinned to NS-3 3.41 measurements, not to a formula restated from the same source.
+
+    Measured directly from PhyTxBegin/PhyTxEnd at 6 Mb/s: every 1400 B data frame occupied
+    exactly 1 940 000 ns and every ACK exactly 44 000 ns.
+    """
+    assert b.ofdm_ppdu(b.mpdu_bytes(1400)) == pytest.approx(1940e-6, abs=1e-12)
+    assert b.T_ACK_EXACT == pytest.approx(44e-6, abs=1e-12)
+    assert b.mpdu_bytes(1400) == 1436  # 1400 payload + 8 LLC/SNAP + 24 MAC hdr + 4 FCS
+
+
+def test_ofdm_quantisation_is_what_the_continuous_model_misses() -> None:
+    """Records the size of the approximation the docs/02 §6 constants carry."""
+    exact_data = b.ofdm_ppdu(b.mpdu_bytes(1400))
+    cont_data = b.T_PHY + 8 * (1400 + b.MAC_OVH_BYTES) / b.R_BPS
+    assert cont_data < exact_data
+    assert (exact_data - cont_data) / exact_data == pytest.approx(0.0041, abs=5e-4)  # 0.41 %
+    # The ACK is the bad one: 14 B needs 6 whole symbols, so continuous 8N/R is 12 % short.
+    assert (b.T_ACK_EXACT - b.T_ACK) / b.T_ACK_EXACT == pytest.approx(
+        0.121, abs=5e-3)
+
+
+def test_exact_slot_times_match_measured_ns3_deferral_floors() -> None:
+    """NS-3 gap floors: 94 µs after a success (SIFS+ACK+DIFS) and 43 µs = DIFS+slot after a
+    collision, both measured from the busy-period trace at N=50 unicast."""
+    data = b.ofdm_ppdu(b.mpdu_bytes(1400))
+    assert b.t_success_exact(1400) - data == pytest.approx(94e-6, abs=1e-12)
+    assert b.t_collision_exact(1400) - data == pytest.approx(b.DIFS, abs=1e-12)
+    assert b.t_broadcast_exact(1400) == pytest.approx(1974e-6, abs=1e-12)
+
+
+def test_solve_airtime_overrides_leave_the_default_model_untouched() -> None:
+    """The override exists for the NS-3 comparison; omitting it must reproduce docs/02 §6."""
+    base = b.solve(20, 1400.0)
+    same = b.solve(20, 1400.0,
+                         t_s=b.t_success(1400.0), t_c=b.t_collision(1400.0))
+    assert same.throughput_bps == pytest.approx(base.throughput_bps, rel=1e-15)
+    exact = b.solve(20, 1400.0,
+                          t_s=b.t_success_exact(1400.0), t_c=b.t_collision_exact(1400.0))
+    # Longer real slots ⇒ strictly lower predicted throughput, and τ/p_c are unaffected.
+    assert exact.throughput_bps < base.throughput_bps
+    assert exact.tau == pytest.approx(base.tau, rel=1e-15)

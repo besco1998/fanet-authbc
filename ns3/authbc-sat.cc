@@ -104,13 +104,16 @@ main(int argc, char* argv[])
     NodeContainer nodes;
     nodes.Create(nNodes);
 
-    // Channel. DEFAULT (near-far): log-distance n=3 over the 1 cm-spaced line below gives a
-    // ~50 dB spread between the nearest and farthest node -- ample for a receiver to CAPTURE
-    // the strongest of several colliding frames. That violates the Bianchi assumption of
-    // symmetric stations, so the analytic no-ACK model cannot be compared against it fairly.
-    // --equalPower sets the path-loss exponent to 0: every link then has identical loss (L0),
-    // i.e. all stations are electrically equidistant, capture is impossible, and the model is
-    // tested on its own assumptions.
+    // Channel. The DEFAULT is ALREADY equal-power, despite appearances (audit A5). NS-3's
+    // LogDistancePropagationLossModel clamps below its reference distance:
+    //     if (distance <= m_referenceDistance) return txPowerDbm - m_referenceLoss;
+    // and d0 = 1 m while the whole cluster spans 0.49 m, so EVERY link gets exactly the same
+    // 46.68 dB reference loss. The "~50 dB near-far spread" this comment used to claim never
+    // existed, and no capture is possible here. Verified: --equalPower is byte-identical to the
+    // default at N=5/20/50 in both modes.
+    // --equalPower (path-loss exponent 0) is kept because it makes the property EXPLICIT and
+    // survives any future change of geometry; --powerSpreadDb is the knob that really does
+    // create asymmetric received powers, by varying TX power instead of distance.
     YansWifiChannelHelper channel;
     if (realistic)
     {

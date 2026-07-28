@@ -225,21 +225,29 @@ main(int argc, char* argv[])
         g_rxCsv.open(outPrefix + ".rx.csv");
         g_rxCsv << "event,t_ns,reason\n";
 
+        // TraceConnectWithoutContext returns false for an unknown trace name and connects
+        // NOTHING — a misspelling would silently produce an empty trace that still looks like a
+        // valid measurement. Every connection is therefore checked (audit A0).
+        auto connect = [](Ptr<Object> obj, const char* name, const CallbackBase& cb) {
+            NS_ABORT_MSG_IF(!obj->TraceConnectWithoutContext(name, cb),
+                            "failed to connect trace source '" << name << "' — wrong name or type");
+        };
+
         for (uint32_t i = 0; i < nNodes; ++i)
         {
             Ptr<WifiNetDevice> dev = DynamicCast<WifiNetDevice>(devices.Get(i));
             Ptr<WifiPhy> p = dev->GetPhy();
-            p->TraceConnectWithoutContext("PhyTxBegin", MakeBoundCallback(&TxBegin, i));
-            p->TraceConnectWithoutContext("PhyTxEnd", MakeBoundCallback(&TxEnd, i));
+            connect(p, "PhyTxBegin", MakeBoundCallback(&TxBegin, i));
+            connect(p, "PhyTxEnd", MakeBoundCallback(&TxEnd, i));
             Ptr<Txop> txop = dev->GetMac()->GetTxop();
             NS_ABORT_MSG_IF(!txop, "no non-QoS Txop on node " << i << " — scenario assumes DCF");
-            txop->TraceConnectWithoutContext("BackoffTrace", MakeBoundCallback(&BackoffDrawn, i));
-            txop->TraceConnectWithoutContext("CwTrace", MakeBoundCallback(&CwChanged, i));
+            connect(txop, "BackoffTrace", MakeBoundCallback(&BackoffDrawn, i));
+            connect(txop, "CwTrace", MakeBoundCallback(&CwChanged, i));
         }
         Ptr<WifiPhy> p0 = DynamicCast<WifiNetDevice>(devices.Get(0))->GetPhy();
-        p0->TraceConnectWithoutContext("PhyRxBegin", MakeCallback(&RxBeginNode0));
-        p0->TraceConnectWithoutContext("PhyRxEnd", MakeCallback(&RxOkNode0));
-        p0->TraceConnectWithoutContext("PhyRxDrop", MakeCallback(&RxDropNode0));
+        connect(p0, "PhyRxBegin", MakeCallback(&RxBeginNode0));
+        connect(p0, "PhyRxEnd", MakeCallback(&RxOkNode0));
+        connect(p0, "PhyRxDrop", MakeCallback(&RxDropNode0));
     }
 
     // Read the contention/timing parameters back OUT of the built objects instead of assuming
