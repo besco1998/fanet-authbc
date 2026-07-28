@@ -1,4 +1,6 @@
 # 07 — PARALLEL EXECUTION PLAN
+> ⚠️ **HISTORICAL (marked 2026-07-29).** This document reflects the plan as written at project start and has not been maintained since 2026-07-03. It is kept for provenance. **Current state lives in `docs/DECISIONS.md`, `docs/OPEN_ITEMS.md` and `docs/TECHNICAL_NARRATIVE.md`.** Do not use it to make decisions.
+
 Which phases can genuinely overlap, how to run them safely with multiple Claude Code
 sessions, and what it buys. Referenced by ⚠️ D7 (Mohamed picks the mode at end of P0).
 

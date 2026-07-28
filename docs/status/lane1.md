@@ -1,4 +1,6 @@
 # Lane 1 — status & handoffs
+> ⚠️ **HISTORICAL (marked 2026-07-29).** This document reflects the plan as written at project start and has not been maintained since 2026-07-03. It is kept for provenance. **Current state lives in `docs/DECISIONS.md`, `docs/OPEN_ITEMS.md` and `docs/TECHNICAL_NARRATIVE.md`.** Do not use it to make decisions. **D7 resolved to serial execution — the parallel lanes described here were never used.**
+
 
 ## P0 bootstrap — environment gate (Step 1) · 2026-07-03
 

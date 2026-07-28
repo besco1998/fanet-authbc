@@ -46,7 +46,7 @@ Ordered by what a thesis examiner would hit first.
 
 | # | Item | Status | Action |
 |---|---|---|---|
-| **D1** | **The energy model is never validated end-to-end** — powers and timings are measured, but the composed µJ/record is not compared against a wall measurement | OPEN | Either measure one configuration end-to-end on the RPi4, or state explicitly that energy is *composed from measured parts*, not measured |
+| **D1** | End-to-end energy validation | **PARTIALLY CLOSED 2026-07-29 — and it found a defect (F14)** | Composition half done (needs no meter, since power enters linearly): the model has **no chain-hash term**, under-predicting CPU by **+7.97 %**, and **asymmetrically** — optimized +6.73 % vs baseline +2.52 %, so it **overstates the optimized config's energy advantage by ~4 points**. Meter half blocked: `hw/validate_energy_e2e.py` is written and smoke-tested but the RPi4s are powered down | (a) power the boards and run the harness; (b) add an **ARM** SHA-256 timing to the P1 harness, then add the term and re-freeze — not patchable with the x86 number we have |
 | **D2** | **The LoRa arm has no measurement of any kind** | ACCEPTED — Mohamed's "scoped chapter" decision | Chapter must say so in-chapter: no hardware, no energy column |
 | **D3** | NS-3 validates **saturation throughput** only — not latency, not energy, not loss behaviour | OPEN | Say so; do not let "NS-3-validated" imply more than throughput |
 | **D4** | Hardware is **2× RPi4** (charter said 4×; `hw/SETUP.md` records the real inventory) | **CLOSED 2026-07-28** | Charter corrected |
@@ -57,11 +57,11 @@ Ordered by what a thesis examiner would hit first.
 | # | Item | Status | Action |
 |---|---|---|---|
 | **E1** | `lora_eu868.csv`, `lora_codesign.csv`, `capacity_envelope.csv` were **outside the frozen gate** | **CLOSED 2026-07-28** | Added to `_CASES`; gate is now 13 tests and all three re-derive byte-identically |
-| **E2** | `docs/03_IMPLEMENTATION_GUIDE.md` and `docs/07_PARALLEL_EXECUTION_PLAN.md` untouched since 2026-07-03 | OPEN — low | Review for drift at P8, or mark historical |
-| **E3** | `docs/status/lane1.md`, `lane2.md` stale (parallel-execution lanes, last touched 07-04/07-09) | OPEN — low | Mark historical; D7 execution mode never went parallel |
-| **E4** | `docs/04 §3` and `docs/06 §2` describe a 30 s NS-3 run and a `parse_flowmon.py` that does not exist | OPEN | Recorded in DECISIONS; amend the docs at P8 |
+| **E2** | docs/03 and docs/07 stale | **CLOSED 2026-07-29** | Both marked **HISTORICAL** with a banner pointing at DECISIONS / OPEN_ITEMS / TECHNICAL_NARRATIVE |
+| **E3** | Parallel-lane status files | **CLOSED 2026-07-29** | Marked historical, and annotated that D7 resolved to serial — the lanes were never used |
+| **E4** | docs/04 §3 / docs/06 §2 wrong NS-3 references | **CLOSED — were already correct** | Checked 2026-07-29: both already say 10 s × 10 seeds, PacketSocket+PacketSink (not FlowMonitor), and `ns3/parse_ns3.py`. The DECISIONS entries saying "to be amended at P8" were themselves stale |
 | **E5** | `bench/micro.py` at 30 % test coverage (repo total 91 %) | ACCEPTED — low | Measurement plumbing, exercised by the frozen gate through `p1_sizes` |
-| **E6** | No figure for the LoRa arm, T6, or the capacity envelope | OPEN | Needed for the scoped chapter |
+| **E6** | Missing figures | **CLOSED 2026-07-29** | `analysis/figures_envelope_lora.py` produces `fig_envelope.png` (N_max per config), `fig_t6_exclusion.png` (T6 tiers over EU868) and `fig_lora_chain.png` (F5). Visually checked, not just generated |
 
 ## F. Carried decisions needing implementation
 

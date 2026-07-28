@@ -1,4 +1,6 @@
 # Lane 2 (Models) — status / handoff log
+> ⚠️ **HISTORICAL (marked 2026-07-29).** This document reflects the plan as written at project start and has not been maintained since 2026-07-03. It is kept for provenance. **Current state lives in `docs/DECISIONS.md`, `docs/OPEN_ITEMS.md` and `docs/TECHNICAL_NARRATIVE.md`.** Do not use it to make decisions. **D7 resolved to serial execution — the parallel lanes described here were never used.**
+
 
 ## Handoff 2026-07-04 — phase P5b / E4 (lane 2)
 - **Green baseline:** branch `lane2` **rebased on `p1-done` (e33a149)**, tag **`p5-done`** (this

@@ -384,3 +384,57 @@ and then attributing that number to all four axes.
 conclusion; (ii) the decomposition table above added to the results section — it is *more*
 informative than the single number; (iii) `test_headline_decomposition.py` pins the encoding-
 independence so the claim cannot silently regress.
+
+---
+
+## F14 — the energy model omits the chain-hash cost, and under-predicts CPU asymmetrically ⚠️
+*Found 2026-07-29 while building the D1 end-to-end validation. **Partial result: the meter half is
+blocked on hardware; the composition half is done and is where the defect was.***
+
+**What D1 asked.** P7b measured every *input* to the energy model — `p_cpu_w`, `p_radio_w`, and all
+per-operation timings — but nothing ever measured its *output*. `per_record` composes
+`t_enc + t_sign/b + t_verify/b` and multiplies by power. Power enters **linearly**, so it cannot be
+the source of a composition error; the risk lives entirely in *which* times are summed and what they
+are divided by. That half needs no meter.
+
+**The defect.** `models.energy.per_record` has **no hashing term**. Every record must be hashed to
+form `prev_hash = SHA-256(previous record)` — that is the ledger — but the model never charges for
+it. Measured against the real pipeline (stateful delta encode → chain link → sign once per frame),
+same machine, same code paths:
+
+| | model as written | + chain hash | measured |
+|---|---|---|---|
+| µs/record (delta, B, b=4) | 12.302 | 12.756 | **13.282** |
+| gap | **+7.97 %** | +4.12 % | — |
+
+Adding the omitted hash accounts for **roughly half** the discrepancy. The residual ~4 % is frame
+assembly the model also does not count (list building, concatenation, slicing) — real work, charged
+to nobody.
+
+**The direction is the problem, not the size.** Both figures sit inside the ±10 % acceptance band,
+but the error is **not uniform across configurations**:
+
+| configuration | model µs/rec | measured | gap |
+|---|---|---|---|
+| optimized delta/B, b=4 | 12.147 | 12.965 | **+6.73 %** |
+| A+CBOR baseline, b=1 | 34.167 | 35.028 | **+2.52 %** |
+
+The batched configuration is under-predicted **2.7× harder** than the baseline, because the omitted
+per-record costs (hash, framing) do *not* amortise over b while the signature does. **The model
+therefore overstates the optimized configuration's energy advantage by ~4 percentage points.** That
+bias runs in our favour and must be stated wherever the energy column is quoted.
+
+**Why it is not simply fixed today.** Adding a hash term needs a *measured ARM* SHA-256 time; the
+only figures here are x86, and substituting them would be the fabrication Law 7 forbids. So the
+omission is **documented with its measured magnitude and direction** rather than patched with a
+borrowed constant. The E5 energy column stands, with this caveat attached.
+
+**Not affected.** The auth-byte and total-byte results are power-free and untouched. T4's scheme
+crossover compares *verify* times, where the omitted terms are common to both schemes and cancel to
+first order.
+
+**Actions.** (i) `hw/validate_energy_e2e.py` runs the composed pipeline under the INA219 rig and
+prints the predicted value *before* reading the meter (Law 6) — ready, blocked only on the boards
+being powered; (ii) add an ARM SHA-256 measurement to the P1 micro harness, then add the term and
+re-freeze; (iii) until then, every energy claim carries the "+7 % under-predicted, asymmetric"
+caveat. Tracked as **D1** in docs/OPEN_ITEMS.md.

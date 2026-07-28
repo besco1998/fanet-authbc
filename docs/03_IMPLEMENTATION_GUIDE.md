@@ -1,4 +1,6 @@
 # 03 — IMPLEMENTATION GUIDE
+> ⚠️ **HISTORICAL (marked 2026-07-29).** This document reflects the plan as written at project start and has not been maintained since 2026-07-03. It is kept for provenance. **Current state lives in `docs/DECISIONS.md`, `docs/OPEN_ITEMS.md` and `docs/TECHNICAL_NARRATIVE.md`.** Do not use it to make decisions.
+
 
 ## 1. Environment (WSL2)
 - Ubuntu 24.04 on WSL2; work ONLY on the Linux filesystem (`~/projects/...`), never

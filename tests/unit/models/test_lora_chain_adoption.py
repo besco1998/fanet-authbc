@@ -21,7 +21,7 @@ import yaml
 from authbc.bench.experiments import REPO, load_config
 from authbc.models import lora
 
-H_F, G_A, CHAIN = 40, 64, 32
+H_F, G_A, CHAIN = 44, 64, 32   # H_F measured from wire.py (B1, docs/01 §2a)
 S_DELTA = 45.0                      # measured delta record incl. its own 32 B prev_hash (E1)
 S_DELTA_PER_FRAME = S_DELTA - CHAIN  # 13.0 B once the hash is charged once per frame
 
@@ -29,6 +29,8 @@ S_DELTA_PER_FRAME = S_DELTA - CHAIN  # 13.0 B once the hash is charged once per 
 def test_lora_config_adopts_per_frame_and_still_carries_the_counterfactual() -> None:
     cfg = load_config("lora")
     assert cfg["adopted_chain_mode"] == "per_frame"
+    # the grid must stay contiguous through the knee, or the optimum is quantized (F3 defect)
+    assert cfg["batches"] == list(range(1, 21)), "LoRa batch grid must be contiguous 1..20"
     assert set(cfg["chain_modes"]) == {"per_record", "per_frame"}, \
         "the 802.11-format counterfactual must stay in the sweep as the evidence for the decision"
 
@@ -44,38 +46,42 @@ def test_80211_arm_is_untouched_and_still_chains_per_record() -> None:
             f"{exp} must keep the D6-frozen per-record wire format implicitly"
 
 
-def test_per_frame_lets_dr5_carry_more_than_twice_the_records() -> None:
+def test_per_frame_lets_dr5_carry_three_and_a_half_times_the_records() -> None:
     """Hand-computed at DR5 (N = 242 B, RP002 Table 13), delta encoding, placement B.
 
-    per_record: usable = 242 − 40 − 64 = 138;  b = ⌊138/45⌋ = 3
-    per_frame : usable = 242 − 40 − 64 − 32 = 106;  b = ⌊106/13⌋ = 8
+    per_record: usable = 242 − 44 − 64 = 134;  b = ⌊134/45⌋ = 2
+    per_frame : usable = 242 − 44 − 64 − 32 = 102;  b = ⌊102/13⌋ = 7
+
+    b=7 is why the batch grid must be CONTIGUOUS: the original sparse grid jumped 6 → 8, so the
+    optimum was reported as 6 and F5's benefit understated as 2.75x instead of 3.03x. Same defect
+    as audit F3.
     """
     n = lora.EU868_DATA_RATES[5].max_app_payload
     assert n == 242
     b_record = int((n - H_F - G_A) // S_DELTA)
     b_frame = int((n - H_F - G_A - CHAIN) // S_DELTA_PER_FRAME)
-    assert (b_record, b_frame) == (3, 8)
-    assert lora.max_batch_for_mtu(S_DELTA, G_A, H_F, dr=5) == 3
-    assert lora.max_batch_for_mtu(S_DELTA_PER_FRAME, G_A + CHAIN, H_F, dr=5) == 8
+    assert (b_record, b_frame) == (2, 7)
+    assert lora.max_batch_for_mtu(S_DELTA, G_A, H_F, dr=5) == 2
+    assert lora.max_batch_for_mtu(S_DELTA_PER_FRAME, G_A + CHAIN, H_F, dr=5) == 7
 
 
 def test_the_rate_gain_is_the_ratio_of_batches_not_of_bytes() -> None:
-    """Λ = b/(ToA/duty). Frames grow slightly (239 B → 240 B), so the gain is ≈ b-ratio, not 8/3.
+    """Λ = b/(ToA/duty). Frames grow slightly (198 B → 231 B), so the gain is ≈ b-ratio, not 7/2.
 
-    This is the number the decision was made on: ~2.7x the records a node can legally send.
+    This is the number the decision was made on: ~3x the records a node can legally send.
     """
-    lam_record = lora.sustainable_record_rate(3, H_F + G_A + 3 * int(S_DELTA), dr=5)
+    lam_record = lora.sustainable_record_rate(2, H_F + G_A + 2 * int(S_DELTA), dr=5)
     lam_frame = lora.sustainable_record_rate(
-        8, H_F + G_A + CHAIN + 8 * int(S_DELTA_PER_FRAME), dr=5)
-    assert 2.6 < lam_frame / lam_record < 2.8
-    assert 0.070 < lam_record < 0.080
-    assert 0.195 < lam_frame < 0.210
+        7, H_F + G_A + CHAIN + 7 * int(S_DELTA_PER_FRAME), dr=5)
+    assert 2.9 < lam_frame / lam_record < 3.2
+    assert 0.055 < lam_record < 0.065
+    assert 0.175 < lam_frame < 0.190
 
 
-def test_per_frame_chaining_lowers_bytes_per_record_to_thirty() -> None:
-    """(40 + 64 + 32 + 8·13)/8 = 240/8 = 30.0 B/record, vs (40+64+3·45)/3 = 239/3 = 79.67."""
-    assert (H_F + G_A + CHAIN + 8 * S_DELTA_PER_FRAME) / 8 == 30.0
-    assert abs((H_F + G_A + 3 * S_DELTA) / 3 - 79.667) < 0.001
+def test_per_frame_chaining_lowers_bytes_per_record_to_thirty_three() -> None:
+    """(44 + 64 + 32 + 7·13)/7 = 231/7 = 33.0 B/record, vs (44+64+2·45)/2 = 198/2 = 99.0."""
+    assert (H_F + G_A + CHAIN + 7 * S_DELTA_PER_FRAME) / 7 == 33.0
+    assert (H_F + G_A + 2 * S_DELTA) / 2 == 99.0
 
 
 def test_stored_ledger_is_unchanged_so_this_is_a_framing_choice_only() -> None:

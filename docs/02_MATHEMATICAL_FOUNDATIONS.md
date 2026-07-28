@@ -317,15 +317,18 @@ way 802.11 does (T2a). This is the **third regime**:
 ### Two findings (measured, `results/raw/lora_eu868.csv`)
 
 **(1) Authentication does not fit at all below DR4 — and this is a theorem, not a measurement.**
-Per-frame overhead is H_f 40 + signature 64 = **104 B**, against a regional limit of 51 B at DR0–DR2
-and 115 B at DR3, which leaves 11 B — under the 13 B smallest AUTHBC record. Only DR4/5/6 are
-feasible, and JSON never fits. **See T6** for the general form, the proof that fragmenting cannot
-escape it, and the tier structure: DR0–DR2 fail on the *signature alone* (64 B > 51 B payload, so no
-encoding or header design can rescue them), while DR3 fails on the encoding by **two bytes**.
+Per-frame overhead is H_f 44 (**measured**, docs/01 §2a) + signature 64 = **108 B**, against a
+regional limit of 51 B at DR0–DR2 and 115 B at DR3, which leaves 7 B — under the 13 B smallest
+AUTHBC record. Only DR4/5/6 are feasible, and JSON never fits. **See T6** for the general form, the
+proof that fragmenting cannot escape it, and the tier structure: DR0–DR2 fail on the *signature
+alone* (64 B > 51 B payload, so no encoding or header design can rescue them), while DR3 fails on
+the encoding by **six bytes**.
 
-**(2) The sustainable rate is 130–470× below the 802.11 arm.** At DR5, delta, b=3: frame 239 B,
-airtime 394.5 ms, so one frame per **39.4 s** and **Λ = 0.076 rec/s** — a record every 13 s, against
-the 802.11 arm's 20 rec/s. Freshness is likewise **39.4 s**, i.e. **158× the 802.11 D_max of 250 ms**.
+**(2) The sustainable rate is 55–193× below the 802.11 arm.** At DR5, delta, per-frame chaining,
+b=7: frame 231 B, so one frame per **38.4 s** and **Λ = 0.182 rec/s** — a record every 5.5 s, against
+the 802.11 arm's 20 rec/s (**110×**). Freshness is likewise **38.4 s**, i.e. **154× the 802.11 D_max
+of 250 ms**. Under the 802.11 per-record format it is worse still (Λ = 0.060 rec/s at DR5, **333×**
+below).
 
 ### 9b. Per-frame chaining is the adopted LoRa wire format (F5, decided 2026-07-28) ⚠️
 
@@ -334,13 +337,21 @@ because the regional payload limit binds — so smaller records convert into *mo
 
 | DR | chain mode | b | bytes/record | **Λ (rec/s)** |
 |---|---|---|---|---|
-| 5 | per_record *(today)* | 3 | 79.7 | 0.0760 |
-| 5 | **per_frame** | **8** | **30.0** | **0.2028** — **2.7×** |
-| 6 | per_record | 3 | 79.7 | 0.1521 |
-| 6 | **per_frame** | **8** | **30.0** | **0.4056** — **2.7×** |
+| 4 | per_record *(802.11 format)* | 2 | 99.0 | 0.0337 |
+| 4 | **per_frame** | **7** | **33.0** | **0.1035** — **3.08×** |
+| 5 | per_record | 2 | 99.0 | 0.0601 |
+| 5 | **per_frame** | **7** | **33.0** | **0.1822** — **3.03×** |
+| 6 | per_record | 2 | 99.0 | 0.1201 |
+| 6 | **per_frame** | **7** | **33.0** | **0.3643** — **3.03×** |
 
-**2.7× the sustainable telemetry rate for the same regulatory budget**, versus a 26 % airtime saving
-and *no* extra records on 802.11 (where freshness, not size, is the wall).
+**≈3.0× the sustainable telemetry rate for the same regulatory budget**, versus a 26 % airtime
+saving and *no* extra records on 802.11 (where freshness, not size, is the wall).
+
+*Two corrections landed here on 2026-07-29, both raising the benefit.* The measured H_f = 44 B
+(docs/01 §2a) tightened every batch, and the batch grid was **sparse** — it listed
+`[…5, 6, 8, 10…]`, omitting 7, so the DR5 per-frame optimum was reported as b=6 when the payload
+limit allows b=7. That is the **same grid-quantization defect as audit F3**, and it *understated*
+F5's benefit as 2.75×. The grid is now contiguous 1..20 and the true figure is **3.03×**.
 
 **Decision (Mohamed, 2026-07-28): adopt per-frame chaining on the LoRa arm only.** The two arms now
 carry the same ledger in two framings, and that asymmetry is the point rather than an inconsistency:
@@ -389,16 +400,16 @@ is the LoRa co-design problem and has no 802.11 counterpart.**
 Objectives: min bytes/record · **max Λ** · min freshness · max V · **max range**.
 Constraints: frame ≤ N(DR) · V ≥ 1−ε · t_verify(b)·Λ ≤ 1.
 
-**Result (`results/raw/lora_codesign.csv`): 3414 of 3696 design points do not physically exist** —
-they exceed the regional payload limit — leaving 282 feasible and **108 on the Pareto front,
-spanning DR4/DR5/DR6**. Representative front (delta, placement B, chain per-frame):
+**Result (`results/raw/lora_codesign.csv`): most design points do not physically exist** — they
+exceed the regional payload limit — leaving **258 feasible and 108 on the Pareto front, spanning
+DR4/DR5/DR6** (measured H_f = 44 B, contiguous batch grid 1..20). Representative front (delta, placement B, chain per-frame):
 
 | DR | range | b | B/record | Λ (rec/s) | freshness |
 |---|---|---|---|---|---|
-| 4 | **2.00×** | 8 | 30.0 | 0.1148 | 69.7 s |
-| 5 | 1.41× | 8 | 30.0 | 0.2028 | 39.5 s |
-| 6 | 1.00× | 8 | 30.0 | **0.4056** | **19.7 s** |
-| 6 | 1.00× | 1 | 149.0 | 0.0765 | 13.1 s |
+| 4 | **2.00×** | 7 | 33.0 | 0.1035 | 67.6 s |
+| 5 | 1.41× | 7 | 33.0 | 0.1822 | 38.4 s |
+| 6 | 1.00× | 7 | 33.0 | **0.3643** | **19.2 s** |
+| 6 | 1.00× | 1 | 153.0 | 0.0751 | 13.3 s |
 
 Reading: **doubling range costs ~3.5× the record rate**; within a data rate, batching to b=8 buys
 5× the record rate and 5× fewer bytes but 1.5× worse freshness. Every row is a defensible operating

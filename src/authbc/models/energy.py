@@ -188,6 +188,14 @@ def per_record(cfg: EnergyConfig, m: Measured) -> float:
     """Energy per record [J] = P_c·(t_enc + t_sg' + t_vf') + P_r·T_air(frame)/b (docs/02 §7).
 
     t_sg' and t_vf' are the placement-amortized sign/verify times. Deterministic and pure.
+
+    ⚠️ **Known omission (audit F14, 2026-07-29): no hashing or frame-assembly term.** Every record
+    is SHA-256'd to form the chain link, and frames are assembled, but neither is charged here.
+    Measured against the real pipeline this under-predicts CPU by **+7.97 %**, and does so
+    **asymmetrically** — +6.73 % at b=4 versus +2.52 % at b=1, because the omitted costs do not
+    amortize over the batch while the signature does. The model therefore **overstates the batched
+    configuration's energy advantage by ~4 points**. Not patched, because a correct fix needs an ARM
+    SHA-256 measurement and only x86 figures exist (Law 7). Byte results are power-free.
     """
     b = cfg.batch
     cpu_time_s = m.t_enc_s + _sign_cpu_per_record(cfg, m) + _verify_cpu_per_record(cfg, m)  # [s]

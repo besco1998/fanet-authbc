@@ -20,7 +20,10 @@ chain_hash_bytes: 32    # SHA-256 prev_hash (docs/01 §4) - carried per record t
 
 # Batch sweep. Capped in code by the regional payload limit; the duty cycle then fixes both the
 # sustainable Lambda and the freshness, so there is no independent D_max to configure.
-batches: [1, 2, 3, 4, 5, 6, 8, 10, 12, 16, 20]
+# CONTIGUOUS 1..20 (fixed 2026-07-29): the old sparse grid [..6, 8, 10..] omitted 7, so at the
+# measured H_f=44 the DR5 per-frame optimum was reported as b=6 when the true payload limit allows
+# b=7 — the same grid-quantization defect as audit F3. Never sample a knee with a sparse grid.
+batches: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
 
 # Chain placement (audit F5 — DECIDED 2026-07-28 by Mohamed: adopt per_frame on the LoRa arm ONLY).
 #   per_frame  - ADOPTED HERE. Only the frame's first prev_hash is sent; the receiver derives the
