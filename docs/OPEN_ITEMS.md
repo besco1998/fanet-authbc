@@ -69,7 +69,7 @@ Ordered by what a thesis examiner would hit first.
 
 | # | Item | Status | Action |
 |---|---|---|---|
-| **F1** | **Paper restructure** — 802.11 co-design as the measured core, then "Generalisation: the low-rate regime" carrying T6 | **DECIDED, not started** | This is the P8 deliverable. Must absorb A1/A2's reframing |
+| **F1** | Paper restructure | **CLOSED 2026-07-29** | Done in the decided shape: T6 added as theory (§III-F), new §VI "Generalisation: the Low-Rate Regime" (T6 on EU868 + chaining + the N_max=5 capacity result), Results reordered feasibility-first. 7 pages, builds clean. Fixed three stale claims en route (T5's MTU wording, the missing chain-hash term, E4's x86 ratio) and caught one repeat of the retracted T7 error before it shipped |
 | **F2** | Abstract/conclusion framing | **CLOSED 2026-07-29** | Rewritten in the A1 pass: abstract leads with total bytes + decomposition + the feasibility envelope; conclusion states the `1−1/b` result explicitly. One residual: the success criterion is still phrased as an *auth-byte* target (§I), which is fine — it is the pre-registered criterion and must not be moved after the fact |
 
 ---
