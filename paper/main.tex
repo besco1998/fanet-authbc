@@ -41,7 +41,8 @@ The authentication term alone reduces to $1-1/b$, invariant to header size, sign
 encoding---so the co-design claim rests not on that ratio but on \emph{joint feasibility}: coupling
 the byte model to an NS-3-validated broadcast channel shows the inline baselines exhaust a single
 collision domain at $N{=}32$ (CBOR) and $N{=}25$ (JSON) neighbours, while the co-designed
-configuration reaches $N{=}103$---a $3.2\times$ larger swarm. Because a tighter freshness deadline
+configuration reaches $N{=}103$---a ${\approx}3\times$ larger swarm, a ratio that holds whether the
+limit is taken at saturation throughput or at the measured verifiability boundary. Because a tighter freshness deadline
 shrinks the batch and so raises the frame rate, latency and capacity trade against each other: meeting
 the 100\,ms bound of 3GPP TS~22.125 costs a factor of two in supportable swarm size and nothing in
 bytes. Freshness, not the MTU, is what binds:
@@ -166,9 +167,30 @@ is the break-even power ratio, obtained without measuring a single watt. Wi-Fi r
 CPU-active power, so plausible platforms have $\kappa \lesssim 0.5$.
 
 \subsection{T5: co-design optimum}
-Enumerate $(e,\sigma,\text{placement},b)$ and take the Pareto front over $\{$min bytes, min energy, max
-$V\}$ subject to MTU fit, $V \geq 1-\epsilon$, and verify-throughput $t_{\text{verify}}(b)\,\Lambda \leq
-1$. The optimum is the smallest deterministic encoding under self-batch at the largest MTU-feasible batch.
+Enumerate $(e,\sigma,\text{placement},b)$ and take the Pareto front over $\{$min bytes, min energy,
+min staleness, max $V\}$ subject to MTU fit, $V \geq 1-\epsilon$, freshness $D(b)\leq D_{\max}$, and
+verify-throughput $t_{\text{verify}}(b)\,\Lambda \leq 1$. The optimum is the smallest deterministic
+encoding under self-batch at the largest \emph{freshness}-feasible batch --- not the largest
+MTU-feasible one. Which ceiling binds is itself a result (T2a): at telemetry rates fill time
+dominates $D(b)$, so $b \lesssim \Lambda D_{\max}$ and the MTU is never reached.
+
+\subsection{T6: authentication-exclusion threshold}\label{sec:t6}
+T1--T5 ask what a saved byte buys. T6 asks the prior question --- whether a link admits
+authenticated telemetry at all. A frame that is independently verifiable must carry the header, the
+authentication object and at least one record, so a link of maximum payload $M$ is usable iff
+\begin{equation}
+s_{\max}(M) = M - H_f - \ba \;\geq\; s_{\min}.
+\label{eq:t6}
+\end{equation}
+Fragmenting an oversized signature is no escape: by T3 a unit spanning $n$ frames verifies with
+probability $(1-p)^n$, so $V\geq 1-\epsilon$ forces $n \leq \lfloor\ln(1-\epsilon)/\ln(1-p)\rfloor$,
+which is exactly $1$ whenever $\epsilon \leq p$. Equation~\eqref{eq:t6} is therefore evaluated at
+$n{=}1$ and is an exclusion, not an inconvenience.
+
+Three tiers follow, and each names a different escape route: $M < \ba$ (only a smaller signature
+helps --- no header design, encoding, batching or chaining can), $\ba \leq M < H_f+\ba$ (only a
+leaner header), and $H_f+\ba \leq M < H_f+\ba+s_{\min}$ (the sole regime an encoder can attack, and
+where T2's amplification is operative). Section~\ref{sec:lowrate} applies this to LoRa.
 
 \subsection{Channel and energy models}
 At the 6\,Mb/s OFDM base rate, broadcast airtime is $T_{\text{air}}(L)=T_{\text{phy}}+8(L+\text{MAC})/R
@@ -178,8 +200,10 @@ Under contention among $N$ saturated stations, the Bianchi DCF fixed point is
 \tau = \frac{2(1-2p_c)}{(1-2p_c)(W+1)+p_c W(1-(2p_c)^m)}, \quad p_c = 1-(1-\tau)^{N-1},
 \end{equation}
 with $W=16$, $m=6$, solved by damped iteration; saturation throughput $S = P_{tr}P_s\,8L/E[\text{slot}]$.
-Self-batch per-record energy is $E = P_c(t_{\text{enc}}+t_{\text{sign}}/b+t_{\text{verify}}/b) +
-P_r\,T_{\text{air}}(\text{frame})/b$.
+Self-batch per-record energy is $E = P_c(t_{\text{enc}}+2t_{\text{hash}}+t_{\text{sign}}/b+
+t_{\text{verify}}/b) + P_r\,T_{\text{air}}(\text{frame})/b$. The hash term is the chain link
+$\mathit{prev\_hash}=H(\text{record})$, charged twice per record because the sender extends the
+chain and the receiver re-verifies it; unlike the signature it does \emph{not} amortize over $b$.
 
 \section{Implementation}\label{sec:impl}
 The project ran in phases under an eight-law discipline (plan-first, verify-before-assume,
@@ -222,7 +246,9 @@ the payload makes a fixed 64\,B signature dominate---T1 confirmed.
 
 \textbf{P1 crypto (x86 medians).} ECDSA-P256 sign/verify $26.2/78.5${\us}; Ed25519 $29.1/95.0${\us}; BLS
 $324.6/1016.5${\us}; BLS aggregate-verify$(b{=}8)$ $3445${\us}. Notably, ECDSA \emph{beats} Ed25519 on
-x86 (OpenSSL P-256 assembly)---the reverse of the usual ordering, and the reason the optimizer breaks a
+x86 (OpenSSL P-256 assembly)---the reverse of the usual ordering. The ordering \emph{flips} on the
+ARM target (Ed25519 259.5 vs ECDSA 326.9{\us} verify), which is what the optimizer uses; both are
+64\,B, so the byte results are identical either way. This is the reason the optimizer breaks a
 byte-tie toward ECDSA on the energy metric; this edge is expected to vanish on ARM.
 
 \textbf{E2 (T2/T2a).} At MTU 1500, self-batch, the measured amplification
@@ -235,7 +261,8 @@ at telemetry rates.
 \textbf{E3 (T3).} $V_B \approx 1-p$ flat in $b$ (0.90 at $p{=}0.10$); $V_D=(1-p)^n$ drops the moment a
 block spans $n>1$ frames (0.81 at $p{=}0.10$, $b{=}40$)---the frontier is exactly T3.
 
-\textbf{E4 (T4, Fig.~\ref{fig:e4}).} Ed25519 verify is $10.7\times$ cheaper than BLS verify. Across the
+\textbf{E4 (T4, Fig.~\ref{fig:e4}).} On ARM---the thesis platform---Ed25519 verify is $33.2\times$
+cheaper than BLS verify ($10.7\times$ on x86). Across the
 full relay-fraction $\times$ batch $\times$ rate grid (80 points), Ed25519 wins \emph{every} one
 (minimum $\kappa^\ast = 31.6 \gg 0.5$). At 96\,B, BLS carries more auth bytes than Ed25519 on own
 self-batch traffic ($\kappa^\ast=\infty$) and saves bytes only on relay traffic for $b\geq 2$; its
@@ -286,9 +313,10 @@ scheme & neither (both 64\,B) & --- & --- \\
 
 \begin{table}[t]\centering\footnotesize
 \caption{Feasibility envelope: largest single collision domain each configuration can serve
-($U<1$, 802.11a 6\,Mb/s, broadcast model of~\cite{machen2007}). This is the result that requires all
-four axes \emph{and} the channel model; $N{=}50$ is quoted because it lies between the baseline and
-co-design limits.}
+(802.11a 6\,Mb/s, broadcast model of~\cite{machen2007}). Computed against saturation throughput
+($U<1$), which simulation shows to be conservative by ${\approx}2.8\times$; the measured
+$V{\geq}0.95$ boundary gives 65 / 104 / 233 for the same three rows. The ratio, not the absolute
+limit, is the claim.}
 \label{tab:envelope}
 \begin{tabular}{l r r r}
 \toprule
@@ -309,6 +337,19 @@ self-batch at $b{=}4$, cutting total on-air bytes from 174.3 to \textbf{72.0\,B/
 \textbf{58.7\%} reduction versus the Pillar-1 baseline at $V=0.95$, $p=0.05$ and a 250\,ms freshness
 bound. Hand-checked: $45.0+108/4=72.0$\,B/record, freshness $4/20=200$\,ms.
 
+\textbf{Feasibility is the co-design result (Table~\ref{tab:envelope}).} The substantive claim is not
+how many bytes are saved but which configurations \emph{can run}. Coupling the byte model to the
+broadcast channel model gives the largest neighbourhood each configuration sustains. Two thresholds
+are reported because they answer different questions. Against \emph{saturation} throughput ($U<1$)
+the naive and Pillar-1 baselines exhaust a single collision domain at 25 and 32 neighbours while the
+co-design reaches 103. That criterion is conservative: saturation throughput is what the medium
+carries when every node is backlogged, and simulation shows $98.8\%$ delivery still at $U{=}1$, with
+verifiability crossing $V{=}0.95$ only near $U{\approx}2.8$. Against \emph{that} measured boundary
+the same three configurations reach 65, 104 and 233. The ratio is what survives both readings: the
+co-design carries ${\approx}3\times$ the swarm on the same medium. This statement needs the encoding
+(frame size), the placement and batch (frames per second), the scheme (auth bytes) and the channel
+model together; no single axis produces it.
+
 \textbf{Attributing the saving (Table~\ref{tab:decomp}).} We separate the axes rather than report one
 figure, because they are not equal contributors. Authentication overhead per record is
 $(H_f+g_a)/b$; the record size does not appear, so the auth-byte reduction
@@ -320,15 +361,6 @@ to three decimals for all four encodings. The encoding axis is nonetheless load-
 $3\times$ on total bytes---but it acts on payload, contributing 20.8\% of the saving against
 placement and batching's 79.2\%. The scheme axis is byte-neutral here (Ed25519 and ECDSA are both
 64\,B) and is decided on energy and verification throughput instead (T4).
-
-\textbf{Feasibility is the co-design result (Table~\ref{tab:envelope}).} Because the byte ratio alone
-reduces to $1-1/b$, we take the substantive claim to be which configurations \emph{can run}. Coupling
-the byte model to the broadcast channel model gives the largest neighbourhood each configuration
-sustains: the naive and Pillar-1 baselines exhaust a single collision domain at 25 and 32 neighbours,
-while the co-designed configuration reaches 103---a $3.2\times$ larger swarm for the same medium. At
-$N{=}50$ the baselines are not merely wasteful but \emph{unrunnable} ($U=2.28$ and $1.53$). This
-statement needs the encoding (frame size), the placement and batch (frames per second), the scheme
-(auth bytes) and the channel model together; no single axis produces it.
 
 \textbf{Which constraint binds is itself the result.} Ignoring freshness, the byte-optimal batch is
 $b{=}30$ at the MTU knee, cutting 96.7\%---but the oldest record in such a batch waits
@@ -386,6 +418,81 @@ reduction of the unicast model (dashed) fails by $16\times$ at $N{=}50$.}
 \label{fig:ns3}
 \end{figure}
 
+\section{Generalisation: the Low-Rate Regime}\label{sec:lowrate}
+Everything so far concerns a companion-class 802.11 link. The natural question is how far the
+co-design carries, and the honest answer is that it stops --- for reasons that are worth stating
+precisely, because they bound the contribution rather than extend it.
+
+This section is \emph{analysis and simulation, not measurement}. No LoRa hardware was instrumented
+and no LoRa energy figure is reported: the only metered radio power in this work is a Wi-Fi figure,
+and reusing it would be fabrication. Every LoRa constant is transcribed from the SX1276 datasheet
+(Rev.~7, \S4.1.1.5/\S4.1.1.7) and LoRaWAN RP002-1.0.3 (Tables~8 and~13, EU868 duty cycle $<1\%$).
+
+\subsection{T6 excludes the four longest-range modes}
+With $H_f = 44$\,B and a 64\,B Ed25519 signature, Eq.~\eqref{eq:t6} partitions EU868
+(Table~\ref{tab:t6}). DR0--DR2 fail on the \emph{signature alone}: 64\,B does not fit a 51\,B
+payload, so the exclusion holds even with a zero-byte header and a zero-byte record. The only
+escape is a smaller authentication object, and the smallest standardised one is a 48\,B compressed
+BLS12-381 $\mathbb{G}_1$ point~\cite{cfrg_bls} at 126-bit security --- which does fit 51\,B, leaving
+three bytes for the header and the record together. DR3 fails on the encoding, and by six bytes.
+
+\begin{table}[t]\centering\footnotesize
+\caption{T6 applied to EU868 ($H_f{=}44$\,B measured, $\ba{=}64$\,B, $s_{\min}{=}13$\,B).}
+\label{tab:t6}
+\begin{tabular}{l r r l}
+\toprule
+DR & $M$ (B) & $s_{\max}$ & verdict \\
+\midrule
+0, 1, 2 & 51 & $-57$ & excluded --- signature alone overflows \\
+3 & 115 & 7 & excluded --- no record fits (misses by 6\,B) \\
+4, 5, 6 & 242 & 134 & feasible \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Where the design changes: chaining}
+On 802.11 freshness binds, so the batch is fixed by $\Lambda D_{\max}$ and saving payload bytes buys
+nothing extra. On LoRa the \emph{regional payload limit} binds, so bytes convert directly into more
+records per frame. Moving the 32\,B chain link from per-record to once-per-frame --- the receiver
+re-derives the rest from $\mathit{prev\_hash}_{i+1}=H(\text{record}_i)$, leaving the stored ledger
+byte-identical --- raises the DR5 batch from 2 to 7 and the sustainable rate from 0.060 to
+$0.182$\,rec/s, a factor of $3.03$. We adopt it \emph{on this arm only}: the same change on 802.11
+buys ${\approx}6\%$ energy and no extra records, which does not pay for losing independently
+transmitted per-record tamper evidence.
+
+\subsection{Capacity: the two penalties compound}
+Time on air and the duty cycle are deterministic, so simulating them would be circular. One
+quantity is not derivable that way --- how many nodes share the channel --- because LoRaWAN uplinks
+are pure ALOHA, with no carrier sense and no acknowledgement. Simulating the AUTHBC frame at DR5
+under the same $V \geq 0.95$ criterion used for 802.11 gives $N_{\max} = 5$, with a sharp cliff:
+delivery is $1.000$ at $N{=}5$ and $0.866$ at $N{=}8$. There is no backoff to absorb contention.
+
+\begin{table}[t]\centering\footnotesize
+\caption{The low-rate regime is not a slower version of the same problem.}
+\label{tab:lowrate}
+\begin{tabular}{l r r r}
+\toprule
+ & per node & $N_{\max}$ & aggregate \\
+\midrule
+802.11a, delta/B, $b{=}4$ & 20 rec/s & 103 & 2060 rec/s \\
+LoRa EU868 DR5, $b{=}6$ & 0.165 rec/s & 5 & 0.82 rec/s \\
+\midrule
+ratio & $121\times$ & $21\times$ & $\mathbf{\approx}\mathbf{2500}\boldsymbol{\times}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The arm is ${\approx}120\times$ slower per node \emph{and} ${\approx}20\times$ smaller per domain,
+and it is the product that matters (Table~\ref{tab:lowrate}). LoRa is not a slow 802.11; it is a
+different regime, in which authenticated per-record telemetry is not the right application at all.
+Its defensible role is long-range \emph{provenance} --- a tamper-evident trickle --- not live
+telemetry.
+
+One caveat of provenance. The simulator enforces RP002 Table~12 (repeater-compatible, 222\,B) while
+our analytical model uses Table~13 (non-repeater, 242\,B); at DR5 that caps the batch at 6 rather
+than 7. Both are defensible readings of the same standard, and we simulate what the implementation
+accepts rather than reconcile them silently.
+
 \section{Reproducibility and Scientific Integrity}\label{sec:repro}
 Beyond the results, the project's second product is its discipline. Anomalies were root-caused, not
 patched over: a stateful delta codec used statelessly (60$\to$45\,B); string-keyed CBOR replaced by
@@ -434,7 +541,8 @@ reduces to $1-1/b$: the header and signature sizes cancel, and neither the encod
 appears. Reported as a headline percentage it would overstate what four coupled axes contribute. The
 contribution that genuinely requires the coupling is \emph{feasibility}---which configurations can
 run at all. Joining the byte model to the channel model shows the inline baselines exhaust a single
-collision domain at 25--32 neighbours while the co-designed configuration reaches 103.
+collision domain at 25--32 neighbours while the co-designed configuration reaches 103 --- a
+${\approx}3\times$ ratio that is stable under either feasibility threshold.
 
 Pushed to its limit, the same coupling yields an exclusion result that we regard as the more durable
 contribution. A link whose payload cannot hold one header, one signature and one record carries no
