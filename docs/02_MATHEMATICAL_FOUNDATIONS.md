@@ -171,6 +171,61 @@ per-frame-verifiable telemetry at 128-bit security, period.**
 locates exactly where compression is worth pursuing — tier 3 (DR3) is the only regime an encoder can
 attack, and T2a says that is precisely where the amplification A is operative.
 
+## ~~T7 — Medium-exclusion threshold~~ — **WITHDRAWN 2026-07-29, same day it was written** ⚠️
+*Retracted by its own validation experiment (D3, `results/raw/ns3_delay.csv`). Kept visible rather
+than deleted, because the way it failed is instructive.*
+
+**What was claimed.** That capacity can exclude what frame size permits, with the exclusion
+threshold at **U ≥ 1** — U being offered load over *saturation* throughput. From that: at N = 50
+under the 3GPP 100 ms bound only 4 operating points are runnable, only 2 batch, and the achievable
+authentication cut caps at **50 %**.
+
+**Why it is wrong.** U ≥ 1 is not a feasibility boundary. Saturation throughput is what the channel
+carries when *every* node is backlogged; a lightly loaded channel collides far less and carries
+substantially more. NS-3 measurement at N = 50, 288 B broadcast:
+
+| U (offered ÷ saturation) | delivered | mean delay | access delay omitted by D(b) |
+|---|---|---|---|
+| 0.111 | 1.0000 | 0.50 ms | +0.011 ms |
+| 0.557 *(reference point)* | 0.9898 | 0.52 ms | **+0.033 ms** |
+| 1.003 | 0.9884 | 0.57 ms | +0.073 ms |
+| 1.672 | 0.9808 | 0.63 ms | +0.133 ms |
+| 2.230 | 0.9719 | 0.69 ms | +0.199 ms |
+| **≈2.80** | **0.9500** | — | — *(V = 1−ε crossing)* |
+| 3.345 | 0.9292 | 0.92 ms | +0.418 ms |
+| 6.690 | 0.4228 | 2.69 ms | +2.185 ms |
+
+*(N=50, 288 B broadcast, 5 seeds × 20 s per point; `results/raw/ns3_delay.csv`.)*
+
+**The system is still delivering 98.8 % of frames at U = 1.00.** The real boundary — where
+verifiability falls to V = 0.95 — sits at **U ≈ 2.80**, and at that boundary the 3GPP-compliant
+configuration (Λ = 50 Hz, D = 100 ms, U = 1.394) is comfortably **feasible**. So the claimed
+exclusion does not exist at N = 50, and the "50 % ceiling" was an artifact of the wrong threshold.
+
+**Second structural error.** The theorem assumed overload manifests as *delay*. It does not:
+**802.11 broadcast has no ARQ and no queue buildup**, so excess offered load is dropped, not
+queued. Even at U = 8.9 — nine times saturation throughput — mean delay is 2.7 ms. Overload
+degrades **delivery**, never latency. Any capacity argument here must be made in V, not in D.
+
+### What survives: the latency–capacity coupling (a cost, not an exclusion)
+The underlying mechanism is real and worth stating. Because b ≤ ⌊Λ·D_max⌋ (T2a), tightening the
+freshness deadline **shrinks the batch** and therefore **raises the frame rate** the medium must
+carry for the same Λ. Latency and capacity genuinely pull in opposite directions. Measured against
+the V ≥ 0.95 boundary, that costs swarm size rather than forbidding operation:
+
+| operating point | b | bytes | largest neighbourhood (V ≥ 0.95) |
+|---|---|---|---|
+| Λ = 20, D = 250 ms *(reference)* | 4 | 58.68 % cut | **N ≤ 233** |
+| Λ = 50, D = 100 ms *(3GPP-compliant)* | 4 | **58.68 % cut — identical** | **N ≤ 116** |
+
+**Meeting the standard's deadline costs a factor of two in supportable swarm size and nothing in
+bytes.** That is the honest, measured statement, and it is a better result than the theorem it
+replaces: the co-design is standards-compliant, and the price is quantified.
+
+**Lesson recorded.** T7 was written from a model quantity (saturation throughput) treated as a
+physical limit, and published into docs and the paper before the experiment that tested it existed.
+The validation was already scheduled as item D3; running it first would have prevented the claim.
+
 ## 6. Channel model — Bianchi DCF (802.11, saturation)
 Fixed point over (τ, p_c): τ = 2(1−2p_c) / [(1−2p_c)(W+1) + p_c·W(1−(2p_c)^m)],
 p_c = 1−(1−τ)^{N−1}; W=16, m=6. **Solve with damped iteration** p←0.7p+0.3p_new,
@@ -439,22 +494,26 @@ UAV-to-UAV local broadcast service — precisely this system: **R-5.2.2-010 ≥ 
 | | points | best auth cut achievable | at |
 |---|---|---|---|
 | whole region | 70 | **98.0 %** | Λ=50, D=1000 ms, b=49 |
-| TS 22.125 compliant | 18 | **75.0 %** | Λ=50, D=100 ms, b=4 — but **U = 1.39, unrunnable at N=50** |
-| **compliant AND runnable at N=50** | **4** | **50.0 %** | **Λ=21–22, D=100 ms, b=2** |
+| TS 22.125 compliant | 18 | **75.0 %** | Λ=50, D=100 ms, b=4 |
+| **compliant AND feasible at N=50** | **18** | **75.0 %** | same — **U = 1.39 is well inside the measured V≥0.95 boundary of U ≈ 2.80** |
 
-**The compliant-and-runnable set is exactly four points, and here it is in full:**
+⚠️ **Corrected 2026-07-29.** An earlier version of this table applied a **U < 1** feasibility test and
+concluded that only 4 points were runnable and the compliant ceiling was 50 %. That test was wrong:
+U is measured against *saturation* throughput, and NS-3 shows 98.8 % delivery still at U = 1.00,
+with the V = 0.95 crossing at **U ≈ 2.80** (`results/raw/ns3_delay.csv`, and the withdrawal notice
+above). **The 75 % cut is achievable at the 3GPP deadline.**
 
-| Λ | D_max | Λ·D | b | auth cut | total cut | U at N=50 | N_max |
-|---|---|---|---|---|---|---|---|
-| 21 | 100 ms | 2.1 | 2 | **50.0 %** | 43.2 % | 0.888 | 58 |
-| 22 | 100 ms | 2.2 | 2 | **50.0 %** | 43.2 % | 0.930 | 55 |
-| 10 | 50 ms | 0.5 | 1 | 0 % | 12.2 % | 0.711 | 78 |
-| 10 | 100 ms | 1.0 | 1 | 0 % | 12.2 % | 0.711 | 78 |
+**So the honest result of B3 is that compliance costs swarm size, not bytes.** The
+standards-compliant point (Λ = 50 Hz — PX4 `MAVLINK_MODE_ONBOARD` — at D = 100 ms) has Λ·D = 5,
+therefore b = 4, therefore **exactly the same 75.0 % / 58.68 %** as the reference point. What
+differs is channel load, and measured against the V ≥ 0.95 boundary:
 
-**So the honest headline result of B3 is a bound, not a choice:** *under full 3GPP compliance and a
-50-node collision domain, the maximum achievable on-air authentication reduction on 802.11a is
-**50 %**, and it requires Λ ∈ [21, 22] Hz.* Faster streams meet the deadline but exhaust the medium;
-slower ones cannot batch at all.
+| operating point | b | total cut | U at N=50 | largest neighbourhood |
+|---|---|---|---|---|
+| Λ=20, D=250 ms *(reference)* | 4 | 58.68 % | 0.557 | **N ≤ 233** |
+| Λ=50, D=100 ms *(3GPP-compliant)* | 4 | **58.68 %** | 1.394 | **N ≤ 116** |
+
+**Meeting the standard's deadline halves the supportable swarm and changes nothing else.**
 
 ### Declared reference operating point: Λ = 20 rec/s, D_max = 250 ms
 
@@ -477,11 +536,7 @@ how tightly this regime is squeezed, and it is why the corner is reported rather
 objection: the mechanism does not depend on the relaxed deadline — only b does, and b depends only
 on Λ·D_max.
 
-### At N=50 the 100 ms bound is unsatisfiable *with batching* on 802.11a (finding B8)
-Of the 18 compliant points, only 4 are runnable at N=50, and only 2 of those batch at all. Every
-faster variant saturates the medium. **This is an 802.11-side impossibility of the same kind as
-T6** — the *medium*, not the cryptography, forecloses it — and it is a result, not a configuration
-failure.
+*(The impossibility this exposes is stated as **T7** below, beside T6.)*
 
 ### Loss probability p — mechanism, not a borrowed number (item B4)
 p ∈ {0.02, 0.05, 0.10} is a **declared sensitivity range**, and the reason it is not tied to a

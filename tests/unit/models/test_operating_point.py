@@ -189,3 +189,50 @@ def test_equal_lambda_times_dmax_gives_identical_bytes() -> None:
     # identical bytes, and that is exactly where they differ:
     assert float(a["channel_util_at_n_ref"]) < 1.0 < float(b["channel_util_at_n_ref"])
     assert int(a["n_max"]) > int(b["n_max"])
+
+
+# --- D3/C1: the delay measurement that closed C1 and refuted T7 (docs/02, ns3_delay.csv) ------
+def _delay_rows() -> list[dict[str, str]]:
+    path = REPO / "results/raw/ns3_delay.csv"
+    return list(csv.DictReader([ln for ln in path.read_text().splitlines()
+                                if not ln.startswith("#")]))
+
+
+def test_omitted_access_delay_is_negligible_against_the_freshness_budget() -> None:
+    """C1 asked whether omitting DCF access delay from D(b) matters. Measured: it does not.
+
+    At the reference operating point the omitted term is ~0.03 ms against a 250 ms budget, and even
+    at nine times saturation load it stays in the low milliseconds.
+    """
+    rows = _delay_rows()
+    ref = next(r for r in rows if abs(float(r["channel_util"]) - 0.557) < 0.01)
+    assert float(ref["access_delay_ms"]) < 0.1
+    assert float(ref["pct_of_250ms_budget"]) < 0.3, "must stay far under 1 % of the budget"
+    assert all(float(r["delay_mean_ms"]) < 5.0 for r in rows), (
+        "broadcast has no ARQ and cannot queue, so delay must never diverge — if it does, the "
+        "scenario has grown a retransmission path and C1 must be reopened")
+
+
+def test_delivery_not_delay_is_what_degrades_under_overload() -> None:
+    """The structural finding: overload drops frames, it does not delay them."""
+    rows = sorted(_delay_rows(), key=lambda r: float(r["channel_util"]))
+    lo, hi = rows[0], rows[-1]
+    assert float(hi["channel_util"]) / float(lo["channel_util"]) > 20     # a wide load range
+    assert float(lo["delivered_frac"]) - float(hi["delivered_frac"]) > 0.5   # delivery collapses
+    assert float(hi["delay_mean_ms"]) / float(lo["delay_mean_ms"]) < 10      # delay barely moves
+
+
+def test_saturation_throughput_understates_usable_capacity() -> None:
+    """Why T7 was withdrawn: U >= 1 is not a feasibility boundary.
+
+    U is offered load over *saturation* throughput. NS-3 still delivers ~99 % at U = 1, and the
+    V >= 0.95 crossing sits near U = 2.8 — so every N_max computed at U < 1 is a conservative lower
+    bound, not a limit.
+    """
+    at_unity = next(r for r in _delay_rows()
+                    if abs(float(r["channel_util"]) - 1.0) < 0.05)
+    assert float(at_unity["delivered_frac"]) > 0.98, (
+        "if delivery at U=1 ever falls below 0.98, the U<1 criterion becomes defensible again "
+        "and docs/02's T7 withdrawal must be revisited")
+    survivors = [r for r in _delay_rows() if float(r["delivered_frac"]) >= 0.95]
+    assert max(float(r["channel_util"]) for r in survivors) > 2.0

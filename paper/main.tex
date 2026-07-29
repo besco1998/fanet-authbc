@@ -41,7 +41,10 @@ The authentication term alone reduces to $1-1/b$, invariant to header size, sign
 encoding---so the co-design claim rests not on that ratio but on \emph{joint feasibility}: coupling
 the byte model to an NS-3-validated broadcast channel shows the inline baselines exhaust a single
 collision domain at $N{=}32$ (CBOR) and $N{=}25$ (JSON) neighbours, while the co-designed
-configuration reaches $N{=}103$---a $3.2\times$ larger swarm. Freshness, not the MTU, is what binds:
+configuration reaches $N{=}103$---a $3.2\times$ larger swarm. Because a tighter freshness deadline
+shrinks the batch and so raises the frame rate, latency and capacity trade against each other: meeting
+the 100\,ms bound of 3GPP TS~22.125 costs a factor of two in supportable swarm size and nothing in
+bytes. Freshness, not the MTU, is what binds:
 the byte-optimal batch cuts 96.7\% of authentication but incurs 1.50\,s of staleness, so a co-design
 optimizer blind to freshness solves the wrong problem. The airtime model is
 validated against NS-3 3.41: unicast matches Bianchi within $+0.6$/$-2.9\%$, while the common
@@ -427,12 +430,18 @@ reduces to $1-1/b$: the header and signature sizes cancel, and neither the encod
 appears. Reported as a headline percentage it would overstate what four coupled axes contribute. The
 contribution that genuinely requires the coupling is \emph{feasibility}---which configurations can
 run at all. Joining the byte model to the channel model shows the inline baselines exhaust a single
-collision domain at 25--32 neighbours while the co-designed configuration reaches 103, and that at
-the 100\,ms latency bound of 3GPP TS~22.125~\cite{3gpp_ts22125} no 802.11a configuration serves 50
-neighbours at all. The same reasoning, pushed to the low-rate regime, yields an exclusion theorem:
-a link whose payload cannot hold one header, one signature and one record carries no
-per-frame-verifiable telemetry at any encoding or batch size, which removes the four longest-range
-LoRa modes from consideration outright. An NS-3-validated channel model and an automated
+collision domain at 25--32 neighbours while the co-designed configuration reaches 103.
+
+Pushed to its limit, the same coupling yields an exclusion result that we regard as the more durable
+contribution. A link whose payload cannot hold one header, one signature and one record carries no
+per-frame-verifiable telemetry at \emph{any} encoding or batch size, which removes the four
+longest-range LoRa modes outright; loss makes fragmentation no escape, since a unit spanning $n$
+frames verifies with probability $(1-p)^n$ and the target is already spent at $n{=}1$ whenever
+$\epsilon \leq p$. It is not escapable by better cryptography, and it is not visible to a byte model
+alone. Capacity, by contrast, turned out to constrain rather than exclude: simulation shows the
+channel still delivering $98.8\%$ of frames at nominal saturation load, so meeting the
+100\,ms bound of 3GPP TS~22.125~\cite{3gpp_ts22125} costs swarm size---$N{\leq}116$ instead of
+$N{\leq}233$---and nothing in bytes. An NS-3-validated channel model and an automated
 reproducibility gate keep the study honest and repeatable.
 
 \bibliographystyle{IEEEtran}

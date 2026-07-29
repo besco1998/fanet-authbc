@@ -133,3 +133,8 @@ def test_measured_inputs_present_and_shaped() -> None:
     matrix = [ln for ln in (RAW / "ns3_matrix.csv").read_text().splitlines()
               if not ln.startswith("#")]
     assert len(matrix) > 1 and matrix[0].startswith("N,mode")
+    # ns3_delay is the same class of artifact: a simulation measurement, not a derived table, so
+    # it is shape-checked here rather than re-derived above (D3, docs/02).
+    delay = [ln for ln in (RAW / "ns3_delay.csv").read_text().splitlines()
+             if not ln.startswith("#")]
+    assert len(delay) > 1 and delay[0].startswith("n_nodes,frames_per_s")

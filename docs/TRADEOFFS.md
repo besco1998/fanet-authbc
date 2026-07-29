@@ -23,9 +23,9 @@ behind several rows here).
 
 | # | Decision | Bought | Gave up | Status |
 |---|---|---|---|---|
-| **Λ = 20 rec/s, D_max = 250 ms** | reference operating point | b=4 ⇒ 75.0 % auth / 58.68 % total cut; U=0.557 and N_max=103 at N=50 | **Violates 3GPP TS 22.125 R-5.2.2-011** (≤100 ms). Under full compliance the best achievable cut is **50 %**, so a third of the headline is bought by the deviation. Rests on a *scope* argument — §5.2.2 targets collision avoidance; a provenance ledger has a different deadline | **DECLARED** (docs/02 §7a) |
-| | *alternative:* Λ=50, D=100 ms | fully compliant, **identical bytes** (Λ·D=5 ⇒ b=4), PX4 `ONBOARD` is a real mode | **unrunnable at N=50** (U=1.39); N_max falls 103→35, and the baseline ratio weakens 3.2×→1.8× | reported |
-| | *alternative:* Λ=21, D=100 ms | compliant **and** runnable at N=50 (U=0.888, N_max=58) | cut halves to 50 %; **knife-edge** — at Λ=20.0 the b=2 frame takes 100.37 ms, so b→1 and the cut → **0 %** | reported, not adopted |
+| **Λ = 20 rec/s, D_max = 250 ms** | reference operating point | b=4 ⇒ 75.0 % auth / 58.68 % total cut; supports **N ≤ 233** at V≥0.95 | **Violates 3GPP TS 22.125 R-5.2.2-011** (≤100 ms). ⚠️ *Corrected 2026-07-29:* the deviation buys **no bytes at all** — the compliant point gives an identical cut. What it buys is **swarm size, 116 → 233**. Rests on a *scope* argument: §5.2.2 targets collision avoidance; a provenance ledger has a different deadline | **DECLARED** (docs/02 §7a) |
+| | *alternative:* Λ=50, D=100 ms | fully compliant, **identical bytes** (Λ·D=5 ⇒ b=4), PX4 `ONBOARD` is a real mode, and **feasible** — U=1.39 is inside the measured V≥0.95 boundary of U≈2.80 | halves the supportable swarm: N≤233 → **N≤116** | reported |
+| | *alternative:* Λ=21, D=100 ms | compliant, lowest channel load | cut halves to 50 %; **knife-edge** — at Λ=20.0 the b=2 frame takes 100.37 ms, so b→1 and the cut → **0 %**. Superseded: Λ=50 is compliant *and* keeps the full cut | reported, not adopted |
 | **N_local = 50** | neighbourhood size | a swarm the baselines cannot serve (32) and the co-design can (103) | not independently cited; justified *by* the envelope rather than by a density source | **MEASURED** as a curve (B2) |
 | **p ∈ {0.02, 0.05, 0.10}** | loss grid | mechanism-grounded (802.11 broadcast has no ACK, no retransmission ⇒ receiver sees raw channel error) | no single measured FANET PER; 20–100× more pessimistic than TS 22.125's managed-C2 99.9 % — conservative, but not tied to a measurement | **DECLARED** (B4) |
 | **ε = p** | verifiability target | makes T6's n_max = 1 exact, closing the fragmentation escape | a looser ε would admit fragmentation and weaken T6; the theorem is stated with its condition (ε ≤ p) rather than the value | **DECLARED** |
@@ -43,8 +43,8 @@ behind several rows here).
 
 | # | Decision | Bought | Gave up | Status |
 |---|---|---|---|---|
-| **No DCF channel-access delay in D(b)** | tractable closed form; the M/M/1 term covers a node's own queue (ρ≈0.002) | D(b) is a **lower bound**, credible only at low U. Must be read alongside U, never quoted near U→1 | **OPEN** (C1) |
-| **Saturation channel models at a non-saturated point** | Bianchi / Ma & Chen are validated and closed-form | correct as a *capacity* bound (which is how U uses them), **not** valid for delay at our load | **DECLARED** (C2) |
+| **No DCF channel-access delay in D(b)** | tractable closed form | **measured negligible**: +0.033 ms at the reference point, +2.2 ms even at 9× saturation load, against 250 ms. Broadcast has no ARQ so it cannot queue — overload degrades *delivery*, not latency | **MEASURED** (C1/D3) |
+| **Saturation channel models at a non-saturated point** | Bianchi / Ma & Chen are validated and closed-form | measured to understate usable capacity by **≈2.8×**; U<1 is *sufficient, not necessary*, so every N_max computed that way is a **lower bound**. Comparative ratios unaffected | **MEASURED** (C2/D3) |
 | **Single collision domain; no mobility, spatial reuse or hidden terminals** | one clean, validated regime | a real formation gets spatial reuse (helps) and hidden terminals (hurts); bounded by a sweep showing the idealised model is conservative to ≈300–400 m and optimistic by 15.7 % at 500 m | **DECLARED** (C3) |
 | **i.i.d. per-frame loss** | closed-form V | real FANET loss is bursty. F11 proved V_D ≤ V_B under *any* correlation, so the **T3 ordering survives**; absolute V still assumes independence | **PARTLY OPEN** (C4) |
 | **No sender-side CPU throughput constraint** | simpler optimizer | verified never to bind (worst case 13.9 % of one core; binds at ~360 rec/s vs our 20) | **DECLARED** (C5) |
@@ -85,3 +85,5 @@ behind several rows here).
    dominant delay term at high load. Mitigated by reporting U, not by fixing the model.
 4. **Energy is 10–14 % low** (§5) — was 32 %, root-caused and fixed; the residual is uncharged
    prototype framing overhead, measured and stated. Absolute values are lower bounds.
+5. **A withdrawn theorem** (docs/02, ~~T7~~) — capacity was claimed to exclude at U ≥ 1; the
+   validation experiment refuted it the same day. Kept visible, with the lesson recorded.
