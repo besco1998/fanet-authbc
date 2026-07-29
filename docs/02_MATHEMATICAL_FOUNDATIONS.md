@@ -403,6 +403,52 @@ the 802.11 arm's 20 rec/s (**110×**). Freshness is likewise **38.4 s**, i.e. **
 of 250 ms**. Under the 802.11 per-record format it is worse still (Λ = 0.060 rec/s at DR5, **333×**
 below).
 
+### 9c. The LoRa capacity envelope — SIMULATED, not derived (D2, 2026-07-29)
+*Artifact: `results/raw/lora_capacity.csv` · scenario `ns3/authbc-lora-capacity.cc` on ns-3.48 with
+the signetlabdei LoRaWAN module · driver `ns3/run_lora_capacity.py`.*
+
+Everything else in this arm is analytical, deliberately: time on air is the SX1276 formula and the
+sustainable rate is the duty cycle, both deterministic, so simulating them would be circular.
+Exactly one quantity resists that — **how many nodes can share the channel** — because LoRaWAN
+uplinks are pure ALOHA, with no carrier sense and no ACK. The duty cycle says what *one* node may
+legally send; it says nothing about fifty.
+
+Measured at DR5, AUTHBC frame 218 B (b=6), one transmission per duty-cycle interval, 3 seeds × 1 h,
+against the same **V ≥ 1−ε** criterion the 802.11 envelope uses:
+
+| N | delivered | meets V ≥ 0.95 |
+|---|---|---|
+| 2, 3, 5 | 1.0000 | ✅ |
+| 8 | 0.8656 | ✗ |
+| 10 | 0.7731 | ✗ |
+| 20 | 0.5795 | ✗ |
+| 50 | 0.2532 | ✗ |
+
+**N_max = 5**, and the cliff is brutally sharp — perfect at 5, 13 % loss at 8. That is ALOHA without
+carrier sense: there is no backoff to absorb contention, so the transition from "fine" to "unusable"
+spans less than a factor of two in N.
+
+**The two penalties compound, and this is the number the chapter should lead with:**
+
+| | per-node Λ | N_max (V≥0.95) | aggregate |
+|---|---|---|---|
+| 802.11a, delta/B, b=4 | 20 rec/s | 103 | **2060 rec/s** |
+| LoRa EU868 DR5, b=6 | 0.165 rec/s | **5** | **0.82 rec/s** |
+| ratio | 121× | 21× | **≈2500×** |
+
+The arm was already known to be ~120× slower *per node*; it is also ~20× smaller *per domain*, and
+the product is what separates the two regimes. **LoRa is not a slower version of the 802.11 arm — it
+is a different regime**, which is precisely the "generalisation to the low-rate regime" framing.
+
+⚠️ **Frame size is the module's limit, not ours.** The module enforces RP002-1.0.3 **Table 12**
+(repeater-compatible, 222 B); `models/lora.py` uses **Table 13** (non-repeater, 242 B) and documents
+that choice. At DR5 that caps b at 6 here where our model reports 7. Both readings of the standard
+are defensible; we simulate what the module accepts and state the difference rather than reconcile
+it silently.
+
+**Scope.** This is *simulation*, not hardware — item D2's "no measurement of any kind" becomes "a
+simulated bound", not a measured one. No LoRa radio was metered, and no energy column exists.
+
 ### 9b. Per-frame chaining is the adopted LoRa wire format (F5, decided 2026-07-28) ⚠️
 
 Moving the chain hash from per-record to per-frame (audit F5) is worth far more here than on 802.11,

@@ -416,8 +416,12 @@ validated only in the idealised single-collision-domain regime they describe: a 
 formation introduces spatial reuse and, at long range, hidden terminals that neither model
 represents. We bound this: sweeping a realistic air-to-air scenario (Friis, 3D cluster, Nakagami
 fading) shows the idealised model is a \emph{conservative} lower bound up to a ${\approx}300$--400\,m
-cluster (goodput $+43$ to $+51\%$ from spatial reuse) but becomes \emph{optimistic} by $15.7\%$ at
-500\,m, where links break down; fading costs a further 5--13 points. The hardware validation is two-node. On ARM the scheme tie breaks toward Ed25519
+cluster (goodput $+42$ to $+51\%$ from spatial reuse) but becomes \emph{optimistic} by $39\%$ at
+500\,m, where links break down; Rayleigh fading ($m{=}1$) costs a further 27 points. These two
+marginal-link figures moved substantially when we migrated NS-3 3.41$\to$3.48 (from $15.7\%$ and
+9 points), while every near-field scenario moved under $2\%$ --- consistent with that release's
+\texttt{InterferenceHelper} and \texttt{WifiPhy} fixes, which bite hardest at marginal SNR. We
+report the newer simulator's figures. The hardware validation is two-node. On ARM the scheme tie breaks toward Ed25519
 rather than ECDSA, with an identical auth-byte cut.
 
 \section{Conclusion}
