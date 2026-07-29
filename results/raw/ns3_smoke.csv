@@ -1,3 +1,3 @@
 mode,nNodes,frameSize,simTime,seed,rx_bytes,goodput_mbps,flowmon_throughput_mbps
-unicast,2,200,5,1,2044600,3.27136,3.3908
-broadcast,2,200,5,1,2316000,3.7056,
+unicast,2,200,5,1,1994800,3.19168,
+broadcast,2,200,5,1,2291200,3.66592,
