@@ -10,13 +10,17 @@ from __future__ import annotations
 import argparse
 import csv
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
 from authbc.bench import provenance
 
 REPO = Path(__file__).resolve().parents[1]
-NS3 = REPO / "ns3" / "ns-allinone-3.41" / "ns-3.41"
+sys.path.insert(0, str(REPO / "ns3"))
+from ns3_paths import ns3_root  # noqa: E402
+
+NS3 = ns3_root()   # D4: pinned tree, override with AUTHBC_NS3 (ns3/ns3_paths.py)
 RESULTS = REPO / "results" / "raw"
 
 N_VALUES = (5, 10, 20, 35, 50)

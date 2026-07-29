@@ -4,15 +4,59 @@ Validates the Bianchi airtime/throughput model against NS-3 (docs/04 §3, docs/0
 NS-3 tree is built locally and **git-ignored** (`ns3/ns-allinone-*`); only the scenario, parser,
 and this README are committed. NS-3 is machine-dependent and NOT run in CI.
 
-## ⚠️ D4 — NS-3 version pinned at **3.41** (from source, optimized).
+## ⚠️ D4 — NS-3 pinned at **3.48** (migrated from 3.41 on 2026-07-29)
 
-## Build (one-time, ~15–40 min)
+Both trees may coexist; `ns3/ns3_paths.py` selects one and every driver imports it:
+
 ```bash
-sudo apt install -y g++ cmake ninja-build python3 libgsl-dev      # deps
+python ns3/run_matrix.py                                          # the pinned tree (3.48)
+AUTHBC_NS3=ns3/ns-allinone-3.41/ns-3.41 python ns3/run_matrix.py  # the old tree, for comparison
+```
+
+The 3.41 tree is **kept until the migration comparison passes** — you cannot show results did not
+move by deleting the simulator that produced them (`ns3/compare_versions.py`).
+
+## ⚠️ MEMORY: build with `-j 3`, not the default
+
+This machine is **WSL2 with ~7.8 GB RAM and 16 cores**, so ninja defaults to `-j 15`. NS-3
+translation units need roughly 1–2 GB each, so the default parallelism exhausts the VM, the OOM
+killer fires, and **WSL itself drops** — losing the SSH/IDE session mid-build. Symptom: the build
+appears to "break" and the IDE must be restarted.
+
+```bash
+cd ns3/ns-3.48
+./ns3 configure --build-profile=optimized --enable-examples -- -G Ninja
+nohup ./ns3 build -j 3 > /tmp/ns348_build.log 2>&1 &   # detached: survives an IDE restart
+tail -f /tmp/ns348_build.log
+```
+
+Run it under `nohup` (or `tmux`): a build attached to the IDE's shell dies with the IDE.
+
+## Build ns-3.48 (one-time, ~40–90 min at `-j 3`)
+```bash
+sudo apt install -y g++ cmake ninja-build python3 libgsl-dev
+cd ns3 && wget https://www.nsnam.org/releases/ns-3.48.tar.bz2 && tar xf ns-3.48.tar.bz2
+# LoRaWAN arm (item D2) — the module pins ns-3.48 exactly (its NS3-VERSION file):
+git clone --depth 1 https://github.com/signetlabdei/lorawan.git ns-3.48/contrib/lorawan
+python ../ns3/patch_lorawan.py        # REQUIRED: see below
+cd ns-3.48
+./ns3 configure --build-profile=optimized --enable-examples -- -G Ninja
+nohup ./ns3 build -j 3 > /tmp/ns348_build.log 2>&1 &
+```
+
+### Why `patch_lorawan.py` is required
+57 of the module's sources use `NS_LOG_*` and none include `ns3/log.h`; they rely on a transitive
+include that our `optimized` profile (`NS3_ASSERT=OFF`, `NS3_LOG=OFF`) does not provide. Without the
+patch the module fails with *"'NS_LOG_FUNCTION' was not declared in this scope"*. The script is
+idempotent; re-run it after any `git pull` inside the module. We patch rather than switch profile
+because the frozen 802.11 results were produced under `optimized`, and changing the profile would
+confound a version migration with a build-profile change.
+
+## Legacy: the 3.41 tree
+```bash
 cd ns3 && wget https://www.nsnam.org/releases/ns-allinone-3.41.tar.bz2
 tar xf ns-allinone-3.41.tar.bz2 && cd ns-allinone-3.41/ns-3.41
-./ns3 configure --build-profile=optimized --enable-examples -- -G Ninja
-./ns3 build
+./ns3 configure --build-profile=optimized --enable-examples -- -G Ninja && ./ns3 build -j 3
 ./ns3 run hello-simulator        # GATE: runs (exit 0)
 ```
 **Gate note**: `hello-simulator` prints via `NS_LOG_UNCOND`, which the **optimized** profile

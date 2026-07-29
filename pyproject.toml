@@ -40,6 +40,10 @@ where = ["src"]
 line-length = 100
 target-version = "py312"
 src = ["src", "tests"]
+# Vendored NS-3 trees are third-party source and are git-ignored; never lint them. Previously the
+# only tree lived under ns-allinone-* and was excluded by accident of its name; the 3.48 migration
+# put a tree at ns3/ns-3.48 and ruff started reporting 1172 errors from NS-3 itself (2026-07-29).
+extend-exclude = ["ns3/ns-3.*", "ns3/ns-allinone-*"]
 
 [tool.ruff.lint]
 # Conservative, high-signal rule set for P0; expanded as real code lands.

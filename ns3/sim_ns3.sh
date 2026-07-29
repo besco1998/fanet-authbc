@@ -4,11 +4,11 @@
 set -euo pipefail
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
-NS3="$REPO/ns3/ns-allinone-3.41/ns-3.41"
+NS3="${AUTHBC_NS3:-$REPO/ns3/ns-3.48}"   # D4: pinned tree (ns3/ns3_paths.py)
 PY="${PY:-$REPO/.venv/bin/python}"
 
 if [ ! -x "$NS3/ns3" ]; then
-  echo "ERROR: NS-3 3.41 not built at $NS3 — see ns3/README.md (download + ./ns3 build)."; exit 1
+  echo "ERROR: NS-3 not built at $NS3 — see ns3/README.md (download + ./ns3 build)."; exit 1
 fi
 
 cp "$REPO/ns3/authbc-sat.cc" "$NS3/scratch/authbc-sat.cc"

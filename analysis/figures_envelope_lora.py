@@ -51,7 +51,8 @@ def fig_envelope() -> None:
     ax.set_yticks(range(len(rows)))
     ax.set_yticklabels(labels, fontsize=8)
     ax.invert_yaxis()
-    ax.set_xlabel("largest single collision domain sustainable, $N_{max}$  ($U<1$)")
+    ax.set_xlabel("largest sustainable collision domain, $N_{max}$   (at $U<1$ — conservative;\n"
+                  "measured $V{\\geq}0.95$ boundary is $U{\\approx}2.8$)")
     ax.set_title("Feasibility envelope: how many UAVs each configuration can actually serve",
                  fontsize=10)
     for bar, v in zip(bars, n_max, strict=True):
@@ -127,7 +128,7 @@ def fig_lora_chain() -> None:
     ax.set_xticks(drs)
     ax.set_xticklabels([f"DR{d}" for d in drs])
     ax.set_ylabel("sustainable rate $\\Lambda$ (records/s)")
-    ax.set_title("F5 on the LoRa arm: per-frame chaining buys 2.7$\\times$ the telemetry\n"
+    ax.set_title("F5 on the LoRa arm: per-frame chaining buys 3.0$\\times$ the telemetry\n"
                  "(EU868, 1 % duty cycle, delta encoding)", fontsize=10)
     ax.legend(fontsize=8)
     ax.grid(alpha=0.3)

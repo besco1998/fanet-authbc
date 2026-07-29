@@ -22,7 +22,10 @@ import tempfile
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
-NS3 = REPO / "ns3" / "ns-allinone-3.41" / "ns-3.41"
+sys.path.insert(0, str(REPO / "ns3"))
+from ns3_paths import ns3_root  # noqa: E402
+
+NS3 = ns3_root()   # D4: pinned tree, override with AUTHBC_NS3 (ns3/ns3_paths.py)
 sys.path.insert(0, str(REPO / "src"))
 
 from authbc.bench import provenance  # noqa: E402
