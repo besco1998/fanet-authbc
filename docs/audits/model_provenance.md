@@ -387,54 +387,76 @@ independence so the claim cannot silently regress.
 
 ---
 
-## F14 — the energy model omits the chain-hash cost, and under-predicts CPU asymmetrically ⚠️
-*Found 2026-07-29 while building the D1 end-to-end validation. **Partial result: the meter half is
-blocked on hardware; the composition half is done and is where the defect was.***
+## F14 — the energy model under-predicts CPU energy by ~32 %, uniformly across configurations
+*Opened 2026-07-29 from the composition check; **CLOSED the same day by the first end-to-end
+measurement**, which corrected the interim conclusion. Both halves are recorded — the wrong
+inference and the measurement that overturned it.*
 
-**What D1 asked.** P7b measured every *input* to the energy model — `p_cpu_w`, `p_radio_w`, and all
-per-operation timings — but nothing ever measured its *output*. `per_record` composes
-`t_enc + t_sign/b + t_verify/b` and multiplies by power. Power enters **linearly**, so it cannot be
-the source of a composition error; the risk lives entirely in *which* times are summed and what they
-are divided by. That half needs no meter.
+### What D1 asked
+P7b measured every *input* to the energy model — `p_cpu_w`, `p_radio_w`, all per-operation timings —
+but nothing measured its *output*. `models.energy.per_record` composes `t_enc + t_sign/b + t_verify/b`
+and multiplies by power. A model can be built from correct pieces and still be wrong, because
+composition is where the assumptions live.
 
-**The defect.** `models.energy.per_record` has **no hashing term**. Every record must be hashed to
-form `prev_hash = SHA-256(previous record)` — that is the ledger — but the model never charges for
-it. Measured against the real pipeline (stateful delta encode → chain link → sign once per frame),
-same machine, same code paths:
+### Two defects in the harness, found by running it
+1. **The prediction included `t_verify`; the pipeline never verifies.** The first run compared a
+   sender-side measurement against a sender+receiver model, inflating the prediction ~1.9×. The
+   harness now predicts the sender side only and says so in its banner.
+2. **The manifest schema did not match the reducer** (`label` vs `kind`/`op`), so windows could not
+   be paired. Fixed at source rather than by hand-editing the artifact.
 
-| | model as written | + chain hash | measured |
-|---|---|---|---|
-| µs/record (delta, B, b=4) | 12.302 | 12.756 | **13.282** |
-| gap | **+7.97 %** | +4.12 % | — |
+### The measurement (INA219, pi-A, 5 reps per configuration, 60 s windows)
 
-Adding the omitted hash accounts for **roughly half** the discrepancy. The residual ~4 % is frame
-assembly the model also does not count (list building, concatenation, slicing) — real work, charged
-to nobody.
+| configuration | predicted | measured | gap | ΔP |
+|---|---|---|---|---|
+| optimized delta/B, b=4 | 44.25 µJ/rec | **58.38** | **+31.95 %** | 0.732 W |
+| A+CBOR baseline, b=1 | 87.83 µJ/rec | **118.83** | **+35.30 %** | 0.755 W |
 
-**The direction is the problem, not the size.** Both figures sit inside the ±10 % acceptance band,
-but the error is **not uniform across configurations**:
+Well outside the ±10 % acceptance band. It decomposes into two roughly equal factors, both pushing
+the same way:
 
-| configuration | model µs/rec | measured | gap |
-|---|---|---|---|
-| optimized delta/B, b=4 | 12.147 | 12.965 | **+6.73 %** |
-| A+CBOR baseline, b=1 | 34.167 | 35.028 | **+2.52 %** |
+* **Time (+13.3 %)** — measured pipeline 81.0 µs/record against the model's 71.5 µs (components
+  re-measured on the Pi in the same process, so like-for-like). The **chain hash is 4.64 µs/record
+  and the model has no term for it**; frame assembly accounts for the rest. This is the original
+  F14 defect and it stands.
+* **Power (+15.5 %)** — the composed pipeline draws **0.732 W**, not the **0.634 W** `p_cpu_w` from
+  P7b. That constant is the *median incremental power over eight isolated primitives*; a real
+  pipeline has a different instruction mix (bytes/list churn between crypto calls) and draws more.
+  **Using one `p_cpu_w` for every configuration is itself a modelling simplification**, and this is
+  the first evidence of its size.
 
-The batched configuration is under-predicted **2.7× harder** than the baseline, because the omitted
-per-record costs (hash, framing) do *not* amortise over b while the signature does. **The model
-therefore overstates the optimized configuration's energy advantage by ~4 percentage points.** That
-bias runs in our favour and must be stated wherever the energy column is quoted.
+Cross-check (Law 6): the energy run's own throughput implies 79.9 µs/record against 81.0 µs from an
+independent benchmark — 1.4 % apart, so the two routes corroborate.
 
-**Why it is not simply fixed today.** Adding a hash term needs a *measured ARM* SHA-256 time; the
-only figures here are x86, and substituting them would be the fabrication Law 7 forbids. So the
-omission is **documented with its measured magnitude and direction** rather than patched with a
-borrowed constant. The E5 energy column stands, with this caveat attached.
+### ⚠️ RETRACTION: the interim claim about direction was wrong
+Between the composition check and the measurement, this audit stated that the model **"overstates
+the optimized configuration's energy advantage by ~4 points."** That was inferred from an *x86
+timing* check (+6.73 % at b=4 vs +2.52 % at b=1) on the reasoning that the omitted per-record costs
+do not amortize over b. **The end-to-end measurement does not support it:**
 
-**Not affected.** The auth-byte and total-byte results are power-free and untouched. T4's scheme
-crossover compares *verify* times, where the omitted terms are common to both schemes and cancel to
-first order.
+| | predicted | measured |
+|---|---|---|
+| advantage (baseline ÷ optimized) | 1.985× | **2.035×** |
 
-**Actions.** (i) `hw/validate_energy_e2e.py` runs the composed pipeline under the INA219 rig and
-prints the predicted value *before* reading the meter (Law 6) — ready, blocked only on the boards
-being powered; (ii) add an ARM SHA-256 measurement to the P1 micro harness, then add the term and
-re-freeze; (iii) until then, every energy claim carries the "+7 % under-predicted, asymmetric"
-caveat. Tracked as **D1** in docs/OPEN_ITEMS.md.
+Both configurations are under-predicted by a similar factor, and the **baseline slightly more**
+(+35.30 % vs +31.95 %), so the model very slightly **understates** the advantage — 2.5 % in the
+opposite direction. The reason the x86 inference misled: at b=1 the omitted framing is charged once
+per *record* rather than once per *four*, but the base it is measured against is also ~2× larger
+(one full signature per record), and on ARM the second effect dominates. **The claim is withdrawn
+and replaced by the measurement.** It was propagated to `models/energy.py`, the paper's limitations
+section, OPEN_ITEMS and the status board; all four are corrected.
+
+### What this means for the thesis
+* **Byte results are power-free and entirely unaffected.**
+* **The energy column is systematically ~32 % low in absolute terms**, and this must be stated. It
+  is *not* a fabricated correction factor — nothing is rescaled — it is a measured, reported gap.
+* **Relative energy comparisons survive**, because the bias is near-uniform across configurations
+  (31.95 % vs 35.30 %). T4's scheme crossover, which compares verify times with the same omitted
+  terms on both sides, is unaffected to first order.
+* A correct fix needs an **ARM SHA-256 measurement** plus a per-configuration `p_cpu_w`, neither of
+  which exists yet. Patching with the x86 hash figure would be the fabrication Law 7 forbids, so the
+  gap is documented rather than closed.
+
+*Artifacts: `results/hw/energy/e2e/energy_d1{,_baseline}-summary.csv`, manifests and raw samples.
+Harness: `hw/validate_energy_e2e.py`.*
+

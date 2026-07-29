@@ -420,43 +420,68 @@ Wi-Fi figure from the RPi4 rig; reusing it for a LoRa transceiver would be fabri
 record is reported instead — it is what the regulator rations, and it is computed, not assumed.
 A LoRa energy column needs a LoRa radio measurement.
 
-## 7a. The operating point, and where it sits against the standard ⚠️ (2026-07-29, items B3/B4)
+## 7a. The operating point is an OPTIMIZATION RESULT, not a chosen constant (B3, 2026-07-29) ⚠️
+*Artifact: `results/raw/operating_region.csv` (`make exp-operating-region`). 70 points.*
 
-**D_max is now cited, and the citation is stricter than our operating point.** 3GPP TS 22.125
-R-5.2.2-011 requires direct UAV-to-UAV local broadcast to deliver with **end-to-end latency ≤ 100 ms**;
-R-5.2.2-010 requires **≥10 messages/s**. We run at **250 ms**.
+Λ and D_max are **decision variables of the same optimization the rest of this thesis solves**, not
+settings to be picked and then defended. Treating them as constants was the actual defect in item
+B3; the fix is to enumerate the region, state every trade-off, and then *declare* a reference point
+with its costs attached.
 
-**Why this is recoverable: only the product Λ·D_max matters.** Batching obeys b ≤ ⌊Λ·D_max⌋ (T2a),
-so freshness and rate trade off exactly. Sweeping both (H_f = 44 B, g_a = 64 B, delta s = 45 B):
+**The governing relation** is b ≤ ⌊Λ·D_max⌋ (T2a), so **the byte results depend only on the
+product**. Everything distinguishing equal-product points is channel load: a faster stream at a
+tighter deadline buys *identical bytes* and *costs capacity*. That is the whole of B3.
 
-| Λ (rec/s) | D_max | Λ·D_max | b | auth B/rec | auth cut | total B/rec | total cut | U at N=50 |
-|---|---|---|---|---|---|---|---|---|
-| 20 | 50 ms | 1.0 | 1 | 108.00 | 0 % | 153.00 | 12.2 % | — |
-| 20 | **100 ms** *(3GPP)* | 2.0 | **1** | 108.00 | **0 %** | 153.00 | 12.2 % | **1.42 ✗** |
-| 20 | 150 ms | 3.0 | 2 | 54.00 | 50.0 % | 99.00 | 43.2 % | — |
-| 20 | 200 ms | 4.0 | 3 | 36.00 | 66.7 % | 81.00 | 53.5 % | — |
-| **20** | **250 ms** *(operating point)* | **5.0** | **4** | **27.00** | **75.0 %** | **72.00** | **58.7 %** | **0.56 ✓** |
-| **50** *(PX4 ONBOARD)* | **100 ms** *(3GPP)* | **5.0** | **4** | **27.00** | **75.0 %** | **72.00** | **58.7 %** | **1.39 ✗** |
-| 10 *(3GPP min)* | 100 ms | 1.0 | 1 | 108.00 | 0 % | 153.00 | 12.2 % | 0.71 ✓ |
-| 20 | 1 s | 20.0 | 19 | 5.68 | 94.7 % | 50.68 | 70.9 % | — |
+**The constraint that makes it interesting.** 3GPP TS 22.125 V17.6.0 §5.2.2 specifies the direct
+UAV-to-UAV local broadcast service — precisely this system: **R-5.2.2-010 ≥ 10 messages/s** and
+**R-5.2.2-011 ≤ 100 ms end-to-end**. Applying both to the region:
 
-Two things follow, and the second is the interesting one.
+| | points | best auth cut achievable | at |
+|---|---|---|---|
+| whole region | 70 | **98.0 %** | Λ=50, D=1000 ms, b=49 |
+| TS 22.125 compliant | 18 | **75.0 %** | Λ=50, D=100 ms, b=4 — but **U = 1.39, unrunnable at N=50** |
+| **compliant AND runnable at N=50** | **4** | **50.0 %** | **Λ=21–22, D=100 ms, b=2** |
 
-**(1) The co-design result is reproduced at a compliant operating point.** (Λ=50 Hz, D=100 ms) —
-PX4's `MAVLINK_MODE_ONBOARD` rate at the 3GPP latency bound — gives Λ·D = 5, b = 4, and **exactly the
-same 75.0 % / 58.7 %**. The mechanism does not depend on the relaxed latency; only b does, and b
-depends only on the product.
+**The compliant-and-runnable set is exactly four points, and here it is in full:**
 
-**(2) At N = 50 the 3GPP latency bound is not satisfiable on 802.11a at all.** Every 100 ms row
-either saturates the channel (U = 1.42 / 1.39 > 1) or forbids batching entirely (b = 1). The single
-compliant, runnable point is the standard's *minimum* message rate with no batching. **This is an
-802.11-side impossibility statement of the same kind as T6**, and it is a finding, not a
-configuration failure: the medium, not the cryptography, is what forecloses it.
+| Λ | D_max | Λ·D | b | auth cut | total cut | U at N=50 | N_max |
+|---|---|---|---|---|---|---|---|
+| 21 | 100 ms | 2.1 | 2 | **50.0 %** | 43.2 % | 0.888 | 58 |
+| 22 | 100 ms | 2.2 | 2 | **50.0 %** | 43.2 % | 0.930 | 55 |
+| 10 | 50 ms | 0.5 | 1 | 0 % | 12.2 % | 0.711 | 78 |
+| 10 | 100 ms | 1.0 | 1 | 0 % | 12.2 % | 0.711 | 78 |
 
-⚠️ **Open decision (Mohamed).** Either (a) keep 250 ms and declare the deviation from
-TS 22.125 R-5.2.2-011 with this table as the justification; or (b) re-anchor the headline operating
-point to (Λ=50 Hz, D=100 ms), which is standards-compliant and PX4-real, gives identical byte
-results, but requires reporting N ≤ 35 rather than N = 50. Recorded in docs/OPEN_ITEMS.md.
+**So the honest headline result of B3 is a bound, not a choice:** *under full 3GPP compliance and a
+50-node collision domain, the maximum achievable on-air authentication reduction on 802.11a is
+**50 %**, and it requires Λ ∈ [21, 22] Hz.* Faster streams meet the deadline but exhaust the medium;
+slower ones cannot batch at all.
+
+### Declared reference operating point: Λ = 20 rec/s, D_max = 250 ms
+
+**Declared, with its costs stated in full — not defended as optimal:**
+
+| what it buys | what it costs |
+|---|---|
+| b = 4 → **75.0 %** auth-byte cut, **58.68 %** total-byte cut | **Violates TS 22.125 R-5.2.2-011** (250 ms vs ≤100 ms). This is a **declared deviation.** |
+| U = 0.557 at N=50 — comfortable headroom | The 100 ms-compliant point with the *same* bytes (Λ=50) is **unrunnable at N=50** (U=1.39, N_max=35) |
+| N_max = **103**, vs 32 for the Pillar-1 baseline (3.2×) | Under full compliance the best available cut is **50 %**, not 75 % — a third of the headline is bought by the deviation |
+| Λ=20 sits between the standard's 10 msg/s floor and PX4 `ONBOARD`'s 50 Hz | A **ledger** freshness argument, not a control-loop one: TS 22.125 §5.2.2 is *collision avoidance*; a tamper-evident provenance log has a genuinely different deadline. This is a **scope argument and must be presented as one.** |
+
+**Why not the compliant corner (Λ=21, D=100 ms)?** It is reported, and it is *not* dismissed — but
+it is a **knife-edge**: at Λ = 20.0 the b=2 frame takes **100.37 ms**, 0.37 ms over, so b collapses
+to 1 and the cut goes to **zero**; at Λ = 20.2 it is 99.38 ms and b=2 holds. A 1 % change in
+telemetry rate flips the result between 50 % and nothing. That fragility is itself a finding about
+how tightly this regime is squeezed, and it is why the corner is reported rather than adopted.
+
+**Both are in the paper.** Reporting the compliant point costs nothing and forecloses the obvious
+objection: the mechanism does not depend on the relaxed deadline — only b does, and b depends only
+on Λ·D_max.
+
+### At N=50 the 100 ms bound is unsatisfiable *with batching* on 802.11a (finding B8)
+Of the 18 compliant points, only 4 are runnable at N=50, and only 2 of those batch at all. Every
+faster variant saturates the medium. **This is an 802.11-side impossibility of the same kind as
+T6** — the *medium*, not the cryptography, forecloses it — and it is a result, not a configuration
+failure.
 
 ### Loss probability p — mechanism, not a borrowed number (item B4)
 p ∈ {0.02, 0.05, 0.10} is a **declared sensitivity range**, and the reason it is not tied to a

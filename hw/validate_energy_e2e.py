@@ -56,6 +56,8 @@ sys.path.insert(0, str(REPO / "hw"))
 from energy_loop import GAP_S, WARMUP, SyncLine, device_state, window_is_clean  # noqa: E402
 
 # The E5 optimized configuration (docs/02 §7a, experiments/e5/config.yaml).
+# Overridable so the A+CBOR baseline can be measured as a CONTROL: without it, any claim about
+# the model's bias being asymmetric across configurations is unmeasured.
 ENCODING = "delta"
 SCHEME = "ed25519"
 BATCH = 4
@@ -131,18 +133,36 @@ def main() -> None:
     ap.add_argument("--t-sign-ns", type=float, default=88120.2, help="measured Ed25519 sign (ARM)")
     ap.add_argument("--t-verify-ns", type=float, default=259498.7,
                     help="measured Ed25519 verify (ARM)")
+    ap.add_argument("--batch", type=int, help="override b (use 1 for the A+CBOR baseline)")
+    ap.add_argument("--encoding", help="override the encoding (cbor for the baseline)")
+    ap.add_argument("--record-bytes", type=float, help="override s for the model prediction")
+    ap.add_argument("--no-verify", action="store_true", default=True,
+                    help="the pipeline signs but does not verify; predict the sender side only")
     args = ap.parse_args()
+    global ENCODING, BATCH, RECORD_BYTES
+    if args.batch:
+        BATCH = args.batch
+    if args.encoding:
+        ENCODING = args.encoding
+    if args.record_bytes:
+        RECORD_BYTES = args.record_bytes
     args.out.mkdir(parents=True, exist_ok=True)
 
+    # ⚠️ The pipeline SIGNS but does not VERIFY. Predicting with t_verify included compared a
+    # sender-side measurement against a sender+receiver model and inflated the prediction ~1.9x.
+    # Found 2026-07-29 on the first real run; predict the sender side only.
+    t_verify_for_prediction = 0.0 if args.no_verify else args.t_verify_ns * 1e-9
     predicted = predicted_cpu_uj_per_record(args.p_cpu_w, args.t_enc_ns * 1e-9,
-                                            args.t_sign_ns * 1e-9, args.t_verify_ns * 1e-9)
+                                            args.t_sign_ns * 1e-9, t_verify_for_prediction)
     # Law 6: state the expectation BEFORE reading the meter.
     print("=" * 72)
     print("D1 end-to-end energy validation — EXPECTED VALUE, stated before measurement")
     print("=" * 72)
     print(f"  configuration     : {ENCODING} + {SCHEME} + placement B, b={BATCH}, H_f={H_F} B")
     print(f"  model inputs      : p_cpu={args.p_cpu_w} W, t_enc={args.t_enc_ns/1e3:.2f} µs, "
-          f"t_sign={args.t_sign_ns/1e3:.2f} µs, t_verify={args.t_verify_ns/1e3:.2f} µs")
+          f"t_sign={args.t_sign_ns/1e3:.2f} µs")
+    print("  scope             : SENDER side (encode+chain+sign). Verify excluded from both the "
+          "pipeline and the prediction.")
     print(f"  PREDICTED CPU     : {predicted:.3f} µJ/record")
     print("  acceptance        : |measured - predicted| / predicted <= 10 %")
     print("                      a larger gap is a FINDING to explain in writing (Law 7),")
@@ -172,8 +192,11 @@ def main() -> None:
             duration = time.perf_counter() - t0
             after = device_state()
             clean = window_is_clean(before["throttled"], after["throttled"])
+            # Schema must match what `ina219_capture.reduce` consumes: idle/load `kind` pairs
+            # with an `op` name, not a bare label — otherwise the reducer cannot pair windows.
             windows.append({
-                "rep": rep, "label": label, "n_ops": n_ops, "checksum": checksum,
+                "rep": rep, "kind": "idle" if fn is None else "load", "op": label,
+                "n_ops": n_ops, "checksum": checksum,
                 "duration_s": duration, "records": n_ops * BATCH,
                 "throttle_clean": clean, "before": before, "after": after,
             })
@@ -181,8 +204,13 @@ def main() -> None:
             rate = (n_ops * BATCH / duration) if duration else 0.0
             print(f"  rep{rep} {label:20s} frames={n_ops:<8} records/s={rate:>9.1f}{status}")
 
+    import platform as _plat
     manifest = {
         "experiment": "d1_energy_e2e",
+        "host": _plat.node(), "run_utc": time.strftime("%Y%m%dT%H%M%SZ", time.gmtime()),
+        "platform": _plat.platform(), "python": _plat.python_version(),
+        "gpio_backend": "gpiod" if sync.available else "none",
+        "duration_s": args.seconds, "reps": args.reps,
         "configuration": {"encoding": ENCODING, "scheme": SCHEME, "placement": "B",
                           "batch": BATCH, "h_f": H_F, "g_a": G_A},
         "model_inputs": {"p_cpu_w": args.p_cpu_w, "t_enc_ns": args.t_enc_ns,

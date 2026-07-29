@@ -142,3 +142,50 @@ def test_our_loss_grid_is_more_pessimistic_than_the_standards_c2_reliability() -
     ts22125_c2_p = 1e-3
     for p in (0.02, 0.05, 0.10):
         assert p > ts22125_c2_p * 10
+
+
+# --- B3 as an optimization: the region, not a chosen constant (docs/02 §7a) -------------------
+def _region() -> list[dict[str, str]]:
+    path = REPO / "results/raw/operating_region.csv"
+    return list(csv.DictReader([ln for ln in path.read_text().splitlines()
+                                if not ln.startswith("#")]))
+
+
+def test_compliant_and_runnable_set_is_exactly_four_points() -> None:
+    """The headline result of B3 is a BOUND, not a choice.
+
+    Under TS 22.125 (>=10 msg/s, <=100 ms) AND U<1 at N=50, only four operating points exist and
+    the best achievable auth-byte cut is 50 %, not the 75 % the declared reference point reports.
+    """
+    ok = [r for r in _region()
+          if r["ts22125_compliant"] == "1" and r["runnable_at_n_ref"] == "1"]
+    assert len(ok) == 4
+    best = max(float(r["auth_cut_pct"]) for r in ok)
+    assert best == pytest.approx(50.0, abs=0.01), (
+        "under full compliance at N=50 the achievable cut is 50 %; if this changes, docs/02 §7a "
+        "and the paper's compliance paragraph must change with it")
+    batching = sorted(int(r["lambda_rec_per_s"]) for r in ok if int(r["b"]) >= 2)
+    assert batching == [21, 22], "only 21-22 Hz both meets the deadline and clears the medium"
+
+
+def test_the_declared_reference_point_is_non_compliant_and_says_so() -> None:
+    """Λ=20, D=250 ms is DECLARED, not optimal. The deviation must stay visible in the data."""
+    ref = next(r for r in _region()
+               if r["lambda_rec_per_s"] == "20" and r["d_max_ms"] == "250")
+    assert ref["ts22125_compliant"] == "0", "the reference point violates R-5.2.2-011 by design"
+    assert ref["runnable_at_n_ref"] == "1" and int(ref["b"]) == 4
+    assert float(ref["auth_cut_pct"]) == pytest.approx(75.0)
+    assert int(ref["n_max"]) == 103
+
+
+def test_equal_lambda_times_dmax_gives_identical_bytes() -> None:
+    """The governing relation: bytes depend only on the product, capacity does not."""
+    a = next(r for r in _region() if r["lambda_rec_per_s"] == "20" and r["d_max_ms"] == "250")
+    b = next(r for r in _region() if r["lambda_rec_per_s"] == "50" and r["d_max_ms"] == "100")
+    assert a["lambda_x_dmax"] == b["lambda_x_dmax"] == "5.0"
+    assert a["b"] == b["b"] == "4"
+    assert a["auth_bytes_per_rec"] == b["auth_bytes_per_rec"]
+    assert a["total_cut_pct"] == b["total_cut_pct"]
+    # identical bytes, and that is exactly where they differ:
+    assert float(a["channel_util_at_n_ref"]) < 1.0 < float(b["channel_util_at_n_ref"])
+    assert int(a["n_max"]) > int(b["n_max"])

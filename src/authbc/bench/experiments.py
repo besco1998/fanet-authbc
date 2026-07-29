@@ -165,6 +165,62 @@ def run_capacity(cfg: dict) -> list[dict]:
     return rows
 
 
+def run_operating_region(cfg: dict) -> list[dict]:
+    """The (Λ × D_max) feasible region — B3 treated as OPTIMIZATION, not a chosen constant.
+
+    Λ and D_max are decision variables, not settings to be picked and defended. This enumerates the
+    region and reports, for every point, what the design buys and what it costs — including whether
+    the point satisfies 3GPP TS 22.125 R-5.2.2-010/-011 (≥10 msg/s, ≤100 ms end-to-end).
+
+    The governing relation is b ≤ ⌊Λ·D_max⌋ (T2a), so the byte results depend only on the PRODUCT.
+    Everything that distinguishes points at equal product is channel load: a faster stream at a
+    tighter deadline buys the same bytes and costs capacity. That trade is the whole of B3 and it
+    is reported here rather than resolved by assertion.
+    """
+    sizes = framesizes.measured_sizes()
+    s = sizes[cfg["encoding"]]
+    g_a, h_f, n_ref = cfg["g_a"], cfg["h_f"], cfg["n_local_ref"]
+    base_s = sizes[cfg["baseline_encoding"]]
+    baseline_total = base_s + h_f + g_a                       # placement A, b=1
+    rows: list[dict] = []
+    for lam in cfg["region_lambda"]:
+        for d_ms in cfg["region_d_max_ms"]:
+            d = d_ms / 1000.0
+            b = max(1, int(lam * d))
+            while b > 1:
+                cand = EnergyConfig(placement=Placement.B, batch=b, record_bytes=s,
+                                    auth_bytes=g_a, frame_hdr_bytes=h_f, n_frames=1)
+                if energy.freshness_delay_s(cand, float(lam)) <= d:
+                    break
+                b -= 1
+            frame = h_f + g_a + b * s
+            total = s + (h_f + g_a) / b
+            util = optimizer.channel_utilisation(n_ref, float(lam), b, frame)
+            n_max = 0
+            for n in range(2, cfg["envelope_n_ceiling"] + 1):
+                if optimizer.channel_utilisation(n, float(lam), b, frame) > 1.0:
+                    break
+                n_max = n
+            compliant = d_ms <= cfg["ts22125_max_latency_ms"] and lam >= cfg["ts22125_min_rate_hz"]
+            rows.append({
+                "lambda_rec_per_s": lam, "d_max_ms": d_ms,
+                "lambda_x_dmax": round(lam * d, 3), "b": b,
+                "auth_bytes_per_rec": round((h_f + g_a) / b, 3),
+                "auth_cut_pct": round(100.0 * (1.0 - 1.0 / b), 2),
+                "total_bytes_per_rec": round(total, 3),
+                "total_cut_pct": round(100.0 * (baseline_total - total) / baseline_total, 2),
+                "frame_bytes": round(frame, 1),
+                "channel_util_at_n_ref": round(util, 4),
+                "runnable_at_n_ref": int(util < 1.0),
+                "n_max": n_max,
+                "ts22125_compliant": int(compliant),
+                "verdict": ("compliant+runnable" if compliant and util < 1.0
+                            else "compliant, over capacity" if compliant
+                            else "non-compliant" + ("" if util < 1.0 else ", over capacity")),
+            })
+    return rows
+
+
 def _n_max_envelope(cfg: dict, sizes: dict[str, float]) -> list[dict]:
     """Largest N each configuration can carry with U < 1 (item B2, docs/02 §6b).
 
@@ -486,6 +542,8 @@ _RUNNERS = {
     "e3": (run_e3, "e3_loss"),
     "e5": (run_e5, "e5_codesign"),
     "capacity": (run_capacity, "capacity_envelope"),        # (N, Λ) envelope, docs/02 §6a
+    # B3 as optimization: the (Λ × D_max) region with 3GPP TS 22.125 compliance flags
+    "operating-region": (run_operating_region, "operating_region"),
     # The two LoRa runners share experiments/lora/config.yaml: one arm, one parameter set.
     "lora": (run_lora, "lora_eu868", "lora"),
     "lora-codesign": (run_lora_codesign, "lora_codesign", "lora"),

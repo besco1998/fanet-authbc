@@ -1,0 +1,211 @@
+{
+  "experiment": "d1_energy_e2e",
+  "configuration": {
+    "encoding": "delta",
+    "scheme": "ed25519",
+    "placement": "B",
+    "batch": 4,
+    "h_f": 44,
+    "g_a": 64
+  },
+  "model_inputs": {
+    "p_cpu_w": 0.634,
+    "t_enc_ns": 47759.0,
+    "t_sign_ns": 88120.2,
+    "t_verify_ns": 259498.7
+  },
+  "predicted_cpu_uj_per_record": 85.3768016501225,
+  "windows": [
+    {
+      "rep": 1,
+      "label": "idle",
+      "n_ops": 0,
+      "checksum": 0,
+      "duration_s": 60.0002896449987,
+      "records": 0,
+      "throttle_clean": true,
+      "before": {
+        "temp": "temp=50.6'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance"
+      },
+      "after": {
+        "temp": "temp=51.1'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance"
+      }
+    },
+    {
+      "rep": 1,
+      "label": "e2e_frame_pipeline",
+      "n_ops": 187035,
+      "checksum": 428,
+      "duration_s": 60.000218984998355,
+      "records": 748140,
+      "throttle_clean": true,
+      "before": {
+        "temp": "temp=50.6'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance"
+      },
+      "after": {
+        "temp": "temp=57.4'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance"
+      }
+    },
+    {
+      "rep": 2,
+      "label": "idle",
+      "n_ops": 0,
+      "checksum": 0,
+      "duration_s": 60.00027000800037,
+      "records": 0,
+      "throttle_clean": true,
+      "before": {
+        "temp": "temp=56.0'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance"
+      },
+      "after": {
+        "temp": "temp=51.6'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance"
+      }
+    },
+    {
+      "rep": 2,
+      "label": "e2e_frame_pipeline",
+      "n_ops": 188025,
+      "checksum": 412,
+      "duration_s": 60.00043415699838,
+      "records": 752100,
+      "throttle_clean": true,
+      "before": {
+        "temp": "temp=51.6'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance"
+      },
+      "after": {
+        "temp": "temp=58.4'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance"
+      }
+    },
+    {
+      "rep": 3,
+      "label": "idle",
+      "n_ops": 0,
+      "checksum": 0,
+      "duration_s": 60.00027459099874,
+      "records": 0,
+      "throttle_clean": true,
+      "before": {
+        "temp": "temp=56.9'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance"
+      },
+      "after": {
+        "temp": "temp=53.5'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance"
+      }
+    },
+    {
+      "rep": 3,
+      "label": "e2e_frame_pipeline",
+      "n_ops": 187096,
+      "checksum": 7,
+      "duration_s": 60.00043813999946,
+      "records": 748384,
+      "throttle_clean": true,
+      "before": {
+        "temp": "temp=54.0'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance"
+      },
+      "after": {
+        "temp": "temp=57.9'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance"
+      }
+    },
+    {
+      "rep": 4,
+      "label": "idle",
+      "n_ops": 0,
+      "checksum": 0,
+      "duration_s": 60.00026414599779,
+      "records": 0,
+      "throttle_clean": true,
+      "before": {
+        "temp": "temp=58.9'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance"
+      },
+      "after": {
+        "temp": "temp=53.0'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance"
+      }
+    },
+    {
+      "rep": 4,
+      "label": "e2e_frame_pipeline",
+      "n_ops": 187824,
+      "checksum": 0,
+      "duration_s": 60.000212307000766,
+      "records": 751296,
+      "throttle_clean": true,
+      "before": {
+        "temp": "temp=53.0'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance"
+      },
+      "after": {
+        "temp": "temp=60.8'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance"
+      }
+    },
+    {
+      "rep": 5,
+      "label": "idle",
+      "n_ops": 0,
+      "checksum": 0,
+      "duration_s": 60.00029105199792,
+      "records": 0,
+      "throttle_clean": true,
+      "before": {
+        "temp": "temp=57.4'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance"
+      },
+      "after": {
+        "temp": "temp=55.0'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance"
+      }
+    },
+    {
+      "rep": 5,
+      "label": "e2e_frame_pipeline",
+      "n_ops": 188382,
+      "checksum": 7,
+      "duration_s": 60.00036222599738,
+      "records": 753528,
+      "throttle_clean": true,
+      "before": {
+        "temp": "temp=52.5'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance"
+      },
+      "after": {
+        "temp": "temp=59.9'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance"
+      }
+    }
+  ],
+  "note": "Reduce with hw/ina219_capture.py --reduce <this> <samples.csv> --channel 1. Measured \u00b5J/record = (P_active - P_idle) * duration_s / records."
+}

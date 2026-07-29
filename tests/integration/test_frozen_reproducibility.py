@@ -32,6 +32,7 @@ from authbc.bench.experiments import (
     run_e5,
     run_lora,
     run_lora_codesign,
+    run_operating_region,
 )
 
 # Slow (re-runs the encode-heavy generators): deselected from the fast local `make test`, run in
@@ -101,6 +102,7 @@ _CASES = {
     "lora_eu868.csv": lambda: run_lora(load_config("lora")),
     "lora_codesign.csv": lambda: run_lora_codesign(load_config("lora")),
     "capacity_envelope.csv": lambda: run_capacity(load_config("capacity")),
+    "operating_region.csv": lambda: run_operating_region(load_config("operating-region")),
 }
 
 

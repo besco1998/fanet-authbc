@@ -1,0 +1,27 @@
+# (Lambda x D_max) operating region — item B3 treated as OPTIMIZATION (docs/02 §7a).
+#
+# B3 is not "which constant do we pick?". Lambda and D_max are DECISION VARIABLES of the same
+# optimization the rest of the thesis solves, so the honest answer is the whole feasible region
+# plus a DECLARED reference point whose costs are stated — not a defended constant.
+#
+# The governing relation is b <= floor(Lambda * D_max) (T2a), so the BYTE results depend only on
+# the product. What distinguishes equal-product points is channel load: a faster stream at a
+# tighter deadline buys identical bytes and costs capacity. That trade is the whole of B3.
+#
+# Compliance is checked against 3GPP TS 22.125 V17.6.0 §5.2.2 (direct UAV-to-UAV local broadcast,
+# which is precisely this service):
+#   R-5.2.2-010  >= 10 messages/s        R-5.2.2-011  <= 100 ms end-to-end
+experiment: operating-region
+
+encoding: delta            # the co-design optimum (E5)
+baseline_encoding: cbor    # A+CBOR (Pillar-1), placement A, b=1 — the comparison baseline
+g_a: 64                    # Ed25519
+h_f: 44                    # MEASURED from the implemented wire format (B1, docs/01 §2a)
+n_local_ref: 50            # neighbourhood at which channel load is reported
+
+region_lambda:   [5, 10, 15, 20, 21, 22, 25, 30, 40, 50]
+region_d_max_ms: [50, 100, 150, 200, 250, 500, 1000]
+
+ts22125_max_latency_ms: 100
+ts22125_min_rate_hz: 10
+envelope_n_ceiling: 400

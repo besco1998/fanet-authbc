@@ -22,3 +22,4 @@ envelope_configs:
   - ["optimized delta/B @3GPP100ms/50Hz", "delta", "B", 50, 0.100]
   - ["optimized delta/B @3GPP100ms/10Hz", "delta", "B", 10, 0.100]
 envelope_n_ceiling: 400
+

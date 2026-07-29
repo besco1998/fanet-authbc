@@ -110,6 +110,9 @@ silent-staleness risk.
 
 > **Open items live in [`OPEN_ITEMS.md`](OPEN_ITEMS.md)** — the single tracked list of
 > everything assumed, deferred, unvalidated or accepted-as-a-limitation. Decisions live here.
+> **What each decision COST lives in [`TRADEOFFS.md`](TRADEOFFS.md)** — required reading before
+> quoting any number: this is an optimization problem, so a reported configuration without its
+> alternatives is a selection, not an optimization.
 
 ## Decision → downstream frozen artifacts (blast-radius map)
 Use this whenever a decision changes, to know exactly what to re-run + re-freeze + re-validate.

@@ -46,10 +46,12 @@ Ordered by what a thesis examiner would hit first.
 
 | # | Item | Status | Action |
 |---|---|---|---|
-| **D1** | End-to-end energy validation | **PARTIALLY CLOSED 2026-07-29 — and it found a defect (F14)** | Composition half done (needs no meter, since power enters linearly): the model has **no chain-hash term**, under-predicting CPU by **+7.97 %**, and **asymmetrically** — optimized +6.73 % vs baseline +2.52 %, so it **overstates the optimized config's energy advantage by ~4 points**. Meter half blocked: `hw/validate_energy_e2e.py` is written and smoke-tested but the RPi4s are powered down | (a) power the boards and run the harness; (b) add an **ARM** SHA-256 timing to the P1 harness, then add the term and re-freeze — not patchable with the x86 number we have |
+| **D1** | End-to-end energy validation | **CLOSED 2026-07-29 — measured on hardware (F14)** | Model under-predicts sender-side CPU energy by **~32 %** (delta/B/b=4: 44.25→**58.38** µJ/rec; A+CBOR b=1: 87.83→**118.83**). Half omitted chain-hash + framing, half a single `p_cpu_w` (0.634 W) understating a composed pipeline (0.732 W). **Bias is near-uniform, so relative comparisons survive**; the interim "overstates the advantage" claim is **retracted** — measured advantage 2.035× vs predicted 1.985× | Absolute energy is a **lower bound** and must be reported as such. A real fix needs an ARM SHA-256 timing + per-config `p_cpu_w` (⚠️ new item **D6**) |
 | **D2** | **The LoRa arm has no measurement of any kind** | ACCEPTED — Mohamed's "scoped chapter" decision | Chapter must say so in-chapter: no hardware, no energy column |
 | **D3** | NS-3 validates **saturation throughput** only — not latency, not energy, not loss behaviour | OPEN | Say so; do not let "NS-3-validated" imply more than throughput |
 | **D4** | Hardware is **2× RPi4** (charter said 4×; `hw/SETUP.md` records the real inventory) | **CLOSED 2026-07-28** | Charter corrected |
+| **D6** | ⚠️ **NEW: one `p_cpu_w` for all configurations.** The composed pipeline draws 0.732 W vs the 0.634 W median over isolated primitives (+15.5 %) — half of F14's 32 % energy gap | OPEN | Measure `p_cpu_w` per configuration, or state it as a declared simplification with its measured size (currently the latter) |
+| **D7** | ⚠️ **NEW: no ARM SHA-256 timing.** Blocks fixing F14's other half — the missing chain-hash term | OPEN | Add SHA-256 to the P1 micro harness on the Pi, then add the term to `models.energy` and re-freeze |
 | **D5** | RPi3 / BeagleBone cross-platform points | OPEN — optional | "Secondary/stretch" tiers in `hw/SETUP.md`; only add generalization breadth |
 
 ## E. Process and reproducibility
