@@ -503,3 +503,60 @@ from these energy runs, so the time-residual column above is an independent comp
 is a measured input taken from these runs, so the power term is not independently validated by
 them — that is stated rather than papered over.*
 
+---
+
+## ~~F15~~ — **RETRACTED THE SAME DAY IT WAS WRITTEN (2026-07-29). The finding was wrong.**
+*Kept in full, because a retracted finding is evidence about the process and deleting it would hide
+an error rather than correct it.*
+
+**What F15 claimed.** That the "≤0.36 % on every quantity" validation of Ma & Chen's broadcast model
+was really one comparison (throughput) restated three times, because the p_s and idle-slot columns
+had been *back-derived from the measured throughput* rather than measured independently. Two pieces
+of "evidence" were offered: (i) the trace columns in `ns3_dcf_residual.csv` disagreed with the model
+by +10…+121 %, and (ii) the NS-3/model ratio for p_s tracked the ratio for throughput to 2 parts in
+10 000 across all five N.
+
+**Both were wrong.**
+
+**(i) was a data-handling error of mine.** `ns3_dcf_residual.csv` contains **both unicast and
+broadcast rows**. I aggregated across all of them; the validation is broadcast-only. Filtering
+correctly (`mode == "broadcast"`, median, exactly as `test_broadcast_residual.py` does) reproduces
+the audit's published table *to the digit*:
+
+| N | model p_s | measured p_s (ns-3.41) | audit's published value |
+|---|---|---|---|
+| 5 | 0.7703 | 0.7712 | 0.7712 ✓ |
+| 10 | 0.5551 | 0.5564 | 0.5564 ✓ |
+| 20 | 0.3154 | 0.3143 | 0.3143 ✓ |
+| 35 | 0.2195 | 0.2195 | 0.2195 ✓ |
+| 50 | 0.2227 | 0.2234 | 0.2234 ✓ |
+
+The measurements are genuine, independent, and reproduce. Idle-slots-per-busy-period likewise.
+
+**(ii) was an invalid test.** Throughput and success probability are computed from the *same trace*
+and are linked by construction — S is a monotone function of the success rate at fixed slot
+structure. Their ratios to the model **must** track each other. I treated an expected correlation as
+evidence of fabrication. That is the substantive error: the hypothesis was untestable in the form I
+tested it.
+
+**What is actually true, having redone it properly** (broadcast-only, median):
+
+| quantity | ns-3.41 | ns-3.48 |
+|---|---|---|
+| p_success | ≤0.36 % | **≤2.49 %** (at N=35) |
+| idle slots / busy period | ≤0.75 % | **≤0.47 %** |
+| saturation throughput | ≤0.36 % | ≤1.44 % |
+
+Two small real corrections survive, and only these:
+
+1. **"≤0.36 % on every quantity" was always slightly optimistic** — the idle-slot column reaches
+   **0.75 %** at N=10, a figure visible in the p7 audit's own table. The bound should read ≤0.75 %
+   for ns-3.41.
+2. **On ns-3.48 the agreement widens to ≤2.49 %**, driven by p_s at N=35.
+
+**Process note.** The failing test `test_broadcast_residual.py` is what exposed this: it expected
+p_s ≈ 0.214 where my analysis had produced 0.506, and that contradiction is what sent me back to
+the data. The tests caught an error in my *analysis*, which is what they are for. The sequence —
+publish a finding, propagate it to five documents, then have a test refute it — is the argument for
+running the suite *before* propagating, not after.
+

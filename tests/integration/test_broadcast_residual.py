@@ -65,16 +65,26 @@ def _ladder(n: int) -> dcf_ladder.LadderResult:
                           t_busy_s=_T_BUSY, slot_s=bianchi.SLOT, payload_bytes=_L, seed=1)
 
 
+# Tolerances widened 2026-07-29 for the ns-3.41 -> ns-3.48 migration (decision D4), NOT to make a
+# failing assertion pass. The frozen artifact is now produced by a different simulator release
+# whose notes include a WifiPhy state-machine race fix; the migration gate accepted per-point
+# movement up to 3 % (ns3/compare_versions.py), and these bounds are set from the RE-MEASURED
+# agreement rather than from whatever value happened to pass:
+#     p_success  <=0.36 % on 3.41 -> <=2.49 % on 3.48 (worst at N=35)
+#     idle/busy  <=0.75 % on 3.41 -> <=0.47 % on 3.48
+#     throughput <=0.36 % on 3.41 -> <=1.44 % on 3.48
+# If a future run needs these loosened again, that is a finding about the model, not a tolerance
+# to adjust (Law 3).
 @pytest.mark.parametrize("n", [5, 10, 20, 35, 50])
 def test_published_model_reproduces_measured_p_success(n: int) -> None:
     """The whole finding in one line: Ma & Chen predict NS-3's collision statistics."""
-    assert _model(n).p_success == pytest.approx(_measured()[n]["p_s_measured"], rel=0.01)
+    assert _model(n).p_success == pytest.approx(_measured()[n]["p_s_measured"], rel=0.03)
 
 
 @pytest.mark.parametrize("n", [5, 10, 20, 35, 50])
 def test_published_model_reproduces_measured_goodput(n: int) -> None:
     assert _model(n).throughput_bps / 1e6 == pytest.approx(
-        _measured()[n]["goodput_window_mbps"], rel=0.01)
+        _measured()[n]["goodput_window_mbps"], rel=0.03)
 
 
 @pytest.mark.parametrize("n", [5, 10, 20, 35, 50])
@@ -94,8 +104,11 @@ def test_slot_exact_model_reproduces_measured_goodput(n: int) -> None:
     """Compared against the window-consistent goodput (audit A11): `goodput_mbps` is the
     PacketSink figure over [1, simTime+1] while every slot statistic here comes from the guarded
     steady-state window, and mixing the two costs ~1 % of spurious disagreement."""
+    # rel widened 0.02 -> 0.03 with the D4 migration: our slot-exact simulator vs ns-3.48 is
+    # worst 2.64 % (N=35), against <2 % on ns-3.41. Set from the re-measured worst case, and
+    # inside the +/-3 % the migration gate accepted per point.
     assert _ladder(n).throughput_bps / 1e6 == pytest.approx(
-        _measured()[n]["goodput_window_mbps"], rel=0.02)
+        _measured()[n]["goodput_window_mbps"], rel=0.03)
 
 
 @pytest.mark.parametrize("n", [5, 10, 20, 35, 50])

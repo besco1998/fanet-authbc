@@ -49,7 +49,7 @@ the byte-optimal batch cuts 96.7\% of authentication but incurs 1.50\,s of stale
 optimizer blind to freshness solves the wrong problem. The airtime model is
 validated against NS-3 3.48: unicast matches Bianchi within $+1.28$/$-0.49\%$, while the common
 reduction of that model to broadcast fails by $16\times$ at $N{=}50$ and is replaced by Ma and Chen's
-broadcast model~\cite{machen2007,machen2008}, which our measurements confirm to within $0.36\%$. All results are reproduced deterministically from frozen data by
+broadcast model~\cite{machen2007,machen2008}, which our measurements confirm to within $2.49\%$. All results are reproduced deterministically from frozen data by
 an automated staleness gate. AUTHBC introduces no new primitive; its contribution is the rigorous,
 reproducible co-design and its quantified trade-offs.
 \end{abstract}
@@ -356,7 +356,7 @@ busy period---but the \emph{backoff counter consecutive freeze process}: with no
 window never doubles, so a station that has just transmitted may redraw a zero backoff and seize the
 medium one slot ahead of every deferring station, whose counter is necessarily $\geq 1$. This is
 precisely the effect analysed by Ma and Chen~\cite{machen2007,machen2008}, whose closed form reproduces
-our measurements to within $0.36\%$ on throughput, success probability and idle-slot occupancy; the
+our measurements to within $2.49\%$ on success probability, idle-slot occupancy and throughput; the
 unicast counterpart is the ``anomalous slot'' analysis of Tinnirello \emph{et al.}~\cite{tinnirello2010},
 which our unicast traces independently confirm. We claim no novelty for the mechanism; our contribution
 is its validation at $W_0{=}16$ under 802.11a timing (the original studies used $W_0{=}32,128$ at

@@ -85,7 +85,8 @@ chain whose τ/p_c fixed point yields closed-form saturation throughput matching
 *Positioning:* AUTHBC uses Bianchi as the **airtime cost model inside the optimizer** and validates it
 against **NS-3** (unicast within +0.6…−2.9 %). Its no-ACK *broadcast* variant is shown to fail by
 up to 16×, root-caused to the Consecutive Freeze Process, and replaced by Ma & Chen's published
-broadcast model, which matches NS-3 to ≤0.36 % (docs/audits/p7.md F9).
+broadcast model, which matches NS-3 to ≤0.75 % on ns-3.41 and ≤2.49 % on ns-3.48 across p_s,
+idle-slots and throughput (docs/audits/p7.md F9).
 
 **Overall positioning.** AUTHBC is a **rigorous, hardware-validated co-design + measurement study**,
 not a new cryptographic construction. Its contribution is the joint optimization of *encoding ×
@@ -275,7 +276,7 @@ to its own analytic variant (never crossed unicast↔broadcast).
   never doubles, so a station that just transmitted may redraw backoff 0 and take the medium a slot
   before any deferring station (whose counter is necessarily ≥ 1). (4) A literature check then showed
   this is **published** — Ma & Chen, IEEE Comm. Lett. 11(8):686–688, 2007 — so the novelty claim was
-  retracted as well; their closed form reproduces our measurement to **≤0.36 %**
+  retracted as well; their closed form reproduces our measurement to **≤0.75 %** (ns-3.41)
   (docs/audits/p7.md F9).
   Verdict: **both** arms are now quantitatively validated — unicast against ACK-Bianchi, broadcast
   against the slot-exact model; the textbook no-ACK Bianchi variant is the thing that fails.
@@ -410,7 +411,7 @@ window never doubles, so a station that just transmitted may redraw backoff 0 an
 slot before any deferring station can. That is **Ma & Chen's published broadcast model** (IEEE Comm.
 Lett. 11(8):686–688, 2007; IEEE TVT 57(6):3757–3768, 2008), whose abstract warns that unicast models
 "cannot simply be reduced" to broadcast — exactly the error we made. Their closed form reproduces our
-measurement to **≤0.36 %** (rightmost column). We claim **no novelty** for the mechanism; what is ours
+measurement to **≤0.75 %** (ns-3.41; ≤2.49 % re-measured on ns-3.48). We claim **no novelty** for the mechanism; what is ours
 is validation at W₀=16 / 802.11a (they tested W₀=32, 128 at 1 Mb/s) and a direct PHY-trace measurement
 of the mechanism rather than curve-fitting.
 
@@ -428,7 +429,7 @@ The project's second product (after the results) is the *discipline*. The anomal
   Consecutive Freeze Process** — and a literature check then showed it was **published in 2007**
   (Ma & Chen), so our "discovery" was a rediscovery and the novelty claim was retracted too.
   Three retractions on one question, all kept visible. The result is stronger for it: the broadcast
-  arm now rests on a cited IEEE model that our measurement validates to 0.36 %.
+  arm now rests on a cited IEEE model that our measurement validates to ≤0.75 % (ns-3.41).
 - **Pre-P7b whole-repo audit** (docs/audits/full_audit_pre_p7b.md) — re-derived every formula against
   the code, hand-checked one point per experiment (E5 energy = 64.24 µJ = frozen), and produced seven
   findings F1–F7 (one fixed, six documented as P7/P8 items).

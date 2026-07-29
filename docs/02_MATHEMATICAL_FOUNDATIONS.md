@@ -315,9 +315,24 @@ this becomes the dominant way any frame succeeds alone.
     E[N_sf] = Σ_i n·τ_f(i)(1−τ_f(i))^{n−1} ,  E[N_bf] = Σ_i 1−(1−τ_f(i))^n
     S = (p_ss + E[N_sf])·8L / (σ + (p_bs + E[N_bf])·T),  T = T_phy + 8(L+MAC)/R + DIFS + δ
 
-Verified against our own NS-3 3.41 runs (802.11a, 6 Mb/s, W₀=16, L=1400 B): throughput, p_s and
-idle-slots-per-busy-period all within **≤0.36 %** at N = 5, 10, 20, 35, 50 — a regime the original
-papers did not test (they used W₀ = 32 and 128 at 1 Mb/s).
+Verified against our own NS-3 runs (802.11a, 6 Mb/s, W₀=16, L=1400 B): **saturation throughput**
+agrees to **≤0.36 %** on ns-3.41 and **≤1.44 %** on ns-3.48, at N = 5, 10, 20, 35, 50 — a regime the
+original papers did not test (they used W₀ = 32 and 128 at 1 Mb/s).
+
+All three quantities are **independently measured** from the PHY trace (`ns3_dcf_residual.csv`,
+broadcast rows, median over seeds). Full bounds, both simulator versions:
+
+| quantity | ns-3.41 | ns-3.48 |
+|---|---|---|
+| success probability p_s | ≤0.36 % | **≤2.49 %** (N=35) |
+| idle slots per busy period | ≤0.75 % | **≤0.47 %** |
+| saturation throughput | ≤0.36 % | **≤1.44 %** |
+
+⚠️ *Two corrections, 2026-07-29.* The previous text said "all within ≤0.36 %"; the idle-slot column
+actually reaches **0.75 %** at N=10 on ns-3.41 — visible in the p7 audit's own table and simply
+mis-summarised. And on ns-3.48 the overall bound widens to **≤2.49 %**. (An intermediate claim that
+these were not independent measurements — audit F15 — was **retracted**: it rested on a
+broadcast/unicast filtering error and on treating an expected correlation as evidence.)
 
 **References (verified from primary sources, docs/literature/):**
 - G. Bianchi, "Performance Analysis of the IEEE 802.11 Distributed Coordination Function,"
