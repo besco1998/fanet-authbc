@@ -28,6 +28,7 @@
 #include "ns3/packet-socket-address.h"
 #include "ns3/packet-socket-helper.h"
 #include "ns3/wifi-module.h"
+#include "ns3/wifi-utils.h"   // GetEstimatedAckTxTime (ns-3.48; see the port note below)
 
 #include <fstream>
 
@@ -274,6 +275,19 @@ main(int argc, char* argv[])
     double rxScale = (mode == "broadcast" && nNodes > 1) ? (nNodes - 1.0) : 1.0;
     double goodputMbps = (rxBytes / rxScale) * 8.0 / simTime / 1e6;
 
+    // ns-3.48 port (D4): `WifiPhy::GetAckTxTime()` was removed; the same quantity now comes from
+    // the free function `GetEstimatedAckTxTime(txVector)` in wifi-utils. Both implement 802.11-2016
+    // Table 10-5 "Determination of the EstimatedAckTxTime based on properties of the PPDU causing
+    // the EIFS". ns-3.41 hardcoded MicroSeconds(44) for 802.11a; ns-3.48 derives it from the
+    // modulation class and constellation size, and OFDM with BPSK (OfdmRate6Mbps) yields the same
+    // 44 us. The assertion below makes that equivalence a checked property, not a comment.
+    WifiTxVector ackTxVector;
+    ackTxVector.SetMode(WifiMode("OfdmRate6Mbps"));
+    const Time ackTxTime = GetEstimatedAckTxTime(ackTxVector);
+    NS_ABORT_MSG_UNLESS(ackTxTime == MicroSeconds(44),
+                        "802.11a ACK TX time changed from the 44 us this study was validated "
+                        "against; the DCF trace comparison must be re-checked before use");
+
     std::ofstream stats(outPrefix + ".stats");
     stats << "key,value\n"
           << "mode," << mode << "\n"
@@ -292,9 +306,8 @@ main(int argc, char* argv[])
           << "goodput_mbps," << goodputMbps << "\n"
           << "sifs_ns," << phy0->GetSifs().GetNanoSeconds() << "\n"
           << "slot_ns," << phy0->GetSlot().GetNanoSeconds() << "\n"
-          << "ack_tx_ns," << phy0->GetAckTxTime().GetNanoSeconds() << "\n"
-          << "eifs_no_difs_ns,"
-          << (phy0->GetSifs() + phy0->GetAckTxTime()).GetNanoSeconds() << "\n"
+          << "ack_tx_ns," << ackTxTime.GetNanoSeconds() << "\n"
+          << "eifs_no_difs_ns," << (phy0->GetSifs() + ackTxTime).GetNanoSeconds() << "\n"
           << "cw_min," << txop0->GetMinCw() << "\n"
           << "cw_max," << txop0->GetMaxCw() << "\n"
           << "aifsn," << static_cast<uint32_t>(txop0->GetAifsn()) << "\n";

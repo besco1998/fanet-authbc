@@ -445,7 +445,8 @@ results (two retracted broadcast explanations, BLS losing on 802.11) are reporte
 ## 6. Status and what remains
 - **Complete and green:** P0–P6 + E5 headline + P7a prep + the audit + the reproduction gate, all on
   one trunk (tags through `p7-done`). Theorems T1–T5 all validated; NS-3 confirms the unicast DCF
-  to +0.6/−2.9 % and the broadcast model (Ma & Chen) to ≤1.1 %.
+  to **+1.28/−0.49 %** and the broadcast model (Ma & Chen) to **≤1.44 %** (ns-3.48; on ns-3.41
+  these read +0.6/−2.9 % and ≤1.1 % — unicast improved, broadcast widened slightly).
 - **Headline:** co-design cuts on-air auth bytes **75.00 %** vs the Pillar-1 baseline at V≥0.95,
   p=0.05 **and freshness ≤ 250 ms** — **PASS**. (Byte-optimal ignoring freshness is 96.67 % at
   b=30, but that costs 1.50 s of staleness — audit F10.)

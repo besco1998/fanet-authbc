@@ -252,7 +252,10 @@ Verified: PPDU(1436) = 1940 µs and PPDU(14) = 44 µs, both matching NS-3 3.41 e
 post-success deferral floor SIFS+T_ack+DIFS = 94 µs matching the measured trace.
 
 **Validate:** E5 vs NS-3; expect and *report* known gaps rather than force-fitting. Measured
-against NS-3 3.41: unicast agrees to **+0.6 … −2.9 %** across N=5–50 (audit F8/F9).
+against NS-3: unicast agrees to **+1.28 … −0.49 %** across N=5–50, broadcast (Ma & Chen) to
+**≤1.44 %** — both re-measured on **ns-3.48** after the D4 migration (2026-07-29). On ns-3.41 the
+same comparison read +0.6/−2.9 % and ≤1.1 %: **unicast agreement improved, broadcast widened
+slightly**, and both are reported rather than quoting whichever version flattered the model.
 
 ### 6b. Channel capacity as a co-design constraint (2026-07-28, audit F12)
 The channel model was validated against NS-3 but never *used* by the optimizer. It is now a hard

@@ -47,7 +47,7 @@ the 100\,ms bound of 3GPP TS~22.125 costs a factor of two in supportable swarm s
 bytes. Freshness, not the MTU, is what binds:
 the byte-optimal batch cuts 96.7\% of authentication but incurs 1.50\,s of staleness, so a co-design
 optimizer blind to freshness solves the wrong problem. The airtime model is
-validated against NS-3 3.41: unicast matches Bianchi within $+0.6$/$-2.9\%$, while the common
+validated against NS-3 3.48: unicast matches Bianchi within $+1.28$/$-0.49\%$, while the common
 reduction of that model to broadcast fails by $16\times$ at $N{=}50$ and is replaced by Ma and Chen's
 broadcast model~\cite{machen2007,machen2008}, which our measurements confirm to within $0.36\%$. All results are reproduced deterministically from frozen data by
 an automated staleness gate. AUTHBC introduces no new primitive; its contribution is the rigorous,
@@ -192,7 +192,7 @@ KATs (RFC 8032, Wycheproof, Chia). \textbf{P1b} switched the binary codecs to ca
 \textbf{P3} implemented the four placements and the 802.11a airtime model (broadcast and unicast kept
 separate). \textbf{P4} turned T1--T3 into seeded experiments (E1--E3). \textbf{P5} built the energy
 model, the exhaustive Pareto optimizer, and the power-independent crossover (E4). \textbf{P6} validated
-the Bianchi model against NS-3 3.41. \textbf{E5} fed the optimizer measured inputs and tested the
+the Bianchi model against NS-3 3.48. \textbf{E5} fed the optimizer measured inputs and tested the
 headline. \textbf{P7a} produced the hardware-measurement scripts; a whole-repo audit then corrected one
 inconsistency and added an automated frozen-data reproduction gate (Sec.~\ref{sec:repro}).
 
@@ -348,7 +348,7 @@ baselines. Authentication overhead falls from 104\,B to $26.0$\,B under the 250\
 \end{figure}
 
 \textbf{NS-3 validation (Table~\ref{tab:ns3}, Fig.~\ref{fig:ns3}).} Unicast validates the Bianchi
-model~\cite{bianchi2000} to $+0.6$/$-2.9\%$ across $N=5$--$50$. Broadcast requires a \emph{different}
+model~\cite{bianchi2000} to $+1.28$/$-0.49\%$ across $N=5$--$50$. Broadcast requires a \emph{different}
 model, not the same one with the ACK removed. Reducing the unicast model by fixing $\tau=2/(W{+}1)$
 under-predicts NS-3 by $16\times$ at $N{=}50$. PHY-trace instrumentation shows the cause is not frame
 capture---which we measure at \textbf{0\%}, every successful decode arriving from a single-transmitter
@@ -363,7 +363,7 @@ is its validation at $W_0{=}16$ under 802.11a timing (the original studies used 
 1\,Mb/s) and a direct slot-level measurement of it.
 
 \begin{table}[t]\centering\footnotesize
-\caption{Analytic DCF models vs.\ NS-3 3.41, relative gap.}
+\caption{Analytic DCF models vs.\ NS-3 3.48, relative gap.}
 \label{tab:ns3}
 \begin{tabular}{rrrr}
 \toprule
@@ -380,8 +380,8 @@ $N$ & unicast vs.~\cite{bianchi2000} & broadcast vs.~naive reduction & broadcast
 
 \begin{figure}[t]\centering
 \includegraphics[width=\columnwidth]{fig_ns3_bianchi.png}
-\caption{Analytic DCF models vs.\ NS-3 3.41 saturation throughput. Unicast matches Bianchi within
-$+0.6$/$-2.9\%$; broadcast matches Ma and Chen~\cite{machen2008} within $1.1\%$, while the naive
+\caption{Analytic DCF models vs.\ NS-3 3.48 saturation throughput. Unicast matches Bianchi within
+$+1.28$/$-0.49\%$; broadcast matches Ma and Chen~\cite{machen2008} within $1.44\%$, while the naive
 reduction of the unicast model (dashed) fails by $16\times$ at $N{=}50$.}
 \label{fig:ns3}
 \end{figure}
