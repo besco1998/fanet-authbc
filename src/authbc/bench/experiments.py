@@ -466,7 +466,7 @@ def _point(enc, sch, plc: Placement, batch: int, plat, con) -> dict:
                         auth_bytes=optimizer.frame_auth_bytes(plc, batch, sch.auth_bytes),
                         frame_hdr_bytes=plat.frame_hdr_bytes, n_frames=n)
     meas = Measured(t_enc_s=enc.t_enc_s, t_sign_s=sch.t_sign_s, t_verify_s=sch.t_verify_s,
-                    p_cpu_w=plat.p_cpu_w, p_radio_w=plat.p_radio_w,
+                    p_cpu_w=plat.p_cpu_w, p_radio_w=plat.p_radio_w, t_hash_s=plat.t_hash_s,
                     t_agg_build_s=sch.t_agg_build_s, t_agg_verify_s=sch.t_agg_verify_s)
     return {"encoding": enc.name, "scheme": sch.name, "placement": str(plc), "batch": batch,
             "n_frames": n, "s": round(enc.record_bytes, 2), "bytes_per_rec": round(bpr, 3),
@@ -486,6 +486,7 @@ def run_e5(cfg: dict) -> list[dict]:
     """Optimizer byte-optimal config vs baselines; test the ≥40 % auth-byte-cut criterion (T5)."""
     encs, schemes = _measured_inputs(cfg)
     plat = optimizer.Platform(p_cpu_w=cfg["p_cpu_w"], p_radio_w=cfg["p_radio_w"],
+                              t_hash_s=cfg["t_hash_ns"] * 1e-9,
                               frame_hdr_bytes=cfg["h_f"], mtu_bytes=cfg["mtu"])
     con = optimizer.Constraints(epsilon=cfg["epsilon"], p_loss=cfg["p_loss"], lam=cfg["lam"],
                                 n_local=cfg["n_local"])

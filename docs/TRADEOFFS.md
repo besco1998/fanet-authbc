@@ -56,7 +56,7 @@ behind several rows here).
 |---|---|---|---|---|
 | **H_f = 44 B** | measured from `wire.py` | replaced an unreferenced 40 B assumption | it is *placement-dependent* in reality (A 45→51, D 81); the flat value understates A by 1 B and D by 37 B — **both conservative** | **MEASURED** (B1) |
 | **CBOR text keys in the frame header** | readable, standard, deterministic | 29 of 43 skeleton bytes are key *names*; an integer-keyed profile would be materially smaller. **This thesis does not claim a tuned wire format** | **DECLARED** |
-| **32 B `prev_hash` per record (802.11)** | independent per-record tamper evidence | ~71 % of a delta record is incompressible hash | **DECLARED** (F5) |
+| **32 B `prev_hash` per record (802.11)** | independent per-record tamper evidence | ~71 % of a delta record is incompressible hash; its CPU cost (2×2745.5 ns/record) is now charged too (D7) | **DECLARED** (F5) |
 | **Per-frame chaining on LoRa only** | b 2→7 at DR5, **3.03×** the sustainable rate | two framings of one ledger; within a LoRa frame tamper-evidence rests on the frame signature rather than independent hashes — equivalent in strength, no longer independent | **DECLARED** (F5) |
 | **BLS = 96 B (blspy min-pubkey)** | timings and size are coherent | the 48 B min-sig variant was specified originally; 96 B makes BLS lose the byte game outside multi-signer aggregation | **DECLARED** |
 | **Ed25519 over ECDSA** | wins on ARM (259 vs 327 µs verify), the thesis platform | order **flips on x86**; the choice is platform-specific and the auth-byte result is identical either way (both 64 B) | **MEASURED** (D8/F6) |
@@ -65,8 +65,8 @@ behind several rows here).
 
 | # | Decision | Bought | Gave up | Status |
 |---|---|---|---|---|
-| **Energy composed from measured parts** | per-op timings and powers are all measured | metered end-to-end, the composition is **~32 % low** (F14): half omitted chain-hash + framing, half a single `p_cpu_w` understating a composed pipeline. **Absolute energy is a lower bound**; the bias is near-uniform so *relative* comparisons hold | **MEASURED** (D1/F14) |
-| **One `p_cpu_w` for all configurations** | one constant to measure | the composed pipeline draws 0.732 W vs the 0.634 W median over isolated primitives (+15.5 %) | **OPEN** (D6) |
+| **Energy composed from measured parts** | per-op timings and powers are all measured; **validated end-to-end** on four configurations | was ~32 % low; both causes found and fixed (D7 chain hash, D6 composed-pipeline power). **Residual +7.5…+14.3 %, all frame assembly.** Absolute energy is a **lower bound by ~10–14 %** | **MEASURED** (D1/F14) |
+| **One `p_cpu_w` for all configurations** | keeps the model **predictive** — a per-config power would mean metering a design before you could model it | measured spread across four configurations is only **3.8 %**, so this holds. The old 0.634 W was wrong for a different reason: it came from *isolated primitives* and understated composed pipelines by 18.2 %. Now **0.749 W** | **MEASURED** (D6) |
 | **LoRa arm is analysis-only** | the result is derivable from primary specs alone | **no hardware, no energy column, no measured validation** — must be stated in-chapter | **DECLARED** |
 | **NS-3 validates throughput only** | the airtime/contention model is grounded | latency, energy and loss behaviour are **not** validated by simulation; "NS-3-validated" must not imply more | **OPEN** (D3) |
 | **10 s NS-3 runs, not 30 s** | ~5000 busy periods/run × 10 seeds; tight CIs | a documented deviation from docs/04 §3 | **DECLARED** |
@@ -83,4 +83,5 @@ behind several rows here).
 2. **`1 − 1/b`** (§2) — answered by refusing to lead with that metric at all.
 3. **D(b) has no channel-access delay** (§3) — the freshness constraint that *sets b* omits the
    dominant delay term at high load. Mitigated by reporting U, not by fixing the model.
-4. **Energy is 32 % low** (§5) — measured and stated; absolute values are lower bounds.
+4. **Energy is 10–14 % low** (§5) — was 32 %, root-caused and fixed; the residual is uncharged
+   prototype framing overhead, measured and stated. Absolute values are lower bounds.

@@ -91,6 +91,8 @@ class Platform:
     p_radio_w: float
     frame_hdr_bytes: float   # H_f
     mtu_bytes: float         # M
+    # SHA-256 of one chain link, MEASURED per platform (item D7). 0.0 reproduces the F14 omission.
+    t_hash_s: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -375,6 +377,7 @@ def _evaluate(enc: EncodingSpec, sch: SchemeSpec, plc: Placement, batch: int,
         t_verify_s=sch.t_verify_s,
         p_cpu_w=plat.p_cpu_w,
         p_radio_w=plat.p_radio_w,
+        t_hash_s=plat.t_hash_s,
         t_agg_build_s=sch.t_agg_build_s,
         t_agg_verify_s=sch.t_agg_verify_s,
     )

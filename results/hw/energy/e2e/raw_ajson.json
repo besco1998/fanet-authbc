@@ -1,0 +1,228 @@
+{
+  "experiment": "d1_energy_e2e",
+  "host": "authbc-pi4a",
+  "run_utc": "20260729T045540Z",
+  "platform": "Linux-6.12.93+rpt-rpi-v8-aarch64-with-glibc2.36",
+  "python": "3.12.13",
+  "gpio_backend": "gpiod",
+  "duration_s": 60.0,
+  "reps": 5,
+  "configuration": {
+    "encoding": "json",
+    "scheme": "ed25519",
+    "placement": "B",
+    "batch": 1,
+    "h_f": 44,
+    "g_a": 64
+  },
+  "model_inputs": {
+    "p_cpu_w": 0.634,
+    "t_enc_ns": 51370.0,
+    "t_sign_ns": 88120.2,
+    "t_verify_ns": 259498.7
+  },
+  "predicted_cpu_uj_per_record": 88.43678680050598,
+  "windows": [
+    {
+      "rep": 1,
+      "kind": "idle",
+      "op": "idle",
+      "n_ops": 0,
+      "checksum": 0,
+      "duration_s": 60.00031348899938,
+      "records": 0,
+      "throttle_clean": true,
+      "before": {
+        "temp": "temp=53.0'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance"
+      },
+      "after": {
+        "temp": "temp=52.5'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance"
+      }
+    },
+    {
+      "rep": 1,
+      "kind": "load",
+      "op": "e2e_frame_pipeline",
+      "n_ops": 372695,
+      "checksum": 333,
+      "duration_s": 60.000337662000675,
+      "records": 372695,
+      "throttle_clean": true,
+      "before": {
+        "temp": "temp=54.0'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance"
+      },
+      "after": {
+        "temp": "temp=59.4'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance"
+      }
+    },
+    {
+      "rep": 2,
+      "kind": "idle",
+      "op": "idle",
+      "n_ops": 0,
+      "checksum": 0,
+      "duration_s": 60.00026953999986,
+      "records": 0,
+      "throttle_clean": true,
+      "before": {
+        "temp": "temp=57.4'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance"
+      },
+      "after": {
+        "temp": "temp=58.9'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance"
+      }
+    },
+    {
+      "rep": 2,
+      "kind": "load",
+      "op": "e2e_frame_pipeline",
+      "n_ops": 373126,
+      "checksum": 0,
+      "duration_s": 60.00016097200205,
+      "records": 373126,
+      "throttle_clean": true,
+      "before": {
+        "temp": "temp=58.4'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance"
+      },
+      "after": {
+        "temp": "temp=64.2'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance"
+      }
+    },
+    {
+      "rep": 3,
+      "kind": "idle",
+      "op": "idle",
+      "n_ops": 0,
+      "checksum": 0,
+      "duration_s": 60.00024851800117,
+      "records": 0,
+      "throttle_clean": true,
+      "before": {
+        "temp": "temp=63.7'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance"
+      },
+      "after": {
+        "temp": "temp=59.9'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance"
+      }
+    },
+    {
+      "rep": 3,
+      "kind": "load",
+      "op": "e2e_frame_pipeline",
+      "n_ops": 373620,
+      "checksum": 1,
+      "duration_s": 60.000269449999905,
+      "records": 373620,
+      "throttle_clean": true,
+      "before": {
+        "temp": "temp=59.9'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance"
+      },
+      "after": {
+        "temp": "temp=65.7'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance"
+      }
+    },
+    {
+      "rep": 4,
+      "kind": "idle",
+      "op": "idle",
+      "n_ops": 0,
+      "checksum": 0,
+      "duration_s": 60.000251362998824,
+      "records": 0,
+      "throttle_clean": true,
+      "before": {
+        "temp": "temp=64.2'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance"
+      },
+      "after": {
+        "temp": "temp=56.9'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance"
+      }
+    },
+    {
+      "rep": 4,
+      "kind": "load",
+      "op": "e2e_frame_pipeline",
+      "n_ops": 374019,
+      "checksum": 333,
+      "duration_s": 60.00017964700237,
+      "records": 374019,
+      "throttle_clean": true,
+      "before": {
+        "temp": "temp=56.9'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance"
+      },
+      "after": {
+        "temp": "temp=60.8'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance"
+      }
+    },
+    {
+      "rep": 5,
+      "kind": "idle",
+      "op": "idle",
+      "n_ops": 0,
+      "checksum": 0,
+      "duration_s": 60.00027034199957,
+      "records": 0,
+      "throttle_clean": true,
+      "before": {
+        "temp": "temp=61.3'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance"
+      },
+      "after": {
+        "temp": "temp=54.5'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance"
+      }
+    },
+    {
+      "rep": 5,
+      "kind": "load",
+      "op": "e2e_frame_pipeline",
+      "n_ops": 374287,
+      "checksum": 332,
+      "duration_s": 60.00017321699852,
+      "records": 374287,
+      "throttle_clean": true,
+      "before": {
+        "temp": "temp=56.0'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance"
+      },
+      "after": {
+        "temp": "temp=61.8'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance"
+      }
+    }
+  ],
+  "note": "Reduce with hw/ina219_capture.py --reduce <this> <samples.csv> --channel 1. Measured \u00b5J/record = (P_active - P_idle) * duration_s / records."
+}

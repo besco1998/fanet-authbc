@@ -22,12 +22,20 @@ lam: 20
 # the verify-throughput constraint is a receiver constraint, so it uses the aggregate.
 n_local: 50
 # MEASURED on the thesis platform (RPi4, decision D8) — no longer nominal.
-# p_cpu_w  : median incremental CPU power over the 8-op energy campaign (results/hw/energy/)
+# p_cpu_w  : median incremental CPU power over the four E5 COMPOSED pipelines, not over isolated
+#            primitives (item D6, 2026-07-29 — see results/hw/energy/p_cpu_w_composed.md).
+#            The P7b value 0.634 W was the median over 8 isolated ops and understates a real
+#            pipeline by 18.2 %; the four configurations agree to 3.8 %, so one constant holds.
 # p_radio_w: pi-B receive-path delta on the 2-node IBSS link (results/hw/energy/p_radio_w.md)
 # t_enc_ns : median encode time per record, measured on authbc-pi4a
-p_cpu_w: 0.634
+p_cpu_w: 0.749
 p_radio_w: 0.218
 t_enc_ns: {json: 51370, cbor: 50407, msgpack: 24018, delta: 47759}
+# SHA-256 of one chain link (prev_hash 32 B + delta body 13 B), MEASURED on authbc-pi4a with
+# the P1 harness (item D7, 2026-07-29). The model charges it TWICE per record: the sender
+# hashes to extend the chain, the receiver re-hashes to verify it. It does not amortize
+# over b. Omitting it was half of F14's measured ~32 % energy gap.
+t_hash_ns: 2745.5
 # ARM crypto timings (D8): the thesis platform is the Pi, not the x86 dev box.
 crypto_csv: p1_crypto.authbc-pi4a.csv
 bls_agg_ref_b: 8   # representative batch for BLS aggregate timings (placement C)

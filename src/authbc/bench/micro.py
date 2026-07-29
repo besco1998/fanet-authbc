@@ -31,6 +31,8 @@ RESULTS = Path(__file__).resolve().parents[3] / "results" / "raw"
 G_INLINE = 64  # inline per-record signature bytes for φ (Ed25519/ECDSA), docs/02 T1
 MSG_BYTES = 200  # docs/04 §1
 CI_SEED = 12345  # bootstrap RNG seed (reproducible CIs)
+# prev_hash(32) + a delta-encoded record body(13) — what the chain actually hashes (D7)
+CHAIN_MSG_BYTES = 45
 BATCH_SIZES = (2, 4, 8, 16, 32)
 BLS_CAP_NS = 2_500_000_000  # wall-time cap for ms-scale BLS ops
 
@@ -71,7 +73,11 @@ def measure_sizes(seed: int, n: int) -> list[dict]:
 
 
 # --------------------------------------------------------------------------- crypto timings
-def _time_row(scheme: str, op: str, fn, *, agg_b: str, expensive: bool) -> dict:
+def _time_row(scheme: str, op: str, fn, *, agg_b: str, expensive: bool,
+              msg_bytes: int = MSG_BYTES) -> dict:
+    """One timed row. `msg_bytes` MUST describe the input actually measured — the SHA-256 chain
+    link hashes a 45 B record, not the 200 B crypto message, and a frozen artifact that misstates
+    its own input is worse than no artifact (caught 2026-07-29 during D7)."""
     if expensive:
         # ms-scale ops: gather ~1 s of samples (hundreds–thousands) for a tight CI, capped at
         # BLS_CAP_NS so the slowest (agg_verify b=32, ~11 ms) still finishes quickly.
@@ -80,7 +86,7 @@ def _time_row(scheme: str, op: str, fn, *, agg_b: str, expensive: bool) -> dict:
     else:
         res = time_op(fn)  # production floors: ≥10k ops / ≥200 ms
     s = summarize(res.samples_ns, seed=CI_SEED)
-    return {"scheme": scheme, "op": op, "agg_b": agg_b, "msg_bytes": MSG_BYTES,
+    return {"scheme": scheme, "op": op, "agg_b": agg_b, "msg_bytes": msg_bytes,
             "median_ns": round(s.median, 1), "ci_lo_ns": round(s.ci_lo, 1),
             "ci_hi_ns": round(s.ci_hi, 1), "n_ops": res.n_ops, "checksum": res.checksum}
 
@@ -98,6 +104,16 @@ def measure_crypto(seed: int) -> list[dict]:
         rows.append(_time_row(scheme.name, "verify",
                               lambda sc=scheme, p=pk, g=sig: sc.verify(p, msg, g),
                               agg_b="", expensive=exp))
+    # SHA-256 chain link (item D7, 2026-07-29). Every record is hashed to form prev_hash — that
+    # IS the ledger — but `models.energy` had no term for it, which is half of F14's measured 32 %
+    # energy gap. Measured here so the model's input is a real per-platform figure rather than a
+    # borrowed x86 number. The message is the RECORD-sized input the chain actually hashes
+    # (prev_hash 32 B + a delta-encoded body), not the 200 B crypto message.
+    chain_input = bytes(rng.randrange(256) for _ in range(CHAIN_MSG_BYTES))
+    rows.append(_time_row("sha256", "chain_link",
+                          lambda m=chain_input: hashlib.sha256(m).digest(), agg_b="",
+                          expensive=False, msg_bytes=CHAIN_MSG_BYTES))
+
     # BLS cross-signer aggregation over distinct messages (AugScheme), b∈{2,4,8,16,32}
     bls = get_scheme("bls")
     for b in BATCH_SIZES:

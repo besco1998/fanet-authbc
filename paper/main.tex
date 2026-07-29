@@ -398,15 +398,17 @@ exact regression it was built for. No result is fabricated, no test skipped, no 
 \section{Limitations and Future Work}
 Results are 802.11-only (a LoRa arm is future work). Energy is now measured on a Raspberry~Pi~4 with
 INA219 meters ($P_\mathrm{cpu}=0.634$\,W, $P_\mathrm{radio}=0.218$\,W---both nominal values were
-$3$--$5\times$ too high), and the byte-based headline is power-free either way. The energy figures are
-\emph{composed} from separately measured powers and timings, and we metered the composition
-end-to-end: it under-predicts real sender-side CPU energy by ${\approx}32\%$ (44.25 to a measured
-58.38\,\micro J/record at $b{=}4$; 87.83 to 118.83 at $b{=}1$). Half of that is an omitted chain-hash
-and frame-assembly term, half is that a single $P_\mathrm{cpu}$ measured over isolated primitives
-understates a composed pipeline (0.732 versus 0.634\,W). The bias is near-uniform across
-configurations, so \emph{relative} energy comparisons hold---the measured advantage (2.035$\times$)
-slightly exceeds the predicted one (1.985$\times$)---but absolute energy values should be read as
-lower bounds. The channel models are
+$3$--$5\times$ too high), and the byte-based headline is power-free either way. The energy model is
+\emph{composed} from separately measured powers and timings, so we metered the composition
+end-to-end on four configurations. It was initially ${\approx}32\%$ low; both causes were identified
+and corrected---an omitted per-record chain-hash term (SHA-256, 2745.5\,ns measured on ARM, charged
+twice per record and not amortized over $b$), and a $P_\mathrm{cpu}$ measured over \emph{isolated}
+primitives (0.634\,W) that understates any composed pipeline by $18.2\%$ (four configurations meter
+0.732--0.760\,W, a $3.8\%$ spread, so a single constant remains appropriate; we adopt 0.749\,W). The
+residual is $+7.5$ to $+14.3\%$ and is entirely frame assembly between crypto calls, which we
+deliberately do not charge because it is interpreter overhead of a prototype rather than a property
+of the design. Absolute energy figures should therefore be read as lower bounds by ${\approx}10$--$14\%$;
+byte results are power-free. The channel models are
 validated only in the idealised single-collision-domain regime they describe: a spread, mobile
 formation introduces spatial reuse and, at long range, hidden terminals that neither model
 represents. We bound this: sweeping a realistic air-to-air scenario (Friis, 3D cluster, Nakagami

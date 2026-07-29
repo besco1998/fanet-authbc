@@ -460,3 +460,46 @@ section, OPEN_ITEMS and the status board; all four are corrected.
 *Artifacts: `results/hw/energy/e2e/energy_d1{,_baseline}-summary.csv`, manifests and raw samples.
 Harness: `hw/validate_energy_e2e.py`.*
 
+### CLOSURE (same day): both causes found and fixed, gap 32 % → 7.5–14.3 %
+
+**D7 — the chain-hash term.** SHA-256 of one chain link measured on authbc-pi4a with the P1 harness:
+**2745.5 ns** over a 45 B input (prev_hash 32 + delta body 13). Added as `Measured.t_hash_s` and
+charged **2× per record** — the sender hashes to extend the chain, the receiver re-hashes to verify
+it — and it does **not** amortize over b, because the chain is per-record by construction. E5's
+optimized row moved 112.0818 → 115.5631 µJ/record, matching the predicted +3.481 exactly.
+
+**D6 — and the premise of D6 was wrong.** The item asked whether `p_cpu_w` is
+configuration-dependent. Metered on all four E5 configurations:
+
+| configuration | b | ΔP |
+|---|---|---|
+| optimized delta/B | 4 | 0.732 W |
+| D-over-agg cbor/D | 40 | 0.744 W |
+| A+CBOR (Pillar-1) | 1 | 0.755 W |
+| A+JSON naive | 1 | 0.760 W |
+
+**A 3.8 % spread — so no, it is not configuration-dependent.** What was wrong is that 0.634 W was
+the median over eight *isolated primitives*, which understates any *composed* pipeline by **18.2 %**.
+Adopted **0.749 W** (median of the four). Keeping one constant matters: a per-configuration power
+would require building and metering a design before it could be modelled, which defeats the model.
+
+**Residual after both fixes**, model vs measurement, sender side:
+
+| configuration | model | measured | gap |
+|---|---|---|---|
+| optimized delta/B, b=4 | 54.33 µJ/rec | 58.38 | **+7.5 %** |
+| A+CBOR, b=1 | 105.81 | 118.82 | **+12.3 %** |
+| A+JSON, b=1 | 106.53 | 121.77 | **+14.3 %** |
+| D-over-agg, b=40 | 41.46 | 47.02 | **+13.4 %** |
+
+**All of the residual is frame assembly** — list building, byte concatenation and slicing between
+crypto calls. It is **deliberately not charged**: that is CPython overhead of a prototype, and a
+compiled implementation would carry a fraction of it. Charging it would make the model describe
+*our Python code* rather than the design under study. Every energy figure is therefore a **lower
+bound by roughly 10–14 %**, and is reported as such.
+
+*Independence note: the timings (`t_enc`, `t_sign`, `t_hash`) come from the P1 micro harness, not
+from these energy runs, so the time-residual column above is an independent comparison. `p_cpu_w`
+is a measured input taken from these runs, so the power term is not independently validated by
+them — that is stated rather than papered over.*
+

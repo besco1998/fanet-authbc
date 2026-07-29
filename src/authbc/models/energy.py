@@ -62,11 +62,15 @@ class Measured:
     t_verify_s: float       # verify one ordinary signature
     p_cpu_w: float          # CPU power
     p_radio_w: float        # radio receive power
+    # SHA-256 of one chain link (item D7). Defaults to 0.0 so existing callers keep working, but
+    # leaving it 0 silently reproduces the F14 omission — set it from a MEASURED per-platform
+    # figure (results/hw/p1_crypto.*.csv, scheme=sha256 op=chain_link).
+    t_hash_s: float = 0.0
     t_agg_build_s: float | None = None    # build one aggregate signature (relay, per frame)
     t_agg_verify_s: float | None = None   # aggregate-verify one frame (receiver, per frame)
 
     def __post_init__(self) -> None:
-        for name in ("t_enc_s", "t_sign_s", "t_verify_s"):
+        for name in ("t_enc_s", "t_sign_s", "t_verify_s", "t_hash_s"):
             if getattr(self, name) < 0:
                 raise ValueError(f"{name} must be ≥ 0, got {getattr(self, name)}")
         if self.p_cpu_w <= 0 or self.p_radio_w <= 0:
@@ -189,24 +193,33 @@ def per_record(cfg: EnergyConfig, m: Measured) -> float:
 
     t_sg' and t_vf' are the placement-amortized sign/verify times. Deterministic and pure.
 
-    ⚠️ **Measured gap (audit F14, closed 2026-07-29 by end-to-end INA219 measurement).** This
-    composition under-predicts real sender-side CPU energy by **~32 %**: 44.25 → 58.38 µJ/record
-    measured for delta/B/b=4, and 87.83 → 118.83 for the A+CBOR baseline. Two causes, roughly equal:
-    (i) **no hashing or frame-assembly term** — every record is SHA-256'd to form the chain link
-    (4.64 µs/record on ARM) and frames are assembled, neither charged here (+13.3 % of time); and
-    (ii) `p_cpu_w` is the median over eight *isolated primitives*, while the composed pipeline draws
-    0.732 W rather than 0.634 W (+15.5 %).
+    **The chain-hash term (D7, added 2026-07-29).** Every record is hashed once by the sender to
+    form the next `prev_hash` and once by the receiver to verify the link, so the system pays
+    **2·t_hash per record**. This term was missing entirely and is half of the ~32 % energy gap
+    measured in F14; the other half is that a single `p_cpu_w` understates a composed pipeline.
+    It does NOT amortize over b — the chain is per-record by construction.
 
-    **The bias is near-uniform across configurations (+31.95 % vs +35.30 %), so RELATIVE energy
-    comparisons survive** — the measured advantage (2.035x) slightly exceeds the predicted one
-    (1.985x). An earlier interim claim that this model overstates the batched configuration's
-    advantage was inferred from x86 timings and is **retracted**; the measurement contradicts it.
+    ⚠️ **Validated end-to-end against INA219 (audit F14/D1, 2026-07-29).** The composition was
+    first measured ~32 % low. Two causes were found and both are now fixed:
+    (i) **D7** — no chain-hash term. Every record is SHA-256'd to form `prev_hash`; that is now
+    charged as 2·t_hash (sender extends the chain, receiver verifies), measured 2745.5 ns on ARM.
+    (ii) **D6** — `p_cpu_w` was the median over eight *isolated primitives* (0.634 W). Metered on
+    four *composed* pipelines it is **0.749 W (+18.2 %)**, and those four agree to 3.8 %, so a
+    single constant remains right — the methodology was wrong, not the assumption.
 
-    Not patched: a correct fix needs an ARM SHA-256 measurement and a per-configuration p_cpu_w,
-    and substituting the x86 figure would be fabrication (Law 7). Byte results are power-free.
+    **Residual after both fixes: +7.5 % to +14.3 %** across the four E5 configurations, and it has
+    one identified cause — frame assembly (list building, concatenation) between crypto calls. That
+    is deliberately NOT charged: it is CPython overhead of a prototype, and charging it would make
+    this model describe our Python code rather than the design. **Read every energy figure as a
+    lower bound of roughly 10-14 % on that account.**
+
+    Byte results are power-free and unaffected by any of this.
     """
     b = cfg.batch
-    cpu_time_s = m.t_enc_s + _sign_cpu_per_record(cfg, m) + _verify_cpu_per_record(cfg, m)  # [s]
+    # 2x: the sender hashes each record to extend the chain, the receiver re-hashes to verify it.
+    chain_hash_s = 2.0 * m.t_hash_s                                                         # [s]
+    cpu_time_s = (m.t_enc_s + chain_hash_s
+                  + _sign_cpu_per_record(cfg, m) + _verify_cpu_per_record(cfg, m))          # [s]
     e_cpu = m.p_cpu_w * cpu_time_s                                                          # [J]
     e_radio = m.p_radio_w * radio_airtime_s(cfg) / b                                        # [J]
     return e_cpu + e_radio
