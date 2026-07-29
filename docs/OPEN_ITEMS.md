@@ -70,7 +70,7 @@ Ordered by what a thesis examiner would hit first.
 | # | Item | Status | Action |
 |---|---|---|---|
 | **F1** | **Paper restructure** — 802.11 co-design as the measured core, then "Generalisation: the low-rate regime" carrying T6 | **DECIDED, not started** | This is the P8 deliverable. Must absorb A1/A2's reframing |
-| **F2** | Abstract/conclusion still claim the four-axis framing corrected by F13 | OPEN | Rewrite with the decomposition |
+| **F2** | Abstract/conclusion framing | **CLOSED 2026-07-29** | Rewritten in the A1 pass: abstract leads with total bytes + decomposition + the feasibility envelope; conclusion states the `1−1/b` result explicitly. One residual: the success criterion is still phrased as an *auth-byte* target (§I), which is fine — it is the pre-registered criterion and must not be moved after the fact |
 
 ---
 
