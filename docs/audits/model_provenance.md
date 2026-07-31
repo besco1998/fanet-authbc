@@ -1765,3 +1765,74 @@ counts; and a defensible derivation of how much randomisation is right, rather t
 
 **Artifacts:** `results/raw/lora_phase_artifact_30seed.csv` (ALOHA, 180 runs),
 `results/raw/lora_phase_artifact_eu_30seed.csv` (EU, 120 runs).
+
+---
+
+## F34 — certificate bytes charged, and the CLAS baseline run (2026-07-30)
+
+### 1. The fairness fix, made before looking at the comparison
+
+`bytes_per_record` charged **certificate bytes to nobody**. That silently assumed out-of-band
+credential distribution — free on the wire — for *every* scheme, which flatters PKI and penalises
+**certificateless** ones whose entire advertised advantage is carrying no certificate.
+
+Added `cert_bytes` / `cert_period` (defaults 0/1, so every frozen artifact is bit-identical). The
+period reflects practice: broadcast systems send a credential periodically and let receivers cache,
+so the on-air cost is `cert_bytes / cert_period` per frame.
+
+**This was implemented before the CLAS numbers were obtained**, deliberately — doing it afterwards
+would have invited fitting the correction to the answer.
+
+### 2. ⚠️ The finding: CLAS "aggregate signatures" do not reduce on-air bytes
+
+From the PLOS One scheme's own Table 2 (DOI 10.1371/journal.pone.0317047), communication overhead
+for *n* messages, using their stated parameters (G₁ = 128 B, G₂ = 40 B, |Z*q| = hash = 20 B,
+traffic message = 67 B):
+
+| scheme | total | security overhead per message |
+|---|---|---|
+| Wang et al. | 859*n* B | 792 B |
+| Liang et al. | 735*n* B | 668 B |
+| Xu et al. | 596*n* B | 529 B |
+| Cahyadi et al. | 583*n* B | 516 B |
+| PLOS 2025 (theirs) | 583*n* B | **516 B** |
+
+**Every entry is linear in *n*.** The aggregate compresses **verification cost**, not bytes: each
+message still carries its own tuple `(M, PID, vpk, t, σ)` on the wire.
+
+### 3. The comparison
+
+| configuration | B/record | overhead |
+|---|---|---|
+| AUTHBC B, b=4, no cert charged | 72.0 | 27.0 |
+| AUTHBC B, b=4, **117 B cert every 10 frames** | 74.9 | 29.9 |
+| AUTHBC B, b=4, **117 B cert every frame** (worst case) | 101.2 | 56.2 |
+| best CLAS above | 583 | 516 |
+
+**Even charging ourselves a certificate on every single frame — the most pessimistic assumption
+available — we are 5.8× cheaper on the wire.**
+
+### 4. What this does and does NOT establish
+
+**It does not establish that we beat CLAS.** Three reasons, all of which must be stated:
+
+1. **They buy something we do not.** The per-message `PID` and `vpk` provide *conditional privacy*
+   — pseudonymous identity with authority traceability. AUTHBC provides no anonymity. A large part
+   of their 516 B is paying for a property we do not offer, and a ledger arguably wants the
+   opposite (attributable records).
+2. **Different primitives.** Their G₁ element is 128 B; our Ed25519 signature is 64 B. Some of the
+   gap is curve and encoding choice, not design.
+3. **Different axis, which is the point.** Their aggregation reduces the verifier's work; our
+   batching reduces airtime. **This measurement confirms the positioning the paper already claimed**
+   for Zhang et al. — receiver-side versus sender-side — and now with a number rather than an
+   argument.
+
+**The honest headline:** *aggregate-signature schemes for vehicular broadcast do not reduce on-air
+bytes; they reduce verification cost. On a byte-constrained link the axis that matters is placement
+and batching, which is what this work optimises.* That is a stronger and more defensible statement
+than "we are 5.8× better."
+
+⚠️ **Remaining gap:** the 117 B certificate is a plausible IEEE-1609.2-scale figure but is **not
+sourced from a primary standard here**. It is used only to bound our own cost pessimistically, and
+the conclusion is invariant over the whole plausible range (72–101 B/record against 583). Before
+publication it needs a citation or a sensitivity sweep.

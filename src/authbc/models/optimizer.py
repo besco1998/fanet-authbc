@@ -201,12 +201,35 @@ def frame_auth_bytes(placement: Placement, batch: int, g_a: float) -> float:
 
 
 def bytes_per_record(placement: Placement, batch: int, s: float, g_a: float, h_f: float,
-                     n: int) -> float:
+                     n: int, *, cert_bytes: float = 0.0, cert_period: int = 1) -> float:
     """On-air bytes/record: A → s+g_a+H_f/b (no auth amortization); B/C → s+(g_a+H_f)/b (T2);
-    D → s+(g_a+n·H_f)/b (T3)."""
+    D → s+(g_a+n·H_f)/b (T3), plus amortized certificate bytes.
+
+    ⚠️ **Certificate bytes were charged to nobody until this was added, and that was not neutral.**
+    A signature is only verifiable if the receiver can bind the public key to an identity, which in
+    a PKI means a certificate reaching the receiver somehow. Omitting it silently assumed
+    out-of-band distribution — free on the wire — for *every* scheme. That assumption flatters PKI
+    schemes and penalises **certificateless** ones (CLAS), whose entire advertised advantage is
+    carrying no certificate at all. Comparing against a CLAS baseline without this term would have
+    rigged the comparison in our favour (docs/CLAS_BASELINE_PLAN.md).
+
+    ``cert_bytes``   size of the credential a receiver needs; **0 for certificateless schemes**.
+    ``cert_period``  how many frames share one transmitted certificate. Broadcast systems do not
+                     attach a certificate to every frame — they send it periodically and let
+                     receivers cache — so the on-air cost is ``cert_bytes / cert_period`` per frame.
+                     ``cert_period=1`` is the pessimistic every-frame case.
+
+    Defaults are 0/1 so existing callers and every frozen artifact are bit-identical; the term is
+    opt-in and must be supplied deliberately.
+    """
     _require_placement(placement)
+    if cert_bytes < 0:
+        raise ValueError(f"cert_bytes must be ≥ 0, got {cert_bytes}")
+    if cert_period < 1:
+        raise ValueError(f"cert_period must be ≥ 1 frame, got {cert_period}")
     headers = n * h_f if placement is Placement.D else h_f
-    return s + (frame_auth_bytes(placement, batch, g_a) + headers) / batch
+    per_frame = frame_auth_bytes(placement, batch, g_a) + headers + cert_bytes / cert_period
+    return s + per_frame / batch
 
 
 def _dominates(a: Candidate, b: Candidate) -> bool:
