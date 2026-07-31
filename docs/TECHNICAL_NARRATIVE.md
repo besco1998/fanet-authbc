@@ -295,7 +295,8 @@ a **whole-repo audit** (§5) that found and fixed the T4/BLS inconsistency, and 
 
 All values from frozen `results/raw/*.csv`. Model/byte results derived on x86 (Intel i5-14400F);
 the energy column's crypto timings, encode timings **and both powers are MEASURED on the RPi4**
-(D8) — `p_cpu_w`=0.634 W, `p_radio_w`=0.218 W. Energy is no longer nominal.
+(D8) — `p_cpu_w`=0.749 W (composed-pipeline median, D6 — supersedes the 0.634 W isolated-primitive figure),
+`p_radio_w`=0.218 W. Energy is no longer nominal.
 
 ### E1 — overhead dominance (T1), 30 seeds
 | encoding | mean bytes s | φ = 64/(s+64) | notes |
@@ -374,10 +375,14 @@ D_max=250 ms) — this, not a single number, is the co-design result:
 
 | b | auth B/record | auth cut | freshness | energy/record |
 |---|---|---|---|---|
-| 1 | 103.998 | 0.00 % | 50.3 ms | 317.38 µJ |
-| 2 | 51.998 | 50.00 % | 100.4 ms | 180.37 µJ |
-| 3 | 34.665 | 66.67 % | 150.4 ms | 134.70 µJ |
-| **4** | **25.998** | **75.00 %** | **200.5 ms** | **111.86 µJ** |
+| 1 | 108.000 | 0.00 % | 50.3 ms | 367.83 µJ |
+| 2 | 54.000 | 50.00 % | 100.4 ms | 210.40 µJ |
+| 3 | 36.000 | 66.67 % | 150.4 ms | 157.92 µJ |
+| **4** | **27.000** | **75.00 %** | **200.5 ms** | **131.68 µJ** |
+
+*(At the measured H_f = 44 B, with the chain-hash term and the composed-pipeline power. Bytes read
+104/52/34.7/26.0 and energy 317/180/135/112 µJ before B1, D6 and D7 — the **auth-cut column is
+unchanged**, which is F13's point: it is 1 − 1/b and nothing else.)*
 
 Every 50 ms of freshness spent buys auth-byte reduction, with sharply diminishing returns. The
 freshness-feasible batch is bounded by **b ≲ Λ·D_max** (=5 here; airtime pushes b=5 just over, so
@@ -438,8 +443,10 @@ The project's second product (after the results) is the *discipline*. The anomal
   deterministic frozen artifact from current code and fails loudly on any drift, verified to catch the
   F1 regression. Staleness can no longer be committed.
 
-Every energy number is now **measured** (P7b: `p_cpu_w`=0.634 W, `p_radio_w`=0.218 W, both 3–5x
-below the retired nominal values); the auth-byte headline is **power-free** either way. Nothing is fabricated, no test is skipped, no tolerance is widened, and negative/limiting
+Every energy number is now **measured and validated end-to-end** (`p_cpu_w`=**0.749 W** from four
+composed pipelines, `p_radio_w`=0.218 W). E5's optimized configuration is **131.68 µJ/record**.
+⚠️ Absolute energy is a **lower bound by ~10–14 %** — the residual is uncharged CPython frame
+assembly (F14). The auth-byte headline is **power-free** either way. Nothing is fabricated, no test is skipped, no tolerance is widened, and negative/limiting
 results (two retracted broadcast explanations, BLS losing on 802.11) are reported plainly.
 
 ---

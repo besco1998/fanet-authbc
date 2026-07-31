@@ -20,7 +20,8 @@ velocity, battery, mode). **Aggregate neighbourhood arrival Λ = Λ_i·N_local**
 batches its OWN records (freshness uses Λ_i) but verifies EVERYONE's (verify-throughput uses Λ).
 Conflating them was audit finding **F12**.
 
-**Λ_i = 20 rec/s and D_max = 250 ms — sources VERIFIED at source (2026-07-29, items A4/B3).**
+**Λ_i = 50 rec/s and D_max = 100 ms — ADOPTED 2026-07-30 (B3 resolved by Mohamed: report the
+region, adopt the compliant point). Sources VERIFIED at source (2026-07-29, item A4).**
 An AUTHBC record maps onto MAVLink `GLOBAL_POSITION_INT` plus part of `SYS_STATUS`. The rates below
 were read from the autopilot source, not from secondary summaries:
 
@@ -49,15 +50,31 @@ broadcast* service — which is precisely this system, not a cellular uplink:
   payload, which is exactly the φ metric this thesis optimises.
 * R-5.2.2-009: range up to 600 m; R-5.2.2-007: relative speeds to 320 km/h.
 
-So Λ_i = 20 rec/s sits **above the standard's 10 msg/s floor and below PX4's 50 Hz companion rate** —
-defensible from both directions.
+**B3 RESOLVED (2026-07-30).** The adopted point is **Λ_i = 50 rec/s, D_max = 100 ms** — PX4's
+`MAVLINK_MODE_ONBOARD` companion rate, and **fully compliant** with TS 22.125 (≥10 msg/s and
+≤100 ms). The previous (20 Hz, 250 ms) point is retained as a reported alternative, not as the
+headline.
 
-⚠️ **D_max = 250 ms EXCEEDS the standard's 100 ms bound. This is a declared deviation, not an
-oversight.** See docs/02 §7a for the full sweep and the ⚠️ decision it raises. In short: batching
-obeys **b ≤ Λ_i·D_max**, so only the *product* matters. Our (20 Hz, 250 ms) gives Λ·D = 5 ⇒ b = 4 —
-**identical** to the standards-compliant (50 Hz PX4 ONBOARD, 100 ms) point, which also gives b = 4.
-The co-design result is therefore reproduced at a compliant operating point; what changes is the
-channel load, and that is where it becomes interesting (docs/02 §6b).
+**Why the switch is free in bytes.** Batching obeys **b ≤ Λ_i·D_max**, so only the *product*
+matters. Both points give Λ·D = 5 ⇒ **b = 4 ⇒ 72.0 B/record ⇒ −58.68 %**. Identical.
+
+**What it costs, stated because this is an optimization problem:**
+
+| | Λ | D_max | b | B/rec | N_max (U<1) | N_max (V≥0.95) | compliant |
+|---|---|---|---|---|---|---|---|
+| **ADOPTED** | 50 | 100 ms | 4 | **72.0** | 35 | **116** | ✅ |
+| alternative | 20 | 250 ms | 4 | **72.0** | 103 | 233 | ❌ exceeds 100 ms |
+| — | 20 | 100 ms | 1 | 153.0 | 34 | — | ✅ but no batching |
+| — | 10 | 100 ms | 1 | 153.0 | 78 | — | ✅ but no batching |
+
+Compliance costs **~2× swarm size** (233 → 116 at the V≥0.95 boundary; 103 → 35 at saturation) and
+**nothing in bytes**.
+
+⚠️ **The region has a floor, and it is a real constraint on the application.** Holding b ≥ 4 under a
+100 ms deadline needs **Λ ≥ 40 Hz**. At 20 or 10 Hz the same deadline forces b = 1 and the saving
+collapses from 58.7 % to **12.2 %**. So the batching benefit is *not* available at every compliant
+operating point — it requires a telemetry rate fast enough to fill a batch inside the deadline.
+See docs/02 §6b, `TRADEOFFS.md` §1 and `results/raw/operating_region.csv` for the full surface.
 
 **Structural coupling:** any batching at all needs `b/Λ_i ≤ D_max` with b ≥ 1, hence
 **Λ_i ≥ 1/D_max**. At D_max = 250 ms that means Λ_i ≥ 4 rec/s; at the 3GPP 100 ms bound it means

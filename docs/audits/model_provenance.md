@@ -560,3 +560,1208 @@ the data. The tests caught an error in my *analysis*, which is what they are for
 publish a finding, propagate it to five documents, then have a test refute it — is the argument for
 running the suite *before* propagating, not after.
 
+---
+
+## F16 — T6 is NOT novel. Prior art found before publication, unlike F9 ⚠️
+*2026-07-30, from the prior-art check Mohamed asked for. The result is negative and that is the
+point: F9 taught this project to search **before** claiming, and this time we did.*
+
+**What T6 claimed to contribute.** An "authentication-exclusion threshold": a link admits
+per-frame-verifiable telemetry only if `s_max = M − H_f − g_a ≥ s_min`, with fragmentation closed
+off by T3.
+
+**The inequality is established prior art.** Gündoğan, Amsüss, Schmidt and Wählisch (ACM ICN 2021)
+perform exactly this computation for 802.15.4/NDN:
+
+> "we assume the 802.15.4 MTU, a data name of 16 bytes, a structural NDN encoding overhead of
+> another 16 bytes, and the link-layer header further consumes 23 bytes … This sums up to 55 bytes
+> and leaves 73 bytes for the payload and signature. … Ed25519 … 64 bytes … Yet this reduces the
+> available space for application data down to 9 bytes"
+
+That is `M − H_f − g_a = s_max`, computed and used to motivate a design. The same reasoning appears
+in the post-quantum literature, where NIST signatures are reported as incompatible with the 372 B
+maximum of 5G SIB1 — our "tier 1", the signature alone overflowing the frame.
+
+**The fragmentation step is also known.** That a fragmented unit needs every fragment, giving
+`(1−p)^n` delivery, is standard in the 6LoWPAN literature ("the loss of only a single fragment can
+render the entire packet invalid"), and "sliced signatures" are an actively proposed workaround.
+
+**So T6 is a synthesis of two established facts, not a new theorem.** Demoted accordingly: it is
+stated as an *applied threshold* with prior art cited, not as a contribution.
+
+**What survives as ours, stated conservatively:**
+
+1. **The composition made explicit** — that the sliced-signature escape the literature proposes is
+   unavailable whenever `ε ≤ p`, because the verifiability target is then spent entirely on the
+   first frame (`n_max = 1`). Each half is known; we have not found the two combined into a
+   feasibility condition.
+2. **The EU868 partition** — which specific LoRa data rates are excluded and by which tier
+   (DR0–DR2 by the signature alone; DR3 by six bytes). That is application of a known bound to a
+   link nobody had applied it to, and it is a useful negative result, but it is engineering, not
+   theory.
+
+**T2a is left flagged, not cleared.** The searches targeted T6. T2a (amplification `A` is operative
+only in the MTU-limited regime; under a freshness bound `dC/ds = 1`) has *not* had an equivalent
+check and must get one in the A3 pass before any novelty is implied for it.
+
+**Why this matters more than the finding itself.** F9 cost a retraction because a claim was
+published before the literature was read. The correct outcome here is unglamorous — we searched,
+found prior art, and downgraded a claim we liked. That is the process working.
+
+---
+
+## F17 — a static type gate found three real defects the test suite could not (2026-07-30, FIXED)
+
+**What prompted it.** Housekeeping, not suspicion: `mypy` was added to the toolchain to close a
+professionalism gap. It was expected to find nothing, because the suite was green at 1077 tests.
+**Expected before running: 0 substantive findings, some annotation noise.** That expectation was
+wrong, and the reason it was wrong is the interesting part.
+
+**What it found.** 18 errors, of which three were genuine design defects rather than annotation
+noise:
+
+1. **A Liskov violation across the whole `Framer` hierarchy.** The base class declared
+   `unpack(frame, **verifier)` and `pack(records, *, b)`; the subclasses declared incompatible
+   narrower signatures — `unpack(frame, *, pk)` in A/B/D but `unpack(frame)` in C, and
+   `pack(..., sigs, pks, b)` in C alone. Any code holding a `Framer` and calling it polymorphically
+   could therefore raise `TypeError` depending on which placement it was handed. The tests never
+   caught it because every call site instantiates a *concrete* placement.
+   **Root cause — and it is a modelling fact, not an oversight:** placement C is genuinely
+   different. It aggregates signatures produced by *other* senders, so it cannot sign internally
+   (needs `sigs`/`pks` on `pack`) and it carries its own public keys in the frame (needs no `pk` on
+   `unpack`). The hierarchy had encoded that asymmetry by silently diverging instead of stating it.
+   **Fix:** one signature for all four placements, with the placement-specific arguments optional
+   and *checked at run time* with a message naming the placement. The asymmetry is now documented
+   in the base-class docstring rather than implied by a signature mismatch.
+
+2. **BLS-only methods called through the general protocol.** `micro.py` called `.aggregate()` and
+   `.aggregate_verify()` on the result of `get_scheme("bls")`, typed as `SignatureScheme` — a
+   protocol that does not declare them. The `crypto/base.py` docstring already said "BLS
+   additionally exposes aggregate/aggregate_verify", so the *documentation* was ahead of the
+   *types*. **Fix:** an `AggregateScheme(SignatureScheme, Protocol)`, so handing a non-aggregating
+   scheme to placement C or the aggregation benchmarks is now a type error rather than a runtime
+   `AttributeError`.
+
+3. **Three stale `# type: ignore[arg-type]` suppressions** in `encodings/`, silently dead. Found
+   only because `warn_unused_ignores = true` was set. A suppression that no longer suppresses
+   anything is a claim that the code is unsafe when it is not.
+
+Also fixed, less interesting: `b_max`/`b_max_inline` were annotated `s: int` while every caller
+passes a **measured mean** (float) and relies on the floor being taken on the *quotient* — flooring
+`s` first gives a different answer. The annotation was wrong, not the code; widening it to `float`
+documents why the `//` is where it is.
+
+**What this says about the test suite.** Nothing bad: 1077 tests are the reason the *numbers* are
+trustworthy. But tests exercise the paths that are called, and the LSP defect lives exactly in the
+path nobody calls — polymorphic use of a base class. Types and tests fail differently, which is why
+both are now in `make all`.
+
+**Standing change:** `make typecheck` is part of `make all` and `.pre-commit-config.yaml`. Config in
+`pyproject [tool.mypy]` with `warn_unused_ignores`/`warn_redundant_casts` on, so dead suppressions
+cannot accumulate again. Zero suppressions remain in `src/` beyond one documented cast in
+`encodings/json_enc.py`, where the JSON wire dict is legitimately a different type from the record
+dict (`prev_hash` becomes a hex string).
+
+---
+
+## ~~F18 — the LoRa capacity result corroborated against published measurements~~ ⚠️ **RETRACTED 2026-07-30, same day, by Mohamed**
+
+**The claim was: "our simulation is slightly more optimistic than Bor et al.'s measurement-based
+model, so N_max = 5 is not an artifact." That is false, and it was false in the direction that
+flattered us.** Superseded by F19. Kept visible because the *way* it went wrong matters more than
+the finding did.
+
+**What I did wrong.** I extracted this sentence from the PDF and attributed it to their LoRaWAN
+result: *"For 1000 nodes per gateway, around 90 % of packets collide, while the average throughput
+per device is around 20 frames per hour."* It is from **§6.2, Figure 14 — their PURE ALOHA model**,
+not their LoRa model. Their LoRa figure for the same configuration is **~32 %**.
+
+**The aggravating part.** A search snippet had reported exactly the correct split — 32 % LoRaWAN
+versus 90 % pure ALOHA. I overrode it from the PDF, got it backwards, and then wrote a ⚠️ warning
+into `docs/literature/README.md` telling future readers that the *snippet* had lied. **The snippet
+was right. I was the one who misquoted.** "Quote the PDF" is still the rule; it is not a licence to
+stop reading which section the sentence came from — a quotation without its figure number is not a
+quotation, it is a fragment.
+
+**Why it survived my own check.** The Law 6 gate asks for an expected value stated in advance. I
+stated one for the *arithmetic* (offered-load ratio) and it was correct — 25×, reproduced below in
+F19. I never stated an expectation for the *attribution*, so there was nothing for the evidence to
+contradict. **A number can be right while the sentence around it is wrong.**
+
+---
+
+## F18 (original text, retained for the record — DO NOT CITE)
+
+**The exposure.** `N_max = 5` at DR5 is one of the two load-bearing claims of the low-rate chapter,
+and LoRaWAN scalability papers routinely quote node counts in the hundreds to thousands. A reviewer
+who knows that literature will read `5` as evidence of a broken simulation. Until now the number
+rested on our own NS-3 runs alone.
+
+**What we checked it against.** Bor, Roedig, Voigt & Alonso, *LoRa Scalability: A Simulation Model
+Based on Interference Measurements*, Sensors 17(6), 2017 — a model built on measured interference
+rather than an analytical idealisation, i.e. an independent and unfavourable comparison.
+
+⚠️ **A secondary source misreported it, and reading the paper mattered.** A search summary
+attributed "32 % loss at 1000 nodes" to this paper. The paper says: *"For 1000 nodes per gateway,
+around 90 % of packets collide, while the average throughput per device is around 20 frames per
+hour."* Had the 32 % figure been used, we would have overstated the disagreement with our own
+result. **Quote the PDF, never the summary** — the same discipline as F9 and F16.
+
+**The reconciliation.** Normalising both studies to per-node channel occupancy, computed with our
+own `lora.frame_time_on_air_s`:
+
+| | Bor et al. | AUTHBC |
+|---|---|---|
+| payload / ToA | 20 B / 71.9 ms | **218 B / 363.8 ms** (5.1×) |
+| send interval | 180 s at their 1000-node point | **36.4 s** (the 1 % duty-cycle maximum) |
+| per-node occupancy | 0.040 % | **1.000 %** (**25×**) |
+| criterion | any non-zero throughput | **V ≥ 0.95** |
+
+**Their 1000 nodes carry the same offered load as ≈40 of ours**, and at that load they report ~90 %
+collisions. We measure 59 % loss at N=30 and 75 % at N=50. **Our simulation is therefore slightly
+more optimistic than their measurement-based model, not more pessimistic** — so `N_max = 5` is not
+a simulator artifact. It is what a 218 B frame sent at the maximum legal rate costs.
+
+**Second, independent check** against the textbook pure-ALOHA success curve `e^(−2G)`: measured
+0.866 vs predicted 0.852 at N=8; 0.580 vs 0.670 at N=20; 0.253 vs 0.368 at N=50. Better than pure
+ALOHA at low load (LoRa capture lets the stronger of two overlapping frames survive), worse at high
+load (a gateway has finitely many demodulation paths). **Both deviations are in the physically
+expected direction**, which is the useful part — a model that matched pure ALOHA exactly would mean
+the simulator was ignoring LoRa physics.
+
+**Limitation this exposed, now stated rather than discovered by a reviewer.** Because the data rate
+is a *design variable* here, each run holds one DR fixed, which forfeits the SF quasi-orthogonality
+that supplies much of a real deployment's capacity. `N_max = 5` is a **within-one-spreading-factor
+bound at the maximum legal rate, not a LoRaWAN network capacity.** Tracked as `OPEN_ITEMS` E7 and
+stated in the low-rate chapter.
+
+---
+
+## F19 — what our LoRa simulation actually models, and why `N_max = 5` is a worst case (2026-07-30)
+
+**Supersedes the retracted F18.** Prompted by Mohamed asking two questions I could not answer from
+the documentation: *"Bor said 90 % is pure ALOHA and 32 % is LoRaWAN — what is our actual model, and
+did we use pure ALOHA or LoRaWAN?"* Both answers required reading source, not notes.
+
+### What Bor et al. report, by figure
+
+| figure | configuration | access | loss @ 1000 nodes |
+|---|---|---|---|
+| Fig. 6 (§6.1) | 1 channel, 1 SF, 20 B | **LoRa** | ~90 % |
+| Fig. 15 (§6.3) | 3 ch × 6 SF = 18 logical | **LoRa** | **~32 %** |
+| Fig. 14 (§6.2) | 18 logical | **pure ALOHA** | ~90 % |
+| Fig. 11 (§6.2) | 1 channel, 1 SF | **pure ALOHA** | total by 200 nodes |
+
+Their abstract: *"the losses will be up to 32 %. In such a case, pure Aloha will have around 90 %
+losses."* **F18 attributed the Figure-14 pure-ALOHA sentence to their LoRa model.** Mohamed was
+right; the retraction stands above.
+
+### What we actually simulate
+
+`ns3/authbc-lora-capacity.cc` called `macHelper.SetRegion(LorawanMacHelper::ALOHA)`. Reading
+`lorawan-mac-helper.cc::ConfigureForAlohaRegion`, that preset provisions the gateway with
+**`maxReceptionPaths = 1`** and **one frequency (868.1 MHz)**. The `EU` preset
+(`ConfigureForEuRegion`) provisions **8 reception paths and 3 frequencies**.
+
+So the answer is: **we simulate the LoRaWAN PHY** — real LoRa modulation with the module's
+interference and capture model, *not* an abstract ALOHA analysis — **on the module's harshest MAC
+preset: one channel, one demodulator, one forced spreading factor.**
+
+### The like-for-like comparison, which does not flatter us
+
+Both studies transmit at the 1 % duty-cycle ceiling (Bor: *"packets were transmitted as soon as
+possible, just after the waiting time imposed by the radio duty cycle mechanism"*), so per-node
+occupancy is 1 % in both and offered load scales identically as `G = N × 0.01`. **The 25× per-node
+load ratio asserted in F18 was an artifact of assuming their traffic was sparse; it is not.**
+
+Their own curve fit `f_MCH_MSF(x) = f_SCH_SSF(x/18)` maps the multi-channel 1000-node point onto
+**56 nodes on 1 channel / 1 SF at ~32 % loss**. We measure **74.7 % at N = 50**.
+
+> **We are ≈2.3× more pessimistic than their measurement-based LoRa model.** Most likely cause: the
+> single demodulation path. A second concurrent arrival is rejected outright rather than being given
+> the capture chance their SX1301 measurements grant it.
+
+**Expected-before-checking (Law 6), stated properly this time:** if the single-demodulator hypothesis
+is right, re-running with the `EU` preset (8 paths, 3 channels, same forced SF) must raise `N_max`
+**substantially** — and if it does not, the hypothesis is wrong and the loss is coming from the
+interference model instead. A `gwRegion` flag has been added to the scenario to run exactly that.
+
+### Consequence for the claim
+
+`N_max = 5` is **not** "LoRaWAN capacity". It is a **worst-case bound: one channel, one demodulator,
+one spreading factor.** Labelled that way in the paper, the register and `OPEN_ITEMS` (E8 single-SF,
+**E9** single-channel/single-path). The qualitative conclusion the low-rate chapter rests on — that
+LoRa is a different regime, not a slow 802.11 — is *strengthened* by being conservative, but the
+number must carry its configuration or it is misleading.
+
+### The process lesson, which is the expensive part
+
+F18 passed my Law 6 check because I stated an expectation for the **arithmetic** (the offered-load
+ratio) and verified it, while stating none for the **attribution**. The arithmetic was internally
+correct and completely irrelevant, because its input premise — that their nodes were sparse — came
+from a sentence I had misread. **A verified number inside a misattributed sentence is still wrong,
+and it is more dangerous than an obvious error because the verification feels like diligence.**
+Extend the rule: when a comparison rests on a source's operating point, state and check the
+**operating point**, not only the derived quantity.
+
+---
+
+## F20 — the LoRa arm now has an external baseline, and it agrees (2026-07-30)
+
+**Prompted by Mohamed:** *"why didn't we use Bor et al.'s model and test it with our optimizer and
+add them as a comparison?"* There was no good reason. I read the paper *after* the LoRa result
+existed and treated it as a yardstick to quote rather than a model to run. It is stated in closed
+form and was implementable all along.
+
+### What was implemented
+
+`lora.bor2017_loss_pct()` and `lora.bor2017_n_max()` implement their **Eq. (8)** — a degree-5
+polynomial fitted at R² = 0.997 to *total* packet loss (collisions **plus** wrong-payload-CRC),
+measured on real SX1301 hardware — together with the scaling laws Eqs. (9)–(11) that generalise it
+by the number of non-interfering logical channels.
+
+**Why it is applicable to us despite their 20 B frames and our 218 B ones:** the model is
+parameterised by *node count at the 1 % duty-cycle ceiling*. At that ceiling every node occupies
+1 % of the channel whatever its SF or frame length, so offered load is `0.01·N` in both studies.
+This is the same normalisation that F19 established; here it is load-bearing rather than incidental.
+
+### Validation — against the paper's own prose, not against our expectations
+
+| logical channels | Eq. (8) at N = 1000 | what the paper states |
+|---|---|---|
+| 1 (1 ch × 1 SF) | **86.6 %** | "around 90 % of all packets are collided" (Fig. 6) |
+| 6 (1 ch × 6 SF) | **65.3 %** | "around 68 % for 1000 nodes per gateway" (Fig. 7) |
+| 3 (3 ch × 1 SF) | **80.0 %** | "around 75 % … **lost due to collisions**" (Fig. 8) |
+| 18 (3 ch × 6 SF) | **32.4 %** | "In total, **32 %** of packets are lost" (Fig. 9) |
+
+Three land within ~3 points. The fourth looks 5 points high until you read the quantity that
+sentence names: Fig. 8's 75 % is **collisions only**, while Eq. (8) fits the *total*, so the model
+*must* come out above it. Asserted as such in `tests/test_bor2017_external_model.py`.
+
+### The result
+
+| | AUTHBC ns-3 | Bor et al. 2017 |
+|---|---|---|
+| **N_max at V ≥ 0.95** | **5** | **4** |
+
+**Two independent methods — a discrete-event simulation of the LoRa PHY, and a polynomial fitted to
+hardware interference measurements — land one node apart on the number the low-rate chapter rests
+on.** That is the external baseline item A7 was missing, and it is a far stronger statement than the
+one retracted in F18.
+
+**Do not over-read the agreement.** Below N ≈ 10 their polynomial is dominated by its 1.7833
+intercept, which is a fitting artifact (it predicts 1.78 % loss at zero nodes), so their N_max = 4
+carries the fit's error rather than a measurement. The agreement is the right *order*, obtained
+independently; it is not a precision result.
+
+### The shape disagreement, which is the informative part
+
+There is a **crossover at N ≈ 8**:
+
+| N | AUTHBC loss | Bor loss | |
+|---|---|---|---|
+| 5 | 0.0 % | 5.1 % | we are **more optimistic** |
+| 8 | 13.4 % | 7.0 % | we are 1.9× more pessimistic |
+| 30 | 59.0 % | 19.9 % | 3.0× |
+| 50 | 74.7 % | 29.9 % | 2.5× |
+
+Consistent with F19's diagnosis: at low load our capture model saves frames their fit's intercept
+penalises; at high load our **single demodulation path** rejects concurrent arrivals outright, which
+their SX1301-based model does not. The two disagreements have different causes and both are in the
+direction the configurations predict — which is why this is corroboration rather than coincidence.
+
+### One defect found in their published model
+
+⚠️ **Eq. (8) is not monotone.** It peaks at x ≈ 723 (86.61 %), falls to 85.01 % at x ≈ 923, then
+rises again — i.e. it says adding 200 nodes *reduces* loss. The excursion is 1.6 points on a 0–90 %
+curve at R² = 0.997, so it sits inside the fit's own residual and is an artifact of fitting a
+quintic, not a claim about LoRa. It is asserted in the test suite rather than smoothed away, so a
+future reader meets the explanation instead of suspecting our implementation. It does not touch any
+AUTHBC result: our operating region is N ≤ 50, an order of magnitude below the turning point.
+
+### Consequence
+
+`make exp-lora-external` emits `results/raw/lora_external_check.csv`. **A7 is closed for the LoRa
+arm** (the 802.11 arm already had Bianchi and Ma & Chen). `N_max = 5` remains labelled as a
+worst-case, single-channel/single-demodulator/single-SF bound per F19 — but it is now a
+*corroborated* worst case.
+
+---
+
+## F21 — the LoRa arm is a star topology, and what that does and does not invalidate (2026-07-30)
+
+**Prompted by Mohamed:** *"we suppose to do this work to a decentralized ad hoc network — does the
+LoRa model and what we simulated apply for this?"* It is the sharpest question asked of this work so
+far, and the answer required reading the scenario rather than the notes.
+
+### The mismatch is real
+
+`authbc-lora-capacity.cc` creates `nGateways = 1` and reports
+`delivered_frac = received_by_gateway / sent`. It is **N end devices → 1 gateway**. Meanwhile the
+802.11 arm is a genuine single-collision-domain broadcast among peers, and the thesis framing —
+FANET, 3GPP TS 22.125 §5.2.2 *direct UAV-to-UAV local broadcast* — is decentralised.
+
+This is not a simulator artifact that can be configured away: **LoRaWAN is by specification a
+star-of-stars topology and has no peer-to-peer mode.** UAV-to-UAV over LoRa means *raw LoRa* — the
+PHY without the LoRaWAN MAC — which the module does not implement. So the two arms of the thesis
+were, until now, answering topologically different questions without saying so.
+
+### What transfers anyway, and why
+
+**Collision statistics at a receiver depend on how many transmitters are concurrently in range, not
+on what the receiver is plugged into.** From the viewpoint of a single receiver, `N` end devices
+sending to a gateway and `N` peers sending to one peer produce the same arrival process. The star
+simulation is therefore a valid model of **one receiver in an ad hoc network**, with the mapping
+
+> star with N end devices ≈ ad hoc with N+1 nodes, from one receiver's viewpoint
+
+because in ad hoc the receiver is itself one of the nodes and does not interfere with itself.
+
+### ⚠️ This inverts E9
+
+E9 recorded the `ALOHA` preset (1 channel, **1 demodulation path**) as unrealistically harsh, on the
+grounds that a real gateway has 8. That reasoning was right for a *gateway* and wrong for our actual
+system. **A UAV peer has one radio and one demodulator.** The preset I flagged as a limitation is the
+*appropriate* model for the decentralised case, and the `EU` preset (3 channels, 8 paths) answers a
+different question — infrastructure collection — rather than a more realistic version of ours.
+
+`N_max = 5` therefore stands as the **ad hoc** number, and it now stands for the right reason rather
+than by accident.
+
+### What the star simulation still does not model
+
+1. **Half-duplex.** A LoRa radio cannot receive while transmitting. Each node is blind for its own
+   364 ms frame, ≈1 % of the time, so it misses roughly **2 %** of any given peer's frames (the
+   ALOHA vulnerability window is twice the frame time). Small at N = 5, and it is a loss the
+   gateway never suffers.
+2. **Full replication.** Our `V` is a *per-receiver* metric, identical in definition to the 802.11
+   arm. A record reaching **every** peer in one broadcast has probability ≈ `p^(N-1)`: at
+   `p = 0.95, N = 5` that is **0.815**, not 0.95. A ledger that requires every node to hold every
+   record in a single hop would need gossip or relay, which is an application-layer mechanism
+   outside this thesis's scope — but the paper must say so rather than let "decentralised" imply it.
+3. **Spatial diversity.** Peers sit at different distances, so capture resolves differently at each
+   receiver; a gateway is a single, usually well-sited, vantage point.
+
+### Also found while checking
+
+The `ALOHA` preset sets its sub-band duty cycle to **1 (100 %)** —
+`AddSubBand(SubBand(868.0e6, 868.6e6, 1, 14))` — so the MAC does **not** enforce the 1 % limit in our
+runs. The 1 % offered load comes from our application period (`appPeriodS = 38.4` s against a
+≈384 ms frame) instead. Self-consistent and correct, but it was undocumented, and anyone changing
+`appPeriod` without changing the preset would silently violate the regulation the whole LoRa arm is
+built around.
+
+### Consequence
+
+E9 is **reframed, not closed**: the `EU`-preset run is still worth doing, but as an
+*infrastructure-variant comparison*, not as a correction to the ad hoc number. New item **E10**
+records the half-duplex and full-replication gaps. The paper's low-rate section now states the
+topology explicitly instead of leaving "LoRaWAN uplinks" to imply it.
+
+---
+
+## F22 — the "LoRaWAN has no peer-to-peer mode" claim, checked against the literature (2026-07-30)
+
+**Prompted by Mohamed:** before accepting F21's reframing (*"what if a ground gateway collected the
+ledger instead?"*) and spending an NS-3 rebuild on it, verify that the claim underneath it is
+actually true. It was asserted from the specification and from module source, not from literature.
+
+**Verdict: the claim holds, in almost the words used.** Three peer-reviewed sources, all now held in
+`docs/literature/`, all Crossref-verified.
+
+### 1. LoRaWAN is star-only — confirmed
+
+Paredes, Kaushal, Vakilinia & Prodanoff, *LoRa Technology in Flying Ad Hoc Networks: A Survey of
+Challenges and Open Issues*, Sensors 23(5):2403, 2023:
+
+> "LoRaWAN—a protocol used to create a **star topology** network using LoRa technology. However, when
+> it comes to MANETs and FANETs, **LoRaWAN presents some limitations regarding its star topology, its
+> medium access control (MAC) layer and its lack of routing procedures**."
+
+> "These network elements typically connect in a **star-of-stars topology**."
+
+Berto, Napoletano & Savi, *A LoRa-Based Mesh Network for Peer-to-Peer Long-Range Communication*,
+Sensors 21(13):4314, 2021, in its abstract:
+
+> "A LoRaWAN network **assumes a star topology** where each of the nodes communicates with multiple
+> gateways" — and their contribution is a mesh "**not relying on LoRaWAN**… **without the use of
+> gateways**."
+
+So peer-to-peer LoRa exists and is an active area, but it is built by *discarding* the LoRaWAN MAC.
+That is exactly what F21 asserted.
+
+### 2. Half-duplex and pure ALOHA are specification properties, not our modelling choices
+
+Paredes et al., on LoRaWAN device classes:
+
+> "**Class A**: The end devices of this class are **half-duplex transceivers that implement pure
+> ALOHA** for their uplink transmissions… The receiver remains off, except for [the receive windows]."
+
+Berto et al., on their peer-to-peer implementation:
+
+> "Since the employed controller **only permits half-duplex communication**, the overall transceiver
+> system should be designed to spend as much time as possible in an active listen state so that
+> expensive retransmissions [are avoided]."
+
+**This independently validates two things we had derived ourselves:** our use of a pure-ALOHA uplink
+(it is what Class A specifies), and E10's half-duplex caveat (it is a real design constraint that
+peer-to-peer LoRa implementers have to engineer around).
+
+### 3. The gap is real, which is useful positioning
+
+Paredes et al.'s own conclusion, from a 2023 survey:
+
+> "Though **not much research work has been conducted on using LoRa as a mesh backhaul for air-to-air
+> links**, this technology can be useful to maximize the communications range between UAVs in
+> low-data-rate applications."
+
+and earlier: "there is **little research activity on FANETs using LoRa technology**."
+
+### What this changes
+
+**Nothing needs retracting.** F21's reframing stands and is now cited rather than asserted. Three
+consequences:
+
+1. The paper's topology caveat now carries `\cite{paredes2023lorafanet,berto2021loramesh}` instead of
+   resting on our reading of the specification.
+2. **The gateway framing is the honest one for a LoRaWAN simulation.** A LoRa UAV-to-UAV ledger is
+   possible, but it is a *different system* — raw LoRa plus a custom MAC and routing — not a
+   configuration of what we simulated. Presenting our result as an ad hoc LoRa capacity without that
+   caveat would have been wrong.
+3. ⚠️ **A limitation of scope, now stated:** where the 802.11 arm is genuinely decentralised, the
+   low-rate arm answers the *infrastructure-collected* variant. The two arms bracket the design space
+   rather than being the same experiment at two data rates, and the paper says so.
+
+⚠️ **Identified but NOT read, so not cited for any specific number:** *Swarm of Drones Using LoRa
+Flying Ad-Hoc Network* (IEEE, 2021) builds a LoRa FANET with DSDV routing; secondary summaries report
+it uses listen-before-talk and dedicated TX/RX radios on a single channel — which would corroborate
+both our single-channel argument and E10's half-duplex point. **Not claimed here, because the F18
+lesson is that a summary is not a source.** Worth obtaining before the defence.
+
+---
+
+## F23 — hardware says the LoRa capacity result is range-limited, and our own radius breaks it (2026-07-30)
+
+**Mohamed supplied the paper** (`zirak2021.pdf`, a scanned IEEE copy with no text layer — read by
+rendering the pages) after F22 listed it as identified-but-unread. It turned out to carry more than
+the corroboration it was fetched for.
+
+**Zirak, Shashev & Shidlovskiy, "Swarm of Drones Using LoRa Flying Ad-Hoc Network", 2021 ICIT,
+pp. 400–405, DOI 10.1109/ICIT52682.2021.9491655.**
+
+### It confirms F21/F22 in the strongest terms yet — from the abstract
+
+> "the Media Access Control (MAC) level protocol **LoRaWAN only supports star topology**. This paper
+> contributes towards decentralization by creating a Flying Ad-Hoc Network (FANET) using LoRa … with
+> a customized Destination Sequenced Distance Vector (DSDV) routing protocol **optimized for a single
+> channel**. Results show that … **Listen Before Talk (LBT) reduces idle wait time**, and **dedicated
+> transmitter/receiver improves Packet Delivery Ratio (PDR)**."
+
+Four of our positions, independently stated by people who built the thing:
+* **LoRaWAN is star-only** — F21/F22.
+* **A single channel is the right choice for an ad hoc LoRa swarm** — `TRADEOFFS.md` §1a, which we
+  argued from the sub-band duty cycle and single-radio reception. They reached it by building one.
+* **Half-duplex is a real cost with a known fix** — E10. Their fix is *dedicated TX and RX radios*,
+  and they measure the improvement (their Fig. 10).
+* Their intro also notes LoRaWAN assumes transmission "**in hours or days** … But the frequency of
+  data transmission in a swarm will be much greater … **in seconds or milliseconds**" — precisely the
+  mismatch our low-rate arm quantifies.
+
+⚠️ One position of ours it **does not** support: they use **LBT**, not pure ALOHA. Our uplink is pure
+ALOHA (correct for LoRaWAN Class A, per F22), so a real LoRa FANET with carrier sense would collide
+*less* than we model. One more respect in which `N_max = 5` is conservative.
+
+### The finding it actually delivered: we do not model link loss at all
+
+Their **Table I** is a hardware PDR-versus-range measurement over 1000 packets, first hop, field
+test — with two drones and a base station, so contention is negligible and the numbers isolate
+**range-dependent link loss**:
+
+| range | 200 m | 500 m | 600 m | 1000 m |
+|---|---|---|---|---|
+| measured PDR | 0.9711 | **0.9550** | **0.9399** | **0.9045** |
+
+**Our scenario is configured with `radiusMeters = 1000` and `realisticChannelModel = false`.** At
+that range we simulate **zero** link loss and report delivered = 1.0000 at N ≤ 5. Hardware measures
+**0.9045**. *Our idealised channel is 9.6 percentage points optimistic at our own deployment radius.*
+
+**Stated before computing (Law 6):** link loss and collision loss are independent, so delivery is
+`P_link(range) × P_no_collision(N)`; therefore any range whose measured link PDR is already below
+0.95 must make V ≥ 0.95 unreachable at *every* node count, and their table crosses 0.95 between 500
+and 600 m. Computed:
+
+| range | N_max at V ≥ 0.95 |
+|---|---|
+| 200–500 m | **5** |
+| 600–1000 m | **0** |
+
+Exactly as predicted, which is the useful part: the prediction was structural, not fitted.
+
+### Consequence — the headline survives, with a qualifier it did not have
+
+**`N_max = 5` holds only within ≈500 m.** Beyond that the criterion fails on path loss alone, before
+a single collision, and capacity cannot rescue it. At the 1000 m radius our own scenario configures,
+`N_max = 0`.
+
+This does not overturn the low-rate chapter's argument — LoRa remains a different regime, and the
+result is *conservative* in every other respect (single channel, single demodulator, pure ALOHA
+rather than LBT). But a capacity number quoted without its range is incomplete, and ours was. It is
+the LoRa counterpart of the 802.11 arm's known result that the idealised channel is 39 % optimistic
+at 500 m — the same class of error, now caught on both arms.
+
+Implemented as `lora.zirak2021_link_pdr()` and `lora.max_range_for_verifiability()`, with the table
+asserted in tests and the range sweep emitted by `make exp-lora-external`. Tracked as **E12**.
+
+---
+
+## F24 — a supplied PDF was the wrong paper, and the filename is why it nearly slipped (2026-07-30)
+
+Mohamed supplied two sources. One (`pueyo2021_beyond_star_of_stars.pdf`) is correct and is now the
+strongest confirmation the topology claim has. The other, saved as **`klimiashvili2020.pdf`** and
+intended to be *"LoRa vs. WiFi Ad Hoc: A Performance Analysis and Comparison"*, is a **different
+paper entirely**:
+
+> Sikder & Haque, *"Optimization of Idealized Quantum Dot Intermediate Band Solar Cells Considering
+> Spatial Variation of Generation Rates"*, IEEE Access, 2013, DOI 10.1109/ACCESS.2013.2265094.
+
+**Checked across the whole document, not just page 1:** 8 pages, **0** occurrences of "LoRa",
+"WiFi", "Wi-Fi" or "ad hoc"; **54** of "solar", 20 of "intermediate band". It is a solar-cell physics
+article. The repository served the wrong file, or the wrong file was saved.
+
+**Why this is worth a finding rather than a shrug.** The filename encoded a plausible
+author-year (`klimiashvili2020`) matching what was requested. Had the sweep been done at volume —
+or had the file been registered from its name and read later — a citation to a solar-cell paper
+could have entered the bibliography under a networking claim. That is the same failure mode as F18
+(trusting a label instead of the content), reached by a different route.
+
+**Standing rule, now applied to every supplied PDF:** *open it and confirm the title, authors and
+venue against the record before it is registered or cited* — cheap, and it has now caught something
+twice.
+
+**Consequence:** "LoRa vs. WiFi Ad Hoc" remains **wanted, not held** (`docs/literature/README.md`
+§4c, item 1). It is still the highest-value outstanding source, because it is our two-arm structure
+as somebody else's entire paper.
+
+---
+
+## F25 — the NS-3 variant runs: E9 answered, E12 answered differently than expected (2026-07-30)
+
+Four sweeps, expectations written to `EXPECTATIONS.md` **before** launching (Law 6), DR5, 218 B,
+36.378 s period, 3600 s, 3 seeds, N ∈ {2,3,5,8,10,15,20,30,50}.
+
+### 0. The baseline reproduces byte-for-byte
+
+`aloha/ideal/r=1000` re-run against the frozen `lora_capacity.csv`: **identical on every row**. All
+the scenario edits since (the `gwRegion` flag, the `channelModel` flag, the payload guard) are
+behaviour-preserving for the frozen configuration.
+
+⚠️ **A trap found on the way, now fixed.** The scenario's default `payloadBytes` was **231 B**, above
+the module's enforced RP002 Table 12 limit of **222 B** at DR5. The MAC silently rejects every
+oversized packet, so a manual run with the defaults sent *nothing* and surfaced only as the generic
+"no packets were sent" abort 3600 simulated seconds later. Default corrected to 218 B and an
+**early, explicit guard** added that names the limit and the DR. This cost real debugging time and
+would have cost more later.
+
+### 1. E9 — the gateway preset: N_max = 8, and my prediction was wrong
+
+**Predicted N_max ≥ 14**, from Bor et al. Eq. (10) (3 channels ≈ 3× nodes) plus the removal of the
+single-demodulator bottleneck. **Measured: 8.**
+
+| N | `aloha` (1 ch, 1 path) | `EU` (3 ch, 8 paths) | ratio |
+|---|---|---|---|
+| 8 | 0.8656 | **0.9958** | 1.15× |
+| 10 | 0.7731 | 0.9370 | 1.21× |
+| 20 | 0.5795 | 0.8322 | 1.44× |
+| 50 | 0.2532 | **0.6781** | **2.68×** |
+| 100 | — | 0.5308 | — |
+
+**Why the prediction failed, and it is the interesting part.** The gateway preset *does* deliver
+roughly the 3× the channel count implies — but only in **aggregate delivery at high load** (2.68× at
+N=50, still rising). It buys almost nothing at the **V ≥ 0.95 threshold**, because that threshold
+sits on a very steep part of the curve: EU passes at N=8 with 0.9958 and fails at N=10 with 0.9370.
+A 3× reduction in offered load moves a near-vertical curve sideways by very little.
+
+**This is the same duality the 802.11 arm shows between saturation (U<1) and the measured V≥0.95
+boundary:** a capacity metric and a strict-reliability metric respond very differently to the same
+change. Reporting only N_max would have hidden a 2.68× improvement; reporting only aggregate
+delivery would have implied a threshold gain that does not exist.
+
+⇒ **Infrastructure collection (a ground gateway) buys ~2.7× the aggregate delivery at high load but
+only 5 → 8 nodes at V ≥ 0.95.** E9 answered.
+
+### 2. E12 — shadowing changes *nothing* at our ranges, and that is the finding
+
+`shadowing` at r = 1000 and r = 500 returned results **identical to `ideal` on every row**. The
+falsifier stated in advance was: *"if shadowing changes nothing at N=2, the shadowing model is not
+active and the run is invalid — do not report it as no-effect."* So it was tested rather than
+believed:
+
+| range | `ideal` | `shadowing` |
+|---|---|---|
+| 3500 m | 1.0000 | 1.0000 |
+| **4000 m** | **1.0000** | **0.5152** |
+| 5000 m | 0.0303 | 0.0152 |
+
+**Shadowing is correctly wired.** It simply cannot bite at 500–1000 m, and the link budget says why:
+with `LogDistance(n = 3.76, 7.7 dB @ 1 m)`, 14 dBm TX and the module's **−130 dBm** SF7 gateway
+sensitivity, the margin is **28.8 dB at 500 m and 17.5 dB at 1000 m**. An ~8 dB shadowing σ cannot
+erode that. Simulated failure onset is ≈4200 m — confirmed, ideal drops to 0.626 at 4000 m.
+
+**⇒ The correct conclusion is not "shadowing was missing". It is that our propagation parameters
+describe a far better link than a real drone-to-drone channel, and no option the scenario exposes
+fixes that.** Hardware measures 9.6 % loss at 1000 m (F23) where our model, with or without
+shadowing, has 17.5 dB of margin and loses nothing.
+
+**E12 resolution:** the range qualifier stands and is now **empirically justified rather than merely
+stated** — we asked whether the simulator could produce the measured link loss and established that
+it cannot at these ranges. Composing the two terms remains the honest treatment: our simulation
+supplies `P_no_collision(N)`, hardware supplies `P_link(range)`, and `exp-lora-external` multiplies
+them. Recalibrating the path-loss exponent against Zirak's table would be the alternative, and is
+recorded as future work rather than done here, because fitting a propagation model to nine points
+from one field campaign would trade a stated limitation for a hidden one.
+
+---
+
+## F26 — intensive audit of the NS-3 simulations: two errors of mine, one broken number (2026-07-30)
+
+Mohamed asked for the simulations to be revised, audited and attacked. Seven issues found across the
+four scenarios. **One invalidates a headline number, two are errors in my own earlier write-ups.**
+
+### ⚠️⚠️ A1 (CRITICAL) — `N_max = 5` is not supported: frozen phases + a 3-seed sample
+
+Every device shares **one exact period** (`Simulator::Schedule(m_interval, …)`, no jitter, no drift)
+and LoRaWAN ALOHA has **no backoff to re-randomise**. Relative phases are therefore **frozen for the
+entire run**: a pair that collides on its first transmission collides on *every* transmission, and a
+pair that misses never collides. Delivery is consequently **bimodal**, not noisy-around-a-mean.
+
+Per-seed `delivered_frac`, 30 seeds, the exact frozen configuration:
+
+| N | reported (3 seeds) | **30-seed mean** | median | σ | min | seeds failing V≥0.95 |
+|---|---|---|---|---|---|---|
+| 4 | 1.0000 | **0.8981** | 1.0000 | 0.200 | 0.2500 | **27 %** |
+| 5 | **1.0000** | **0.8905** | 1.0000 | 0.211 | 0.2000 | **27 %** |
+
+**Seeds 1–3 happened to land on 1.0000 for both. That is luck, and it is the whole basis of
+`N_max = 5`.** On a 30-seed mean, *N = 4 also fails*. Three seeds cannot characterise a bimodal
+distribution, and comparing its **mean** against a hard threshold is the wrong statistic regardless
+of sample size.
+
+**Is the bimodality physical or an artifact?** Partly both, and the arithmetic decides it:
+
+| crystal tolerance | relative drift over 3600 s | enough to clear a 2×364 ms collision? |
+|---|---|---|
+| ±20 ppm (realistic SX127x) | 144 ms | **no** |
+| ±100 ppm | 720 ms | marginal |
+| ±500 ppm | 3600 ms | yes — and measured values stop being quantised |
+
+So for a *naive exact-period sender*, frozen phases are **physically plausible within a one-hour
+window**. But real LoRaWAN Class A devices are specified to randomise transmission timing precisely
+to avoid this, and the module's `PeriodicSender` does not model that. An opt-in `--clockPpm` flag was
+added (**default 0, so the frozen configuration is bit-for-bit unchanged** — verified: N=8 still
+gives 0.8656).
+
+**⚠️ This is a decision for Mohamed.** `N_max = 5` should be either (a) re-derived from ≥30 seeds and
+reported as a distribution rather than a mean, or (b) re-run with a sender that randomises timing as
+the standard requires — probably both. It is the same artifact class the 802.11 arm already guards
+against, with this comment in `authbc-delay.cc`: *"De-synchronise the sources: identical start times
+would make every node's periodic transmission collide deterministically, which is an artifact, not
+DCF behaviour."* **We fixed it on one arm and never applied it to the other.**
+
+### ⚠️ A2 (MAJOR, my error) — there is no capture in our LoRa runs, and I claimed there was
+
+The scenario selects `LoraInterferenceHelper::ALOHA`, whose matrix is `+inf` on the same-SF diagonal
+and `−inf` off it: **any co-SF overlap is unconditionally fatal, and different SFs never interfere.**
+Since we force a single SF, **every overlap destroys both packets — there is no capture whatsoever.**
+Goursaud's diagonal is 6 dB, which *is* capture.
+
+**I repeatedly attributed our low-N behaviour to capture** — in F19, F20, F25, the literature register
+and the paper ("capture working", "our capture model saves frames"). **All of it is wrong.** Measured
+cost of the choice:
+
+| N | ALOHA matrix (used) | Goursaud (capture) | gain |
+|---|---|---|---|
+| 8 | 0.8656 | 0.8984 | +3.3 pts |
+| 50 | 0.2532 | **0.3453** | **1.36×** |
+
+The real reason we beat the Poisson curve `e^(−2G)` at low N is that **traffic is periodic, not
+Poisson**: for periodic sources the escape probability is `(1−2τ/T)^(N−1)` = 0.868 at N=8, against
+0.8656 measured — a near-exact match, and nothing to do with capture. Capture is a *further* 3–9
+points we are giving away, so this makes our result more conservative than stated, for a reason we
+now understand rather than guess at.
+
+### A3 (MAJOR) — nothing moves, in a *Flying* ad-hoc network study
+
+All four scenarios use `ConstantPositionMobilityModel`. No Doppler, no link churn, no distance
+variation over time. Defensible for the 802.11 saturation analysis (MAC contention in one collision
+domain is mobility-independent to first order, provided nodes stay in range) but a real gap for the
+LoRa arm, where F23 established that range dominates.
+
+### A4 (MODERATE, latent) — `n_max` takes the *last* passing N, not the first failure
+
+`run_lora_capacity.py` does `if ok: n_max = n` inside the sweep with **no break**. On a monotone
+curve this is harmless; under the noise A1 documents it would silently report a higher capacity than
+the data supports. It has not bitten yet only because the reported means happened to be monotone.
+
+### A5 (MODERATE) — no variance is reported anywhere
+
+None of the NS-3 drivers emit a standard deviation, confidence interval, or min/max — only means
+over 3 seeds. A1 is the direct consequence: a σ of 0.21 was invisible in the output.
+
+### A6 (MINOR, latent) — `sent` counts PHY transmissions, so MAC drops are invisible
+
+`sent` hooks `StartSending` on the device PHY, so a packet dropped by the MAC (e.g. duty-cycle
+refusal) never enters the denominator and `delivered_frac` would flatter the result. **Verified not
+biting today**: `sent_mean` is identical between the `aloha` and `EU` presets at every N and matches
+`n × 3600/36.378` analytically, so no drops occur at the current app period. It would mislead
+silently if `appPeriod` were reduced below the duty limit.
+
+### A7 (MINOR) — no warm-up exclusion
+
+No scenario discards a startup transient. Negligible at present durations (queues fill in
+milliseconds against 30–3600 s runs) and the 802.11 counting window is correctly matched to its
+denominator, so this is noted rather than actioned.
+
+---
+
+### What the audit confirmed as *correct*
+
+Worth recording, because these were checked rather than assumed:
+
+* **Seeding**: `SetSeed(1)` + `SetRun(seed)` in all four, and in every case **before** any object
+  creation — the standard ns-3 replication idiom, correctly applied.
+* **802.11 counting window**: sinks stop *with* sources and the denominator is exactly the source
+  window (the F8 tail-drain fix); the head is clean too.
+* **802.11 de-synchronisation**: jitter present and explicitly justified in a comment.
+* **Broadcast scaling**: `rxScale = N−1` correctly converts summed sink bytes to channel goodput.
+* **Baseline reproducibility**: the frozen `lora_capacity.csv` reproduces **byte-for-byte** after all
+  scenario edits.
+* **EU preset not inflated**: hypothesised that duty-cycle drops might flatter it; tested and
+  rejected — `sent` is identical across presets.
+
+---
+
+## F27 — second audit pass: methods and scientific honesty, both arms (2026-07-30)
+
+F26 attacked the simulations as engineering. This pass attacks the *methods* — whether what we claim
+matches what we computed, and whether the two arms mean the same things by the same words.
+
+### 1. The published validation bands reproduce exactly — but nothing was enforcing them
+
+Recomputed from the frozen `ns3_matrix.csv`, using the convention docs/02 uses,
+**(simulation − model) / model**:
+
+| mode | N=5 | N=10 | N=20 | N=35 | N=50 | band |
+|---|---|---|---|---|---|---|
+| unicast (Bianchi) | +0.46 | **+1.28** | +0.94 | +0.42 | **−0.49** | **+1.28 / −0.49 %** |
+| broadcast (Ma & Chen) | +0.25 | +0.06 | +0.20 | **−1.44** | −1.12 | **+0.25 / −1.44 %** |
+
+The unicast band is **exactly** the +1.28/−0.49 % the abstract claims. ✅
+
+⚠️ **The denominator matters and was never stated.** With `(sim − model)/sim` the same data gives
+−1.26/+0.49 %. Same magnitudes, opposite signs. A reader cannot check our arithmetic without knowing
+which we used, so the convention is now asserted in a test.
+
+⚠️ **The abstract's "confirmed to within 2.49 %" is the *success-probability* deviation, not
+goodput.** Goodput agrees to **1.44 %**. Quoting the worse of two metrics is the conservative
+direction, but they are different quantities and the sentence does not say which. Both are now
+pinned separately.
+
+**The actual gap: no test asserted any of this.** The frozen gate re-derives the CSVs and the unit
+tests exercise the models in isolation, but nothing compared the two. A model change could have left
+a stale validation claim in the abstract with every gate green. `tests/test_validation_bands.py`
+(16 tests) now closes that, including a test that the naive Bianchi-reduced-to-broadcast is badly
+optimistic — the F9 result, previously asserted nowhere.
+
+### 2. ⚠️ "V ≥ 0.95" means three different things, and the paper uses one symbol for all three
+
+| where | what it is | epistemic status |
+|---|---|---|
+| optimizer constraint (802.11) | `V = 1 − p_loss`, with **p = 0.05 assumed** | **an input**, not a result |
+| capacity boundary (802.11) | V measured in NS-3 as channel load rises; crosses 0.95 at U ≈ 2.80 | measured |
+| LoRa capacity | `delivered_frac` measured at the gateway | measured |
+
+**The consequence is uncomfortable and should be stated.** For placements A, B and C the optimizer's
+`verifiability()` returns `1 − p` — **independent of encoding, batch size and scheme**. With p fixed
+at 0.05 it returns exactly 0.95. So the "keep V ≥ 0.95" half of the pre-registered criterion is
+satisfied *by construction, with zero margin*, for every configuration we actually adopt. It can only
+fail for placement D, where V = (1−p)^n.
+
+That does not make the byte result wrong — the ≥40 % byte cut is the falsifiable half and it was met.
+But **the criterion is weaker than it reads**, and a reader entitled to think both halves were at risk
+was not told otherwise. Stated plainly rather than left to be discovered.
+
+### 3. ⚠️ Two `Placement` enums, and identity comparisons that fail silently between them
+
+`models/energy.py` defines `Placement(StrEnum)`; `placement/wire.py` defines `Placement(IntEnum)`
+whose integer values are part of the frozen frame format. **They share member names.** Seven
+`is Placement.X` comparisons across `optimizer.py` and `energy.py` therefore evaluate `False` when a
+caller imports the wrong one — with **no error**.
+
+Concretely: `verifiability(wire.Placement.D, 4, 0.05)` returned **0.95** instead of **0.8145** —
+overstating block-level loss robustness by 17 %.
+
+**Live or latent?** Latent. `bench/experiments.py` imports the correct one, no `src/` file imports
+both, and `mypy` covers `src/`. **But it is not hypothetical: it caught me during this session**, in
+ad-hoc analysis code, which is exactly where it would catch anyone — such scripts are not
+type-checked and the failure is silent. `verifiability()` now raises `TypeError` naming both modules.
+The remaining six comparisons are unguarded and tracked.
+
+### 4. Confirmed correct on this pass
+
+* **Ma & Chen implementation is faithful.** τs = 2/W₀ (eq. 5), p_bs (eq. 7), p_ss = nτs(1−τs)^(n−1)
+  (eq. 8 — the journal version, and the docstring records that the 2007 letter's eq. (6) misprints
+  it as a collision probability). CFP truncation at 12 stages is justified: τ_f falls by W₀ per
+  stage, so stage 6 is below 1e-9 of the first.
+* **No correction, calibration or fudge factors anywhere** in `src/authbc/models/` — grepped for.
+* **Throughput units are consistent**: the model returns *payload* bits/s and `channel_utilisation`
+  divides by `8 × frame_bytes` of the same payload.
+* **`channel_utilisation` uses a saturation model for a non-saturated load** — a deliberate and
+  documented conservatism, since S_sat(n) assumes all n backlogged. Its direction was independently
+  validated by D3 (98.8 % delivery still at U = 1), so it is conservative by a *measured* ≈2.8×,
+  not an assumed factor.
+* ⚠️ Minor: `channel_utilisation` returns exactly `0.0` for `n_local == 1`. A lone sender does not
+  contend, but it does occupy airtime, so the true utilisation is small-but-positive. Harmless (N=1
+  is not an operating point) and noted rather than changed.
+
+---
+
+## F28 — E13 fixed: `N_max` corrects from 5 to 3, and the simulation now matches theory (2026-07-30)
+
+The fix for the frozen-phase artifact (F26/A1). **A headline number changes.**
+
+### What was done
+
+1. **`JitteredSender`**, a small application in our own scenario file — the module's `PeriodicSender`
+   could not be subclassed (`SendPacket()` non-virtual, interval and event handle private).
+   ⚠️ **The jitter is one-sided by construction**, `[T, T+J]`, never earlier. A symmetric ±J would
+   let half the transmissions arrive sooner than the duty-cycle interval and silently violate the
+   1 % EU868 limit that the whole LoRa arm's Λ and batch argument rest on.
+2. **Seeds raised from 3 to 30** as the driver default, with min/max/σ/failing-count now emitted.
+3. Default `--tx-jitter` = 1.0 s ≈ 2.7 % of the duty interval.
+
+### The result
+
+| N | old (3 seeds, exact period) | **new (30 seeds, jittered)** | analytic `(1−2τ/T)^(N−1)` |
+|---|---|---|---|
+| 2 | 1.0000 | 0.9717 | 0.9800 |
+| 3 | 1.0000 | **0.9598** ✅ | 0.9604 |
+| 5 | 1.0000 | **0.9167** ❌ | 0.9224 |
+| 10 | 0.7731 | 0.8292 | 0.8337 |
+| 50 | 0.2532 | 0.3755 | 0.3716 |
+
+> ### ⚠️ `N_max` = **3**, not 5.
+> The old 5 came entirely from seeds 1–3 landing on 1.0000 by luck against a bimodal distribution.
+> A 30-seed control **without** jitter gives 3 as well, so the correction is the sampling, not the
+> jitter; the jitter fixes the *shape* (the catastrophic tail at N=5 lifts from 0.20 to 0.70).
+
+### The strongest evidence that the fix is right
+
+Mean absolute deviation from the closed-form periodic-ALOHA escape probability:
+
+* old data: **0.0688** (6.9 points)
+* corrected data: **0.0059** (0.6 points) — a **12× improvement**
+
+The frozen-phase artifact was exactly what pushed the simulation away from the analytical model it
+should track. Correcting it brings the two into agreement across the whole sweep, and the corrected
+`N_max = 3` is precisely what theory predicts: `0.98² = 0.960 ≥ 0.95`, `0.98³ = 0.941 < 0.95`.
+
+### Three independent lines now agree
+
+| method | N_max |
+|---|---|
+| our corrected NS-3 simulation | **3** |
+| closed-form periodic ALOHA | **3** |
+| Bor et al. 2017, measurement-fitted | **4** |
+
+Stronger corroboration than the retracted F18 ever claimed, and obtained by fixing our own defect
+rather than by reinterpreting someone else's figure.
+
+### A second benefit that was not the goal
+
+The frozen configuration sat at **exactly 1.0000 %** duty cycle. EU868 requires **< 1 %**, strictly.
+One-sided jitter raises the mean interval to 36.878 s and the duty to **0.9864 %** — the corrected
+configuration is strictly compliant where the old one sat on the boundary.
+
+### Artifacts
+
+`results/raw/lora_capacity.csv` regenerated (30 seeds, jittered) and now carries min/max/σ per row.
+The superseded 3-seed file is kept as `lora_capacity_3seed_SUPERSEDED.csv`; `lora_capacity_30seed.csv`
+is the no-jitter control. **Historical findings F19–F26 still quote 5 in their narratives and are
+left untouched — they are the record of how the error was found.**
+
+---
+
+## F29 — the channel model was validated at 1400 B but applied at 72–288 B. Now measured. (2026-07-30)
+
+**The gap.** Every published agreement band came from `ns3_matrix.csv`, which contains **frameSize
+1400 only** — as do `ns3_dcf_residual` and `ns3_sensitivity`. But `N_max`, the feasibility region and
+the whole co-design result are computed at **72–288 B**, where per-frame overhead (preamble, DIFS,
+backoff) dominates instead of payload: the model puts broadcast at 1.50 Mb/s at 72 B against
+3.13 Mb/s at 1400 B. Validating in one regime and applying in another is a real methodological hole,
+and it was not stated anywhere.
+
+**Now measured**, 3 seeds × N ∈ {5,10,20,35,50}, both modes, at both ends of the operating range:
+
+| frame | unicast (Bianchi) | broadcast (Ma & Chen) |
+|---|---|---|
+| **72 B** | **−2.37 .. −1.51 %** | **−0.21 .. +0.35 %** |
+| **288 B** | −1.19 .. +0.06 % | −1.25 .. +0.36 % |
+| 1400 B (published) | +1.28 .. −0.49 % | +0.25 .. −1.44 % |
+
+**The load-bearing answer is favourable.** `N_max` depends on the *broadcast* model through
+`channel_utilisation`, and broadcast agrees to **±0.36 %** across 72–288 B — **tighter than the
+±1.44 % measured at 1400 B**. The model does not degrade in the regime we actually use; it improves.
+
+⚠️ **One real finding: unicast carries a systematic negative bias at small frames** — every N at
+72 B over-predicts by 1.5–2.4 %, which is outside the published +1.28/−0.49 band and is a *bias*,
+not scatter. Plausibly the anomalous-slot effect (Tinnirello et al.), whose relative weight grows as
+the frame shrinks. It does not touch the headline, because the co-design result runs on broadcast,
+but the unicast band should be quoted **as measured at 1400 B** rather than as general.
+
+**Artifacts:** `ns3_matrix_72B.csv`, `ns3_matrix_288B.csv`. `run_matrix.py` gained `--out` so
+small-frame sweeps are additive rather than overwriting the frozen 1400 B matrix.
+
+---
+
+## F30 — E22/E23/E24 re-run at 30 seeds: one band was noise, one headline number moves (2026-07-30)
+
+Mohamed asked whether the simulation stage was clean. It was not: the LoRa arm had been sampled
+hard (F26/F28) and **the 802.11 arm never had.** Re-run at 30 seeds.
+
+### E22 — the published bands, re-measured
+
+| frame | mode | 10-seed (published) | **30 seeds** | worst SE |
+|---|---|---|---|---|
+| 1400 B | unicast | +1.28 / −0.49 % | **+1.29 / −0.40 %** | ±0.13 % |
+| 1400 B | broadcast | +0.25 / **−1.44 %** | **+0.24 / −0.51 %** | ±0.39 % |
+
+**The unicast band is confirmed.** ✅ The broadcast band's −1.44 % endpoint was **sampling noise**:
+at 30 seeds it tightens to **−0.51 %**. So the broadcast model agrees *better* than we published,
+and the abstract's "within 2.49 %" was doubly conservative — it quoted the success-probability
+figure (F27) *and* a noise-inflated goodput endpoint.
+
+### E24 — small frames, confirmed at 30 seeds
+
+| frame | unicast | broadcast |
+|---|---|---|
+| 72 B | −1.40 / −2.60 % | **+0.21 / −0.03 %** |
+| 288 B | +0.33 / −1.07 % | **+0.09 / −0.12 %** |
+
+**Broadcast — the model `N_max` depends on — holds to ±0.21 % across the whole operating range**,
+tighter than at 1400 B. The F29 conclusion survives a 10× larger sample. ⚠️ Unicast's systematic
+negative bias at 72 B is **confirmed, not noise**: −1.40/−2.60 % with SE ±0.06 %.
+
+### ⚠️ E23 — the delay crossing moves, and it feeds a headline number
+
+The measured `V = 0.95` crossing was read off **5 seeds**: `U ≈ 2.797`. At 30 seeds it is
+**`U = 2.435`** — a 13 % shift, and the same under-sampling class as E13.
+
+| operating point | published (U=2.797) | **corrected (U=2.435)** | ratio then → now |
+|---|---|---|---|
+| compliant 50 Hz/100 ms | 35 → **116** | 31 → **100** | 3.29× → **3.23×** |
+| relaxed 20 Hz/250 ms | 103 → **233** | 88 → **213** | 2.26× → **2.42×** |
+
+**The absolute capacity figures fall by 10–14 %; the co-design ratio is essentially unchanged.**
+That is the reassuring part: the *claim* is the ratio, and it is robust to the correction, while the
+absolute numbers — which we already report at two thresholds precisely because they are
+threshold-sensitive — need restating as **213** and **100**.
+
+**Pattern worth naming.** Three separate headline numbers (`N_max`, the delay crossing, a validation
+band endpoint) were each distorted by small-sample means. None was a modelling error; all were
+sampling. The fix in every case was more seeds and reporting spread, and the drivers now default to
+30 seeds and emit min/max/σ.
+
+---
+
+## F31 — the 30-seed data promoted to frozen; hardware stage accepted as designed (2026-07-30)
+
+Closing out the three items F30 left open.
+
+### 1. The 30-seed matrices are now the frozen artifacts
+
+`ns3_matrix.csv` (300 rows) and `ns3_delay.csv` replaced their 5/10-seed predecessors, which are
+kept as `*_SUPERSEDED_lowseed.csv`. The small-frame sweeps `ns3_matrix_72B/288B.csv` are likewise
+30-seed.
+
+**Reasoning for promoting rather than footnoting:** the frozen gate exists to catch *drift*, not to
+preserve a worse measurement. Keeping a 10-seed matrix as canonical while citing 30-seed numbers in
+the text would have left two values for one quantity — exactly the drift the gate is for.
+
+Bands re-baselined everywhere — paper, `docs/02`, and the 19 tests in `test_validation_bands.py`:
+
+| | was (low seed) | **now (30 seeds)** |
+|---|---|---|
+| unicast | +1.28 / −0.49 % | **+1.29 / −0.40 %** |
+| broadcast goodput | +0.25 / −1.44 % | **+0.24 / −0.51 %** |
+| V=0.95 crossing | U ≈ 2.797 | **U = 2.435** |
+| capacity at V≥0.95 (compliant) | 35 → 116 | **31 → 100** |
+| capacity at V≥0.95 (relaxed) | 103 → 233 | **88 → 213** |
+
+### 2. The unicast small-frame bias is now stated, not absorbed
+
+The abstract now says the band is quoted **at the 1400 B frame it was measured on**, that broadcast
+tightens to ±0.21 % at 72 B, and that unicast carries a systematic −1.4 to −2.6 % bias there.
+
+Reporting it costs nothing — the co-design result runs on the *broadcast* model — and absorbing it
+would have been the kind of quiet correction Law 7 forbids. Its likely cause (the anomalous-slot
+effect, whose relative weight grows as the frame shrinks) is a hypothesis we have **not** tested, and
+it is labelled as such rather than asserted.
+
+### 3. Hardware stage accepted as designed
+
+No further work. The audit's conclusion stands: the rig measures what `RIG.md` designed it to
+measure, and the TX/RX radio figure was obtained correctly with the single documented sync wire.
+Two real defects were found and fixed (Pi-B's venv lacked `gpiod`; the capture recorded no
+per-sample host time), and a class of silent mis-reduction now **refuses** rather than returning
+numbers biased −3 to −20 %.
+
+⚠️ **Recorded so it is not re-litigated:** Pi-B CPU energy is *not* a model input — `experiments/e5`
+takes a single `p_cpu_w` from the DUT — so measuring it would be a **new deliverable**, not the
+closing of a gap. It would need a second sketch pin, a CSV schema change, capture and reducer
+changes, plus the wire and its 10 kΩ pulldown. Not worth it unless a cross-platform energy
+comparison becomes a goal.
+
+### The pattern this whole audit sequence exposed
+
+Three headline numbers — LoRa `N_max`, the delay crossing, and a validation-band endpoint — were
+each distorted by **small-sample means against thresholds**. None was a modelling error; every one
+was sampling. The models were right the whole time. The fix in each case was more seeds and
+reporting spread, and the drivers now default to 30 seeds and emit min/max/σ so the next such error
+is visible in the artifact itself rather than discoverable only by re-running.
+
+---
+
+## F32 — Direction C step 1: the standard LoRaWAN ns-3 traffic model distorts results (2026-07-30)
+
+**Question.** The ns-3 LoRaWAN literature generates traffic with *equal period, random initial
+phase*. Because the period is exact and ALOHA has no backoff, relative phases are then frozen for
+the whole run (F26/A1). Does that measurably distort published-style results, or is it only a
+small-N curiosity we happened to trip over?
+
+**Pre-registered** in `scratchpad/C1_EXPECTATIONS.md` with three explicit falsifiers, before running.
+
+**Design.** N ∈ {5, 20, 100} × jitter ∈ {0, 1.0 s} × **30 seeds** = 180 runs. Statistics chosen for
+the *shape* of the data, not by habit: the frozen distribution is **bimodal**, so variance is tested
+with **Levene** (robust to non-normality — an F-test would be invalid) and location with
+**Mann-Whitney U** (non-parametric).
+
+| N | CV frozen | CV jittered | ratio | Levene *p* | MWU *p* | mean shift |
+|---|---|---|---|---|---|---|
+| 5 | 23.7 % | 8.2 % | 2.91× | **0.19 — not significant** | 2.8e−3 | +2.9 % |
+| 20 | 19.9 % | 7.0 % | **2.82×** | **2.6e−6** | 1.8e−2 | **+10.6 %** |
+| 100 | 26.7 % | 3.4 % | **7.88×** | **2.7e−8** | 4.5e−4 | **+18.9 %** |
+
+### Result
+
+**Confirmed for N ≥ 20.** The frozen-phase model inflates seed-to-seed variance by **2.8–7.9×** and
+biases mean delivery **low by 10.6–18.9 %**. All three pre-registered falsifiers failed to fire.
+
+⚠️ **Not established at N = 5** (Levene *p* = 0.19). Reported as such. The reason is mechanical: at
+N=5 the frozen distribution piles at the ceiling (22/30 runs deliver exactly 1.000), so Levene's
+deviations-from-median lose power. The *means* still differ (MWU *p* = 0.003).
+
+### ⚠️ My prior hypothesis was wrong, in the informative direction
+
+Before the pilot I predicted the artifact would **wash out** at the large N the scalability
+literature studies. It does the opposite: variance inflation grows from 2.8× at N=20 to **7.9×** at
+N=100, and the mean bias grows from 10.6 % to **18.9 %**.
+
+**Mechanism.** With frozen phases the *set* of colliding pairs is fixed at t=0, so a run cannot
+self-average — only seeds can. With randomised timing, collisions redistribute continuously *within*
+each run, so every run self-averages and seed-to-seed spread collapses. More nodes means more pairs
+locked into their initial relationship, not fewer.
+
+### Why this is not just our problem
+
+The configuration is used, verbatim, by the field's most-cited ns-3 LoRaWAN work:
+
+* *Scalability Analysis of Large-Scale LoRaWAN Networks in ns-3* (349 citations): "the transmission
+  time of the first upstream packet is picked from a random variable uniformly distributed between
+  zero and the upstream period. Subsequent upstream packets are **periodically generated**."
+* *A Thorough Study of LoRaWAN Performance Under Different Parameter Settings* (122 citations):
+  devices "generate packets periodically, **with equal period but random phases**."
+
+372 works cite the module paper; 56 have capacity/scalability/collision titles.
+
+⚠️ **This mean-bias claim was NARROWED by F33** — it holds only for a receiver-bottlenecked
+configuration (1 channel, 1 demodulator). Under an RP002-provisioned gateway the mean is
+unaffected. **The variance inflation is the part that generalises.**
+
+### What is still NOT established
+
+1. **Seed counts across the corpus.** I verified the *traffic model* in three papers by direct
+   quotation; I have **not** surveyed how many of the 56 report ≤5 seeds. Without that, "papers
+   inherit both effects" is an inference, not a measurement.
+2. **One configuration.** DR5, 218 B, 1 % duty, single channel/demodulator, ideal channel. The
+   `EU` preset (3 channels, 8 demodulation paths) is untested and could change the picture.
+3. **1 s of jitter is a choice**, not a derived value. What is defensible is that LoRaWAN Class A
+   *requires* transmission randomisation and the module's sender omits it — an argument, not a
+   measurement of the correct amount.
+
+**Artifacts:** `results/raw/lora_phase_artifact_30seed.csv` (180 runs, provenance header),
+`analysis/analyse_phase_artifact.py`.
+
+---
+
+## F33 — Direction C steps 2 and 3: half the finding generalises, half does not (2026-07-30)
+
+### Step 3 — EU preset replication ⚠️ splits the F32 claim
+
+F32 reported two effects from the frozen-phase traffic model: **inflated variance** and a **mean
+biased low**. Replicating under the RP002-style `EU` preset (3 channels, 8 demodulation paths),
+30 seeds:
+
+| preset | N | CV ratio | Levene *p* | mean shift | MWU *p* |
+|---|---|---|---|---|---|
+| ALOHA (1 ch, 1 demod) | 20 | 2.82× | 2.6e−6 | +10.6 % | 1.8e−2 |
+| ALOHA | 100 | 7.88× | 2.7e−8 | +18.9 % | 4.5e−4 |
+| **EU (3 ch, 8 demod)** | 20 | **2.33×** | **2.8e−4** | +0.27 % | **0.52 — NS** |
+| **EU** | 100 | **2.08×** | **8.0e−4** | +0.87 % | **0.36 — NS** |
+
+**✅ The variance inflation generalises.** 2.1–2.3× under EU, significant at *p* < 1e−3. The
+pre-registered killer ("CV ratio ≈ 1 under EU, or Levene *p* > 0.05") did **not** fire.
+
+**❌ The mean bias does NOT generalise.** Under a realistically-provisioned gateway it is +0.3 to
++0.9 % and statistically indistinguishable from zero. **F32's claim that "the standard model
+underestimates delivery by 10–19 %" is therefore only true for a receiver-bottlenecked
+configuration, and must not be stated generally.**
+
+**Mechanism for the split.** Phase locking fixes *which* pairs overlap. Whether an overlap is
+*fatal* depends on the receiver: with one demodulator on one channel every overlap is lost, so
+locked-in collisions shift the mean; with 8 demodulators across 3 channels most overlaps survive, so
+the locking still concentrates outcomes run-to-run (variance) without moving the average.
+
+### Step 2 — what the corpus reports
+
+Five distinct ns-3 LoRaWAN papers were obtained in full text and searched for replication and
+dispersion reporting:
+
+| searched for | result |
+|---|---|
+| "seed" | **not present in any** |
+| independent runs / Monte Carlo / repetitions | **not present** (one hit was *packet* repetition, unrelated) |
+| confidence interval / error bar / SD **of results** | **not present** in the simulation papers |
+| "averaged over N runs" | **not present** |
+
+⚠️ **This is a statement about *reporting*, not about what the authors did.** They may have run many
+replications and not said so. Absence of the word "seed" is not evidence of a single seed. The
+defensible claim is that **replication counts and dispersion are not reported**, which is a
+reproducibility gap independent of whether the underlying runs were adequate.
+
+⚠️ **Sample is small and non-random**: 5 papers, selected by open-access availability from 56
+capacity-titled citers. MDPI's bot protection blocked most downloads. This is indicative, not a
+survey. A real survey needs the full 56 and should count reported replications explicitly.
+
+### Net position on Direction C
+
+**What survives, with evidence:** the standard traffic model (equal period, exact interval) locks
+relative phases for the whole run and **inflates seed-to-seed variance by ~2–8×** across both gateway
+provisionings, in a literature that does not report replication counts or dispersion.
+
+**What does not survive:** any general claim about biased means.
+
+**Still required before this is publishable:** the full 56-paper survey with explicit replication
+counts; and a defensible derivation of how much randomisation is right, rather than our chosen 1 s.
+
+**Artifacts:** `results/raw/lora_phase_artifact_30seed.csv` (ALOHA, 180 runs),
+`results/raw/lora_phase_artifact_eu_30seed.csv` (EU, 120 runs).

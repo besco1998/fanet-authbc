@@ -20,8 +20,12 @@ htmlcov/
 coverage.xml
 
 # NS-3 build tree (built locally, never committed)
-ns3/ns-3.41/
+# Vendored NS-3 trees — third-party source, built locally, NEVER committed (ns3/README.md).
+# The pattern must be GENERAL: it was `ns-3.41` + `ns-allinone-*` and the 3.48 migration slipped
+# 5439 files into the index because the new tree matched neither (caught 2026-07-29).
+ns3/ns-3.*/
 ns3/ns-allinone-*/
+ns3/*.tar.bz2
 
 # SECRETS — never commit, not even to a private repo. A private key in git history is a
 # permanent credential leak (clones, forks, CI logs, future visibility changes all expose it).

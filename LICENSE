@@ -1,0 +1,26 @@
+All Rights Reserved
+
+Copyright (c) 2026 Mohamed A. Farouk. All rights reserved.
+
+This repository contains the source code, documents, data and figures of the AUTHBC thesis work.
+
+No permission is granted to copy, modify, merge, publish, distribute, sublicense, sell, or create
+derivative works from any part of this repository, in whole or in part, without the prior written
+permission of the copyright holder.
+
+Viewing this repository, and reproducing its results for the purpose of academic examination or
+peer review, is permitted. Any other use requires written permission.
+
+THE SOFTWARE AND DATA ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE
+AND NONINFRINGEMENT. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR
+OTHER LIABILITY ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR DATA OR THE USE OR
+OTHER DEALINGS THEREIN.
+
+---
+THIRD-PARTY COMPONENTS. This notice covers only the AUTHBC material in this repository. Software
+downloaded during setup and deliberately kept out of version control retains its own licence:
+  * ns-3 (GPLv2) — ns3/ns-3.*/ , fetched by docs/05_REPRODUCTION_GUIDE.md
+  * signetlabdei/lorawan (GPLv2) — an ns-3 contrib module
+`ns3/patch_lorawan.py` modifies the LoRaWAN module in place at build time; that modification is
+likewise GPLv2. Neither is redistributed here.

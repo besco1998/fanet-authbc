@@ -23,12 +23,41 @@ behind several rows here).
 
 | # | Decision | Bought | Gave up | Status |
 |---|---|---|---|---|
-| **Λ = 20 rec/s, D_max = 250 ms** | reference operating point | b=4 ⇒ 75.0 % auth / 58.68 % total cut; supports **N ≤ 233** at V≥0.95 | **Violates 3GPP TS 22.125 R-5.2.2-011** (≤100 ms). ⚠️ *Corrected 2026-07-29:* the deviation buys **no bytes at all** — the compliant point gives an identical cut. What it buys is **swarm size, 116 → 233**. Rests on a *scope* argument: §5.2.2 targets collision avoidance; a provenance ledger has a different deadline | **DECLARED** (docs/02 §7a) |
+| **Λ = 50 rec/s, D_max = 100 ms** — **ADOPTED 2026-07-30** | primary operating point | b=4 ⇒ 75.0 % auth / **58.68 % total cut** (identical to the alternative — only Λ·D_max sets b); **fully compliant** with 3GPP TS 22.125 (≥10 msg/s, ≤100 ms); Λ=50 Hz is PX4 `MAVLINK_MODE_ONBOARD`, read from source | **~2× swarm size**: N ≤ 116 at V≥0.95 (35 at saturation) instead of 233 (103). Requires the vehicle to actually stream at 50 Hz | **ADOPTED** (B3, docs/01) |
+| Λ = 20 rec/s, D_max = 250 ms | reported alternative, **no longer the headline** | b=4 ⇒ same 58.68 % cut; supports **N ≤ 233** at V≥0.95 | **Violates TS 22.125 R-5.2.2-011** (≤100 ms). The deviation buys **no bytes** — only swarm size. Retained because a deployment outside §5.2.2's scope may prefer it, and because hiding it would hide the size of the trade | **REPORTED, not adopted** |
+| ⚠️ **Λ < 40 Hz with D_max = 100 ms** | — | compliant | **b = 1: the co-design collapses to a 12.2 % cut.** b ≤ Λ·D_max means holding b=4 under a 100 ms deadline needs Λ ≥ 40 Hz. **The batching benefit is not available at every compliant point** — it is a constraint on the application's telemetry rate, not on the cryptography | **FLOOR OF THE REGION** (B3) |
 | | *alternative:* Λ=50, D=100 ms | fully compliant, **identical bytes** (Λ·D=5 ⇒ b=4), PX4 `ONBOARD` is a real mode, and **feasible** — U=1.39 is inside the measured V≥0.95 boundary of U≈2.80 | halves the supportable swarm: N≤233 → **N≤116** | reported |
 | | *alternative:* Λ=21, D=100 ms | compliant, lowest channel load | cut halves to 50 %; **knife-edge** — at Λ=20.0 the b=2 frame takes 100.37 ms, so b→1 and the cut → **0 %**. Superseded: Λ=50 is compliant *and* keeps the full cut | reported, not adopted |
 | **N_local = 50** | neighbourhood size | a swarm the baselines cannot serve (32) and the co-design can (103) | not independently cited; justified *by* the envelope rather than by a density source | **MEASURED** as a curve (B2) |
 | **p ∈ {0.02, 0.05, 0.10}** | loss grid | mechanism-grounded (802.11 broadcast has no ACK, no retransmission ⇒ receiver sees raw channel error) | no single measured FANET PER; 20–100× more pessimistic than TS 22.125's managed-C2 99.9 % — conservative, but not tied to a measurement | **DECLARED** (B4) |
 | **ε = p** | verifiability target | makes T6's n_max = 1 exact, closing the fragmentation escape | a looser ε would admit fragmentation and weaken T6; the theorem is stated with its condition (ε ≤ p) rather than the value | **DECLARED** |
+
+## 1a. LoRa channel count — why "use as many channels as possible" is right for a gateway and wrong for us
+
+*Raised by Mohamed 2026-07-30. The intuition is correct for the infrastructure case and inverts for
+ours, so it is recorded rather than answered in passing.*
+
+| option | what it buys | what it costs | verdict |
+|---|---|---|---|
+| **1 channel (868.1), all nodes** — **ADOPTED** | **every node can hear every other node.** The only configuration in which a single-radio peer receives the whole neighbourhood | ~3× the collisions of a 3-channel deployment at the same load | **ADOPTED for the ad hoc arm** |
+| 3 channels (868.1/.3/.5), gateway collects | **MEASURED (F25):** ~**2.68× aggregate delivery at N=50** (0.2532→0.6781) and reaches N=100 at 0.5308, which the peer config cannot. ⚠️ But **N_max only 5 → 8** at V≥0.95 — the threshold sits on a near-vertical part of the curve | ⚠️ **a single-radio peer tuned to 868.1 cannot hear a frame sent on 868.3.** Fine for a gateway with 8 demodulators across all three; **broken for peer-to-peer broadcast** | **correct for infrastructure, not for us** |
+| 3 channels + multi-radio peers | collision reduction *and* full reception | 3 radios per UAV — a hardware change, not a configuration | out of scope |
+
+**Two facts behind this, both verified at source:**
+
+1. ⚠️ **Extra channels buy zero extra airtime.** The EU868 duty cycle is enforced **per sub-band**,
+   not per channel, and all three mandatory channels sit inside **g1 (868.0–868.6 MHz), which has a
+   single 1 % budget** — confirmed in the ns-3 module: `AddSubBand(SubBand(868.0e6, 868.6e6, 0.01,
+   14))`. Hopping across them spreads the *collisions*, it does not raise the *rate*. So `Λ` and the
+   whole duty-cycle-derived batch argument (docs/02 §9) are unchanged by channel count.
+2. **Broadcast requires a shared channel.** For a provenance ledger every peer must receive every
+   record. With one radio per node, that is only possible if all nodes transmit and listen on the
+   same frequency. Channel diversity and broadcast reachability are in direct conflict, and the
+   ledger needs reachability.
+
+**Net:** more channels is the right answer to "how many UAVs can report to a ground station" and the
+wrong answer to "how many UAVs can hear each other". We are asking the second. See F21.
+
 
 ## 2. What is claimed, and how
 
@@ -77,7 +106,9 @@ behind several rows here).
 
 ## The rows an examiner will press hardest
 
-1. **The 250 ms deviation** (§1) — the only place a headline number depends on a choice looser than
+1. ~~**The 250 ms deviation**~~ — **resolved 2026-07-30**: the compliant (50 Hz, 100 ms) point is now
+   primary and gives identical bytes. Kept in the list only as the historical entry. It was the only place a
+   headline number depended on a choice looser than
    the applicable standard. Answer with the region: the mechanism is deadline-independent, only b
    depends on Λ·D_max, and the compliant point is reported.
 2. **`1 − 1/b`** (§2) — answered by refusing to lead with that metric at all.

@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+title: "AUTHBC — co-optimizing encoding, authentication placement, signature scheme and batching for UAV telemetry ledgers"
+message: "If you use this software or its data, please cite it."
+type: software
+authors:
+  - family-names: Farouk
+    given-names: Mohamed A.
+repository-code: "https://github.com/besco1998/fanet-authbc"
+abstract: >-
+  Reproducible testbed for authenticated, blockchain-grade UAV telemetry ledgers over 802.11 FANET
+  links, with a low-rate (LoRa) generalisation. Co-optimizes record encoding, authentication
+  placement, signature scheme and batch size under joint constraints on verifiability, freshness
+  and channel capacity. All results are derived from frozen, seeded data and re-checked on every
+  run by an automated staleness gate.
+keywords:
+  - FANET
+  - UAV telemetry
+  - broadcast authentication
+  - digital signatures
+  - IEEE 802.11 DCF
+  - LoRaWAN
+  - reproducible research
+license-url: "https://github.com/besco1998/fanet-authbc/blob/main/LICENSE"
+version: "0.8.0"
+date-released: "2026-07-30"

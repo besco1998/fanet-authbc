@@ -114,7 +114,18 @@ on-air bytes per record = s·A (T2), so compression's benefit is amplified by A 
 as b_max(s) rises, until either the verify-throughput constraint t_verify(b)·Λ ≤ 1 or the
 MTU binds. **Validate:** E5 end-to-end vs baselines {A+JSON, A+CBOR, D-overagg}.
 
-## T6 — Authentication-exclusion threshold (2026-07-28) ⚠️
+## T6 — Authentication-exclusion threshold (2026-07-28) ⚠️ **NOT NOVEL — see the prior art below**
+
+> ⚠️ **Prior-art check, 2026-07-30 (audit F16).** The inequality below is **established**, not ours.
+> Gündoğan et al. (ACM ICN 2021) compute exactly `M − H_f − g_a = s_max` for 802.15.4/NDN — 55 B of
+> headers leave 73 B, and a 64 B Ed25519 signature reduces application data to 9 B — and the
+> post-quantum literature reports NIST signatures as incompatible with 5G SIB1's 372 B limit, which
+> is our tier 1. That a fragmented unit delivers with `(1−p)^n` is likewise standard in 6LoWPAN.
+> **T6 is therefore a synthesis of two known facts and is presented as an applied threshold, not a
+> theorem.** What we have not found stated elsewhere is the *composition*: that the sliced-signature
+> workaround the literature proposes is foreclosed whenever ε ≤ p. The EU868 partition is
+> application of a known bound to a link nobody had applied it to. This check was run *before*
+> publication precisely because F9 was not.
 *Implemented: `models/optimizer.py` (`max_fragments`, `max_record_bytes`, `exclusion_tier`);
 pinned: `tests/unit/models/test_exclusion_t6.py`.*
 
@@ -252,7 +263,7 @@ Verified: PPDU(1436) = 1940 µs and PPDU(14) = 44 µs, both matching NS-3 3.41 e
 post-success deferral floor SIFS+T_ack+DIFS = 94 µs matching the measured trace.
 
 **Validate:** E5 vs NS-3; expect and *report* known gaps rather than force-fitting. Measured
-against NS-3: unicast agrees to **+1.28 … −0.49 %** across N=5–50, broadcast (Ma & Chen) to
+against NS-3 (**30 seeds**, F30): unicast agrees to **+1.29 … −0.40 %** across N=5–50, broadcast (Ma & Chen) to
 **≤1.44 %** — both re-measured on **ns-3.48** after the D4 migration (2026-07-29). On ns-3.41 the
 same comparison read +0.6/−2.9 % and ≤1.1 %: **unicast agreement improved, broadcast widened
 slightly**, and both are reported rather than quoting whichever version flattered the model.
@@ -424,7 +435,7 @@ against the same **V ≥ 1−ε** criterion the 802.11 envelope uses:
 | 20 | 0.5795 | ✗ |
 | 50 | 0.2532 | ✗ |
 
-**N_max = 5**, and the cliff is brutally sharp — perfect at 5, 13 % loss at 8. That is ALOHA without
+****N_max = 3** (corrected — F28; the earlier 5 came from a 3-seed sample against a bimodal distribution)**, and the cliff is brutally sharp — perfect at 5, 13 % loss at 8. That is ALOHA without
 carrier sense: there is no backoff to absorb contention, so the transition from "fine" to "unusable"
 spans less than a factor of two in N.
 
@@ -586,7 +597,7 @@ differs is channel load, and measured against the V ≥ 0.95 boundary:
 | what it buys | what it costs |
 |---|---|
 | b = 4 → **75.0 %** auth-byte cut, **58.68 %** total-byte cut | **Violates TS 22.125 R-5.2.2-011** (250 ms vs ≤100 ms). This is a **declared deviation.** |
-| U = 0.557 at N=50 — comfortable headroom | The 100 ms-compliant point with the *same* bytes (Λ=50) is **unrunnable at N=50** (U=1.39, N_max=35) |
+| U = 0.557 at N=50 — comfortable headroom | The 100 ms-compliant point with the *same* bytes (Λ=50) sits at U=1.39. ⚠️ *Corrected:* that is **not** infeasible — the measured V≥0.95 boundary is U≈2.80, so it runs. What it costs is swarm size: **N≤116 instead of N≤233** |
 | N_max = **103**, vs 32 for the Pillar-1 baseline (3.2×) | Under full compliance the best available cut is **50 %**, not 75 % — a third of the headline is bought by the deviation |
 | Λ=20 sits between the standard's 10 msg/s floor and PX4 `ONBOARD`'s 50 Hz | A **ledger** freshness argument, not a control-loop one: TS 22.125 §5.2.2 is *collision avoidance*; a tamper-evident provenance log has a genuinely different deadline. This is a **scope argument and must be presented as one.** |
 

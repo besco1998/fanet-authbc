@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# ⚠️ NOT USED. D7 resolved to SERIAL execution, so no lane worktree was ever created.
+# Kept for provenance alongside docs/07 (also marked historical). See docs/README.md.
 # scripts/lane.sh — create a parallel-execution git worktree for a lane (docs/07 §3–4).
 #
 # Usage: scripts/lane.sh <N>        N ∈ {2,3,4}

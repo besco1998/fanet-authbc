@@ -1,0 +1,25 @@
+# LoRa external cross-check (items A7, F20) — our ns-3 result against a published model.
+#
+# Bor, Roedig, Voigt & Alonso, "LoRa Scalability: A Simulation Model Based on Interference
+# Measurements", Sensors 17(6):1193, 2017 (PDF in docs/literature/). Their Eq. (8) is a
+# closed-form fit (R^2 = 0.997) to TOTAL packet loss — collisions plus wrong-payload-CRC —
+# measured on real hardware, so it is an independent yardstick rather than another simulation
+# of the same assumptions.
+
+# Which of our measurements to compare against. Produced by `make sim-lora-capacity`.
+measured_csv: lora_capacity.csv
+
+# Non-interfering (channel x SF) combinations in OUR scenario.
+# authbc-lora-capacity.cc uses LorawanMacHelper::ALOHA -> one 868.1 MHz channel, one forced DR,
+# one gateway demodulation path => exactly 1 logical channel, matching their Fig. 6 case.
+# (Their Eqs. (9)-(11) would give 6, 3 or 18 for the richer provisionings; see OPEN_ITEMS E9.)
+logical_channels: 1
+
+# The same criterion the 802.11 arm uses, so the two capacity numbers are comparable.
+verifiability_target: 0.95
+
+# F23 — the range dimension our collision-only simulation omits.
+# Zirak, Shashev & Shidlovskiy, "Swarm of Drones Using LoRa Flying Ad-Hoc Network", ICIT 2021
+# (PDF in docs/literature/) measured air-to-air PDR on real drones. Their Table I spans 200-1000 m;
+# we do not extrapolate outside it. Our own scenario uses radiusMeters = 1000.
+ranges_m: [200, 300, 400, 500, 600, 700, 800, 900, 1000]
