@@ -11,7 +11,7 @@ BIN    := $(VENV)/bin
 
 .DEFAULT_GOAL := help
 .PHONY: help setup lint test verify-frozen all hw-capture hw-reduce \
-        bench-micro bench-macro exp-e1 exp-e2 exp-e3 exp-e4 exp-e5 exp-capacity exp-lora exp-lora-codesign \
+        bench-micro bench-macro exp-e1 exp-e2 exp-e3 exp-e4 exp-e5 exp-capacity exp-operating-region exp-lora exp-lora-external exp-lora-codesign \
         sim-ns3 sim-ns3-matrix sim-ns3-dcf sim-ns3-delay sim-lora-capacity sim-ns3-sensitivity export-framesizes figures
 
 help:  ## list the supported targets
@@ -42,13 +42,16 @@ setup:  ## create venv (Python >=3.12) and install pinned deps + pre-commit hook
 lint:  ## ruff check
 	$(BIN)/ruff check src tests
 
+typecheck:  ## mypy static type gate (config in pyproject [tool.mypy])
+	$(BIN)/mypy
+
 test:  ## run the fast test suite (excludes the slow frozen-reproduction gate)
 	$(BIN)/pytest -m "not frozen"
 
 verify-frozen:  ## re-derive every deterministic frozen artifact; fail on staleness (docs/DECISIONS.md)
 	$(BIN)/pytest -m frozen -p no:cov -o addopts="-q"
 
-all: lint test verify-frozen  ## lint + fast tests + frozen-reproduction gate
+all: lint typecheck test verify-frozen  ## lint + types + fast tests + frozen-reproduction gate
 
 # --------------------------------------------------------------------------- guarded stubs
 bench-micro:  ## P1 microbenchmarks -> results/raw/p1_{sizes,crypto}.csv
@@ -68,8 +71,13 @@ exp-e5:  ## E5 co-design: optimizer vs baselines -> results/raw/e5_codesign.csv
 	$(BIN)/python -m authbc.bench.experiments --exp e5
 exp-capacity:  ## (N, Lambda) channel capacity envelope (docs/02 §6b) -> results/raw/capacity_envelope.csv
 	$(BIN)/python -m authbc.bench.experiments --exp capacity
+exp-operating-region:  ## [B3] (Lambda x D_max) operating region -> results/raw/operating_region.csv
+	$(BIN)/python -m authbc.bench.experiments --exp operating-region
 exp-lora:  ## LoRa arm feasibility + duty budget (docs/02 §9) -> results/raw/lora_eu868.csv
 	$(BIN)/python -m authbc.bench.experiments --exp lora
+exp-lora-external:  ## LoRa capacity vs the published Bor et al. 2017 model (A7/F20)
+	$(BIN)/python -m authbc.bench.experiments --exp lora-external
+
 exp-lora-codesign:  ## LoRa arm as a joint optimization -> results/raw/lora_codesign.csv
 	$(BIN)/python -m authbc.bench.experiments --exp lora-codesign
 sim-ns3:  ## [P6] build authbc-sat + 2-node both-modes smoke -> results/raw/ns3_smoke.csv
