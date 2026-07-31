@@ -1,0 +1,18 @@
+# python=3.12.3
+# platform=Linux-6.6.114.1-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=lora_capacity
+# config_hash=20638badf797ea09
+n_devices,data_rate,batch,payload_bytes,app_period_s,sent_mean,delivered_frac,implied_p_loss,delivered_min,delivered_max,delivered_stdev,seeds_failing_v,meets_v,seeds,lambda_rec_per_s,aggregate_rec_per_s
+2,5,6,218,36.378,197.9,1.0,0.0,1.0,1.0,0.0,0,1,30,0.16494,0.3299
+3,5,6,218,36.378,296.9,0.95084,0.04916,0.33333,1.0,0.14259,4,1,30,0.16494,0.4948
+4,5,6,218,36.378,395.8,0.89806,0.10194,0.25,1.0,0.20035,8,0,30,0.16494,0.6597
+5,5,6,218,36.378,494.9,0.89048,0.10952,0.2,1.0,0.21078,8,0,30,0.16494,0.8247
+6,5,6,218,36.378,593.8,0.87297,0.12703,0.53199,1.0,0.15222,16,0,30,0.16494,0.9896
+8,5,6,218,36.378,791.7,0.8367,0.1633,0.5,1.0,0.12826,24,0,30,0.16494,1.3195
+10,5,6,218,36.378,989.6,0.75324,0.24676,0.5,1.0,0.12653,28,0,30,0.16494,1.6494

@@ -1,0 +1,30 @@
+# python=3.12.3
+# platform=Linux-6.6.114.1-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=lora_external_check
+# config_hash=3c891cc9d02728b1
+n_devices,authbc_ns3_loss_pct,bor2017_loss_pct,delta_points,ratio_ours_over_theirs,who_is_optimistic,meets_v_target_authbc,meets_v_target_bor
+2,2.834,3.11,-0.276,0.911,AUTHBC,1,1
+3,4.019,3.766,0.253,1.067,Bor2017,1,1
+5,8.33,5.065,3.265,1.645,Bor2017,0,0
+8,12.897,6.981,5.916,1.848,Bor2017,0,0
+10,17.081,8.235,8.846,2.074,Bor2017,0,0
+15,25.022,11.296,13.726,2.215,Bor2017,0,0
+20,30.873,14.251,16.622,2.166,Bor2017,0,0
+30,42.972,19.853,23.119,2.165,Bor2017,0,0
+50,62.453,29.905,32.548,2.088,Bor2017,0,0
+RANGE_200m,,2.89,,,measured link (Zirak2021),0,
+RANGE_300m,,3.25,,,measured link (Zirak2021),0,
+RANGE_400m,,3.9,,,measured link (Zirak2021),0,
+RANGE_500m,,4.5,,,measured link (Zirak2021),0,
+RANGE_600m,,6.01,,,measured link (Zirak2021),0,
+RANGE_700m,,7.34,,,measured link (Zirak2021),0,
+RANGE_800m,,7.99,,,measured link (Zirak2021),0,
+RANGE_900m,,8.87,,,measured link (Zirak2021),0,
+RANGE_1000m,,9.55,,,measured link (Zirak2021),0,
+N_MAX,,,-1,,,3,4
