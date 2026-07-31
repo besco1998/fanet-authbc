@@ -68,32 +68,6 @@
   howpublished = {\url{https://msgpack.org}}, year = {2008}
 }
 
-% ============================================================================
-% [VERIFY] DOMAIN-SPECIFIC PLACEHOLDERS -- replace each with a verified primary
-% source before submission. Titles are deliberately marked so an unverified
-% reference is never mistaken for a real one in the compiled PDF.
-% ============================================================================
-@misc{verify_fanet_auth,
-  author = {{[PLACEHOLDER]}},
-  title  = {[VERIFY] Lightweight authentication for FANET/UAV networks --- replace with primary source},
-  year   = {----}
-}
-@misc{verify_uav_blockchain,
-  author = {{[PLACEHOLDER]}},
-  title  = {[VERIFY] Blockchain-based UAV/IoT data provenance --- replace with primary source},
-  year   = {----}
-}
-@misc{verify_batch_verify,
-  author = {{[PLACEHOLDER]}},
-  title  = {[VERIFY] Batch/aggregate signature verification in VANET/IoT --- replace with primary source},
-  year   = {----}
-}
-@misc{verify_delta_telemetry,
-  author = {{[PLACEHOLDER]}},
-  title  = {[VERIFY] Differential/delta encoding for telemetry time-series --- replace with primary source},
-  year   = {----}
-}
-
 @article{machen2007,
   author  = {Ma, Xiaomin and Chen, Xianbo},
   title   = {Saturation Performance of {IEEE} 802.11 Broadcast Networks},
@@ -177,4 +151,136 @@
   note         = {SRx\_POSITION default is vehicle-specific: Plane and Rover 1 Hz, Sub 3 Hz,
                   Copter/Heli/Blimp 0 Hz (streams requested on demand by the GCS).
                   Range 0--50 Hz. Verified 2026-07-29}
+}
+
+@inproceedings{gundogan2021firmware,
+  author    = {G{\"u}ndo{\u{g}}an, Cenk and Ams{\"u}ss, Christian and Schmidt, Thomas C. and
+               W{\"a}hlisch, Matthias},
+  title     = {Reliable Firmware Updates for the Information-Centric Internet of Things},
+  booktitle = {Proc. 8th ACM Conf. on Information-Centric Networking (ICN)},
+  year      = {2021},
+  publisher = {ACM},
+  note      = {Computes the payload remaining after MTU minus headers minus signature for
+               802.15.4/NDN: 55 B of headers leave 73 B, and a 64 B Ed25519 signature reduces
+               application data to 9 B. Prior art for the AUTHBC exclusion threshold}
+}
+
+@misc{veara2025tbrd,
+  author       = {Veara, Jason and Jain, Manav and Moy, Kyle and Ranganathan, Aanjhan},
+  title        = {{TBRD}: {TESLA} Authenticated {UAS} Broadcast Remote {ID}},
+  year         = {2025},
+  eprint       = {2510.11343},
+  archivePrefix= {arXiv},
+  primaryClass = {cs.CR},
+  note         = {TESLA-based broadcast authentication for UAS Remote ID; 32 B keychain entries,
+                  reports a 50\% reduction in authentication overhead versus digital signatures
+                  and 100x lower computation, at the cost of delayed verification}
+}
+
+@article{perrig2002tesla,
+  author  = {Perrig, Adrian and Canetti, Ran and Tygar, J. D. and Song, Dawn},
+  title   = {The {TESLA} Broadcast Authentication Protocol},
+  journal = {RSA CryptoBytes},
+  volume  = {5}, number = {2}, pages = {2--13}, year = {2002},
+  note    = {Delayed key disclosure: a MAC now, its key later. Trades verification latency for
+             per-message bytes}
+}
+
+@article{bor2017lora,
+  author  = {Bor, Martin and Roedig, Utz and Voigt, Thiemo and Alonso, Juan M.},
+  title   = {{LoRa} Scalability: A Simulation Model Based on Interference Measurements},
+  journal = {Sensors},
+  volume  = {17},
+  number  = {6},
+  pages   = {1193},
+  year    = {2017},
+  doi     = {10.3390/s17061193}
+}
+
+% --- A3: the three [VERIFY] placeholders, replaced with primary sources.
+% Every field below was confirmed against the Crossref record for the DOI (2026-07-30);
+% Gorilla's title and technical claim were additionally read from the PDF in docs/literature/.
+@inproceedings{zhang2008batch,
+  author    = {Zhang, Chenxi and Lu, Rongxing and Lin, Xiaodong and Ho, Pin-Han and Shen, Xuemin},
+  title     = {An Efficient Identity-Based Batch Verification Scheme for Vehicular Sensor Networks},
+  booktitle = {IEEE INFOCOM 2008 --- The 27th Conference on Computer Communications},
+  pages     = {246--250},
+  year      = {2008},
+  doi       = {10.1109/INFOCOM.2008.58}
+}
+
+@article{mehta2020blockchainuav,
+  author  = {Mehta, Parimal and Gupta, Rajesh and Tanwar, Sudeep},
+  title   = {Blockchain Envisioned {UAV} Networks: Challenges, Solutions, and Comparisons},
+  journal = {Computer Communications},
+  volume  = {151},
+  pages   = {518--538},
+  year    = {2020},
+  doi     = {10.1016/j.comcom.2020.01.023}
+}
+
+@article{pelkonen2015gorilla,
+  author  = {Pelkonen, Tuomas and Franklin, Scott and Teller, Justin and Cavallaro, Paul
+             and Huang, Qi and Meza, Justin and Veeraraghavan, Kaushik},
+  title   = {Gorilla: A Fast, Scalable, In-Memory Time Series Database},
+  journal = {Proceedings of the VLDB Endowment},
+  volume  = {8},
+  number  = {12},
+  pages   = {1816--1827},
+  year    = {2015},
+  doi     = {10.14778/2824032.2824078}
+}
+
+% --- LoRa topology: does the ad hoc claim hold? (F22). Crossref-verified 2026-07-30.
+@article{paredes2023lorafanet,
+  author  = {Paredes, William David and Kaushal, Hemani and Vakilinia, Iman and Prodanoff, Zornitza},
+  title   = {{LoRa} Technology in Flying Ad Hoc Networks: A Survey of Challenges and Open Issues},
+  journal = {Sensors},
+  volume  = {23},
+  number  = {5},
+  pages   = {2403},
+  year    = {2023},
+  doi     = {10.3390/s23052403}
+}
+
+@article{berto2021loramesh,
+  author  = {Berto, Riccardo and Napoletano, Paolo and Savi, Marco},
+  title   = {A {LoRa}-Based Mesh Network for Peer-to-Peer Long-Range Communication},
+  journal = {Sensors},
+  volume  = {21},
+  number  = {13},
+  pages   = {4314},
+  year    = {2021},
+  doi     = {10.3390/s21134314}
+}
+
+@article{davoli2021hybridlora,
+  author  = {Davoli, Luca and Pagliari, Emanuele and Ferrari, Gianluigi},
+  title   = {Hybrid {LoRa}-{IEEE} 802.11s Opportunistic Mesh Networking for Flexible {UAV} Swarming},
+  journal = {Drones},
+  volume  = {5},
+  number  = {2},
+  pages   = {26},
+  year    = {2021},
+  doi     = {10.3390/drones5020026}
+}
+
+@inproceedings{zirak2021swarm,
+  author    = {Zirak, Qazawat and Shashev, Dmitriy and Shidlovskiy, Stanislav},
+  title     = {Swarm of Drones Using {LoRa} Flying Ad-Hoc Network},
+  booktitle = {2021 International Conference on Information Technology (ICIT)},
+  pages     = {400--405},
+  year      = {2021},
+  doi       = {10.1109/ICIT52682.2021.9491655}
+}
+
+@article{centelles2021beyondstar,
+  author  = {Centelles, Roger Pueyo and Freitag, Felix and Meseguer, Roc and Navarro, Leandro},
+  title   = {Beyond the Star of Stars: An Introduction to Multihop and Mesh for {LoRa} and {LoRaWAN}},
+  journal = {IEEE Pervasive Computing},
+  volume  = {20},
+  number  = {2},
+  pages   = {63--72},
+  year    = {2021},
+  doi     = {10.1109/MPRV.2021.3063443}
 }
