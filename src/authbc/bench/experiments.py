@@ -13,8 +13,10 @@ import argparse
 import csv
 import io
 import math
+from collections.abc import Callable
 from pathlib import Path
 from statistics import mean
+from typing import Any, NamedTuple
 
 import numpy as np
 import yaml
@@ -115,7 +117,7 @@ def run_e2(cfg: dict) -> list[dict]:
                         "b": b, "b_max": bm, "frame_bytes": round(fb, 2),
                         "bytes_per_rec": round(per_rec, 3), "phi_overhead_pct": round(phi_ov, 2),
                         "A_at_b": round(per_rec / s, 4),
-                        "A_formula": round(a_formula, 4) if a_formula != "" else "",
+                        "A_formula": round(float(a_formula), 4) if a_formula != "" else "",
                         "is_bmax": int(b == bm),
                         # T2a: which ceiling actually caps the batch, and what compression is
                         # therefore worth per byte. A_formula is the MTU-limit value; A_effective
@@ -123,7 +125,7 @@ def run_e2(cfg: dict) -> list[dict]:
                         "binds": binds,
                         "b_ceiling": (min(bm, optimizer.freshness_batch_bound(
                             cfg["lam"], cfg["d_max_s"])) if placement == "B" else ""),
-                        "A_effective": round(a_eff, 4) if a_eff != "" else "",
+                        "A_effective": round(float(a_eff), 4) if a_eff != "" else "",
                     })
     return rows
 
@@ -344,7 +346,7 @@ def run_lora_codesign(cfg: dict) -> list[dict]:
     if not res.feasible:
         raise ValueError("LoRa co-design: nothing feasible — check the config")
 
-    rows = [{
+    rows: list[dict[str, Any]] = [{
         "on_pareto": int(c in res.pareto), "dr": c.dr,
         "sf": lora.EU868_DATA_RATES[c.dr].sf,
         "bw_khz": lora.EU868_DATA_RATES[c.dr].bw_hz // 1000,
@@ -361,7 +363,8 @@ def run_lora_codesign(cfg: dict) -> list[dict]:
         "V": round(c.verifiability, 5),
         "adopted": int(c.chain_mode == cfg["adopted_chain_mode"]),
     } for c in res.feasible]
-    rows.sort(key=lambda r: (-r["on_pareto"], -r["relative_range"], -r["lambda_rec_per_s"]))
+    rows.sort(key=lambda r: (-float(r["on_pareto"]), -float(r["relative_range"]),
+                             -float(r["lambda_rec_per_s"])))
     print(f"  LoRa co-design: {res.evaluated} evaluated, {res.skipped} do not fit the regional "
           f"limit, {len(res.feasible)} feasible, {len(res.pareto)} on the Pareto front")
     return rows
@@ -418,6 +421,76 @@ def run_e3(cfg: dict) -> list[dict]:
                 })
     return rows
 
+
+def run_lora_external(cfg: dict) -> list[dict]:
+    """Cross-check the LoRa capacity result against a published external model (items A7, F20).
+
+    Every other LoRa number in this thesis comes from one simulator. This runner evaluates Bor et
+    al. 2017's measurement-fitted capacity model at *our* operating point and puts the two side by
+    side, so the low-rate arm gets the same treatment the 802.11 arm gets from Bianchi and
+    Ma & Chen: an independent yardstick rather than an internal baseline.
+
+    The comparison is like-for-like because both studies transmit at the 1 % duty-cycle ceiling,
+    where every node occupies 1 % of the channel regardless of SF or frame size. Offered load is
+    therefore 0.01*N in both, which is what lets a model fitted to 20 B frames speak to our 218 B
+    ones (docs/literature/README.md §5).
+    """
+    from authbc.models import lora
+
+    lc = int(cfg["logical_channels"])
+    v_target = float(cfg["verifiability_target"])
+    rows: list[dict] = []
+    for r in _read_raw(cfg["measured_csv"]):
+        n = int(r["n_devices"])
+        ours_pct = 100.0 * (1.0 - float(r["delivered_frac"]))
+        theirs_pct = lora.bor2017_loss_pct(n, logical_channels=lc)
+        rows.append({
+            "n_devices": n,
+            "authbc_ns3_loss_pct": round(ours_pct, 3),
+            "bor2017_loss_pct": round(theirs_pct, 3),
+            "delta_points": round(ours_pct - theirs_pct, 3),
+            "ratio_ours_over_theirs": round(ours_pct / theirs_pct, 3) if theirs_pct else "",
+            "who_is_optimistic": "AUTHBC" if ours_pct < theirs_pct else "Bor2017",
+            "meets_v_target_authbc": int(ours_pct <= 100.0 * (1.0 - v_target)),
+            "meets_v_target_bor": int(theirs_pct <= 100.0 * (1.0 - v_target)),
+        })
+    # F23: the collision-only capacity above assumes a perfect link. Zirak et al. 2021 measured
+    # air-to-air LoRa PDR on real drones; delivery is P_link(range) x P_no_collision(N), so a
+    # range whose link PDR already misses the target makes it unreachable at EVERY node count.
+    measured = {int(r["n_devices"]): float(r["delivered_frac"])
+                for r in _read_raw(cfg["measured_csv"])}
+    for range_m in cfg["ranges_m"]:
+        p_link = lora.zirak2021_link_pdr(range_m)
+        n_rng = 0
+        for n, d in sorted(measured.items()):
+            if p_link * d >= v_target:
+                n_rng = n
+            else:
+                break
+        rows.append({
+            "n_devices": f"RANGE_{range_m}m", "authbc_ns3_loss_pct": "",
+            "bor2017_loss_pct": round(100 * (1 - p_link), 3),
+            "delta_points": "", "ratio_ours_over_theirs": "",
+            "who_is_optimistic": "measured link (Zirak2021)",
+            "meets_v_target_authbc": n_rng, "meets_v_target_bor": "",
+        })
+    r_max = lora.max_range_for_verifiability(v_target)
+    print(f"  measured air-to-air link (Zirak et al. 2021): V>={v_target} needs range <= {r_max} m;"
+          f" our scenario is configured at 1000 m, where the link alone delivers"
+          f" {lora.zirak2021_link_pdr(1000):.4f}")
+
+    n_max_ours = max((r["n_devices"] for r in rows
+                      if isinstance(r["n_devices"], int) and r["meets_v_target_authbc"]), default=0)
+    n_max_theirs = lora.bor2017_n_max(v_target, logical_channels=lc)
+    rows.append({
+        "n_devices": "N_MAX", "authbc_ns3_loss_pct": "", "bor2017_loss_pct": "",
+        "delta_points": n_max_ours - n_max_theirs, "ratio_ours_over_theirs": "",
+        "who_is_optimistic": "", "meets_v_target_authbc": n_max_ours,
+        "meets_v_target_bor": n_max_theirs,
+    })
+    print(f"  LoRa external check (V>={v_target}, {lc} logical channel(s)): "
+          f"AUTHBC ns-3 N_max={n_max_ours}, Bor et al. 2017 N_max={n_max_theirs}")
+    return rows
 
 # --------------------------------------------------------------------------- E5 (T5 co-design)
 def _read_raw(name: str) -> list[dict]:
@@ -537,17 +610,27 @@ def run_e5(cfg: dict) -> list[dict]:
     return rows
 
 
-_RUNNERS = {
-    "e1": (run_e1, "e1_dominance"),
-    "e2": (run_e2, "e2_batching"),
-    "e3": (run_e3, "e3_loss"),
-    "e5": (run_e5, "e5_codesign"),
-    "capacity": (run_capacity, "capacity_envelope"),        # (N, Λ) envelope, docs/02 §6a
+class _Runner(NamedTuple):
+    """One experiment entry point: its runner, output stem, and config name."""
+
+    fn: Callable[[dict[str, Any]], list[dict[str, Any]]]
+    out: str
+    config: str | None = None   # None → the config is named after the experiment
+
+
+_RUNNERS: dict[str, _Runner] = {
+    "e1": _Runner(run_e1, "e1_dominance"),
+    "e2": _Runner(run_e2, "e2_batching"),
+    "e3": _Runner(run_e3, "e3_loss"),
+    "e5": _Runner(run_e5, "e5_codesign"),
+    "capacity": _Runner(run_capacity, "capacity_envelope"),        # (N, Λ) envelope, docs/02 §6a
     # B3 as optimization: the (Λ × D_max) region with 3GPP TS 22.125 compliance flags
-    "operating-region": (run_operating_region, "operating_region"),
+    "operating-region": _Runner(run_operating_region, "operating_region"),
     # The two LoRa runners share experiments/lora/config.yaml: one arm, one parameter set.
-    "lora": (run_lora, "lora_eu868", "lora"),
-    "lora-codesign": (run_lora_codesign, "lora_codesign", "lora"),
+    "lora": _Runner(run_lora, "lora_eu868", "lora"),
+    "lora-codesign": _Runner(run_lora_codesign, "lora_codesign", "lora"),
+    # A7/F20: the LoRa arm's external baseline — our simulation vs a published model.
+    "lora-external": _Runner(run_lora_external, "lora_external_check", "lora-external"),
 }
 
 
@@ -556,10 +639,9 @@ def main() -> None:
     ap.add_argument("--exp", required=True, choices=sorted(_RUNNERS))
     args = ap.parse_args()
     entry = _RUNNERS[args.exp]
-    runner, out_name = entry[0], entry[1]
-    cfg = load_config(entry[2] if len(entry) > 2 else args.exp)
-    rows = runner(cfg)
-    path = write_csv(out_name, rows, cfg)
+    cfg = load_config(entry.config or args.exp)
+    rows = entry.fn(cfg)
+    path = write_csv(entry.out, rows, cfg)
     print(f"{args.exp}: wrote {path} ({len(rows)} rows)")
 
 

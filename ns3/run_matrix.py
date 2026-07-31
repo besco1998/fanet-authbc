@@ -44,6 +44,10 @@ def main() -> None:
     ap.add_argument("--seeds", type=int, default=10)
     ap.add_argument("--frameSize", type=int, default=1400)
     ap.add_argument("--simTime", type=float, default=10.0)
+    # F28: the published bands were measured at 1400 B only, but the co-design operates at
+    # 72-288 B where per-frame overhead dominates instead of payload. Allow a distinct output so
+    # the small-frame validation is an added artifact rather than a replacement.
+    ap.add_argument("--out", default="ns3_matrix.csv")
     args = ap.parse_args()
 
     if not (NS3 / "ns3").exists():
@@ -65,10 +69,10 @@ def main() -> None:
     RESULTS.mkdir(parents=True, exist_ok=True)
     cfg = {"N": list(N_VALUES), "modes": list(MODES), "seeds": args.seeds,
            "frameSize": args.frameSize, "simTime": args.simTime}
-    meta = {**provenance.env_block(), "run": "ns3_matrix", "ns3_version": "3.41",
+    meta = {**provenance.env_block(), "run": args.out.replace(".csv", ""), "ns3_version": "3.41",
             "config_hash": provenance.config_hash(cfg)}
     fields = ["N", "mode", "seed", "frameSize", "simTime", "goodput_mbps"]
-    path = RESULTS / "ns3_matrix.csv"
+    path = RESULTS / args.out
     with path.open("w", newline="") as fh:
         for k, v in meta.items():
             fh.write(f"# {k}={v}\n")

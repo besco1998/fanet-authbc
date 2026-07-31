@@ -12,6 +12,7 @@ a block that never completes is discarded and counted (``discarded_partial``).
 from __future__ import annotations
 
 from collections.abc import Sequence
+from typing import Any
 
 from authbc.crypto.ed25519 import Ed25519Scheme
 from authbc.ledger.record import Record
@@ -26,7 +27,15 @@ class BlockAggFramer(Framer):
     def __init__(self, sk) -> None:
         self._sk = sk
 
-    def pack(self, records: Sequence[Record], *, b: int) -> list[Frame]:
+    def pack(
+        self,
+        records: Sequence[Record],
+        *,
+        b: int,
+        sigs: Sequence[bytes] | None = None,
+        pks: Sequence[Any] | None = None,
+    ) -> list[Frame]:
+        del sigs, pks   # placement D signs internally (see Framer.pack)
         """Sign the whole block once; split into ⌈len/b⌉ fragment frames of ≤ b records each."""
         recs = list(records)
         block_sig = _ED.sign(self._sk, covered_bytes(recs, Placement.D))  # over the WHOLE block
@@ -41,8 +50,13 @@ class BlockAggFramer(Framer):
             ))
         return frames
 
-    def unpack(self, frame: Frame, *, pk) -> tuple[list[Record], list[bool]]:
+    def unpack(self, frame: Frame, *, pk: Any = None) -> tuple[list[Record], list[bool]]:
         """Verify a REASSEMBLED block frame (recs = the full block)."""
+        if pk is None:
+            raise ValueError(
+                "placement D (block aggregation) requires the sender public key: "
+                "unpack(frame, pk=pk)"
+            )
         ok = verify_D(frame, pk)
         return list(frame.recs), [ok] * frame.n
 
@@ -52,7 +66,8 @@ class BlockReassembler:
 
     def __init__(self, timeout_ms: int = REASSEMBLY_TIMEOUT_MS) -> None:
         self.timeout_ms = timeout_ms
-        self._buf: dict[int, dict] = {}
+        # Keyed by (src, block_id): block_id is unique per sender, not globally — see `offer`.
+        self._buf: dict[tuple[int, int], dict] = {}
         self.discarded_partial = 0
 
     def offer(self, frame: Frame, now_ms: int) -> Frame | None:

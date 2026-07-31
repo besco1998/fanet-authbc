@@ -14,6 +14,7 @@ byte accounting uses the real 96 B rather than silently absorbing the difference
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import Any, Protocol, runtime_checkable
 
 
@@ -34,4 +35,25 @@ class SignatureScheme(Protocol):
 
     def verify(self, pk: Any, msg: bytes, sig: bytes) -> bool:
         """Return True iff ``sig`` is a valid signature of ``msg`` under ``pk``."""
+        ...
+
+
+@runtime_checkable
+class AggregateScheme(SignatureScheme, Protocol):
+    """A scheme that also aggregates signatures over *distinct* messages.
+
+    Only BLS12-381 satisfies this. It is a separate protocol so that placement C
+    (cross-signer aggregation) and the aggregation micro-benchmarks are statically
+    prevented from being handed a non-aggregating scheme — a mistake that would
+    otherwise only surface as an ``AttributeError`` at run time.
+    """
+
+    def aggregate(self, sigs: Sequence[bytes]) -> bytes:
+        """Combine signatures into one ``sig_len``-wide aggregate."""
+        ...
+
+    def aggregate_verify(
+        self, pks: Sequence[Any], msgs: Sequence[bytes], agg: bytes
+    ) -> bool:
+        """Return True iff ``agg`` verifies as ``pks[i]`` signing ``msgs[i]`` for every i."""
         ...

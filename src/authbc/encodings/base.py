@@ -43,7 +43,7 @@ def obj_to_record(obj: dict) -> TelemetryRecord:
     fields = {_INV_KEYS[k]: v for k, v in obj.items()}
     ph = fields["prev_hash"]
     fields["prev_hash"] = bytes(ph) if not isinstance(ph, bytes) else ph
-    return TelemetryRecord(**fields)  # type: ignore[arg-type]
+    return TelemetryRecord(**fields)
 
 
 def record_to_array(rec: TelemetryRecord) -> list:
@@ -63,7 +63,7 @@ def array_to_record(arr: list) -> TelemetryRecord:
     fields = dict(zip(FIELD_ORDER, arr, strict=True))
     ph = fields["prev_hash"]
     fields["prev_hash"] = bytes(ph) if not isinstance(ph, bytes) else ph
-    return TelemetryRecord(**fields)  # type: ignore[arg-type]
+    return TelemetryRecord(**fields)
 
 
 # --------------------------------------------------------------------------- varint helpers

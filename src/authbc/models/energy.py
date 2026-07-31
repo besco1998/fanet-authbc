@@ -89,6 +89,15 @@ class EnergyConfig:
     n_frames: int = 1       # frames the batch spans: 1 for A/B/C; n(b) ≥ 1 for block-level D
 
     def __post_init__(self) -> None:
+        # Audit E18: `placement.wire.Placement` shares its member names with this enum, so an
+        # `is Placement.A` test silently evaluates False if the wrong one is passed, and the energy
+        # figure comes out wrong with no error. Catch it where the object is built.
+        if not isinstance(self.placement, Placement):
+            raise TypeError(
+                f"placement must be authbc.models.energy.Placement, got "
+                f"{type(self.placement).__module__}.{type(self.placement).__name__} — "
+                f"the modelling and wire Placement enums are not interchangeable"
+            )
         if self.batch < 1:
             raise ValueError(f"batch b must be ≥ 1, got {self.batch}")
         if self.n_frames < 1:

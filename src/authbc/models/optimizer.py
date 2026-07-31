@@ -154,8 +154,36 @@ def n_frames(batch: int, s: float, g_a: float, h_f: float, mtu: float) -> int:
     return max(1, math.ceil((batch * s + g_a + h_f) / mtu))
 
 
+
+def _require_placement(placement: Placement) -> None:
+    """Reject a `placement.wire.Placement` passed where a modelling `Placement` is expected.
+
+    Audit E18. The two enums share member names, so every `is Placement.X` test in this module
+    silently evaluates False for the wrong one — `verifiability` returned 0.95 instead of 0.8145,
+    a 17 % overstatement of block-level loss robustness, with no error raised. `mypy` covers
+    `src/`, but ad-hoc analysis scripts are not type-checked and this has already caught one.
+    """
+    if not isinstance(placement, Placement):
+        raise TypeError(
+            f"expected authbc.models.energy.Placement, got "
+            f"{type(placement).__module__}.{type(placement).__name__} — "
+            f"the modelling and wire Placement enums are not interchangeable"
+        )
+
+
 def verifiability(placement: Placement, n: int, p_loss: float) -> float:
-    """V (T3): frame-level self-verifiable ⇒ 1−p; block-level D ⇒ (1−p)^n."""
+    """V (T3): frame-level self-verifiable ⇒ 1−p; block-level D ⇒ (1−p)^n.
+
+    ⚠️ The guard below is not paranoia (audit F27). Two distinct ``Placement`` enums exist —
+    ``models.energy.Placement`` (StrEnum, the modelling layer) and ``placement.wire.Placement``
+    (IntEnum, whose integer values are part of the frozen frame format). They share member names,
+    so ``placement is Placement.D`` silently evaluates False when a caller imports the wrong one,
+    and this function then returns ``1-p`` (0.95) where the truth is ``(1-p)^n`` (0.8145 at n=4) —
+    a 17 % overstatement of block-level loss robustness, with no error raised. ``mypy`` catches the
+    mistake inside ``src/``, but ad-hoc analysis scripts are not type-checked and this has already
+    caught one. Fail loudly instead.
+    """
+    _require_placement(placement)
     if placement is Placement.D:
         return (1.0 - p_loss) ** n
     return 1.0 - p_loss
@@ -168,6 +196,7 @@ def frame_auth_bytes(placement: Placement, batch: int, g_a: float) -> float:
     signature, which is exactly why A is the naive baseline. B/C fold b records under one auth
     object; D uses one block signature.
     """
+    _require_placement(placement)
     return batch * g_a if placement is Placement.A else g_a
 
 
@@ -175,6 +204,7 @@ def bytes_per_record(placement: Placement, batch: int, s: float, g_a: float, h_f
                      n: int) -> float:
     """On-air bytes/record: A → s+g_a+H_f/b (no auth amortization); B/C → s+(g_a+H_f)/b (T2);
     D → s+(g_a+n·H_f)/b (T3)."""
+    _require_placement(placement)
     headers = n * h_f if placement is Placement.D else h_f
     return s + (frame_auth_bytes(placement, batch, g_a) + headers) / batch
 

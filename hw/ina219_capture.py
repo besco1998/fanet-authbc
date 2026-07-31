@@ -82,7 +82,11 @@ def capture(port: str, out: Path, limit: float | None) -> None:
         # Write the canonical header OURSELVES. Attaching to an already-running sketch means the
         # first line is usually a fragment and the sketch's own header may never arrive, so the file
         # must be self-describing regardless of when capture started.
-        fh.write(",".join(SAMPLE_COLS) + "\n")
+        # H1: the Arduino ms counter alone cannot be mapped to UTC — it restarts on reset
+        # and a file may hold several sessions, so a single `capture_start_utc` header is an
+        # ambiguous anchor. Stamping every sample with host UTC makes the timestamp-based
+        # window recovery exact, which is what lets Pi-B (no sync wire) be reduced at all.
+        fh.write(",".join([*SAMPLE_COLS, "host_utc"]) + "\n")
         fh.flush()
         try:
             for line in _serial_lines(port):
@@ -103,7 +107,7 @@ def capture(port: str, out: Path, limit: float | None) -> None:
                 except ValueError:
                     dropped += 1
                     continue
-                fh.write(f"{line}\n")
+                fh.write(f"{line},{datetime.now(UTC).isoformat()}\n")
                 n += 1
                 if n % 250 == 0:
                     fh.flush()
@@ -177,13 +181,116 @@ def _segments(rows: list[dict[str, str]], channel: int) -> list[list[float]]:
     return out
 
 
-def reduce(manifest_path: Path, samples_path: Path, channel: int, out: Path | None) -> None:
+def _segments_by_power_step(rows: list[dict[str, str]], channel: int,
+                            windows: list[dict]) -> list[list[float]]:
+    """Recover windows from the power signal itself — no clocks, no sync wire (hardware audit H1).
+
+    Why not timestamps: the rig has one sync wire (Pi-A), so Pi-B can only be reduced from times.
+    But the manifest's window bounds come from the *Pi's* clock while samples are stamped by the
+    *capture host's* clock, and serial buffering adds lag on top. Measured, that offset biased
+    energy low by **3-6 % on 60 s windows and 13-20 % on 5 s windows** — the tell is that the error
+    scales inversely with window length, i.e. a fixed time shift, not a scale error. No amount of
+    NTP fixes the serial lag, so absolute time is the wrong instrument.
+
+    What is used instead: the load windows are plainly visible in the power trace as steps of
+    several hundred mW. We threshold at the midpoint between the run's low and high power modes,
+    take contiguous high runs as load and the low runs between them as idle, and match them to the
+    manifest **by sequence**, which is the one thing both sides agree on exactly. The guard gap
+    (1.0 s, ~50 samples) makes the runs unambiguous.
+    """
+    # Coarse crop by host clock, precise edges from the signal. Cross-host clock error is
+    # sub-second (measured -0.11 s to -0.35 s) plus serial lag — fatal for a 5 s window boundary,
+    # irrelevant for cropping a multi-minute campaign with 10 s of slack each side. This keeps
+    # activity before and after the campaign (ssh, interpreter start-up) out of the step search.
+    from datetime import datetime, timedelta
+    if rows and rows[0].get("host_utc"):
+        t_lo = datetime.fromisoformat(windows[0]["t_start_utc"]) - timedelta(seconds=10)
+        t_hi = datetime.fromisoformat(windows[-1]["t_end_utc"]) + timedelta(seconds=10)
+        cropped = [r for r in rows
+                   if t_lo <= datetime.fromisoformat(r["host_utc"]) <= t_hi]
+        if len(cropped) >= 10 * len(windows):
+            rows = cropped
+
+    col = f"P{channel}_W"
+    p = [float(r[col]) for r in rows]
+    lo, hi = min(p), max(p)
+    if hi - lo < 0.10:
+        raise SystemExit(
+            f"!! channel {channel} power range is only {hi - lo:.3f} W — no load step is visible, "
+            "so windows cannot be recovered from the signal. Is this the right channel, and was "
+            "the DUT actually running the campaign?"
+        )
+    thr = (_mode_low(p) + _mode_high(p)) / 2.0
+
+    runs: list[tuple[bool, list[float]]] = []
+    cur: list[float] = [p[0]]
+    state = p[0] >= thr
+    for v in p[1:]:
+        s = v >= thr
+        if s == state:
+            cur.append(v)
+        else:
+            runs.append((state, cur))
+            cur, state = [v], s
+    runs.append((state, cur))
+
+    # Drop runs shorter than half the guard gap: those are edge ringing, not windows.
+    min_len = 25
+    runs = [(s, r) for s, r in runs if len(r) >= min_len]
+    loads = [r for s, r in runs if s]
+    idles = [r for s, r in runs if not s]
+    n_load = sum(1 for w in windows if w["kind"] == "load")
+    if len(loads) != n_load:
+        raise SystemExit(
+            f"!! found {len(loads)} load steps in the channel-{channel} power trace but the "
+            f"manifest declares {n_load}. Refusing to guess an alignment (Law 3).\n"
+            "\n"
+            "   This is expected and is the documented limit of clock-free recovery (audit H1):\n"
+            "   energy_loop.py runs >=1000 warm-up iterations before each measured window, and\n"
+            "   warm-up draws power, so it appears as its own step. The signal cannot tell a\n"
+            "   warm-up step from a measured one; only the GPIO line can.\n"
+            "\n"
+            "   Reducing a Pi WITHOUT a sync wire is therefore not supported. Fit the second\n"
+            "   window wire (Pi-B BCM17 / pin 11 -> the Arduino's second window input) or move\n"
+            "   the existing one to the Pi being measured. See hw/RIG.md."
+        )
+
+    out: list[list[float]] = []
+    li = ii = 0
+    for w in windows:
+        if w["kind"] == "load":
+            out.append(loads[li][EDGE_TRIM:] or loads[li])
+            li += 1
+        else:
+            seg = idles[ii] if ii < len(idles) else idles[-1]
+            out.append(seg[EDGE_TRIM:] or seg)
+            ii += 1
+    return out
+
+
+def _mode_low(p: list[float]) -> float:
+    s = sorted(p)
+    return s[len(s) // 10]
+
+
+def _mode_high(p: list[float]) -> float:
+    s = sorted(p)
+    return s[-len(s) // 10]
+
+
+def reduce(manifest_path: Path, samples_path: Path, channel: int, out: Path | None,
+           by_timestamp: bool = False) -> None:
     from authbc.bench.stats import bootstrap_ci
 
     man = json.loads(manifest_path.read_text())
     windows = man["windows"]
-    segs = _segments(_read_samples(samples_path), channel)
-    print(f"manifest windows: {len(windows)}   captured segments: {len(segs)}")
+    rows = _read_samples(samples_path)
+    if by_timestamp:
+        segs = _segments_by_power_step(rows, channel, windows)
+        print(f"manifest windows: {len(windows)}   power-step segments: {len(segs)}")
+    else:
+        segs = _segments(rows, channel)
+        print(f"manifest windows: {len(windows)}   captured segments: {len(segs)}")
     if len(segs) != len(windows):
         sys.exit(
             f"!! window/segment mismatch ({len(windows)} vs {len(segs)}).\n"
@@ -259,12 +366,16 @@ def main() -> None:
     ap.add_argument("--seconds", type=float, help="stop capture after N seconds")
     ap.add_argument("--reduce", nargs=2, metavar=("MANIFEST", "SAMPLES"),
                     help="reduce a manifest + samples pair into energy/op")
+    ap.add_argument("--by-timestamp", action="store_true",
+                    help="recover windows from the power signal itself instead of the GPIO "
+                         "`window` column (required for Pi-B: only Pi-A has a sync wire)")
     ap.add_argument("--channel", type=int, default=1, choices=(1, 2),
                     help="INA219 channel to reduce (1=Pi-A/DUT, 2=Pi-B)")
     args = ap.parse_args()
 
     if args.reduce:
-        reduce(Path(args.reduce[0]), Path(args.reduce[1]), args.channel, args.out)
+        reduce(Path(args.reduce[0]), Path(args.reduce[1]), args.channel, args.out,
+               args.by_timestamp)
         return
     stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     capture(args.port, args.out or ENERGY_DIR / f"samples-{stamp}.csv", args.seconds)

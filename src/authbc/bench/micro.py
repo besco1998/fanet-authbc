@@ -24,6 +24,7 @@ import numpy as np
 from authbc.bench import provenance
 from authbc.bench.stats import bootstrap_ci, summarize
 from authbc.bench.timers import time_op
+from authbc.crypto.base import AggregateScheme
 from authbc.crypto.registry import all_schemes, get_scheme
 from authbc.encodings.registry import new_encoder
 
@@ -116,6 +117,8 @@ def measure_crypto(seed: int) -> list[dict]:
 
     # BLS cross-signer aggregation over distinct messages (AugScheme), b∈{2,4,8,16,32}
     bls = get_scheme("bls")
+    if not isinstance(bls, AggregateScheme):   # narrows for the type checker AND
+        raise TypeError("bls scheme does not aggregate")  # fails loudly if it regresses
     for b in BATCH_SIZES:
         keys = [bls.keygen(seed=_seed32(seed, f"bls{b}_{i}")) for i in range(b)]
         msgs = [bytes(rng.randrange(256) for _ in range(MSG_BYTES)) for _ in range(b)]

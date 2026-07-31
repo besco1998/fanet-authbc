@@ -36,6 +36,15 @@ double radiusMeters = 1000;         //!< Radius (m) of the deployment
 double simulationTimeSeconds = 100; //!< Scenario duration (s) in simulated time
 
 // Channel model
+// Channel model (E12). The module's own "realistic" option aggregates correlated shadowing AND
+// BuildingPenetrationLoss. **Building penetration is wrong physics for a UAV air-to-air link** —
+// drones fly above the buildings, and that model also needs MobilityBuildingInfo installed, which
+// this scenario never does. So we expose shadowing on its own rather than the module's bundle:
+//   "ideal"     -> LogDistance only. No link loss; all loss is collisions. (previous behaviour)
+//   "shadowing" -> LogDistance + CorrelatedShadowing. The honest air-to-air model.
+// See F23: hardware measurements of air-to-air LoRa show 9.6 points of loss at 1000 m that the
+// idealised model does not produce at all.
+std::string channelModel = "ideal";
 bool realisticChannelModel = false; //!< Whether to use a more realistic channel model with
                                     //!< buildings and correlated shadowing
 
@@ -74,15 +83,115 @@ OnPacketReceptionCallback(Ptr<const Packet> packet, uint32_t receiverNodeId)
     packetsReceived.at(tag.GetSpreadingFactor() - 7)++;
 }
 
+
+/**
+ * \brief A LoRa sender with **one-sided** inter-transmission jitter (audit E13/F26).
+ *
+ * The module's PeriodicSender fires on an exact interval. Because every device in this scenario
+ * shares one period and LoRaWAN ALOHA has no backoff, relative phases are then frozen for the whole
+ * run: a pair that collides once collides on every transmission, and a pair that misses never
+ * collides. Delivery becomes bimodal — measured at N=5, 22 of 30 seeds give exactly 1.000 and the
+ * rest fall to 0.20-0.84 — so a small-sample mean is meaningless against a hard threshold.
+ *
+ * ⚠️ The jitter is **one-sided by construction** (``[T, T+J]``, never earlier than T). A symmetric
+ * ±J would let half the transmissions arrive sooner than the duty-cycle interval, silently
+ * violating the 1 % EU868 regulation on which this entire arm's Lambda and batch argument rest.
+ * That is the whole reason this class exists rather than a two-line attribute change.
+ *
+ * Real LoRaWAN Class A devices randomise transmission timing for exactly this reason; the module's
+ * sender simply does not model it. Subclassing was not possible: SendPacket() is non-virtual and
+ * the interval and event handle are private, so this reimplements the few lines that matter.
+ */
+class JitteredSender : public Application
+{
+  public:
+    JitteredSender(Time interval, Time jitter, uint32_t pktSize)
+        : m_interval(interval), m_jitter(jitter), m_pktSize(pktSize)
+    {
+        m_rand = CreateObject<UniformRandomVariable>();
+        m_rand->SetAttribute("Min", DoubleValue(0.0));
+        m_rand->SetAttribute("Max", DoubleValue(jitter.GetSeconds()));
+    }
+
+    /** Next fire time: the duty-cycle interval plus a non-negative random extra. */
+    Time NextDelay() const
+    {
+        return m_interval + Seconds(m_rand->GetValue());
+    }
+
+  private:
+    void StartApplication() override
+    {
+        if (!m_mac)
+        {
+            auto dev = DynamicCast<LoraNetDevice>(GetNode()->GetDevice(0));
+            NS_ABORT_MSG_IF(!dev, "JitteredSender expects a LoraNetDevice on device 0");
+            m_mac = dev->GetMac();
+        }
+        // Randomise the first transmission over a full interval, as PeriodicSender does.
+        Ptr<UniformRandomVariable> first = CreateObject<UniformRandomVariable>();
+        m_event = Simulator::Schedule(Seconds(first->GetValue(0.0, m_interval.GetSeconds())),
+                                      &JitteredSender::Fire, this);
+    }
+
+    void StopApplication() override { Simulator::Cancel(m_event); }
+
+    void Fire()
+    {
+        m_mac->Send(Create<Packet>(m_pktSize));
+        m_event = Simulator::Schedule(NextDelay(), &JitteredSender::Fire, this);
+    }
+
+    Time m_interval;
+    Time m_jitter;
+    uint32_t m_pktSize;
+    Ptr<UniformRandomVariable> m_rand;
+    Ptr<LorawanMac> m_mac;
+    EventId m_event;
+};
+
 int
 main(int argc, char* argv[])
 {
     std::string interferenceMatrix = "aloha";
     uint32_t dataRate = 5;        // 0=SF12 .. 5=SF7
-    uint32_t payloadBytes = 231;  // AUTHBC frame at DR5: H_f 44 + g_a 64 + chain 32 + 7*13
+    // ⚠️ Must not exceed the module's enforced RP002 Table 12 limit for the chosen DR (222 B at
+    // DR5). A larger value is silently rejected by the MAC and the run sends NOTHING — which used
+    // to surface only as the "no packets were sent" abort below. 218 B is the AUTHBC frame at
+    // b=6, which is what run_lora_capacity.py computes and what the frozen results use.
+    uint32_t payloadBytes = 218;  // AUTHBC frame at DR5, b=6: H_f 44 + g_a 64 + chain 32 + 6*13
     double appPeriodS = 38.4;     // 1 % duty cycle on that frame's time on air
     uint32_t seed = 1;
     std::string outPrefix = "authbc_lora_cap";
+    // Gateway provisioning. F19: the two presets differ by more than their names suggest, and the
+    // difference dominates the capacity result:
+    //   "aloha" -> 1 logical channel (868.1), 1 demodulation path  [models an AD HOC PEER]
+    //   "eu"    -> 3 logical channels,        8 demodulation paths [models a GATEWAY]
+    // Both still force a single SF (see drDistribution below), so neither buys SF orthogonality.
+    //
+    // ⚠️ F21: "aloha" is the RIGHT preset for this thesis, not merely the harshest. Our system is a
+    // decentralised FANET, and a UAV peer has ONE radio and ONE demodulator; 8 paths across 3
+    // channels models a ground gateway, which is a different question. Note also that a peer
+    // listening on 868.1 cannot hear a frame sent on 868.3 — for broadcast, where every node must
+    // receive every record, all nodes must share one channel (docs/TRADEOFFS.md §1a).
+    //
+    // ⚠️ E11: the "aloha" preset sets the g1 sub-band duty cycle to 1 (i.e. 100%), so the MAC does
+    // NOT enforce the regulatory 1 %. That limit is imposed here by appPeriodS instead. Changing
+    // appPeriod without changing the preset silently breaks the regulation this whole arm rests on.
+    std::string gwRegion = "aloha";
+    // Crystal tolerance, ppm (audit F26). Default 0 preserves the frozen configuration exactly.
+    //
+    // ⚠️ Why this exists: every device shares ONE exact period, so relative phases are frozen for
+    // the whole run — a pair that collides on its first transmission collides on every one, and a
+    // pair that misses never collides. Delivery is therefore bimodal and hugely seed-dependent
+    // (measured at N=5: 22/30 seeds give exactly 1.000, the rest 0.20-0.84). Real SX127x crystals
+    // are +/-20 ppm, which over a 3600 s run is +/-72 ms of drift against a 364 ms frame — enough
+    // for collisions to migrate rather than persist. The 802.11 arm already de-synchronises its
+    // sources for exactly this reason; this is the LoRa equivalent.
+    double clockPpm = 0.0;
+    // One-sided inter-transmission jitter, seconds (E13). 0 = the frozen exact-period behaviour.
+    // Only ever DELAYS a transmission, so the 1 % duty cycle is preserved. See JitteredSender.
+    double txJitterS = 0.0;
 
     CommandLine cmd(__FILE__);
     cmd.AddValue("nDevices", "Number of end devices to include in the simulation", nDevices);
@@ -96,9 +205,28 @@ main(int argc, char* argv[])
     cmd.AddValue("appPeriod", "seconds between transmissions (the duty-cycle interval)", appPeriodS);
     cmd.AddValue("seed", "RNG run number", seed);
     cmd.AddValue("outPrefix", "output file prefix", outPrefix);
+    cmd.AddValue("txJitter",
+                 "one-sided inter-transmission jitter in seconds (0 = exact period, the default)",
+                 txJitterS);
+    cmd.AddValue("clockPpm",
+                 "per-device crystal tolerance in ppm (0 = frozen phases, the original behaviour)",
+                 clockPpm);
+    cmd.AddValue("channelModel",
+                 "propagation [ideal = LogDistance only, shadowing = + correlated shadowing]",
+                 channelModel);
+    cmd.AddValue("gwRegion",
+                 "gateway provisioning [aloha = 1 channel/1 demod path, eu = 3 channels/8 paths]",
+                 gwRegion);
     cmd.Parse(argc, argv);
 
     NS_ABORT_MSG_IF(dataRate > 5, "DR must be 0..5 (LoRa modulation only)");
+    // Fail early and legibly rather than as a mystifying zero-send run 3600 simulated seconds
+    // later. RP002 Table 12 (repeater-compatible) is what this module enforces.
+    const uint32_t kRp002Table12MaxPayload[6] = {51, 51, 51, 115, 222, 222};  // DR0..DR5
+    NS_ABORT_MSG_IF(payloadBytes > kRp002Table12MaxPayload[dataRate],
+                    "payloadBytes " << payloadBytes << " exceeds the module's RP002 Table 12 limit "
+                    << kRp002Table12MaxPayload[dataRate] << " B for DR" << dataRate
+                    << " — the MAC will reject every packet and nothing will be sent");
     NS_ABORT_MSG_IF(payloadBytes > 255, "payload exceeds the LoRa PHY limit");
     RngSeedManager::SetSeed(1);
     RngSeedManager::SetRun(seed);
@@ -144,19 +272,16 @@ main(int argc, char* argv[])
     loss->SetPathLossExponent(3.76);
     loss->SetReference(1, 7.7);
 
-    if (realisticChannelModel)
+    NS_ABORT_MSG_IF(channelModel != "ideal" && channelModel != "shadowing",
+                    "channelModel must be 'ideal' or 'shadowing'");
+    if (channelModel == "shadowing")
     {
-        // Create the correlated shadowing component
+        // Correlated shadowing ONLY. Deliberately no BuildingPenetrationLoss: see the note at the
+        // declaration — UAVs are not indoors, and the building model would need MobilityBuildingInfo
+        // that this scenario does not install.
         Ptr<CorrelatedShadowingPropagationLossModel> shadowing =
             CreateObject<CorrelatedShadowingPropagationLossModel>();
-
-        // Aggregate shadowing to the logdistance loss
         loss->SetNext(shadowing);
-
-        // Add the effect to the channel propagation loss
-        Ptr<BuildingPenetrationLoss> buildingLoss = CreateObject<BuildingPenetrationLoss>();
-
-        shadowing->SetNext(buildingLoss);
     }
 
     Ptr<PropagationDelayModel> delay = CreateObject<ConstantSpeedPropagationDelayModel>();
@@ -173,7 +298,8 @@ main(int argc, char* argv[])
 
     // Create the LorawanMacHelper
     LorawanMacHelper macHelper = LorawanMacHelper();
-    macHelper.SetRegion(LorawanMacHelper::ALOHA);
+    NS_ABORT_MSG_IF(gwRegion != "aloha" && gwRegion != "eu", "gwRegion must be 'aloha' or 'eu'");
+    macHelper.SetRegion(gwRegion == "eu" ? LorawanMacHelper::EU : LorawanMacHelper::ALOHA);
 
     // Create the LoraHelper
     LoraHelper helper = LoraHelper();
@@ -254,10 +380,38 @@ main(int argc, char* argv[])
 
     Time appStopTime = Seconds(simulationTimeSeconds);
     int packetSize = static_cast<int>(payloadBytes);
-    PeriodicSenderHelper appHelper = PeriodicSenderHelper();
-    appHelper.SetPeriod(Seconds(appPeriodSeconds));
-    appHelper.SetPacketSize(packetSize);
-    ApplicationContainer appContainer = appHelper.Install(endDevices);
+    ApplicationContainer appContainer;
+    if (txJitterS > 0.0)
+    {
+        for (auto nd = endDevices.Begin(); nd != endDevices.End(); ++nd)
+        {
+            auto app = CreateObject<JitteredSender>(Seconds(appPeriodSeconds), Seconds(txJitterS),
+                                                    static_cast<uint32_t>(packetSize));
+            (*nd)->AddApplication(app);
+            appContainer.Add(app);
+        }
+    }
+    else
+    {
+        PeriodicSenderHelper appHelper = PeriodicSenderHelper();
+        appHelper.SetPeriod(Seconds(appPeriodSeconds));
+        appHelper.SetPacketSize(packetSize);
+        appContainer = appHelper.Install(endDevices);
+    }
+
+    // Give each device its own slightly-off period so phases drift instead of staying frozen.
+    if (clockPpm > 0.0)
+    {
+        Ptr<UniformRandomVariable> ppm = CreateObject<UniformRandomVariable>();
+        ppm->SetAttribute("Min", DoubleValue(-clockPpm));
+        ppm->SetAttribute("Max", DoubleValue(clockPpm));
+        for (uint32_t i = 0; i < appContainer.GetN(); ++i)
+        {
+            auto sender = DynamicCast<PeriodicSender>(appContainer.Get(i));
+            NS_ABORT_MSG_IF(!sender, "expected a PeriodicSender application");
+            sender->SetInterval(Seconds(appPeriodSeconds * (1.0 + ppm->GetValue() * 1e-6)));
+        }
+    }
 
     appContainer.Start(Time(0));
     appContainer.Stop(appStopTime);
@@ -380,6 +534,11 @@ main(int argc, char* argv[])
     out << "key,value\n"
         << "n_devices," << nDevices << "\n"
         << "data_rate," << dataRate << "\n"
+        << "gw_region," << gwRegion << "\n"
+        << "channel_model," << channelModel << "\n"
+        << "clock_ppm," << clockPpm << "\n"
+        << "tx_jitter_s," << txJitterS << "\n"
+        << "radius_m," << radiusMeters << "\n"
         << "payload_bytes," << payloadBytes << "\n"
         << "app_period_s," << appPeriodSeconds << "\n"
         << "sim_time_s," << simulationTimeSeconds << "\n"

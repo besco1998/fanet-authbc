@@ -18,8 +18,13 @@ class JsonEncoder(Encoder):
     deterministic = True
 
     def encode(self, rec: TelemetryRecord) -> bytes:
-        obj = dict(record_to_obj(self._validated(rec)))
-        obj["ph"] = obj["ph"].hex()  # bytes → hex string
+        src = record_to_obj(self._validated(rec))
+        ph = src["ph"]
+        assert isinstance(ph, bytes), "prev_hash must be bytes before hex-encoding"
+        # JSON cannot carry raw bytes, so the wire dict is a *different* type from the
+        # record dict: ph becomes a hex string. Build it rather than mutating in place.
+        obj: dict[str, int | str] = {k: v for k, v in src.items() if k != "ph"}  # type: ignore[misc]
+        obj["ph"] = ph.hex()
         return json.dumps(obj, sort_keys=True, separators=(",", ":")).encode("utf-8")
 
     def decode(self, data: bytes) -> TelemetryRecord:

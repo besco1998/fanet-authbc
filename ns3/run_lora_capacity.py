@@ -29,6 +29,7 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+from statistics import stdev
 
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "src"))
@@ -50,17 +51,47 @@ def frame_for(dr: int, max_payload: int) -> tuple[int, int]:
     return b, H_F + G_A + CHAIN + int(b * S_DELTA)
 
 
-def run_one(n: int, dr: int, payload: int, period_s: float, sim_s: float, seed: int) -> dict:
+def run_one(n: int, dr: int, payload: int, period_s: float, sim_s: float, seed: int,
+            *, gw_region: str = "aloha", channel_model: str = "ideal",
+            radius_m: float = 1000.0, interference: str = "aloha",
+            tx_jitter_s: float = 0.0) -> dict:
+    """One NS-3 run.
+
+    ``gw_region``     "aloha" = 1 channel / 1 demodulation path (an ad hoc PEER, F21);
+                      "eu"    = 3 channels / 8 paths (a GATEWAY — a different question, E9).
+    ``channel_model`` "ideal" = LogDistance only, all loss is collisions;
+                      "shadowing" = + correlated shadowing, the honest air-to-air model (E12).
+    ``interference``  collision matrix. "aloha" has +inf on the same-SF diagonal, i.e. any
+                      co-SF overlap is fatal and there is **no capture**; "goursaud" uses a 6 dB
+                      same-SF threshold, so the stronger frame survives. We force one SF, so this
+                      choice decides whether capture exists at all (audit finding F26).
+    ``tx_jitter_s``   one-sided inter-transmission jitter (E13). 0 keeps the exact period, whose
+                      frozen relative phases make delivery bimodal. Only ever delays, so the 1 %
+                      duty cycle is preserved (mean interval becomes T + jitter/2).
+    ``radius_m``      devices are uniform in a disc of this radius; the gateway sits at its centre,
+                      so link distances span 0..radius with mean 2/3 radius — not a fixed
+                      point-to-point range like the hardware references.
+    """
     ns3 = ns3_root()
     with tempfile.TemporaryDirectory() as td:
         prefix = Path(td) / "c"
         cmd = (f"authbc-lora-capacity --nDevices={n} --dataRate={dr} "
                f"--payloadBytes={payload} --appPeriod={period_s} "
-               f"--simulationTime={sim_s} --seed={seed} --outPrefix={prefix}")
+               f"--simulationTime={sim_s} --seed={seed} --outPrefix={prefix} "
+               f"--gwRegion={gw_region} --channelModel={channel_model} --radius={radius_m} "
+               f"--interferenceMatrix={interference} --txJitter={tx_jitter_s}")
         subprocess.run(["./ns3", "run", cmd], cwd=ns3, check=True,
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         rows = dict(csv.reader(prefix.with_suffix(".csv").read_text().splitlines()[1:]))
-    return {k: float(v) for k, v in rows.items()}
+    # The scenario also emits provenance strings (gw_region, channel_model), so coerce only what
+    # is numeric rather than assuming every field is.
+    out: dict[str, float | str] = {}
+    for k, v in rows.items():
+        try:
+            out[k] = float(v)
+        except ValueError:
+            out[k] = v
+    return out
 
 
 def main() -> None:
@@ -69,9 +100,24 @@ def main() -> None:
     ap.add_argument("--data-rate", type=int, default=5)
     ap.add_argument("--nodes", type=int, nargs="+",
                     default=[5, 10, 20, 35, 50, 75, 100, 150, 200, 300])
-    ap.add_argument("--seeds", type=int, default=3)
+    # E13/F26: 3 seeds gave N_max=5 purely by luck — the distribution is wide and the threshold
+    # crossing is a knife edge. 30 is the floor for a defensible mean here.
+    ap.add_argument("--seeds", type=int, default=30)
     ap.add_argument("--sim-time", type=float, default=3600.0)
     ap.add_argument("--epsilon", type=float, default=0.05, help="V >= 1-eps (T3)")
+    ap.add_argument("--gw-region", choices=("aloha", "eu"), default="aloha",
+                    help="aloha = 1 ch/1 demod path (ad hoc peer); eu = 3 ch/8 paths (gateway)")
+    ap.add_argument("--channel-model", choices=("ideal", "shadowing"), default="ideal",
+                    help="ideal = LogDistance only; shadowing = + correlated shadowing (E12)")
+    ap.add_argument("--radius", type=float, default=1000.0, help="deployment disc radius (m)")
+    # E13: real LoRaWAN Class A randomises transmission timing; the module's sender does not.
+    # 1 s is ~2.7 % of the duty interval, one-sided, so duty stays at 0.9865 % (< 1 %).
+    ap.add_argument("--tx-jitter", type=float, default=1.0,
+                    help="one-sided inter-transmission jitter (s); 0 = exact period (E13)")
+    ap.add_argument("--interference", choices=("aloha", "goursaud"), default="aloha",
+                    help="aloha = no capture (co-SF overlap always fatal); goursaud = 6 dB capture")
+    ap.add_argument("--out", default="lora_capacity.csv",
+                    help="output CSV under results/raw/ (use a distinct name for variant runs)")
     args = ap.parse_args()
 
     b, payload = frame_for(args.data_rate, MODULE_MAX_PAYLOAD)
@@ -83,29 +129,46 @@ def main() -> None:
 
     out_rows = []
     n_max = 0
+    failed_yet = False
     for n in args.nodes:
-        per_seed = [run_one(n, args.data_rate, payload, period, args.sim_time, s)
+        per_seed = [run_one(n, args.data_rate, payload, period, args.sim_time, s,
+                            gw_region=args.gw_region, channel_model=args.channel_model,
+                            radius_m=args.radius, interference=args.interference,
+                            tx_jitter_s=args.tx_jitter)
                     for s in range(1, args.seeds + 1)]
-        delivered = sum(r["delivered_frac"] for r in per_seed) / len(per_seed)
-        sent = sum(r["sent"] for r in per_seed) / len(per_seed)
+        vals = sorted(float(r["delivered_frac"]) for r in per_seed)
+        delivered = sum(vals) / len(vals)
+        sent = sum(float(r["sent"]) for r in per_seed) / len(per_seed)
         ok = delivered >= 1 - args.epsilon
-        if ok:
+        # F26/A4: N_max is the largest N for which EVERY smaller N also passes. Taking the last
+        # passing N (the previous behaviour) would silently report a higher capacity than the data
+        # supports the moment the curve is non-monotone — and F26/A1 shows it is noisy enough to be.
+        if ok and not failed_yet:
             n_max = n
+        elif not ok:
+            failed_yet = True
         out_rows.append({
             "n_devices": n, "data_rate": args.data_rate, "batch": b,
             "payload_bytes": payload, "app_period_s": round(period, 3),
             "sent_mean": round(sent, 1), "delivered_frac": round(delivered, 5),
             "implied_p_loss": round(1 - delivered, 5),
+            # F26/A5: the mean alone hid a bimodal distribution with sigma ~0.21. Report the spread
+            # so a knife-edge threshold crossing is visible in the artifact itself.
+            "delivered_min": round(vals[0], 5), "delivered_max": round(vals[-1], 5),
+            "delivered_stdev": round(stdev(vals), 5) if len(vals) > 1 else 0.0,
+            "seeds_failing_v": sum(1 for v in vals if v < 1 - args.epsilon),
             "meets_v": int(ok), "seeds": args.seeds,
             # Λ a node can sustain, and what the whole neighbourhood then carries
             "lambda_rec_per_s": round(b / period, 5),
             "aggregate_rec_per_s": round(n * b / period, 4),
         })
-        print(f"  N={n:<4} delivered={delivered:.4f}  "
+        print(f"  N={n:<4} delivered={delivered:.4f} "
+              f"[{vals[0]:.4f}..{vals[-1]:.4f}] "
+              f"{sum(1 for v in vals if v < 1 - args.epsilon)}/{len(vals)} seeds fail  "
               f"{'OK' if ok else 'FAILS V>=0.95'}")
 
     print(f"\n  N_max (V >= {1 - args.epsilon:.2f}) = {n_max}")
-    path = REPO / "results" / "raw" / "lora_capacity.csv"
+    path = REPO / "results" / "raw" / args.out
     buf = io.StringIO()
     meta = {**provenance.env_block(), "run": "lora_capacity",
             "config_hash": provenance.config_hash(

@@ -10,6 +10,7 @@ ok_mask is False and the frame is counted as failed (docs/01 §4).
 from __future__ import annotations
 
 from collections.abc import Sequence
+from typing import Any
 
 from authbc.crypto.bls import BlsScheme
 from authbc.ledger.record import Record
@@ -21,8 +22,18 @@ _BLS = BlsScheme()
 
 class RelayAggFramer(Framer):
     def pack(
-        self, records: Sequence[Record], *, sigs: Sequence[bytes], pks: Sequence, b: int
+        self,
+        records: Sequence[Record],
+        *,
+        b: int,
+        sigs: Sequence[bytes] | None = None,
+        pks: Sequence[Any] | None = None,
     ) -> list[Frame]:
+        if sigs is None or pks is None:
+            raise ValueError(
+                "placement C aggregates signatures from other senders: "
+                "pack(records, b=b, sigs=sigs, pks=pks)"
+            )
         if not (len(records) == len(sigs) == len(pks)):
             raise ValueError("records, sigs, pks must be the same length")
         frames: list[Frame] = []
@@ -34,6 +45,8 @@ class RelayAggFramer(Framer):
                                 recs=tuple(rc), auth={"agg": _BLS.aggregate(sc), "signers": pc}))
         return frames
 
-    def unpack(self, frame: Frame) -> tuple[list[Record], list[bool]]:
+    def unpack(self, frame: Frame, *, pk: Any = None) -> tuple[list[Record], list[bool]]:
+        """``pk`` is accepted and ignored: the aggregate carries its own public keys."""
+        del pk
         ok = verify_C(frame)  # all-or-nothing
         return list(frame.recs), [ok] * frame.n

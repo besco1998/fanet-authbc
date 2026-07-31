@@ -99,4 +99,4 @@ class DeltaEncoder(Encoder):
         if len(prev_hash) != PREV_HASH_LEN:
             raise ValueError("truncated delta frame: missing prev_hash")
         fields = dict(zip(DELTA_FIELDS, vals, strict=True))
-        return TelemetryRecord(src=src, prev_hash=prev_hash, **fields)  # type: ignore[arg-type]
+        return TelemetryRecord(src=src, prev_hash=prev_hash, **fields)

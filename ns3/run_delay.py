@@ -63,7 +63,10 @@ def model_non_fill_delay_ms(n_nodes: int, fps: float) -> float:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--n-nodes", type=int, default=50)
-    ap.add_argument("--seeds", type=int, default=5)
+    # E23: 5 seeds fixed the U~2.80 crossing that produces the 233/116 swarm figures, and was
+    # never variance-checked. Same exposure class as E13 on the LoRa side.
+    ap.add_argument("--seeds", type=int, default=30)
+    ap.add_argument("--out", default="ns3_delay.csv")
     ap.add_argument("--sim-time", type=float, default=20.0)
     ap.add_argument("--rates", type=float, nargs="+",
                     default=[1, 2, 3, 5, 7, 8, 9, 10, 12])
@@ -98,7 +101,7 @@ def main() -> None:
               f"mean={measured:8.3f} ms  p95={mean('delay_p95_ms'):8.3f}  "
               f"model={predicted:.3f}  access={measured - predicted:+8.3f} ms")
 
-    path = REPO / "results" / "raw" / "ns3_delay.csv"
+    path = REPO / "results" / "raw" / args.out
     buf = io.StringIO()
     meta = {**provenance.env_block(), "run": "ns3_delay",
             "config_hash": provenance.config_hash(
