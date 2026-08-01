@@ -65,7 +65,9 @@ reduction of that model to broadcast fails by $16\times$ at $N{=}50$ and is repl
 broadcast model~\cite{machen2007,machen2008}, whose goodput our measurements confirm to within
 $0.51\%$ (the success-probability figure is looser, $2.49\%$). The band is quoted at the $1400$\,B frame it was measured on: at the $72$\,B end of the
 operating range the broadcast model tightens further, to $\pm0.21\%$, while unicast carries a
-systematic $-1.4$ to $-2.6\%$ bias that we report rather than absorb. All results are reproduced deterministically from frozen data by
+systematic $-1.4$ to $-2.6\%$ bias that we report rather than absorb. Against published certificateless aggregate-signature schemes for vehicular broadcast we find
+the informative result is not a ratio but an axis: their overhead is linear in the message
+count because aggregation compresses the verifier's work, not the wire. All results are reproduced deterministically from frozen data by
 an automated staleness gate. AUTHBC introduces no new primitive; its contribution is the rigorous,
 reproducible co-design and its quantified trade-offs.
 \end{abstract}
@@ -523,6 +525,55 @@ $+1.28$/$-0.49\%$; broadcast matches Ma and Chen~\cite{machen2008} within $1.44\
 reduction of the unicast model (dashed) fails by $16\times$ at $N{=}50$.}
 \label{fig:ns3}
 \end{figure}
+
+\subsection{Comparison against a published external scheme}\label{sec:clas}
+Every baseline so far is internal --- inline signing under different encodings --- which measures
+improvement but not standing. The nearest published comparators are certificateless aggregate
+signature (CLAS) schemes for vehicular broadcast, which target the same shape of problem: many
+small, individually-attributable messages on a byte-constrained shared medium.
+
+\textbf{A correction we had to make first.} Our byte model charged certificate bytes to \emph{no}
+scheme, silently assuming out-of-band credential distribution. That assumption flatters public-key
+infrastructure and penalises certificateless designs, whose entire advertised advantage is carrying
+no certificate --- so comparing without it would have decided the result in our favour before any
+measurement. We therefore charge certificates explicitly, using an ECDSA certificate of $162$\,B and
+the transmission policy of the deployed standard, one full certificate every fifth
+message~\cite{ndss2024pqv2v}.
+
+\begin{table}[t]\centering\footnotesize
+\caption{On-air cost per record against published CLAS schemes. CLAS figures are read from the
+scheme's own comparison table under its own stated parameters~\cite{plos2025clas}; a $67$\,B traffic
+message is subtracted to isolate security overhead.}
+\label{tab:clas}
+\begin{tabular}{lrr}
+\toprule
+ & total B/record & security overhead \\
+\midrule
+Wang \emph{et al.} (CLAS) & 859 & 792 \\
+Liang \emph{et al.} (CLAS) & 735 & 668 \\
+Xu \emph{et al.} (CLAS) & 596 & 529 \\
+Cahyadi \emph{et al.} / \cite{plos2025clas} (CLAS) & 583 & 516 \\
+\midrule
+AUTHBC, self-batch $b{=}4$, cert every 5th frame & \textbf{80.1} & 35.1 \\
+AUTHBC, self-batch $b{=}4$, cert every frame & 112.5 & 67.5 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{The informative result is not the ratio.} Every published CLAS overhead in
+Table~\ref{tab:clas} is \emph{linear in the number of messages}: the aggregate compresses the
+verifier's work, not the wire, because each message still carries its own identity, verification key
+and signature components. Batching compresses the wire. \textbf{The two techniques operate on
+different axes}, which is the same distinction we drew for receiver-side batch
+verification~\cite{zhang2008batch}, now with a measurement rather than an argument.
+
+\textbf{What this does not establish.} We do not claim to beat CLAS. Those schemes buy
+\emph{conditional privacy} --- a per-message pseudonymous identity that an authority can trace ---
+which AUTHBC does not provide and a provenance ledger arguably does not want. Part of their overhead
+purchases a property we decline. Their group element is also $128$\,B against our $64$\,B signature,
+so some of the gap is curve and encoding choice rather than design. The defensible statement is
+narrower and more useful than a ratio: \emph{on a byte-constrained broadcast link, aggregate
+signatures do not reduce airtime; placement and batching do.}
 
 \section{Generalisation: the Low-Rate Regime}\label{sec:lowrate}
 Everything so far concerns a companion-class 802.11 link. The natural question is how far the
