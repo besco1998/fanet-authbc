@@ -12,6 +12,41 @@ where the durable record lives. If you want the conclusion only, follow the poin
 
 ---
 
+# 2026-07-30 (cont.) — the audit session: four wrong numbers, two retractions, one external baseline
+
+The longest correction run in the project. Everything below was found by attacking our own work.
+
+## What moved
+
+**Four headline numbers were wrong, and every one was sampling — not modelling.** LoRa `N_max`
+5→3; the delay crossing U 2.797→2.435; a broadcast band endpoint −1.44→−0.51 %; capacity at V≥0.95
+233/116→213/100. The models were right the whole time. Drivers now default to 30 seeds and emit
+min/max/σ so the next instance is visible in the artifact.
+
+**Two of my own claims were retracted.** F18 (I said we were the *more optimistic* model vs Bor —
+I had quoted their pure-ALOHA figure as their LoRa one) and the "no capture" correction, where I had
+attributed our low-N margin to capture that our interference matrix does not implement.
+
+**The external baseline finally exists** (F34), and the interesting part is that it is not a score:
+CLAS overheads are linear in message count because aggregation compresses verification, not
+airtime. Different axis, not a competitor.
+
+**The hardware stage was audited and largely vindicated.** I wrongly reported the Pi-B sync wire as
+undocumented — `hw/RIG.md:40-42` states it explicitly, and my three failed reduction attempts simply
+re-derived the design note's own rationale ("no wall-clock alignment"). Two real defects were fixed:
+Pi-B's venv lacked `gpiod`, and the capture recorded no per-sample host time.
+
+## What was decided and deferred
+
+Mobility (separate new scenario files, literature survey first) and Direction C — the LoRaWAN
+frozen-phase artifact, a possible second short paper. Both have written plans; neither is started.
+
+## The lesson worth carrying
+
+Three times this session a number changed after re-sampling, and once a claim inverted after reading
+which *figure* a quotation came from. Quoting the PDF is not enough — quote the figure. And a mean
+of a few samples near a threshold is where sampling error turns into a wrong categorical answer.
+
 # 2026-07-30 — Literature sweep, licensing, and a type gate that found real defects
 
 Pre-commit hardening. Nothing was committed on this day either; the working tree is still

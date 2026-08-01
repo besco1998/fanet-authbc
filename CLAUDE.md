@@ -56,13 +56,36 @@ Small pure functions; every module docstring cites the docs section it implement
 type hints; no dead code; comments explain WHY, not what.
 
 ## Current status board (agent updates this section every session)
-- **Phase: P8. Paper restructured (F1 DONE). NS-3 migrated 3.41→3.48. LoRa arm now simulated.**
-- **Green:** 1063 fast + 14 frozen-gate tests (1077), `ruff` clean, paper builds (7 pp, 0 undefined refs).
+- **Phase: P8 audit complete. COMMITTED AND PUSHED** to branch `p8-audit-and-corrections`. Work from any machine: `git clone`, `git checkout p8-audit-and-corrections`, `make setup && make all`.
+- **Green:** 1107 fast + 14 frozen-gate tests (**1121**), `ruff` clean, **`mypy` clean (0 / 49 files)**, paper builds (**10 pp**, 0 undefined refs). `make all` exit 0.
 - **METHODOLOGY (Mohamed):** this is an optimization problem — *state everything, choose what to stick with, state the trade-offs for every decision*. **`docs/TRADEOFFS.md` is required reading before quoting any number.**
-- **Headline:** total on-air bytes **−58.68 %**, as a **decomposition** (placement×batching 79.2 %, encoding 20.8 %, scheme byte-neutral). **Never quote the bare 75 %** — it is algebraically **1 − 1/b**. Load-bearing claim is the **feasibility envelope**, reported at BOTH thresholds: **25/32/103** at saturation (U<1) and **65/104/233** at the measured V≥0.95 boundary (U≈2.80). **The ~3× ratio is the claim**, since it survives either reading.
-- **NS-3 = 3.48** (D4 amended). Both trees kept; `ns3/ns3_paths.py` + `AUTHBC_NS3` select one. Migration gate passed: matrix **2.56 %**, DCF trace **2.62 %**, smoke **2.44 %**, delay crossing **identical (U=2.80)**. Bands re-measured: unicast↔Bianchi **+1.28/−0.49 %** (improved), broadcast↔Ma&Chen **≤2.49 %** (widened from ≤0.75 %). ⚠️ **Build with `-j 3` under `nohup`** — 7.8 GB RAM vs ninja's default `-j 15` OOMs and takes WSL down.
-- ⚠️ **Sensitivity moved a lot on 3.48 at marginal SNR:** `realistic_500m` **−26.5 %**, `nakagami1` **−18.2 %**, near-field all <2 %. Paper limitations updated: idealised model is **39 % optimistic at 500 m** (was 15.7 %), Rayleigh fading costs **27 points** (was 9).
-- **D2 CLOSED by simulation:** LoRaWAN module on ns-3.48 gives **N_max = 5** at DR5 (V≥0.95), a sharp ALOHA cliff (1.000 at N=5 → 0.866 at N=8). With the 121× per-node gap that is **≈2500× less aggregate capacity** than 802.11. Still **not hardware**. Module enforces RP002 **Table 12** (222 B) vs our **Table 13** (242 B) → b=6 not 7; both defensible, difference stated.
-- **⚠️ TWO RETRACTIONS this session, both mine, both kept visible:** **T7** (capacity excludes at U≥1 — refuted by its own validation experiment) and **F15** (the ≤0.36 % validation is one comparison restated — refuted by a broadcast/unicast filtering error of mine plus an invalid independence test). Lesson recorded: **run the suite before propagating a finding**, not after.
-- **Energy validated end-to-end** (D1/F14): was ~32 % low, both causes fixed (D7 chain hash 2745.5 ns ×2/record; D6 `p_cpu_w` 0.634→**0.749 W** from composed pipelines). Residual **+7.5…+14.3 %**, all uncharged CPython framing. **Energy figures are lower bounds by ~10–14 %.**
-- **Still open:** **A3** `[VERIFY]` citations (**deferred by Mohamed to the end — this is now next**) · ⚠️ **B3** keep D_max=250 ms or re-anchor to the compliant (50 Hz, 100 ms) point · B5/C3/C5/C6/D5 accepted limitations.
+- **LICENSE = all rights reserved** (© 2026 Mohamed A. Farouk). Vendored NS-3 + `signetlabdei/lorawan` stay GPLv2, **not** redistributed.
+
+### The headline numbers, current
+- **Total on-air bytes −58.68 %**, as a **decomposition** (placement×batching 79.2 %, encoding 20.8 %, scheme byte-neutral). ⚠️ **Never quote the bare 75 %** — it is algebraically **1 − 1/b**.
+- **Adopted operating point: Λ=50 Hz, D_max=100 ms** (PX4 `MAVLINK_MODE_ONBOARD`, TS 22.125 compliant). Capacity **18→35** (U<1), **31→100** (V≥0.95). Relaxed (20 Hz/250 ms): 25/32→**103**, 55/88→**213**.
+- ⚠️ **Do NOT say "≈3× holds across readings"** — the four combinations are **1.94× / 2.24× / 3.22× / 3.31×**. Quote the **range 1.9–3.3×**.
+- **LoRa `N_max` = 3** (not 5), and only within **≈500 m**. Composed with measured link loss, **V≥0.95 admits no multi-node network**; V≥0.90 restores 3.
+- **Validation, 30 seeds:** unicast **+1.29/−0.40 %**, broadcast goodput **±0.51 %**, crossing **U=2.435**. ⚠️ Unicast has a real **−1.4..−2.6 % bias at 72 B** — quote the band as measured at 1400 B.
+
+### ⚠️ THE PATTERN of the whole audit — read this before trusting any new number
+**Four headline numbers were distorted by small-sample means against thresholds. NONE was a modelling error; every one was sampling.** Drivers now default to **30 seeds** and emit min/max/σ. Before reporting any threshold crossing, look at the *distribution*.
+
+### External baselines (A7 closed)
+- **Bor et al. 2017 implemented** (`lora.bor2017_loss_pct`), validated against their own four figures: **their N_max=4 vs our 3**; closed-form periodic ALOHA also gives 3.
+- **Zirak et al. 2021** — the only **hardware** air-to-air LoRa PDR-vs-range data; it range-limits our result.
+- **CLAS (F34).** ⚠️ **The finding is the AXIS, not the ratio:** every published CLAS overhead is **linear in message count** (583–859 B/rec) because aggregation compresses the *verifier's work*, not the wire; ours is **80.1 B/rec** with certificates charged at the standards policy (162 B every 5th frame, NDSS 2024). **Do NOT claim we beat CLAS** — they buy conditional privacy we do not offer, and their group element is 128 B vs our 64 B.
+- ⚠️ **METHOD RULE:** the certificate-byte term was added **BEFORE** the CLAS numbers were fetched. Doing it after would have been fitting the correction to the answer. Defaults are 0/1 so frozen artifacts stay bit-identical.
+
+### Retractions, kept visible
+**T7** (capacity excludes at U≥1) · **F15** (the ≤0.36 % validation) · **F18** (I claimed we were the *more optimistic* model vs Bor — I quoted their **pure-ALOHA** figure as their LoRa result). ⚠️ **Quoting the PDF is not enough: quote the FIGURE.**
+
+### Where things live
+`docs/README.md` is the index. Findings **F1–F34** in `docs/audits/model_provenance.md`. Open items **only** in `docs/OPEN_ITEMS.md`. Trade-offs in `docs/TRADEOFFS.md`. Method and failed attempts in `docs/LOGBOOK.md`. **24 PDFs** in `docs/literature/` with each source's ROLE stated; `A3_CITATION_VERIFICATION.md` records how every citation was checked (Crossref by DOI).
+
+### Deferred by Mohamed — plans written, DO NOT START unprompted
+- **Mobility (E20)** — `docs/MOBILITY_PLAN.md`. **Separate NEW scenario files**, literature survey first. Not for the 802.11 arm (Bianchi/Ma&Chen have no position term).
+- **Direction C** — the LoRaWAN frozen-phase artifact as a second short paper. Needs the full 56-paper survey (5 done) and a defensible jitter value.
+
+### Accepted limitations, stated in the paper
+E8 single SF · E10 half-duplex + full replication · E11 duty enforced at app level · E14 no capture · E15 static nodes · E12 propagation too optimistic · D5 cross-platform hardware (optional) · B5/C3/C5/C6.

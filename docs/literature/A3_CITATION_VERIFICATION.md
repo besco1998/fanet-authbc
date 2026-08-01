@@ -5,7 +5,7 @@ was verified**, and it is complete: the two paywalled sources it originally flag
 Mohamed and have since been read.*
 
 Date: 2026-07-30. Result: **`paper/refs.bib` contains 0 `[PLACEHOLDER]` entries and the compiled PDF
-contains 0 `[VERIFY]` markers.** Paper builds at 9 pages, 0 undefined references. **Every source
+contains 0 `[VERIFY]` markers.** Paper builds at 10 pages, 0 undefined references. **Every source
 cited is held in this directory and has been read.**
 
 ---
@@ -89,6 +89,10 @@ filled, because inventing a use for a citation is worse than not having it.
 **Nothing outstanding.** Both paywalled sources were supplied by Mohamed after this report first
 flagged them, verified against their Crossref records, and the Zhang claim is now quoted from the
 PDF rather than paraphrased from the title. Every source cited in the paper is now held and read.
+
+Two sources were added later by the CLAS comparison (F34) and are held and read:
+`plos2025clas` (DOI 10.1371/journal.pone.0317047, its Table 2 read directly) and `ndss2024pqv2v`
+(NDSS 2024, source of the 162 B ECDSA certificate and the every-5th-message policy).
 
 Everything else in `paper/refs.bib` is either a standard (RFC/3GPP/IEEE/Semtech), a source whose PDF
 is in this directory and has been read, or a foundational paper whose cited content is
