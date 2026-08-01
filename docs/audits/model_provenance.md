@@ -1832,7 +1832,24 @@ bytes; they reduce verification cost. On a byte-constrained link the axis that m
 and batching, which is what this work optimises.* That is a stronger and more defensible statement
 than "we are 5.8× better."
 
-⚠️ **Remaining gap:** the 117 B certificate is a plausible IEEE-1609.2-scale figure but is **not
-sourced from a primary standard here**. It is used only to bound our own cost pessimistically, and
-the conclusion is invariant over the whole plausible range (72–101 B/record against 583). Before
-publication it needs a citation or a sensitivity sweep.
+### 5. ⚠️ Certificate parameters now SOURCED (gap closed)
+
+The earlier 117 B placeholder is replaced with a figure from a top-tier primary source:
+
+> **"The size of the ECDSA certificate C_S is 162 bytes."** — Twardokus, Bindel, Rahbari & McCarthy,
+> *Practical Post-Quantum Authentication for V2V Communications*, NDSS 2024.
+
+The **transmission policy** is sourced from the same paper: "in an arbitrary five-second window, a
+vehicle complying with these standards would transmit 10 full-certificate SPDUs" — against 10 Hz
+BSMs that is a full certificate **every 5th message**, so `cert_period = 5` is standards-grounded
+rather than chosen. They also report those transmissions are **"up to 93 % redundant"**, which is
+independent confirmation that amortising the certificate is what real systems do.
+
+| policy | B/record | vs best CLAS (583) |
+|---|---|---|
+| no certificate charged (previous model) | 72.0 | 8.1× |
+| **162 B every 5th frame (standards policy)** | **80.1** | **7.3×** |
+| 162 B every frame (worst case) | 112.5 | 5.2× |
+
+**The conclusion is invariant across the whole range**, which is the point: it does not depend on
+the certificate policy we assume.
