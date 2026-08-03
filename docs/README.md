@@ -7,6 +7,7 @@ sit at three different values in three files. Start here.*
 
 | # | Document | What it answers |
 |---|---|---|
+| 0 | **[`NEXT_STEPS.md`](NEXT_STEPS.md)** | **What to do next** — the prioritised work plan, the strategy decision, and decisions not to re-litigate. Start here if you are resuming |
 | 1 | [`../CLAUDE.md`](../CLAUDE.md) | Standing policy, the Eight Laws, and the **current status board** — always current, read first |
 | 2 | [`00_PROJECT_CHARTER.md`](00_PROJECT_CHARTER.md) | Scope, research questions, contributions, what is explicitly out of scope |
 | 3 | [`01_SYSTEM_MODEL_ARCHITECTURE.md`](01_SYSTEM_MODEL_ARCHITECTURE.md) | System model, traffic, security model, and the **notation table** (single source of truth for symbols) |
