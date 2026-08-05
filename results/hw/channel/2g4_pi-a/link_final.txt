@@ -1,0 +1,3 @@
+Joined IBSS 76:a0:52:ff:4b:fe (on wlan0)
+	SSID: authbc-mesh
+	freq: 2412

@@ -17,6 +17,18 @@ a = ap.parse_args()
 
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+# Enlarge the receive buffer before binding. At the top of the load sweep (1600 fps x 1400 B =
+# 2.2 MB/s) the default ~208 KB buffer holds under 0.1 s of traffic, so a scheduling hiccup in
+# this Python loop would drop frames that the radio actually delivered — receiver loss recorded
+# as channel loss. The granted size is reported so the caveat can be checked rather than
+# assumed: the kernel silently caps this at net.core.rmem_max.
+try:
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 8 << 20)
+except OSError:
+    pass
+rcvbuf = s.getsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF)
+
 s.bind(("", a.port))
 s.settimeout(1.0)
 
@@ -43,5 +55,6 @@ while time.monotonic() < deadline:
 s.close()
 json.dump({"received_unique": len(seen), "duplicates": dups,
            "max_seq": max(seen) if seen else -1,
-           "span_s": (last - first) if first and last else 0.0}, open(a.out, "w"))
+           "span_s": (last - first) if first and last else 0.0,
+           "rcvbuf_bytes": rcvbuf}, open(a.out, "w"))
 print(json.dumps({"received_unique": len(seen), "duplicates": dups}))

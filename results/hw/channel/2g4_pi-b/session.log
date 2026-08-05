@@ -1,0 +1,40 @@
+Running timer as unit: authbc-revert.timer
+Will run service as unit: authbc-revert.service
+Running timer as unit: authbc-reboot.timer
+Will run service as unit: authbc-reboot.service
+[2026-08-05T18:21:58+03:00] deadmen armed: revert 800 s, reboot 1100 s | role=rx start_epoch=1785943367
+[2026-08-05T18:22:15+03:00] type:  	type IBSS 	channel 1 (2412 MHz), width: 20 MHz, center1: 2412 MHz 
+[2026-08-05T18:22:15+03:00] link:  Joined IBSS 92:42:8a:10:af:7e (on wlan0) 	SSID: authbc-mesh 
+[2026-08-05T18:22:15+03:00] addr:  inet 10.0.0.2 
+[2026-08-05T18:22:17+03:00] PEER 10.0.0.1 REACHABLE — link formed
+{"received_unique": 1847, "duplicates": 0}
+[2026-08-05T18:23:12+03:00] window 00_A_100fps done
+{"received_unique": 1833, "duplicates": 0}
+[2026-08-05T18:23:43+03:00] window 01_A_100fps done
+{"received_unique": 1820, "duplicates": 0}
+[2026-08-05T18:24:12+03:00] window 02_A_100fps done
+{"received_unique": 1848, "duplicates": 0}
+[2026-08-05T18:24:42+03:00] window 03_A_100fps done
+{"received_unique": 1853, "duplicates": 0}
+[2026-08-05T18:25:13+03:00] window 04_A_100fps done
+{"received_unique": 1839, "duplicates": 0}
+[2026-08-05T18:25:42+03:00] window 05_A_100fps done
+{"received_unique": 1848, "duplicates": 0}
+[2026-08-05T18:26:13+03:00] window 06_A_100fps done
+{"received_unique": 1851, "duplicates": 0}
+[2026-08-05T18:26:43+03:00] window 07_A_100fps done
+{"received_unique": 599, "duplicates": 0}
+[2026-08-05T18:27:03+03:00] window 08_B_50fps done
+{"received_unique": 1031, "duplicates": 0}
+[2026-08-05T18:27:23+03:00] window 09_B_100fps done
+{"received_unique": 1026, "duplicates": 0}
+[2026-08-05T18:27:42+03:00] window 10_B_200fps done
+{"received_unique": 1036, "duplicates": 0}
+[2026-08-05T18:28:02+03:00] window 11_B_400fps done
+{"received_unique": 1036, "duplicates": 0}
+[2026-08-05T18:28:22+03:00] window 12_B_800fps done
+{"received_unique": 999, "duplicates": 0}
+[2026-08-05T18:28:43+03:00] window 13_B_1600fps done
+[2026-08-05T18:28:43+03:00] revert: starting
+[2026-08-05T18:28:52+03:00] revert: finished, wlan0 = inet 192.168.1.20
+[2026-08-05T18:28:57+03:00] reverted OK, both deadmen disarmed

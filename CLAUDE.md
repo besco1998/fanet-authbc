@@ -63,6 +63,13 @@ type hints; no dead code; comments explain WHY, not what.
 - **METHODOLOGY (Mohamed):** this is an optimization problem — *state everything, choose what to stick with, state the trade-offs for every decision*. **`docs/TRADEOFFS.md` is required reading before quoting any number.**
 - **LICENSE = all rights reserved** (© 2026 Mohamed A. Farouk). Vendored NS-3 + `signetlabdei/lorawan` stay GPLv2, **not** redistributed.
 
+### Hardware 802.11 channel validation — DONE 2026-08-05 (F35), the 802.11 arm is no longer simulation-only
+- Two-Pi ad-hoc IBSS, **5 GHz ch 36**: broadcast **link loss p = 2.3 × 10⁻⁴** (99.9773 % pooled, 8 windows, σ = 0.024 pp, 0 duplicates) and **airtime 1.995 ms/frame vs 1.99 ms predicted** — an independent check on the 802.11a timing constants under Bianchi and Ma & Chen.
+- ⚠️ **One transmitter ⇒ zero contention. This does NOT validate Ma & Chen** — that stays simulation-only.
+- ⚠️ **Use 5 GHz, never 2.4 GHz.** A first 2.4 GHz sweep gave a tidy 97.45 % that was **saturation at the 802.11b 1 Mb/s broadcast basic rate**, not channel loss. Caught by the pre-stated prediction plus a load sweep; kept labelled as `adhoc_sweep_2g4.csv`.
+- ⚠️ `eth0` still has **no carrier** on either Pi — every session severs its own SSH path and relies on the deadman + reboot timer. **Never put a deadman marker in `/tmp`** (systemd `PrivateTmp`). Plugging in ethernet removes the whole risk class.
+- Mobility: **survey pilot written** (`docs/MOBILITY_SURVEY.md`, 5 held sources). ⚠️ It recommends **also running RWP as a baseline**, which deviates from `MOBILITY_PLAN.md` §M1 — **Mohamed's call (Law 8)**. Scenario file not yet written.
+
 ### The headline numbers, current
 - **Total on-air bytes −58.68 %**, as a **decomposition** (placement×batching 79.2 %, encoding 20.8 %, scheme byte-neutral). ⚠️ **Never quote the bare 75 %** — it is algebraically **1 − 1/b**.
 - **Adopted operating point: Λ=50 Hz, D_max=100 ms** (PX4 `MAVLINK_MODE_ONBOARD`, TS 22.125 compliant). Capacity **18→35** (U<1), **31→100** (V≥0.95). Relaxed (20 Hz/250 ms): 25/32→**103**, 55/88→**213**.

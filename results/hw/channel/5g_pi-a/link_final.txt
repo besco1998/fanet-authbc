@@ -1,0 +1,3 @@
+Joined IBSS 52:d2:79:6c:1a:4d (on wlan0)
+	SSID: authbc-mesh
+	freq: 5180

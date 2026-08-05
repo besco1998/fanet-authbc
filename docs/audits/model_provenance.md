@@ -1853,3 +1853,70 @@ independent confirmation that amortising the certificate is what real systems do
 
 **The conclusion is invariant across the whole range**, which is the point: it does not depend on
 the certificate policy we assume.
+
+---
+
+## F35 — hardware 802.11 broadcast measured; the airtime model confirmed, one run discarded (2026-08-05)
+
+**The gap this closes.** Every 802.11 number in the paper was simulation (D2's LoRa counterpart was
+closed the same way and flagged as such). The two-Pi rig now supplies a hardware anchor for two
+quantities: broadcast **link loss** and broadcast **airtime**.
+
+### The result
+
+Two nodes, ad-hoc IBSS on 5 GHz ch 36 (802.11a), one transmitter, 1400 B frames, 8 repeats of 22 s
+at 100 fps. Full record in `results/hw/channel/RESULTS.md`; artifact `adhoc_sweep_5ghz.csv`.
+
+| quantity | predicted **before** the run | measured |
+|---|---|---|
+| airtime per 1400 B broadcast frame | 1.99 ms | **1.995 ms** (0.36 %) |
+| broadcast capacity | ≈503 fps | **501.19 fps** (0.36 %) |
+| delivery at 100 fps (≈21 % utilisation) | ≥99 % | **99.9773 %** pooled (17 596/17 600) |
+| duplicates | 0 | **0** |
+| per-window dispersion | — | σ = **0.024 pp**, min 99.954 %, max 100.000 % |
+
+Measured link loss **p = 2.273 × 10⁻⁴**.
+
+**The airtime agreement is the load-bearing part.** DIFS 34 µs + preamble 20 µs + mean backoff
+67.5 µs + 1400 B at 6 Mb/s predicts 1.99 ms; hardware says 1.995 ms. That is an independent check on
+the 802.11a timing constants underneath every Bianchi and Ma & Chen figure in the paper.
+
+**Loss is on air, not in the stack — measured, not assumed.** In each window that lost a frame the
+receiver's NIC counter equals the application count (window 01: 2200 transmitted, `rx_frames_nic`
+2199, `received_unique` 2199). The interface counters were added specifically to make that
+separable, after the 2.4 GHz run showed why.
+
+### ⚠️ What it does NOT show
+
+* **It cannot validate Ma & Chen.** One transmitter means zero contention; that model describes N
+  contending stations. The contention result stays simulation-only.
+* **It does not license lowering `p`.** Two nodes at 1–2 m, line of sight, stationary, on a clear
+  channel is the best case by construction. It bounds the optimistic end of the B4 grid: B4 argued
+  `p = 0.05` is 20–100× more pessimistic than TS 22.125's 99.9 %; measured, it is conservative by
+  **≈220×** here. B4's *reasoning* is corroborated; its *value* is untouched.
+
+### ⚠️ The discarded run, and why it is kept
+
+The first sweep ran on 2.4 GHz and produced **97.45 % delivery, σ = 0.196 pp over 8 windows** — tidy,
+plausible, and **wrong**. Every offered rate from 100 to 1600 fps produced the same ~85 fps /
+0.96 Mb/s on air, which is 1400 B at the 802.11b **1 Mb/s basic rate**. Broadcast uses the lowest
+basic rate, so the "100 fps operating point" was ≈118 % of capacity: the number measured
+**over-subscription**, not channel loss. It is retained as `adhoc_sweep_2g4.csv`, labelled.
+
+Two things caught it, both in place *before* the run rather than constructed afterwards: the
+pre-stated prediction, which named the 1 Mb/s basic rate explicitly as the risk if `mcast_rate`
+could not be pinned (it could not — brcmfmac returns -95), and the offered-load sweep. **A single
+100 fps run would have produced a publishable wrong number** — the exact pattern the status board
+warns about, arriving this time through a PHY-rate assumption rather than a small sample.
+
+Moving to 5 GHz is not a workaround: 802.11a has no sub-6 Mb/s rate, so its basic rate is 6 Mb/s,
+which is what the NS-3 model already assumes.
+
+### Two earlier statements corrected
+
+* **`key-mgmt none` was blamed as the fix; it was the cause.** In NetworkManager it means *static
+  WEP*, not "open" — attempt 2 died on *"Secrets were required"*. `hw/channel/README.md` said it was
+  REQUIRED. Corrected.
+* **`peers: 0` was read as "the link never formed".** The 2.4 GHz run reported `peers: 0` with an
+  empty station dump while delivering 4988/5000 frames. FullMAC drivers do not expose IBSS peers via
+  nl80211; the inference was unsound.
