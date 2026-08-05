@@ -8,8 +8,13 @@ from __future__ import annotations
 
 import argparse
 import csv
+import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+
+from authbc.bench import provenance  # noqa: E402
 
 FIELDS = ["mode", "nNodes", "frameSize", "simTime", "seed", "rx_bytes", "goodput_mbps",
           "flowmon_throughput_mbps"]
@@ -64,6 +69,12 @@ def main() -> None:
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     with out.open("w", newline="") as fh:
+        # Law 7 / audit S6: raw CSVs carry env + config provenance. This writer emitted none, so
+        # ns3_smoke.csv was the one NS-3 artifact whose producing environment was unrecorded.
+        meta = {**provenance.env_block(), "run": "ns3_smoke",
+                "config_hash": provenance.config_hash({"stats": sorted(args.stats)})}
+        for k, v in meta.items():
+            fh.write(f"# {k}={v}\n")
         w = csv.DictWriter(fh, fieldnames=FIELDS)
         w.writeheader()
         w.writerows(rows)

@@ -235,6 +235,76 @@ the tests say, not that the tests say the right thing.
 
 ---
 
+## 7b. Second pass (2026-08-06) — Mohamed: "report both, headline the mean" + execute all fixes
+
+### A. The paper contradicted itself, and the V column was never generated
+
+`tab:envelope`'s $V{\geq}0.95$ column was **hand-written in LaTeX**. When F30 corrected the crossing
+2.797 → 2.435 the prose was updated to 213/100 but the table kept **233/116**, and two further rows
+(A+CBOR@50/100, optimized@20/100) existed in the table with no generator at all.
+
+**Fixed properly rather than patched:** every column is now derived by `_n_max_envelope` at four U
+ceilings, and `tests/test_paper_matches_artifacts.py` **parses the LaTeX table and compares it to
+the CSV**, so the two cannot diverge again.
+
+**The load-bearing claim survives the criterion change** — which is what had to be checked before
+adopting "report both":
+
+| criterion | compliant | relaxed |
+|---|---|---|
+| U < 1 | 1.94× | 3.22× |
+| V ≥ 0.95 (mean) | 3.23× | 2.42× |
+| V ≥ 0.95 (per run) | 2.67–3.14× | 2.51–3.02× |
+
+Every ratio lies inside 1.9×–3.3×. ⚠️ Two published ratios were also stale (3.31→**3.23**,
+2.24→**2.42**), so the four-number list in the status board needed correcting too.
+
+### B. `p` sensitivity (O2) — the constant is not load-bearing, but it sits on a boundary
+
+`analysis/sensitivity_p.py`, 16 points from the hardware measurement (2.3 × 10⁻⁴, F35) to 0.20:
+
+* **The selection never changes.** `delta / ed25519 / B, b = 4, 71.998 B/rec` at **every** feasible
+  p. One distinct selection across the whole grid, so the unsourced `p = 0.05` is *not*
+  load-bearing.
+* ⚠️ **Feasibility collapses at p > ε, identically.** At p = 0.051 *nothing* is feasible. This is an
+  identity, not a finding: placement B attains V = 1 − p and D gives (1 − p)ⁿ ≤ 1 − p, so the best
+  achievable V is 1 − p and `V ≥ 1 − ε ⟺ p ≤ ε`. With p = ε = 0.05 the adopted point has **zero
+  margin in the model** — a property of the *requirement*, not a defect in the design, and the
+  hardware measurement puts the real link ~200× inside it.
+
+### C. Provenance (S6) — and two worse things found while fixing it
+
+* `ns3_smoke.csv` had no header because `parse_ns3.py` wrote none. **Fixed at the generator.**
+* ⚠️ **`analysis/analyse_phase_artifact.py` read a hardcoded path into an agent session scratchpad**
+  (`/tmp/claude-.../c1_raw.csv`). It was unrunnable by anyone else and did not read the committed
+  artifact. **Fixed**: defaults to the committed CSV, `--csv` to override. It now reproduces F32's
+  2–8× variance inflation (2.91× / 2.82× / 7.88×) from data in the repo.
+* ⚠️ **Neither `lora_phase_artifact_*.csv` has a committed generator** — 300 runs that are Direction
+  C's entire evidence base cannot be re-derived. Recorded as open; a retrospective header was added
+  to the EU file stating config and findings, with the **env block deliberately absent rather than
+  guessed**, plus an explicit warning that no generator reproduces it.
+
+### D. The unicast small-frame bias (O4) — hypothesis tested, and it holds
+
+E21 recorded the anomalous-slot effect (Tinnirello, Bianchi & Xiao, TVT 2010) as a *plausible,
+untested* cause. Bianchi omits the anomalous slot, so it under-counts the cycle by one idle slot σ
+per success and over-predicts by σ/(T_s + σ) — a worst case that should **bound** the bias and,
+crucially, **scale as 1/T_s**:
+
+| L | predicted bound | measured deviation |
+|---|---|---|
+| 72 B | −3.32 % | −2.60 … −1.40 % |
+| 288 B | −1.61 % | −1.07 … +0.33 % |
+| **1400 B** | **−0.44 %** | **−0.40** … +1.29 % |
+
+Correct sign, bounded at every size, and the predicted 7.5× collapse across a 20× frame-size range
+is matched. At 1400 B the bound and the measured floor agree to **0.04 points**. ⚠️ This is a
+consistency check against a bounding argument, not a fit of the full Tinnirello model — and
+broadcast (which the headline runs on) holds to ±0.21 % at 72 B, so the explanation is asserted for
+the unicast arm only. `tests/test_anomalous_slot_bias.py` pins all of it.
+
+---
+
 ## 8. Summary — what changed in this pass
 
 | # | severity | finding | state |

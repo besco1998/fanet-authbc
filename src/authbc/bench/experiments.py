@@ -248,17 +248,27 @@ def _n_max_envelope(cfg: dict, sizes: dict[str, float]) -> list[dict]:
             b -= 1
         # inline placement A never amortizes: one signature per record, so it frames b=1
         b_eff, frame = (1, h_f + g_a + s) if placement == "A" else (b, h_f + g_a + b * s)
-        n_max = 0
-        for n in range(2, cfg["envelope_n_ceiling"] + 1):
-            if optimizer.channel_utilisation(n, float(lam), b_eff, frame) > 1.0:
-                break
-            n_max = n
+
+        # ⚠️ N_max is now reported at EVERY U ceiling, not just U<1 (audit S3b). The V>=0.95
+        # column of the paper's table used to be computed by hand in LaTeX; it went stale when
+        # F30 moved the measured crossing from 2.797 to 2.435, leaving the prose saying 213/100
+        # while the table still said 233/116. Deriving each column here removes that failure mode.
+        n_max_by_ceiling: dict[str, int] = {}
+        for name, ceiling in cfg["u_ceilings"]:
+            n_max = 0
+            for n in range(2, cfg["envelope_n_ceiling"] + 1):
+                if optimizer.channel_utilisation(n, float(lam), b_eff, frame) > float(ceiling):
+                    break
+                n_max = n
+            n_max_by_ceiling[f"n_max_{name}"] = n_max
+
         rows.append({
             "n_local": "ENVELOPE", "lambda_rec_per_s": lam, "b": b_eff,
             "binds": label, "frame_bytes": round(frame, 1),
             "bytes_per_rec": round(frame / b_eff, 3),
             "frames_needed_per_s": "", "channel_util": "",
-            "verdict": f"N_max={n_max}",
+            **n_max_by_ceiling,
+            "verdict": f"N_max={n_max_by_ceiling['n_max_u_lt_1']}",
         })
     return rows
 

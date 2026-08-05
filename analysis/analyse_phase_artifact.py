@@ -1,12 +1,37 @@
-"""Direction C step 1 — variance and location tests, chosen for bimodal data."""
+"""Direction C step 1 — variance and location tests, chosen for bimodal data.
+
+Levene (variance, robust to non-normality) and Mann-Whitney U (location, non-parametric) because
+the delivered-fraction distribution under the frozen-phase traffic model is **bimodal**, which rules
+out the usual F-test/t-test pair.
+
+⚠️ This script previously read a HARDCODED path into an agent session scratchpad
+(`/tmp/claude-.../c1_raw.csv`), so it was unrunnable by anyone else and its input was not the
+committed artifact (audit S6). It now defaults to the committed CSV and takes `--csv` to override.
+
+Usage:  python3 analysis/analyse_phase_artifact.py
+        python3 analysis/analyse_phase_artifact.py --csv <per-seed artifact>
+"""
+import argparse
 import csv
 import statistics as st
 from collections import defaultdict
+from pathlib import Path
 
 from scipy.stats import levene, mannwhitneyu
 
-rows = list(csv.DictReader(open("/tmp/claude-1000/-home-besco1998-authbc-package/"
-                                "498f150b-7bcc-4604-aa13-e2dce00bd774/scratchpad/c1_raw.csv")))
+REPO = Path(__file__).resolve().parents[1]
+DEFAULT_CSV = REPO / "results" / "raw" / "lora_phase_artifact_30seed.csv"
+
+ap = argparse.ArgumentParser(description=__doc__,
+                             formatter_class=argparse.RawDescriptionHelpFormatter)
+ap.add_argument("--csv", type=Path, default=DEFAULT_CSV,
+                help="per-seed artifact to analyse (default: the committed ALOHA 30-seed run)")
+args = ap.parse_args()
+
+# Strip the `# key=value` provenance header before parsing.
+_lines = [ln for ln in args.csv.read_text().splitlines() if not ln.startswith("#")]
+rows = list(csv.DictReader(_lines))
+print(f"# source: {args.csv.relative_to(REPO)}  ({len(rows)} runs)\n")
 g = defaultdict(list)
 for r in rows:
     g[(int(r["n_devices"]), float(r["tx_jitter_s"]))].append(float(r["delivered_frac"]))

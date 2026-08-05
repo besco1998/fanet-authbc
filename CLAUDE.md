@@ -81,6 +81,12 @@ type hints; no dead code; comments explain WHY, not what.
 - ⚠️ **S7 — `make sim-ns3-delay` did not reproduce `ns3_delay.csv`** (defaults stopped at U=1.34 vs the artifact's 6.69). Fixed. ⚠️ **U ≈ 2.435 is an INTERPOLATION** between measured U=2.23 and U=3.34 — label it as such.
 - **S4** delay driver now emits min/max/σ (it was means-only, against the project's own post-F30 standard). **O5** `channel_utilisation` no longer returns 0.0 at N=1 — and ⚠️ **a unit test had asserted that defect**.
 - **S5 checked CLEAN:** F25/E9/A2 are **not** RNG-confounded (`sent` invariant). Guarded by `make verify-rng-isolation`.
+- **DECISION (Mohamed, 2026-08-06): report BOTH criteria, headline the mean.** Paper table now has three N_max columns (U<1 / V≥0.95 mean / V≥0.95 per-run) and a paragraph explaining why. **The co-design ratio survives either reading** — every combination lies in 1.9×–3.3×.
+- ⚠️ **CORRECTED stale numbers:** the paper's `tab:envelope` V≥0.95 column still held the pre-F30 crossing — **233/116, now 213/100** — while the prose already said 213/100. Two ratios were stale too: **3.31→3.23** and **2.24→2.42**. The four combinations are now **1.94× / 2.42× / 3.22× / 3.23×**; quote the range **1.9–3.2×**.
+- **Drift is now impossible:** `tests/test_paper_matches_artifacts.py` parses the LaTeX table and compares every cell to `capacity_envelope.csv`.
+- **O2 CLOSED — `p` is not load-bearing.** The optimizer picks `delta/ed25519/B, b=4` at *every* feasible p (2.3e-4 → 0.05). ⚠️ But feasibility needs **p ≤ ε identically**, so p=ε=0.05 has **zero model margin**; hardware (F35) puts the real link ~200× inside it.
+- **O4 CLOSED — the unicast small-frame bias is the anomalous slot.** Predicted bound −3.32 % (72 B) → **−0.44 % (1400 B)** against measured −2.60 % → **−0.40 %**: right sign, bounded everywhere, and the 1/T_s scaling matches over a 20× frame range. Broadcast is unaffected (±0.21 % at 72 B), so the headline is untouched.
+- ⚠️ **NEW S8 — no committed generator for `lora_phase_artifact_*.csv`.** The 300 runs behind Direction C cannot be regenerated. Also fixed: `analyse_phase_artifact.py` had a **hardcoded agent-scratchpad path**.
 - **The taxonomy to check new numbers against:** C1 small-sample mean vs threshold · C2 unverified constant on the measurement path · C3 threshold applied to a mean not a distribution · C4 config change perturbing the random realisation · C5 claim wider than the experiment. **Only C1 is fixed by more seeds.**
 
 ### The headline numbers, current

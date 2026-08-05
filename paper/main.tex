@@ -49,7 +49,7 @@ encoding cuts \emph{payload} bytes by 32.1\%, contributing 79\% and 21\% of the 
 The authentication term alone reduces to $1-1/b$, invariant to header size, signature size and
 encoding---so the co-design claim rests not on that ratio but on \emph{joint feasibility}: coupling
 the byte model to an NS-3-validated broadcast channel shows the co-design carrying between
-$1.9\times$ and $3.3\times$ the swarm of an inline baseline on the same medium, depending on the
+$1.9\times$ and $3.2\times$ the swarm of an inline baseline on the same medium, depending on the
 operating point and on whether the limit is read at saturation throughput or at the measured
 verifiability boundary. We report the operating region rather than a point, and adopt as primary the
 configuration that complies with 3GPP TS~22.125 (50\,Hz, 100\,ms, the PX4 companion stream rate):
@@ -396,23 +396,24 @@ and the measured $V{\geq}0.95$ boundary ($U{\approx}2.80$). Batch obeys $b \leq 
 so \textbf{bytes depend only on the product} --- the first two blocks are byte-identical and differ
 only in capacity and in compliance.}
 \label{tab:envelope}
-\begin{tabular}{l r r r r r}
+\begin{tabular}{l r r r r r r}
 \toprule
-configuration & $\Lambda$ & $D_{\max}$ & $b$ & \multicolumn{2}{c}{$N_{\max}$} \\
- & (rec/s) & (ms) & & $U{<}1$ & $V{\geq}0.95$ \\
+configuration & $\Lambda$ & $D_{\max}$ & $b$ & \multicolumn{3}{c}{$N_{\max}$} \\
+ & (rec/s) & (ms) & & $U{<}1$ & $V{\geq}0.95$ & $V{\geq}0.95$ \\
+ & & & & & (mean) & (per run) \\
 \midrule
-\multicolumn{6}{l}{\emph{Primary: compliant with 3GPP TS~22.125}~\cite{3gpp_ts22125}} \\
-\textbf{optimized} delta/B & 50 & 100 & 4 & \textbf{35} & \textbf{116} \\
-A+CBOR (Pillar-1) & 50 & 100 & 1 & 18 & 35 \\
+\multicolumn{7}{l}{\emph{Primary: compliant with 3GPP TS~22.125}~\cite{3gpp_ts22125}} \\
+\textbf{optimized} delta/B & 50 & 100 & 4 & \textbf{35} & \textbf{100} & 64--91 \\
+A+CBOR (Pillar-1) & 50 & 100 & 1 & 18 & 31 & 24--29 \\
 \midrule
-\multicolumn{6}{l}{\emph{Relaxed freshness: same bytes, larger swarm, exceeds the standard}} \\
-optimized delta/B & 20 & 250 & 4 & 103 & 233 \\
-A+CBOR (Pillar-1) & 20 & 250 & 1 & 32 & 104 \\
-A+JSON (naive) & 20 & 250 & 1 & 25 & 65 \\
+\multicolumn{7}{l}{\emph{Relaxed freshness: same bytes, larger swarm, exceeds the standard}} \\
+optimized delta/B & 20 & 250 & 4 & 103 & 213 & 163--201 \\
+A+CBOR (Pillar-1) & 20 & 250 & 1 & 32 & 88 & 54--80 \\
+A+JSON (naive) & 20 & 250 & 1 & 25 & 53 & 35--48 \\
 \midrule
-\multicolumn{6}{l}{\emph{Compliant but below the batching threshold} ($\Lambda D_{\max} < 4$)} \\
-optimized delta/B & 20 & 100 & 1 & 34 & --- \\
-optimized delta/B & 10 & 100 & 1 & 78 & --- \\
+\multicolumn{7}{l}{\emph{Compliant but below the batching threshold} ($\Lambda D_{\max} < 4$)} \\
+optimized delta/B & 20 & 100 & 1 & 34 & 98 & 62--89 \\
+optimized delta/B & 10 & 100 & 1 & 78 & 180 & 134--169 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -432,9 +433,21 @@ delivery still at $U{=}1$, with \emph{measured} verifiability $V_{\mathrm{meas}}
 only near $U{\approx}2.44$. We
 report both rather than choose, because choosing would select the flattering one.
 
+A third column is reported because the second one is a statement about a \emph{mean}. The
+$V{\geq}0.95$ crossing is located where the mean delivered fraction across seeds meets the target,
+but $V$ is a reliability requirement, and at the crossing the distribution straddles it: at
+$U{=}2.23$ the mean is $0.962$ while $10$ of $30$ seeds fall below $0.95$. Reading the criterion
+per realisation instead---at least $95\%$ of runs must individually meet $V$---places the crossing
+in $U \in (1.67, 2.23]$ and gives the ranges in the last column. We headline the mean, because it is
+the reading under which the two thresholds are computed consistently, and report the per-run figures
+beside it because they are what an operator promising a reliability target would need. \textbf{The
+co-design advantage is insensitive to the choice}: the ratio spans $1.94\times$--$3.23\times$ under
+the mean reading and $2.51\times$--$3.14\times$ under the per-run reading, so the conclusion does not
+depend on which criterion a reader prefers.
+
 Across the operating region the co-design multiplies the supportable swarm by between
-$1.9\times$ and $3.3\times$ (Table~\ref{tab:envelope}): $1.94\times$ and $3.31\times$ at the two
-thresholds for the compliant point, $3.22\times$ and $2.24\times$ for the relaxed one. \textbf{The
+$1.9\times$ and $3.2\times$ (Table~\ref{tab:envelope}): $1.94\times$ and $3.23\times$ at the two
+thresholds for the compliant point, $3.22\times$ and $2.42\times$ for the relaxed one. \textbf{The
 advantage is robust in existence and variable in size}, and we state it that way; a single
 ``${\approx}3\times$'' would be true of two of those four numbers and misleading about the other
 two. What no single axis produces is the advantage itself --- it needs the encoding (frame size),
@@ -448,7 +461,7 @@ TS~22.125~\cite{3gpp_ts22125} requires ${\geq}10$\,msg/s \emph{and} ${\leq}100$\
 the first violates. \textbf{We adopt the compliant point $(50\,\text{Hz}, 100\,\text{ms})$ as
 primary.} It is not a contrived rate: $50$\,Hz is PX4's \texttt{MAVLINK\_MODE\_ONBOARD} companion
 stream rate, read from \texttt{mavlink\_main.cpp}. The byte result is unchanged; what it costs is
-swarm size, $233 \to 116$ at the $V{\geq}0.95$ boundary and $103 \to 35$ at saturation. The relaxed
+swarm size, $213 \to 100$ at the $V{\geq}0.95$ boundary and $103 \to 35$ at saturation. The relaxed
 point is retained in Table~\ref{tab:envelope} because a deployment outside the standard's scope may
 prefer it, and because reporting only the compliant point would hide the size of the trade.
 
@@ -870,8 +883,8 @@ frames verifies with probability $(1-p)^n$ and the target is already spent at $n
 $\epsilon \leq p$. It is not escapable by better cryptography, and it is not visible to a byte model
 alone. Capacity, by contrast, turned out to constrain rather than exclude: simulation shows the
 channel still delivering $98.8\%$ of frames at nominal saturation load, so adopting the
-100\,ms bound of 3GPP TS~22.125~\cite{3gpp_ts22125} costs swarm size---$N{\leq}116$ instead of
-$N{\leq}233$---and nothing in bytes, provided the telemetry rate is high enough for the batch to
+100\,ms bound of 3GPP TS~22.125~\cite{3gpp_ts22125} costs swarm size---$N{\leq}100$ instead of
+$N{\leq}213$---and nothing in bytes, provided the telemetry rate is high enough for the batch to
 fill inside the deadline. An NS-3-validated channel model and an automated
 reproducibility gate keep the study honest and repeatable.
 

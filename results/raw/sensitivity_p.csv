@@ -1,0 +1,28 @@
+# python=3.12.3
+# platform=Linux-6.6.114.1-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=sensitivity_p
+# config_hash=60b8a6003a2b8b54
+# O2/Tier-2 #5: does the co-design SELECTION depend on the assumed p = 0.05?
+p_loss,feasible,encoding,scheme,placement,batch,bytes_per_rec,V,n_feasible
+0.00023,1,delta,ed25519,B,4,71.998,0.99977,44
+0.001,1,delta,ed25519,B,4,71.998,0.999,44
+0.005,1,delta,ed25519,B,4,71.998,0.995,44
+0.01,1,delta,ed25519,B,4,71.998,0.99,44
+0.02,1,delta,ed25519,B,4,71.998,0.98,44
+0.03,1,delta,ed25519,B,4,71.998,0.97,44
+0.04,1,delta,ed25519,B,4,71.998,0.96,44
+0.045,1,delta,ed25519,B,4,71.998,0.955,44
+0.049,1,delta,ed25519,B,4,71.998,0.951,44
+0.05,1,delta,ed25519,B,4,71.998,0.95,44
+0.051,0,,,,,,,0
+0.06,0,,,,,,,0
+0.08,0,,,,,,,0
+0.1,0,,,,,,,0
+0.15,0,,,,,,,0
+0.2,0,,,,,,,0

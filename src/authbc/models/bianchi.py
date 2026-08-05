@@ -93,6 +93,30 @@ def t_collision(payload_bytes: float) -> float:
     return ofdm_ppdu(mpdu_bytes(payload_bytes)) + DIFS
 
 
+def anomalous_slot_bias_pct(payload_bytes: float) -> float:
+    """Bianchi's expected over-prediction from the anomalous slot, in percent (item O4).
+
+    **The effect.** Bianchi's cycle accounts for idle slots, collisions and successes, but not for
+    the *anomalous slot*: a station whose backoff reaches zero while the medium is busy must still
+    observe one further idle slot after the medium clears before it may transmit. Tinnirello,
+    Bianchi & Xiao (IEEE TVT 2010) add this term; the base model omits it, so it credits the channel
+    with a cycle shorter than reality and **over-predicts throughput**.
+
+    **Why it only shows up on small frames.** The cost is a fixed σ = 9 µs per successful
+    transmission, so relative to the cycle it scales as σ/T_s(L). At 1400 B that is 0.44 %; at 72 B
+    it is 3.3 %, because T_s collapses while σ does not. This is a *worst case* — one full extra
+    slot on every success — so it bounds the bias rather than predicting it exactly.
+
+    Returned negative, matching the project's sign convention (simulation − model)/model: NS-3
+    delivers less than the model claims. Validated against measurement in
+    `tests/test_anomalous_slot_bias.py`.
+    """
+    if payload_bytes <= 0:
+        raise ValueError("payload_bytes must be positive")
+    t_s = t_success(payload_bytes)
+    return -100.0 * SLOT / (t_s + SLOT)
+
+
 def t_broadcast(payload_bytes: float) -> float:
     """Channel-busy time of one BROADCAST frame (never ACKed): PPDU(L+MAC_OVH) + DIFS, seconds.
 

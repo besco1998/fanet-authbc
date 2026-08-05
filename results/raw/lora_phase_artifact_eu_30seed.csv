@@ -1,3 +1,15 @@
+# run=lora_phase_artifact_eu
+# purpose=Direction C step 2 - does the frozen-phase distortion (F32) survive the EU gateway
+#         preset (3 channels / 8 demodulation paths)? Companion to lora_phase_artifact_30seed.csv.
+# config=gwRegion=eu, dataRate=5, payloadBytes=218, 30 seeds per (n_devices, tx_jitter_s) cell
+# columns=per-seed raw rows; nothing aggregated here (F30 practice)
+# findings=F32 (variance inflation) and F33 (the mean-bias half did NOT generalise - see the
+#          retraction note there before quoting any mean shift from this file)
+# analysis=analysis/analyse_phase_artifact.py --csv results/raw/lora_phase_artifact_eu_30seed.csv
+# WARNING=header added RETROSPECTIVELY by audit S6 on 2026-08-06. The env block (python/platform/
+#         cpu) is deliberately ABSENT rather than guessed: this file predates the generator being
+#         committed, so the producing environment is not known and must not be fabricated.
+# WARNING=no committed generator reproduces this file (audit S6). Re-derive before relying on it.
 n_devices,tx_jitter_s,seed,delivered_frac
 20,0,1,0.815657
 20,0,2,0.923232

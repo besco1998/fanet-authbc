@@ -20,6 +20,24 @@ envelope_configs:
   - ["A+CBOR Pillar-1 @250ms",      "cbor",  "A", 20, 0.250]
   - ["A+JSON naive @250ms",         "json",  "A", 20, 0.250]
   - ["optimized delta/B @3GPP100ms/50Hz", "delta", "B", 50, 0.100]
+  # Added by audit S3b: these two rows appear in the paper's tab:envelope but were NOT produced
+  # by any generator, so they could not be checked and could drift silently. Now derived.
+  - ["A+CBOR Pillar-1 @3GPP100ms/50Hz",   "cbor",  "A", 50, 0.100]
+  - ["optimized delta/B @3GPP100ms/20Hz", "delta", "B", 20, 0.100]
   - ["optimized delta/B @3GPP100ms/10Hz", "delta", "B", 10, 0.100]
 envelope_n_ceiling: 400
+
+# --- U ceilings at which N_max is reported (audit S3b).
+# ⚠️ The V>=0.95 column of the paper's tab:envelope used to be hand-computed in LaTeX. It went
+# stale when F30 moved the measured crossing 2.797 -> 2.435: the prose was updated to 213/100 but
+# the table still said 233/116. Deriving every column from these constants makes that impossible.
+#
+# The two "strict" entries bracket the PER-REALISATION reading of V (>=95 % of runs must meet it),
+# which audit S3b showed differs from the mean reading: at U=2.230 the mean clears 0.95 while
+# 10 of 30 seeds fail. The bracket is measured, not assumed -- 1/30 fail at U=1.672, 10/30 at 2.230.
+u_ceilings:
+  - ["u_lt_1",        1.000]   # saturation throughput; conservative
+  - ["v95_mean",      2.435]   # measured crossing, MEAN criterion -- the headline (Mohamed, 2026-08-06)
+  - ["v95_strict_lo", 1.672]   # per-realisation criterion, conservative end of the measured bracket
+  - ["v95_strict_hi", 2.230]   # per-realisation criterion, optimistic end
 
