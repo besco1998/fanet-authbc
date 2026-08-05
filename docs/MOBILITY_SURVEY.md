@@ -90,7 +90,23 @@ the G-M arm can be built while the question is open.
 
 ---
 
-## 4. What the full survey still needs
+## 4. ⚠️ Result from the built scenario that changes the experiment design (F36)
+
+`ns3/authbc-lora-capacity-mobile.cc` is built and its control arm reproduces the static scenario
+bit-identically. Running it immediately found a design trap:
+
+**Under `--interferenceMatrix=aloha` — our frozen default — mobility cannot change delivery at all.**
+The ALOHA matrix puts +inf on the same-SF diagonal, so any co-SF overlap is fatal *regardless of
+power*; power is the only route by which position affects the outcome. Speeds 5 and 20 m/s give
+byte-identical delivery (0.720859) despite mean displacements of 878 m and 1090 m. With capture
+enabled (`goursaud`) the same speeds separate (0.785276 vs 0.791411).
+
+So the speed grid in §3 is only meaningful **with capture enabled**, and mobility runs are then a
+different collision model from the frozen `N_max = 3` result and must be reported as their own arm.
+⚠️ Also: the static-vs-mobile gap under `aloha` is **RNG stream displacement, not motion** — see F36
+before comparing those two arms.
+
+## 5. What the full survey still needs
 
 1. **Sample size.** Five sources, three of which say something about mobility. The plan's wording
    ("deep literature survey") means tens of papers, and specifically ones that state speeds.

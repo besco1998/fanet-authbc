@@ -68,7 +68,11 @@ type hints; no dead code; comments explain WHY, not what.
 - ⚠️ **One transmitter ⇒ zero contention. This does NOT validate Ma & Chen** — that stays simulation-only.
 - ⚠️ **Use 5 GHz, never 2.4 GHz.** A first 2.4 GHz sweep gave a tidy 97.45 % that was **saturation at the 802.11b 1 Mb/s broadcast basic rate**, not channel loss. Caught by the pre-stated prediction plus a load sweep; kept labelled as `adhoc_sweep_2g4.csv`.
 - ⚠️ `eth0` still has **no carrier** on either Pi — every session severs its own SSH path and relies on the deadman + reboot timer. **Never put a deadman marker in `/tmp`** (systemd `PrivateTmp`). Plugging in ethernet removes the whole risk class.
-- Mobility: **survey pilot written** (`docs/MOBILITY_SURVEY.md`, 5 held sources). ⚠️ It recommends **also running RWP as a baseline**, which deviates from `MOBILITY_PLAN.md` §M1 — **Mohamed's call (Law 8)**. Scenario file not yet written.
+
+### Mobility (E20) — scenario built, and it found a design trap before it found a result
+- Survey pilot in `docs/MOBILITY_SURVEY.md`; **scenario `ns3/authbc-lora-capacity-mobile.cc` BUILT** (separate new file; `--speed=0` reproduces the static scenario bit-identically).
+- ⚠️ **F36 — mobility is a NO-OP under `interferenceMatrix=aloha` (our default), by construction.** +inf on the same-SF diagonal makes any overlap fatal regardless of power, so position cannot matter: speeds 5 and 20 m/s give byte-identical delivery despite 878 m vs 1090 m displacement. Mobility runs **must** use `goursaud` — a different collision model from the frozen `N_max=3`, so they are their own arm. **Never** attribute the static-vs-mobile gap under `aloha` to motion; it is RNG stream displacement.
+- ⚠️ The survey recommends **also running RWP as a baseline**, deviating from `MOBILITY_PLAN.md` §M1 — **Mohamed's call (Law 8)**.
 
 ### The headline numbers, current
 - **Total on-air bytes −58.68 %**, as a **decomposition** (placement×batching 79.2 %, encoding 20.8 %, scheme byte-neutral). ⚠️ **Never quote the bare 75 %** — it is algebraically **1 − 1/b**.

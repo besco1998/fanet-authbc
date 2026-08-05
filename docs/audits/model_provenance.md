@@ -1920,3 +1920,58 @@ which is what the NS-3 model already assumes.
 * **`peers: 0` was read as "the link never formed".** The 2.4 GHz run reported `peers: 0` with an
   empty station dump while delivering 4988/5000 frames. FullMAC drivers do not expose IBSS peers via
   nl80211; the inference was unsound.
+
+---
+
+## F36 — mobility is a NO-OP under our default collision matrix, by construction (2026-08-05)
+
+**The mobile LoRa scenario is built and validated, and the first thing it found is a trap in the
+experiment design rather than a result about UAVs.**
+
+`ns3/authbc-lora-capacity-mobile.cc` is a **separate new file** per Mohamed's direction; the static
+scenario is untouched. Its control arm is exact: at `--speed=0` it reproduces
+`authbc-lora-capacity.cc` **bit-identically** (seed 7, N=20: sent 323, received 249,
+delivered_frac 0.770898 in both). Any difference is therefore mobility, not a porting error.
+
+### The finding
+
+| collision matrix | speed 5 m/s | speed 20 m/s | mean displacement (5 / 20) |
+|---|---|---|---|
+| `aloha` (no capture — **our default**) | 0.720859 | **0.720859** (identical) | 878 m / 1090 m |
+| `goursaud` (6 dB capture) | 0.785276 | **0.791411** (differs) | 878 m / 1090 m |
+
+The nodes demonstrably fly — mean displacement differs with speed, and the scenario now measures and
+reports it precisely so this could be checked. Yet under `aloha`, delivery does not move **at all**.
+
+**The mechanism is structural, not statistical.** The ALOHA matrix puts **+inf on the same-SF
+diagonal**: any co-SF overlap is fatal *regardless of received power*. Power is the only channel
+through which position can influence the outcome, so with capture disabled, delivered fraction is a
+function of the transmission **schedule alone**. Mobility cannot change it at any speed, in any
+model, over any distance that keeps nodes in range. Enabling capture restores the power dependence,
+and the speeds immediately separate.
+
+### ⚠️ Two consequences, both of which would have produced a wrong result
+
+1. **`MOBILITY_PLAN.md` §M2's stated prediction is unreachable under the default config.** It
+   predicted mobility would "reduce the bimodality" and "widen the delivery distribution". Under
+   `aloha` that is *structurally impossible*, not merely unobserved. A 30-seed sweep run at the
+   default would have concluded "mobility has no effect on the LoRa arm" — true, but for a reason
+   that has nothing to do with UAVs, and it would have been reported as a physical finding.
+2. ⚠️ **The static→mobile difference under `aloha` is RNG stream displacement, not mobility.**
+   0.770898 static vs 0.720859 mobile looks like a 5-point mobility penalty. It is not: the
+   mobility model consumes random variates and shifts the sender-jitter stream. The proof is that
+   speeds 5 and 20 give *identical* delivery — if the gap were positional it would vary with speed.
+   **Never compare a static arm against a mobile arm under `aloha` and attribute the difference to
+   motion.**
+
+### What this fixes going forward
+
+Any LoRa mobility experiment must run with `--interferenceMatrix=goursaud`, and must say so, because
+that is a **different collision model** from the one behind the frozen `N_max = 3` result — so
+mobility numbers are not directly comparable to it and must be reported as their own arm. The
+alternative reading is equally publishable and more honest: *in a no-capture ALOHA channel, node
+mobility is irrelevant to capacity by construction* — which is a statement about the model, and one
+the LoRa-FANET literature does not appear to make explicitly.
+
+Displacement (`mean_displacement_m`, `max_displacement_m`) is now emitted in every run's CSV, so
+"did the nodes actually move?" is never again a question answered by inference.
