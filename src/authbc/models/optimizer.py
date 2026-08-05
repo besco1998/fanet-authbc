@@ -397,8 +397,13 @@ def channel_utilisation(n_local: int, lam: float, batch: int, frame_bytes: float
     """
     if n_local < 1 or lam <= 0 or batch < 1 or frame_bytes <= 0:
         raise ValueError("channel_utilisation needs n_local≥1, lam>0, batch≥1, frame_bytes>0")
-    if n_local == 1:
-        return 0.0                                    # a lone sender never contends
+    # ⚠️ N=1 previously short-circuited to 0.0 with the comment "a lone sender never contends".
+    # That confused *contention* with *utilisation*: a lone sender does not collide, but it still
+    # occupies airtime, and U is the fraction of capacity demanded. Reporting 0.0 said a single
+    # node can carry unbounded traffic. Ma & Chen already handles n=1 correctly — it returns
+    # 1793.72 frames/s at 288 B, exactly the closed-form lone-sender rate
+    # 1/(t_broadcast + (W-1)/2 * slot) — so the special case was both wrong and unnecessary.
+    # Latent until the strict N_max criterion started reporting N=1 (audit S3/O5).
     solved = broadcast_dcf.solve(n_local, frame_bytes, bianchi.t_broadcast(frame_bytes),
                                  w0=bianchi.W, slot_s=bianchi.SLOT)
     frames_available = solved.throughput_bps / (8.0 * frame_bytes)

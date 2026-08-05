@@ -345,7 +345,14 @@ def test_channel_utilisation_is_evaluated_at_the_configuration_s_own_frame_size(
     small = channel_utilisation(50, 20, 1, 170.0)
     large = channel_utilisation(50, 20, 4, 284.0)
     assert small > large, "b=1 needs 4x the frames AND gets less capacity per frame"
-    assert channel_utilisation(1, 20, 1, 170.0) == 0.0, "a lone sender never contends"
+    # ⚠️ This previously asserted `== 0.0` with the rationale "a lone sender never contends".
+    # That conflated *contention* with *utilisation* (audit S3/O5): a lone sender does not collide,
+    # but it still occupies airtime, and this function's own docstring defines U as the fraction of
+    # capacity DEMANDED — with U >= 1 meaning the configuration cannot work. Hardcoding 0.0 declared
+    # a single node able to carry unbounded traffic. Ma & Chen handles n=1 correctly, so the special
+    # case was removed; `test_threshold_crossing_ci.py` cross-checks the value against the
+    # closed-form lone-sender rate.
+    assert channel_utilisation(1, 20, 1, 170.0) > 0.0, "a lone sender still occupies the medium"
     with pytest.raises(ValueError, match="channel_utilisation needs"):
         channel_utilisation(0, 20, 1, 170.0)
 

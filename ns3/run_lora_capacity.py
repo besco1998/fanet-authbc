@@ -38,6 +38,7 @@ sys.path.insert(0, str(REPO / "ns3"))
 from ns3_paths import ns3_root  # noqa: E402
 
 from authbc.bench import provenance  # noqa: E402
+from authbc.bench.stats import threshold_crossing_ci  # noqa: E402
 from authbc.models import lora  # noqa: E402
 
 H_F, G_A, CHAIN, S_DELTA = 44, 64, 32, 13.0   # measured H_f (B1); per-frame chaining (F5)
@@ -130,6 +131,10 @@ def main() -> None:
     out_rows = []
     n_max = 0
     failed_yet = False
+    # Kept for the bootstrap: a threshold crossing needs the per-seed sample, not the summary.
+    per_seed_delivered: dict[int, list[float]] = {}
+    n_max_strict = 0
+    strict_failed_yet = False
     for n in args.nodes:
         per_seed = [run_one(n, args.data_rate, payload, period, args.sim_time, s,
                             gw_region=args.gw_region, channel_model=args.channel_model,
@@ -139,7 +144,16 @@ def main() -> None:
         vals = sorted(float(r["delivered_frac"]) for r in per_seed)
         delivered = sum(vals) / len(vals)
         sent = sum(float(r["sent"]) for r in per_seed) / len(per_seed)
+        per_seed_delivered[n] = list(vals)
         ok = delivered >= 1 - args.epsilon
+        # ⚠️ Two different questions, and the project previously answered only the first.
+        #   `ok`        : does the MEAN across seeds meet V?           (a throughput-like reading)
+        #   `ok_strict` : do at least 95 % of individual runs meet V?  (a reliability reading)
+        # V is a verifiability target, so the strict form is the operationally meaningful one. At
+        # N=3 the mean passes (0.9598) while 9 of 30 seeds fail — the two disagree, and reporting
+        # only the mean overstates what the network guarantees.
+        seed_pass_frac = sum(1 for v in vals if v >= 1 - args.epsilon) / len(vals)
+        ok_strict = seed_pass_frac >= 0.95
         # F26/A4: N_max is the largest N for which EVERY smaller N also passes. Taking the last
         # passing N (the previous behaviour) would silently report a higher capacity than the data
         # supports the moment the curve is non-monotone — and F26/A1 shows it is noisy enough to be.
@@ -147,6 +161,10 @@ def main() -> None:
             n_max = n
         elif not ok:
             failed_yet = True
+        if ok_strict and not strict_failed_yet:
+            n_max_strict = n
+        elif not ok_strict:
+            strict_failed_yet = True
         out_rows.append({
             "n_devices": n, "data_rate": args.data_rate, "batch": b,
             "payload_bytes": payload, "app_period_s": round(period, 3),
@@ -157,7 +175,8 @@ def main() -> None:
             "delivered_min": round(vals[0], 5), "delivered_max": round(vals[-1], 5),
             "delivered_stdev": round(stdev(vals), 5) if len(vals) > 1 else 0.0,
             "seeds_failing_v": sum(1 for v in vals if v < 1 - args.epsilon),
-            "meets_v": int(ok), "seeds": args.seeds,
+            "seed_pass_frac": round(seed_pass_frac, 4),
+            "meets_v": int(ok), "meets_v_strict": int(ok_strict), "seeds": args.seeds,
             # Λ a node can sustain, and what the whole neighbourhood then carries
             "lambda_rec_per_s": round(b / period, 5),
             "aggregate_rec_per_s": round(n * b / period, 4),
@@ -167,10 +186,22 @@ def main() -> None:
               f"{sum(1 for v in vals if v < 1 - args.epsilon)}/{len(vals)} seeds fail  "
               f"{'OK' if ok else 'FAILS V>=0.95'}")
 
-    print(f"\n  N_max (V >= {1 - args.epsilon:.2f}) = {n_max}")
+    crossing = threshold_crossing_ci(per_seed_delivered, threshold=1 - args.epsilon,
+                                     resamples=10_000, seed=0)
+    print(f"\n  N_max (mean V >= {1 - args.epsilon:.2f})            = {n_max}")
+    print(f"  N_max 95 % bootstrap CI                = [{crossing.ci_lo}, {crossing.ci_hi}]"
+          f"{'   <-- KNIFE EDGE, do not quote bare' if crossing.is_knife_edge else ''}")
+    print(f"  bootstrap distribution                 = "
+          f"{ {k: round(v, 3) for k, v in sorted(crossing.distribution.items())} }")
+    print(f"  N_max (>= 95 % of individual runs)     = {n_max_strict}"
+          f"{'   <-- DISAGREES with the mean criterion' if n_max_strict != n_max else ''}")
     path = REPO / "results" / "raw" / args.out
     buf = io.StringIO()
     meta = {**provenance.env_block(), "run": "lora_capacity",
+            "n_max_mean_criterion": n_max,
+            "n_max_ci95": f"[{crossing.ci_lo},{crossing.ci_hi}]",
+            "n_max_is_knife_edge": int(crossing.is_knife_edge),
+            "n_max_strict_criterion": n_max_strict,
             "config_hash": provenance.config_hash(
                 {"dr": args.data_rate, "nodes": args.nodes, "seeds": args.seeds,
                  "t": args.sim_time, "payload": payload})}

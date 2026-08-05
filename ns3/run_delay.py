@@ -20,6 +20,7 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+from statistics import stdev
 
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "ns3"))
@@ -68,8 +69,13 @@ def main() -> None:
     ap.add_argument("--seeds", type=int, default=30)
     ap.add_argument("--out", default="ns3_delay.csv")
     ap.add_argument("--sim-time", type=float, default=20.0)
+    # ⚠️ These MUST be the rates that produced the committed `ns3_delay.csv`. The previous default
+    # ([1,2,3,5,7,8,9,10,12]) topped out at U = 1.34, so `make sim-ns3-delay` produced a file that
+    # could not contain the U ~ 2.44 crossing the paper quotes — the documented entry point did not
+    # reproduce its own artifact (audit S7). The crossing is an INTERPOLATION between the measured
+    # U = 2.23 (delivered 0.9625) and U = 3.34 (0.8948) rows, and needs both of them present.
     ap.add_argument("--rates", type=float, nargs="+",
-                    default=[1, 2, 3, 5, 7, 8, 9, 10, 12])
+                    default=[1, 2, 3, 5, 7, 9, 12, 15, 20, 30, 40, 60])
     args = ap.parse_args()
 
     out_rows = []
@@ -87,6 +93,17 @@ def main() -> None:
             "lambda_rec_per_s": round(fps * BATCH, 2), "frame_bytes": FRAME_BYTES,
             "channel_util": round(util, 4),
             "delivered_frac": round(mean("delivered_frac"), 5),
+            # F38: this driver reported 30-seed MEANS with no dispersion at all, while the LoRa
+            # and matrix drivers were fixed to emit min/max/sigma after F30. The V=0.95 crossing
+            # that yields the swarm-size figures is a threshold applied to this column, so the
+            # spread is exactly what a reader needs in order to judge it.
+            "delivered_min": round(min(r["delivered_frac"] for r in per_seed), 5),
+            "delivered_max": round(max(r["delivered_frac"] for r in per_seed), 5),
+            "delivered_stdev": round(stdev([r["delivered_frac"] for r in per_seed]), 5)
+            if len(per_seed) > 1 else 0.0,
+            "seeds_failing_v": sum(1 for r in per_seed if r["delivered_frac"] < 0.95),
+            "delay_mean_stdev_ms": round(stdev([r["delay_mean_ms"] for r in per_seed]), 4)
+            if len(per_seed) > 1 else 0.0,
             "delay_mean_ms": round(measured, 4),
             "delay_p50_ms": round(mean("delay_p50_ms"), 4),
             "delay_p95_ms": round(mean("delay_p95_ms"), 4),
@@ -98,6 +115,9 @@ def main() -> None:
             "seeds": args.seeds,
         })
         print(f"  fps={fps:<5} U={util:.3f}  delivered={mean('delivered_frac'):.4f}  "
+              f"[{min(r['delivered_frac'] for r in per_seed):.4f}.."
+              f"{max(r['delivered_frac'] for r in per_seed):.4f}] "
+              f"{sum(1 for r in per_seed if r['delivered_frac'] < 0.95)}/{len(per_seed)} fail  "
               f"mean={measured:8.3f} ms  p95={mean('delay_p95_ms'):8.3f}  "
               f"model={predicted:.3f}  access={measured - predicted:+8.3f} ms")
 

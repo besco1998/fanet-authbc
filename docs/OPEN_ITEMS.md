@@ -34,6 +34,18 @@ Ordered by what a thesis examiner would hit first.
 
 | **B8** | Medium-exclusion finding | ⚠️ **CLOSED 2026-07-29 — promoted to T7, then T7 WITHDRAWN the same day** | T7 claimed capacity excludes at **U ≥ 1**. Its own validation experiment (D3) refuted it: NS-3 delivers **98.8 % at U = 1.00**, and the V≥0.95 crossing is at **U ≈ 2.80**, so the 3GPP-compliant point (U=1.39) is feasible and **the 75 % cut is achievable at the deadline**. T7 is withdrawn; the surviving mechanism is a **cost** — meeting the 100 ms bound halves the swarm (N≤233 → N≤116) and changes nothing in bytes | Lesson recorded in docs/02: the claim was published before the experiment already scheduled to test it |
 
+## B'. Scientific-implementation defects (audit 2026-08-05, `docs/audits/scientific_implementation_audit.md`)
+
+| # | Item | Status | Action |
+|---|---|---|---|
+| **S3** | ⚠️ **`N_max` applied V ≥ 0.95 to the MEAN across seeds, not to the distribution.** At the certified N=3, **9 of 30 seeds fail** the criterion. Re-derived: `N_max` = 3 with **95 % CI [2, 3]** (knife edge); under a per-realisation reading (≥95 % of runs meet V) it is **1** | **FIXED (driver) / ⚠️ OPEN (which to quote)** | Both criteria + bootstrap CI now computed and emitted (`lora_capacity_ci.csv`). **Mohamed decides which the paper headlines**; they answer different questions and both are defensible |
+| **S7** | ⚠️ **`make sim-ns3-delay` did not reproduce `ns3_delay.csv`** — default rates topped out at U = 1.34 while the artifact reaches 6.69 and the quoted crossing is U ≈ 2.44. Also: that crossing is an **interpolation** between measured U = 2.23 and U = 3.34 rows, not a measured point | **FIXED** | Defaults corrected to the generating rates. ⚠️ Label the crossing as interpolated in the paper |
+| **S4** | `run_delay.py` emitted 30-seed means with **no dispersion**, against the project's own post-F30 standard | **FIXED** | Now emits min/max/σ, `seeds_failing_v`, `delay_mean_stdev_ms` |
+| **O5** | `channel_utilisation` returned exactly **0.0 at N=1**, conflating contention with utilisation — a single node was declared able to carry unbounded traffic. ⚠️ **A unit test asserted the defect** | **FIXED** | Special case removed (Ma & Chen handles n=1; cross-checked against the closed-form lone-sender rate). Test corrected with reasoning kept visible |
+| **S5** | Are F25 / E9 / A2 confounded by the RNG-stream displacement that F37 found? | **CHECKED — CLEAN** | `sent` is invariant across all three axes. Guarded permanently by `make verify-rng-isolation` |
+| **S6** | `ns3_smoke.csv` and `lora_phase_artifact_eu_30seed.csv` carry no provenance header | OPEN (minor) | Add `env_block` + `config_hash` to their generators. ⚠️ **Do NOT add one to `ns3_contention.csv`** — its frozen test compares exact text, so a cpu/platform header would make it machine-locked |
+| **O2** | `p = 0.05` has no sensitivity analysis | OPEN | The 802.11 envelope is analytic in `p`, so all its uncertainty is inherited from `p`. Hardware now bounds the optimistic end at 2.3 × 10⁻⁴ (F35) |
+
 ## C. Model scope — what the models do not cover
 
 | # | Item | Status | Action |

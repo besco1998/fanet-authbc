@@ -76,6 +76,13 @@ type hints; no dead code; comments explain WHY, not what.
 - ⚠️ **Per-frame Doppler is still unmodelled** (~50 coherence intervals inside one 364 ms LoRa frame). The null result means "mobility does not change *collision-limited capacity*", NOT "mobility is harmless to a LoRa link".
 - ⚠️ **The confound that nearly produced a false 5-point mobility penalty:** ns-3 assigns RNG streams by creation order, so installing a mobility model shifts every sender's stream. Fixed by pinning sender streams per node id. `ns3/run_lora_mobility.py --verify` asserts **two** properties before any sweep: `--pinStreams=false --speed=0` reproduces the frozen scenario bit-identically, and pinned `aloha` arms are all equal.
 
+### ⚠️ Scientific-implementation audit 2026-08-05 — read `docs/audits/scientific_implementation_audit.md`
+- ⚠️ **S3 — `N_max` was certified on a MEAN, not a distribution.** At the certified N=3, **9 of 30 seeds fail** V≥0.95. Correct reporting: **N_max = 3, 95 % CI [2, 3]** (knife edge). Under a **per-realisation** reading (≥95 % of runs meet V) it is **1**. ⚠️ **Which criterion the paper quotes is Mohamed's decision** — both are emitted (`lora_capacity_ci.csv`).
+- ⚠️ **S7 — `make sim-ns3-delay` did not reproduce `ns3_delay.csv`** (defaults stopped at U=1.34 vs the artifact's 6.69). Fixed. ⚠️ **U ≈ 2.435 is an INTERPOLATION** between measured U=2.23 and U=3.34 — label it as such.
+- **S4** delay driver now emits min/max/σ (it was means-only, against the project's own post-F30 standard). **O5** `channel_utilisation` no longer returns 0.0 at N=1 — and ⚠️ **a unit test had asserted that defect**.
+- **S5 checked CLEAN:** F25/E9/A2 are **not** RNG-confounded (`sent` invariant). Guarded by `make verify-rng-isolation`.
+- **The taxonomy to check new numbers against:** C1 small-sample mean vs threshold · C2 unverified constant on the measurement path · C3 threshold applied to a mean not a distribution · C4 config change perturbing the random realisation · C5 claim wider than the experiment. **Only C1 is fixed by more seeds.**
+
 ### The headline numbers, current
 - **Total on-air bytes −58.68 %**, as a **decomposition** (placement×batching 79.2 %, encoding 20.8 %, scheme byte-neutral). ⚠️ **Never quote the bare 75 %** — it is algebraically **1 − 1/b**.
 - **Adopted operating point: Λ=50 Hz, D_max=100 ms** (PX4 `MAVLINK_MODE_ONBOARD`, TS 22.125 compliant). Capacity **18→35** (U<1), **31→100** (V≥0.95). Relaxed (20 Hz/250 ms): 25/32→**103**, 55/88→**213**.
