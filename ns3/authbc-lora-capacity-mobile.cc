@@ -72,6 +72,17 @@ std::string mobilityModel = "gaussmarkov"; //!< "static" | "gaussmarkov" | "rwp"
 double gmAlpha = 0.85;
 double gmTimeStepS = 1.0;           //!< Velocity-update interval (s)
 
+// Base index for the senders' pinned RNG streams (F36). Well above anything ns-3 auto-allocates,
+// so pinning cannot collide with a stream the simulator hands out on its own.
+constexpr int64_t AUTHBC_SENDER_STREAM_BASE = 1000000;
+
+// ⚠️ Pinning is required for VALID mobility comparison and prevents BIT-IDENTICAL comparison with
+// the frozen static scenario — the two properties are mutually exclusive, so both are offered:
+//   --pinStreams=false --speed=0  reproduces authbc-lora-capacity.cc exactly (porting correctness)
+//   --pinStreams=true  (default)  makes the traffic realisation independent of the mobility model,
+//                                 so a static-vs-mobile difference can only come from motion
+bool pinStreams = true;
+
 // Channel model
 // Channel model (E12). The module's own "realistic" option aggregates correlated shadowing AND
 // BuildingPenetrationLoss. **Building penetration is wrong physics for a UAV air-to-air link** —
@@ -156,6 +167,24 @@ class JitteredSender : public Application
         return m_interval + Seconds(m_rand->GetValue());
     }
 
+    /** Pin this sender's RNG streams so they do not depend on object-creation order.
+     *
+     * ⚠️ This is the fix for the confound recorded in F36. ns-3 hands each newly created
+     * RandomVariableStream the next index from a global counter, and the mobility models are
+     * created BEFORE the senders — so installing Gauss-Markov instead of ConstantPosition shifts
+     * every sender's stream. Under the ALOHA matrix that alone moved delivery 0.7709 -> 0.7209,
+     * which reads exactly like a 5-point mobility penalty and is nothing of the kind.
+     *
+     * Pinning by node id makes the traffic realisation identical across mobility configurations,
+     * so a static-vs-mobile difference can only come from motion.
+     */
+    void PinStreams(int64_t base)
+    {
+        m_pinned = true;
+        m_streamBase = base;
+        m_rand->SetStream(base);
+    }
+
   private:
     void StartApplication() override
     {
@@ -167,6 +196,17 @@ class JitteredSender : public Application
         }
         // Randomise the first transmission over a full interval, as PeriodicSender does.
         Ptr<UniformRandomVariable> first = CreateObject<UniformRandomVariable>();
+        // Pinned for the same reason as m_rand: the start offsets set the relative phases of every
+        // node, so if they shift with mobility configuration the collision pattern changes for
+        // reasons that have nothing to do with movement.
+        //
+        // ⚠️ MUST stay conditional. Setting this unconditionally gave every node the SAME stream
+        // (m_streamBase defaults to 0 when unpinned), so all nodes drew the same start offset and
+        // transmitted in lockstep — delivery collapsed to 0.0298. Caught by the property-1 check.
+        if (m_pinned)
+        {
+            first->SetStream(m_streamBase + 1);
+        }
         m_event = Simulator::Schedule(Seconds(first->GetValue(0.0, m_interval.GetSeconds())),
                                       &JitteredSender::Fire, this);
     }
@@ -182,6 +222,8 @@ class JitteredSender : public Application
     Time m_interval;
     Time m_jitter;
     uint32_t m_pktSize;
+    bool m_pinned = false;
+    int64_t m_streamBase = 0;
     Ptr<UniformRandomVariable> m_rand;
     Ptr<LorawanMac> m_mac;
     EventId m_event;
@@ -241,6 +283,10 @@ main(int argc, char* argv[])
     cmd.AddValue("mobilityModel", "static | gaussmarkov | rwp", mobilityModel);
     cmd.AddValue("gmAlpha", "Gauss-Markov memory alpha in [0,1]", gmAlpha);
     cmd.AddValue("gmTimeStep", "Gauss-Markov velocity update interval (s)", gmTimeStepS);
+    cmd.AddValue("pinStreams",
+                 "pin sender RNG streams so traffic is identical across mobility models (F36); "
+                 "false reproduces the frozen static scenario bit-identically at speed 0",
+                 pinStreams);
     cmd.AddValue("dataRate", "LoRaWAN DR 0..5 (0=SF12 .. 5=SF7), forced on every device", dataRate);
     cmd.AddValue("payloadBytes", "application payload = the AUTHBC frame size", payloadBytes);
     cmd.AddValue("appPeriod", "seconds between transmissions (the duty-cycle interval)", appPeriodS);
@@ -487,6 +533,14 @@ main(int argc, char* argv[])
         {
             auto app = CreateObject<JitteredSender>(Seconds(appPeriodSeconds), Seconds(txJitterS),
                                                     static_cast<uint32_t>(packetSize));
+            // Two pinned streams per node (jitter + start offset), keyed on node id so the traffic
+            // realisation is identical whatever mobility model is installed. The base is far above
+            // the auto-allocated range so it cannot alias a stream ns-3 hands out itself.
+            if (pinStreams)
+            {
+                app->PinStreams(AUTHBC_SENDER_STREAM_BASE +
+                                2 * static_cast<int64_t>((*nd)->GetId()));
+            }
             (*nd)->AddApplication(app);
             appContainer.Add(app);
         }
@@ -670,6 +724,7 @@ main(int argc, char* argv[])
         << "speed_mps," << speedMps << "\n"
         << "gm_alpha," << gmAlpha << "\n"
         << "gm_time_step_s," << gmTimeStepS << "\n"
+        << "pin_streams," << (pinStreams ? 1 : 0) << "\n"
         << "mean_displacement_m," << meanDisp << "\n"
         << "max_displacement_m," << maxDisp << "\n"
         << "payload_bytes," << payloadBytes << "\n"

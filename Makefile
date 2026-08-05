@@ -84,6 +84,8 @@ sim-ns3:  ## [P6] build authbc-sat + 2-node both-modes smoke -> results/raw/ns3_
 	PY=$(BIN)/python bash ns3/sim_ns3.sh
 sim-lora-capacity:  ## [D2] LoRa multi-node capacity envelope -> results/raw/lora_capacity.csv
 	$(BIN)/python ns3/run_lora_capacity.py
+sim-lora-mobility:  ## [E20/M2] mobility sweep, both collision matrices -> results/raw/lora_mobility.csv
+	$(BIN)/python ns3/run_lora_mobility.py
 sim-ns3-delay:  ## [D3] non-saturated delivery-delay sweep -> results/raw/ns3_delay.csv
 	$(BIN)/python ns3/run_delay.py
 sim-ns3-matrix:  ## [P6b] N x mode x seed saturation matrix -> results/raw/ns3_matrix.csv

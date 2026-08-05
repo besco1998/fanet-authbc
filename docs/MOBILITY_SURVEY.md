@@ -90,21 +90,20 @@ the G-M arm can be built while the question is open.
 
 ---
 
-## 4. ⚠️ Result from the built scenario that changes the experiment design (F36)
+## 4. ANSWERED — the sweep was run, and mobility makes no difference (F37)
 
-`ns3/authbc-lora-capacity-mobile.cc` is built and its control arm reproduces the static scenario
-bit-identically. Running it immediately found a design trap:
+`ns3/authbc-lora-capacity-mobile.cc` was built and swept at 30 seeds. **Every arm lands within
+0.06 σ of the static control** (Gauss-Markov 5 m/s −0.24 pp, G-M 20 m/s −0.03 pp, RWP 20 m/s
++0.36 pp; |t| ≤ 0.22) at 816–967 m mean displacement, under the **goursaud** capture matrix. Under
+**aloha** all four arms are byte-identical, because without capture position cannot enter the
+calculation at all. **Same conclusion under both collision models.**
 
-**Under `--interferenceMatrix=aloha` — our frozen default — mobility cannot change delivery at all.**
-The ALOHA matrix puts +inf on the same-SF diagonal, so any co-SF overlap is fatal *regardless of
-power*; power is the only route by which position affects the outcome. Speeds 5 and 20 m/s give
-byte-identical delivery (0.720859) despite mean displacements of 878 m and 1090 m. With capture
-enabled (`goursaud`) the same speeds separate (0.785276 vs 0.791411).
+⚠️ **This retires §2a's open question.** The survey argued RWP should be run as a baseline against
+`MOBILITY_PLAN.md` §M1's "not Random Waypoint". Both were run and they are **statistically
+indistinguishable**, so the model choice carries no weight in this result and neither position needs
+defending. The speed grid in §3 is validated as adequate rather than merely plausible.
 
-So the speed grid in §3 is only meaningful **with capture enabled**, and mobility runs are then a
-different collision model from the frozen `N_max = 3` result and must be reported as their own arm.
-⚠️ Also: the static-vs-mobile gap under `aloha` is **RNG stream displacement, not motion** — see F36
-before comparing those two arms.
+Per-frame Doppler remains unmodelled — see F37's closing caveat before quoting this anywhere.
 
 ## 5. What the full survey still needs
 

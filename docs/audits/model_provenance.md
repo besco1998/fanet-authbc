@@ -1975,3 +1975,80 @@ the LoRa-FANET literature does not appear to make explicitly.
 
 Displacement (`mean_displacement_m`, `max_displacement_m`) is now emitted in every run's CSV, so
 "did the nodes actually move?" is never again a question answered by inference.
+
+---
+
+## F37 — mobility measured at 30 seeds: no significant effect, and the static assumption is now VALIDATED (2026-08-05)
+
+**E20/M2 is answered.** The static assumption in the LoRa arm was previously an *accepted
+limitation* (C3, "no mobility"). It is now a **tested and confirmed** one, which is a materially
+stronger position: we ran the experiment rather than excusing it.
+
+Artifact `results/raw/lora_mobility.csv`, driver `ns3/run_lora_mobility.py`, 140 runs.
+
+### Both scenario properties verified before any number was trusted
+
+| property | check | result |
+|---|---|---|
+| **porting correctness** | `--pinStreams=false --speed=0` vs frozen `authbc-lora-capacity.cc` | sent/received **323/249 in both** — bit-identical |
+| **clean attribution** | pinned, `aloha`, four mobility configs | all four return **exactly** 0.637771 |
+
+⚠️ These two are **mutually exclusive by construction**, which is why stream pinning is a flag. See
+the confound below.
+
+### The result — `goursaud` (capture; the module's own default, and the physical model), 30 seeds
+
+| arm | mean | min | max | σ | Δ vs static | t | significant? |
+|---|---|---|---|---|---|---|---|
+| static, 0 m/s | 0.745366 | 0.640244 | 0.873065 | 0.063283 | — | — | — |
+| Gauss–Markov, 5 m/s | 0.742923 | 0.609756 | 0.863777 | 0.066017 | **−0.244 pp** | −0.146 | **NO** |
+| Gauss–Markov, 20 m/s | 0.745083 | 0.603659 | 0.863777 | 0.066280 | **−0.028 pp** | −0.017 | **NO** |
+| Random Waypoint, 20 m/s | 0.748988 | 0.641745 | 0.873065 | 0.064528 | **+0.362 pp** | +0.220 | **NO** |
+
+Static 95 % CI **[0.7227, 0.7680]**. Every mobile arm's mean sits inside it, within **0.06 σ** and
+|t| ≤ 0.22, against mean displacements of **816–967 m**. Nodes fly nearly a kilometre and delivery
+does not move.
+
+### And `aloha`, 5 seeds × 4 arms — the structural prediction, confirmed at scale
+
+All four arms returned **byte-identical statistics**: mean 0.671036, min 0.576324, max 0.793210,
+σ 0.104392. Not "close" — identical, as F36 predicts, because with capture disabled position cannot
+enter the calculation at all.
+
+### Three conclusions
+
+1. **Mobility does not change the LoRa capacity result**, under either collision model, at speeds
+   spanning published FANET practice. Under `aloha` that is provable a priori; under `goursaud` it
+   is measured and null. **The conclusion is the same either way, which is what makes it robust** —
+   it does not depend on the capture assumption that A2 flagged as consequential elsewhere.
+2. ⚠️ **Gauss–Markov and Random Waypoint are statistically indistinguishable here** (0.7451 vs
+   0.7490, 0.06 σ apart). `MOBILITY_PLAN.md` §M1 argued RWP is "wrong for a swarm" and should not be
+   used; `MOBILITY_SURVEY.md` §2a countered that it is standard practice and should be run as a
+   baseline. **The empirical answer retires the argument: the model choice carries no weight in this
+   result.** We ran both and say so, instead of defending a preference.
+3. **The mechanism is the link margin, not luck.** F25 measured 17–29 dB of headroom; the
+   Gauss-Markov bounding box keeps nodes within ~1414 m of the gateway, which costs about 5.6 dB at
+   path-loss exponent 3.76. Motion never approaches the sensitivity threshold, so the only route
+   left is capture SIR, and averaged over 30 seeds that washes out.
+
+### ⚠️ The confound this run had to remove first, and how close it came to a false finding
+
+Before stream pinning, `aloha` static read 0.770898 and mobile read 0.720859 — a clean-looking
+**5-point mobility penalty**. It was **entirely RNG stream displacement**: ns-3 assigns each new
+`RandomVariableStream` the next index from a global counter, and the mobility models are constructed
+*before* the senders, so installing Gauss-Markov instead of ConstantPosition shifted every sender's
+jitter and start-offset stream. The tell was that speeds 5 and 20 gave *identical* delivery — a real
+positional effect would scale with displacement.
+
+Pinning the senders' streams by node id removes it. ⚠️ A first attempt at the fix set the
+start-offset stream **unconditionally**, so when pinning was off every node shared stream 0+1, drew
+the same start offset, and transmitted in lockstep — delivery collapsed to **0.0298**. That was
+caught by the porting-correctness property, which is precisely why both properties are asserted in
+the driver and re-checked before every sweep.
+
+### What still is not modelled, and must be stated wherever this is quoted
+
+Per-frame Doppler fading. At 20 m/s the LoRa coherence time is ~7.3 ms against a 364 ms frame, so
+the channel decorrelates ~50× **within** a single transmission. This scenario moves nodes between
+frames; it does not fade within them. The null result above is therefore "mobility does not change
+collision-limited capacity", **not** "mobility is harmless to a LoRa link".

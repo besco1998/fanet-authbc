@@ -1,0 +1,22 @@
+# python=3.12.3
+# platform=Linux-6.6.114.1-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=lora_mobility
+# config_hash=bf37512af2d98ae4
+# E20/M2 mobility sweep. The aloha arm demonstrates the F36 structural invariance
+# (mobility cannot act without capture); goursaud is the only arm in which a
+# mobility number is meaningful. Sender RNG streams are pinned in both.
+matrix,mobility_model,speed_mps,seeds,delivered_mean,delivered_min,delivered_max,delivered_stdev,mean_displacement_m,max_displacement_m
+goursaud,static,0.0,30,0.745366,0.640244,0.873065,0.063283,0.0,0.0
+goursaud,gaussmarkov,5.0,30,0.742923,0.609756,0.863777,0.066017,965.0,2181.2
+goursaud,gaussmarkov,20.0,30,0.745083,0.603659,0.863777,0.06628,967.3,2076.4
+goursaud,rwp,20.0,30,0.748988,0.641745,0.873065,0.064528,816.4,1768.6
+aloha,static,0.0,5,0.671036,0.576324,0.79321,0.104392,0.0,0.0
+aloha,gaussmarkov,5.0,5,0.671036,0.576324,0.79321,0.104392,922.9,1850.8
+aloha,gaussmarkov,20.0,5,0.671036,0.576324,0.79321,0.104392,957.8,1928.3
+aloha,rwp,20.0,5,0.671036,0.576324,0.79321,0.104392,805.2,1581.6
