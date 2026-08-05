@@ -156,6 +156,41 @@ well behaved where the LoRa arm was not — through U = 1.338 the spread is tigh
 
 ---
 
+## 4c. S3b (MAJOR, new) — the U crossing has the SAME defect as `N_max`, and it moves the headline
+
+The full-range re-derivation (`results/raw/ns3_delay_ci.csv`, 12 rates x 30 seeds) makes the
+dispersion visible for the first time:
+
+| fps | U | mean delivered | min | max | seeds failing V |
+|---|---|---|---|---|---|
+| 12 | 1.338 | 0.98435 | 0.93925 | 0.99925 | **1 / 30** |
+| 15 | 1.672 | 0.97814 | 0.94421 | 0.99639 | **1 / 30** |
+| **20** | **2.230** | **0.96246** | 0.92842 | 0.99378 | ⚠️ **10 / 30** |
+| 30 | 3.345 | 0.89479 | 0.82494 | 0.94367 | 30 / 30 |
+
+**At U = 2.23 the mean (0.9625) clears V ≥ 0.95 while a third of the runs fail it.** This is exactly
+S3 in the 802.11 arm: the crossing that yields the headline swarm capacities (**31→100** compliant,
+**88→213** relaxed) is a threshold applied to a mean whose distribution straddles it.
+
+* **Mean criterion:** crossing at U ≈ 2.435 (interpolated) — the published value.
+* **Per-realisation criterion** (≤5 % of runs may fail): the crossing is bracketed by
+  **U ∈ (1.672, 2.230]** — at U = 1.672 only 1/30 fails, at U = 2.230 ten do.
+
+So the strict crossing is at most **~69 %** of the quoted one, and the V ≥ 0.95 capacity figures
+would fall by roughly a third.
+
+### ✅ The adopted operating point is NOT affected — and that is the important part
+
+The 3GPP-compliant point sits at **U = 1.39** (B8). At U = 1.338 only **1 of 30** seeds falls below
+V, and every rate up to U = 1.672 behaves the same. **The operating point the thesis actually adopts
+is comfortably inside the safe region under either criterion.** What moves is the *maximum* capacity
+claim, not the configuration being proposed.
+
+The delay arm is also markedly better behaved than the LoRa arm: 0/30 failures up to U = 0.557 and
+≤1/30 through U = 1.672, where LoRa was already failing 8/30 at N = 2.
+
+---
+
 ## 5. S6 (MINOR) — three raw CSVs carry no provenance header
 
 Law 7 requires raw CSVs to carry config-hash + environment headers. Missing on:
