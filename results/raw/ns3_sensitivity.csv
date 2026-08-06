@@ -7,13 +7,13 @@
 # cbor2=5.8.0
 # msgpack=1.2.1
 # run=ns3_sensitivity
-# ns3_version=3.41
-# config_hash=0abe3466eb7125ff
+# ns3_version=3.48
+# config_hash=0cbe1c91e56dcfc4
 scenario,N,frameSize,simTime,seeds,goodput_mbps_median,goodput_mbps_min,goodput_mbps_max,delta_vs_controlled_pct
-controlled,20,1400,10.0,3,1.8088,1.7763,1.8346,0.0
-realistic_50m,20,1400,10.0,3,2.5678,2.5482,2.5771,41.96
-realistic_150m,20,1400,10.0,3,2.7218,2.6938,2.727,50.47
-realistic_300m,20,1400,10.0,3,2.1193,2.1167,2.1409,17.16
-realistic_500m,20,1400,10.0,3,1.1002,1.0912,1.1161,-39.18
-realistic_150m_nakagami3,20,1400,10.0,3,2.6751,2.6745,2.6863,47.89
-realistic_150m_nakagami1,20,1400,10.0,3,1.9959,1.9834,2.0517,10.34
+controlled,20,1400,10.0,30,1.7892,1.7102,1.8402,0.0
+realistic_50m,20,1400,10.0,30,2.545,2.471,2.5771,42.24
+realistic_150m,20,1400,10.0,30,2.6952,2.6255,2.727,50.64
+realistic_300m,20,1400,10.0,30,2.1179,2.0812,2.1746,18.37
+realistic_500m,20,1400,10.0,30,1.0995,1.0597,1.1641,-38.55
+realistic_150m_nakagami3,20,1400,10.0,30,2.6833,2.6378,2.7135,49.97
+realistic_150m_nakagami1,20,1400,10.0,30,2.0266,1.942,2.1055,13.27

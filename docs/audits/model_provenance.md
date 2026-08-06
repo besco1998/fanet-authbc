@@ -2052,3 +2052,75 @@ Per-frame Doppler fading. At 20 m/s the LoRa coherence time is ~7.3 ms against a
 the channel decorrelates ~50× **within** a single transmission. This scenario moves nodes between
 frames; it does not fade within them. The null result above is therefore "mobility does not change
 collision-limited capacity", **not** "mobility is harmless to a LoRa link".
+
+---
+
+## F38 — the last six 3-seed artifacts re-run at 30 seeds; A2's capture table is CORRECTED (2026-08-06)
+
+**Why this was necessary.** F30 established the pattern that cost this project four headline
+numbers: a small-sample mean compared against a threshold. Drivers were fixed to default to 30
+seeds — but **six committed artifacts were never re-run**, and three of them backed published
+claims. They were also frozen-phase (`txJitter = 0`), predating E13, so they were stale on *two*
+counts. Every one has now been re-derived at 30 seeds with jitter and full dispersion.
+
+### ⚠️ CORRECTION — audit A2's capture-cost table
+
+A2 quantified what the ALOHA collision matrix gives away versus Goursaud capture. Both of its
+columns came from 3-seed, frozen-phase runs. Re-measured at 30 seeds with jitter:
+
+| N | A2 published: ALOHA / Goursaud → gain | **corrected 30-seed** | |
+|---|---|---|---|
+| 8 | 0.8656 / 0.8984 → **+3.3 pts** | 0.87103 / 0.89757 → **+2.7 pts** | |
+| 50 | 0.2532 / 0.3453 → **1.36×** | 0.37547 / 0.48561 → **1.29×** | |
+
+⚠️ **The ALOHA baseline at N=50 moved the most: 0.2532 → 0.3755, a 48 % relative change.** That is
+the frozen-phase artifact (F32), which inflates dispersion most at high N — exactly where A2 read
+its headline ratio. **A2's conclusion survives** — capture is worth a few points and we are
+conservatively giving it away — but both quoted figures were wrong and are corrected here.
+
+### Confirmed, not moved
+
+| claim | 3-seed | 30-seed | verdict |
+|---|---|---|---|
+| **E9: EU preset `N_max = 8`** | 8 | **8** | ⚠️ **holds, but 95 % CI [5, 8]** — 27.6 % of bootstrap replicates give 5. Quote the interval, never the bare 8 |
+| **F25: "shadowing changes nothing"** | null | **null** | holds — and now *explained*: see below |
+| Goursaud `N_max` | — | **3** | capture does **not** raise `N_max` above the ALOHA value of 3; it helps well below the threshold, not at it |
+
+### The shadowing null is structural, not empirical — and that is a stronger statement
+
+`lora_capacity_shadow500.csv` and `lora_capacity_repro.csv` returned **byte-identical bootstrap
+distributions** ({1: 0.013, 2: 0.188, 3: 0.796, 5: 0.003}) despite different radii *and* different
+channel models. That is F36's mechanism again: under the ALOHA matrix any co-SF overlap is fatal
+**regardless of received power**, so delivery is a function of the transmission schedule alone.
+Radius and shadowing act only through power, so **neither can change the result** — the null was
+guaranteed before it was measured. F25's finding is upgraded from "measured no effect" to "cannot
+have an effect under this collision model".
+
+### Three further defects found while doing it
+
+1. ⚠️ **`config_hash` could not distinguish its own runs.** `run_lora_capacity.py` hashed only
+   {dr, nodes, seeds, t, payload}, so `lora_capacity_shadow500.csv`, `_shadow1000.csv` and
+   `_repro.csv` all carried the **same hash** despite different radii and channel models. Now covers
+   gw_region, channel_model, radius, interference, tx_jitter and epsilon.
+2. ⚠️ **`ns3/sensitivity.py` recorded a false provenance**: it hardcoded `ns3_version = "3.41"`
+   while calling `ns3_root()`, which resolves to the pinned **3.48** tree. The metadata contradicted
+   the binary that produced the numbers. Now read from the tree in use. Its `--seeds` default was
+   also still 3.
+3. ⚠️ **`lora_phase_artifact_30seed.csv` cites `expectations_preregistered=scratchpad/C1_EXPECTATIONS.md`,
+   which is not in the repo.** The artifact claims pre-registered expectations and the evidence for
+   that claim is missing — it lived in an agent scratchpad that is gone. The claim cannot be
+   verified and should not be relied on until the expectations are re-stated in a committed file.
+
+### The 802.11 geometry sensitivity was robust
+
+`ns3_sensitivity.csv` re-run at 30 seeds moved by at most **2.93 pp** (nakagami1: +10.34 % →
++13.27 %) and under 1 pp for four of six scenarios. Every qualitative conclusion holds. Reported
+because a null re-derivation is evidence too — it is what tells us the sampling problem was specific
+to the LoRa threshold crossings rather than general to the project.
+
+### S8 closed
+
+`ns3/run_lora_phase_artifact.py` (`make sim-lora-phase-artifact`) now generates both Direction C
+artifacts, reconstructed from their own `design=` headers. ⚠️ Re-running will **not** reproduce the
+committed files bit-for-bit — those predate the generator and used a different RNG realisation.
+Compare distributions, not rows.

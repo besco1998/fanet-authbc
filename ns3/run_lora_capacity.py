@@ -203,8 +203,15 @@ def main() -> None:
             "n_max_is_knife_edge": int(crossing.is_knife_edge),
             "n_max_strict_criterion": n_max_strict,
             "config_hash": provenance.config_hash(
+                # ⚠️ Must include EVERY parameter that distinguishes a variant run. It used to
+                # cover only {dr, nodes, seeds, t, payload}, so lora_capacity_shadow500.csv,
+                # _shadow1000.csv and _repro.csv all carried the SAME hash despite different
+                # radii and channel models — a hash that cannot tell its own runs apart.
                 {"dr": args.data_rate, "nodes": args.nodes, "seeds": args.seeds,
-                 "t": args.sim_time, "payload": payload})}
+                 "t": args.sim_time, "payload": payload,
+                 "gw_region": args.gw_region, "channel_model": args.channel_model,
+                 "radius": args.radius, "interference": args.interference,
+                 "tx_jitter": args.tx_jitter, "epsilon": args.epsilon})}
     for k, v in meta.items():
         buf.write(f"# {k}={v}\n")
     w = csv.DictWriter(buf, fieldnames=list(out_rows[0]))

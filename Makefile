@@ -84,6 +84,9 @@ sim-ns3:  ## [P6] build authbc-sat + 2-node both-modes smoke -> results/raw/ns3_
 	PY=$(BIN)/python bash ns3/sim_ns3.sh
 sim-lora-capacity:  ## [D2] LoRa multi-node capacity envelope -> results/raw/lora_capacity.csv
 	$(BIN)/python ns3/run_lora_capacity.py
+sim-lora-phase-artifact:  ## [S8/DirC] regenerate the frozen-phase artifact sweep (F32/F33)
+	$(BIN)/python ns3/run_lora_phase_artifact.py --preset aloha
+	$(BIN)/python ns3/run_lora_phase_artifact.py --preset eu
 exp-sensitivity-p:  ## [O2] does the co-design selection depend on p? -> results/raw/sensitivity_p.csv
 	$(BIN)/python analysis/sensitivity_p.py
 verify-rng-isolation:  ## [F37] assert config axes do not displace sender RNG streams

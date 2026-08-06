@@ -65,7 +65,8 @@ def _run(label: str, args: str, n: int, seeds: int, frame: int, sim_t: float,
 def main() -> None:
     ap = argparse.ArgumentParser(description="NS-3 deployment-geometry sensitivity")
     ap.add_argument("--nNodes", type=int, default=20)
-    ap.add_argument("--seeds", type=int, default=3)
+    # 30 is the project floor since F30: three seeds moved four headline numbers.
+    ap.add_argument("--seeds", type=int, default=30)
     ap.add_argument("--frameSize", type=int, default=1400)
     ap.add_argument("--simTime", type=float, default=10.0)
     args = ap.parse_args()
@@ -98,7 +99,11 @@ def main() -> None:
     RESULTS.mkdir(parents=True, exist_ok=True)
     cfg = {"scenarios": [s for s, _ in SCENARIOS], "N": args.nNodes, "seeds": args.seeds,
            "frameSize": args.frameSize, "simTime": args.simTime}
-    meta = {**provenance.env_block(), "run": "ns3_sensitivity", "ns3_version": "3.41",
+    meta = {**provenance.env_block(), "run": "ns3_sensitivity",
+            # Was hardcoded to "3.41" while the code ran ns3_root() -- the pinned tree is
+            # 3.48, so the recorded provenance contradicted the binary that produced the
+            # numbers. Read it from the tree in use instead of asserting it.
+            "ns3_version": NS3.name.replace("ns-", ""),
             "config_hash": provenance.config_hash(cfg)}
     path = RESULTS / "ns3_sensitivity.csv"
     with path.open("w", newline="") as fh:
