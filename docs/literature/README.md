@@ -2,7 +2,7 @@
 
 *Every source consulted for AUTHBC, with **why it matters to this thesis** stated explicitly. A
 citation with no stated role is a citation nobody will check. PDFs are stored beside this file where
-licensing allows. **20 PDFs; every source cited in the paper is held and has been read.** The one
+licensing allows. **25 PDFs; every source cited in the paper is held and has been read.** ⚠️ The header said *20* until 2026-08-07 while 25 sat on disk, and **five held PDFs had no register entry at all** despite the promise above — they are added at the end of this file. A register that silently omits a fifth of its corpus is not a register. The one
 exception is Gündoğan et al. (ACM DL only) — its DOI is recorded instead. See
 [`A3_CITATION_VERIFICATION.md`](A3_CITATION_VERIFICATION.md) for how each citation was checked.*
 
@@ -193,3 +193,53 @@ at N = 8, and 0.253 vs 0.368 at N = 50. Above the curve at low load (capture wor
 load (the single demodulator). That is a coherent signature of exactly the configuration described
 above.
 
+
+
+---
+
+## Added 2026-08-07 — five sources that were held but unregistered
+
+⚠️ These PDFs were in `docs/literature/` with **no entry here**, contradicting this file's opening
+promise. Recorded now with their role, and with what we can and cannot claim from each.
+
+### Durand & Booysen 2025 — *Performance Evaluation of a Mesh-Topology LoRa Network*
+`durand2025_loramesh_ns3.pdf` · Sensors 25(5):1602 · **USED**
+Was filed as `..._TOREAD.pdf` and **read on 2026-08-07**. An ns-3 LoRaMesh model; PDR for distant
+nodes rises 40.2 % → 73.78 %, first hop 96.9 %. Cited in the LoRa topology caveat for its plain
+statement that *"there is currently no standardised and commercialised multi-hop LoRa-based
+network"*, which supports our single-hop scope.
+⚠️ **It is also a Direction C data point.** A keyword sweep for seed / repetition / run count /
+confidence interval / standard deviation over the whole paper returns **zero hits**: a 2025 ns-3
+LoRa simulation study reporting no replication at all. That is the sixth paper checked and it fits
+the pattern F32/F33 describe.
+
+### Chen (Abel C. H.) 2023 — *Evaluation and Analysis of Standard Security Technology in V2X Communication: Exploring ECQV Implicit Certificate Cracking*
+`arxiv2309.15340_ecqv_implicit_cert_v2x.pdf` · arXiv:2309.15340 · **NOT CITED — cannot be read**
+⚠️ **The full text is in Chinese.** The filename is accurate (verified against the arXiv record);
+what is missing is our ability to read it, so it is **not cited** — the standard in this register is
+that a cited source has been read, and an English abstract is not the paper.
+**It nonetheless marks a real gap.** Its abstract says it *"analyzes the length of uncompressed
+elliptic curve points, compressed elliptic curve points, explicit certificates, and implicit
+certificates"* — and our F34 certificate accounting charges an **explicit** 162 B ECDSA certificate
+every fifth frame. **Implicit (ECQV) certificates are the smaller alternative we never priced.**
+Recorded as open item S10.
+
+### Sobati-Moghadam 2025 — *Predictive-CSM: Lightweight Fragment Security for 6LoWPAN IoT Networks*
+`arxiv2506.01767_6lowpan_fragment_security.pdf` · arXiv:2506.01767 · **USED / POSITIONING**
+Cited in the PQ projection: once a signature no longer fits one frame, fragmentation becomes a
+security surface in its own right, not merely a byte-accounting change.
+
+### Bhatt, Penumatsa & Kumar 2025 — *Hybrid MAC Protocol with Integrated Multi-Layered Security for Resource-Constrained UAV Swarm Communications*
+`arxiv2510.10236_uav_swarm_hybrid_mac.pdf` · arXiv:2510.10236 · **USED / POSITIONING**
+Current NS-3 UAV-swarm practice: 20–100 nodes, 400 × 400 × 1000 m, Random Waypoint, Nakagami,
+802.11ah. Also the anchor in `MOBILITY_SURVEY.md` for RWP being standard practice.
+⚠️ It states node count, area, path loss, PHY, MAC and energy — and **never states the RWP speed
+range or pause time**, the two parameters that define what its mobility model did.
+
+### Abrardo & Pozzebon 2019 — *A Multi-Hop LoRa Linear Sensor Network … Medieval Aqueducts in Siena*
+`branch2019_multihop_lora_linear.pdf` · Sensors 19(2):402 · **USED / POSITIONING**
+⚠️ **The filename is wrong** — it says `branch2019` but the authors are Abrardo & Pozzebon. The
+bib key is `abrardo2019multihoplora`; the file is left under its original name so existing links do
+not break, and the mismatch is recorded here rather than hidden.
+Cited beside Jiang et al. as a concrete multi-hop LoRa deployment that still keeps a sink-directed
+data flow.

@@ -2228,3 +2228,45 @@ evidence, which is the substance that matters.
 
 Any future Direction C run must commit its expectations **before** executing. Law 6 already requires
 stating the expected value in advance; what was missing was a committed place to put it.
+
+---
+
+## F41 — reading the one unread source produced a finding, not a citation (2026-08-07)
+
+`sensors2025_mesh_lora_performance_TOREAD.pdf` had sat in `docs/literature/` unread. Reading it
+(Durand & Booysen, *Sensors* 25(5):1602 — an ns-3 LoRaMesh model) yielded three things:
+
+1. **A citation that was earned.** Its statement that *"there is currently no standardised and
+   commercialised multi-hop LoRa-based network"* directly supports our single-hop scope, and sits
+   beside the mesh reviews already cited.
+2. ⚠️ **A sixth Direction C data point.** A keyword sweep of the entire paper for
+   seed / repetition / run count / confidence interval / standard deviation / variance returns
+   **zero hits**. A 2025 ns-3 LoRa simulation study reports *no replication information at all* —
+   the pattern F32/F33 describe, now observed in a paper we did not choose for that purpose.
+3. The file is renamed `durand2025_loramesh_ns3.pdf`; "TOREAD" in a filename is a to-do, not a
+   status, and it survived for weeks.
+
+### ⚠️ The register was missing a fifth of its own corpus
+
+`docs/literature/README.md` opens with *"Every source consulted for AUTHBC, with why it matters
+stated explicitly"* and its header claimed **20 PDFs**. There were **25 on disk, and five had no
+entry at all**. All five are now recorded with roles, along with two filename defects that were
+found while doing it: `branch2019_multihop_lora_linear.pdf` is actually **Abrardo & Pozzebon**, and
+the TOREAD file above. Both are recorded rather than silently renamed, because a link that already
+points at the old name should still resolve.
+
+### ⚠️ S10 — a gap the unreadable source exposed
+
+arXiv:2309.15340 (held) is *"…Exploring ECQV Implicit Certificate Cracking"* by Abel C. H. Chen. The
+filename is accurate — verified against the arXiv record, correcting an earlier characterisation of
+it as mislabeled. **The full text is in Chinese**, so it is not cited: an English abstract is not
+the paper, and this register's standard is that cited sources have been read.
+
+But its abstract names exactly what we skipped: it *"analyzes the length of … explicit certificates,
+and implicit certificates"*. **F34 charges an explicit 162 B ECDSA certificate and never considers
+the implicit (ECQV) alternative**, which is the smaller one and is standard in IEEE 1609.2.
+
+⚠️ The direction of the error is worth stating: charging the **larger** certificate is conservative
+for us and **harsher on the CLAS comparison**, whose entire advertised advantage is carrying no
+certificate. So the omission cuts against our own favour — it weakens our CLAS position rather than
+flattering it, and is safe to leave stated as an upper bound while S10 is open.
