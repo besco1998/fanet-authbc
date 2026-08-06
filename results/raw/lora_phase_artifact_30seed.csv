@@ -4,7 +4,15 @@
 # design=N in {5,20,100} x tx_jitter in {0,1.0} s x 30 seeds; DR5, 218 B, appPeriod 36.378 s,
 #        3600 s, aloha preset, ideal channel, radius 1000 m
 # stats=Levene (variance, robust to the bimodality) + Mann-Whitney U (location, non-parametric)
-# expectations_preregistered=scratchpad/C1_EXPECTATIONS.md
+# expectations=⚠️ CLAIM WITHDRAWN 2026-08-06 (audit S9). This header previously read
+#              `expectations_preregistered=scratchpad/C1_EXPECTATIONS.md`. That file is NOT
+#              in the repository -- it lived in an agent scratchpad that no longer exists --
+#              so the claim of pre-registered expectations cannot be verified by anyone,
+#              including its author. It is withdrawn rather than reconstructed: writing an
+#              expectations file now, after the results are known, would manufacture a
+#              pre-registration, which is worse than having none.
+#              Treat F32/F33 as ordinary (not pre-registered) analyses. Any FUTURE run should
+#              commit its expectations BEFORE executing -- see docs/prompts/T_TEMPLATES.md.
 n_devices,tx_jitter_s,seed,delivered_frac
 5,0,1,1
 5,0,2,1

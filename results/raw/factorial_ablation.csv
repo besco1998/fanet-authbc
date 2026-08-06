@@ -1,0 +1,28 @@
+# python=3.12.3
+# platform=Linux-6.6.114.1-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=factorial_ablation
+# config_hash=8d8a8cede28184aa
+# Tier-2 item 4: is the co-design claim an ABLATION result or only a decomposition?
+# Rows with `term` are Yates contrasts; interactions are the terms containing ' x '.
+encoding,placement,batch,axes_at_codesign,bytes_per_rec,term,effect_bytes
+json,A,1,0,299.0853,,
+json,A,4,1,266.0853,,
+json,B,1,1,299.0853,,
+json,B,4,2,218.0853,,
+delta,A,1,1,152.9982,,
+delta,A,4,2,119.9982,,
+delta,B,1,2,152.9982,,
+delta,B,4,3,71.9982,,
+,,,,,encoding,-146.0871
+,,,,,placement,-24.0
+,,,,,batching,-57.0
+,,,,,encoding x placement,-0.0
+,,,,,encoding x batching,-0.0
+,,,,,placement x batching,-24.0
+,,,,,encoding x placement x batching,-0.0

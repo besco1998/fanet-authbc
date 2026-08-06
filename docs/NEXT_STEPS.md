@@ -27,22 +27,36 @@ Direction C proceeds as a separate short paper.
 
 ## Everything in Tier 1 is DONE. What actually remains
 
-### The one substantive scientific gap
+### ✅ Done 2026-08-06 — ablation, PQC, S9, references
 
-**Factorial ablation over the four axes — 2 days.** The paper's central claim is that the axes
-**couple** ("co-design"). The evidence offered is a **decomposition** (79.2 % placement×batching,
-20.8 % encoding), which is a different thing: a decomposition attributes a total, an ablation shows
-that removing one axis degrades what the others deliver. ⚠️ **If the axes turn out to be separable,
-"co-design" is overclaimed** — and that is the question a reviewer will ask. The optimizer can be
-run with each axis pinned, so the machinery already exists.
+* **Factorial ablation (F39).** The four-axis coupling claim was **overstated**. Placement×batching
+  couple *exactly* (`g_a(1−1/b)`, zero at b=1); **encoding is perfectly separable** (every
+  interaction exactly 0); scheme is byte-degenerate. The apparent encoding coupling was a
+  **ratio-scale artifact** — the absolute saving is 81.0 B for every encoding. Abstract, intro and
+  Related Work corrected; a new Results paragraph states it. Nothing numeric moved.
+* **PQC projection.** `make exp-pqc` — ML-DSA costs 9.2×, SPHINCS+ 28.1× per record, and the
+  binding problem is that **batching cannot rescue it**: freshness caps b at 5, and an ML-DSA
+  signature plus header (2464 B) **exceeds the 1500 B MTU on its own**. Projection only; the prior
+  art is cited and nothing is claimed.
+* **S9 resolved by WITHDRAWING the claim (F40)** — deliberately not reconstructed.
+* **References 29 → 39 rendered.** ⚠️ **Short of the 45–60 target, and stopped there on purpose:**
+  39 is every source held in `docs/literature/` that has been read. Two held PDFs were excluded —
+  `arxiv2309.15340` is a **Chinese-language paper we cannot read**, and
+  `sensors2025_mesh_lora_performance` is still marked `TOREAD`. Reaching 45–60 needs a genuine
+  sourcing pass: find, download, **read**, then cite. Padding the list would be the same failure as
+  the stale numbers this audit spent its time removing.
+
+### What remains
+
+**References 39 → 45–60** is now the main open item, and it is a *reading* task, not a writing one.
 
 ### Writing, not experiments
 
 | # | work | why | effort |
 |---|---|---|---|
-| 6 | PQC extension section | foreseeable question; **cite** the 5G/V2X prior art and claim nothing | 1 d |
-| 7 | References 31 → 45–60 | thin for a Transactions-class venue | 1 wk |
-| **S9** | Re-state the Direction C pre-registration, or drop the claim | the artifact cites `scratchpad/C1_EXPECTATIONS.md`, **which is not in the repo** — the claim of pre-registered expectations cannot be verified | 1 h |
+| ~~6~~ | ~~PQC extension section~~ | **DONE** — Limitations §, backed by `results/raw/pqc_projection.csv` | — |
+| 7 | References **39** → 45–60 | 29→39 done from held+read sources; the rest needs sourcing **and reading** | 1 wk |
+| ~~S9~~ | ~~Re-state or drop the pre-registration claim~~ | **DONE (F40)** — withdrawn, not reconstructed | — |
 
 ### Optional
 

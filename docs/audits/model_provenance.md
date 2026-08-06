@@ -2142,3 +2142,89 @@ But six numbers were wrong, and the "from 5 to 8" sentence had been stale since 
 artifacts, reconstructed from their own `design=` headers. ⚠️ Re-running will **not** reproduce the
 committed files bit-for-bit — those predate the generator and used a different RNG realisation.
 Compare distributions, not rows.
+
+---
+
+## F39 — the factorial ablation: the co-design claim was overstated, and is now precise (2026-08-06)
+
+**The gap.** The paper's thesis was that all four knobs "are coupled and must be co-optimized" and
+"are not separable". The evidence offered was a **decomposition** (79.2 % placement×batching,
+20.8 % encoding). A decomposition attributes a total and is possible even when the axes are
+perfectly independent, so it cannot establish coupling. Only interaction terms can.
+
+`analysis/factorial_ablation.py` (`make exp-ablation`), full 2³ factorial on bytes/record:
+
+| term | effect (B/rec) | |
+|---|---|---|
+| encoding | **−146.09** | largest main effect |
+| batching | −57.00 | |
+| placement | −24.00 | |
+| encoding × placement | **−0.0000** | |
+| encoding × batching | **−0.0000** | |
+| **placement × batching** | **−24.00** | equal to placement's own main effect |
+| encoding × placement × batching | **−0.0000** | |
+
+### What it shows
+
+1. **Placement and batching genuinely couple, exactly.** The placement benefit is the closed form
+   **`g_a(1 − 1/b)`**, so it is **identically zero at b = 1**: placements A and B are byte-identical
+   on a single-record frame. Measured, A→B saves **0.000 B at b=1** and **48.000 B at b=4**
+   (= 64 × 0.75). The interaction term equalling the main effect is the signature of a *pure*
+   interaction — placement has essentially no standalone effect to speak of.
+   ⚠️ Note the shape: `1 − 1/b` is the same expression the status board warns about for the bare
+   75 %. **The term that makes the headline look impressive and the term that couples placement to
+   batching are the same algebra.**
+2. ⚠️ **Encoding is perfectly separable.** Every interaction involving it is *exactly* zero, and
+   structurally so: `s` enters `s + (H_f + g_a)/b` additively, so it cannot interact with anything.
+3. **Scheme is byte-degenerate at the operating point** (Ed25519 and ECDSA-P256 are both 64 B). BLS
+   at 96 B would cost +8 B/record at b=4 — and batching mutes even that.
+
+### ⚠️ A claim in Related Work was a scale artifact
+
+The paper said *"encoding is coupled to authentication: a smaller payload raises the auth fraction,
+which increases the value of batching."* The absolute saving from batching is **81.000 B for JSON,
+CBOR and delta alike** (spread 4 × 10⁻¹⁴ B); only the *percentage* differs (27.1 % vs 52.9 %,
+a 1.95× ratio) because the denominator shrinks. **Two effects that are additive on an absolute scale
+always appear to interact once expressed as ratios.** That is arithmetic, not evidence of coupling.
+
+### ⚠️ The paper contradicted itself — again — and the results section was the correct half
+
+§Results already derived the invariance: *"the record size does not appear, so the auth-byte
+reduction … is invariant to header size, signature size, encoding and scheme."* The abstract and
+introduction nonetheless claimed all four knobs were coupled and "not separable". This is the third
+internal contradiction the audit has found (after `tab:envelope` and the "5 to 8" sentence), and the
+same mechanism each time: **prose that no test compares against the model.**
+
+**Corrected** in the abstract, the introduction's thesis statement and Related Work, and a new
+Results paragraph states the ablation. The revised claim is *stronger* because it is falsifiable:
+one genuine two-axis interaction, one additive contributor, one byte-neutral axis.
+
+**Nothing else moves.** The 75 % auth-byte cut, the −58.68 % total, the decomposition and the
+feasibility envelope are all unchanged — the ablation reinterprets them, it does not revise them.
+Pinned by `tests/test_factorial_ablation.py` (19 tests), which asserts the closed forms rather than
+the numbers, so the zeros cannot drift into small non-zeros unnoticed.
+
+---
+
+## F40 — S9: a pre-registration claim withdrawn rather than reconstructed (2026-08-06)
+
+`results/raw/lora_phase_artifact_30seed.csv` carried the header field
+`expectations_preregistered=scratchpad/C1_EXPECTATIONS.md`. **That file is not in the repository.**
+It lived in an agent session scratchpad that no longer exists, so the claim that F32/F33's
+expectations were stated in advance cannot be verified by anyone — including its author.
+
+**Two ways to resolve it, and only one is honest.** The tempting fix is to write the expectations
+file now, from the reasoning recorded in F32. ⚠️ **That would manufacture a pre-registration.** A
+pre-registration's entire value is that it was fixed *before* the outcome was known; reconstructing
+one afterwards from a document that already describes the outcome produces something that looks like
+evidence and is not. It is worse than having no pre-registration at all, because it is unfalsifiable
+from the outside.
+
+**The claim is therefore withdrawn.** The header now records what it used to say, that the file is
+missing, and why it was not reconstructed. **F32 and F33 stand as ordinary analyses** — their
+statistics (Levene, Mann-Whitney U) and their conclusions are unaffected; what is removed is an
+unearned methodological claim on top of them. F33 already narrowed the mean-bias half of F32 on
+evidence, which is the substance that matters.
+
+Any future Direction C run must commit its expectations **before** executing. Law 6 already requires
+stating the expected value in advance; what was missing was a committed place to put it.

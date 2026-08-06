@@ -87,6 +87,10 @@ sim-lora-capacity:  ## [D2] LoRa multi-node capacity envelope -> results/raw/lor
 sim-lora-phase-artifact:  ## [S8/DirC] regenerate the frozen-phase artifact sweep (F32/F33)
 	$(BIN)/python ns3/run_lora_phase_artifact.py --preset aloha
 	$(BIN)/python ns3/run_lora_phase_artifact.py --preset eu
+exp-pqc:  ## [Tier2-6] PQ signature sizes through our byte model -> results/raw/pqc_projection.csv
+	$(BIN)/python analysis/pqc_projection.py
+exp-ablation:  ## [Tier2-4] factorial ablation: do the four axes couple? -> results/raw/factorial_ablation.csv
+	$(BIN)/python analysis/factorial_ablation.py
 exp-sensitivity-p:  ## [O2] does the co-design selection depend on p? -> results/raw/sensitivity_p.csv
 	$(BIN)/python analysis/sensitivity_p.py
 verify-rng-isolation:  ## [F37] assert config axes do not displace sender RNG streams

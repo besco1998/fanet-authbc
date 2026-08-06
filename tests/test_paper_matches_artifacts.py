@@ -118,3 +118,75 @@ class TestTheClaimsMadeAboutTheTable:
                             "n_max_v95_strict_lo", "n_max_v95_strict_hi")]
         assert min(ratios) > 1.9, "the co-design advantage must hold under every criterion"
         assert max(ratios) < 3.3
+
+
+# --------------------------------------------------------------------------- LoRa arm (F38/F39)
+LORA = {
+    "aloha": REPO / "results" / "raw" / "lora_capacity_ci.csv",
+    "eu": REPO / "results" / "raw" / "lora_capacity_eu.csv",
+    "goursaud": REPO / "results" / "raw" / "lora_capacity_goursaud.csv",
+}
+
+
+def _lora(arm: str) -> dict[int, dict[str, str]]:
+    rows = csv.DictReader([ln for ln in LORA[arm].read_text().splitlines()
+                           if not ln.startswith("#")])
+    return {int(r["n_devices"]): r for r in rows}
+
+
+def _d(arm: str, n: int) -> float:
+    return float(_lora(arm)[n]["delivered_frac"])
+
+
+class TestTheLoRaPassagesMatchTheArtifacts:
+    """⚠️ These exist because three separate LoRa numbers went stale in the paper unnoticed.
+
+    "N_max moves only from 5 to 8" survived F30 changing the baseline 5 -> 3, and the capture and
+    gateway figures survived F38 re-running their artifacts at 30 seeds. Nothing compared the paper
+    to the CSVs for this arm, so nothing caught any of it. Now something does.
+    """
+
+    def test_capture_gain_figures(self):
+        tex = TEX.read_text()
+        pts = (_d("goursaud", 8) - _d("aloha", 8)) * 100
+        ratio = _d("goursaud", 50) / _d("aloha", 50)
+        assert rf"raises delivery by ${pts:.1f}$ points at $N{{=}}8$" in tex, (
+            f"paper's capture gain at N=8 drifted; artifact says {pts:+.1f} pts"
+        )
+        assert rf"by ${ratio:.2f}\times$ at $N{{=}}50$" in tex, (
+            f"paper's capture ratio at N=50 drifted; artifact says {ratio:.2f}x"
+        )
+
+    def test_gateway_versus_peer_figures(self):
+        tex = TEX.read_text()
+        ratio = _d("eu", 50) / _d("aloha", 50)
+        assert rf"${ratio:.2f}\times$ at $N{{=}}50$" in tex
+        assert rf"(${_d('aloha', 50):.4f} \rightarrow {_d('eu', 50):.4f}$)" in tex
+        assert rf"still ${_d('eu', 100):.4f}$ at $N{{=}}100$" in tex
+
+    def test_the_eu_crossing_values(self):
+        tex = TEX.read_text()
+        assert rf"$N{{=}}8$ with ${_d('eu', 8):.4f}$" in tex
+        assert rf"fails at $N{{=}}10$ with ${_d('eu', 10):.4f}$" in tex
+
+    def test_the_periodic_escape_cross_check_quotes_the_measured_value(self):
+        assert rf"against ${_d('aloha', 8):.3f}$ measured" in TEX.read_text()
+
+    def test_the_superseded_n_max_baseline_of_5_is_gone(self):
+        """F30 moved the ALOHA N_max 5 -> 3; the 'from 5 to 8' sentence outlived it by weeks."""
+        tex = TEX.read_text()
+        assert r"moves only from 5 to 8" not in tex, "the superseded 'from 5 to 8' sentence is back"
+        assert r"moves only from 3 to 8" in tex
+
+
+class TestTheAblationClaimsMatchTheModel:
+    """F39: the abstract and intro claimed all four axes couple; the ablation says two do."""
+
+    def test_the_paper_no_longer_claims_the_knobs_are_inseparable(self):
+        tex = TEX.read_text()
+        assert "these knobs are not separable" not in tex, (
+            "the falsified 'not separable' thesis statement is back -- encoding is exactly additive"
+        )
+
+    def test_the_placement_closed_form_is_stated(self):
+        assert r"g_a(1{-}1/b)" in TEX.read_text() or r"g_a(1-1/b)" in TEX.read_text()

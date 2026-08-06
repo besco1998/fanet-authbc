@@ -1,0 +1,19 @@
+# python=3.12.3
+# platform=Linux-6.6.114.1-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=pqc_projection
+# config_hash=353068173d64bdfc
+# Tier-2 item 6: PQ signature sizes substituted into OUR byte model. Projection
+# only -- no novelty claimed; the prior art is NDSS 2024 and arXiv 2510.23457.
+# ⚠️ Falcon's SIGNATURE size is not quoted in either held source (they give the
+#    certificate); it brackets the range and must not be cited as sourced.
+scheme,sig_bytes,source,bytes_per_rec_b4,ratio_vs_ed25519,frame_bytes_b4,frames_needed,fits_one_mtu_at_any_b,batch_for_ed25519_parity,fill_time_s_at_parity,fill_vs_d_max
+Ed25519 (current),64.0,"docs/06 §4 - raw r||s, measured",71.998,1.0,288.0,1,1,4.0,0.08,0.8
+Falcon-512,666.0,NDSS 2024 Tab. III gives cert 858 B / beta=2; sig size NOT quoted there -- see note,222.498,3.09,890.0,1,1,26.3,0.526,5.3
+ML-DSA / Dilithium2,2420.0,"arXiv 2510.23457, quoted",660.998,9.181,2644.0,2,0,91.3,1.825,18.3
+SPHINCS+-128s,7856.0,"arXiv 2510.23457, quoted",2019.998,28.056,8080.0,6,0,292.6,5.852,58.5

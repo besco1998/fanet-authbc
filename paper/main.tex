@@ -24,8 +24,10 @@ Flying ad-hoc networks (FANETs) stream tiny telemetry records that must be indiv
 and hash-chained into a tamper-evident ledger. Because a cryptographic signature (64--96\,B) rivals or
 exceeds the payload (45--190\,B), naive per-record signing wastes airtime, energy, and goodput on a
 shared, lossy 802.11 channel. We argue that four design knobs---record \emph{encoding}, authentication
-\emph{placement}, signature \emph{scheme}, and \emph{batch} size---are coupled and must be
-\emph{co-optimized}. We formalize this with five results (overhead dominance, batching amplification, a
+\emph{placement}, signature \emph{scheme}, and \emph{batch} size---must be chosen jointly, and a
+factorial ablation identifies which of them actually interact: placement and batching are
+inseparable (placement saves exactly $g_a(1{-}1/b)$, hence \emph{nothing} at $b{=}1$), encoding is
+additive, and the scheme axis is byte-neutral at the operating point. We formalize this with five results (overhead dominance, batching amplification, a
 loss-robustness frontier, a power-independent scheme crossover, and the co-design optimum), and we
 distinguish these from two boundaries that are \emph{applications of established results rather than
 new ones}: the regime in which batching amplification ceases to apply, which is the standard
@@ -91,8 +93,11 @@ authentication overhead rival or exceed the payload, and on a shared, contended,
 wasted airtime directly costs goodput, energy, and freshness. How much overhead one actually pays
 depends on four \emph{coupled} choices: the record \emph{encoding} $e$ (setting the size $s$), the
 authentication \emph{placement} (inline, self-batch, relay-aggregate, or block-level), the signature
-\emph{scheme} $\sigma$, and the \emph{batch} size $b$. Our thesis is that these knobs are not separable
-and that co-optimizing them jointly beats tuning any one. We make this precise (Sec.~\ref{sec:theory}),
+\emph{scheme} $\sigma$, and the \emph{batch} size $b$. Our thesis is that tuning any one in isolation
+leaves saving on the table, and that the coupling is concentrated in one specific pair: a factorial
+ablation (Sec.~\ref{sec:results}) finds placement and batching interact exactly---placement is worth
+nothing without batching---while encoding contributes additively and the scheme axis is byte-neutral
+here. Calling all four ``inseparable'' would overstate what the model supports. We make this precise (Sec.~\ref{sec:theory}),
 implement it (Sec.~\ref{sec:impl}), and test the falsifiable headline of Sec.~\ref{sec:results}.
 
 \section{Related Work and Positioning}
@@ -120,7 +125,9 @@ authentication \emph{placement}, co-designs it with encoding and scheme, and add
 loss-robustness frontier that pure aggregation ignores.
 
 \textbf{(c) Blockchain/hash-chained ledgers for UAV/IoT provenance.} Nakamoto's hash
-chain~\cite{nakamoto2008} makes a log tamper-evident; UAV-blockchain systems, surveyed
+chain~\cite{nakamoto2008} makes a log tamper-evident. UAV swarm communication architectures and
+their routing assumptions are reviewed in~\cite{chen2020uavswarm}, and recent NS-3 swarm studies
+combine a hybrid MAC with per-layer security~\cite{bhatt2025uavswarmmac}; UAV-blockchain systems, surveyed
 in~\cite{mehta2020blockchainuav},
 place telemetry or attestations on such a chain, gaining integrity at per-record overhead cost. AUTHBC
 targets exactly that substrate byte/energy cost and is agnostic to the consensus layer.
@@ -131,8 +138,10 @@ established practice, most prominently in Gorilla~\cite{pelkonen2015gorilla}, wh
 delta-of-delta timestamps and XOR-folded values for a $10\times$ reduction. Our variant differs in
 one respect that the link forces: Gorilla is a database and can chain deltas indefinitely, whereas a
 lossy broadcast link makes an unbounded chain fragile, so we re-anchor on a keyframe every $K$
-records and pay the resulting size for loss independence. AUTHBC measures these head-to-head and shows encoding is coupled to
-authentication: a smaller payload raises the auth fraction, which \emph{increases} the value of batching.
+records and pay the resulting size for loss independence. AUTHBC measures these head-to-head. A smaller payload raises the auth
+\emph{fraction}, so batching returns a larger \emph{percentage} of the frame; but the absolute saving
+is $(H_f{+}g_a)(1{-}1/b)$, identical for every encoding, so that is a ratio-scale effect and not an
+interaction.
 
 \textbf{(e) Analytical 802.11 modelling.} Bianchi~\cite{bianchi2000} models the DCF as a per-station
 Markov chain whose fixed point yields closed-form saturation throughput. AUTHBC uses it as the airtime
@@ -460,7 +469,8 @@ different operating points give the same $b{=}4$ and the same $72.0$\,B/record: 
 TS~22.125~\cite{3gpp_ts22125} requires ${\geq}10$\,msg/s \emph{and} ${\leq}100$\,ms latency, which
 the first violates. \textbf{We adopt the compliant point $(50\,\text{Hz}, 100\,\text{ms})$ as
 primary.} It is not a contrived rate: $50$\,Hz is PX4's \texttt{MAVLINK\_MODE\_ONBOARD} companion
-stream rate, read from \texttt{mavlink\_main.cpp}. The byte result is unchanged; what it costs is
+stream rate, read from \texttt{mavlink\_main.cpp}~\cite{px4_mavlink_streams}; ArduPilot's
+defaults are vehicle-specific rather than a single rate~\cite{ardupilot_stream_rates}. The byte result is unchanged; what it costs is
 swarm size, $213 \to 100$ at the $V{\geq}0.95$ boundary and $103 \to 35$ at saturation. The relaxed
 point is retained in Table~\ref{tab:envelope} because a deployment outside the standard's scope may
 prefer it, and because reporting only the compliant point would hide the size of the trade.
@@ -482,6 +492,23 @@ to three decimals for all four encodings. The encoding axis is nonetheless load-
 $3\times$ on total bytes---but it acts on payload, contributing 20.8\% of the saving against
 placement and batching's 79.2\%. The scheme axis is byte-neutral here (Ed25519 and ECDSA are both
 64\,B) and is decided on energy and verification throughput instead (T4).
+
+\textbf{Ablation: which axes actually interact.} A decomposition attributes a total and is possible
+even when the axes are independent, so it cannot establish the co-design claim on its own. We
+therefore ran the full factorial on bytes/record. Every interaction involving \emph{encoding} is
+\textbf{exactly zero}---$s$ enters $s+(H_f{+}g_a)/b$ additively, so it cannot interact---while
+placement$\times$batching is $-24.0$\,B/rec, equal in magnitude to placement's own main effect. That
+equality is the signature of a pure interaction, and the closed form says why: the placement benefit
+is $g_a(1-1/b)$, which is \textbf{identically zero at $b{=}1$}. Placement A and B are byte-identical
+on a single-record frame; batching is what gives placement anything to amortize.
+
+\textbf{So the coupling is real but narrower than ``four coupled knobs'' suggests}, and we state it
+that way: one genuine two-axis interaction (placement$\times$batching), one additive contributor
+(encoding, $146$\,B/rec of the saving and the largest main effect), and one axis that does not move
+bytes at the operating point (scheme). The intuition that a smaller payload ``increases the value
+of batching'' holds only on the \emph{percentage} scale---the absolute saving is $81.0$\,B for JSON,
+CBOR and delta alike---and two effects that are additive on an absolute scale always appear to
+interact once expressed as ratios.
 
 \textbf{Which constraint binds is itself the result.} Ignoring freshness, the byte-optimal batch is
 $b{=}30$ at the MTU knee, cutting 96.7\%---but the oldest record in such a batch waits
@@ -596,7 +623,8 @@ precisely, because they bound the contribution rather than extend it.
 This section is \emph{analysis and simulation, not measurement}. No LoRa hardware was instrumented
 and no LoRa energy figure is reported: the only metered radio power in this work is a Wi-Fi figure,
 and reusing it would be fabrication. Every LoRa constant is transcribed from the SX1276 datasheet
-(Rev.~7, \S4.1.1.5/\S4.1.1.7) and LoRaWAN RP002-1.0.3 (Tables~8 and~13, EU868 duty cycle $<1\%$).
+(Rev.~7, \S4.1.1.5/\S4.1.1.7)~\cite{semtech_sx1276} and LoRaWAN RP002-1.0.3~\cite{lora_rp002}
+(Tables~8 and~13, EU868 duty cycle $<1\%$).
 
 \subsection{T6 excludes the four longest-range modes}
 With $H_f = 44$\,B and a 64\,B Ed25519 signature, Eq.~\eqref{eq:t6} partitions EU868
@@ -641,14 +669,16 @@ specification a star-of-stars with no peer-to-peer mode: a recent FANET survey n
 its lack of routing procedures''~\cite{paredes2023lorafanet}, and published peer-to-peer LoRa meshes
 are built by discarding the LoRaWAN MAC entirely, ``not relying on LoRaWAN\ldots without the use of
 gateways''~\cite{berto2021loramesh}. A LoRa FANET that was actually flown reports the same
-constraint --- ``LoRaWAN only supports star topology'' --- and, having built one, converges on a
+constraint --- ``LoRaWAN only supports star topology'' --- and hybrid LoRa/802.11s UAV meshes
+reach for a second radio for the same reason~\cite{davoli2021hybridlora}; having built one, it converges on a
 \emph{single channel} and on dedicated transmit and receive radios to work around
 half-duplex~\cite{zirak2021swarm}, which is the configuration we model. Nor is the gateway framing
 unrepresentative of the multi-hop literature: a review of mesh proposals for LoRa finds that even
 those pursuing flexible topologies retain ``a predominant nodes $\rightarrow$ gateway/sink data
 flow'', with ``fewer proposals'' targeting genuinely decentralized architectures, and lists
 ``network scalability with hundreds, or even thousands, of nodes'' among the challenges that remain
-open~\cite{centelles2021beyondstar}. Our scenario is therefore $N$ end devices reporting to one
+open~\cite{centelles2021beyondstar}; concrete multi-hop LoRa deployments keep the same
+sink-directed shape~\cite{abrardo2019multihoplora,jiang2020hybridlpwan}. Our scenario is therefore $N$ end devices reporting to one
 gateway, whereas the 802.11 arm is a genuine broadcast among peers. \textbf{The two arms bracket the
 design space rather than repeating one experiment at two data rates}, and the low-rate result should
 be read as the infrastructure-collected variant. What transfers
@@ -836,6 +866,29 @@ every deterministic frozen artifact from the current code and fails on any drift
 exact regression it was built for. No result is fabricated, no test skipped, no tolerance widened.
 
 \section{Limitations and Future Work}
+
+\textbf{Post-quantum signatures: a projection, not a contribution.} Practical PQ authentication for
+vehicular broadcast is already solved at NDSS level~\cite{ndss2024pqv2v} and for 5G
+broadcast~\cite{arxiv2510pqsib1}; we claim nothing there. But the substitution is mechanical in our
+model, so we report it rather than leave a foreseeable question unanswered. Taking sizes from those
+sources---ML-DSA/Dilithium2 at 2420\,B and SPHINCS+ at 7856\,B per signature---and holding the
+adopted operating point, bytes/record at $b{=}4$ move from $72.0$\,B (Ed25519) to $661.0$\,B
+($9.2\times$) and $2020.0$\,B ($28.1\times$).
+
+\textbf{The binding problem is not the ratio, it is that batching cannot rescue it.} Two of our own
+constraints collide. Freshness caps the batch at $b \leq \lfloor \Lambda D_{\max} \rfloor = 5$, so
+there is almost nothing to amortize a kilobyte-scale signature over: reaching Ed25519's $27$\,B/record
+of overhead would need $b{=}91$ for ML-DSA, a $1.83$\,s fill---$18\times$ the $100$\,ms deadline. And
+the MTU binds harder still: an ML-DSA signature plus the $44$\,B header is $2464$\,B, which
+\emph{exceeds the 1500\,B MTU on its own}, so placement B stops fitting in a single frame at
+\emph{any} batch size. That is precisely why~\cite{ndss2024pqv2v} needs a fragmentation design
+($\beta{=}4$ frames for Dilithium, $8$ for SPHINCS+ in their Table~III) rather than a larger batch.
+Fragmenting authenticated payloads is itself a security surface in constrained
+networks~\cite{sobati2025fragmentsec}, so the change is not only a byte-accounting one.
+The honest conclusion is that AUTHBC's amortization argument does not survive the transition
+unchanged: a PQ variant would be a different design, not a re-parameterisation, and the placement
+axis would have to be re-derived against fragmentation rather than against the MTU.
+
 Results are 802.11-only (a LoRa arm is future work). Energy is now measured on a Raspberry~Pi~4 with
 INA219 meters ($P_\mathrm{cpu}=0.634$\,W, $P_\mathrm{radio}=0.218$\,W---both nominal values were
 $3$--$5\times$ too high), and the byte-based headline is power-free either way. The energy model is
