@@ -2118,6 +2118,24 @@ have an effect under this collision model".
 because a null re-derivation is evidence too — it is what tells us the sampling problem was specific
 to the LoRa threshold crossings rather than general to the project.
 
+### ⚠️ The paper carried five stale numbers from this correction
+
+I initially reported that A2's figures lived only in the audit register. That was wrong — the paper
+quotes them, and the F38 re-derivation invalidated five passages, now corrected:
+
+| passage | was | now |
+|---|---|---|
+| capture gain | +3.3 pts at N=8, 1.36× at N=50 | **+2.7 pts, 1.29×** |
+| periodic-escape cross-check | 0.868 predicted vs **0.866** measured | vs **0.871** measured (agreement holds) |
+| gateway vs peer at N=50 | 2.68× (0.2532 → 0.6781) | **1.90×** (0.3755 → 0.7134) |
+| gateway at N=100 | 0.5308 | **0.5071** |
+| "N_max moves only from **5** to 8" | 5 | **3** — the ALOHA baseline moved at F30 and this sentence was never updated |
+| EU crossing | passes N=8 at 0.9958, fails N=10 at 0.9370 | **0.9526 / 0.9398**, now with the 95 % CI [5,8] stated |
+
+**The narrative survives every one of them** — capture helps but does not move `N_max`, the gateway
+improves delivery without moving the threshold, and the escape-probability cross-check still lands.
+But six numbers were wrong, and the "from 5 to 8" sentence had been stale since F30.
+
 ### S8 closed
 
 `ns3/run_lora_phase_artifact.py` (`make sim-lora-phase-artifact`) now generates both Direction C

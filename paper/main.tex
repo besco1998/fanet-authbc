@@ -684,10 +684,10 @@ because a single demodulation path rejects a second concurrent arrival outright 
 it the capture chance their measurements support. Our own configuration is deliberately the pessimistic one in a further respect: the interference
 matrix treats \emph{any} same-spreading-factor overlap as fatal, so there is no capture at all,
 where a real LoRa receiver recovers the stronger of two colliding frames. Enabling a 6\,dB capture
-threshold raises delivery by $3.3$ points at $N{=}8$ and by $1.36\times$ at $N{=}50$ without moving
+threshold raises delivery by $2.7$ points at $N{=}8$ and by $1.29\times$ at $N{=}50$ without moving
 $N_{\max}$. The small margin over the Poisson curve $e^{-2G}$ at low load is not capture but traffic
 regularity: sources are periodic rather than Poisson, for which the escape probability is
-$(1-2\tau/T)^{N-1} = 0.868$ at $N{=}8$ against $0.866$ measured.
+$(1-2\tau/T)^{N-1} = 0.868$ at $N{=}8$ against $0.871$ measured.
 
 \textbf{The result is also range-limited, and that limit binds before capacity does.} Our channel
 model attributes all loss to collisions, and this is not an option we simply left switched off:
@@ -751,10 +751,10 @@ The single-demodulator, single-channel provisioning above models a UAV peer. The
 question --- what if a ground gateway collected the ledger instead? --- is a configuration change,
 and we ran it: three channels and eight demodulation paths, the RP002 provisioning, with the same
 forced data rate. Delivery improves substantially and the improvement grows with load, reaching
-$2.68\times$ at $N{=}50$ ($0.2532 \rightarrow 0.6781$) and still $0.5308$ at $N{=}100$, which the
-peer configuration cannot reach at all. \textbf{Yet $N_{\max}$ moves only from 5 to 8.} The
+$1.90\times$ at $N{=}50$ ($0.3755 \rightarrow 0.7134$) and still $0.5071$ at $N{=}100$, which the
+peer configuration cannot reach at all. \textbf{Yet $N_{\max}$ moves only from 3 to 8} (95\% CI $[5,8]$; the bare value must not be quoted). The
 $V \geq 0.95$ criterion sits on a near-vertical part of the delivery curve --- the gateway passes at
-$N{=}8$ with $0.9958$ and fails at $N{=}10$ with $0.9370$ --- so a threefold reduction in offered
+$N{=}8$ with $0.9526$ and fails at $N{=}10$ with $0.9398$ --- so a threefold reduction in offered
 load per channel shifts the threshold barely at all. This is the same duality the 802.11 arm shows
 between saturation and the measured verifiability boundary: \emph{a capacity metric and a
 strict-reliability metric respond very differently to the same change}, and reporting either alone

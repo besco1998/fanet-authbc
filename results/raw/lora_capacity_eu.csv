@@ -11,7 +11,7 @@
 # n_max_ci95=[5,8]
 # n_max_is_knife_edge=1
 # n_max_strict_criterion=1
-# config_hash=68eddb76aa4343b0
+# config_hash=ed8efbb390b8f016
 n_devices,data_rate,batch,payload_bytes,app_period_s,sent_mean,delivered_frac,implied_p_loss,delivered_min,delivered_max,delivered_stdev,seeds_failing_v,seed_pass_frac,meets_v,meets_v_strict,seeds,lambda_rec_per_s,aggregate_rec_per_s
 1,5,6,218,36.378,97.5,1.0,0.0,1.0,1.0,0.0,0,1.0,1,1,30,0.16494,0.1649
 2,5,6,218,36.378,195.2,0.98805,0.01195,0.93299,1.0,0.02149,4,0.8667,1,0,30,0.16494,0.3299
@@ -23,3 +23,4 @@ n_devices,data_rate,batch,payload_bytes,app_period_s,sent_mean,delivered_frac,im
 20,5,6,218,36.378,1952.0,0.88259,0.11741,0.80943,0.92158,0.02573,30,0.0,0,0,30,0.16494,3.2987
 30,5,6,218,36.378,2928.1,0.82529,0.17471,0.75676,0.86232,0.01914,30,0.0,0,0,30,0.16494,4.9481
 50,5,6,218,36.378,4881.6,0.71339,0.28661,0.67172,0.7436,0.01939,30,0.0,0,0,30,0.16494,8.2468
+100,5,6,218,36.378,9763.1,0.5071,0.4929,0.47619,0.53525,0.01476,30,0.0,0,0,30,0.16494,16.4937
