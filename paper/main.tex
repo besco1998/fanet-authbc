@@ -1039,15 +1039,23 @@ does not.
 in their own results, attributing bimodal delivery to nodes that ``always transmit on a specific SF,
 time, and channel'', producing ``certain packet collisions being repeated for every transmission
 cycle''~\cite{durand2025loramesh}. What appears to be absent from the literature is any
-\emph{quantification} of the resulting dispersion. Of the \emph{five} ns-3 LoRa simulation studies
-now meeting our pre-registered inclusion criteria, four state no seed count, confidence interval or
-standard deviation that would let a reader detect it. \textbf{The fifth does}: Klimiashvili
-\emph{et al.} average every reported result over ``50 independent runs over channel realization and
-nodes' position''~\cite{klimiashvili2020loravswifi}. We report that as a count and not a
-percentage, because five papers cannot support one: the protocol targeted 56, the achieved $n$ is
-$5$, and a single counter-example moves the estimate from $0\%$ to $20\%$. What this supports is
-the weak claim --- that a reader of this literature frequently \emph{cannot} tell --- not a
-quantitative claim about how often. That is why every capacity figure in this
+\emph{quantification} of the resulting dispersion. Of the \emph{fourteen} ns-3 LoRa simulation studies
+meeting our pre-registered inclusion criteria, \textbf{twelve} state no seed count, confidence
+interval or standard deviation that would let a reader detect it. \textbf{Two do}, and both are
+counter-examples to our own hypothesis: Klimiashvili \emph{et al.} average over ``50 independent
+runs over channel realization and nodes'
+position''~\cite{klimiashvili2020loravswifi}, and Khan \emph{et al.} collect theirs ``from 100
+simulation runs''~\cite{reliableuplink2019}. At $14.3\%$ reporting, against a falsification
+threshold of $25\%$ fixed before the corpus existed, the hypothesis is supported --- but the
+achieved $n$ is $14$ where the protocol targeted $56$, and we report it as the achieved $n$.
+The shortfall is not neutral: retrieval succeeded on arXiv and failed on the paywalled venues,
+so the corpus is biased toward preprints, and whether that population reports better or worse is
+something these fourteen papers cannot say.
+
+Hand adjudication was not a formality. A purely mechanical sweep would have been wrong on three
+papers, most instructively by matching \texttt{seed} against ``Seed Studio'' --- a hardware
+vendor's name --- and scoring a paper as reporting replication on the strength of a component
+supplier. That is why every capacity figure in this
 paper is reported at 30 seeds with its distribution, and why a threshold crossing is given as an
 interval: at $N{=}3$ the mean clears $V{\geq}0.95$ while nine of thirty individual runs do not.
 

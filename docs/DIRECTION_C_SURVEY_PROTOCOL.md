@@ -97,3 +97,58 @@ is recorded in the CSV rather than left in someone's head.
   changes any *published* conclusion — only that a reader could not detect it from what is printed.
 * Nine papers are already swept (the pilot). They are retained in the corpus and **flagged as
   pilot**, since they were selected before this protocol was written.
+
+---
+
+# SWEEP LOG (appended 2026-08-08; nothing above this line was changed)
+
+*The pre-registered protocol is unchanged. This section records what the sweep actually did, so the
+sampling is auditable rather than asserted.*
+
+## Achieved n = 14 (target was 56)
+
+⚠️ **Reported as the achieved n, per §4.** The sweep stopped because the accessible open-access pool
+was exhausted, not because the pattern looked clear.
+
+**How papers were sought.** arXiv API, topic-only queries, per §2 — no replication term ever
+appeared in a query, since querying on the dependent variable would bias the corpus. Queries used:
+`LoRaWAN AND ns-3`, `LoRa AND ns-3`, `LoRa AND "network simulator 3"`, `LoRaWAN AND simulation`,
+`LoRa AND "discrete event simulation"`, `LoRaWAN AND "spreading factor" AND simulator`,
+`LoRa AND collision AND simulation AND gateway`, `LoRaWAN AND "capture effect"`,
+`LoRa AND multi-hop AND simulation`.
+
+## Sought and NOT included — every exclusion with its reason
+
+| candidate | reason |
+|---|---|
+| arXiv 2509.02811 | **duplicate** of `traspadini2025_lora_ntn_ns3` (criterion 4) |
+| arXiv 2507.23342 (FAST-LoRa) | **fails criterion 2** — ns-3 appears only as related work and as a performance foil; the simulator is their own framework |
+| arXiv 2008.09019 (Long-Lived LoRa) | **fails criterion 2** — no ns-3 use (0 mentions) |
+| arXiv 1811.05386, 1811.06345 | **fail criterion 3** — no PDF retrievable from arXiv or its export mirror on repeated attempts |
+| MDPI / PMC / IEEE candidates | **fail criterion 3 in this environment** — the hosts refuse scripted retrieval, returning challenge pages. ⚠️ They were **not** fetched via a summarising tool: a summary is not the text, and sweeping one would risk manufacturing `NONE` verdicts, which §3 names as the single most likely way this survey produces a false result |
+
+⚠️ **This is a real sampling limitation and it biases toward arXiv-hosted work.** Whether arXiv
+preprints report replication better or worse than paywalled venues is not something this corpus can
+answer, and no claim is made either way.
+
+## Result
+
+**12 NONE / 2 REPORTS out of 14 counted; REPORTS = 14.3 %**, below the pre-registered 25 %
+falsification threshold, so H1 is supported at the achieved n.
+
+Both `REPORTS` verdicts are counter-examples to our own hypothesis and both are direct quotations:
+
+* `klimiashvili2020` — *"the average of 50 independent runs over channel realization and nodes' position"*
+* `reliable_uplink_lorawan_dcoss2019` — *"the experimental results ... are collected from 100 simulation runs, and the average is calculated"*
+
+## ⚠️ Hand adjudication earned its place
+
+The keyword sweep alone would have been wrong on three papers:
+
+* `ramanathan2025` matched `seed` on **"Seed Studio WM1302"** — a hardware vendor's name. A purely
+  mechanical sweep would have scored a REPORTS on a company.
+* `lauridsen2019` produced five hits, four of them the LoRaWAN protocol's `repetitions` parameter or
+  ns-3 *execution time*. The closest call in the corpus, adjudicated `NONE` because it states no
+  count, CI or dispersion — while publishing its implementation so readers can replicate, which is
+  better practice than most of the corpus and simply is not what H1 measures.
+* `batteryless_2021` matched on the protocol's message-repetition feature.

@@ -21,12 +21,66 @@
     "ns3": true,
     "pilot": true,
     "adjudication": "NONE",
-    "note": "both hits FALSE POSITIVES: 'routing information is repeated for a fixed number of cycles' (routing protocol) and 'packet collisions being repeated for every transmission cycle' (their own result). \u26a0\ufe0f The second hit is PRIOR ART on Direction C's phenomenon -- see F42; it is not replication reporting, so the verdict stands as NONE."
+    "note": "both hits FALSE POSITIVES: 'routing information is repeated for a fixed number of cycles' (routing protocol) and 'packet collisions being repeated for every transmission cycle' (their own result). ⚠️ The second hit is PRIOR ART on Direction C's phenomenon -- see F42; it is not replication reporting, so the verdict stands as NONE."
   },
   "klimiashvili2020_lora_vs_wifi_adhoc_ns3": {
     "ns3": true,
     "pilot": false,
     "adjudication": "REPORTS",
-    "note": "Added 2026-08-07, AFTER the protocol was fixed (eb3eda5) and therefore NOT a pilot entry. Verdict REPORTS, adjudicated by hand: 'All the results presented in this section are the average of 50 independent runs over channel realization and nodes' position.' That is an explicit run count, which is exactly what H1 says is absent. \u26a0\ufe0f This is the first counter-example in the corpus and it was recorded as such rather than excluded."
+    "note": "Added 2026-08-07, AFTER the protocol was fixed (eb3eda5) and therefore NOT a pilot entry. Verdict REPORTS, adjudicated by hand: 'All the results presented in this section are the average of 50 independent runs over channel realization and nodes' position.' That is an explicit run count, which is exactly what H1 says is absent. ⚠️ This is the first counter-example in the corpus and it was recorded as such rather than excluded."
+  },
+  "kouvelas2018_pcsma_lora_ns3": {
+    "ns3": true,
+    "pilot": false,
+    "adjudication": null,
+    "note": "arXiv 1805.12263. Added 2026-08-08 in the n->20 sweep. Awaiting hand adjudication."
+  },
+  "lauridsen2019_single_gateway_lorawan_model_ns3": {
+    "ns3": true,
+    "pilot": false,
+    "adjudication": "NONE",
+    "note": "arXiv 1912.01285. ⚠️ The CLOSEST CALL in the corpus, and adjudicated NONE on the protocol's stated criterion. Five hits: three are the LoRaWAN protocol's `repetitions` parameter (m, h) and one is ns-3 EXECUTION TIME ('each ns-3 simulation run takes tens of seconds'), all false positives. The fifth is real but insufficient: 'the positions of the nodes are randomly picked at each simulation run' tells a reader that runs vary WITHOUT giving a count, CI or dispersion -- none of the four things H1 names. Recorded in fairness: they DO publish their implementation so readers 'can easily replicate the results', which is better practice than most of the corpus, and is simply not the quantity being measured."
+  },
+  "reliable_uplink_lorawan_dcoss2019_ns3": {
+    "ns3": true,
+    "pilot": false,
+    "adjudication": "REPORTS",
+    "note": "arXiv 2009.09397 (DCOSS 2019). Verdict REPORTS on a direct quotation: 'the experimental results of ACK delay and consumed energy using ns-3 are collected from 100 simulation runs, and the average is calculated.' An explicit run count. Corroborated by 'we carried out multiple simulation runs in ns-3'. The third hit ('replicating the operation of large number of network devices') is a false positive. SECOND counter-example to our own H1."
+  },
+  "experimental_eval_lorawan_itnac2018_ns3": {
+    "ns3": true,
+    "pilot": false,
+    "adjudication": null,
+    "note": "arXiv 2009.09503. Added 2026-08-08 in the n->20 sweep. Awaiting hand adjudication."
+  },
+  "batteryless_energy_harvesting_node_ns3_2021": {
+    "ns3": true,
+    "pilot": false,
+    "adjudication": "NONE",
+    "note": "arXiv 2103.14596. Sole hit is a FALSE POSITIVE: 'message repetitions or the use of a higher transmission power' is the LoRaWAN protocol's repetition feature, not simulation replication."
+  },
+  "swifeed_smart_water_iot_ns3_2024": {
+    "ns3": true,
+    "pilot": false,
+    "adjudication": null,
+    "note": "arXiv 2404.07692. Added 2026-08-08 in the n->20 sweep. Awaiting hand adjudication."
+  },
+  "favero2025_lora_mars_ns3": {
+    "ns3": true,
+    "pilot": false,
+    "adjudication": null,
+    "note": "arXiv 2412.19549. Added 2026-08-08 in the n->20 sweep. Awaiting hand adjudication."
+  },
+  "sf_selection_mobile_lora_gateways_ns3_2025": {
+    "ns3": true,
+    "pilot": false,
+    "adjudication": null,
+    "note": "arXiv 2507.19938. Added 2026-08-08 in the n->20 sweep. Awaiting hand adjudication."
+  },
+  "ramanathan2025_mesh_augmentation_lorawan_ns3": {
+    "ns3": true,
+    "pilot": false,
+    "adjudication": "NONE",
+    "note": "arXiv 2512.00161. Both hits FALSE POSITIVES. (1) 'Seed Studio WM1302' -- the HARDWARE VENDOR name (Seeed Studio) matching `seed`. This is exactly the false-positive class the protocol anticipated and is the strongest argument yet for hand adjudication: a keyword sweep alone would have scored this paper REPORTS on a company name. (2) 'the procedure is repeated from where the pointer is left off' describes their algorithm."
   }
 }
