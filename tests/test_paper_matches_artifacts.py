@@ -319,9 +319,11 @@ class TestLoraExternalTable:
         assert m, "tab:lora-external no longer states both N_max values"
         ours, theirs = int(m.group(1)), int(m.group(2))
         assert (ours, theirs) == (3, 4), (
-            f"N_max reads ({ours}, {theirs}); the 30-seed run gives ours=3 (0.9508 at N=3, "
-            f"0.8981 at N=4) and Bor's closed form gives 4 (4.418% at N=4, 5.065% at N=5). "
-            f"⚠️ ours=5 is the purged 3-seed value."
+            f"N_max reads ({ours}, {theirs}). The canonical run is lora_capacity.csv (30 seeds, "
+            f"jittered): 0.95981 at N=3 passes, 0.9167 at N=5 fails, so ours=3. Bor's closed form "
+            f"gives 4 (4.418% at N=4, 5.065% at N=5). ⚠️ ours=5 is the purged 3-seed value. "
+            f"⚠️ Do NOT cite lora_capacity_30seed.csv here — despite its name it is the "
+            f"NO-JITTER CONTROL, not the canonical run."
         )
 
     def test_lowrate_table_arithmetic_is_self_consistent(self):
@@ -433,3 +435,77 @@ class TestRemainingTables:
             assert (verdict == "feasible") == (smax >= smin), (
                 f"MTU {mtu}: s_max={smax} vs s_min={smin} contradicts verdict '{verdict}'"
             )
+
+
+class TestDerivedConstants:
+    """⚠️ Constants DERIVED from H_f lagged behind the measured H_f for weeks.
+
+    Grepping for "40" found nothing, because these numbers never print H_f — they print a
+    function of it. Found 2026-08-07:
+
+        T2a boundary (M-H_f-g_a)/(b+1)   paper 232.7   H_f=40 -> 232.67   H_f=44 -> 232.00
+        low-rate A = M/(M-H_f-g_a)       paper 1.88    H_f=40 -> 1.881    H_f=44 -> 1.947
+        802.11  A at MTU 1500            paper 1.0745  H_f=40 -> 1.0744   H_f=44 -> 1.0776
+        b_max at MTU 1500, delta         paper 31      H_f=40 -> 31       H_f=44 -> 30
+        A realised at MTU 256            paper 1.68    H_f=40 -> 1.684    H_f=44 -> 1.730
+
+    The models were CORRECT throughout — e2_batching.csv already carried 1.7297 and b_max=30.
+    Only the prose lagged, which is the hardest case to see: the artifacts agree with each other
+    and disagree only with the sentence describing them.
+    """
+
+    H_F, G_A = 44, 64   # measured wire-format header; Ed25519/ECDSA signature
+
+    def _tex(self) -> str:
+        return (REPO / "paper" / "main.tex").read_text()
+
+    def test_t2a_boundary_uses_the_measured_header(self):
+        b = int(20 * 0.250)                       # Lambda=20 rec/s, D_max=250 ms
+        want = (1500 - self.H_F - self.G_A) / (b + 1)
+        m = re.search(r"this is \$([\d.]+)\$\\,B on 802\.11", self._tex())
+        assert m, "the T2a boundary sentence changed shape"
+        assert abs(float(m.group(1)) - want) < 0.05, (
+            f"T2a boundary reads {m.group(1)} B; with the measured "
+            f"H_f={self.H_F} it is {want:.1f} B"
+        )
+
+    def test_low_rate_amplification(self):
+        want = 222 / (222 - self.H_F - self.G_A)
+        m = re.search(r"\$A\{=\}([\d.]+)\$ \\emph\{is\} operative", self._tex())
+        assert m, "the low-rate amplification sentence changed shape"
+        assert abs(float(m.group(1)) - want) < 0.01, (
+            f"low-rate A reads {m.group(1)}; M=222 with H_f={self.H_F} gives {want:.2f}"
+        )
+
+    def test_e2_paragraph_matches_the_batching_artifact(self):
+        rows = [r for r in csv.DictReader(
+                    ln for ln in (REPO / "results" / "raw" / "e2_batching.csv")
+                    .read_text().splitlines() if not ln.startswith("#"))
+                if r["encoding"] == "delta" and r["placement"] == "B" and r["is_bmax"] == "1"]
+        by_mtu = {int(r["mtu"]): r for r in rows}
+        tex = self._tex()
+        m = re.search(r"delta reaches \$b_\{\\max\}=(\d+)\$ with \$A_\{@b\}=A=([\d.]+)\$", tex)
+        assert m, "the E2 sentence changed shape"
+        assert int(m.group(1)) == int(by_mtu[1500]["b_max"]), (
+            f"paper says b_max={m.group(1)}, e2_batching.csv says {by_mtu[1500]['b_max']}"
+        )
+        assert abs(float(m.group(2)) - float(by_mtu[1500]["A_formula"])) < 0.0005, (
+            f"paper says A={m.group(2)}, artifact says {by_mtu[1500]['A_formula']}"
+        )
+        m256 = re.search(r"\$M\{=\}256\$ is MTU-limited \(\$A\{=\}([\d.]+)\$ realised\)", tex)
+        assert m256, "the MTU-256 clause changed shape"
+        assert abs(float(m256.group(1)) - float(by_mtu[256]["A_formula"])) < 0.005
+
+    def test_reproducibility_claim_matches_the_gate(self):
+        """⚠️ The paper claimed 20 re-derived artifacts; the gate re-derives 16.
+
+        This is a headline contribution, so an inflated count is the worst place for one.
+        """
+        gate = (REPO / "tests" / "integration" / "test_frozen_reproducibility.py").read_text()
+        actual = len(set(re.findall(r'"([\w.]+\.csv)"\s*:', gate)))
+        claimed = {int(x) for x in re.findall(
+            r"(?:all|\\emph\{)?(\d+)\}?\s+model-derived artifacts", self._tex())}
+        assert claimed, "the paper no longer states how many artifacts the gate re-derives"
+        assert claimed == {actual}, (
+            f"paper claims {claimed} model-derived artifacts; the gate re-derives {actual}"
+        )

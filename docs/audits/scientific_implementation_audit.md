@@ -548,3 +548,56 @@ than typed into a label.
 All **10** tables and all **5** figures are now checked against the data that produced them.
 Each new guard was **mutation-tested** — deliberately corrupted to confirm it fails — including
 replays of two real bugs (`N_max` 3→5, ratio range 3.2→3.3×).
+
+---
+
+## 11. Pass 4 — reading every sentence, not just every number
+
+The first three passes compared printed values to CSVs. This pass read the argument. It found a
+different defect class: **constants DERIVED from a measured input, which never print that input.**
+
+### ⚠️ Five numbers still carried the superseded H_f = 40 B
+
+Grepping for "40" found nothing, because none of these prints H_f — each prints a function of it:
+
+| quantity | paper had | H_f=40 | H_f=44 (measured) |
+|---|---|---|---|
+| T2a boundary $(M{-}H_f{-}g_a)/(b{+}1)$ | 232.7 B | 232.67 | **232.00** |
+| low-rate $A = M/(M{-}H_f{-}g_a)$, M=222 | 1.88 | 1.881 | **1.947** |
+| 802.11 $A$ at MTU 1500 | 1.0745 | 1.0744 | **1.0776** |
+| $b_{\max}$ at MTU 1500, delta | 31 | 31 | **30** |
+| $A$ realised at MTU 256 | 1.68 | 1.684 | **1.730** |
+
+⚠️ **The models were right the whole time.** `e2_batching.csv` already carried `A_formula=1.7297`
+and `b_max=30`. Only the prose lagged — the hardest case to see, because every artifact agrees with
+every other artifact and disagrees only with the sentence describing them. Guarded by
+`TestDerivedConstants`, mutation-tested against all five historical values.
+
+### Other findings
+
+* ⚠️ **"Results are 802.11-only (a LoRa arm is future work)"** — flatly contradicted Sec.~VI, an
+  entire LoRa arm with its own tables, figures and external validation. A leftover from before that
+  work existed, sitting in Limitations where a reviewer looks hardest.
+* ⚠️ **The reproducibility contribution was overstated**: the paper claimed the gate re-derives
+  **20** model-derived artifacts; it re-derives **16**. An inflated count in a headline
+  contribution is the worst place for one. Now guarded against the gate itself.
+* $\varphi$ was defined with an undefined symbol $g$ where the rest of the paper uses $g_a$.
+* The fragmentation bound said $n$ "is exactly 1" when $\epsilon \leq p$; $\lfloor \cdot \rfloor$
+  is **0** for $\epsilon < p$. Corrected to "at most 1" — the operational conclusion is unchanged.
+* Delivery at $U{\approx}1$ was quoted as 98.8 %; the artifact says 0.98896 → **98.9 %** (two places).
+* A duplicated "and and" across a line break.
+* The Conclusion's hardware figure of **0.36 % is correct** — but only reconstructible from the
+  unrounded 1.9882 ms prediction, since the printed 1.99/1.995 implies 0.25 %. Now stated as 1.988.
+
+### ⚠️ A citation error of my own, corrected
+
+Verifying `N_max=3` I quoted 0.9508/0.8981 from `lora_capacity_30seed.csv`. **That file is the
+no-jitter control**, not the canonical run — the `_30seed` suffix is misleading because the
+canonical `lora_capacity.csv` is *also* 30 seeds (jittered). The paper is right and consistent
+(0.960 at N=3, nine of thirty seeds failing, both from `lora_capacity.csv`); the wrong citation was
+mine. Recorded in `results/PROVENANCE.md` so the next reader does not repeat it.
+
+**Verified correct in this pass, against artifacts:** the factorial effects (interaction $-24.0$,
+placement main effect $-24.0$, encoding $146.1$), the CLAS row ($72.0 + 162/(5{\times}4) = 80.1$),
+the PQ projection ($45 + 2464/4 = 661.0$), the per-run crossing $U \in (1.67, 2.23]$ with 10/30
+seeds failing, and `tab:t6`'s three tiers.

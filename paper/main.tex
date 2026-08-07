@@ -89,7 +89,7 @@ questions (Sec.~\ref{sec:results}).
 exactly $g_a(1{-}1/b)$; encoding is additive and scheme is byte-neutral here. We report this
 because it contradicts the four-axis framing we began with.
 \item \textbf{Reproducibility as a result, not a promise.} A staleness gate re-derives all
-\emph{20} model-derived artifacts byte-identically on every commit; the remainder require NS-3 or
+\emph{16} model-derived artifacts byte-identically on every commit; the remainder require NS-3 or
 the hardware rig and carry provenance headers instead, and we say which is which rather than
 claiming ``all results''. The success criterion was committed to version control two days before
 the result existed, and the corrections this discipline forced---including retractions---are
@@ -216,9 +216,9 @@ $M = 1500$\,B. On-air bytes per record, by placement:
 \subsection{T1: overhead dominance}
 For inline authentication the pure-authentication fraction is
 \begin{equation}
-\varphi = \frac{g}{s+g}.
+\varphi = \frac{\ba}{s+\ba}.
 \end{equation}
-For $s = 45$--$190$\,B and $g=64$\,B, $\varphi = 25$--$59\%$: the smaller the payload, the more the
+For $s = 45$--$190$\,B and $\ba=64$\,B, $\varphi = 25$--$59\%$: the smaller the payload, the more the
 signature dominates. T2--T5 quantify what can be done about this, and where it stops.
 
 \subsection{T2: batching cure and amplification}
@@ -236,9 +236,9 @@ freshness bound the cap is instead $b=\lfloor\Lambda D_{\max}\rfloor$, which doe
 then $C(s)=s+(\ba+H_f)/b$ and $dC/ds=1$ \emph{exactly}---compression pays $1\times$, not $A\times$,
 and the residual authentication cost is a floor compression cannot reach. The boundary is
 $s<(M-H_f-\ba)/(\lfloor\Lambda D_{\max}\rfloor+1)$. At $\Lambda{=}20$\,rec/s and
-$D_{\max}{=}250$\,ms this is $232.7$\,B on 802.11, above every encoding studied, so
+$D_{\max}{=}250$\,ms this is $232.0$\,B on 802.11, above every encoding studied, so
 \textbf{$A$ is never operative there}; on a low-rate link ($M{=}222$) the MTU binds again and
-$A{=}1.88$ \emph{is} operative. The ``compression pays $\times A$'' leverage is therefore real and
+$A{=}1.95$ \emph{is} operative. The ``compression pays $\times A$'' leverage is therefore real and
 \emph{exclusive to low-rate links}.
 
 \subsection{T3: loss-robustness frontier}
@@ -279,7 +279,7 @@ s_{\max}(M) = M - H_f - \ba \;\geq\; s_{\min}.
 \end{equation}
 Fragmenting an oversized signature is no escape: by T3 a unit spanning $n$ frames verifies with
 probability $(1-p)^n$, so $V\geq 1-\epsilon$ forces $n \leq \lfloor\ln(1-\epsilon)/\ln(1-p)\rfloor$,
-which is exactly $1$ whenever $\epsilon \leq p$. Equation~\eqref{eq:t6} is therefore evaluated at
+which is at most $1$ whenever $\epsilon \leq p$ --- fragmentation is excluded outright. Equation~\eqref{eq:t6} is therefore evaluated at
 $n{=}1$ and is an exclusion, not an inconvenience. Both ingredients are individually known --- the
 residual above, and that a fragmented unit needs every fragment --- but the consequence is worth
 stating: the \emph{sliced-signature} workaround proposed for constrained links is unavailable in
@@ -336,7 +336,7 @@ batch) evaluates the byte, energy, freshness and verifiability models at every p
 Pareto front, so the reported optimum is not the output of a heuristic.
 
 \textbf{Reproduction procedure.} Every artifact carries an environment and configuration-hash
-header. A gate re-derives all 20 model-derived artifacts byte-identically on each commit and fails
+header. A gate re-derives all 16 model-derived artifacts byte-identically on each commit and fails
 if any differs; artifacts requiring NS-3 or the hardware rig cannot be re-derived in that gate and
 are labelled as such rather than counted as reproduced. Figures are regenerated from the same frozen
 CSVs, and a separate check asserts that every figure the paper cites is still produced by a
@@ -365,8 +365,8 @@ size, encoding and scheme, so quoting it as a headline would credit four axes fo
 \end{enumerate}
 
 The airtime model underneath boundary~2 is validated twice: against NS-3 over 30 seeds, and against
-two Raspberry~Pi~4 radios, where the predicted $1.99$\,ms broadcast airtime measures
-$1.995$\,ms.
+two Raspberry~Pi~4 radios, where the predicted $1.988$\,ms broadcast airtime measures $1.995$\,ms,
+a $0.36\%$ gap (equivalently, a $502.98$\,fps ceiling measured at $501.19$).
 
 All values are from frozen CSVs. Byte and model results were derived on an x86 host
 (Intel~i5-14400F); the crypto timings, encode timings and both power figures feeding the energy
@@ -401,9 +401,9 @@ optimizer reports.
 
 \textbf{E2 (T2/T2a).} At MTU 1500, self-batch, the measured amplification
 $A_{@b}=(\text{bytes/rec})/s$ matches $A = M/(M-H_f-\ba)$ within $5\%$ (integer-$b$ slack, shrinking
-with $s$); delta reaches $b_{\max}=31$ with $A_{@b}=A=1.0745$ exactly. The MTU sweep also straddles
-the T2a boundary: $M{=}256$ is MTU-limited ($A{=}1.68$ realised), while $M{=}576$ and $M{=}1500$ are
-freshness-limited and realise $A{=}1.0000$---i.e.\ the $b_{\max}{=}31$ above is \emph{unreachable}
+with $s$); delta reaches $b_{\max}=30$ with $A_{@b}=A=1.0776$ exactly. The MTU sweep also straddles
+the T2a boundary: $M{=}256$ is MTU-limited ($A{=}1.73$ realised), while $M{=}576$ and $M{=}1500$ are
+freshness-limited and realise $A{=}1.0000$---i.e.\ the $b_{\max}{=}30$ above is \emph{unreachable}
 at telemetry rates.
 
 \textbf{E3 (T3).} $V_B \approx 1-p$ flat in $b$ (0.90 at $p{=}0.10$); $V_D=(1-p)^n$ drops the moment a
@@ -500,7 +500,7 @@ $4/50=80$\,ms at the adopted compliant point and $4/20=200$\,ms at the relaxed o
 how many bytes are saved but which configurations \emph{can run}. Coupling the byte model to the
 broadcast channel model gives the largest neighbourhood each configuration sustains. Two thresholds
 are reported because they answer different questions. \emph{Saturation} throughput ($U<1$) is what
-the medium carries when every node is backlogged, and it is conservative: simulation shows $98.8\%$
+the medium carries when every node is backlogged, and it is conservative: simulation shows $98.9\%$
 delivery still at $U{=}1$, with \emph{measured} verifiability $V_{\mathrm{meas}}$ crossing $0.95$
 only near $U{\approx}2.44$. We
 report both rather than choose, because choosing would select the flattering one.
@@ -1010,8 +1010,8 @@ characters, and counting it as evidence would manufacture support for our own hy
 
 Beyond the results, the project's second product is its discipline. Anomalies were root-caused, not
 patched over: a stateful delta codec used statelessly (60$\to$45\,B); string-keyed CBOR replaced by
-canonical arrays (110$\to$66\,B); the BLS size corrected 48$\to$96\,B (with the T4 model updated); and
-and, on the broadcast channel, three successive explanations retracted in writing---an ``18$\times$
+canonical arrays (110$\to$66\,B); the BLS size corrected 48$\to$96\,B (with the T4 model updated); and,
+on the broadcast channel, three successive explanations retracted in writing---an ``18$\times$
 capture'' over-claim, then the capture effect itself (PHY instrumentation measured it at 0\%), and
 finally our own claim to have discovered the responsible mechanism, which a literature check showed had
 been published in 2007~\cite{machen2007}. A whole-repo audit re-derived every formula against the code and hand-checked one point per
@@ -1046,7 +1046,7 @@ The honest conclusion is that AUTHBC's amortization argument does not survive th
 unchanged: a PQ variant would be a different design, not a re-parameterisation, and the placement
 axis would have to be re-derived against fragmentation rather than against the MTU.
 
-Results are 802.11-only (a LoRa arm is future work). Energy is now measured on a Raspberry~Pi~4 with
+The 802.11 and LoRa arms are evaluated separately and are not combined into a single heterogeneous scenario; a gateway-relayed hybrid is future work. Energy is now measured on a Raspberry~Pi~4 with
 INA219 meters ($P_\mathrm{cpu}=0.634$\,W, $P_\mathrm{radio}=0.218$\,W---both nominal values were
 $3$--$5\times$ too high), and the byte-based headline is power-free either way. The energy model is
 \emph{composed} from separately measured powers and timings, so we metered the composition
@@ -1100,7 +1100,7 @@ longest-range LoRa modes outright; loss makes fragmentation no escape, since a u
 frames verifies with probability $(1-p)^n$ and the target is already spent at $n{=}1$ whenever
 $\epsilon \leq p$. It is not escapable by better cryptography, and it is not visible to a byte model
 alone. Capacity, by contrast, turned out to constrain rather than exclude: simulation shows the
-channel still delivering $98.8\%$ of frames at nominal saturation load, so adopting the
+channel still delivering $98.9\%$ of frames at nominal saturation load, so adopting the
 100\,ms bound of 3GPP TS~22.125~\cite{3gpp_ts22125} costs swarm size---$N{\leq}100$ instead of
 $N{\leq}213$---and nothing in bytes, provided the telemetry rate is high enough for the batch to
 fill inside the deadline. An NS-3-validated channel model and an automated
