@@ -583,6 +583,8 @@ placement attains. \textbf{The byte reduction carried the falsifiability on its 
 verifiability, written $V_{\mathrm{meas}}$ throughout, is a separate quantity obtained from
 simulation and is not what this criterion tested.
 
+\textbf{Sensitivity to $p$.} Fixing $p{=}0.05$ invites the question of how much rides on it, so we swept it. The answer is that nothing does, until everything does: for every $p \leq \epsilon$ the optimizer returns the \emph{same} configuration (delta, Ed25519, self-batch $b{=}4$, $72.0$\,B/record) from the same $44$ feasible points, and at $p{=}0.051$ the feasible set is \textbf{empty}. This is not a gradient but the cliff of T3: frame-level placements attain $V=1-p$ at best, so $p > \epsilon$ excludes every configuration rather than shifting the choice among them. The operating point is therefore insensitive to $p$ in the only sense available --- and the sensitivity that matters is not to the value of $p$ but to whether it exceeds the target.
+
 \textbf{Ablation: which axes actually interact.} A decomposition attributes a total and is possible
 even when the axes are independent, so it cannot establish the co-design claim on its own. We
 therefore ran the full factorial on bytes/record. Every interaction involving \emph{encoding} is
@@ -730,7 +732,7 @@ With $H_f = 44$\,B and a 64\,B Ed25519 signature, Eq.~\eqref{eq:t6} partitions E
 payload, so the exclusion holds even with a zero-byte header and a zero-byte record. The only
 escape is a smaller authentication object, and the smallest standardised one is a 48\,B compressed
 BLS12-381 $\mathbb{G}_1$ point~\cite{cfrg_bls} at 126-bit security --- which does fit 51\,B, leaving
-three bytes for the header and the record together. DR3 fails on the encoding, and by six bytes.
+three bytes for the header and the record together. DR3 fails on the encoding, and by six bytes. The $s_{\min}{=}13$\,B it is measured against is the smallest record this design can emit: the $45$\,B delta record of Table~\ref{tab:e1} minus the $32$\,B chain link, once chaining moves to once-per-frame (Sec.~\ref{sec:chaining}). That is the most favourable value available to us, so DR3's exclusion does not rest on a pessimistic choice --- a leaner record would have to beat $13$\,B while remaining hash-chainable.
 
 \begin{figure}[t]\centering
 \includegraphics[width=\columnwidth]{fig_t6_exclusion.png}
@@ -756,7 +758,7 @@ DR & $M$ (B) & $s_{\max}$ & verdict \\
 \end{tabular}
 \end{table}
 
-\subsection{Where the design changes: chaining}
+\subsection{Where the design changes: chaining}\label{sec:chaining}
 On 802.11 freshness binds, so the batch is fixed by $\Lambda D_{\max}$ and saving payload bytes buys
 nothing extra. On LoRa the \emph{regional payload limit} binds, so bytes convert directly into more
 records per frame. Moving the 32\,B chain link from per-record to once-per-frame --- the receiver
@@ -1068,7 +1070,7 @@ cluster (goodput $+42$ to $+51\%$ from spatial reuse) but becomes \emph{optimist
 marginal-link figures moved substantially when we migrated NS-3 3.41$\to$3.48 (from $15.7\%$ and
 9 points), while every near-field scenario moved under $2\%$ --- consistent with that release's
 \texttt{InterferenceHelper} and \texttt{WifiPhy} fixes, which bite hardest at marginal SNR. We
-report the newer simulator's figures. The hardware validation is two-node. On ARM the scheme tie breaks toward Ed25519
+report the newer simulator's figures. \textbf{The hardware validation is two-node, with a single transmitter, so it involves zero contention and therefore does \emph{not} validate Bianchi or Ma \& Chen.} What it validates is the 802.11a timing constants those models are built on, and the link loss; the contention models themselves remain simulation-validated only. On ARM the scheme tie breaks toward Ed25519
 rather than ECDSA, with an identical auth-byte cut.
 
 \section{Conclusion}

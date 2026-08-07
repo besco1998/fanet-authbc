@@ -509,3 +509,68 @@ class TestDerivedConstants:
         assert claimed == {actual}, (
             f"paper claims {claimed} model-derived artifacts; the gate re-derives {actual}"
         )
+
+
+class TestReviewerTargets:
+    """Assumptions a reviewer will attack first, pinned to the code that sets them.
+
+    Added in pass 5, after a reviewer-simulation read found three load-bearing claims with no
+    stated justification. Two were genuine gaps; all three are now argued in the text, so these
+    tests keep the text and the constants together.
+    """
+
+    def _tex(self) -> str:
+        return (REPO / "paper" / "main.tex").read_text()
+
+    def test_s_min_is_the_delta_record_minus_the_chain_link(self):
+        """⚠️ The whole DR3 exclusion rests on s_min, which the paper never justified.
+
+        s_min = 13 B is the 45 B delta record less the 32 B prev_hash, once chaining moves to
+        once-per-frame. If either input moves, "misses by 6 B" moves with it.
+        """
+        gen = (REPO / "analysis" / "figures_envelope_lora.py").read_text()
+        s_min = float(re.search(r"S_MIN_LORA\s*=\s*([\d.]+)", gen).group(1))
+        rows = {r["encoding"]: r for r in csv.DictReader(
+            ln for ln in (REPO / "results" / "raw" / "e1_dominance.csv").read_text().splitlines()
+            if not ln.startswith("#"))}
+        delta = float(rows["delta"]["mean_bytes"])
+        assert abs(s_min - (delta - 32)) < 0.01, (
+            f"s_min={s_min} is no longer (delta record {delta:.2f} B - 32 B chain link); "
+            f"the paper justifies it as exactly that"
+        )
+        tex = self._tex()
+        assert "32}\\,B chain link" in tex or "$32$\\,B chain link" in tex, (
+            "the paper stopped justifying s_min; a reviewer will ask where 13 B comes from"
+        )
+        m = re.search(r"DR3 fails on the encoding, and by (\w+) bytes", tex)
+        assert m, "the DR3 clause changed shape"
+        gap = {"six": 6}[m.group(1)]
+        assert (115 - 44 - 64) + gap == s_min, (
+            f"DR3 s_max={115 - 44 - 64} plus a {gap} B miss should equal s_min={s_min}"
+        )
+
+    def test_p_sensitivity_is_reported_and_matches_the_sweep(self):
+        """The paper fixes p=0.05; the sweep answering "why?" existed but went unreported."""
+        rows = list(csv.DictReader(
+            ln for ln in (REPO / "results" / "raw" / "sensitivity_p.csv").read_text().splitlines()
+            if not ln.startswith("#")))
+        feas = [r for r in rows if r["feasible"] == "1"]
+        infeas = [r for r in rows if r["feasible"] == "0"]
+        assert feas and infeas, "sensitivity_p.csv no longer brackets the cliff"
+        assert len({r["bytes_per_rec"] for r in feas}) == 1, (
+            "the optimum is no longer invariant across the feasible p range; the paper says it is"
+        )
+        n_feas = {r["n_feasible"] for r in feas}
+        assert n_feas == {"44"}, f"feasible-set size changed to {n_feas}; the paper says 44"
+        first_bad = min(float(r["p_loss"]) for r in infeas)
+        assert abs(first_bad - 0.051) < 1e-9, f"the cliff moved to p={first_bad}"
+        tex = self._tex()
+        assert "Sensitivity to $p$" in tex, "the p-sensitivity paragraph was removed"
+        assert "$p{=}0.051$ the feasible set is \\textbf{empty}" in tex
+
+    def test_hardware_section_states_what_it_cannot_validate(self):
+        """⚠️ One transmitter means zero contention. Claiming otherwise would overreach."""
+        tex = self._tex()
+        assert "zero contention" in tex and "does \\emph{not} validate" in tex, (
+            "the two-node hardware caveat no longer says it cannot validate the contention models"
+        )
