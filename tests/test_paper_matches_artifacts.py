@@ -627,3 +627,55 @@ class TestDirectionCSurvey:
             f"REPORTS is now {share:.0%}, at or above the pre-registered 25 % falsification "
             f"threshold. H1 is NOT supported — the paper's claim must be withdrawn, not softened."
         )
+
+
+class TestDR6Derivation:
+    """DR6 is derived, not simulated, and the paper must keep saying so.
+
+    Mohamed asked for a DR6 run (2026-08-07). It is not possible in this module: the sensitivity
+    vectors are indexed by SF alone with no bandwidth dimension, so SF7-at-250kHz would return
+    DR6's doubled bit rate with DR5's noise floor -- a clean, repeatable, optimistic number.
+    The capacity claim rests instead on a closed form whose airtime term cancels, validated
+    against the measured DR5 run.
+    """
+
+    DUTY = 0.009864   # measured duty cycle after jitter (EU868 requires < 1%)
+
+    def test_closed_form_reproduces_the_measured_dr5_run(self):
+        """If this drifts, the DR6 claim loses the evidence it rests on."""
+        meas = {int(r["n_devices"]): float(r["delivered_frac"]) for r in csv.DictReader(
+            ln for ln in (REPO / "results" / "raw" / "lora_capacity.csv").read_text().splitlines()
+            if not ln.startswith("#"))}
+        worst = 0.0
+        for n, m in meas.items():
+            if n < 2 or n > 10:
+                continue
+            worst = max(worst, abs(math.exp(-2 * (n - 1) * self.DUTY) - m))
+        assert worst < 0.01, (
+            f"the rate-independent closed form now deviates from DR5 by {worst:.4f} "
+            f"(was <0.009); the DR6 derivation cited it as validated"
+        )
+
+    def test_closed_form_gives_the_same_n_max_as_the_simulation(self):
+        n_max = max(n for n in range(1, 40) if math.exp(-2 * (n - 1) * self.DUTY) >= 0.95)
+        assert n_max == 3, f"closed form now gives N_max={n_max}; the simulation gives 3"
+
+    def test_paper_labels_dr6_as_derived_not_measured(self):
+        tex = (REPO / "paper" / "main.tex").read_text()
+        assert "We derive this rather than simulate it" in tex, (
+            "the paper stopped disclosing that DR6 is derived rather than simulated"
+        )
+        assert "indexed by \\emph{spreading factor alone}" in tex, (
+            "the paper stopped stating WHY DR6 cannot be simulated here"
+        )
+
+    def test_the_scenario_guard_states_the_true_reason(self):
+        """The guard used to claim DR6 is not LoRa modulation. It is; FSK starts at DR7."""
+        cc = (REPO / "ns3" / "ns-3.48" / "scratch" / "authbc-lora-capacity.cc")
+        if not cc.exists():
+            pytest.skip("NS-3 tree not present")
+        src = cc.read_text()
+        assert "LoRa modulation only" not in src, (
+            "the false justification came back: DR6 IS LoRa modulation (SF7/250kHz)"
+        )
+        assert "indexed by SF only" in src

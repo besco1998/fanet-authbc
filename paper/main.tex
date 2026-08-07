@@ -829,6 +829,27 @@ individual runs do not. Read per realisation the value is $1$. The mean-based fi
 quoted, for consistency with the 802.11 thresholds, but a deployment promising a reliability target
 should use the per-run reading.
 
+\textbf{Why DR5 and not DR6, and what DR6 would buy.} Our own exclusion table admits DR4, DR5 and
+DR6 equally --- all three carry $N{=}242$\,B and leave the same $134$\,B residual --- and DR6
+(SF7/250\,kHz) runs at $11$\,kb/s against DR5's $5\,470$, so the choice needs stating.
+\emph{Capacity does not change.} At a fixed duty cycle $d$ the transmissions falling inside one
+$2T_{\text{air}}$ vulnerability window number $N \cdot 2T_{\text{air}}/T_{\text{period}} = 2Nd$:
+\textbf{the airtime cancels}, so $P(\text{deliver}) = e^{-2(N-1)d}$ is rate-independent and
+$N_{\max}$ is the same at either rate. That closed form reproduces the measured DR5 run to within
+$0.9$ percentage points across $N{=}2$--$10$ (exactly at $N{=}8$) and returns $N_{\max}=3$, matching
+the simulation. DR6 therefore doubles the aggregate to ${\approx}0.99$\,rec/s \emph{at the same
+three nodes}, and pays for it in link budget: $-120$ against $-123$\,dBm is $3$\,dB, or
+$1.41\times$ less range under free-space spreading. Since range is the only reason to accept this
+data rate's costs at all, we report DR5 and note DR6 as the throughput-preferring alternative.
+
+\textbf{We derive this rather than simulate it, and the reason is a limitation worth recording.}
+The module's sensitivity vectors are indexed by \emph{spreading factor alone} --- there is no
+bandwidth dimension in \texttt{EndDeviceLoraPhy::SENSITIVITY} or its gateway counterpart, and none
+in the interference helper. Forcing SF7 onto a 250\,kHz channel would have returned DR6's doubled
+bit rate while silently keeping DR5's noise floor, so the $3$\,dB penalty --- DR6's entire cost ---
+would have been invisible in a run that completed cleanly and repeated across all 30 seeds. We
+state the derivation and label it as one; it is weaker than a measurement.
+
 This figure is far below the node counts usually quoted for LoRaWAN, and the discrepancy is
 configuration, not disagreement. We simulate the LoRa physical layer --- real modulation, with the
 module's measured interference and capture model --- but on its harshest MAC provisioning: a single
@@ -1090,7 +1111,10 @@ validated only in the idealised single-collision-domain regime they describe: a 
 formation introduces spatial reuse and, at long range, hidden terminals that neither model
 represents. We bound this: sweeping a realistic air-to-air scenario (Friis, 3D cluster, Nakagami
 fading) shows the idealised model is a \emph{conservative} lower bound up to a ${\approx}300$--400\,m
-cluster (goodput $+42$ to $+51\%$ from spatial reuse) but becomes \emph{optimistic} by $39\%$ at
+cluster --- a boundary an independent ns-3 study corroborates from the other side, finding that a
+WiFi ad hoc network spanning $300$\,m already needs four hops in a linear topology and 21 nodes in
+a random one~\cite{klimiashvili2020loravswifi}, i.e.\ it has stopped being one collision domain
+at precisely the range our own sweep flags --- (goodput $+42$ to $+51\%$ from spatial reuse) but becomes \emph{optimistic} by $39\%$ at
 500\,m, where links break down; Rayleigh fading ($m{=}1$) costs a further 27 points. These two
 marginal-link figures moved substantially when we migrated NS-3 3.41$\to$3.48 (from $15.7\%$ and
 9 points), while every near-field scenario moved under $2\%$ --- consistent with that release's
