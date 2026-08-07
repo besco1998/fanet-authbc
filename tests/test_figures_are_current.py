@@ -82,3 +82,48 @@ def test_make_figures_covers_every_generator():
     assert not uncovered, (
         f"`make figures` does not run {uncovered} — those figures can drift from the data silently"
     )
+
+
+def _generator_sources() -> dict[str, str]:
+    return {g: (REPO / "analysis" / g).read_text() for g in GENERATORS}
+
+
+def test_no_generator_hardcodes_a_stale_ns3_version():
+    """⚠️ `fig_ns3_bianchi.png` said "NS-3 3.41" while the paper said 3.48 in four places.
+
+    The paper's own Limitations section documents the 3.41->3.48 migration and reports that
+    marginal-link figures moved substantially because of it, so the figure was labelling the
+    data with the version it was NOT produced under.
+    """
+    tex = (REPO / "paper" / "main.tex").read_text()
+    paper_versions = set(re.findall(r"NS-3[~ ]?(\d+\.\d+)", tex))
+    # the migration sentence legitimately names the old version; the current one is the max
+    current = max(paper_versions, key=lambda v: tuple(int(x) for x in v.split(".")))
+    bad = []
+    for name, src in _generator_sources().items():
+        for v in set(re.findall(r"NS-3 (\d+\.\d+)", src)):
+            if v != current:
+                bad.append(f"{name} hardcodes NS-3 {v}; the paper's current version is {current}")
+    assert not bad, "\n".join(bad)
+
+
+def test_no_generator_carries_a_pending_phase_note():
+    """⚠️ `fig_e5_codesign.png` footed "energy/power are nominal (pending P7)" long after P7 closed.
+
+    The paper states both power figures are measured on the Pi 4 (decision D8), so the figure
+    contradicted the text it sat beside — and understated the work.
+    """
+    bad = [f"{name}: {m.group(0)!r}"
+           for name, src in _generator_sources().items()
+           for m in re.finditer(r"pending P\d+|are nominal", src)]
+    assert not bad, (
+        "figure captions still advertise unfinished phases:\n" + "\n".join(bad)
+    )
+
+
+def test_the_naive_factor_is_derived_not_hardcoded():
+    """It read "16x" for weeks after the 30-seed regeneration moved it to 17.3x."""
+    src = _generator_sources()["figures_ns3.py"]
+    assert not re.search(r"fails, \d+(\.\d+)?x at N=\d+", src), (
+        "figures_ns3.py hardcodes the naive-reduction factor again; derive it from the CSV"
+    )

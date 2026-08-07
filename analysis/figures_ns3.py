@@ -120,13 +120,17 @@ def make_figure(s: dict) -> str:
         label = "Bianchi ACK (unicast)" if mode == "unicast" else "Ma & Chen (broadcast)"
         ax.plot(ns, an, "-", color=colors[mode], lw=1.2, label=label)
         if all(s["cells"][(mode, n)]["naive"] is not None for n in ns):
-            ax.plot(ns, [s["cells"][(mode, n)]["naive"] for n in ns], "--",
-                    color="#888", lw=1.4,
-                    label="naive no-ACK reduction (fails, 16x at N=50)")
+            naive = [s["cells"][(mode, n)]["naive"] for n in ns]
+            # ⚠️ derived, never hardcoded: this label read "16x" for weeks after the 30-seed
+            # regeneration moved it to 17.3x.
+            worst = max(ns)
+            factor = s["cells"][(mode, worst)]["ns3"] / s["cells"][(mode, worst)]["naive"]
+            ax.plot(ns, naive, "--", color="#888", lw=1.4,
+                    label=f"naive no-ACK reduction (fails, {factor:.1f}x at N={worst})")
     ax.axhline(6.0, ls=":", color="gray", label="6 Mb/s PHY ceiling")
     ax.set_xlabel("N saturated stations")
     ax.set_ylabel("saturation throughput [Mb/s]")
-    ax.set_title(f"Analytic DCF models vs NS-3 3.41 (L={int(s['L'])} B, per-mode matched)")
+    ax.set_title(f"Analytic DCF models vs NS-3 3.48 (L={int(s['L'])} B, per-mode matched)")
     ax.legend(fontsize=7)
     out = FIGS / "fig_ns3_bianchi.png"
     fig.savefig(out, **_SAVE)

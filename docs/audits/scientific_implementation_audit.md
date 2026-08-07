@@ -519,3 +519,32 @@ section's argument that LoRa is a different regime rather than a slow 802.11. Th
 **Guards added:** `TestLoraExternalTable` compares every cell to `lora_external_check.csv`, asserts
 no row revives F18 (it checks the *artifact*, not the wording), pins both $N_{\max}$ values, and
 recomputes `tab:lowrate`'s arithmetic from its own columns.
+
+### Re-audit pass 3 — rendering the PDF to images, not reading the log
+
+The build log said "0 errors, 0 undefined refs" throughout every pass above. Rasterising the pages
+and looking at them found six defects the log could not report:
+
+| defect | how it presented |
+|---|---|
+| Bianchi equation overflowed its column | **collided with the adjacent column's text** — unreadable |
+| 5 tables ran past the column edge | 2 promoted to `table*`, 3 narrowed |
+| `fig_envelope` title collision | the "N=50 quoted" note was anchored *above* the axes and overprinted the title |
+| ⚠️ `fig_envelope` axis label said $U{\approx}2.8$ | the **stale crossing**; corrected to 2.44 in `tab:envelope`'s caption but never in the figure |
+| ⚠️ `fig_ns3_bianchi` said "NS-3 3.41" | the paper says 3.48 in four places and its own Limitations section documents the migration |
+| ⚠️ `fig_ns3_bianchi` said "fails, 16x" | the 30-seed regeneration moved it to **17.3×** |
+| ⚠️ `fig_e5_codesign` footed "energy/power are nominal (pending P7)" | P7 closed; the paper states both powers are **measured on the Pi 4** (D8). The figure contradicted the text beside it *and understated the work.* |
+
+**The pattern, again in a new place.** Every one of these is text baked into a figure or a layout,
+where no CSV comparison could reach it. `verify-frozen` re-derives data; nothing had ever *looked* at
+the output. ⚠️ **A clean LaTeX log is not evidence that a page is correct.**
+
+Guards added: generators may no longer hardcode an NS-3 version that disagrees with the paper, may
+not carry `pending P<N>` notes, and the naive-reduction factor is now *derived from the CSV* rather
+than typed into a label.
+
+### Coverage after three passes
+
+All **10** tables and all **5** figures are now checked against the data that produced them.
+Each new guard was **mutation-tested** — deliberately corrupted to confirm it fails — including
+replays of two real bugs (`N_max` 3→5, ratio range 3.2→3.3×).

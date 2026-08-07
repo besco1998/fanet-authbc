@@ -52,16 +52,20 @@ def fig_envelope() -> None:
     ax.set_yticklabels(labels, fontsize=8)
     ax.invert_yaxis()
     ax.set_xlabel("largest sustainable collision domain, $N_{max}$   (at $U<1$ — conservative;\n"
-                  "measured $V{\\geq}0.95$ boundary is $U{\\approx}2.8$)")
+                  "measured $V{\\geq}0.95$ boundary is $U{\\approx}2.44$)")
     ax.set_title("Feasibility envelope: how many UAVs each configuration can actually serve",
                  fontsize=10)
     for bar, v in zip(bars, n_max, strict=True):
         ax.text(bar.get_width() + 1.5, bar.get_y() + bar.get_height() / 2, str(v),
                 va="center", fontsize=9, fontweight="bold")
     ax.axvline(50, color="#333333", linestyle="--", linewidth=1)
+    # Headroom for the note INSIDE the axes: anchoring it above the frame (va="bottom" at
+    # y=-0.62) put it on top of the title, which is how it shipped.
+    ax.set_ylim(len(rows) - 0.4, -1.25)
     ax.annotate("N=50 quoted — between\nthe baseline and co-design limits",
-                xy=(50, -0.62), fontsize=7.5, color="#333333", ha="center", va="bottom",
-                annotation_clip=False)
+                xy=(50, -1.15), fontsize=7.5, color="#333333", ha="center", va="top",
+                bbox={"boxstyle": "round,pad=0.25", "facecolor": "white",
+                      "edgecolor": "none", "alpha": 0.85})
     ax.set_xlim(0, max(n_max) * 1.18)
     ax.grid(axis="x", alpha=0.3)
     fig.savefig(FIGS / "fig_envelope.png", **_SAVE)

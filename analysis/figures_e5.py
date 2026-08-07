@@ -55,7 +55,8 @@ def main() -> None:
     opt = rows["optimized"]
     fig.text(0.5, -0.03,
              f"optimized = {opt['encoding']}+{opt['scheme']}+placement {opt['placement']} "
-             f"b={opt['batch']} · energy/power are nominal (⚠ pending P7)", ha="center", fontsize=8)
+             f"b={opt['batch']} · timings and both power figures measured on Raspberry Pi 4 (D8)",
+             ha="center", fontsize=8)
     out = FIGS / "fig_e5_codesign.png"
     fig.savefig(out, **_SAVE)
     plt.close(fig)
