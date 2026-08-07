@@ -39,7 +39,12 @@ P_GRID = [0.00023, 0.001, 0.005, 0.01, 0.02, 0.03, 0.04, 0.045, 0.049,
           0.05, 0.051, 0.06, 0.08, 0.10, 0.15, 0.20]
 
 
-def main() -> None:
+def build_rows() -> list[dict]:
+    """The CSV rows, as a pure function of the measured inputs (gated by the frozen suite)."""
+    return _compute()
+
+
+def _compute() -> list[dict]:
     cfg = load_config("e5")
     encs, schemes = _measured_inputs(cfg)
     plat = optimizer.Platform(p_cpu_w=cfg["p_cpu_w"], p_radio_w=cfg["p_radio_w"],
@@ -67,6 +72,12 @@ def main() -> None:
               f"bytes/rec={best.bytes_per_record:7.3f}  V={best.verifiability:.5f}  "
               f"({len(res.feasible)} feasible)")
 
+    return rows
+
+
+def main() -> None:
+    cfg = load_config("e5")
+    rows = _compute()
     out = REPO / "results" / "raw" / "sensitivity_p.csv"
     buf = io.StringIO()
     meta = {**provenance.env_block(), "run": "sensitivity_p",

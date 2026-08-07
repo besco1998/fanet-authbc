@@ -319,3 +319,91 @@ the unicast arm only. `tests/test_anomalous_slot_bias.py` pins all of it.
 **New machinery:** `threshold_crossing_ci` + 13 tests, `verify_rng_isolation.py`, and two make
 targets. The through-line is that each replaces a discipline with a mechanical check — the project
 has repeatedly found that "remember to look at the distribution" is not a control.
+
+---
+
+## 9. Idea and framing audit (2026-08-07) — the first pass that questioned the *premise*
+
+*Requested: "audit the project, the idea and the process." Every earlier pass asked whether numbers
+measure what they claim. This one asks whether the claims are worth making, and whether the paper
+states them well. It found four framing defects and verified two integrity claims — one of which
+survived and one of which did not.*
+
+### I1 (MAJOR) — the paper did not agree with itself about its own best contribution
+
+| where | valuation of the payload-exclusion result |
+|---|---|
+| Abstract | listed among "**applications of established results rather than new ones**" |
+| Conclusion | "an exclusion result that we regard as **the more durable contribution**" |
+
+Both readings are defensible — *durable* is not *novel* — but a paper that files its strongest
+result under "not new" in the abstract and "most durable" in the conclusion has not decided what it
+is arguing. **Resolved by promoting it to the first result in the abstract and the first
+contribution bullet**, stated precisely: the bound is Gündoğan's, the *instantiation on EU868 with a
+measured H_f*, and the fragmentation corollary, are ours.
+
+⚠️ It also deserves the promotion on merit: it is arithmetic. 64 B does not fit in 51 B, so DR0--2
+are excluded whatever the encoding, batch or scheme. **Unlike every performance number in this
+project — four of which this audit had to move — an impossibility result cannot drift.**
+
+### I2 (MAJOR) — the conclusion violated a rule the same paper states
+
+* §Results: *"a single `≈3×` would be true of two of those four numbers and misleading about the
+  other two."*
+* §Conclusion: *"a `≈3×` ratio that is **stable under either feasibility threshold**."*
+
+The artifact says **3.22× at saturation and 2.42× at the verifiability boundary**. The conclusion
+was both wrong and self-contradicting, and it is the phrasing `CLAUDE.md` explicitly forbids.
+**Fourth internal contradiction found by this audit, and the same mechanism every time: prose that
+no test compares against anything.**
+
+### I3 (MAJOR) — the abstract was 693 words and structurally defensive
+
+IEEE Access expects ~250. More important than length was the *shape*: it spent more words
+qualifying the result than stating it — three separate self-criticisms before the reader reached
+the feasibility envelope, which is the contribution that actually requires the co-design.
+
+⚠️ **Honesty and impact were not in tension here; the abstract was failing at both.** Burying a
+sound result under hedges tells a reader "this work is weak", which is itself inaccurate. Rewritten
+to **267 words**, ordered by durability (exclusion → feasibility → bytes), with the limitations
+stated once and precisely instead of woven through every sentence.
+
+⚠️ **The rewrite caused a regression, which is worth recording.** The disclosure that the
+pre-registered criterion's verifiability half was *satisfied by construction* existed **only in the
+abstract**. Shortening deleted it. It is now restored to §Results, expanded with the stronger
+statement the `p` sweep later established (feasibility requires `p ≤ ε` identically). **Improving
+impact silently removed a self-criticism — exactly the failure this audit exists to catch, produced
+by the audit itself.**
+
+### I4 — no contributions list
+
+A reader could not extract what was new in ten seconds. Four bullets added, each naming what is
+*not* ours alongside what is.
+
+### P1 (CHECKED — the claim is TRUE and verifiable)
+
+The abstract calls the ≥40 % criterion **pre-registered**. Given S9 — where an identical claim was
+withdrawn because its evidence had vanished — this had to be checked rather than trusted.
+
+```
+docs/04_EVALUATION_PLAN.md   3354ec1  2026-07-03  "Success criterion for the thesis headline:
+                                                   optimized config reduces on-air auth bytes >=40%
+                                                   vs A+CBOR at V >= 0.95 under p=0.05"
+results/raw/e5_codesign.csv  a51486a  2026-07-05
+```
+
+**The criterion was committed two days before the result existed, in the public history.** This is
+the rare case where a pre-registration claim is checkable by a third party with nothing but the
+repository, and the paper now says so with that ordering rather than asserting the word.
+
+### P2 (MAJOR) — "all results are reproduced by an automated staleness gate" was an overstatement
+
+The gate covered **16 of 41** artifacts. Most of the remainder genuinely require NS-3 or the Pi rig —
+but **four did not**: `factorial_ablation`, `pqc_projection`, `sensitivity_p` and
+`lora_external_check` are pure model computation and were ungated only because they were new. That
+is the same F1 hole the gate exists to close.
+
+**Fixed by closing the hole rather than softening the sentence.** All four are now gated (each
+re-derives byte-identically; the frozen suite is 14 → 18 tests), every remaining ungated artifact
+has a stated reason, and the paper now claims exactly "all 20 model-derived artifacts" instead of
+"all results".

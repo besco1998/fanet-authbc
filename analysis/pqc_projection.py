@@ -60,7 +60,12 @@ SCHEMES = {
 # never quoted as sourced. Everything the paper claims uses ML-DSA and SPHINCS+, which are quoted.
 
 
-def main() -> None:
+def build_rows() -> list[dict]:
+    """The CSV rows, as a pure function of the published sizes (gated by the frozen suite)."""
+    return _compute()
+
+
+def _compute() -> list[dict]:
     s = framesizes.measured_sizes()["delta"]
     b_cap = int(LAM * D_MAX_S)
     rows = []
@@ -92,6 +97,11 @@ def main() -> None:
         print(f"{name:<22}{g_a:>8.0f}{per_rec:>12.1f}{per_rec / ed_ref:>11.2f}x"
               f"{frame:>10.0f}{frames:>8}{b_parity:>14.0f}{fill_s:>9.2f}")
 
+    return rows
+
+
+def main() -> None:
+    rows = _compute()
     print("\nsignature+header alone vs MTU:")
     for name, (g_a, _) in SCHEMES.items():
         ok = "fits" if g_a + H_F <= MTU else "EXCEEDS -- placement B cannot fit one frame at ANY b"

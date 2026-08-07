@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import csv
 import importlib.util
+import sys
 from pathlib import Path
 from types import ModuleType
 
@@ -32,6 +33,7 @@ from authbc.bench.experiments import (
     run_e5,
     run_lora,
     run_lora_codesign,
+    run_lora_external,
     run_operating_region,
 )
 
@@ -41,6 +43,11 @@ pytestmark = pytest.mark.frozen
 
 REPO = Path(__file__).resolve().parents[2]
 RAW = REPO / "results" / "raw"
+sys.path.insert(0, str(REPO / "analysis"))
+
+import factorial_ablation as _factorial_ablation  # noqa: E402
+import pqc_projection as _pqc_projection  # noqa: E402
+import sensitivity_p as _sensitivity_p  # noqa: E402
 
 
 def _load_script(rel: str) -> ModuleType:
@@ -103,6 +110,14 @@ _CASES = {
     "lora_codesign.csv": lambda: run_lora_codesign(load_config("lora")),
     "capacity_envelope.csv": lambda: run_capacity(load_config("capacity")),
     "operating_region.csv": lambda: run_operating_region(load_config("operating-region")),
+    # Added 2026-08-07. The abstract claimed "all results are reproduced deterministically by an
+    # automated staleness gate" while the gate covered 16 of 41 artifacts. Most of the rest need
+    # NS-3 or the Pi rig and genuinely cannot be re-derived here — but these three are pure model
+    # computation and were ungated only because they were new. Same F1 hole, same fix.
+    "lora_external_check.csv": lambda: run_lora_external(load_config("lora-external")),
+    "factorial_ablation.csv": lambda: _factorial_ablation.build_rows(),
+    "pqc_projection.csv": lambda: _pqc_projection.build_rows(),
+    "sensitivity_p.csv": lambda: _sensitivity_p.build_rows(),
 }
 
 

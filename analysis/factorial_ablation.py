@@ -58,7 +58,12 @@ def _bytes(encoding: str, placement: str, batch: int, g_a: float = G_A_ED) -> fl
     return bytes_per_record(plc, batch, s, g_a, H_F, 1)
 
 
-def main() -> None:
+def build_rows() -> list[dict]:
+    """The CSV rows, as a pure function of the measured sizes (gated by the frozen suite)."""
+    return _compute()[0]
+
+
+def _compute() -> tuple[list[dict], dict[str, float]]:
     names = list(AXES)
     # level index 0 = baseline, 1 = co-design; enumerate the full 2^k design
     corners = list(itertools.product((0, 1), repeat=len(names)))
@@ -122,7 +127,11 @@ def main() -> None:
     for label, eff in effects.items():
         rows.append({"encoding": "", "placement": "", "batch": "", "axes_at_codesign": "",
                      "bytes_per_rec": "", "term": label, "effect_bytes": round(eff, 4)})
+    return rows, effects
 
+
+def main() -> None:
+    rows, _effects = _compute()
     out = REPO / "results" / "raw" / "factorial_ablation.csv"
     buf = io.StringIO()
     meta = {**provenance.env_block(), "run": "factorial_ablation",

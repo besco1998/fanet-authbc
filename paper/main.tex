@@ -20,58 +20,30 @@ Blockchain-Grade UAV Telemetry over 802.11}
 \maketitle
 
 \begin{abstract}
-Flying ad-hoc networks (FANETs) stream tiny telemetry records that must be individually authenticated
-and hash-chained into a tamper-evident ledger. Because a cryptographic signature (64--96\,B) rivals or
-exceeds the payload (45--190\,B), naive per-record signing wastes airtime, energy, and goodput on a
-shared, lossy 802.11 channel. We argue that four design knobs---record \emph{encoding}, authentication
-\emph{placement}, signature \emph{scheme}, and \emph{batch} size---must be chosen jointly, and a
-factorial ablation identifies which of them actually interact: placement and batching are
-inseparable (placement saves exactly $g_a(1{-}1/b)$, hence \emph{nothing} at $b{=}1$), encoding is
-additive, and the scheme axis is byte-neutral at the operating point. We formalize this with five results (overhead dominance, batching amplification, a
-loss-robustness frontier, a power-independent scheme crossover, and the co-design optimum), and we
-distinguish these from two boundaries that are \emph{applications of established results rather than
-new ones}: the regime in which batching amplification ceases to apply, which is the standard
-diminishing-returns behaviour of packet aggregation, and a payload-exclusion
-bound~\cite{gundogan2021firmware} that delimits where co-design is possible at all. We implement
-measurable models for each, and test one falsifiable criterion: the co-optimized configuration must cut
-on-air authentication bytes by $\geq 40\%$ versus an inline-signature CBOR baseline while keeping
-verifiability $V_{\mathrm{tgt}} \geq 0.95$ under an assumed per-frame loss $p = 0.05$. We report
-that criterion as pre-registered even though our analysis later showed the authentication ratio to
-be a weak headline (Sec.~\ref{sec:results}); moving the goalposts after seeing the data would be the
-larger error. We also state plainly that the two halves were not equally at risk: for the
-frame-level placements $V_{\mathrm{tgt}} = 1-p$ independently of encoding, batch and scheme, so with
-$p$ fixed the verifiability half is satisfied by construction and \emph{the byte reduction carried
-the falsifiability}. Measured verifiability, written $V_{\mathrm{meas}}$ throughout, is a separate
-quantity obtained from simulation. Driven by measured microbenchmarks, the
-optimizer selects a delta encoding under self-batch placement, cutting \emph{total} on-air bytes by
-\textbf{58.7\%} (to $72.0$\,B/record) at $V = 0.95$---criterion met.
-We report this as a decomposition rather than a single figure, because the axes do not contribute
-equally: placement and batching cut \emph{authentication} bytes by 75.0\% (108$\to$27\,B/record) and
-encoding cuts \emph{payload} bytes by 32.1\%, contributing 79\% and 21\% of the saving respectively.
-The authentication term alone reduces to $1-1/b$, invariant to header size, signature size and
-encoding---so the co-design claim rests not on that ratio but on \emph{joint feasibility}: coupling
-the byte model to an NS-3-validated broadcast channel shows the co-design carrying between
-$1.9\times$ and $3.2\times$ the swarm of an inline baseline on the same medium, depending on the
-operating point and on whether the limit is read at saturation throughput or at the measured
-verifiability boundary. We report the operating region rather than a point, and adopt as primary the
-configuration that complies with 3GPP TS~22.125 (50\,Hz, 100\,ms, the PX4 companion stream rate):
-because the batch obeys $b \leq \Lambda D_{\max}$, compliance is free in bytes and costs swarm size,
-$N{\leq}213$ falling to $N{\leq}100$. It is not free everywhere---holding $b{=}4$ under a 100\,ms
-deadline requires $\Lambda \geq 40$\,Hz, below which the deadline forces $b{=}1$ and the saving
-collapses to 12.2\%. Freshness, not the MTU, is what binds:
-the byte-optimal batch cuts 96.7\% of authentication but incurs 1.50\,s of staleness, so a co-design
-optimizer blind to freshness solves the wrong problem. The airtime model is
-validated against NS-3 3.48 over 30 seeds: unicast matches Bianchi within $+1.29$/$-0.40\%$,
-while the common
-reduction of that model to broadcast fails by $16\times$ at $N{=}50$ and is replaced by Ma and Chen's
-broadcast model~\cite{machen2007,machen2008}, whose goodput our measurements confirm to within
-$0.51\%$ (the success-probability figure is looser, $2.49\%$). The band is quoted at the $1400$\,B frame it was measured on: at the $72$\,B end of the
-operating range the broadcast model tightens further, to $\pm0.21\%$, while unicast carries a
-systematic $-1.4$ to $-2.6\%$ bias that we report rather than absorb. Against published certificateless aggregate-signature schemes for vehicular broadcast we find
-the informative result is not a ratio but an axis: their overhead is linear in the message
-count because aggregation compresses the verifier's work, not the wire. All results are reproduced deterministically from frozen data by
-an automated staleness gate. AUTHBC introduces no new primitive; its contribution is the rigorous,
-reproducible co-design and its quantified trade-offs.
+Flying ad-hoc networks stream telemetry records so small that a cryptographic signature
+(64--96\,B) rivals or exceeds the payload (45--190\,B), so naive per-record signing spends airtime,
+energy and goodput on a shared, lossy channel. We co-optimize four knobs---record \emph{encoding},
+authentication \emph{placement}, signature \emph{scheme} and \emph{batch} size---against a byte
+model, an NS-3-validated 802.11 broadcast model, and energy measured on Raspberry~Pi~4 hardware.
+
+We report three results, ordered by how durable they are. \textbf{First, an exclusion.} A link whose
+payload cannot hold one header, one signature and one record carries no per-frame-verifiable
+telemetry at \emph{any} encoding or batch size; this removes the four longest-range LoRa modes
+outright, and loss makes fragmentation no escape, since a unit spanning $n$ frames verifies with
+probability $(1-p)^n$. It is arithmetic, so unlike a performance figure it cannot move.
+\textbf{Second, feasibility}---the contribution that genuinely requires the coupling: joining the
+byte model to the channel model, the co-design sustains between $1.9\times$ and $3.2\times$ the
+neighbourhood of an inline baseline on the same medium, the range spanning the saturation and
+measured-verifiability thresholds rather than hiding behind one of them. \textbf{Third, bytes}:
+$58.7\%$ fewer on-air bytes ($72.0$\,B/record) at an operating point compliant with 3GPP TS~22.125,
+meeting a success criterion that was committed to version control two days before the result
+existed.
+
+A factorial ablation narrows the co-design claim rather than inflating it: only placement and
+batching interact, by exactly $g_a(1{-}1/b)$ and therefore not at all at $b{=}1$; encoding
+contributes additively and the scheme axis is byte-neutral at this operating point. AUTHBC
+introduces no new cryptographic primitive. Its contribution is a reproducible co-design, its
+quantified trade-offs, and the boundary beyond which no choice of cryptography helps.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -99,6 +71,28 @@ ablation (Sec.~\ref{sec:results}) finds placement and batching interact exactly-
 nothing without batching---while encoding contributes additively and the scheme axis is byte-neutral
 here. Calling all four ``inseparable'' would overstate what the model supports. We make this precise (Sec.~\ref{sec:theory}),
 implement it (Sec.~\ref{sec:impl}), and test the falsifiable headline of Sec.~\ref{sec:results}.
+
+\textbf{Contributions.}
+\begin{itemize}
+\item \textbf{An exclusion bound instantiated on a real band.} Applying the payload-exclusion
+argument~\cite{gundogan2021firmware} with a \emph{measured} $H_f{=}44$\,B partitions EU868: DR0--2
+fail on the signature alone and DR3 by six bytes, so four of seven data rates admit no
+per-frame-verifiable telemetry at any encoding or batch (Sec.~\ref{sec:lowrate}). The bound is not
+ours; the instantiation, the measured constant and the fragmentation corollary are.
+\item \textbf{A feasibility envelope, not a byte ratio.} Coupling the byte model to an
+NS-3-validated broadcast model yields the largest neighbourhood each configuration can sustain
+($1.9$--$3.2\times$ the inline baseline), reported at two thresholds because they answer different
+questions (Sec.~\ref{sec:results}).
+\item \textbf{An ablation that narrows our own claim.} Only placement$\times$batching interact, by
+exactly $g_a(1{-}1/b)$; encoding is additive and scheme is byte-neutral here. We report this
+because it contradicts the four-axis framing we began with.
+\item \textbf{Reproducibility as a result, not a promise.} A staleness gate re-derives all
+\emph{20} model-derived artifacts byte-identically on every commit; the remainder require NS-3 or
+the hardware rig and carry provenance headers instead, and we say which is which rather than
+claiming ``all results''. The success criterion was committed to version control two days before
+the result existed, and the corrections this discipline forced---including retractions---are
+recorded rather than quietly absorbed (Sec.~\ref{sec:repro}).
+\end{itemize}
 
 \section{Related Work and Positioning}
 \emph{Citation integrity.} Every reference in this section was confirmed against the Crossref record
@@ -492,6 +486,23 @@ to three decimals for all four encodings. The encoding axis is nonetheless load-
 $3\times$ on total bytes---but it acts on payload, contributing 20.8\% of the saving against
 placement and batching's 79.2\%. The scheme axis is byte-neutral here (Ed25519 and ECDSA are both
 64\,B) and is decided on energy and verification throughput instead (T4).
+
+\textbf{The pre-registered criterion, and how much of it was actually at risk.} The success
+criterion---cut on-air authentication bytes by ${\geq}40\%$ versus A+CBOR while holding
+$V_{\mathrm{tgt}} \geq 0.95$ at $p{=}0.05$---was committed to version control in the project's
+initial scaffold, two days before the result it judges existed; both commits are in the public
+history, so the ordering is checkable rather than asserted. We report it as pre-registered even
+though our own later analysis showed the authentication ratio to be a weak headline: moving the
+goalposts after seeing the data would be the larger error.
+
+Its two halves were not equally at risk, and we state that rather than let the word
+``falsifiable'' do work it has not earned. For the frame-level placements
+$V_{\mathrm{tgt}} = 1-p$ independently of encoding, batch and scheme, so with $p$ fixed at $0.05$
+and $\epsilon = 0.05$ the verifiability half is satisfied \emph{exactly, by construction}---indeed
+feasibility requires $p \leq \epsilon$ identically, since $1-p$ is the best verifiability any
+placement attains. \textbf{The byte reduction carried the falsifiability on its own.} Measured
+verifiability, written $V_{\mathrm{meas}}$ throughout, is a separate quantity obtained from
+simulation and is not what this criterion tested.
 
 \textbf{Ablation: which axes actually interact.} A decomposition attributes a total and is possible
 even when the axes are independent, so it cannot establish the co-design claim on its own. We
@@ -927,8 +938,11 @@ reduces to $1-1/b$: the header and signature sizes cancel, and neither the encod
 appears. Reported as a headline percentage it would overstate what four coupled axes contribute. The
 contribution that genuinely requires the coupling is \emph{feasibility}---which configurations can
 run at all. Joining the byte model to the channel model shows the inline baselines exhaust a single
-collision domain at 25--32 neighbours while the co-designed configuration reaches 103 --- a
-${\approx}3\times$ ratio that is stable under either feasibility threshold.
+collision domain at 25--32 neighbours while the co-designed configuration reaches 103. We resist
+rounding that to ``${\approx}3\times$'': against the CBOR baseline it is $3.22\times$ at saturation
+but $2.42\times$ at the measured verifiability boundary, and quoting one figure for both would
+repeat the error Sec.~\ref{sec:results} warns against. The advantage is robust in existence
+($>1.9\times$ under every threshold and criterion we tested) and variable in size.
 
 Pushed to its limit, the same coupling yields an exclusion result that we regard as the more durable
 contribution. A link whose payload cannot hold one header, one signature and one record carries no
