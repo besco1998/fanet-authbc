@@ -44,3 +44,4 @@ hw/keys/*
 *.swp
 
 # NOTE: results/raw/*.csv are data-of-record and ARE committed (docs/06 §6). Do not ignore.
+*:Zone.Identifier

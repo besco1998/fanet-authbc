@@ -574,3 +574,56 @@ class TestReviewerTargets:
         assert "zero contention" in tex and "does \\emph{not} validate" in tex, (
             "the two-node hardware caveat no longer says it cannot validate the contention models"
         )
+
+
+class TestDirectionCSurvey:
+    """The survey claim changed on new evidence (2026-08-07) and must track the artifact.
+
+    Klimiashvili et al. 2020 entered the corpus under the pre-registered criteria and is the first
+    REPORTS verdict — it states "the average of 50 independent runs". The paper had said none of
+    four studies reported replication; it now says four of five, and reports a count rather than a
+    percentage because n=5 cannot support one.
+
+    ⚠️ A counter-example to one's own hypothesis is the single easiest thing to quietly drop. This
+    test makes dropping it fail.
+    """
+
+    CSV = REPO / "results" / "raw" / "direction_c_survey.csv"
+
+    def _verdicts(self) -> dict[str, str]:
+        return {r["paper"]: r["verdict"] for r in csv.DictReader(
+            ln for ln in self.CSV.read_text().splitlines() if not ln.startswith("#"))}
+
+    def test_the_counter_example_is_in_the_corpus_and_counted(self):
+        v = self._verdicts()
+        assert "klimiashvili2020_lora_vs_wifi_adhoc_ns3" in v, (
+            "the REPORTS counter-example was removed from the corpus"
+        )
+        assert v["klimiashvili2020_lora_vs_wifi_adhoc_ns3"] == "REPORTS"
+        counted = [x for x in v.values() if x in {"REPORTS", "NONE"}]
+        assert len(counted) == 5, f"corpus size changed to {len(counted)}"
+
+    def test_paper_states_the_survey_as_the_artifact_has_it(self):
+        v = self._verdicts()
+        counted = [x for x in v.values() if x in {"REPORTS", "NONE"}]
+        n_none = sum(1 for x in counted if x == "NONE")
+        tex = (REPO / "paper" / "main.tex").read_text()
+        assert "\\emph{five} ns-3 LoRa simulation studies" in tex, (
+            f"the paper no longer says the corpus holds {len(counted)} studies"
+        )
+        assert n_none == 4 and "four state no seed count" in tex, (
+            f"artifact has {n_none} NONE; the paper's wording disagrees"
+        )
+        assert "\\textbf{The fifth does}" in tex, (
+            "⚠️ the paper stopped disclosing the counter-example to its own hypothesis"
+        )
+
+    def test_reports_share_still_sits_below_the_preregistered_threshold(self):
+        """If REPORTS ever reaches 25 %, H1 is unsupported and the paper must say so."""
+        v = self._verdicts()
+        counted = [x for x in v.values() if x in {"REPORTS", "NONE"}]
+        share = sum(1 for x in counted if x == "REPORTS") / len(counted)
+        assert share < 0.25, (
+            f"REPORTS is now {share:.0%}, at or above the pre-registered 25 % falsification "
+            f"threshold. H1 is NOT supported — the paper's claim must be withdrawn, not softened."
+        )

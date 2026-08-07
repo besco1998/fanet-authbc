@@ -106,3 +106,30 @@ title-level (Bianchi, Nakamoto, BLS).
 demoted them (`gundogan2021firmware` for T6; for T2a the disposition is recorded in `OPEN_ITEMS` A6
 with no citation, because the finding is that the result is *standard*, and standard results are
 attributed to the field, not to a paper).
+
+---
+
+## Added 2026-08-07 — `klimiashvili2020loravswifi`
+
+| field | value | how checked |
+|---|---|---|
+| DOI | `10.1109/ICNC47757.2020.9049724` | Crossref API, queried by full title |
+| title | LoRa vs. WiFi Ad Hoc: A Performance Analysis and Comparison | Crossref record matches the PDF title page exactly |
+| authors | Klimiashvili, Tapparello, Heinzelman | Crossref; matches the PDF byline (U. Rochester) |
+| venue / year | 2020 International Conference on Computing, Networking and Communications (ICNC) | Crossref; corroborated by the PDF's own `/Subject` metadata |
+| pages | 654–660 | Crossref; the PDF's page furniture shows 654 |
+
+**Every claim we attribute to it was read in the PDF, not inferred from the abstract:**
+
+* *"the average of 50 independent runs over channel realization and nodes' position"* — §V, opening
+  of the numerical results. This is the Direction C `REPORTS` adjudication and it is a **direct
+  quotation**, because it is the sentence that makes them a counter-example to our own hypothesis.
+* *"the theoretical throughput of WiFi is almost 5000 times higher than that of LoRa's"* — §V-C.
+  ⚠️ Read **in context**: the surrounding text fixes their LoRa configuration at data rate 6
+  (SF7/250 kHz, 11 kb/s, their Table I), so this is a PHY bit-rate ratio, not a delivered-throughput
+  or application-level one. The paper says so explicitly rather than letting the number stand
+  next to our ≈4200× and imply agreement. *This is the F18 discipline applied on purpose:
+  quoting the sentence was not enough; the configuration it depends on had to be read too.*
+* DR3 = 123 B — their Table I ("DATA RATE FOR LORA IN EU REGION"). Checked against RP002-1.0.3:
+  it is *M* (MACPayload), where our table records *N* (application payload). **Not an error in
+  either source**, and the resolution is now in the paper because it decides the DR3 verdict.

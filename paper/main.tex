@@ -734,6 +734,16 @@ escape is a smaller authentication object, and the smallest standardised one is 
 BLS12-381 $\mathbb{G}_1$ point~\cite{cfrg_bls} at 126-bit security --- which does fit 51\,B, leaving
 three bytes for the header and the record together. DR3 fails on the encoding, and by six bytes. The $s_{\min}{=}13$\,B it is measured against is the smallest record this design can emit: the $45$\,B delta record of Table~\ref{tab:e1} minus the $32$\,B chain link, once chaining moves to once-per-frame (Sec.~\ref{sec:chaining}). That is the most favourable value available to us, so DR3's exclusion does not rest on a pessimistic choice --- a leaner record would have to beat $13$\,B while remaining hash-chainable.
 
+\textbf{Which payload column, and why it decides DR3.} Published EU868 tables differ: Klimiashvili
+\emph{et al.} list DR3 at $123$\,B~\cite{klimiashvili2020loravswifi} where we use $115$\,B. Both
+read RP002-1.0.3 correctly --- $123$ is $M$, the maximum \emph{MACPayload}, and $115$ is $N$, the
+maximum \emph{application} payload, the two differing by the $8$\,B \texttt{FHDR} and
+\texttt{FPort}. $N$ is the applicable figure here, because our header, signature and record travel
+inside \texttt{FRMPayload}. \textbf{The distinction decides the verdict}: at $M{=}123$ the residual
+is $15$\,B and DR3 would be \emph{feasible}; at $N{=}115$ it is $7$\,B and DR3 is excluded. We
+state it because the exclusion is this paper's most durable claim, and a reader holding the other
+table would otherwise find it contradicted rather than explained.
+
 \begin{figure}[t]\centering
 \includegraphics[width=\columnwidth]{fig_t6_exclusion.png}
 \caption{Boundary~1. The payload-exclusion tiers across EU868 data rates at $H_f{=}44$\,B measured
@@ -976,7 +986,16 @@ The arm is ${\approx}120\times$ slower per node \emph{and} ${\approx}34\times$ s
 and it is the product that matters (Table~\ref{tab:lowrate}). LoRa is not a slow 802.11; it is a
 different regime, in which authenticated per-record telemetry is not the right application at all.
 Its defensible role is long-range \emph{provenance} --- a tamper-evident trickle --- not live
-telemetry.
+telemetry. An independent ns-3 comparison of the two technologies reaches the same structural
+conclusion from a different direction: Klimiashvili \emph{et al.} find neither uniformly better,
+with WiFi ad hoc winning on delay at every file size while it remains single-hop and LoRa winning on
+energy only where WiFi has degraded into a multi-hop route, and they recommend \emph{selecting
+between} the two rather than tuning one~\cite{klimiashvili2020loravswifi}. \textbf{We take that
+agreement as qualitative only.} Their headline ratio --- WiFi's theoretical throughput ``almost
+5000 times'' LoRa's --- is a \emph{PHY bit-rate} comparison (against DR6's $11$\,kb/s) carrying no
+duty cycle, framing or authentication, whereas our ${\approx}4200\times$ is an application-level
+aggregate of authenticated records per second across a domain. The two are close in magnitude and
+are \emph{not} the same quantity, so we do not offer either as confirming the other.
 
 One caveat of provenance. The simulator enforces RP002 Table~12 (repeater-compatible, 222\,B) while
 our analytical model uses Table~13 (non-repeater, 242\,B); at DR5 that caps the batch at 6 rather
@@ -999,9 +1018,15 @@ does not.
 in their own results, attributing bimodal delivery to nodes that ``always transmit on a specific SF,
 time, and channel'', producing ``certain packet collisions being repeated for every transmission
 cycle''~\cite{durand2025loramesh}. What appears to be absent from the literature is any
-\emph{quantification} of the resulting dispersion, and---of the four ns-3 LoRa simulation studies
-meeting our pre-registered inclusion criteria---any statement of seed count, confidence interval or
-standard deviation that would let a reader detect it. That is why every capacity figure in this
+\emph{quantification} of the resulting dispersion. Of the \emph{five} ns-3 LoRa simulation studies
+now meeting our pre-registered inclusion criteria, four state no seed count, confidence interval or
+standard deviation that would let a reader detect it. \textbf{The fifth does}: Klimiashvili
+\emph{et al.} average every reported result over ``50 independent runs over channel realization and
+nodes' position''~\cite{klimiashvili2020loravswifi}. We report that as a count and not a
+percentage, because five papers cannot support one: the protocol targeted 56, the achieved $n$ is
+$5$, and a single counter-example moves the estimate from $0\%$ to $20\%$. What this supports is
+the weak claim --- that a reader of this literature frequently \emph{cannot} tell --- not a
+quantitative claim about how often. That is why every capacity figure in this
 paper is reported at 30 seeds with its distribution, and why a threshold crossing is given as an
 interval: at $N{=}3$ the mean clears $V{\geq}0.95$ while nine of thirty individual runs do not.
 

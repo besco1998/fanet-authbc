@@ -22,5 +22,11 @@
     "pilot": true,
     "adjudication": "NONE",
     "note": "both hits FALSE POSITIVES: 'routing information is repeated for a fixed number of cycles' (routing protocol) and 'packet collisions being repeated for every transmission cycle' (their own result). \u26a0\ufe0f The second hit is PRIOR ART on Direction C's phenomenon -- see F42; it is not replication reporting, so the verdict stands as NONE."
+  },
+  "klimiashvili2020_lora_vs_wifi_adhoc_ns3": {
+    "ns3": true,
+    "pilot": false,
+    "adjudication": "REPORTS",
+    "note": "Added 2026-08-07, AFTER the protocol was fixed (eb3eda5) and therefore NOT a pilot entry. Verdict REPORTS, adjudicated by hand: 'All the results presented in this section are the average of 50 independent runs over channel realization and nodes' position.' That is an explicit run count, which is exactly what H1 says is absent. \u26a0\ufe0f This is the first counter-example in the corpus and it was recorded as such rather than excluded."
   }
 }

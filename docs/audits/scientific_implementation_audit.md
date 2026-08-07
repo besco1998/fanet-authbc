@@ -601,3 +601,60 @@ mine. Recorded in `results/PROVENANCE.md` so the next reader does not repeat it.
 placement main effect $-24.0$, encoding $146.1$), the CLAS row ($72.0 + 162/(5{\times}4) = 80.1$),
 the PQ projection ($45 + 2464/4 = 661.0$), the per-run crossing $U \in (1.67, 2.23]$ with 10/30
 seeds failing, and `tab:t6`'s three tiers.
+
+---
+
+## 12. A new source, and what it cost (2026-08-07)
+
+Mohamed supplied Klimiashvili, Tapparello & Heinzelman, *LoRa vs. WiFi Ad Hoc* (IEEE ICNC 2020,
+DOI `10.1109/ICNC47757.2020.9049724`, Crossref-verified). It touched three separate claims, and
+**two of the three went against us.**
+
+### ⚠️ 1. A counter-example to our own hypothesis, kept
+
+The paper reports *"the average of 50 independent runs over channel realization and nodes'
+position"*. It is an ns-3 LoRa simulation study, so it enters the Direction C corpus under the
+**pre-registered** inclusion criteria — no discretion available — with the verdict `REPORTS`.
+
+The sweep moves **0/4 → 1/5 REPORTS (20 %)** against a pre-registered falsification threshold of
+25 %. H1 survives, *narrowly*, and the paper's wording changed from "none of the four" to "four of
+five; the fifth does". We now report the **count** and explicitly refuse the percentage: the
+protocol targeted 56 papers, the achieved $n$ is 5, and one paper moves the estimate 20 points.
+
+⚠️ **A counter-example to one's own hypothesis is the easiest thing in science to quietly drop.**
+`TestDirectionCSurvey` now fails if the corpus loses it, if the paper stops disclosing it, or if
+REPORTS ever reaches 25 % — in which case the instruction in the assertion message is to *withdraw*
+the claim, not soften it.
+
+### ⚠️ 2. A payload figure that would have flipped our headline exclusion
+
+Their Table I lists **DR3 = 123 B**; our `tab:t6` uses **115 B**. At 123 B the residual is
+$123-44-64 = 15 \geq s_{\min}$ and **DR3 becomes feasible** — "four of seven data rates excluded"
+would become three, in the result we call the most durable in the paper.
+
+Both numbers are correct readings of RP002-1.0.3: **123 is $M$** (MACPayload), **115 is $N$**
+(application payload), differing by the 8 B `FHDR`+`FPort`. $N$ is the applicable one, because our
+header, signature and record travel inside `FRMPayload` — and `lora.py` already said so
+(`max_app_payload  # N, non-repeater-compatible, Table 13`). The model was right; what was missing
+was any statement of *which column and why*, so a reader holding the other table would have found
+the exclusion contradicted rather than explained. Now argued in §VI-A.
+
+### 3. Corroboration — qualitative, and bounded as such
+
+They find neither technology uniformly better (WiFi ad hoc wins delay while single-hop; LoRa wins
+energy only once WiFi degrades to multi-hop) and recommend *selecting between* them. That is our
+two-regime conclusion reached independently and from the other direction.
+
+⚠️ **Their "almost 5000×" is not our "≈4200×".** Theirs is a PHY bit-rate ratio against DR6's
+11 kb/s with no duty cycle, framing or authentication; ours is an application-level aggregate of
+authenticated records per second across a domain. The two are close in magnitude and measure
+different things. The paper says so in the sentence that cites them, because leaving two similar
+numbers adjacent is how a false corroboration gets made. **This is the F18 discipline applied
+deliberately: quoting the sentence was not enough — the configuration it depends on had to be read.**
+
+### Two more C6 instances, found in passing
+
+The literature register itself carried superseded values: the Bianchi validation band as
+**+1.28/−0.49 %** (now +1.29/−0.40 %) and the naive-reduction error as **16×** (now 17.3×). Both had
+been corrected in the paper weeks earlier. The register is where a reader goes to check a number,
+which makes it a bad place for a stale one.

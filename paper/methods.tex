@@ -6,7 +6,7 @@
 
 \begin{document}
 
-\title{Five Ways a Network Simulation Study Produces a Wrong Number \\
+\title{Six Ways a Network Simulation Study Produces a Wrong Number \\
 \large A self-audit of one LoRa/802.11 co-design, with the guards that caught each}
 
 \author{\IEEEauthorblockN{Mohamed A. Farouk}
@@ -20,7 +20,7 @@ public code, and follow-up work reports that fewer than 15\% of MANET simulation
 reproducible. Those surveys tell us the literature has a credibility problem; they do not tell an
 author what, mechanically, goes wrong. We report the other half: a self-audit of a single
 LoRa/802.11 authentication co-design in which \textbf{ten quantitative results moved or were
-retracted}, and a taxonomy of the \textbf{five distinct mechanisms} responsible. Only one is fixed
+retracted}, and a taxonomy of the \textbf{six distinct mechanisms} responsible. Only one is fixed
 by running more seeds. Two were protected by a passing test suite. Three were internal
 contradictions between a paper and its own artifacts that every gate in the project reported green.
 For each class we give the concrete instance, the number it moved, and the mechanical check that now
@@ -42,7 +42,9 @@ We took that prescription seriously, and it was not enough. Over a five-week aud
 co-design study --- an authenticated UAV telemetry ledger evaluated with NS-3 and two Raspberry~Pi
 radios --- ten quantitative results moved or were withdrawn. Every one had passed the project's own
 gates. \textbf{Seed discipline caught four of them. It was structurally incapable of catching the
-other six.}
+other six.} Four later review passes over the write-up moved roughly thirty further numbers, and
+the dominant mechanism in those was not any of the five: it was corrections that had been made
+correctly at the source and never propagated (C6).
 
 This paper is the taxonomy. It is deliberately a self-audit: every instance is our own, with the
 before and after numbers, because a defect list assembled from other people's papers cannot say what
@@ -98,6 +100,38 @@ figure, inverting a comparison.
 \textbf{Guard:} the discipline of writing what a result cannot show beside what it can, and
 \textbf{quoting the figure, not the paper}.
 
+\subsection{C6 --- A correction that does not propagate}
+The class we did not anticipate, and the one with the most instances. C1--C5 describe how a number
+is \emph{produced} wrongly. C6 is different: the number is corrected \emph{once}, at its source,
+and the correction fails to reach every place the value already appears. The source of truth and the
+artifacts agree with each other; only the derived copies disagree, and they disagree silently.
+
+\textbf{Instances}, all from four further review passes over a single paper:
+\begin{itemize}\itemsep2pt
+\item a frame header measured at 44\,B replaced an assumed 40\,B --- and \textbf{five constants
+\emph{derived} from it kept the old value}. Searching for ``40'' finds none of them, because none of
+them prints the header: they print $(M{-}H_f{-}g_a)/(b{+}1)$, $M/(M{-}H_f{-}g_a)$, a batch ceiling.
+\item a finding was \textbf{retracted} in the audit register and remained printed in a table, one
+hundred lines below a sentence asserting its opposite in bold;
+\item six three-seed artifacts were \textbf{deleted} as superseded, and a table still built on one
+of them matched the deleted file to three decimals;
+\item a threshold crossing corrected in a table caption was left uncorrected on a figure's axis;
+\item a simulator upgrade documented in the paper's own limitations was left stale in a plot title;
+\item a completed phase left a figure footing ``pending''.
+\end{itemize}
+
+\textbf{Why seeds, artifacts and code tests are all blind to it.} There is no wrong computation to
+find. Every artifact is correct and mutually consistent; the defect lives in the copies --- prose,
+captions, axis labels, plot titles --- which no gate reads. Two of the six had \emph{already been
+found and fixed elsewhere in the same repository}, which is what makes the class distinctive: the
+project had the right answer written down and shipped the wrong one anyway.
+
+\textbf{Guard.} Re-derive every consumer when an input changes, and treat a retraction as a
+\texttt{grep} obligation rather than a register entry. Mechanically: parse the prose for the
+constants it quotes and recompute them from the measured inputs. Note the asymmetry --- a
+half-correct table is \emph{harder} to catch than a wholly wrong one, because the columns that
+agree with their source make the table read as verified.
+
 \section{What the gates missed, and why}
 Three of the ten corrections were \emph{internal contradictions} in which a paper disagreed with its
 own artifacts while every test passed:
@@ -140,7 +174,9 @@ the criteria we had just written down. \textbf{Both would otherwise have reached
 The credibility literature tells authors to publish code and report seeds. Both are necessary. In
 one audited study, seeds addressed four defects out of ten; the rest came from an unverified
 constant, a criterion applied to the wrong statistic, a comparison confounded by RNG bookkeeping, an
-overreaching claim, and three contradictions between a paper and its own data.
+overreaching claim, and three contradictions between a paper and its own data. Four further passes
+over the write-up then found a sixth and larger class, in which the study had \emph{already made}
+the correction and shipped the uncorrected copy regardless.
 
 The transferable lesson is not a longer checklist. It is that \emph{every claim worth making should
 have an invariant a machine can check}, including the claims a paper makes about itself --- and that
