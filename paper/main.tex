@@ -109,6 +109,15 @@ primitive}; it quantifies \emph{where and when} each scheme wins once placement 
 (Sec.~\ref{sec:t4}), finding Ed25519 dominant for self-batch and BLS worthwhile only for cross-signer
 relay traffic.
 
+Independent work on UAV swarms adopts exactly the design we treat as the naive baseline:
+Rotta and Mykytyn attach ``a HMAC-256 signature with a timestamp'' to \emph{each} broadcast
+telemetry message, and observe that ``telemetry messages in the MAVLink protocol are much smaller
+than 256 bytes''~\cite{rotta2024telemetrybroadcast}---corroborating both our premise and our
+baseline from outside this work. Their construction is a symmetric MAC under a group key, so it
+provides integrity and group authenticity but \emph{not} non-repudiation, and therefore cannot
+underwrite a tamper-evident ledger attributable to a specific UAV. That is a different trust model,
+not a cheaper solution to ours.
+
 \textbf{(b) Batch/aggregate verification in vehicular/IoT networks.} Zhang \emph{et
 al.}~\cite{zhang2008batch} let a roadside unit ``verify multiple received signatures at the same
 time'', motivated by exactly the pressure we face from the other side: a hard deadline, in their case
@@ -672,7 +681,10 @@ transmitted per-record tamper evidence.
 \subsection{Capacity: the two penalties compound}
 Time on air and the duty cycle are deterministic, so simulating them would be circular. One
 quantity is not derivable that way --- how many nodes share the channel --- because LoRaWAN uplinks
-are pure ALOHA, with no carrier sense and no acknowledgement.
+are pure ALOHA, with no carrier sense and no acknowledgement. Simulating LoRaWAN scalability in ns-3
+is established practice~\cite{vandenabeele2017scalability}, including proposals to replace the ALOHA
+MAC with carrier sense~\cite{to2018loracsma} and recent extensions to non-terrestrial
+links~\cite{traspadini2025lorantn}.
 
 \textbf{A topology caveat, stated because it differs from the 802.11 arm.} LoRaWAN is by
 specification a star-of-stars with no peer-to-peer mode: a recent FANET survey notes that it
@@ -781,7 +793,11 @@ $0.891$ with $\sigma = 0.21$. A three-seed mean, which is what the figure above 
 characterise that distribution. At realistic $\pm20$\,ppm crystal tolerance the accumulated drift
 over an hour ($144$\,ms) is too small to break a $728$\,ms collision window, so the effect is
 physical for a naive periodic sender; real LoRaWAN Class~A devices randomise transmission timing
-precisely to avoid it, which the simulated sender does not model. We report the figure with this
+precisely to avoid it, which the simulated sender does not model. We note that this
+distribution is invisible in a literature that does not report replication: of nine ns-3 LoRa
+studies we examined---including the foundational scalability
+analysis~\cite{vandenabeele2017scalability}---none states a seed count, a confidence interval or a
+standard deviation. We report the figure with this
 caveat rather than restate it as a precise capacity. It is conservative
 in the direction that matters least for the claim being made: the point of this section is that the
 low-rate regime is qualitatively different, and a conservative bound does not manufacture that
@@ -897,7 +913,10 @@ the MTU binds harder still: an ML-DSA signature plus the $44$\,B header is $2464
 \emph{any} batch size. That is precisely why~\cite{ndss2024pqv2v} needs a fragmentation design
 ($\beta{=}4$ frames for Dilithium, $8$ for SPHINCS+ in their Table~III) rather than a larger batch.
 Fragmenting authenticated payloads is itself a security surface in constrained
-networks~\cite{sobati2025fragmentsec}, so the change is not only a byte-accounting one.
+networks~\cite{sobati2025fragmentsec}, so the change is not only a byte-accounting one. PQ
+identity-based signatures with aggregation are being proposed for fog-enabled FANETs
+specifically~\cite{almajmaie2026pqfanet}; that line optimises signing and verification cost, which
+is complementary to the wire-byte constraint that binds here.
 The honest conclusion is that AUTHBC's amortization argument does not survive the transition
 unchanged: a PQ variant would be a different design, not a re-parameterisation, and the placement
 axis would have to be re-derived against fragmentation rather than against the MTU.

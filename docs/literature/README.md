@@ -2,7 +2,7 @@
 
 *Every source consulted for AUTHBC, with **why it matters to this thesis** stated explicitly. A
 citation with no stated role is a citation nobody will check. PDFs are stored beside this file where
-licensing allows. **25 PDFs; every source cited in the paper is held and has been read.** ⚠️ The header said *20* until 2026-08-07 while 25 sat on disk, and **five held PDFs had no register entry at all** despite the promise above — they are added at the end of this file. A register that silently omits a fifth of its corpus is not a register. The one
+licensing allows. **30 PDFs; every source cited in the paper is held and has been read.** ⚠️ The header said *20* until 2026-08-07 while 25 sat on disk, and **five held PDFs had no register entry at all** despite the promise above — they are added at the end of this file. A register that silently omits a fifth of its corpus is not a register. The one
 exception is Gündoğan et al. (ACM DL only) — its DOI is recorded instead. See
 [`A3_CITATION_VERIFICATION.md`](A3_CITATION_VERIFICATION.md) for how each citation was checked.*
 
@@ -243,3 +243,75 @@ bib key is `abrardo2019multihoplora`; the file is left under its original name s
 not break, and the mismatch is recorded here rather than hidden.
 Cited beside Jiang et al. as a concrete multi-hop LoRa deployment that still keeps a sink-directed
 data flow.
+
+
+---
+
+## Added 2026-08-07 — ns-3 LoRa simulation studies, and the Direction C replication sweep
+
+Sourced, downloaded and read as one pass serving two purposes: they are legitimate citations, and
+each was swept for **replication reporting**, which is Direction C's central claim.
+
+### Van den Abeele, Haxhibeqiri, Moerman & Hoebeke 2017 — *Scalability Analysis of Large-Scale LoRaWAN Networks in ns-3*
+`vandenabeele2017_lorawan_ns3_scalability.pdf` · IEEE IoT Journal 4(6):2186--2198 · **USED / PRIOR ART**
+The foundational ns-3 LoRaWAN scalability study. Cited as the precedent for simulating LoRaWAN node
+counts in ns-3.
+⚠️ **Direction C: reports NO replication.** Searched widely, not just for "seed": every occurrence of
+*average* refers to the **traffic model** (Poisson rate, downstream rate, SF distribution), and
+*"each simulation is run for a simulation time equal to hundred times the upstream period"* is
+**duration, not repetitions**. No seed count, no confidence interval, no error bars — in the most
+cited scalability analysis in this space.
+
+### To & Duda 2018 — *Simulation of LoRa in NS-3: Improving LoRa Performance with CSMA*
+`to2018_lora_ns3_csma.pdf` · IEEE ICC · **USED / POSITIONING**
+Cited beside the above as a proposal to replace LoRaWAN's ALOHA MAC with carrier sense.
+⚠️ **Direction C: reports no replication.** Its figures compare measurements against *a* single ns-3
+simulation.
+
+### Traspadini, Zorzi & Giordani 2025 — *Performance Evaluation of LoRa for IoT Applications in Non-Terrestrial Networks via ns-3*
+`traspadini2025_lora_ntn_ns3.pdf` · arXiv:2509.02811 · **USED / POSITIONING**
+Current ns-3 LoRa practice, extended to satellite links.
+⚠️ **Direction C: reports no replication.** The one keyword hit was a false positive — "Hybrid
+Automatic Repeat reQuest" matching *repeat*.
+
+---
+
+### Rotta & Mykytyn 2024 — *Secure Multi-hop Telemetry Broadcasts for UAV Swarm Communication*
+`2024_secure_multihop_telemetry_broadcast.pdf` · arXiv:2401.11915 · **USED / PRIOR ART**
+⚠️ **The most directly comparable outside work we have found.** An independent UAV-swarm design that
+attaches *"a HMAC-256 signature with a timestamp"* to **each** broadcast telemetry message — i.e.
+exactly the per-record placement our paper calls the naive baseline — and states that *"telemetry
+messages in the MAVLink protocol are much smaller than 256 bytes"*. It corroborates both our premise
+and our baseline from outside this project, which matters because a baseline one invents oneself is
+open to the charge of being a straw man.
+⚠️ **It is not a competitor.** HMAC-256 is a symmetric MAC under a group key: integrity and group
+authenticity, but **no non-repudiation**, so it cannot underwrite a ledger attributable to a
+specific UAV. Different trust model, not a cheaper answer to the same question — the same
+distinction that moved TBRD/TESLA to Related Work.
+
+### Al majmaie, Ghajari, Bhatta & Amsaad 2026 — *Blockchain-Driven AI-Enhanced Post-Quantum Multivariate IBS and Privacy-Preserving Data Aggregation for Fog-enabled FANETs*
+`2026_pq_fanet_aggregation.pdf` · arXiv:2604.18819 · **USED / POSITIONING**
+Blockchain + FANET + post-quantum + aggregation in one design. Cited beside the PQ projection.
+⚠️ Its overhead metrics are **signing and verification time**, not wire bytes, so it is
+complementary to — not a comparator for — the airtime constraint that binds here.
+
+## Direction C survey tally (running)
+
+**9 of 56 papers examined; 9 report no replication information.**
+
+| paper | ns-3? | states seeds / CI / σ? |
+|---|---|---|
+| Van den Abeele et al. 2017 (foundational scalability) | yes | **no** |
+| To & Duda 2018 (LoRa + CSMA) | yes | **no** |
+| Traspadini et al. 2025 (LoRa NTN) | yes | **no** |
+| Durand & Booysen 2025 (LoRaMesh) | yes | **no** |
+| Bhatt et al. 2025 (UAV swarm MAC) | yes | **no** (also omits RWP speed and pause) |
+| + 4 from the earlier pilot | — | **no** |
+
+⚠️ **The claim is about *reporting*, not about practice.** These authors may well have run many
+seeds; what is absent is any statement of it, which is exactly what makes a reader unable to judge a
+threshold crossing. Direction C should never be phrased as "they did not replicate".
+
+⚠️ **9 is still a pilot, not the 56-paper survey.** The pattern is now unbroken across nine papers
+including the field's most cited one, which is enough to justify the full survey and not enough to
+substitute for it.
