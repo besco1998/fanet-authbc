@@ -101,6 +101,12 @@ type hints; no dead code; comments explain WHY, not what.
   - **I3** the abstract was **693 words** (IEEE Access ~250) and defensive: more words qualifying than claiming. Rewritten to **267**, ordered exclusion → feasibility → bytes. ⚠️ **The rewrite deleted an honesty disclosure** (the criterion's verifiability half is satisfied *by construction*) that lived only in the abstract — restored to §Results, expanded. Improving impact silently removed a self-criticism; caught only by checking.
   - **P1 CHECKED AND TRUE:** the pre-registration is real and third-party verifiable — criterion in `3354ec1` (2026-07-03), result in `a51486a` (2026-07-05). Unlike S9, this one survived scrutiny.
   - **P2** "all results are reproduced by an automated staleness gate" covered **16/41**. Four ungated artifacts were pure model computation — **gated rather than the sentence softened** (frozen suite 14 → 18). Every remaining ungated artifact now has a stated reason.
+- **DIRECTION C IS RETIRED as a second paper (Mohamed, 2026-08-07)** — folded into the main paper as a methods contribution in §Reproducibility: the traffic model inflates CV **2–8×**, which is *why* every capacity figure is 30 seeds with a distribution. Protocol/harness/artifact kept for resumption.
+- ⚠️ **DIRECTION C, 2026-08-07 (F42) — two self-corrections, both from pre-registering the protocol first.**
+  - **The protocol was committed BEFORE any data** (`docs/DIRECTION_C_SURVEY_PROTOCOL.md`, `eb3eda5`, data-free) — the F40 lesson applied. Harness `make survey-direction-c`; artifact `results/raw/direction_c_survey.csv` with every keyword hit adjudicated in writing.
+  - ⚠️ **The phenomenon has PRIOR ART.** Durand & Booysen 2025 attribute their own bimodal delivery to nodes that "always transmit on a specific SF, time, and channel", giving "certain packet collisions being repeated for every transmission cycle". **Direction C did not discover the frozen-phase artifact.** What remains ours is the *quantification* (2–8× CV inflation) and the link to replication reporting. Any draft saying it is unobserved must be corrected.
+  - ⚠️ **"9 of 9" was inflated and is RETRACTED.** Under the pre-registered inclusion criteria only **4** papers qualify (Bor used **LoRaSim not ns-3**; Mehta is a **survey**; Bhatt is **802.11ah not LoRa**). Honest baseline: **4/4 report no replication.** The paper said "nine studies" for a few hours today; corrected.
+  - ⚠️ **UNREADABLE (<2000 chars extracted) is EXCLUDED from the denominator** — scoring a scanned PDF as "reports nothing" would manufacture support for our own hypothesis. Zirak extracts 5 characters.
 - **The taxonomy to check new numbers against:** C1 small-sample mean vs threshold · C2 unverified constant on the measurement path · C3 threshold applied to a mean not a distribution · C4 config change perturbing the random realisation · C5 claim wider than the experiment. **Only C1 is fixed by more seeds.**
 
 ### The headline numbers, current
@@ -123,7 +129,7 @@ type hints; no dead code; comments explain WHY, not what.
 **T7** (capacity excludes at U≥1) · **F15** (the ≤0.36 % validation) · **F18** (I claimed we were the *more optimistic* model vs Bor — I quoted their **pure-ALOHA** figure as their LoRa result). ⚠️ **Quoting the PDF is not enough: quote the FIGURE.**
 
 ### Where things live
-`docs/README.md` is the index. Findings **F1–F41** in `docs/audits/model_provenance.md`. Open items **only** in `docs/OPEN_ITEMS.md`. Trade-offs in `docs/TRADEOFFS.md`. Method and failed attempts in `docs/LOGBOOK.md`. **24 PDFs** in `docs/literature/` with each source's ROLE stated; `A3_CITATION_VERIFICATION.md` records how every citation was checked (Crossref by DOI).
+`docs/README.md` is the index. Findings **F1–F42** in `docs/audits/model_provenance.md`. Open items **only** in `docs/OPEN_ITEMS.md`. Trade-offs in `docs/TRADEOFFS.md`. Method and failed attempts in `docs/LOGBOOK.md`. **24 PDFs** in `docs/literature/` with each source's ROLE stated; `A3_CITATION_VERIFICATION.md` records how every citation was checked (Crossref by DOI).
 
 ### Deferred by Mohamed — plans written, DO NOT START unprompted
 - **Mobility (E20)** — `docs/MOBILITY_PLAN.md`. **Separate NEW scenario files**, literature survey first. Not for the 802.11 arm (Bianchi/Ma&Chen have no position term).

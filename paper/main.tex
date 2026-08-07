@@ -794,10 +794,14 @@ characterise that distribution. At realistic $\pm20$\,ppm crystal tolerance the 
 over an hour ($144$\,ms) is too small to break a $728$\,ms collision window, so the effect is
 physical for a naive periodic sender; real LoRaWAN Class~A devices randomise transmission timing
 precisely to avoid it, which the simulated sender does not model. We note that this
-distribution is invisible in a literature that does not report replication: of nine ns-3 LoRa
-studies we examined---including the foundational scalability
-analysis~\cite{vandenabeele2017scalability}---none states a seed count, a confidence interval or a
-standard deviation. We report the figure with this
+distribution is invisible in a literature that does not report replication: of the four ns-3 LoRa
+simulation studies meeting our pre-registered inclusion criteria---including the foundational
+scalability analysis~\cite{vandenabeele2017scalability}---none states a seed count, a confidence
+interval or a standard deviation. The phenomenon itself is \emph{not} unobserved: Durand and
+Booysen attribute their own bimodal delivery to nodes that ``always transmit on a specific SF, time,
+and channel'', producing ``certain packet collisions being repeated for every transmission
+cycle''~\cite{durand2025loramesh}. What is absent is any quantification of the resulting dispersion,
+or the replication information a reader would need to detect it. We report the figure with this
 caveat rather than restate it as a precise capacity. It is conservative
 in the direction that matters least for the claim being made: the point of this section is that the
 low-rate regime is qualitatively different, and a conservative bound does not manufacture that
@@ -883,6 +887,32 @@ than 7. Both are defensible readings of the same standard, and we simulate what 
 accepts rather than reconcile them silently.
 
 \section{Reproducibility and Scientific Integrity}\label{sec:repro}
+
+\textbf{A simulator artifact large enough to change what a reader should believe.} The ns-3 LoRaWAN
+module's periodic sender fires on an exact interval, and LoRaWAN ALOHA has no backoff, so relative
+transmission phases are frozen for an entire run: a pair that collides once collides on every cycle.
+Delivery becomes \emph{bimodal} rather than noisy about a mean. Over 30 seeds at $N{=}5$, 22 runs
+deliver exactly $1.000$ and the rest fall to $0.20$--$0.84$. We measure the consequence: the
+coefficient of variation is inflated \textbf{2--8$\times$} relative to a sender with one-second
+transmission jitter, the inflation growing with node count ($2.9\times$ at $N{=}5$, $7.9\times$ at
+$N{=}100$). Real LoRaWAN Class~A devices are required to randomise transmission timing; the module
+does not.
+
+\textbf{We claim the measurement, not the observation.} Durand and Booysen report the same effect
+in their own results, attributing bimodal delivery to nodes that ``always transmit on a specific SF,
+time, and channel'', producing ``certain packet collisions being repeated for every transmission
+cycle''~\cite{durand2025loramesh}. What appears to be absent from the literature is any
+\emph{quantification} of the resulting dispersion, and---of the four ns-3 LoRa simulation studies
+meeting our pre-registered inclusion criteria---any statement of seed count, confidence interval or
+standard deviation that would let a reader detect it. That is why every capacity figure in this
+paper is reported at 30 seeds with its distribution, and why a threshold crossing is given as an
+interval: at $N{=}3$ the mean clears $V{\geq}0.95$ while nine of thirty individual runs do not.
+
+The survey protocol was committed to version control \emph{before} the corpus was assembled, and the
+sweep is reproducible (\texttt{make survey-direction-c}). Papers whose text will not extract are
+excluded from the denominator rather than scored as reporting nothing: one held PDF yields five
+characters, and counting it as evidence would manufacture support for our own hypothesis.
+
 Beyond the results, the project's second product is its discipline. Anomalies were root-caused, not
 patched over: a stateful delta codec used statelessly (60$\to$45\,B); string-keyed CBOR replaced by
 canonical arrays (110$\to$66\,B); the BLS size corrected 48$\to$96\,B (with the T4 model updated); and

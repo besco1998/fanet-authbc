@@ -1,0 +1,26 @@
+{
+  "vandenabeele2017_lorawan_ns3_scalability": {
+    "ns3": true,
+    "pilot": true,
+    "adjudication": "NONE",
+    "note": "5 'average' hits all refer to the TRAFFIC MODEL (Poisson rate, SF distribution); 'each simulation is run for a simulation time equal to hundred times the upstream period' is DURATION not repetitions. Adjudicated by hand 2026-08-07."
+  },
+  "to2018_lora_ns3_csma": {
+    "ns3": true,
+    "pilot": true,
+    "adjudication": "NONE",
+    "note": "hits are figure captions comparing measurements against a single ns-3 simulation."
+  },
+  "traspadini2025_lora_ntn_ns3": {
+    "ns3": true,
+    "pilot": true,
+    "adjudication": "NONE",
+    "note": "sole hit is a FALSE POSITIVE: 'Hybrid Automatic Repeat reQuest' matching `repeat`."
+  },
+  "durand2025_loramesh_ns3": {
+    "ns3": true,
+    "pilot": true,
+    "adjudication": "NONE",
+    "note": "both hits FALSE POSITIVES: 'routing information is repeated for a fixed number of cycles' (routing protocol) and 'packet collisions being repeated for every transmission cycle' (their own result). \u26a0\ufe0f The second hit is PRIOR ART on Direction C's phenomenon -- see F42; it is not replication reporting, so the verdict stands as NONE."
+  }
+}

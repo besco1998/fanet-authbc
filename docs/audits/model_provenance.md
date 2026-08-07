@@ -2270,3 +2270,59 @@ the implicit (ECQV) alternative**, which is the smaller one and is standard in I
 for us and **harsher on the CLAS comparison**, whose entire advertised advantage is carrying no
 certificate. So the omission cuts against our own favour — it weakens our CLAS position rather than
 flattering it, and is safe to leave stated as an upper bound while S10 is open.
+
+---
+
+## F42 — Direction C: the phenomenon has PRIOR ART, and the pilot's "9 of 9" was inflated (2026-08-07)
+
+Two corrections to Direction C, both produced by writing the survey protocol *before* running the
+survey (`docs/DIRECTION_C_SURVEY_PROTOCOL.md`, committed `eb3eda5`, data-free). Neither would have
+surfaced from a looser process, and both narrow our own claim.
+
+### ⚠️ 1. The frozen-phase artifact is not unobserved in the literature
+
+Direction C's framing has been that the standard ns-3 LoRaWAN traffic model distorts results *in a
+literature that does not notice*. Reading `durand2025_loramesh_ns3.pdf` closely — a paper we
+downloaded for a different reason — refutes the second half:
+
+> "In the LoRaMesh PDR analysis … the nodes typically **either have a successful up-link or not**.
+> This can be attributed to the **static nature of the network configuration**. Nodes are set to
+> always transmit on a **specific SF, time, and channel**; therefore, this results in **certain
+> packet collisions being repeated for every transmission cycle**."
+> — Durand & Booysen, *Sensors* 25(5):1602, 2025
+
+That is the artifact: bimodal delivery ("either … or not"), correctly attributed to fixed
+transmission timing. **The observation is prior art.**
+
+**What remains ours, stated narrowly:** they note it in passing to explain the shape of one figure.
+They do not *quantify* it (we measure **2–8× CV inflation** over 30 seeds), do not connect it to
+replication reporting, do not observe that LoRaWAN Class A *mandates* the randomisation the module
+omits, and propose reinforcement learning — adaptive parameters — rather than transmission jitter as
+the remedy. Direction C's contribution is therefore the **quantification and the reporting link**,
+not the discovery. ⚠️ Any draft claiming the phenomenon is unreported must be corrected.
+
+### ⚠️ 2. The pilot's "9 of 9" did not meet the protocol's own inclusion criteria
+
+Applying §2 strictly (simulation results **for LoRa**, simulator **is ns-3**, machine-readable,
+non-duplicate) to every held PDF, only **4** qualify. The pilot's nine had counted:
+
+* **Bor et al. 2017** — used **LoRaSim**, not ns-3. Its single ns-3 mention is future work:
+  *"Implementation of modules in system level simulator, like ns-3, … will further be studied."*
+* **Mehta et al. 2020** — a **survey**; its ns-3 mentions describe other people's work in a table.
+* **Bhatt et al. 2025** — ns-3, but **802.11ah, not LoRa**.
+* two further entries that are reviews rather than simulation studies.
+
+So the honest baseline is **4/4 report no replication**, not 9/9. The pattern is unchanged; the
+sample is smaller and the criteria are now fixed in advance rather than chosen per paper.
+
+### ⚠️ 3. A narrower keyword set had under-reported hits
+
+The pre-registered keyword set is broader than the ad-hoc regex used during the pilot. Under it,
+`durand2025` yields **2 hits** where the earlier sweep reported **zero**. Both are false positives on
+adjudication — but the earlier "zero" was an artifact of the narrower pattern, which is precisely why
+§3 fixes the keyword set in advance and requires every hit to be read in context.
+
+**Harness:** `analysis/direction_c_survey.py`, artifact `results/raw/direction_c_survey.csv`, with
+every adjudication recorded in the CSV rather than held in memory. `UNREADABLE` (< 2000 extracted
+characters) is excluded from the denominator, because scoring a scanned PDF as "reports nothing"
+would manufacture support for our own hypothesis.

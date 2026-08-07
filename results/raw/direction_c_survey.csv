@@ -1,0 +1,18 @@
+# python=3.12.3
+# platform=Linux-6.6.114.1-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=direction_c_survey
+# protocol=docs/DIRECTION_C_SURVEY_PROTOCOL.md (committed eb3eda5, data-free)
+# config_hash=ff7207a58c1f343a
+# ⚠️ UNREADABLE rows are EXCLUDED from the denominator (protocol §3):
+#    a scanned PDF yields zero hits for reasons unrelated to its authors.
+paper,ns3,pilot,chars_extracted,keyword_hits,verdict,adjudication_note,hit_contexts,extract_error
+durand2025_loramesh_ns3,1,1,78786,2,NONE,"both hits FALSE POSITIVES: 'routing information is repeated for a fixed number of cycles' (routing protocol) and 'packet collisions being repeated for every transmission cycle' (their own result). ⚠️ The second hit is PRIOR ART on Direction C's phenomenon -- see F42; it is not replication reporting, so the verdict stands as NONE.","n each child/parent node to the network server, and distribute the routing information is repeated for a fixed number of cycles, de- pending on the network’s maximum number of hops. Once a || pecific SF, time, and channel; therefore, this results in certain packet collisions being repeated for every transmission cycle. Sensors 2025, 25, 1602 22 of 24 This highlights the need fo",
+to2018_lora_ns3_csma,1,1,33280,0,NONE,hits are figure captions comparing measurements against a single ns-3 simulation.,,
+traspadini2025_lora_ntn_ns3,1,1,33478,1,NONE,sole hit is a FALSE POSITIVE: 'Hybrid Automatic Repeat reQuest' matching `repeat`.,for this delay during scheduling [23]. Radio Resource Control (RRC) and Hybrid Automatic Repeat reQuest (HARQ) timers have also been properly adjusted to account for the long propagatio,
+vandenabeele2017_lorawan_ns3_scalability,1,1,61383,0,NONE,"5 'average' hits all refer to the TRAFFIC MODEL (Poisson rate, SF distribution); 'each simulation is run for a simulation time equal to hundred times the upstream period' is DURATION not repetitions. Adjudicated by hand 2026-08-07.",,
