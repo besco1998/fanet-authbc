@@ -17,6 +17,29 @@ by design. Fetch it from the **GitLab** archive; `nsnam.org/releases/...` return
 
 ---
 
+## ⚠️ FRAMING CHANGED 2026-08-07 (Mohamed) — read this before editing the paper
+
+**The paper is now a FEASIBILITY-BOUNDARY paper, not a co-design optimization paper.** Retitled
+*"AUTHBC: Feasibility Boundaries for Authenticated UAV Telemetry — An Exclusion Bound, a Capacity
+Envelope, and Hardware Validation"*. §Results opens with three boundaries ordered by durability:
+
+1. **Impossible** — 64 B does not fit 51 B, excluding four of seven EU868 rates. Arithmetic; cannot
+   move. This is the headline.
+2. **Capacity-limited** — 1.9–3.2× the inline baseline on a validated channel model.
+3. **Runs, and what it costs** — 58.7 % fewer bytes, now presented as the *mechanism* that moves the
+   boundary, **not** as the result. Its auth term is `1−1/b`, an identity.
+
+⚠️ **Why:** as a co-design optimization paper the work is mid-tier — the optimisation is largely
+closed-form and the ablation (F39) showed only one genuine interaction. As a boundary paper the same
+evidence is stronger, because an impossibility result cannot drift and four performance numbers in
+this project did. Do not revert the framing without re-reading F39 and F42.
+
+**A second, short paper now exists:** `paper/methods.tex` (`make paper-methods`) — the defect
+taxonomy as a methodological note in the Kurkowski / SIGCOMM-CCR credibility lineage. It is the more
+transferable output and is deliberately a *self*-audit.
+
+---
+
 ## The strategy decision (Mohamed, 2026-07-31, unchanged)
 
 **Option 3: accept the novelty ceiling, spend the effort on rigour instead.** This is a strong

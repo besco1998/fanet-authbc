@@ -1,0 +1,158 @@
+\documentclass[conference]{IEEEtran}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{url}
+\usepackage[hidelinks]{hyperref}
+
+\begin{document}
+
+\title{Five Ways a Network Simulation Study Produces a Wrong Number \\
+\large A self-audit of one LoRa/802.11 co-design, with the guards that caught each}
+
+\author{\IEEEauthorblockN{Mohamed A. Farouk}
+\IEEEauthorblockA{AUTHBC Project --- methodological companion (auto-generated from frozen results)}}
+
+\maketitle
+
+\begin{abstract}
+Twenty years ago Kurkowski \emph{et al.} found that none of 84 MobiHoc simulation papers referenced
+public code, and follow-up work reports that fewer than 15\% of MANET simulation studies are
+reproducible. Those surveys tell us the literature has a credibility problem; they do not tell an
+author what, mechanically, goes wrong. We report the other half: a self-audit of a single
+LoRa/802.11 authentication co-design in which \textbf{ten quantitative results moved or were
+retracted}, and a taxonomy of the \textbf{five distinct mechanisms} responsible. Only one is fixed
+by running more seeds. Two were protected by a passing test suite. Three were internal
+contradictions between a paper and its own artifacts that every gate in the project reported green.
+For each class we give the concrete instance, the number it moved, and the mechanical check that now
+prevents it --- a bootstrap over threshold crossings, an RNG-stream isolation assertion, a test that
+parses the paper's \LaTeX{} tables and compares them to the CSVs, and a test that compares the
+documentation's own counts to reality. We argue that \emph{seed discipline is necessary and badly
+insufficient}, and that the useful unit of reproducibility work is not the artifact but the
+\emph{invariant a machine can check}.
+\end{abstract}
+
+\section{Introduction}
+Simulation credibility in networking has been studied as a \emph{reporting} problem. Kurkowski,
+Camp and Colagrosso surveyed MobiHoc 2000--2004 and found that experiments were rarely repeatable,
+unbiased, rigorous and statistically sound at once~\cite{kurkowski2005incredibles}; a decade later
+the VANET community reached similar conclusions~\cite{ccr2018vanet}. The prescription that followed
+is familiar: publish code, report seeds, give confidence intervals.
+
+We took that prescription seriously, and it was not enough. Over a five-week audit of one
+co-design study --- an authenticated UAV telemetry ledger evaluated with NS-3 and two Raspberry~Pi
+radios --- ten quantitative results moved or were withdrawn. Every one had passed the project's own
+gates. \textbf{Seed discipline caught four of them. It was structurally incapable of catching the
+other six.}
+
+This paper is the taxonomy. It is deliberately a self-audit: every instance is our own, with the
+before and after numbers, because a defect list assembled from other people's papers cannot say what
+the wrong number \emph{was}.
+
+\section{The five classes}
+
+\subsection{C1 --- A small-sample mean compared against a threshold}
+The known one. A capacity figure is defined as the largest $N$ whose mean delivery still meets
+$V \geq 0.95$; with three seeds the mean lands on the wrong side of the threshold.
+\textbf{Instance:} $N_{\max}$ fell from 5 to 3 at 30 seeds; a delay crossing moved
+$U{=}2.797 \to 2.435$; a validation band endpoint moved $-1.44\% \to -0.51\%$.
+\textbf{Guard:} 30 seeds by default, and drivers that emit min/max/$\sigma$.
+\textbf{This is the only class more seeds fix.}
+
+\subsection{C2 --- An unverified constant on the measurement path}
+\textbf{Instance:} a two-node broadcast experiment returned $97.45\%$ delivery with
+$\sigma = 0.196$\,pp over eight windows --- tight, repeatable, and meaningless. 802.11 sends
+broadcast at the lowest basic rate, which on 2.4\,GHz is 802.11b's 1\,Mb/s; a 1400\,B frame then
+occupies 11.2\,ms, so the nominal ``100\,fps operating point'' was $118\%$ of capacity. The
+measurement was saturation, not channel loss.
+\textbf{Why seeds cannot help:} eight windows agreed to 0.2\,pp \emph{on the wrong quantity}.
+Repeatability is not validity.
+\textbf{Guard:} state the assumption the expectation depends on, and put a discriminator in the same
+run --- an offered-load sweep beside the point measurement located the ceiling at 501\,fps and
+exposed it immediately.
+
+\subsection{C3 --- A threshold applied to a mean rather than to a distribution}
+\textbf{Instance:} at the certified $N{=}3$, \emph{nine of thirty} runs failed the very criterion
+being certified. The mean cleared $0.95$; the distribution straddled it. Reported as a point,
+$N_{\max}{=}3$ has a 95\% bootstrap CI of $[2,3]$; read per realisation --- at least 95\% of runs
+must individually meet $V$ --- it is \textbf{1}.
+\textbf{Why it is not C1:} the sample was already 30. The defect is that a reliability target was
+evaluated as a throughput average.
+\textbf{Guard:} a nonparametric bootstrap over the crossing itself, since a crossing is discrete and
+does not inherit a mean's interval.
+
+\subsection{C4 --- A configuration change that perturbs the random realisation}
+\textbf{Instance:} installing a mobility model appeared to cost 5 percentage points of delivery.
+NS-3 assigns RNG stream indices in object-creation order, and mobility models are constructed before
+senders, so the comparison arms differed in bookkeeping rather than physics. The tell was that
+5\,m/s and 20\,m/s gave \emph{identical} delivery --- a positional effect would scale with
+displacement.
+\textbf{Guard:} pin the senders' streams by node id, and assert an invariant the physics forces:
+\texttt{sent} counts transmissions, so no propagation or gateway option may change it. Applied
+across the study's other comparison axes, that assertion found them clean.
+
+\subsection{C5 --- A claim wider than the experiment supports}
+\textbf{Instance:} a two-node hardware measurement with one transmitter validates airtime and link
+loss. It cannot validate a contention model, which describes $N$ competing stations --- and an
+earlier draft implied it did. Separately, a figure was quoted from the correct paper but the wrong
+figure, inverting a comparison.
+\textbf{Guard:} the discipline of writing what a result cannot show beside what it can, and
+\textbf{quoting the figure, not the paper}.
+
+\section{What the gates missed, and why}
+Three of the ten corrections were \emph{internal contradictions} in which a paper disagreed with its
+own artifacts while every test passed:
+
+\begin{itemize}
+\item a capacity table kept superseded values ($233/116$) after the prose was corrected to
+$213/100$;
+\item a sentence stating a ratio ``is stable under either threshold'' sat in the same paper as a
+sentence warning that exactly that rounding is misleading ($3.22\times$ vs $2.42\times$);
+\item the abstract filed the study's most durable result under ``applications of established
+results'' while the conclusion called it ``the more durable contribution''.
+\end{itemize}
+
+None was a code defect, so no code test could see it. \textbf{The unit of reproducibility work that
+would have caught them is not an artifact but a machine-checkable invariant across the boundary
+between prose and data.} We now parse the paper's \LaTeX{} tables and compare every cell to the
+generating CSV, and parse the project documentation for asserted counts and compare them to reality.
+The second test found four stale claims on its first run.
+
+Two defects were \emph{protected by passing tests}. A unit test asserted
+\texttt{channel\_utilisation(1) == 0.0} with the comment ``a lone sender never contends'' --- true of
+contention, false of utilisation, and it had encoded the defect as intended behaviour. A green suite
+means the code does what the tests say, not that the tests say the right thing.
+
+\section{Pre-registration is cheap and it works}
+The study's success criterion was committed two days before the result it judges, and both commits
+are public, so the ordering is checkable by a third party rather than asserted. A second
+pre-registration claim, on a later sub-study, had to be \textbf{withdrawn}: it cited an expectations
+file that had never been committed. We did not reconstruct it. Writing that file after the outcome
+was known would have manufactured evidence that is unfalsifiable from outside.
+
+When a follow-up survey was later planned, its protocol --- hypothesis, inclusion criteria,
+falsification threshold, keyword set, and the rule that unreadable sources are excluded from the
+denominator rather than scored as negatives --- was committed in a data-free commit before the
+corpus existed. Within an hour it forced two corrections to our own claims: a phenomenon we had
+called unobserved turned out to have prior art, and a tally of ``nine of nine'' fell to four under
+the criteria we had just written down. \textbf{Both would otherwise have reached a submission.}
+
+\section{Conclusion}
+The credibility literature tells authors to publish code and report seeds. Both are necessary. In
+one audited study, seeds addressed four defects out of ten; the rest came from an unverified
+constant, a criterion applied to the wrong statistic, a comparison confounded by RNG bookkeeping, an
+overreaching claim, and three contradictions between a paper and its own data.
+
+The transferable lesson is not a longer checklist. It is that \emph{every claim worth making should
+have an invariant a machine can check}, including the claims a paper makes about itself --- and that
+the most valuable checks are the ones that can return an answer you did not want. Ours did, ten
+times.
+
+\begin{thebibliography}{9}
+\bibitem{kurkowski2005incredibles} S.~Kurkowski, T.~Camp, and M.~Colagrosso, ``MANET simulation
+studies: the incredibles,'' \emph{ACM SIGMOBILE Mobile Computing and Communications Review},
+vol.~9, no.~4, pp.~50--61, 2005.
+\bibitem{ccr2018vanet} ``VANETs' research over the past decade: overview, credibility, and trends,''
+\emph{ACM SIGCOMM Computer Communication Review}, 2018.
+\end{thebibliography}
+
+\end{document}

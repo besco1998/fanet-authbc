@@ -109,6 +109,11 @@ type hints; no dead code; comments explain WHY, not what.
   - ⚠️ **UNREADABLE (<2000 chars extracted) is EXCLUDED from the denominator** — scoring a scanned PDF as "reports nothing" would manufacture support for our own hypothesis. Zirak extracts 5 characters.
 - **The taxonomy to check new numbers against:** C1 small-sample mean vs threshold · C2 unverified constant on the measurement path · C3 threshold applied to a mean not a distribution · C4 config change perturbing the random realisation · C5 claim wider than the experiment. **Only C1 is fixed by more seeds.**
 
+### ⚠️ PAPER FRAMING CHANGED 2026-08-07 — feasibility boundary, not co-design optimization
+- **Retitled** *"Feasibility Boundaries for Authenticated UAV Telemetry — An Exclusion Bound, a Capacity Envelope, and Hardware Validation"*. §Results opens with **three boundaries ordered by durability**: impossible (arithmetic, cannot move) → capacity-limited (1.9–3.2×) → runs (58.7 %, now the *mechanism*, not the headline).
+- **Rationale:** as a co-design paper the work is mid-tier (the optimisation is closed-form; F39 found one real interaction). As a boundary paper the same evidence is stronger — **an impossibility cannot drift, and four performance numbers here did.** ⚠️ Do not revert without re-reading F39 and F42.
+- **Second paper: `paper/methods.tex`** (`make paper-methods`, 2 pp) — the five-class defect taxonomy as a methodological note in the Kurkowski 2005 / SIGCOMM-CCR 2018 credibility lineage. Self-audit by design: 10 results moved, only 4 catchable by seeds, 2 protected by passing tests, 3 paper-vs-artifact contradictions.
+
 ### The headline numbers, current
 - **Total on-air bytes −58.68 %**, as a **decomposition** (placement×batching 79.2 %, encoding 20.8 %, scheme byte-neutral). ⚠️ **Never quote the bare 75 %** — it is algebraically **1 − 1/b**.
 - **Adopted operating point: Λ=50 Hz, D_max=100 ms** (PX4 `MAVLINK_MODE_ONBOARD`, TS 22.125 compliant). Capacity **18→35** (U<1), **31→100** (V≥0.95). Relaxed (20 Hz/250 ms): 25/32→**103**, 55/88→**213**.

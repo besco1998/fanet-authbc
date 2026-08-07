@@ -11,8 +11,8 @@
 
 \begin{document}
 
-\title{AUTHBC: Co-Optimizing Encoding, Authentication Placement, Signature Scheme, and Batching for
-Blockchain-Grade UAV Telemetry over 802.11}
+\title{AUTHBC: Feasibility Boundaries for Authenticated UAV Telemetry ---
+An Exclusion Bound, a Capacity Envelope, and Hardware Validation}
 
 \author{\IEEEauthorblockN{Mohamed A. Farouk}
 \IEEEauthorblockA{AUTHBC Project --- Thesis draft (auto-generated from frozen results)}}
@@ -311,6 +311,30 @@ headline. \textbf{P7a} produced the hardware-measurement scripts; a whole-repo a
 inconsistency and added an automated frozen-data reproduction gate (Sec.~\ref{sec:repro}).
 
 \section{Results}\label{sec:results}
+
+\textbf{Three boundaries, in order of how durable they are.} The question an operator has is not
+how many bytes a scheme saves but \emph{which configurations can run at all}. We answer it as three
+separate boundaries, and we order them by how likely each is to survive contact with a better model:
+
+\begin{enumerate}
+\item \textbf{Impossible} (Sec.~\ref{sec:lowrate}). A link whose payload cannot hold one header, one
+signature and one record admits no per-frame-verifiable telemetry at \emph{any} encoding, batch or
+scheme. With a measured $H_f{=}44$\,B this excludes four of seven EU868 data rates. It is
+arithmetic, so unlike everything else here it cannot move.
+\item \textbf{Capacity-limited} (Table~\ref{tab:envelope}). Above that floor the binding constraint is the
+shared medium. Coupling the byte model to an NS-3-validated broadcast model gives the largest
+neighbourhood each configuration sustains: the co-design carries $1.9$--$3.2\times$ the inline
+baseline, reported at two thresholds because they answer different questions.
+\item \textbf{Runs} --- and what it costs. The byte reduction ($58.7\%$ total,
+$72.0$\,B/record) is best read as the \emph{mechanism} that moves the boundary outward, not as the
+result. Its authentication component reduces to $1-1/b$ and is invariant to header size, signature
+size, encoding and scheme, so quoting it as a headline would credit four axes for what two produce.
+\end{enumerate}
+
+The airtime model underneath boundary~2 is validated twice: against NS-3 over 30 seeds, and against
+two Raspberry~Pi~4 radios, where the predicted $1.99$\,ms broadcast airtime measures
+$1.995$\,ms.
+
 All values are from frozen CSVs. Byte and model results were derived on an x86 host
 (Intel~i5-14400F); the crypto timings, encode timings and both power figures feeding the energy
 column are \emph{measured on the Raspberry~Pi~4} thesis platform (decision D8), so the energy
@@ -635,10 +659,11 @@ so some of the gap is curve and encoding choice rather than design. The defensib
 narrower and more useful than a ratio: \emph{on a byte-constrained broadcast link, aggregate
 signatures do not reduce airtime; placement and batching do.}
 
-\section{Generalisation: the Low-Rate Regime}\label{sec:lowrate}
+\section{Boundary 1 --- Impossibility: the Low-Rate Regime}\label{sec:lowrate}
 Everything so far concerns a companion-class 802.11 link. The natural question is how far the
-co-design carries, and the honest answer is that it stops --- for reasons that are worth stating
-precisely, because they bound the contribution rather than extend it.
+co-design carries, and the honest answer is that it stops --- which is not a caveat but the most
+durable result in this paper. A capacity figure moves when the model improves; an exclusion does
+not.
 
 This section is \emph{analysis and simulation, not measurement}. No LoRa hardware was instrumented
 and no LoRa energy figure is reported: the only metered radio power in this work is a Wi-Fi figure,
@@ -977,10 +1002,15 @@ report the newer simulator's figures. The hardware validation is two-node. On AR
 rather than ECDSA, with an identical auth-byte cut.
 
 \section{Conclusion}
-Authentication overhead dominates tiny UAV telemetry, but it is a \emph{co-design} problem. Jointly
-optimizing encoding, placement, scheme, and batching cuts total on-air bytes by 58.7\% at
-$V\geq0.95$ within the 100\,ms freshness bound of 3GPP TS~22.125---meeting the falsifiable
-criterion at a standards-compliant operating point.
+Authentication overhead dominates tiny UAV telemetry, and the useful question is not how much of it
+a scheme removes but \textbf{which configurations can run at all}. We answered that as three
+boundaries. The first is an \emph{impossibility}: a link whose payload cannot hold one header, one
+signature and one record carries no per-frame-verifiable telemetry at any encoding or batch size,
+excluding four of seven EU868 data rates. The second is \emph{capacity}: above that floor the
+medium binds, and the co-design sustains $1.9$--$3.2\times$ the neighbourhood of an inline baseline
+on an NS-3-validated channel whose airtime we confirmed on hardware to $0.36\%$. The third is what
+running costs: $58.7\%$ fewer on-air bytes at a 3GPP TS~22.125-compliant operating point, meeting a
+criterion committed to version control before the result existed.
 
 We are deliberate about where that result comes from. The authentication component, taken alone,
 reduces to $1-1/b$: the header and signature sizes cancel, and neither the encoding nor the scheme
