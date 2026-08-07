@@ -347,3 +347,89 @@ class TestLoraExternalTable:
         assert abs(int(ratios.group(1)) - w_per / per) < 1.0
         assert abs(int(ratios.group(2)) - w_nmax / nmax) < 1.0
         assert abs(int(ratios.group(3)) - w_agg / agg) < 100.0
+
+
+class TestRemainingTables:
+    """Close the gap: after three tables were found stale, guard the four that were not checked.
+
+    tab:e1, tab:e5, tab:decomp and tab:t6 were audited by hand on 2026-08-07 and all four were
+    CORRECT. These tests exist so they stay that way — the three that went stale did so silently,
+    and a table nobody re-derives is a table nobody can trust.
+    """
+
+    def _tabular(self, label: str) -> str:
+        tex = (REPO / "paper" / "main.tex").read_text()
+        i = tex.index("\\label{" + label + "}")
+        s = tex.index(r"\begin{tabular}", i)
+        return tex[s:tex.index(r"\end{tabular}", s)]
+
+    def _rows(self, path: str) -> list[dict[str, str]]:
+        p = REPO / "results" / "raw" / path
+        return list(csv.DictReader(ln for ln in p.read_text().splitlines()
+                                   if not ln.startswith("#")))
+
+    def test_e1_encoding_sizes(self):
+        art = {r["encoding"]: r for r in self._rows("e1_dominance.csv")}
+        block = self._tabular("tab:e1")
+        seen = 0
+        for name, key in (("JSON", "json"), ("CBOR", "cbor"),
+                          ("MessagePack", "msgpack"), ("delta", "delta")):
+            pat = (name + r"[^&]*&\s*\\?t?e?x?t?b?f?\{?([\d.]+)\}?\s*&\s*"
+                   r"\\?t?e?x?t?b?f?\{?([\d.]+)\\%")
+            m = re.search(pat, block)
+            assert m, f"could not parse the {name} row of tab:e1"
+            assert abs(float(m.group(1)) - float(art[key]["mean_bytes"])) < 0.05, name
+            assert abs(float(m.group(2)) - float(art[key]["phi_pct"])) < 0.06, name
+            seen += 1
+        assert seen == 4
+
+    def test_e5_headline_row_matches_the_optimizer(self):
+        opt = next(r for r in self._rows("e5_codesign.csv") if r["role"] == "optimized")
+        block = self._tabular("tab:e5")
+        m = re.search(r"\\textbf\{optimized\}.*?\\textbf\{([\d.]+)\}\s*&\s*\\textbf\{([\d.]+)\}",
+                      block, re.S)
+        assert m, "could not parse the optimized row of tab:e5"
+        assert abs(float(m.group(1)) - float(opt["auth_overhead_bytes"])) < 0.01
+        assert abs(float(m.group(2)) - float(opt["bytes_per_rec"])) < 0.01
+        assert opt["scheme"] == "ed25519" and opt["placement"] == "B" and opt["batch"] == "4", (
+            "⚠️ the artifact no longer selects delta/Ed25519/self-batch b=4; the paper's prose "
+            "asserts that selection in several places"
+        )
+
+    def test_decomp_shares_sum_and_derive_from_e5(self):
+        """The two shares are a partition of one measured saving, so they must reconstruct it."""
+        rows = {r["role"]: r for r in self._rows("e5_codesign.csv")}
+        base, opt = rows["A+CBOR"], rows["optimized"]
+        total = float(base["bytes_per_rec"]) - float(opt["bytes_per_rec"])
+        auth = float(base["auth_overhead_bytes"]) - float(opt["auth_overhead_bytes"])
+        payload = float(base["s"]) - float(opt["s"])
+        assert abs((auth + payload) - total) < 0.01, (
+            f"auth {auth} + payload {payload} != total {total}: "
+            f"the decomposition is not a partition"
+        )
+        block = self._tabular("tab:decomp")
+        printed = [float(x) for x in re.findall(r"([\d.]+)\\%\s*\\\\", block)]
+        assert printed, "could not parse tab:decomp"
+        for want in (round(100 * auth / total, 1), round(100 * payload / total, 1)):
+            assert any(abs(want - p) < 0.1 for p in printed), (
+                f"tab:decomp does not print the {want}% share derived from e5_codesign.csv"
+            )
+
+    def test_t6_tiers_are_arithmetic_on_the_measured_header(self):
+        """⚠️ tab:t6 is the exclusion bound — it must track H_f=44 B, not the old assumed 40 B."""
+        block = self._tabular("tab:t6")
+        cap = (REPO / "paper" / "main.tex").read_text()
+        i = cap.index(r"\label{tab:t6}")
+        head = cap[cap.rindex(r"\caption{", 0, i):i]
+        hf = int(re.search(r"H_f\{=\}(\d+)", head).group(1))
+        ga = int(re.search(r"\\ba\{=\}(\d+)", head).group(1))
+        smin = int(re.search(r"s_\{\\min\}\{=\}(\d+)", head).group(1))
+        assert (hf, ga, smin) == (44, 64, 13), (
+            f"tab:t6 caption constants changed: {hf},{ga},{smin}")
+        for m in re.finditer(r"^[\d, ]+&\s*(\d+)\s*&\s*\$?(-?\d+)\$?\s*&\s*(\w+)", block, re.M):
+            mtu, smax, verdict = int(m.group(1)), int(m.group(2)), m.group(3)
+            assert smax == mtu - hf - ga, (
+                f"MTU {mtu}: s_max should be {mtu - hf - ga}, table says {smax}")
+            assert (verdict == "feasible") == (smax >= smin), (
+                f"MTU {mtu}: s_max={smax} vs s_min={smin} contradicts verdict '{verdict}'"
+            )
