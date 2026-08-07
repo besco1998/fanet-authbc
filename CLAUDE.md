@@ -59,7 +59,7 @@ type hints; no dead code; comments explain WHY, not what.
 - **NEXT SESSION: read `docs/NEXT_STEPS.md` first** — prioritised work plan, strategy decision, and decisions not to re-litigate.
 - ⚠️ **Repo is PUBLIC and history was REWRITTEN** to purge the 84 MB vendored NS-3 tree. **The remote is authoritative — never force-push an older local branch over it.** Copyrighted PDFs in `docs/literature/` stay by Mohamed's decision (risk accepted, `DECISIONS.md`).
 - **Phase: P8 audit complete. COMMITTED AND PUSHED** to branch `p8-audit-and-corrections`. Work from any machine: `git clone`, `git checkout p8-audit-and-corrections`, `make setup && make all`.
-- **Green:** 1180 fast + **18** frozen-gate tests (**1198**), `ruff` clean, **`mypy` clean (0 / 49 files)**, paper builds (**12 pp**, **45 refs**, 0 undefined, abstract **267 w**). `make all` exit 0.
+- **Green:** 1184 fast + **24** frozen-gate tests (**1208**), `ruff` clean, **`mypy` clean (0 / 49 files)**, paper builds (**14 pp**, **45 refs**, 0 undefined, abstract **265 w**). `make all` exit 0.
 - **METHODOLOGY (Mohamed):** this is an optimization problem — *state everything, choose what to stick with, state the trade-offs for every decision*. **`docs/TRADEOFFS.md` is required reading before quoting any number.**
 - **LICENSE = all rights reserved** (© 2026 Mohamed A. Farouk). Vendored NS-3 + `signetlabdei/lorawan` stay GPLv2, **not** redistributed.
 
@@ -117,7 +117,7 @@ type hints; no dead code; comments explain WHY, not what.
 ### The headline numbers, current
 - **Total on-air bytes −58.68 %**, as a **decomposition** (placement×batching 79.2 %, encoding 20.8 %, scheme byte-neutral). ⚠️ **Never quote the bare 75 %** — it is algebraically **1 − 1/b**.
 - **Adopted operating point: Λ=50 Hz, D_max=100 ms** (PX4 `MAVLINK_MODE_ONBOARD`, TS 22.125 compliant). Capacity **18→35** (U<1), **31→100** (V≥0.95). Relaxed (20 Hz/250 ms): 25/32→**103**, 55/88→**213**.
-- ⚠️ **Do NOT say "≈3× holds across readings"** — the four combinations are **1.94× / 2.24× / 3.22× / 3.31×**. Quote the **range 1.9–3.3×**.
+- ⚠️ **Do NOT say "≈3× holds across readings"** — the four combinations are **1.94× / 3.23× / 3.22× / 2.42×**. Quote the **range 1.9–3.2×**. (Recomputed 2026-08-07 from `capacity_envelope.csv`: Λ=50 U<1 18→35, V 31→100; Λ=20 U<1 32→103, V 88→213. The board previously said 2.24/3.31 and "1.9–3.3×" — both wrong; guarded now by `test_abstract_ratio_range_matches_artifact`.)
 - **LoRa `N_max` = 3** (not 5), and only within **≈500 m**. Composed with measured link loss, **V≥0.95 admits no multi-node network**; V≥0.90 restores 3.
 - **Validation, 30 seeds:** unicast **+1.29/−0.40 %**, broadcast goodput **±0.51 %**, crossing **U=2.435**. ⚠️ Unicast has a real **−1.4..−2.6 % bias at 72 B** — quote the band as measured at 1400 B.
 

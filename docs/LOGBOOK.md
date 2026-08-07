@@ -166,7 +166,12 @@ compliance costs ~2× swarm. **New finding: the region has a floor** — b≥4 u
 Λ ≥ 40 Hz, below which the saving collapses to 12.2 %.
 
 **(e) Abstract corrected.** It claimed "≈3×, a ratio that holds" across thresholds; measured, the
-four combinations give **1.94× / 2.24× / 3.22× / 3.31×**. Now stated as a range. It also said
+four combinations give **1.94× / 2.24× / 3.22× / 3.31×**. Now stated as a range.
+> ⚠️ **Superseded 2026-08-07.** Two of those four were themselves stale: recomputed from
+> `capacity_envelope.csv` the set is **1.94× / 3.23× / 3.22× / 2.42×**, so the range is
+> **1.9–3.2×**, not 1.9–3.3×. The status board carried the wrong pair for weeks while a later
+> line in the same file carried the right one — CLAUDE.md contradicted itself. Guarded now by
+> `TestAbstractRatioRange`. Kept above as written, because the entry records what was believed. It also said
 compliance costs "a factor of two" — true at V≥0.95 (2.01×), but 2.94× at saturation. Both fixed.
 
 ---

@@ -117,5 +117,9 @@ hw-capture:  ## P7b (this host): capture the Arduino INA219 stream -> results/hw
 hw-reduce:  ## P7b (this host): reduce MANIFEST=… SAMPLES=… -> energy/op + CI
 	$(BIN)/python hw/ina219_capture.py --reduce "$(MANIFEST)" "$(SAMPLES)"
 
-figures:  ## regenerate E1-E3 figures from frozen results/raw -> results/figures/
+figures:  ## regenerate ALL figures from frozen results/raw -> results/figures/
 	$(BIN)/python analysis/figures_e123.py
+	$(BIN)/python analysis/figures_e4.py
+	$(BIN)/python analysis/figures_e5.py
+	$(BIN)/python analysis/figures_envelope_lora.py
+	$(BIN)/python analysis/figures_ns3.py

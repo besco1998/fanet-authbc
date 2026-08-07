@@ -2,6 +2,8 @@
 \usepackage{amsmath,amssymb}
 \usepackage{booktabs}
 \usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning}
 \usepackage{url}
 \usepackage[hidelinks]{hyperref}
 
@@ -21,29 +23,29 @@ An Exclusion Bound, a Capacity Envelope, and Hardware Validation}
 
 \begin{abstract}
 Flying ad-hoc networks stream telemetry records so small that a cryptographic signature
-(64--96\,B) rivals or exceeds the payload (45--190\,B), so naive per-record signing spends airtime,
-energy and goodput on a shared, lossy channel. We co-optimize four knobs---record \emph{encoding},
-authentication \emph{placement}, signature \emph{scheme} and \emph{batch} size---against a byte
-model, an NS-3-validated 802.11 broadcast model, and energy measured on Raspberry~Pi~4 hardware.
+(64--96\,B) rivals or exceeds the payload (45--190\,B), so per-record signing spends airtime,
+energy and goodput on a shared, lossy channel. The operational question is not how many bytes a
+scheme saves but \emph{which configurations can run at all}. We answer it by searching four design
+choices jointly---record \emph{encoding}, authentication \emph{placement}, signature \emph{scheme}
+and \emph{batch} size---against a byte model, an NS-3-validated 802.11 broadcast model, and energy
+measured on Raspberry~Pi~4 hardware.
 
-We report three results, ordered by how durable they are. \textbf{First, an exclusion.} A link whose
-payload cannot hold one header, one signature and one record carries no per-frame-verifiable
-telemetry at \emph{any} encoding or batch size; this removes the four longest-range LoRa modes
-outright, and loss makes fragmentation no escape, since a unit spanning $n$ frames verifies with
-probability $(1-p)^n$. It is arithmetic, so unlike a performance figure it cannot move.
-\textbf{Second, feasibility}---the contribution that genuinely requires the coupling: joining the
-byte model to the channel model, the co-design sustains between $1.9\times$ and $3.2\times$ the
-neighbourhood of an inline baseline on the same medium, the range spanning the saturation and
-measured-verifiability thresholds rather than hiding behind one of them. \textbf{Third, bytes}:
-$58.7\%$ fewer on-air bytes ($72.0$\,B/record) at an operating point compliant with 3GPP TS~22.125,
-meeting a success criterion that was committed to version control two days before the result
-existed.
+Three results follow, ordered by how durable they are. \textbf{An exclusion:} a link whose payload
+cannot hold one header, one signature and one record carries no per-frame-verifiable telemetry at
+\emph{any} encoding or batch size. This removes the four longest-range LoRa modes outright, and loss
+makes fragmentation no escape, since a unit spanning $n$ frames verifies with probability
+$(1-p)^n$. Being arithmetic, it cannot move as hardware improves. \textbf{A capacity envelope}---the
+result that genuinely requires the coupling: joined to the channel model, the co-design sustains
+$1.9\times$ to $3.2\times$ the neighbourhood of an inline baseline, the range spanning the
+saturation and verifiability thresholds rather than hiding behind whichever flatters it.
+\textbf{Bytes:} $58.7\%$ fewer on air ($72.0$\,B/record) at an operating point compliant with 3GPP
+TS~22.125, meeting a criterion committed to version control two days before the result existed.
 
 A factorial ablation narrows the co-design claim rather than inflating it: only placement and
-batching interact, by exactly $g_a(1{-}1/b)$ and therefore not at all at $b{=}1$; encoding
-contributes additively and the scheme axis is byte-neutral at this operating point. AUTHBC
-introduces no new cryptographic primitive. Its contribution is a reproducible co-design, its
-quantified trade-offs, and the boundary beyond which no choice of cryptography helps.
+batching interact, by exactly $g_a(1{-}1/b)$ and so not at all at $b{=}1$; encoding contributes
+additively and the scheme axis is byte-neutral here. AUTHBC introduces no new cryptographic
+primitive. Its contribution is a reproducible co-design, its quantified trade-offs, and the boundary
+beyond which no choice of cryptography helps.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -63,7 +65,7 @@ The difficulty is scale mismatch. Telemetry records are tens of bytes; an Ed2551
 64\,B, a SHA-256 chain hash is 32\,B, and a BLS signature is 96\,B. Signing every record inline makes
 authentication overhead rival or exceed the payload, and on a shared, contended, lossy channel that
 wasted airtime directly costs goodput, energy, and freshness. How much overhead one actually pays
-depends on four \emph{coupled} choices: the record \emph{encoding} $e$ (setting the size $s$), the
+depends on four choices: the record \emph{encoding} $e$ (setting the size $s$), the
 authentication \emph{placement} (inline, self-batch, relay-aggregate, or block-level), the signature
 \emph{scheme} $\sigma$, and the \emph{batch} size $b$. Our thesis is that tuning any one in isolation
 leaves saving on the table, and that the coupling is concentrated in one specific pair: a factorial
@@ -162,7 +164,7 @@ byte-for-byte overhead comparison between them would be misleading.
 What makes the pairing worth stating is that both buy authentication bytes with the \emph{same}
 currency --- latency --- but spend it at opposite ends of the link (Table~\ref{tab:external}).
 
-\begin{table}[t]\centering\footnotesize
+\begin{table*}[t]\centering\footnotesize
 \caption{Two ways to buy authentication bytes with latency. Not competing designs: the last row is a
 hard requirement for a ledger, and it is what rules TESLA out here.}
 \label{tab:external}
@@ -178,7 +180,7 @@ loss of one unit & breaks a whole key interval & loses one frame, $V=1-p$ \\
 non-repudiation & \textbf{no} (symmetric MAC) & \textbf{yes} (signature) \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table*}
 
 TESLA is preferable where staleness of \emph{data} is intolerable but staleness of \emph{trust} is
 acceptable; the reverse holds for a tamper-evident ledger, where a record that cannot yet be verified
@@ -187,17 +189,23 @@ comparison is that the byte saving from batching is exactly $1-1/b$ and hence bo
 freshness budget --- a constraint TESLA sidesteps by moving the delay to the receiver, and one that
 any future hybrid would have to confront.
 
-\textbf{Overall.} AUTHBC is a rigorous, hardware-validated co-design and measurement study, not a new
-construction. Prior work typically fixes three of the four knobs; we jointly optimize all four under a
-single falsifiable criterion with a reproducibility gate. Where the vehicular literature builds
+\textbf{Overall.} AUTHBC is a hardware-validated co-design and measurement study, not a new
+construction. Prior work typically fixes three of the four knobs; we search all four jointly under a
+single pre-registered criterion, and report which of them actually interact rather than assuming
+they all do. Where the vehicular literature builds
 \emph{new} aggregate-signature constructions to cut broadcast overhead, we ask a complementary
 question: which combination of \emph{existing, standardised} primitives and system parameters is
 feasible on a given link, and where is no combination feasible at all.
 
 \section{System Model and Theory}\label{sec:theory}
+\input{fig_system}
+
+Fig.~\ref{fig:system} gives the pipeline, the four design axes, and
+the kind of evidence behind each stage.
+
 A record is integer-only fixed-point (floats break canonical-CBOR determinism) with a 32\,B
-\texttt{prev\_hash} chain link; its encoded size is $s$. A frame carries $b$ records, a header $H_f
-\approx 40$\,B, and an authentication object $\ba$ (64\,B Ed25519/ECDSA, 96\,B BLS), bounded by the MTU
+\texttt{prev\_hash} chain link; its encoded size is $s$. A frame carries $b$ records, a header $H_f = 44$\,B
+\emph{measured} from the implemented wire format, and an authentication object $\ba$ (64\,B Ed25519/ECDSA, 96\,B BLS), bounded by the MTU
 $M = 1500$\,B. On-air bytes per record, by placement:
 \begin{align}
 \text{A (inline)} &: s + \ba + H_f/b, \label{eq:A}\\
@@ -211,7 +219,7 @@ For inline authentication the pure-authentication fraction is
 \varphi = \frac{g}{s+g}.
 \end{equation}
 For $s = 45$--$190$\,B and $g=64$\,B, $\varphi = 25$--$59\%$: the smaller the payload, the more the
-signature dominates. This is the disease; T2--T5 are the cure and its limits.
+signature dominates. T2--T5 quantify what can be done about this, and where it stops.
 
 \subsection{T2: batching cure and amplification}
 Self-batch folds $b$ records under one signature, so the per-record auth cost $(\ba+H_f)/b \to 0$.
@@ -286,29 +294,54 @@ where T2's amplification is operative). Section~\ref{sec:lowrate} applies this t
 At the 6\,Mb/s OFDM base rate, broadcast airtime is $T_{\text{air}}(L)=T_{\text{phy}}+8(L+\text{MAC})/R
 +\text{DIFS}+\delta$ (fixed part $\approx 100${\us}); unicast adds SIFS and an ACK ($\approx 156${\us}).
 Under contention among $N$ saturated stations, the Bianchi DCF fixed point is
-\begin{equation}
-\tau = \frac{2(1-2p_c)}{(1-2p_c)(W+1)+p_c W(1-(2p_c)^m)}, \quad p_c = 1-(1-\tau)^{N-1},
-\end{equation}
+\begin{align}
+\tau = \frac{2(1-2p_c)}{(1-2p_c)(W+1)+p_c W\left(1-(2p_c)^m\right)}, \\
+p_c = 1-(1-\tau)^{N-1}, \nonumber
+\end{align}
 with $W=16$, $m=6$, solved by damped iteration; saturation throughput $S = P_{tr}P_s\,8L/E[\text{slot}]$.
 Self-batch per-record energy is $E = P_c(t_{\text{enc}}+2t_{\text{hash}}+t_{\text{sign}}/b+
 t_{\text{verify}}/b) + P_r\,T_{\text{air}}(\text{frame})/b$. The hash term is the chain link
 $\mathit{prev\_hash}=H(\text{record})$, charged twice per record because the sender extends the
 chain and the receiver re-verifies it; unlike the signature it does \emph{not} amortize over $b$.
 
-\section{Implementation}\label{sec:impl}
-The project ran in phases under an eight-law discipline (plan-first, verify-before-assume,
-never-bypass-a-failure, TDD, audit--attack--fix, check-results, scientific-integrity,
-escalate-decisions); \texttt{main} is always green and every result carries an environment and
-config-hash header. \textbf{P0} locked the toolchain and CI. \textbf{P1} built four encoders and three
-schemes under a strict timing harness (GC off, warmup, checksum, bootstrap CIs) validated against real
-KATs (RFC 8032, Wycheproof, Chia). \textbf{P1b} switched the binary codecs to canonical schema arrays
-(CBOR 110$\to$66\,B). \textbf{P2} built the hash-chained store and frozen canonical-CBOR wire vectors.
-\textbf{P3} implemented the four placements and the 802.11a airtime model (broadcast and unicast kept
-separate). \textbf{P4} turned T1--T3 into seeded experiments (E1--E3). \textbf{P5} built the energy
-model, the exhaustive Pareto optimizer, and the power-independent crossover (E4). \textbf{P6} validated
-the Bianchi model against NS-3 3.48. \textbf{E5} fed the optimizer measured inputs and tested the
-headline. \textbf{P7a} produced the hardware-measurement scripts; a whole-repo audit then corrected one
-inconsistency and added an automated frozen-data reproduction gate (Sec.~\ref{sec:repro}).
+\section{Implementation and Validation}\label{sec:impl}
+Everything reported here is produced by one codebase, from measured inputs, under a fixed
+reproduction procedure. We describe what was built and how each component was checked, because the
+credibility of a feasibility boundary rests entirely on the models that draw it.
+
+\textbf{Encoders and schemes.} Four record encodings (JSON, CBOR, MessagePack, and a delta codec
+with a keyframe every $K{=}16$ records) and three signature schemes (ECDSA-P256, Ed25519, BLS12-381)
+are implemented behind one interface. Records are integer-only fixed point: floating point breaks
+canonical-CBOR determinism, and a non-deterministic encoding cannot be hash-chained. Each scheme is
+checked against published known-answer vectors (RFC~8032, Wycheproof, the Chia BLS suite) before any
+timing is taken.
+
+\textbf{Timing harness.} Crypto and encode timings are medians over repeated runs with the garbage
+collector disabled, a warmup phase, a checksum on the work performed to prevent dead-code
+elimination, and bootstrap confidence intervals. Timings used by the optimizer are measured
+\emph{on the Raspberry~Pi~4 target}, not on the development host: the two disagree on which
+signature scheme is faster (Sec.~\ref{sec:t4}), so using x86 numbers would select the wrong scheme.
+
+\textbf{Wire format and placements.} A hash-chained store produces canonical-CBOR wire vectors, from
+which the frame header is \emph{measured} at $H_f{=}44$\,B rather than assumed. All four placements
+are implemented over that format, so the byte model is validated against bytes actually emitted.
+
+\textbf{Channel model.} The 802.11a airtime model keeps broadcast and unicast separate --- they are
+not the same model with an ACK removed, which Sec.~\ref{sec:results} shows quantitatively. Both are
+validated against NS-3~3.48 over 30 seeds, and the broadcast airtime is additionally checked against
+two Raspberry~Pi~4 radios.
+
+\textbf{Optimizer.} An exhaustive search over (encoding $\times$ scheme $\times$ placement $\times$
+batch) evaluates the byte, energy, freshness and verifiability models at every point and returns the
+Pareto front, so the reported optimum is not the output of a heuristic.
+
+\textbf{Reproduction procedure.} Every artifact carries an environment and configuration-hash
+header. A gate re-derives all 20 model-derived artifacts byte-identically on each commit and fails
+if any differs; artifacts requiring NS-3 or the hardware rig cannot be re-derived in that gate and
+are labelled as such rather than counted as reproduced. Figures are regenerated from the same frozen
+CSVs, and a separate check asserts that every figure the paper cites is still produced by a
+generator that runs --- added after three figures were found plotting superseded constants
+(Sec.~\ref{sec:repro}).
 
 \section{Results}\label{sec:results}
 
@@ -362,8 +395,9 @@ the payload makes a fixed 64\,B signature dominate---T1 confirmed.
 $324.6/1016.5${\us}; BLS aggregate-verify$(b{=}8)$ $3445${\us}. Notably, ECDSA \emph{beats} Ed25519 on
 x86 (OpenSSL P-256 assembly)---the reverse of the usual ordering. The ordering \emph{flips} on the
 ARM target (Ed25519 259.5 vs ECDSA 326.9{\us} verify), which is what the optimizer uses; both are
-64\,B, so the byte results are identical either way. This is the reason the optimizer breaks a
-byte-tie toward ECDSA on the energy metric; this edge is expected to vanish on ARM.
+64\,B, so the byte results are identical either way. Because both are 64\,B the tie is broken on
+measured energy, and on the ARM target that selects \textbf{Ed25519} --- which is what the
+optimizer reports.
 
 \textbf{E2 (T2/T2a).} At MTU 1500, self-batch, the measured amplification
 $A_{@b}=(\text{bytes/rec})/s$ matches $A = M/(M-H_f-\ba)$ within $5\%$ (integer-$b$ slack, shrinking
@@ -390,7 +424,7 @@ costs bytes on own traffic).}
 \label{fig:e4}
 \end{figure}
 
-\begin{table}[t]\centering\footnotesize
+\begin{table*}[t]\centering\footnotesize
 \caption{E5: co-design headline (T5) under $V\geq0.95$, $p{=}0.05$ and $D\leq250$\,ms.
 Total-byte cut $=(174.3-72.0)/174.3=58.7\%$; auth cut $=(108-27.0)/108=75.0\% \geq 40\% \Rightarrow$ PASS.
 $H_f{=}44$\,B is measured from the implemented wire format, not assumed.}
@@ -405,7 +439,7 @@ A+JSON (naive) & json & Ed & A & 108.0 & 299.09 & 0.95 & 51 \\
 D-over-agg & cbor & Ed & D,$b{=}40$ & 3.80 & 70.05 & 0.9025 & 2004 \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table*}
 
 \begin{table}[t]\centering\footnotesize
 \caption{Attribution of the E5 saving. The authentication term is $1-1/b$ and is invariant to $H_f$,
@@ -414,13 +448,13 @@ would credit four axes for what two produce.}
 \label{tab:decomp}
 \begin{tabular}{l l r r}
 \toprule
-axis & moves & reduction & share of saving \\
+axis & what it moves & reduction & share \\
 \midrule
-placement $\times$ batching & auth bytes 108$\to$27.0 & 75.0\% & 79.2\% \\
-encoding & payload bytes 66.25$\to$45.0 & 32.1\% & 20.8\% \\
+placement $\times$ batching & auth B 108$\to$27.0 & 75.0\% & 79.2\% \\
+encoding & payload B 66.25$\to$45.0 & 32.1\% & 20.8\% \\
 scheme & neither (both 64\,B) & --- & --- \\
 \midrule
-\textbf{combined} & \textbf{total bytes 174.3$\to$72.0} & \textbf{58.7\%} & 100\% \\
+\textbf{combined} & \textbf{total B 174.3$\to$72.0} & \textbf{58.7\%} & 100\% \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -428,10 +462,12 @@ scheme & neither (both 64\,B) & --- & --- \\
 \begin{table}[t]\centering\footnotesize
 \caption{Feasibility across the operating region, not at one chosen point (802.11a 6\,Mb/s,
 broadcast model of~\cite{machen2007}). $N_{\max}$ is given at both thresholds: saturation ($U<1$)
-and the measured $V{\geq}0.95$ boundary ($U{\approx}2.80$). Batch obeys $b \leq \Lambda D_{\max}$,
+and the measured $V{\geq}0.95$ boundary ($U{\approx}2.44$, interpolated between the
+measured $U{=}2.23$ and $U{=}3.34$ rows). Batch obeys $b \leq \Lambda D_{\max}$,
 so \textbf{bytes depend only on the product} --- the first two blocks are byte-identical and differ
 only in capacity and in compliance.}
 \label{tab:envelope}
+\setlength{\tabcolsep}{4pt}
 \begin{tabular}{l r r r r r r}
 \toprule
 configuration & $\Lambda$ & $D_{\max}$ & $b$ & \multicolumn{3}{c}{$N_{\max}$} \\
@@ -486,8 +522,18 @@ $1.9\times$ and $3.2\times$ (Table~\ref{tab:envelope}): $1.94\times$ and $3.23\t
 thresholds for the compliant point, $3.22\times$ and $2.42\times$ for the relaxed one. \textbf{The
 advantage is robust in existence and variable in size}, and we state it that way; a single
 ``${\approx}3\times$'' would be true of two of those four numbers and misleading about the other
-two. What no single axis produces is the advantage itself --- it needs the encoding (frame size),
-the placement and batch (frames per second), the scheme (auth bytes) and the channel model together.
+two. What no single axis produces is the advantage itself: it needs the encoding (frame size) and the
+placement--batch pair (frames per second) \emph{together with} the channel model. The scheme axis is
+byte-neutral here and contributes nothing to this figure; it is decided on energy instead (T4).
+
+\begin{figure}[t]\centering
+\includegraphics[width=\columnwidth]{fig_envelope.png}
+\caption{Boundary~2. Largest single collision domain each configuration sustains. This is the
+result that requires the coupling: the byte model alone cannot produce it, and the channel model
+alone does not know the frame size. The co-design advantage is visible as horizontal displacement,
+and it is variable in size --- see Table~\ref{tab:envelope} for both thresholds.}
+\label{fig:envelope}
+\end{figure}
 
 \textbf{Choosing the operating point, and what it costs (item B3).} Because $b \leq \Lambda D_{\max}$,
 \emph{only the product} $\Lambda D_{\max}$ sets the batch, and therefore the bytes. Two very
@@ -567,37 +613,44 @@ freshness by $8\times$.
 \begin{figure}[t]\centering
 \includegraphics[width=\columnwidth]{fig_e5_codesign.png}
 \caption{E5: on-air bytes/record (payload + authentication) for the optimized configuration versus the
-baselines. Authentication overhead falls from 104\,B to $26.0$\,B under the 250\,ms freshness bound.}
+baselines. Authentication overhead falls from $108$\,B to $27.0$\,B under the 250\,ms freshness bound
+($H_f{=}44$\,B measured, $g_a{=}64$\,B, $b{=}4$).}
 \label{fig:e5}
 \end{figure}
 
 \textbf{NS-3 validation (Table~\ref{tab:ns3}, Fig.~\ref{fig:ns3}).} Unicast validates the Bianchi
-model~\cite{bianchi2000} to $+1.28$/$-0.49\%$ across $N=5$--$50$. Broadcast requires a \emph{different}
+model~\cite{bianchi2000} to $+1.29$/$-0.40\%$ across $N=5$--$50$ (mean over 30 seeds; the
+median-based derivation in Table~\ref{tab:ns3} gives $+1.33$/$-0.37\%$). Broadcast requires a \emph{different}
 model, not the same one with the ACK removed. Reducing the unicast model by fixing $\tau=2/(W{+}1)$
-under-predicts NS-3 by $16\times$ at $N{=}50$. PHY-trace instrumentation shows the cause is not frame
+under-predicts NS-3 by $17.3\times$ at $N{=}50$ (Table~\ref{tab:ns3}). PHY-trace instrumentation shows the cause is not frame
 capture---which we measure at \textbf{0\%}, every successful decode arriving from a single-transmitter
 busy period---but the \emph{backoff counter consecutive freeze process}: with no ACK the contention
 window never doubles, so a station that has just transmitted may redraw a zero backoff and seize the
 medium one slot ahead of every deferring station, whose counter is necessarily $\geq 1$. This is
 precisely the effect analysed by Ma and Chen~\cite{machen2007,machen2008}, whose closed form reproduces
-our measurements to within $2.49\%$ on success probability, idle-slot occupancy and throughput; the
+our measurements to within $0.51\%$ on throughput (30 seeds) and $2.49\%$ on the looser
+success-probability and idle-slot-occupancy statistics; the
 unicast counterpart is the ``anomalous slot'' analysis of Tinnirello \emph{et al.}~\cite{tinnirello2010},
 which our unicast traces independently confirm. We claim no novelty for the mechanism; our contribution
 is its validation at $W_0{=}16$ under 802.11a timing (the original studies used $W_0{=}32,128$ at
 1\,Mb/s) and a direct slot-level measurement of it.
 
 \begin{table}[t]\centering\footnotesize
-\caption{Analytic DCF models vs.\ NS-3 3.48, relative gap.}
+\caption{Analytic DCF models vs.\ NS-3 3.48, relative gap $(\text{sim}-\text{model})/\text{model}$.
+Median over 30 seeds, exact OFDM airtimes; regenerated from the frozen
+\texttt{ns3\_contention.csv}. The naive reduction is the unicast model with $\tau$ fixed at
+$2/(W{+}1)$, and it under-predicts by $17.3\times$ at $N{=}50$ --- the column exists to show
+that broadcast needs a different model, not a modified one.}
 \label{tab:ns3}
 \begin{tabular}{rrrr}
 \toprule
 $N$ & unicast vs.~\cite{bianchi2000} & broadcast vs.~naive reduction & broadcast vs.~\cite{machen2008} \\
 \midrule
-5 & $+0.6\%$ & $-0.2\%$ & $-0.3\%$ \\
-10 & $+0.9\%$ & $+3.1\%$ & $-0.4\%$ \\
-20 & $+0.6\%$ & $+31.3\%$ & $-0.7\%$ \\
-35 & $-1.4\%$ & $+273.1\%$ & $+0.9\%$ \\
-50 & $\mathbf{-2.9\%}$ & $\mathbf{+1654\%}$ & $\mathbf{+1.1\%}$ \\
+5 & $+0.54\%$ & $+0.1\%$ & $-0.07\%$ \\
+10 & $+1.33\%$ & $+3.4\%$ & $-0.12\%$ \\
+20 & $+1.14\%$ & $+32.8\%$ & $+0.39\%$ \\
+35 & $+0.24\%$ & $+268\%$ & $-0.56\%$ \\
+50 & $\mathbf{-0.37\%}$ & $\mathbf{+1631\%}$ & $\mathbf{-0.27\%}$ \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -605,8 +658,8 @@ $N$ & unicast vs.~\cite{bianchi2000} & broadcast vs.~naive reduction & broadcast
 \begin{figure}[t]\centering
 \includegraphics[width=\columnwidth]{fig_ns3_bianchi.png}
 \caption{Analytic DCF models vs.\ NS-3 3.48 saturation throughput. Unicast matches Bianchi within
-$+1.28$/$-0.49\%$; broadcast matches Ma and Chen~\cite{machen2008} within $1.44\%$, while the naive
-reduction of the unicast model (dashed) fails by $16\times$ at $N{=}50$.}
+$+1.29$/$-0.40\%$ (mean, 30 seeds); broadcast matches Ma and Chen~\cite{machen2008} within
+$0.51\%$, while the naive reduction of the unicast model (dashed) under-predicts by $17.3\times$ at $N{=}50$.}
 \label{fig:ns3}
 \end{figure}
 
@@ -631,15 +684,15 @@ message is subtracted to isolate security overhead.}
 \label{tab:clas}
 \begin{tabular}{lrr}
 \toprule
- & total B/record & security overhead \\
+ & total B/rec & security overhead \\
 \midrule
-Wang \emph{et al.} (CLAS) & 859 & 792 \\
-Liang \emph{et al.} (CLAS) & 735 & 668 \\
-Xu \emph{et al.} (CLAS) & 596 & 529 \\
-Cahyadi \emph{et al.} / \cite{plos2025clas} (CLAS) & 583 & 516 \\
+Wang \emph{et al.} & 859 & 792 \\
+Liang \emph{et al.} & 735 & 668 \\
+Xu \emph{et al.} & 596 & 529 \\
+Cahyadi \emph{et al.}~\cite{plos2025clas} & 583 & 516 \\
 \midrule
-AUTHBC, self-batch $b{=}4$, cert every 5th frame & \textbf{80.1} & 35.1 \\
-AUTHBC, self-batch $b{=}4$, cert every frame & 112.5 & 67.5 \\
+AUTHBC, $b{=}4$, cert every 5th frame & \textbf{80.1} & 35.1 \\
+AUTHBC, $b{=}4$, cert every frame & 112.5 & 67.5 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -678,6 +731,16 @@ payload, so the exclusion holds even with a zero-byte header and a zero-byte rec
 escape is a smaller authentication object, and the smallest standardised one is a 48\,B compressed
 BLS12-381 $\mathbb{G}_1$ point~\cite{cfrg_bls} at 126-bit security --- which does fit 51\,B, leaving
 three bytes for the header and the record together. DR3 fails on the encoding, and by six bytes.
+
+\begin{figure}[t]\centering
+\includegraphics[width=\columnwidth]{fig_t6_exclusion.png}
+\caption{Boundary~1. The payload-exclusion tiers across EU868 data rates at $H_f{=}44$\,B measured
+and $g_a{=}64$\,B. DR0--2 are excluded by the signature alone --- no header design, encoding,
+batching or chaining reaches them --- and DR3 misses on the record by six bytes. Only DR4--6 admit
+per-frame-verifiable telemetry. The boundary is arithmetic, so unlike the capacity results it does
+not move with the channel model.}
+\label{fig:t6}
+\end{figure}
 
 \begin{table}[t]\centering\footnotesize
 \caption{T6 applied to EU868 ($H_f{=}44$\,B measured, $\ba{=}64$\,B, $s_{\min}{=}13$\,B).}
@@ -747,7 +810,12 @@ mechanism we do not study. Simulating the AUTHBC frame at DR5
 under the same $0.95$ threshold used for 802.11 --- here applied to \emph{measured} delivery
 $V_{\mathrm{meas}}$, not to the assumed $V_{\mathrm{tgt}}$ of the byte model --- gives
 $N_{\max} = 3$, with a sharp cliff: delivery is $0.960$ at $N{=}3$ and $0.917$ at $N{=}5$.
-There is no backoff to absorb contention.
+There is no backoff to absorb contention. We give this figure with its uncertainty, as we do on
+the 802.11 arm: bootstrapping the crossing over the 30 seeds puts it at $3$ with a $95\%$ interval
+of $[2,3]$, and at the certified $N{=}3$ the mean clears $0.95$ while \emph{nine of thirty}
+individual runs do not. Read per realisation the value is $1$. The mean-based figure is the one
+quoted, for consistency with the 802.11 thresholds, but a deployment promising a reliability target
+should use the per-run reading.
 
 This figure is far below the node counts usually quoted for LoRaWAN, and the discrepancy is
 configuration, not disagreement. We simulate the LoRa physical layer --- real modulation, with the

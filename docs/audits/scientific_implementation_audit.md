@@ -256,7 +256,7 @@ adopting "report both":
 | V ≥ 0.95 (mean) | 3.23× | 2.42× |
 | V ≥ 0.95 (per run) | 2.67–3.14× | 2.51–3.02× |
 
-Every ratio lies inside 1.9×–3.3×. ⚠️ Two published ratios were also stale (3.31→**3.23**,
+Every ratio lies between **1.94×** and **3.23×**, i.e. the quotable range is **1.9–3.2×**. ⚠️ Two published ratios were also stale (3.31→**3.23**,
 2.24→**2.42**), so the four-number list in the status board needed correcting too.
 
 ### B. `p` sensitivity (O2) — the constant is not load-bearing, but it sits on a boundary
@@ -407,3 +407,77 @@ is the same F1 hole the gate exists to close.
 re-derives byte-identically; the frozen suite is 14 → 18 tests), every remaining ungated artifact
 has a stated reason, and the paper now claims exactly "all 20 model-derived artifacts" instead of
 "all results".
+
+---
+
+## 10. Full paper audit (2026-08-07) — read end to end, every table checked against its artifact
+
+*Requested: "understand it deeply, rewrite every section to standard, audit for contradictions,
+tone, clarity, claims, results and methodology, fix and re-audit; check formatting, graphs and
+tables; think about what visualisations we lack."*
+
+### ⚠️ The largest finding: a whole table was stale, and a shipped figure plotted superseded data
+
+**`tab:ns3` disagreed with its artifact in every cell.** It carried pre-30-seed values:
+
+| N | paper had | artifact |
+|---|---|---|
+| 5 | +0.6 / −0.3 | **+0.54 / −0.07** |
+| 10 | +0.9 / −0.4 | **+1.33 / −0.12** |
+| 20 | +0.6 / −0.7 | **+1.14 / +0.39** |
+| 35 | −1.4 / +0.9 | **+0.24 / −0.56** |
+| 50 | −2.9 / +1.1 | **−0.37 / −0.27** |
+
+Regenerated from the frozen `ns3_contention.csv`, with the statistic now named (median over 30
+seeds, exact OFDM airtimes).
+
+⚠️ **`fig_e5_codesign.png` had been shipping since 28 July plotting $H_f{=}40$\,B**, three days
+before B1 measured it at 44\,B. Its caption said "104\,B to 26.0\,B" while the table beside it said
+108 to 27.0 — 104 = 40+64. Two further figures (`e4_crossover`, `fig_envelope`) were equally stale.
+
+**Root cause, and it is structural:** `make figures` regenerated only `figures_e123`, so four of the
+five generators were never run by any gate. The frozen gate covers CSVs; nothing covered figures.
+Fixed — `make figures` now runs all five, and `tests/test_figures_are_current.py` asserts every
+generator still runs and every cited figure exists.
+
+### Contradictions found and fixed
+
+| # | contradiction | resolution |
+|---|---|---|
+| 1 | §Theory said $H_f \approx 40$\,B (assumed) while the rest of the paper used 44\,B measured | 44\,B measured, everywhere; all 9 mentions now agree |
+| 2 | Text said the optimizer "breaks a byte-tie toward **ECDSA**"; the artifact selects **Ed25519** | corrected to Ed25519, which is what E5 reports |
+| 3 | `tab:envelope` caption said the crossing is $U{\approx}2.80$; the text said 2.44 | 2.44, labelled as interpolated between the measured $U{=}2.23$ and $3.34$ rows |
+| 4 | Text said the advantage "needs … the scheme (auth bytes)" while `tab:decomp` reports the scheme axis as moving *neither* | scheme removed from the list; stated byte-neutral and decided on energy |
+| 5 | Validation band quoted as $+1.28/-0.49\%$ — matching neither derivation | $+1.29/-0.40\%$ (mean, guarded by a test), with the median-based $+1.33/-0.37\%$ named as such |
+| 6 | `fig:ns3` caption claimed agreement "within 1.44 %" — the superseded 10-seed figure | 0.51 % |
+| 7 | "within 2.49 % on success probability, idle-slot occupancy **and throughput**" — throughput is 0.51 % | statistics separated, each with its own figure |
+| 8 | Naive-reduction failure quoted as $16\times$; the regenerated table gives $+1631\%$ | $17.3\times$, consistent in all three places |
+
+⚠️ **Two derivations of the same band existed** and neither was wrong: `figures_ns3.py` uses the
+*median* with exact OFDM airtimes, `test_validation_bands.py` uses the *mean* with defaults. The
+paper now names which statistic it is quoting instead of implying there is only one.
+
+### Visualisations: the gap was not missing figures but unused ones
+
+The paper cited 3 of 9 generated figures — and the two it omitted were **exactly boundaries 1 and 2
+of the new framing**. `figures_envelope_lora.py`'s own docstring had already said the envelope
+"deserves a figure more than the auth-byte ratio does", and the paper was doing the opposite.
+Added `fig:t6` (the exclusion tiers) and `fig:envelope` (the capacity envelope); 5 figures now.
+
+### Rewritten for standard
+
+* **§Implementation** was a project changelog ("P0 locked the toolchain… P1b switched…") in internal
+  phase numbering, with "an eight-law discipline" as jargon. Rewritten as
+  **Implementation and Validation**: what was built and how each component was checked.
+* **Abstract** now opens on the feasibility question, matching the title, before naming the knobs.
+* **Tone:** "This is the disease; T2--T5 are the cure" removed; "AUTHBC is a **rigorous**…" removed
+  (self-praise); "we **jointly optimize all four**" softened to "search all four jointly, and report
+  which of them actually interact" — the previous wording contradicted the F39 ablation.
+* **Consistency:** the intro called the four choices "coupled" two sentences before showing that
+  only one pair is.
+
+### Methodological inconsistency between the two arms, fixed
+
+The 802.11 arm reported `N_max` under both the mean and per-realisation readings; **the LoRa arm
+reported only the mean**, with the caveat buried in §Reproducibility. `N_max = 3` is now given at the
+point of use with its 95 % interval $[2,3]$, the 9-of-30 failure count, and the per-run value of 1.

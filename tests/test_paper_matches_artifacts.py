@@ -13,6 +13,7 @@ This parses the table straight out of `paper/main.tex` and checks every number a
 from __future__ import annotations
 
 import csv
+import math
 import re
 from pathlib import Path
 
@@ -190,3 +191,55 @@ class TestTheAblationClaimsMatchTheModel:
 
     def test_the_placement_closed_form_is_stated(self):
         assert r"g_a(1{-}1/b)" in TEX.read_text() or r"g_a(1-1/b)" in TEX.read_text()
+
+
+class TestAbstractRatioRange:
+    """⚠️ The capacity-ratio RANGE is a flagged number, and the status board had it wrong.
+
+    CLAUDE.md instructed quoting "the range 1.9--3.3x" and listed the four combinations as
+    1.94/2.24/3.22/3.31. Recomputing from `capacity_envelope.csv` on 2026-08-07 gives
+    1.94/3.23/3.22/2.42 -- so two of the four listed values were wrong and the upper end of the
+    range was overstated. The paper's abstract was right; the standing instruction file was not,
+    which is the worse of the two places for an error to live.
+
+    Nothing checked it, because the ratio is not printed in any table -- it is derived in prose
+    from two table cells. This is the prose/data boundary the methods companion argues for, so it
+    gets an invariant.
+    """
+
+    BASELINE_BYTES = 174.252   # A+CBOR (Pillar-1), inline, b=1
+    OPTIMIZED_BYTES = 71.998   # delta / self-batch b=4
+
+    def _ratios(self) -> list[float]:
+        rows = list(_envelope_rows().values())
+        out = []
+        for lam in ("20", "50"):
+            def pick(byts, lam=lam):  # bind the loop variable, not the closure cell
+                return next(r for r in rows
+                            if r["lambda_rec_per_s"] == lam
+                            and abs(float(r["bytes_per_rec"]) - byts) < 1e-3)
+            base, opt = pick(self.BASELINE_BYTES), pick(self.OPTIMIZED_BYTES)
+            for col in ("n_max_u_lt_1", "n_max_v95_mean"):
+                out.append(int(opt[col]) / int(base[col]))
+        return sorted(out)
+
+    def test_the_four_ratios_are_what_the_board_claims(self):
+        got = [round(r, 2) for r in self._ratios()]
+        assert got == [1.94, 2.42, 3.22, 3.23], (
+            f"the four capacity ratios moved: {got}. Update CLAUDE.md and the abstract together "
+            f"— the board has been wrong about these before."
+        )
+
+    def test_abstract_quotes_the_true_range(self):
+        """The abstract must bracket the real spread, not a rounded-up version of it."""
+        tex = (REPO / "paper" / "main.tex").read_text()
+        i, j = tex.index(r"\begin{abstract}"), tex.index(r"\end{abstract}")
+        quoted = re.findall(r"\$?(\d\.\d)\\times\$?", tex[i:j])
+        assert len(quoted) >= 2, f"abstract no longer quotes a ratio range: {quoted}"
+        lo_q, hi_q = float(quoted[0]), float(quoted[1])
+        rs = self._ratios()
+        lo_t, hi_t = math.floor(rs[0] * 10) / 10, math.floor(rs[-1] * 10) / 10
+        assert (lo_q, hi_q) == (lo_t, hi_t), (
+            f"abstract quotes {lo_q}x--{hi_q}x but the artifact gives {rs[0]:.2f}--{rs[-1]:.2f} "
+            f"(truncated {lo_t}--{hi_t}). ⚠️ Never round the upper end UP: it overstates the result."
+        )
