@@ -481,3 +481,41 @@ Added `fig:t6` (the exclusion tiers) and `fig:envelope` (the capacity envelope);
 The 802.11 arm reported `N_max` under both the mean and per-realisation readings; **the LoRa arm
 reported only the mean**, with the caveat buried in §Reproducibility. `N_max = 3` is now given at the
 point of use with its 95 % interval $[2,3]$, the 9-of-30 failure count, and the per-run value of 1.
+
+### ⚠️ Re-audit pass 2 — the worst finding came last: a table built on the PURGED 3-seed run
+
+`tab:lora-external` (the Bor cross-check) still carried the superseded data. Its AUTHBC column
+matched `lora_capacity_3seed_SUPERSEDED.csv` **to three decimals**:
+
+| N | paper had | 3-seed (purged) | 30-seed (current) |
+|---|---|---|---|
+| 5 | 0.0 % | **0.000** | 8.33 % |
+| 8 | 13.4 % | **13.443** | 12.90 % |
+| 30 | 59.0 % | **59.030** | 42.97 % |
+| 50 | 74.7 % | **74.683** | 62.45 % |
+
+Six 3-seed artifacts were purged weeks earlier (F38) and **this table was never re-derived with
+them**. So the defect class CLAUDE.md calls *"the pattern of the whole audit"* — small samples read
+against a threshold — was still being printed, after the audit that named it.
+
+Two claims rode on the stale column:
+
+1. **`N_max` was quoted as 5.** The 30-seed run gives **3** (0.9508 at $N{=}3$, 0.8981 at $N{=}4$);
+   Bor's closed form gives **4** (4.418 % at $N{=}4$, 5.065 % at $N{=}5$). CLAUDE.md had said "their
+   N_max=4 vs our 3" all along — the status board was right and the paper was wrong.
+2. ⚠️ **The row annotated "we are more optimistic" restated retracted finding F18** — while a bold
+   sentence 100 lines earlier said the exact opposite. The crossover is at $N{\approx}3$, not
+   $N{=}8$: beyond it we are the *more pessimistic* model (1.6× at $N{=}5$, 2.1× at $N{=}50$).
+
+**Why it survived three passes:** the Bor column was correct throughout. Half the table agreed with
+its source, so it read as verified. ⚠️ *A partially-correct table is harder to catch than a wholly
+wrong one.*
+
+It propagated: `tab:lowrate` used $N_{\max}{=}5$ to compute an aggregate of 0.82 rec/s and a
+"$\approx$2500×" 802.11-vs-LoRa gap. Corrected: 0.495 rec/s and **≈4200×**, which *strengthens* the
+section's argument that LoRa is a different regime rather than a slow 802.11. The prose figure
+"we measure ≈75 % at $N{=}50$" (also 3-seed) is now 62 %, and "2.3× more pessimistic" is 2×.
+
+**Guards added:** `TestLoraExternalTable` compares every cell to `lora_external_check.csv`, asserts
+no row revives F18 (it checks the *artifact*, not the wording), pins both $N_{\max}$ values, and
+recomputes `tab:lowrate`'s arithmetic from its own columns.

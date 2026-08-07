@@ -59,7 +59,7 @@ type hints; no dead code; comments explain WHY, not what.
 - **NEXT SESSION: read `docs/NEXT_STEPS.md` first** — prioritised work plan, strategy decision, and decisions not to re-litigate.
 - ⚠️ **Repo is PUBLIC and history was REWRITTEN** to purge the 84 MB vendored NS-3 tree. **The remote is authoritative — never force-push an older local branch over it.** Copyrighted PDFs in `docs/literature/` stay by Mohamed's decision (risk accepted, `DECISIONS.md`).
 - **Phase: P8 audit complete. COMMITTED AND PUSHED** to branch `p8-audit-and-corrections`. Work from any machine: `git clone`, `git checkout p8-audit-and-corrections`, `make setup && make all`.
-- **Green:** 1184 fast + **24** frozen-gate tests (**1208**), `ruff` clean, **`mypy` clean (0 / 49 files)**, paper builds (**14 pp**, **45 refs**, 0 undefined, abstract **265 w**). `make all` exit 0.
+- **Green:** 1188 fast + **24** frozen-gate tests (**1212**), `ruff` clean, **`mypy` clean (0 / 49 files)**, paper builds (**14 pp**, **45 refs**, 0 undefined, abstract **265 w**). `make all` exit 0.
 - **METHODOLOGY (Mohamed):** this is an optimization problem — *state everything, choose what to stick with, state the trade-offs for every decision*. **`docs/TRADEOFFS.md` is required reading before quoting any number.**
 - **LICENSE = all rights reserved** (© 2026 Mohamed A. Farouk). Vendored NS-3 + `signetlabdei/lorawan` stay GPLv2, **not** redistributed.
 
@@ -123,6 +123,7 @@ type hints; no dead code; comments explain WHY, not what.
 
 ### ⚠️ THE PATTERN of the whole audit — read this before trusting any new number
 **Four headline numbers were distorted by small-sample means against thresholds. NONE was a modelling error; every one was sampling.** Drivers now default to **30 seeds** and emit min/max/σ. Before reporting any threshold crossing, look at the *distribution*.
+> ⚠️ **And a table survived the purge.** Six 3-seed artifacts were deleted (F38), but `tab:lora-external` was still built on `lora_capacity_3seed_SUPERSEDED.csv` — matching it to three decimals — until 2026-08-07. It quoted `N_max`=5 where the 30-seed run gives **3**. It survived three read-throughs because the *other* column (Bor) was correct: **a half-correct table reads as verified.** Purging an artifact is not enough — re-derive everything that consumed it.
 
 ### External baselines (A7 closed)
 - **Bor et al. 2017 implemented** (`lora.bor2017_loss_pct`), validated against their own four figures: **their N_max=4 vs our 3**; closed-form periodic ALOHA also gives 3.
@@ -132,6 +133,7 @@ type hints; no dead code; comments explain WHY, not what.
 
 ### Retractions, kept visible
 **T7** (capacity excludes at U≥1) · **F15** (the ≤0.36 % validation) · **F18** (I claimed we were the *more optimistic* model vs Bor — I quoted their **pure-ALOHA** figure as their LoRa result). ⚠️ **Quoting the PDF is not enough: quote the FIGURE.**
+> ⚠️ **F18 came back.** On 2026-08-07 it was found still printed in `tab:lora-external` ("we are more optimistic" at N=5) — 100 lines below a bold sentence saying the opposite. **Retracting a finding in the register does not remove it from the paper.** When you retract, grep the paper. Guarded now by `test_no_row_revives_the_retracted_optimism_claim`, which checks the *artifact* rather than the wording.
 
 ### Where things live
 `docs/README.md` is the index. Findings **F1–F42** in `docs/audits/model_provenance.md`. Open items **only** in `docs/OPEN_ITEMS.md`. Trade-offs in `docs/TRADEOFFS.md`. Method and failed attempts in `docs/LOGBOOK.md`. **24 PDFs** in `docs/literature/` with each source's ROLE stated; `A3_CITATION_VERIFICATION.md` records how every citation was checked (Crossref by DOI).

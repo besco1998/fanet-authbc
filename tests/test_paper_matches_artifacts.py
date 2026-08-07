@@ -243,3 +243,107 @@ class TestAbstractRatioRange:
             f"abstract quotes {lo_q}x--{hi_q}x but the artifact gives {rs[0]:.2f}--{rs[-1]:.2f} "
             f"(truncated {lo_t}--{hi_t}). ⚠️ Never round the upper end UP: it overstates the result."
         )
+
+
+class TestLoraExternalTable:
+    """⚠️ `tab:lora-external` was still built on the PURGED 3-seed run.
+
+    Found 2026-08-07. The AUTHBC column read 0.0 / 13.4 / 59.0 / 74.7 %, which matches
+    `lora_capacity_3seed_SUPERSEDED.csv` to three decimals; the current 30-seed-backed artifact
+    gives 8.3 / 12.9 / 43.0 / 62.5 %. Six 3-seed artifacts were purged weeks earlier and this table
+    was not re-derived with them, so the single defect class CLAUDE.md calls "the pattern of the
+    whole audit" -- small samples against a threshold -- was still printed in the paper.
+
+    Two consequences rode on it. `N_max` was quoted as 5 where the 30-seed data gives 3 (0.9508 at
+    N=3, 0.8981 at N=4), and the row annotated "we are more optimistic" at N=5 restated finding
+    **F18**, which the project had already RETRACTED -- while a paragraph 100 lines earlier said
+    the opposite in bold. The paper contradicted itself on a retracted claim.
+
+    The Bor column was correct throughout, which is what made this hard to see: half the table
+    agreed with its source.
+    """
+
+    CSV = REPO / "results" / "raw" / "lora_external_check.csv"
+
+    def _artifact(self) -> dict[int, tuple[float, float]]:
+        out = {}
+        for r in csv.DictReader(ln for ln in self.CSV.read_text().splitlines()
+                                if not ln.startswith("#")):
+            if r["authbc_ns3_loss_pct"]:
+                out[int(r["n_devices"])] = (float(r["authbc_ns3_loss_pct"]),
+                                            float(r["bor2017_loss_pct"]))
+        return out
+
+    def _paper_rows(self) -> dict[int, tuple[float, float]]:
+        tex = (REPO / "paper" / "main.tex").read_text()
+        i = tex.index(r"\label{tab:lora-external}")
+        block = tex[i:tex.index(r"\end{tabular}", i)]
+        out = {}
+        for m in re.finditer(r"^(\d+)\s*&\s*\$([\d.]+)\\%\$\s*&\s*\$([\d.]+)\\%\$",
+                             block, re.M):
+            out[int(m.group(1))] = (float(m.group(2)), float(m.group(3)))
+        return out
+
+    def test_every_cell_matches_the_current_artifact(self):
+        art, paper = self._artifact(), self._paper_rows()
+        assert paper, "could not parse tab:lora-external"
+        bad = []
+        for n, (pa, pb) in paper.items():
+            aa, ab = art[n]
+            if abs(pa - aa) > 0.05 or abs(pb - ab) > 0.05:
+                bad.append(f"N={n}: paper ({pa}, {pb}) vs artifact ({aa:.1f}, {ab:.1f})")
+        assert not bad, ("tab:lora-external disagrees with lora_external_check.csv:\n"
+                         + "\n".join(bad))
+
+    def test_no_row_revives_the_retracted_optimism_claim(self):
+        """⚠️ F18 is retracted. Above the crossover we are the MORE PESSIMISTIC model."""
+        art = self._artifact()
+        tex = (REPO / "paper" / "main.tex").read_text()
+        i = tex.index(r"\label{tab:lora-external}")
+        block = tex[i:tex.index(r"\end{tabular}", i)]
+        for line in block.splitlines():
+            m = re.match(r"^(\d+)\s*&", line)
+            if m and "more optimistic" in line:
+                n = int(m.group(1))
+                ours, theirs = art[n]
+                assert ours < theirs, (
+                    f"row N={n} claims we are more optimistic, but the artifact has us at "
+                    f"{ours}% loss against their {theirs}% — this is retracted finding F18."
+                )
+
+    def test_n_max_is_the_30_seed_value_not_the_3_seed_one(self):
+        tex = (REPO / "paper" / "main.tex").read_text()
+        i = tex.index(r"\label{tab:lora-external}")
+        block = tex[i:tex.index(r"\end{tabular}", i)]
+        m = re.search(r"&\s*\\textbf\{(\d+)\}\s*&\s*\\textbf\{(\d+)\}", block)
+        assert m, "tab:lora-external no longer states both N_max values"
+        ours, theirs = int(m.group(1)), int(m.group(2))
+        assert (ours, theirs) == (3, 4), (
+            f"N_max reads ({ours}, {theirs}); the 30-seed run gives ours=3 (0.9508 at N=3, "
+            f"0.8981 at N=4) and Bor's closed form gives 4 (4.418% at N=4, 5.065% at N=5). "
+            f"⚠️ ours=5 is the purged 3-seed value."
+        )
+
+    def test_lowrate_table_arithmetic_is_self_consistent(self):
+        """`tab:lowrate` inherited N_max=5 and reported aggregate 0.82 rec/s and a 2500x gap.
+
+        With the correct N_max=3 the aggregate is 0.495 rec/s and the gap is ~4200x. The row is
+        pure arithmetic over the two preceding columns, so it can simply be recomputed.
+        """
+        tex = (REPO / "paper" / "main.tex").read_text()
+        i = tex.index(r"\label{tab:lowrate}")
+        block = tex[i:tex.index(r"\end{tabular}", i)]
+        lora = re.search(r"LoRa[^&]*&\s*([\d.]+) rec/s\s*&\s*(\d+)\s*&\s*([\d.]+) rec/s", block)
+        wifi = re.search(r"802\.11a[^&]*&\s*(\d+) rec/s\s*&\s*(\d+)\s*&\s*(\d+) rec/s", block)
+        assert lora and wifi, "could not parse tab:lowrate"
+        per, nmax, agg = float(lora.group(1)), int(lora.group(2)), float(lora.group(3))
+        assert nmax == 3, f"tab:lowrate says N_max={nmax}; the 30-seed run gives 3"
+        assert abs(per * nmax - agg) < 0.01, f"{per} x {nmax} = {per * nmax:.3f}, table says {agg}"
+        w_per, w_nmax, w_agg = int(wifi.group(1)), int(wifi.group(2)), int(wifi.group(3))
+        assert w_per * w_nmax == w_agg, f"802.11a row: {w_per}x{w_nmax} != {w_agg}"
+        ratios = re.search(r"ratio & \$(\d+)\\times\$ & \$(\d+)\\times\$ & "
+                           r"\$\\mathbf\{\\approx\}\\mathbf\{(\d+)\}", block)
+        assert ratios, "could not parse the ratio row"
+        assert abs(int(ratios.group(1)) - w_per / per) < 1.0
+        assert abs(int(ratios.group(2)) - w_nmax / nmax) < 1.0
+        assert abs(int(ratios.group(3)) - w_agg / agg) < 100.0

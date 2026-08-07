@@ -826,8 +826,8 @@ published results~\cite{bor2017lora} must respect that. Both studies transmit at
 duty-cycle ceiling, so per-node occupancy is $1\%$ in both and offered load scales identically as
 $G = 0.01N$; mapping their multi-channel result through their own fit
 $f_{\mathrm{MCH,MSF}}(x) = f_{\mathrm{SCH,SSF}}(x/18)$ places their ${\approx}32\%$ loss at $56$
-nodes on one channel and one SF, where we measure ${\approx}75\%$ at $N{=}50$. \textbf{Our model is
-therefore roughly $2.3\times$ more pessimistic than theirs, not more optimistic}, most plausibly
+nodes on one channel and one SF, where we measure ${\approx}62\%$ at $N{=}50$. \textbf{Our model is
+therefore roughly $2\times$ more pessimistic than theirs, not more optimistic}, most plausibly
 because a single demodulation path rejects a second concurrent arrival outright instead of granting
 it the capture chance their measurements support. Our own configuration is deliberately the pessimistic one in a further respect: the interference
 matrix treats \emph{any} same-spreading-factor overlap as fatal, so there is no capture at all,
@@ -933,13 +933,15 @@ and applied the identical $V \geq 0.95$ criterion.
 \toprule
 $N$ & AUTHBC (NS-3) & Bor \emph{et al.} & \\
 \midrule
-5  & $0.0\%$  & $5.1\%$  & we are more optimistic \\
-8  & $13.4\%$ & $7.0\%$  & crossover \\
-30 & $59.0\%$ & $19.9\%$ & we are $3.0\times$ more pessimistic \\
-50 & $74.7\%$ & $29.9\%$ & $2.5\times$ \\
+2  & $2.8\%$ & $3.1\%$ & we are more optimistic \\
+3  & $4.0\%$ & $3.8\%$ & crossover \\
+5  & $8.3\%$ & $5.1\%$ & we are $1.64\times$ more pessimistic \\
+8  & $12.9\%$ & $7.0\%$ & we are $1.85\times$ more pessimistic \\
+30 & $43.0\%$ & $19.9\%$ & we are $2.16\times$ more pessimistic \\
+50 & $62.5\%$ & $29.9\%$ & we are $2.09\times$ more pessimistic \\
 \midrule
 \multicolumn{2}{l}{$\mathbf{N_{\max}}$ \textbf{at} $\mathbf{V \geq 0.95}$} & & \\
-& \textbf{5} & \textbf{4} & \\
+& \textbf{3} & \textbf{4} & \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -950,8 +952,8 @@ interference measurements land \textbf{one node apart} on the quantity this sect
 their fit is dominated by a $1.78\%$ intercept that is an artifact rather than a measurement --- but
 it is obtained independently and it is the right order. The disagreement in \emph{shape} is the more
 informative part, and it matches the configuration difference: our runs model no capture at all and
-a single demodulation path, where their measurement-based model grants both, so above the crossover
-we reject concurrent arrivals that their gateway would still recover.
+a single demodulation path, where their measurement-based model grants both, so beyond the crossover at
+$N{\approx}3$ we reject concurrent arrivals that their gateway would still recover.
 
 \begin{table}[t]\centering\footnotesize
 \caption{The low-rate regime is not a slower version of the same problem.}
@@ -961,14 +963,14 @@ we reject concurrent arrivals that their gateway would still recover.
  & per node & $N_{\max}$ & aggregate \\
 \midrule
 802.11a, delta/B, $b{=}4$ & 20 rec/s & 103 & 2060 rec/s \\
-LoRa EU868 DR5, $b{=}6$ & 0.165 rec/s & 5 & 0.82 rec/s \\
+LoRa EU868 DR5, $b{=}6$ & 0.165 rec/s & 3 & 0.495 rec/s \\
 \midrule
-ratio & $121\times$ & $21\times$ & $\mathbf{\approx}\mathbf{2500}\boldsymbol{\times}$ \\
+ratio & $121\times$ & $34\times$ & $\mathbf{\approx}\mathbf{4200}\boldsymbol{\times}$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The arm is ${\approx}120\times$ slower per node \emph{and} ${\approx}20\times$ smaller per domain,
+The arm is ${\approx}120\times$ slower per node \emph{and} ${\approx}34\times$ smaller per domain,
 and it is the product that matters (Table~\ref{tab:lowrate}). LoRa is not a slow 802.11; it is a
 different regime, in which authenticated per-record telemetry is not the right application at all.
 Its defensible role is long-range \emph{provenance} --- a tamper-evident trickle --- not live
