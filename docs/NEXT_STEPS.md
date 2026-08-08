@@ -7,21 +7,22 @@ rounding error and a duplicated word, which is the signal of diminishing returns
 
 **Two things remain, and only one of them exists yet:**
 
-1. **Submit the paper.**  is the worklist. Venue-independent items
+1. **Submit the paper.** `paper/SUBMISSION_CHECKLIST.md` is the worklist. Venue-independent items
    are done (data-availability, competing-interests and generative-AI statements, keywords).
-   ⚠️ Blockers only Mohamed can clear: **affiliation**, ORCID, funding statement, whether the
-   supervisor is a co-author, and two MDPI PDFs that need a browser. Venue is undecided; the
-   checklist tabulates what changes for Ad Hoc Networks / IEEE IoT-J / MDPI Drones, including that
-   IoT-J costs **\,225 in mandatory overlength** at 15 pp and that
-    must become  for any journal.
-2. **⚠️ THE THESIS DOCUMENT DOES NOT EXIST.**  holds two papers. The thesis is the actual
-   March-2027 deliverable and nothing has been written. This is the largest gap in the project.
+   ⚠️ Blockers only Mohamed can clear: **affiliation** (a literal placeholder in `main.tex`),
+   ORCID, funding statement, whether the supervisor is a co-author, and two MDPI PDFs that need a
+   browser. Venue is undecided; the checklist tabulates what changes for Ad Hoc Networks /
+   IEEE IoT-J / MDPI Drones — including that IoT-J costs **USD 1,225 in mandatory overlength** at
+   15 pp, and that `\documentclass[conference]` must become `journal` for any journal.
+2. **⚠️ THE THESIS DOCUMENT DOES NOT EXIST.** `paper/` holds two papers (`main.tex`,
+   `methods.tex`). The thesis is the actual March-2027 deliverable and nothing has been written.
+   This is the largest gap in the project.
 
 **Why submission goes first:** review takes 7–14 weeks. Submitting in August means a decision in
 October and acceptance plausibly by January; waiting a month probably costs the publication
 entirely. Write the thesis while the reviews run — the referee reports improve the chapters.
 
-
+---
 
 *Rewritten 2026-08-06. Read `CLAUDE.md`'s status board first for **where the project is**; this file
 is **what to do next**. ⚠️ The previous version of this file was badly stale — it still listed as
