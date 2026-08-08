@@ -152,3 +152,42 @@ The keyword sweep alone would have been wrong on three papers:
   count, CI or dispersion — while publishing its implementation so readers can replicate, which is
   better practice than most of the corpus and simply is not what H1 measures.
 * `batteryless_2021` matched on the protocol's message-repetition feature.
+
+## Sweep round 2 (2026-08-08): achieved n = 20
+
+Retrieval, not identification, was the bottleneck. It was partly solved: **Unpaywall**,
+**Semantic Scholar** and the **Europe PMC REST API** serve legal open-access copies that the
+publishers' own front-ends refuse to a script. Seven of thirteen wanted papers arrived that way;
+six qualified.
+
+**Result: 17 NONE / 3 REPORTS of 20 = 15.0 % reporting**, against the pre-registered 25 %
+falsification threshold. H1 supported.
+
+### The third counter-example is the one that matters
+
+`titolara2025` (Sensors 2025) states its replication information *completely*: it fixes the RNG
+seed, says ``each configuration was executed once ($R=1$)'', and states there is ``no averaging
+across repetitions and no confidence intervals''. **Scored `REPORTS`.**
+
+⚠️ Scoring it `NONE` because $R{=}1$ is a weak design would have silently converted H1 from a claim
+about *reporting* into a claim about *practice* — which §1 forbids in terms. A reader of that paper
+can judge its evidence exactly; that is the whole property H1 says is usually missing.
+
+### The most consequential `NONE`
+
+`magrin2020` — the parameter study by the authors of **the ns-3 LoRaWAN module this thesis uses** —
+states no seed count, run count, CI or dispersion. The convention the field inherits is set there.
+
+### Two more reasons hand adjudication is not optional
+
+A mechanical sweep would now be wrong on **six of twenty**:
+
+* `anwar2021` writes the simulator as ``network simulator (ns)-3''. Our screening regex scored it
+  **0 ns-3 mentions** and would have excluded a qualifying paper outright. Caught by reading.
+* `saraereh2020` matched `repeated` on k-means convergence; `magrin2020` on LoRaWAN packet
+  repetition; `anwar2021` on a related work's SNR standard deviation.
+
+### Still outstanding
+
+Five papers (three MDPI, two arXiv) remain unretrievable by script; see
+`DIRECTION_C_DOWNLOAD_LIST.md`. Achieved n is reported as 20 against the target of 56, per §4.

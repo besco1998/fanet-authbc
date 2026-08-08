@@ -601,23 +601,23 @@ class TestDirectionCSurvey:
         )
         assert v["klimiashvili2020_lora_vs_wifi_adhoc_ns3"] == "REPORTS"
         counted = [x for x in v.values() if x in {"REPORTS", "NONE"}]
-        assert len(counted) == 14, f"corpus size changed to {len(counted)}"
+        assert len(counted) == 20, f"corpus size changed to {len(counted)}"
 
     def test_paper_states_the_survey_as_the_artifact_has_it(self):
         v = self._verdicts()
         counted = [x for x in v.values() if x in {"REPORTS", "NONE"}]
         n_none = sum(1 for x in counted if x == "NONE")
         tex = (REPO / "paper" / "main.tex").read_text()
-        assert "\\emph{fourteen} ns-3 LoRa simulation studies" in tex, (
+        assert "\\emph{twenty} ns-3 LoRa simulation studies" in tex, (
             f"the paper no longer says the corpus holds {len(counted)} studies"
         )
-        assert n_none == 12 and "\\textbf{twelve} state no seed count" in tex, (
+        assert n_none == 17 and "\\textbf{seventeen} state no seed count" in tex, (
             f"artifact has {n_none} NONE; the paper's wording disagrees"
         )
-        assert "\\textbf{Two do}" in tex, (
+        assert "\\textbf{Three do}" in tex, (
             "the paper stopped disclosing the counter-examples to its own hypothesis"
         )
-        assert "achieved $n$ is $14$" in tex, (
+        assert "achieved $n$ is $20$" in tex, (
             "the paper stopped reporting the achieved n against the protocol's target of 56"
         )
 

@@ -1039,23 +1039,29 @@ does not.
 in their own results, attributing bimodal delivery to nodes that ``always transmit on a specific SF,
 time, and channel'', producing ``certain packet collisions being repeated for every transmission
 cycle''~\cite{durand2025loramesh}. What appears to be absent from the literature is any
-\emph{quantification} of the resulting dispersion. Of the \emph{fourteen} ns-3 LoRa simulation studies
-meeting our pre-registered inclusion criteria, \textbf{twelve} state no seed count, confidence
-interval or standard deviation that would let a reader detect it. \textbf{Two do}, and both are
-counter-examples to our own hypothesis: Klimiashvili \emph{et al.} average over ``50 independent
-runs over channel realization and nodes'
-position''~\cite{klimiashvili2020loravswifi}, and Khan \emph{et al.} collect theirs ``from 100
-simulation runs''~\cite{reliableuplink2019}. At $14.3\%$ reporting, against a falsification
-threshold of $25\%$ fixed before the corpus existed, the hypothesis is supported --- but the
-achieved $n$ is $14$ where the protocol targeted $56$, and we report it as the achieved $n$.
-The shortfall is not neutral: retrieval succeeded on arXiv and failed on the paywalled venues,
-so the corpus is biased toward preprints, and whether that population reports better or worse is
-something these fourteen papers cannot say.
+\emph{quantification} of the resulting dispersion. Of the \emph{twenty} ns-3 LoRa simulation studies
+meeting our pre-registered inclusion criteria, \textbf{seventeen} state no seed count, run count,
+confidence interval or dispersion measure that would let a reader detect it. \textbf{Three do},
+and all three are counter-examples to our own hypothesis, so we name them: Klimiashvili \emph{et
+al.} average over ``50 independent runs''~\cite{klimiashvili2020loravswifi}, Khan \emph{et al.}
+over ``100 simulation runs''~\cite{reliableuplink2019}, and Tito-Lara \emph{et al.} state that
+they ``fix the NS-3 random seed'', that ``each configuration was executed once ($R=1$)'', and that
+the figures carry ``no averaging across repetitions and no confidence
+intervals''~\cite{titolara2025interference}. \textbf{We score that last one as reporting}, and the
+reason matters: our hypothesis is about what a paper \emph{discloses}, not about how many runs it
+does. A reader of that paper can judge its evidence exactly. Marking it otherwise because we
+dislike $R{=}1$ would quietly convert a reporting claim into a practice claim.
 
-Hand adjudication was not a formality. A purely mechanical sweep would have been wrong on three
-papers, most instructively by matching \texttt{seed} against ``Seed Studio'' --- a hardware
-vendor's name --- and scoring a paper as reporting replication on the strength of a component
-supplier. That is why every capacity figure in this
+At $15\%$ reporting, against a falsification threshold of $25\%$ fixed before the corpus existed,
+the hypothesis is supported. The achieved $n$ is $20$ where the protocol targeted $56$, and we
+report the achieved $n$; the shortfall is retrieval, not selection, and it leaves the corpus
+weighted toward open-access venues. One entry deserves singling out: the parameter study by the
+authors of the ns-3 LoRaWAN module itself~\cite{magrin2020thorough} states none of the four
+quantities, which is where the field's reporting convention is set.
+
+Hand adjudication was not a formality. A mechanical sweep would have been wrong on six of the
+twenty, most instructively by matching \texttt{seed} against ``Seed Studio'' --- a hardware
+vendor --- and by missing a qualifying paper that spells the simulator ``network simulator (ns)-3''. That is why every capacity figure in this
 paper is reported at 30 seeds with its distribution, and why a threshold crossing is given as an
 interval: at $N{=}3$ the mean clears $V{\geq}0.95$ while nine of thirty individual runs do not.
 

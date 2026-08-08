@@ -2,7 +2,7 @@
 
 *Every source consulted for AUTHBC, with **why it matters to this thesis** stated explicitly. A
 citation with no stated role is a citation nobody will check. PDFs are stored beside this file where
-licensing allows. **40 PDFs; every source cited in the paper is held and has been read.** ⚠️ The header said *20* until 2026-08-07 while 25 sat on disk, and **five held PDFs had no register entry at all** despite the promise above — they are added at the end of this file. A register that silently omits a fifth of its corpus is not a register. The one
+licensing allows. **46 PDFs; every source cited in the paper is held and has been read.** ⚠️ The header said *20* until 2026-08-07 while 25 sat on disk, and **five held PDFs had no register entry at all** despite the promise above — they are added at the end of this file. A register that silently omits a fifth of its corpus is not a register. The one
 exception is Gündoğan et al. (ACM DL only) — its DOI is recorded instead. See
 [`A3_CITATION_VERIFICATION.md`](A3_CITATION_VERIFICATION.md) for how each citation was checked.*
 

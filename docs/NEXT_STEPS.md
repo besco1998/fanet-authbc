@@ -62,7 +62,7 @@ Direction C proceeds as a separate short paper.
   signature plus header (2464 B) **exceeds the 1500 B MTU on its own**. Projection only; the prior
   art is cited and nothing is claimed.
 * **S9 resolved by WITHDRAWING the claim (F40)** — deliberately not reconstructed.
-* **References 29 → 47 rendered.** ⚠️ **Short of the 45–60 target, and stopped there on purpose:**
+* **References 29 → 49 rendered.** ⚠️ **Short of the 45–60 target, and stopped there on purpose:**
   46 is every source held in `docs/literature/` that has been read (Klimiashvili et al. 2020 added 2026-08-07). Two held PDFs were excluded —
   `arxiv2309.15340` is a **Chinese-language paper we cannot read**, and
   `sensors2025_mesh_lora_performance` is still marked `TOREAD`. Reaching 45–60 needs a genuine
@@ -78,7 +78,7 @@ Direction C proceeds as a separate short paper.
 | # | work | why | effort |
 |---|---|---|---|
 | ~~6~~ | ~~PQC extension section~~ | **DONE** — Limitations §, backed by `results/raw/pqc_projection.csv` | — |
-| 7 | References **47** → 45–60 | 29→39 done from held+read sources; the rest needs sourcing **and reading** | 1 wk |
+| 7 | References **49** → 45–60 | 29→39 done from held+read sources; the rest needs sourcing **and reading** | 1 wk |
 | ~~S9~~ | ~~Re-state or drop the pre-registration claim~~ | **DONE (F40)** — withdrawn, not reconstructed | — |
 
 ### Optional

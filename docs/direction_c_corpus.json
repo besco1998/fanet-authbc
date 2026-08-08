@@ -82,5 +82,41 @@
     "pilot": false,
     "adjudication": "NONE",
     "note": "arXiv 2512.00161. Both hits FALSE POSITIVES. (1) 'Seed Studio WM1302' -- the HARDWARE VENDOR name (Seeed Studio) matching `seed`. This is exactly the false-positive class the protocol anticipated and is the strongest argument yet for hand adjudication: a keyword sweep alone would have scored this paper REPORTS on a company name. (2) 'the procedure is repeated from where the pointer is left off' describes their algorithm."
+  },
+  "magrin2020_lorawan_parameter_settings_ns3": {
+    "ns3": true,
+    "pilot": false,
+    "adjudication": "NONE",
+    "note": "IEEE IoT-J 2020, DOI 10.1109/JIOT.2019.2946487, OA copy arXiv:1906.05083. Sole hit is a FALSE POSITIVE: 'implementing a packet repetition strategy' is the LoRaWAN protocol's repetition feature. ⚠️ THE MOST CONSEQUENTIAL ENTRY IN THE CORPUS: these are the authors of the ns-3 LoRaWAN module this thesis uses, and their own parameter study states no seed count, run count, CI or dispersion. The reporting standard the field inherits is set here."
+  },
+  "reynders2018_lorawan_module_wns3": {
+    "ns3": true,
+    "pilot": false,
+    "adjudication": null,
+    "note": "ACM WNS3 2018, DOI 10.1145/3199902.3199913; OA copy KU Leuven Lirias. Added 2026-08-08. Awaiting hand adjudication."
+  },
+  "finnegan2018_classb_gateway_scalability_ns3": {
+    "ns3": true,
+    "pilot": false,
+    "adjudication": null,
+    "note": "IEEE CSCN 2018, DOI 10.1109/CSCN.2018.8581759; OA copy Maynooth repository. Added 2026-08-08. Awaiting hand adjudication."
+  },
+  "saraereh2020_uav_lora_disaster_ns3": {
+    "ns3": true,
+    "pilot": false,
+    "adjudication": "NONE",
+    "note": "Sensors 2020, DOI 10.3390/s20082396, via Europe PMC. Sole hit is a FALSE POSITIVE: 'the said process is repeated until convergence' describes k-means iteration."
+  },
+  "anwar2021_rmadr_mobile_lorawan_ns3": {
+    "ns3": true,
+    "pilot": false,
+    "adjudication": "NONE",
+    "note": "Sensors 2021, DOI 10.3390/s21237980, via Europe PMC. Sole hit is a FALSE POSITIVE: 'Standard Deviation of averaged SNR of P packets' is a RELATED WORK's signal-processing statistic, not dispersion across simulation runs. ⚠️ Nearly lost to a screening artifact: this paper writes 'network simulator (ns)-3', which our ns-3 regex missed (0 matches). It was caught by reading, not by the sweep, and it qualifies."
+  },
+  "titolara2025_lorawan_80211ah_interference_ns3": {
+    "ns3": true,
+    "pilot": false,
+    "adjudication": "REPORTS",
+    "note": "Sensors 2025, DOI 10.3390/s25226924, via Europe PMC. ⚠️ THE MOST INSTRUCTIVE CASE IN THE CORPUS, and the one that proves H1 is about REPORTING and not about practice (protocol §1). They state their replication information completely: 'we fix the NS-3 random seed at runtime --seed=1; all reported results correspond to a single run per scenario', 'Each configuration was executed once (R = 1)', and 'the figures report the single-run outcome ... (no averaging across repetitions and no confidence intervals)'. Verdict REPORTS: a reader can judge the evidence exactly, and what they learn is that there is one run. Scoring this NONE because we dislike R=1 would silently convert H1 from a reporting claim into a practice claim, which §1 forbids in terms."
   }
 }
