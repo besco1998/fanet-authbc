@@ -191,3 +191,40 @@ A mechanical sweep would now be wrong on **six of twenty**:
 
 Five papers (three MDPI, two arXiv) remain unretrievable by script; see
 `DIRECTION_C_DOWNLOAD_LIST.md`. Achieved n is reported as 20 against the target of 56, per §4.
+
+## Sweep round 3 (2026-08-08): achieved n = 23 — and the test has become uninformative
+
+Mohamed retrieved the three MDPI papers by hand. **Two of the three report replication**, taking the
+corpus to **18 NONE / 5 REPORTS = 21.7 %**.
+
+### ⚠️ The pre-registered test passes and no longer means anything
+
+| | REPORTS | 95 % CI (Clopper–Pearson) |
+|---|---|---|
+| overall | 5/23 = **21.7 %** | **[7.5 %, 43.7 %]** |
+| arXiv-sourced | 1/9 = 11.1 % | [0.3 %, 48.2 %] |
+| journal-sourced | 4/14 = 28.6 % | [8.4 %, 58.1 %] |
+
+**The 25 % falsification threshold sits inside every one of those intervals.** At this $n$ the survey
+cannot distinguish "almost nobody reports" from "nearly half do". Reporting `21.7 % < 25 %, H1
+supported` would be true of the arithmetic and false of the evidence.
+
+### The trajectory is the warning
+
+| n | 4 | 5 | 14 | 20 | 23 |
+|---|---|---|---|---|---|
+| REPORTS | 0 % | 20 % | 14.3 % | 15.0 % | **21.7 %** |
+
+The estimate has risen as retrieval improved. The journal-sourced subset — the part **not** shaped by
+what a script could download — reads **28.6 %, above the threshold**.
+
+⚠️ **We do not claim the arXiv/journal split explains it.** Fisher exact gives $p = 0.61$; the split
+is suggestive and unestablished. Stating it as a finding would be the same forking-paths error this
+project has spent an audit removing. It is recorded as a confound we flagged *in advance*, which now
+points the wrong way for us.
+
+### Disposition
+
+H1 is not safely supportable at $n=23$. Per §1 of this protocol — *"a null or mixed result on the
+full corpus is a publishable outcome and will be reported without reframing"* — this is recorded as
+a mixed result, escalated to Mohamed, and **not** defended by quoting the point estimate.
