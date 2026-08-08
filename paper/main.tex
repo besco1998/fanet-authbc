@@ -919,11 +919,9 @@ $0.891$ with $\sigma = 0.21$. A three-seed mean, which is what the figure above 
 characterise that distribution. At realistic $\pm20$\,ppm crystal tolerance the accumulated drift
 over an hour ($144$\,ms) is too small to break a $728$\,ms collision window, so the effect is
 physical for a naive periodic sender; real LoRaWAN Class~A devices randomise transmission timing
-precisely to avoid it, which the simulated sender does not model. We note that this
-distribution is invisible in a literature that does not report replication: of the four ns-3 LoRa
-simulation studies meeting our pre-registered inclusion criteria---including the foundational
-scalability analysis~\cite{vandenabeele2017scalability}---none states a seed count, a confidence
-interval or a standard deviation. The phenomenon itself is \emph{not} unobserved: Durand and
+precisely to avoid it, which the simulated sender does not model. A distribution of this
+shape is only visible to a reader when the replication behind a figure is stated, which is why we
+state ours. The phenomenon itself is \emph{not} unobserved: Durand and
 Booysen attribute their own bimodal delivery to nodes that ``always transmit on a specific SF, time,
 and channel'', producing ``certain packet collisions being repeated for every transmission
 cycle''~\cite{durand2025loramesh}. What is absent is any quantification of the resulting dispersion,
@@ -1038,37 +1036,22 @@ does not.
 \textbf{We claim the measurement, not the observation.} Durand and Booysen report the same effect
 in their own results, attributing bimodal delivery to nodes that ``always transmit on a specific SF,
 time, and channel'', producing ``certain packet collisions being repeated for every transmission
-cycle''~\cite{durand2025loramesh}. What appears to be absent from the literature is any
-\emph{quantification} of the resulting dispersion. Of the \emph{twenty} ns-3 LoRa simulation studies
-meeting our pre-registered inclusion criteria, \textbf{seventeen} state no seed count, run count,
-confidence interval or dispersion measure that would let a reader detect it. \textbf{Three do},
-and all three are counter-examples to our own hypothesis, so we name them: Klimiashvili \emph{et
-al.} average over ``50 independent runs''~\cite{klimiashvili2020loravswifi}, Khan \emph{et al.}
-over ``100 simulation runs''~\cite{reliableuplink2019}, and Tito-Lara \emph{et al.} state that
-they ``fix the NS-3 random seed'', that ``each configuration was executed once ($R=1$)'', and that
-the figures carry ``no averaging across repetitions and no confidence
-intervals''~\cite{titolara2025interference}. \textbf{We score that last one as reporting}, and the
-reason matters: our hypothesis is about what a paper \emph{discloses}, not about how many runs it
-does. A reader of that paper can judge its evidence exactly. Marking it otherwise because we
-dislike $R{=}1$ would quietly convert a reporting claim into a practice claim.
+cycle''~\cite{durand2025loramesh}. What we add is the
+\emph{quantification}: the dispersion this induces, measured, rather than the effect noted.
 
-At $15\%$ reporting, against a falsification threshold of $25\%$ fixed before the corpus existed,
-the hypothesis is supported. The achieved $n$ is $20$ where the protocol targeted $56$, and we
-report the achieved $n$; the shortfall is retrieval, not selection, and it leaves the corpus
-weighted toward open-access venues. One entry deserves singling out: the parameter study by the
-authors of the ns-3 LoRaWAN module itself~\cite{magrin2020thorough} states none of the four
-quantities, which is where the field's reporting convention is set.
+That is why every capacity figure in this paper is reported at 30 seeds with its distribution, and
+why a threshold crossing is given as an interval rather than a point: at $N{=}3$ the mean clears
+$V{\geq}0.95$ while nine of thirty individual runs do not.
 
-Hand adjudication was not a formality. A mechanical sweep would have been wrong on six of the
-twenty, most instructively by matching \texttt{seed} against ``Seed Studio'' --- a hardware
-vendor --- and by missing a qualifying paper that spells the simulator ``network simulator (ns)-3''. That is why every capacity figure in this
-paper is reported at 30 seeds with its distribution, and why a threshold crossing is given as an
-interval: at $N{=}3$ the mean clears $V{\geq}0.95$ while nine of thirty individual runs do not.
-
-The survey protocol was committed to version control \emph{before} the corpus was assembled, and the
-sweep is reproducible (\texttt{make survey-direction-c}). Papers whose text will not extract are
-excluded from the denominator rather than scored as reporting nothing: one held PDF yields five
-characters, and counting it as evidence would manufacture support for our own hypothesis.
+\textbf{A claim we withdrew.} We had intended to report that this dispersion is undetectable in the
+ns-3 LoRa literature because that literature does not state replication information, and we
+pre-registered a survey to test it --- inclusion criteria, keyword set and a $25\%$ falsification
+threshold, all committed before the corpus was assembled. At the achieved $n{=}23$ the result is
+$21.7\%$ reporting with a $95\%$ interval of $[7.5, 43.7]\%$. \textbf{That interval contains the
+threshold, so the survey cannot answer its own question, and we make no claim about the
+literature.} The protocol, corpus and adjudications are in the repository as a null result rather
+than deleted. Our own reporting discipline is argued on its merits above and needs no such claim to
+justify it.
 
 Beyond the results, the project's second product is its discipline. Anomalies were root-caused, not
 patched over: a stateful delta codec used statelessly (60$\to$45\,B); string-keyed CBOR replaced by

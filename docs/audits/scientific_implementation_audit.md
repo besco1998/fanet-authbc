@@ -658,3 +658,54 @@ The literature register itself carried superseded values: the Bianchi validation
 **+1.28/−0.49 %** (now +1.29/−0.40 %) and the naive-reduction error as **16×** (now 17.3×). Both had
 been corrected in the paper weeks earlier. The register is where a reader goes to check a number,
 which makes it a bad place for a stale one.
+
+---
+
+## 13. The Direction C claim, withdrawn (2026-08-08)
+
+Mohamed's decision, on the evidence below. This is the audit's only *withdrawal on new data* rather
+than on a defect, and it is recorded here because a claim removed quietly is indistinguishable from
+one that was never made.
+
+### What happened
+
+The claim: ns-3 LoRa simulation studies do not report the replication information a reader needs.
+The pre-registered rule for abandoning it: **≥ 25 % of the corpus reporting**, fixed before the
+corpus existed (`eb3eda5`, data-free).
+
+| $n$ | 4 | 5 | 14 | 20 | **23** |
+|---|---|---|---|---|---|
+| REPORTS | 0 % | 20 % | 14.3 % | 15.0 % | **21.7 %** |
+
+At $n=23$: **5/23 = 21.7 %, 95 % Clopper–Pearson [7.5 %, 43.7 %]**. ⚠️ **The interval contains the
+threshold.** A test that cannot separate its hypothesis from its own falsification has not produced
+a weak result; it has produced no result. The claim is cut from the paper.
+
+### Two temptations, both recorded because both were real
+
+1. **The point estimate favours us.** 21.7 % is below 25 %, so "H1 supported" was available and
+   arithmetically true. Quoting it without the interval would have been the exact error this audit
+   spent a fortnight removing — the plausible number that survives because nobody states its spread.
+2. **The subset that is not retrieval-biased goes the other way.** Journal-sourced papers read
+   **4/14 = 28.6 %, above the threshold**; arXiv-sourced read 1/9. We had flagged that confound two
+   rounds earlier, *before* these papers entered the corpus. It is nonetheless **not reported as a
+   finding** — Fisher exact $p = 0.61$ — because a non-significant subgroup identified after the
+   fact is the forking-paths error dressed as vindication.
+
+### What is kept
+
+The corpus (23 papers, every verdict hand-adjudicated), the protocol, the sweep log with every
+exclusion and its reason, and the harness. ⚠️ **Deleting them would make a null result
+indistinguishable from an experiment never run.** The withdrawal is now a case study in the methods
+companion, where a pre-registration that cost its author the claim is the strongest available
+evidence that pre-registration works.
+
+### What survives in the paper on its own evidence
+
+The phase-artifact measurement (bimodal delivery, CV inflated 2–8×), the attribution of the
+phenomenon to Durand and Booysen, and the 30-seed reporting discipline. None of them ever needed
+the literature claim.
+
+**Guarded:** `TestDirectionCSurvey` fails if the corpus shrinks, if the withdrawal statement leaves
+the paper, if the old claim reappears, or if the point estimate is ever quoted without its interval.
+Mutation-tested against the claim creeping back.

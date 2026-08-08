@@ -59,7 +59,7 @@ type hints; no dead code; comments explain WHY, not what.
 - **NEXT SESSION: read `docs/NEXT_STEPS.md` first** — prioritised work plan, strategy decision, and decisions not to re-litigate.
 - ⚠️ **Repo is PUBLIC and history was REWRITTEN** to purge the 84 MB vendored NS-3 tree. **The remote is authoritative — never force-push an older local branch over it.** Copyrighted PDFs in `docs/literature/` stay by Mohamed's decision (risk accepted, `DECISIONS.md`).
 - **Phase: P8 audit complete. COMMITTED AND PUSHED** to branch `p8-audit-and-corrections`. Work from any machine: `git clone`, `git checkout p8-audit-and-corrections`, `make setup && make all`.
-- **Green:** 1209 fast + **24** frozen-gate tests (**1233**), `ruff` clean, **`mypy` clean (0 / 49 files)**, paper builds (**15 pp**, **49 refs**, 0 undefined, abstract **265 w**). `make all` exit 0.
+- **Green:** 1209 fast + **24** frozen-gate tests (**1233**), `ruff` clean, **`mypy` clean (0 / 49 files)**, paper builds (**15 pp**, **46 refs**, 0 undefined, abstract **265 w**). `make all` exit 0.
 - **METHODOLOGY (Mohamed):** this is an optimization problem — *state everything, choose what to stick with, state the trade-offs for every decision*. **`docs/TRADEOFFS.md` is required reading before quoting any number.**
 - **LICENSE = all rights reserved** (© 2026 Mohamed A. Farouk). Vendored NS-3 + `signetlabdei/lorawan` stay GPLv2, **not** redistributed.
 
@@ -132,6 +132,7 @@ type hints; no dead code; comments explain WHY, not what.
 - ⚠️ **METHOD RULE:** the certificate-byte term was added **BEFORE** the CLAS numbers were fetched. Doing it after would have been fitting the correction to the answer. Defaults are 0/1 so frozen artifacts stay bit-identical.
 
 ### Retractions, kept visible
+**WITHDRAWN 2026-08-08 — the Direction C literature claim.** We claimed ns-3 LoRa studies do not report replication. Pre-registered threshold: abandon at ≥25 % reporting. As retrieval improved the estimate walked to **21.7 % (5/23), 95 % CI [7.5, 43.7]** — **the interval contains the threshold**, so the test cannot answer its own question. Claim cut from the paper; corpus and protocol kept in-repo as a null result. ⚠️ Two temptations resisted and recorded: the point estimate sits on the favourable side of 25 %, and the non-arXiv subset reads **28.6 %** (above threshold, p=0.61, *not* reported as a finding). Guarded by `TestDirectionCSurvey`, which fails if the claim returns.
 **T7** (capacity excludes at U≥1) · **F15** (the ≤0.36 % validation) · **F18** (I claimed we were the *more optimistic* model vs Bor — I quoted their **pure-ALOHA** figure as their LoRa result). ⚠️ **Quoting the PDF is not enough: quote the FIGURE.**
 > ⚠️ **F18 came back.** On 2026-08-07 it was found still printed in `tab:lora-external` ("we are more optimistic" at N=5) — 100 lines below a bold sentence saying the opposite. **Retracting a finding in the register does not remove it from the paper.** When you retract, grep the paper. Guarded now by `test_no_row_revives_the_retracted_optimism_claim`, which checks the *artifact* rather than the wording.
 
