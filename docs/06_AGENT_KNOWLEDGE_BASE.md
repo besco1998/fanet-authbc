@@ -11,11 +11,14 @@
   WSL; record `lscpu` model + note "WSL, governor uncontrolled" honestly; RPi4 runs pin
   `performance`).
 
-## 2. NS-3 3.41 on WSL2 (follow exactly; deviations are ⚠️ D4)
+## 2. NS-3 **3.48** on WSL2 (follow exactly; deviations are ⚠️ D4)
+> ⚠️ **Migrated 3.41 → 3.48 on 2026-07-29** (D4 amended; the LoRaWAN module pins 3.48). Both trees are
+> kept and selected via `AUTHBC_NS3`; see `DECISIONS.md` and `docs/05` §2. ⚠️ Build with **`-j 3` under
+> `nohup`** — the default job count OOMs this host and takes WSL down with it.
 ```
 sudo apt install g++ cmake ninja-build python3 libgsl-dev
-wget https://www.nsnam.org/releases/ns-allinone-3.41.tar.bz2 && tar xf ...
-cd ns-3.41 && ./ns3 configure --build-profile=optimized --enable-examples -- -G Ninja
+wget https://www.nsnam.org/releases/ns-3.48.tar.bz2 && tar xf ...
+cd ns-3.48 && ./ns3 configure --build-profile=optimized --enable-examples -- -G Ninja
 ./ns3 build   # expect 15–40 min first time
 ./ns3 run hello-simulator   # gate: must print before proceeding
 ```

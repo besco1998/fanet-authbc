@@ -134,3 +134,152 @@ class TestPickUpGuideCounts:
         assert guide == _references(), (
             f"guide says {guide} references, paper/main.bbl has {_references()}"
         )
+
+
+# --------------------------------------------------------------------------- the spec documents
+# ⚠️ Added 2026-08-27. Until today EVERY staleness guard in this repo parsed `paper/main.tex`.
+# The spec documents were outside the P8 paper audit's scope, so the August corrections (F28/F30/
+# F38, S3, S3b) reached the paper and never reached docs/00-07 or TRADEOFFS.md — leaving a dated
+# fault line at ~2026-07-30. Three defect classes had survived there for three weeks:
+#   * the pre-F30 capacity crossing 233/116 (current: 213/100);
+#   * docs/02 §9c's LoRa table, verbatim the PURGED 3-seed run;
+#   * retracted finding F18, alive in docs/OPEN_ITEMS.md — its THIRD recurrence.
+# A guard that reads one file proves one file. These read the specs.
+
+SPEC_DOCS = [
+    "00_PROJECT_CHARTER.md", "01_SYSTEM_MODEL_ARCHITECTURE.md",
+    "02_MATHEMATICAL_FOUNDATIONS.md", "04_EVALUATION_PLAN.md",
+    "05_REPRODUCTION_GUIDE.md", "06_AGENT_KNOWLEDGE_BASE.md",
+    "README.md", "TRADEOFFS.md", "OPEN_ITEMS.md",
+]
+
+
+def _rows(name: str) -> list[dict[str, str]]:
+    """A raw CSV as dicts, provenance `#` lines stripped."""
+    import csv
+    text = (REPO / "results" / "raw" / name).read_text()
+    body = [ln for ln in text.splitlines(True) if not ln.startswith("#")]
+    return list(csv.DictReader(body))
+
+
+def _spec_text() -> list[tuple[str, str]]:
+    """Live prose only.
+
+    ⚠️ Blockquoted lines are stripped. A correction note must *quote* the value it retracts in
+    order to name it, and CLAUDE.md requires retractions stay visible — so a guard that read them
+    would forbid the practice it exists to protect. Corrections go in `>` blockquotes; anything
+    asserting a live number does not.
+    """
+    return [(n, _live_prose((REPO / "docs" / n).read_text())) for n in SPEC_DOCS]
+
+
+def _live_prose(text: str) -> str:
+    """Strip correction notes, which must quote the retracted value in order to name it.
+
+    Two forms, because a markdown table cell cannot contain a blockquote:
+      * blockquote lines  — `> ⚠️ **Corrected 2026-08-27.** ... read 233/116 ...`
+      * inline italics    — `*(Corrected 2026-08-27; the ≈2.8× factor was ...)*`
+    Anything else is a live claim and is checked.
+    """
+    kept = "\n".join(ln for ln in text.splitlines() if not ln.lstrip().startswith(">"))
+    return re.sub(r"\*\([^()]*?(?:orrected|retracted|pre-F30|purged)[^()]*?\)\*", " ", kept)
+
+
+def _envelope_v95() -> dict[str, int]:
+    """N_max at the V>=0.95 mean criterion, keyed by the artifact's own verdict label."""
+    out = {}
+    for r in _rows("capacity_envelope.csv"):
+        if r["n_local"] == "ENVELOPE" and r["n_max_v95_mean"]:
+            out[r["binds"]] = int(r["n_max_v95_mean"])
+    return out
+
+
+class TestSpecDocsMatchArtifacts:
+    """docs/00-07 and TRADEOFFS state numbers too, and nothing checked them until 2026-08-27."""
+
+    def test_no_spec_doc_quotes_the_pre_f30_capacity_crossing(self):
+        """233/116 are the pre-F30 values. The artifact says 213/100."""
+        env = _envelope_v95()
+        relaxed = env["optimized delta/B @250ms"]
+        compliant = env["optimized delta/B @3GPP100ms/50Hz"]
+        assert (relaxed, compliant) == (213, 100), (
+            f"capacity_envelope.csv moved to ({relaxed}, {compliant}); "
+            "update this guard deliberately"
+        )
+        bad = []
+        for name, text in _spec_text():
+            for stale, live in ((233, relaxed), (116, compliant)):
+                # "N <= 233" / "N_max = 233" / "N≤233" — a capacity claim, not an incidental integer
+                if re.search(rf"N\s*(?:_max)?\s*(?:≤|<=|=|→|->)\s*\*{{0,2}}{stale}\b", text):
+                    bad.append(f"{name}: quotes N={stale}, artifact says {live}")
+        assert not bad, (
+            "the pre-F30 capacity crossing is back in the spec docs:\n  " + "\n  ".join(bad)
+        )
+
+    def test_no_spec_doc_revives_the_retracted_optimism_claim(self):
+        """⚠️ F18 is retracted. Bor2017 is the MORE OPTIMISTIC model above the crossover."""
+        who = {r["n_devices"]: r["who_is_optimistic"] for r in _rows("lora_external_check.csv")}
+        assert who.get("50") == "Bor2017", (
+            f"lora_external_check.csv now says {who.get('50')} — "
+            "re-derive before touching this test"
+        )
+        bad = [name for name, text in _spec_text()
+               if re.search(r"(we|our\s+\w+)\s+(?:is|are)\s+\w*\s*more optimistic", text, re.I)]
+        assert not bad, (
+            "retracted finding F18 ('we are the more optimistic model vs Bor') is back in: "
+            + ", ".join(bad)
+            + ". The artifact has who_is_optimistic=Bor2017 at every N>=3."
+        )
+
+    def test_lora_table_in_docs02_is_not_the_purged_three_seed_run(self):
+        """docs/02 §9c was *verbatim* lora_capacity_3seed_SUPERSEDED.csv until 2026-08-27."""
+        purged = {r["n_devices"]: r["delivered_frac"]
+                  for r in _rows("lora_capacity_3seed_SUPERSEDED.csv")}
+        text = _live_prose((REPO / "docs" / "02_MATHEMATICAL_FOUNDATIONS.md").read_text())
+        # 0.2532 / 0.5795 / 0.7731 are the 3-seed values at N=50/20/10 and appear nowhere else.
+        fingerprints = [f"{float(purged[n]):.4f}" for n in ("10", "20", "50")]
+        found = [f for f in fingerprints if f in text]
+        assert not found, (
+            f"docs/02 still carries the purged 3-seed LoRa figures {found}. "
+            "Rebuild the table from results/raw/lora_capacity.csv (30 seeds, jittered). "
+            "⚠️ lora_capacity_30seed.csv is the NO-JITTER CONTROL despite its name."
+        )
+
+    def test_lora_n_max_is_never_quoted_as_five(self):
+        """F28 corrected N_max 5 -> 3; S3 then bounded it as 3, 95 % CI [2, 3]."""
+        rows = {r["n_devices"]: r for r in _rows("lora_capacity.csv")}
+        assert float(rows["3"]["delivered_frac"]) >= 0.95 > float(rows["5"]["delivered_frac"]), (
+            "lora_capacity.csv no longer puts the V>=0.95 crossing between N=3 and N=5"
+        )
+        bad = [name for name, text in _spec_text()
+               if re.search(r"N_max\s*=\s*\*{0,2}5\b", text)]
+        assert not bad, (
+            "N_max = 5 is the purged 3-seed value; the 30-seed run gives 3 (95 % CI [2, 3]). In: "
+            + ", ".join(bad)
+        )
+
+    def test_u_crossing_matches_the_delay_artifact(self):
+        """S3b: the V=0.95 crossing is 2.435, interpolated. U~2.80 is the pre-F30 value."""
+        rows = [r for r in _rows("ns3_delay_ci.csv")]
+        below = max((r for r in rows if float(r["delivered_frac"]) >= 0.95),
+                    key=lambda r: float(r["channel_util"]))
+        above = min((r for r in rows if float(r["delivered_frac"]) < 0.95),
+                    key=lambda r: float(r["channel_util"]))
+        u0, v0 = float(below["channel_util"]), float(below["delivered_frac"])
+        u1, v1 = float(above["channel_util"]), float(above["delivered_frac"])
+        crossing = u0 + (v0 - 0.95) / (v0 - v1) * (u1 - u0)
+        assert abs(crossing - 2.435) < 0.01, f"artifact now crosses at U={crossing:.3f}"
+        bad = [name for name, text in _spec_text()
+               if re.search(r"U\s*(?:≈|~|\\approx)\s*\*{0,2}2\.8", text)]
+        assert not bad, (
+            f"U~2.80 is the pre-F30 crossing; ns3_delay_ci.csv interpolates {crossing:.3f}. In: "
+            + ", ".join(bad)
+        )
+
+    def test_ns3_version_in_the_agent_knowledge_base(self):
+        """D4 was amended 3.41 -> 3.48 on 2026-07-29; docs/06 still gave 3.41 build steps."""
+        kb = (REPO / "docs" / "06_AGENT_KNOWLEDGE_BASE.md").read_text()
+        assert "ns-3.48" in kb, "docs/06 no longer names the 3.48 tree it tells you to build"
+        assert not re.search(r"wget\s+\S*ns-allinone-3\.41", kb), (
+            "docs/06 still instructs a fresh machine to build ns-3.41; D4 was amended to 3.48"
+        )

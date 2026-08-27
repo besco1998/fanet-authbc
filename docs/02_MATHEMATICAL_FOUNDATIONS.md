@@ -202,14 +202,14 @@ substantially more. NS-3 measurement at N = 50, 288 B broadcast:
 | 1.003 | 0.9884 | 0.57 ms | +0.073 ms |
 | 1.672 | 0.9808 | 0.63 ms | +0.133 ms |
 | 2.230 | 0.9719 | 0.69 ms | +0.199 ms |
-| **≈2.80** | **0.9500** | — | — *(V = 1−ε crossing)* |
+| **≈2.435** | **0.9500** | — | — *(V = 1−ε crossing, **interpolated** between the measured U=2.230 and U=3.345 rows)* |
 | 3.345 | 0.9292 | 0.92 ms | +0.418 ms |
 | 6.690 | 0.4228 | 2.69 ms | +2.185 ms |
 
 *(N=50, 288 B broadcast, 5 seeds × 20 s per point; `results/raw/ns3_delay.csv`.)*
 
 **The system is still delivering 98.8 % of frames at U = 1.00.** The real boundary — where
-verifiability falls to V = 0.95 — sits at **U ≈ 2.80**, and at that boundary the 3GPP-compliant
+verifiability falls to V = 0.95 — sits at **U ≈ 2.435** (interpolated), and at that boundary the 3GPP-compliant
 configuration (Λ = 50 Hz, D = 100 ms, U = 1.394) is comfortably **feasible**. So the claimed
 exclusion does not exist at N = 50, and the "50 % ceiling" was an artifact of the wrong threshold.
 
@@ -226,8 +226,8 @@ the V ≥ 0.95 boundary, that costs swarm size rather than forbidding operation:
 
 | operating point | b | bytes | largest neighbourhood (V ≥ 0.95) |
 |---|---|---|---|
-| Λ = 20, D = 250 ms *(reference)* | 4 | 58.68 % cut | **N ≤ 233** |
-| Λ = 50, D = 100 ms *(3GPP-compliant)* | 4 | **58.68 % cut — identical** | **N ≤ 116** |
+| Λ = 20, D = 250 ms *(reference)* | 4 | 58.68 % cut | **N ≤ 213** |
+| Λ = 50, D = 100 ms *(3GPP-compliant)* | 4 | **58.68 % cut — identical** | **N ≤ 100** |
 
 **Meeting the standard's deadline costs a factor of two in supportable swarm size and nothing in
 bytes.** That is the honest, measured statement, and it is a better result than the theorem it
@@ -427,27 +427,46 @@ legally send; it says nothing about fifty.
 Measured at DR5, AUTHBC frame 218 B (b=6), one transmission per duty-cycle interval, 3 seeds × 1 h,
 against the same **V ≥ 1−ε** criterion the 802.11 envelope uses:
 
-| N | delivered | meets V ≥ 0.95 |
-|---|---|---|
-| 2, 3, 5 | 1.0000 | ✅ |
-| 8 | 0.8656 | ✗ |
-| 10 | 0.7731 | ✗ |
-| 20 | 0.5795 | ✗ |
-| 50 | 0.2532 | ✗ |
+| N | delivered (mean) | min | seeds failing V | meets V ≥ 0.95 (mean) |
+|---|---|---|---|---|
+| 2 | 0.97166 | 0.84536 | 8 / 30 | ✅ |
+| 3 | 0.95981 | 0.76792 | 9 / 30 | ✅ *(knife edge)* |
+| 5 | 0.91670 | 0.69592 | 17 / 30 | ✗ |
+| 8 | 0.87103 | 0.64879 | 26 / 30 | ✗ |
+| 10 | 0.82919 | 0.65097 | 30 / 30 | ✗ |
+| 20 | 0.69127 | 0.57121 | 30 / 30 | ✗ |
+| 50 | 0.37547 | 0.32828 | 30 / 30 | ✗ |
 
-****N_max = 3** (corrected — F28; the earlier 5 came from a 3-seed sample against a bimodal distribution)**, and the cliff is brutally sharp — perfect at 5, 13 % loss at 8. That is ALOHA without
-carrier sense: there is no backoff to absorb contention, so the transition from "fine" to "unusable"
-spans less than a factor of two in N.
+> ⚠️ **Corrected 2026-08-27.** Until today this table was *verbatim* the purged 3-seed run
+> (`lora_capacity_3seed_SUPERSEDED.csv`: 1.0000 at N=2/3/5, 0.8656, 0.7731, 0.5795, 0.2532) while the
+> sentence beneath it already said N_max = 3. Rebuilt from `results/raw/lora_capacity.csv` (30 seeds,
+> jittered — the canonical run). ⚠️ `lora_capacity_30seed.csv` is the **no-jitter control** despite its
+> name; do not cite it here.
+
+****N_max = 3, 95 % CI [2, 3]** (F28 corrected the earlier 5, which came from a 3-seed sample against a
+bimodal distribution; S3 then showed the criterion itself was applied to a mean)**, and the cliff is
+sharp — 8 % loss already at N=5, 13 % at N=8. That is ALOHA without carrier sense: there is no backoff
+to absorb contention, so the transition from "fine" to "unusable" spans less than a factor of two in N.
+
+⚠️ **Never quote `N_max = 3` bare.** Its 95 % bootstrap CI is **[2, 3]** — a knife edge — and at the
+certified N=3 **nine of thirty seeds fail the very criterion being certified**. Under a *per-realisation*
+reading (≥95 % of runs meet V) the answer is **1**, not 3. Both are emitted in
+`results/raw/lora_capacity_ci.csv`. **Mohamed's decision (2026-08-06): report both, headline the mean.**
 
 **The two penalties compound, and this is the number the chapter should lead with:**
 
 | | per-node Λ | N_max (V≥0.95) | aggregate |
 |---|---|---|---|
-| 802.11a, delta/B, b=4 | 20 rec/s | 103 | **2060 rec/s** |
-| LoRa EU868 DR5, b=6 | 0.165 rec/s | **5** | **0.82 rec/s** |
-| ratio | 121× | 21× | **≈2500×** |
+| 802.11a, delta/B, b=4 | 20 rec/s | 213 | **4260 rec/s** |
+| LoRa EU868 DR5, b=6 | 0.165 rec/s | **3** | **0.49 rec/s** |
+| ratio | 121× | 71× | **≈8600×** |
 
-The arm was already known to be ~120× slower *per node*; it is also ~20× smaller *per domain*, and
+> ⚠️ **Corrected 2026-08-27.** This table inherited `N_max = 5` from the purged 3-seed run and quoted the
+> pre-F30 802.11 figure of 103 at the V≥0.95 threshold (103 is the **U<1** value; the V≥0.95 value at
+> Λ=20 is 213). The old row read 0.82 rec/s and ≈2500×. Both columns are now taken at the *same*
+> threshold, from `capacity_envelope.csv` and `lora_capacity.csv`.
+
+The arm was already known to be ~120× slower *per node*; it is also ~70× smaller *per domain*, and
 the product is what separates the two regimes. **LoRa is not a slower version of the 802.11 arm — it
 is a different regime**, which is precisely the "generalisation to the low-rate regime" framing.
 
@@ -570,12 +589,12 @@ UAV-to-UAV local broadcast service — precisely this system: **R-5.2.2-010 ≥ 
 |---|---|---|---|
 | whole region | 70 | **98.0 %** | Λ=50, D=1000 ms, b=49 |
 | TS 22.125 compliant | 18 | **75.0 %** | Λ=50, D=100 ms, b=4 |
-| **compliant AND feasible at N=50** | **18** | **75.0 %** | same — **U = 1.39 is well inside the measured V≥0.95 boundary of U ≈ 2.80** |
+| **compliant AND feasible at N=50** | **18** | **75.0 %** | same — **U = 1.39 is well inside the measured V≥0.95 boundary of U ≈ 2.435** |
 
 ⚠️ **Corrected 2026-07-29.** An earlier version of this table applied a **U < 1** feasibility test and
 concluded that only 4 points were runnable and the compliant ceiling was 50 %. That test was wrong:
 U is measured against *saturation* throughput, and NS-3 shows 98.8 % delivery still at U = 1.00,
-with the V = 0.95 crossing at **U ≈ 2.80** (`results/raw/ns3_delay.csv`, and the withdrawal notice
+with the V = 0.95 crossing at **U ≈ 2.435** (`results/raw/ns3_delay_ci.csv`, and the withdrawal notice
 above). **The 75 % cut is achievable at the 3GPP deadline.**
 
 **So the honest result of B3 is that compliance costs swarm size, not bytes.** The
@@ -585,8 +604,8 @@ differs is channel load, and measured against the V ≥ 0.95 boundary:
 
 | operating point | b | total cut | U at N=50 | largest neighbourhood |
 |---|---|---|---|---|
-| Λ=20, D=250 ms *(reference)* | 4 | 58.68 % | 0.557 | **N ≤ 233** |
-| Λ=50, D=100 ms *(3GPP-compliant)* | 4 | **58.68 %** | 1.394 | **N ≤ 116** |
+| Λ=20, D=250 ms *(reference)* | 4 | 58.68 % | 0.557 | **N ≤ 213** |
+| Λ=50, D=100 ms *(3GPP-compliant)* | 4 | **58.68 %** | 1.394 | **N ≤ 100** |
 
 **Meeting the standard's deadline halves the supportable swarm and changes nothing else.**
 
@@ -597,7 +616,7 @@ differs is channel load, and measured against the V ≥ 0.95 boundary:
 | what it buys | what it costs |
 |---|---|
 | b = 4 → **75.0 %** auth-byte cut, **58.68 %** total-byte cut | **Violates TS 22.125 R-5.2.2-011** (250 ms vs ≤100 ms). This is a **declared deviation.** |
-| U = 0.557 at N=50 — comfortable headroom | The 100 ms-compliant point with the *same* bytes (Λ=50) sits at U=1.39. ⚠️ *Corrected:* that is **not** infeasible — the measured V≥0.95 boundary is U≈2.80, so it runs. What it costs is swarm size: **N≤116 instead of N≤233** |
+| U = 0.557 at N=50 — comfortable headroom | The 100 ms-compliant point with the *same* bytes (Λ=50) sits at U=1.39. ⚠️ *Corrected:* that is **not** infeasible — the measured V≥0.95 boundary is U≈2.435, so it runs. What it costs is swarm size: **N≤100 instead of N≤213** |
 | N_max = **103**, vs 32 for the Pillar-1 baseline (3.2×) | Under full compliance the best available cut is **50 %**, not 75 % — a third of the headline is bought by the deviation |
 | Λ=20 sits between the standard's 10 msg/s floor and PX4 `ONBOARD`'s 50 Hz | A **ledger** freshness argument, not a control-loop one: TS 22.125 §5.2.2 is *collision avoidance*; a tamper-evident provenance log has a genuinely different deadline. This is a **scope argument and must be presented as one.** |
 

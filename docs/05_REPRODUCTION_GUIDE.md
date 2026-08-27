@@ -34,7 +34,7 @@ data; everything derived from that data is re-computed and checked on every run.
 git clone https://github.com/besco1998/fanet-authbc.git
 cd fanet-authbc
 make setup            # creates .venv with Python >=3.12 and pinned deps
-make all              # lint + mypy + 1063 fast tests + the 14-test frozen gate
+make all              # lint + mypy + 1215 fast tests + the 24-test frozen gate
 ```
 
 `make all` green means **you have reproduced the thesis's deterministic layer.** The frozen gate
@@ -284,7 +284,7 @@ Spot-checks that a reproduction is genuine:
 | auth-byte cut | exactly **75.00 %** — and it must stay 75.00 % if you change `H_f` or `g_a`, because it is `1 − 1/b` |
 | total-byte cut | 58.68 % |
 | T6 on EU868 | DR0–2 "signature", DR3 "encoding", DR4–6 feasible |
-| unicast ↔ Bianchi | +1.28 / −0.49 % (ns-3.48) |
+| unicast ↔ Bianchi | +1.29 / −0.40 % (ns-3.48, 30 seeds) |
 
 ---
 

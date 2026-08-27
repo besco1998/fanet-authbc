@@ -95,7 +95,7 @@ mobility enters only through domain membership, which is out of scope.
 ### LoRa arm — **worth doing, but not first**
 
 Here mobility genuinely couples to a result: F23 established that delivery is range-limited
-(`N_max = 5` holds only within ≈500 m), so a moving node's delivery varies continuously in a way a
+(`N_max = 3` holds only within ≈500 m), so a moving node's delivery varies continuously in a way a
 fixed disc cannot show. Mobility would let us report delivery over a realistic geometry.
 
 **But it must not be done before E13.** The LoRa capacity result is currently bimodal and

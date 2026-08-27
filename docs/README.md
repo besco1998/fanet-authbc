@@ -29,8 +29,9 @@ sit at three different values in three files. Start here.*
 |---|---|
 | [`LOGBOOK.md`](LOGBOOK.md) | **Method and trial**, newest first — including the paths that failed and the claims that were retracted. If you are about to try something, check here first |
 | [`TECHNICAL_NARRATIVE.md`](TECHNICAL_NARRATIVE.md) | The results told as a story, phase by phase |
-| [`audits/model_provenance.md`](audits/model_provenance.md) | **The findings register: F1–F19**, each with evidence. **Three entries are retractions** (T7, F15, F18) and are kept visible |
+| [`audits/model_provenance.md`](audits/model_provenance.md) | **The findings register: F1–F42**, each with evidence. **Retractions are kept visible** — T7, F15, F18, and the Direction C literature claim (2026-08-08) |
 | [`audits/p0.md` … `p7.md`](audits/) | Per-phase audits, contemporaneous |
+| [`audits/scientific_implementation_audit.md`](audits/scientific_implementation_audit.md) | The 2026-08 scientific-implementation, idea/framing and full-paper audits (S1–S10, I1–I4, P1–P2) |
 
 ## Reference
 
@@ -40,7 +41,7 @@ sit at three different values in three files. Start here.*
 | [`LICENSE`](../LICENSE) | **All rights reserved.** Vendored NS-3 and the LoRaWAN module remain GPLv2 and are not redistributed |
 | [`../ns3/README.md`](../ns3/README.md) | NS-3 build (⚠️ **`-j 3` under `nohup`** — the default OOMs this host), the LoRaWAN module and its required patch |
 | [`../hw/SETUP.md`](../hw/SETUP.md) | Hardware inventory and the tiered measurement campaign |
-| **[`literature/`](literature/)** | **Primary sources, with a register stating what role each plays** — `USED` / `VALIDATES` / `PRIOR ART` / `POSITIONING`. 8 PDFs. Read [`literature/README.md`](literature/README.md) before citing anything |
+| **[`literature/`](literature/)** | **Primary sources, with a register stating what role each plays** — `USED` / `VALIDATES` / `PRIOR ART` / `POSITIONING`. 50 PDFs. Read [`literature/README.md`](literature/README.md) before citing anything |
 | [`prompts/`](prompts/) | Phase prompts and templates |
 
 ## Historical — kept for provenance, **not** current
@@ -66,7 +67,7 @@ sit at three different values in three files. Start here.*
 | whether something is still open | `OPEN_ITEMS.md` — nowhere else |
 | what a failed attempt looked like | `LOGBOOK.md` |
 | whether a source supports or attacks us | `literature/README.md` — each entry states its role |
-| why LoRa `N_max` is 5 and not 1000 | `literature/README.md` §5 and **F19** — 1 channel / 1 demodulator / 1 SF, so it is a **worst case**; we are ≈2.3× *more pessimistic* than the published model (**F18 said the opposite and is retracted**) |
+| why LoRa `N_max` is 3 and not 1000 | `literature/README.md` §5 and **F19** — 1 channel / 1 demodulator / 1 SF, so it is a **worst case**; we are ≈2.1× *more pessimistic* than the published model (**F18 said the opposite and is retracted**). ⚠️ Quote it as **3, 95 % CI [2, 3]**; the per-realisation reading gives **1** (S3) |
 | how to re-run an experiment | `05_REPRODUCTION_GUIDE.md` §1–4, or `make help` |
 | what a given source file does | `05_REPRODUCTION_GUIDE.md` §5 |
 | why the build keeps killing WSL | `05_REPRODUCTION_GUIDE.md` §8 (it is the OOM killer) |

@@ -62,13 +62,17 @@ matters. Both points give Λ·D = 5 ⇒ **b = 4 ⇒ 72.0 B/record ⇒ −58.68 %
 
 | | Λ | D_max | b | B/rec | N_max (U<1) | N_max (V≥0.95) | compliant |
 |---|---|---|---|---|---|---|---|
-| **ADOPTED** | 50 | 100 ms | 4 | **72.0** | 35 | **116** | ✅ |
-| alternative | 20 | 250 ms | 4 | **72.0** | 103 | 233 | ❌ exceeds 100 ms |
+| **ADOPTED** | 50 | 100 ms | 4 | **72.0** | 35 | **100** | ✅ |
+| alternative | 20 | 250 ms | 4 | **72.0** | 103 | 213 | ❌ exceeds 100 ms |
 | — | 20 | 100 ms | 1 | 153.0 | 34 | — | ✅ but no batching |
 | — | 10 | 100 ms | 1 | 153.0 | 78 | — | ✅ but no batching |
 
-Compliance costs **~2× swarm size** (233 → 116 at the V≥0.95 boundary; 103 → 35 at saturation) and
+Compliance costs **~2× swarm size** (213 → 100 at the V≥0.95 boundary; 103 → 35 at saturation) and
 **nothing in bytes**.
+
+> ⚠️ *Corrected 2026-08-27.* This table read 233/116 until today — the pre-F30 crossing. The paper was
+> corrected on 2026-08-07; this document was not, because every staleness guard parses `paper/main.tex`
+> only. Current values are `results/raw/capacity_envelope.csv`, columns `n_max_v95_mean`.
 
 ⚠️ **The region has a floor, and it is a real constraint on the application.** Holding b ≥ 4 under a
 100 ms deadline needs **Λ ≥ 40 Hz**. At 20 or 10 Hz the same deadline forces b = 1 and the saving
