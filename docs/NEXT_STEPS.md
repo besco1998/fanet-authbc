@@ -64,6 +64,46 @@ transferable output and is deliberately a *self*-audit.
 
 ---
 
+## ⚠️ MATH AUDIT DONE 2026-08-28 — the headline moved, and the submission blockers did not
+
+**F43 + F44 + M4.** Every published number reproduced; nothing was a wrong number. But three
+constants turned out to be conventions nobody wrote down, and one of them decided a headline:
+
+* ⚠️ **"Four of seven EU868 rates excluded" is now THREE.** The frame header is 29 B of CBOR text
+  key names; as integers they cost 7 B, halving H_f to 22 B and making DR3 feasible. The abstract
+  and contributions are requalified: **three unconditional, one contingent with its recovery named.**
+  DR0–DR2 are untouched — a 64 B signature will not fit a 51 B payload at *any* header.
+* ⚠️ **The pre-registered ≥40 % criterion reduces to 1 − 1/b**, so any b ≥ 2 met it. The date is
+  real and stays; the abstract no longer implies it was a live test.
+* **M4 closed by measurement** — the U ceiling is frame-size invariant (2.367 vs 2.435, 0.45 σ).
+  ⚠️ N-invariance still untested.
+
+**Decisions Mohamed already took here, do not re-litigate:** investigate the wire profile *knowing*
+it might cost the headline (it did); requalify both abstract claims; keep the frozen wire format
+(D6) so the reported byte cost is an upper bound on an untuned design.
+
+**Nothing in this changes what blocks submission.** The five blockers below are unaffected.
+
+## ⚠️ MATH AUDIT DONE 2026-08-28 — the headline moved, and the submission blockers did not
+
+**F43 + F44 + M4.** Every published number reproduced; nothing was a wrong number. But three
+constants turned out to be conventions nobody wrote down, and one of them decided a headline:
+
+* ⚠️ **"Four of seven EU868 rates excluded" is now THREE.** The frame header is 29 B of CBOR text
+  key names; as integers they cost 7 B, halving H_f to 22 B and making DR3 feasible. The abstract
+  and contributions are requalified: **three unconditional, one contingent with its recovery named.**
+  DR0–DR2 are untouched — a 64 B signature will not fit a 51 B payload at *any* header.
+* ⚠️ **The pre-registered ≥40 % criterion reduces to 1 − 1/b**, so any b ≥ 2 met it. The date is
+  real and stays; the abstract no longer implies it was a live test.
+* **M4 closed by measurement** — the U ceiling is frame-size invariant (2.367 vs 2.435, 0.45 σ).
+  ⚠️ N-invariance still untested.
+
+**Decisions Mohamed already took here, do not re-litigate:** investigate the wire profile *knowing*
+it might cost the headline (it did); requalify both abstract claims; keep the frozen wire format
+(D6) so the reported byte cost is an upper bound on an untuned design.
+
+**Nothing in this changes what blocks submission.** The five blockers below are unaffected.
+
 ## The strategy decision (Mohamed, 2026-07-31, unchanged)
 
 **Option 3: accept the novelty ceiling, spend the effort on rigour instead.** This is a strong
@@ -95,7 +135,17 @@ Direction C proceeds as a separate short paper.
 
 ### What remains
 
-**References 39 → 45–60** is now the main open item, and it is a *reading* task, not a writing one.
+| # | item | who | effort |
+|---|---|---|---|
+| **1** | ⚠️ **Five submission blockers** — affiliation (a literal placeholder in `main.tex`), ORCID, funding statement, co-authorship, **venue** (sets the template; `conference` → `journal`, and IoT-J costs **USD 1,225** overlength at 15 pp) | **Mohamed only** | ~30 min |
+| **2** | ⚠️ **THE THESIS DOES NOT EXIST** — `paper/` holds two papers; the March-2027 deliverable is unwritten. Largest gap in the project | shared | weeks |
+| 3 | Two MDPI PDFs for the checklist (need a browser) | Mohamed | minutes |
+| 4 | **S10** — price ECQV implicit certificates from an English-language source | agent | ~1 day |
+| 5 | References 46 → 45–60 — a *reading* task, not a writing one | shared | ~1 wk |
+| 6 | **M4's other half** — N-invariance of the U ceiling (both arms are N=50) | agent | ~3 h |
+
+**References 46 → 45–60** remains a *reading* task: padding the list would repeat the failure this
+audit spent its time removing.
 
 ### Writing, not experiments
 

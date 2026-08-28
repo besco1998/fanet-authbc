@@ -43,6 +43,7 @@ sit at three different values in three files. Start here.*
 | [`../hw/SETUP.md`](../hw/SETUP.md) | Hardware inventory and the tiered measurement campaign |
 | **[`literature/`](literature/)** | **Primary sources, with a register stating what role each plays** — `USED` / `VALIDATES` / `PRIOR ART` / `POSITIONING`. 50 PDFs. Read [`literature/README.md`](literature/README.md) before citing anything |
 | [`prompts/`](prompts/) | Phase prompts and templates |
+| **Pre-registrations** | [`DR6_EXPECTATIONS.md`](DR6_EXPECTATIONS.md), [`M4_EXPECTATIONS.md`](M4_EXPECTATIONS.md), [`DIRECTION_C_SURVEY_PROTOCOL.md`](DIRECTION_C_SURVEY_PROTOCOL.md) — each **committed data-free** so the ordering is checkable in git. ⚠️ F40 forced a pre-registration claim to be withdrawn once because the file had never been committed |
 
 ## Historical — kept for provenance, **not** current
 
@@ -69,6 +70,9 @@ sit at three different values in three files. Start here.*
 | whether a source supports or attacks us | `literature/README.md` — each entry states its role |
 | why LoRa `N_max` is 3 and not 1000 | `literature/README.md` §5 and **F19** — 1 channel / 1 demodulator / 1 SF, so it is a **worst case**; we are more pessimistic than the published model above N≈3 (**F18 said the opposite and is retracted**) — ⚠️ but quote the **curve, not a ratio**: it runs 0.91× at N=2 (we are the more *optimistic* model there), 1.07× at N=3, 2.09–2.17× from N=10 up, and the sign change sits in exactly the region where N_max is decided. ⚠️ Quote it as **3, 95 % CI [2, 3]**; the per-realisation reading gives **1** (S3) |
 | how to re-run an experiment | `05_REPRODUCTION_GUIDE.md` §1–4, or `make help` |
+| why the exclusion is **three** rates and not four | **F44** — `placement/wire_profile.py`. DR0–DR2 are unconditional; DR3 turns on our own untuned header (H_f 44 → 22 B under integer keys) |
+| what H_f actually is | **a range, 38–44 B** — `framer.measure_frame_header_bytes` (F43b). ⚠️ 44 B is the end most favourable to T6 |
+| whether the U ceiling is frame-size invariant | **yes, measured** — `M4_EXPECTATIONS.md`, 2.367 vs 2.435 at 0.45 σ. ⚠️ N-invariance is still untested |
 | what a given source file does | `05_REPRODUCTION_GUIDE.md` §5 |
 | why the build keeps killing WSL | `05_REPRODUCTION_GUIDE.md` §8 (it is the OOM killer) |
 

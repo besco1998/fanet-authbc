@@ -12,6 +12,141 @@ where the durable record lives. If you want the conclusion only, follow the poin
 
 ---
 
+# 2026-08-28 — the math audit: nothing was wrong, and the headline still moved
+
+*Mohamed: "analyze then audit deeply each scientific claim, number, result, implementation,
+literature comparison, value, methods and placement", then "audit all the math deeply and compare
+it against the simulation", then "fix them with the correct simulation and verify with the correct
+math".*
+
+## Method, because it is the point
+
+Re-derive each quantity from its equations, then check it against a simulation written for the
+purpose — never re-read the project's own conclusion about it. That distinction is what made the
+session productive: **every published number reproduced**, so nothing was found by recomputing
+arithmetic. What was found was found by asking *what does this constant actually mean*.
+
+## What it cost
+
+**The headline.** "Four of seven EU868 rates excluded" is now **three** (F44). The frame header is
+29 B of CBOR text key names; as integers they cost 7 B, so H_f halves to 22 B, DR3's budget goes
+7 B → 29 B, and DR3 becomes feasible. `docs/01 §2a` had always said the header was untuned and
+`docs/02` T6 had always depended on it. **Nobody composed the two facts.**
+
+⚠️ Mohamed authorised the investigation *knowing* it might do this. It did, and the honest version
+is stronger: the boundary is now constructive — it names what would have to change — and the half
+that survives (DR0–DR2, where a 64 B signature will not fit a 51 B payload at a zero-byte header)
+was always the durable half.
+
+## The pattern, and why 30 seeds could not have caught any of it
+
+Every finding is **class C2 — an unverified constant on the measurement path**. The 30-seed
+discipline installed after F30 protects against C1, the failure that had already happened. It gives
+no protection at all against a constant that is precisely reproducible and means something other
+than its label:
+
+* `D(b)` **names** the oldest record's age and **computes** the batch window. Simulation confirms
+  both forms exactly. `b/Λ` survives as the worst case (it is `(b−1)/Λ` plus one sampling quantum)
+  — but the "knife-edge" argument in §7a was an artifact of the convention, not a fact about the
+  design space.
+* `H_f` is a **range**, 38–44 B, and 44 is the end most favourable to the exclusion.
+* `s` depends on how long the generator runs; two committed artifacts disagree by 3.7 B and both
+  are right for their own protocol; the quoted CI is ~150× narrower than the systematic term.
+* The pre-registered ≥40 % criterion reduces to **1 − 1/b** — met by any b ≥ 2. The *ordering* is
+  genuine and verifiable in git; the *risk* was not.
+
+## What was tried and did NOT find anything
+
+Recorded because a clean result is only useful if you can see what was tested. Ma & Chen's closed
+form against `sim.dcf_ladder` — an independent slot-exact Monte Carlo written *before* the paper
+was found — agrees to **≤0.08 %** at N=5–50, and to ≤0.51 % against NS-3. Disabling the CFP head
+start collapses the simulator onto the discarded naive reduction with a **16.9× gap at N=50**,
+reproducing F9's mechanism attribution exactly. Bianchi's unicast band re-measured at
+−0.40…+1.29 %, matching the status board. Fixed-point residuals ≤7×10⁻¹³. The `N_max` first-failure
+search checked exhaustively against a full scan over 7 configurations × 4 ceilings: identical
+everywhere.
+
+⚠️ One clean result is clean **by accident**: Ma & Chen's S(n) is non-monotone in N — all three
+implementations agree, so it is real physics of the CFP series — and the search is safe only
+because U(n)'s explicit factor n outruns the recovery. Nothing had tested that. Now guarded.
+
+## M4, and a flaw in my own pre-registration
+
+The U ceiling was measured at a second frame size (174 B, the A+CBOR baseline frame): crossing
+**2.367** against 288 B's **2.435**, a **0.45 σ** difference. Indistinguishable across a 1.66×
+change, so the universal ceiling is justified and no published number moves.
+
+⚠️ But the pre-registration also predicted a *direction* — that the crossing would drift higher —
+with a mechanism. It drifted lower, and the experiment has **no power to resolve the sign**. Had
+the noise fallen the other way I would have recorded a confirmation I had not earned. Kept visible:
+**a directional prediction needs a power estimate or must be stated as a band.** The load-bearing
+prediction did carry one (±15 %) and is the only reason the run answers its question.
+
+## The lesson worth carrying
+
+Three times now a claim has survived because two facts were each recorded and never put side by
+side — F18 (quoting the PDF instead of the figure), docs/02 §9c (asserting `N_max = 3` one line
+above a table of 3-seed data saying otherwise), and now F44. **A register that stores facts
+separately does not compose them. Only re-derivation does.**
+
+# 2026-08-05 … 08-08 — ⚠️ BACKFILL, written 2026-08-28
+
+> ⚠️ **This entry is retrospective and says so.** The logbook's whole value is that it is
+> contemporaneous, and between 2026-07-30 and 2026-08-28 it was not written at all — a three-week
+> hole covering the project's most productive stretch. Reconstructed from
+> `docs/audits/model_provenance.md` (F35–F42), `docs/audits/scientific_implementation_audit.md`
+> and the git history, all of which *were* written at the time. **Treat those as the record and
+> this as an index to them.** Method and trial that were never written down are simply lost;
+> nothing here is reconstructed from memory.
+
+## What happened, in order
+
+**2026-08-05 — hardware, and mobility answered.** The 802.11 arm stopped being simulation-only
+(**F35**): two Raspberry Pis, ad-hoc IBSS at 5 GHz, broadcast link loss **p = 2.3 × 10⁻⁴** and
+airtime **1.995 ms/frame against 1.99 predicted**. ⚠️ A first 2.4 GHz sweep gave a tidy 97.45 % that
+was **saturation at the 802.11b 1 Mb/s broadcast basic rate**, not channel loss — caught by a
+pre-stated prediction plus a load sweep, and kept labelled rather than deleted. Mobility (**F36**,
+**F37**) came back **null**: 30 seeds of Gauss-Markov 5/20 m/s and RWP 20 m/s all within 0.06 σ of
+static. ⚠️ The confound that nearly produced a false 5-point penalty was ns-3 assigning RNG streams
+by object-creation order, so installing a mobility model shifted every sender's stream.
+
+**2026-08-05/06 — the scientific-implementation audit.** The question was narrower and harder than
+formula conformance: *does each number measure what it is claimed to measure?* It produced the
+five-class defect taxonomy (C1–C5) the project now checks against, and **S3**: `N_max` applied
+V ≥ 0.95 to a **mean across seeds**, while nine of thirty runs at the certified N=3 fail the very
+criterion. **S3b** found the same defect in the 802.11 arm's U crossing. ⚠️ **S7** — `make
+sim-ns3-delay` did not reproduce its own artifact. **O5** — `channel_utilisation` returned 0.0 at
+N=1, **and a unit test asserted the defect**.
+
+**2026-08-06 — the purge, the ablation, and a withdrawal.** **F38** re-ran the last six 3-seed
+artifacts at 30 seeds; A2's capture table was corrected. **F39**'s factorial ablation **narrowed our
+own claim**: placement×batching couple exactly by `g_a(1−1/b)`, encoding is perfectly separable, and
+the apparent encoding coupling was a **ratio-scale artifact**. **F40** withdrew a pre-registration
+claim rather than reconstruct it — writing the expectations file after the results were known would
+have manufactured evidence.
+
+**2026-08-07 — the framing audit, and the reframe.** The first pass to question the premise rather
+than the numbers. The paper disagreed with itself about its own best contribution (**I1**); the
+conclusion used the phrasing the project forbids (**I2**); the abstract was **693 words** and
+defensive (**I3**) — and ⚠️ the rewrite that fixed it **deleted an honesty disclosure**, caught only
+by checking. Mohamed reframed the paper from co-design optimization to **feasibility boundary**,
+because an impossibility cannot drift and four performance numbers here had. **F41**: reading the
+one unread source produced a finding, not a citation. **F42**: Direction C's phenomenon has **prior
+art**, and its "9 of 9" was inflated — only 4 papers qualify.
+
+**2026-08-08 — a claim withdrawn, and the submission package.** The Direction C literature claim was
+**retracted**: the pre-registered threshold was 25 %, the estimate walked to 21.7 % [7.5, 43.7], and
+**the interval contains the threshold**, so the test cannot answer its own question. ⚠️ Two
+temptations recorded because both were real — the point estimate sits on the favourable side, and
+the non-arXiv subset reads 28.6 %. Then the venue-agnostic submission package.
+
+## The lesson this hole itself teaches
+
+The logbook is the one document with no automated guard, because "was method recorded?" is not
+checkable by a test. Every other staleness class in this project has been closed by a gate; this
+one was closed by nobody, and three weeks vanished. ⚠️ **A discipline that depends on remembering
+to write is the one that fails first when the work gets interesting.**
+
 # 2026-07-30 (cont.) — the audit session: four wrong numbers, two retractions, one external baseline
 
 The longest correction run in the project. Everything below was found by attacking our own work.

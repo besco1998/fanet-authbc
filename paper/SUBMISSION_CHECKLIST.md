@@ -38,9 +38,15 @@ either citation until the PDFs are in the repository.
       disclosure for how this work was produced
 - [x] **Keywords** broadened from 8 to 11, adding the terms a *feasibility* paper is searched by
       (feasibility analysis, LoRaWAN, ns-3, reproducibility)
-- [x] Abstract 265 words, no undefined references, no overfull boxes, all 10 tables and 5 figures
+- [x] Abstract **279 words**, no undefined references, no overfull boxes, all 10 tables and 5 figures
       checked against their generating data
-- [x] Six audit passes; every quantitative claim guarded by a test that fails if it drifts
+- [x] Seven audit passes; every quantitative claim guarded by a test that fails if it drifts
+- [x] ⚠️ **Math audit 2026-08-28 (F43/F44/M4) — the headline was requalified.** The exclusion now
+      reads **three of seven EU868 rates unconditionally**, plus DR3 as contingent on our own
+      untuned header with the recovery named (an integer-keyed profile halves H_f and makes DR3
+      feasible). The pre-registration keeps its date and drops the implied risk: the criterion
+      reduces to `1 − 1/b`, so any batch b ≥ 2 met it. Both changes are honesty edits and both
+      make the paper harder to attack — see `docs/audits/model_provenance.md` F43/F44.
 
 ---
 
@@ -59,8 +65,9 @@ the current draft, but a 15-page paper must not go to a journal in the conferenc
 
 ### Draft Highlights (for Elsevier, if chosen)
 
-* Signature bytes exclude four of seven EU868 rates outright, at any encoding or batch
-* Exclusion is arithmetic, so it cannot move as models or hardware improve
+* Signature bytes exclude three of seven EU868 rates outright, at any encoding, batch or header
+* That exclusion is arithmetic, so it cannot move as models or hardware improve
+* A fourth rate is excluded only by our framing, and we show the header redesign that recovers it
 * Co-design sustains 1.9–3.2x the neighbourhood of inline signing on a validated channel
 * Frame header measured at 44 B from the implemented wire format, not assumed
 * All model-derived results re-derived byte-identically by a gate on every commit
@@ -78,6 +85,13 @@ paragraph:
 > That result is arithmetic rather than empirical, so unlike a performance figure it does not move
 > as models, hardware or schemes improve — and it is invisible to the byte models the literature
 > optimises against.
+
+Worth adding, because it is unusual and verifiable from the public history: we audited our own
+exclusion bound against the possibility that it rested on our own wire format, **found that it
+partly did, and reported the smaller result**. Three of seven EU868 data rates are excluded by
+arithmetic; a fourth was excluded by a frame header we had already documented as untuned, and we
+give the redesign that recovers it. The boundary is weaker and the paper is stronger, because a
+reviewer asking "is this just your encoding?" now finds the question already answered.
 
 Worth stating plainly in the letter as well: **corrections and retractions made during the study are
 recorded in the repository rather than removed**, including a survey claim withdrawn when its own

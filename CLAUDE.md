@@ -114,6 +114,51 @@ type hints; no dead code; comments explain WHY, not what.
 - **Rationale:** as a co-design paper the work is mid-tier (the optimisation is closed-form; F39 found one real interaction). As a boundary paper the same evidence is stronger — **an impossibility cannot drift, and four performance numbers here did.** ⚠️ Do not revert without re-reading F39 and F42.
 - **Second paper: `paper/methods.tex`** (`make paper-methods`, 2 pp) — the five-class defect taxonomy as a methodological note in the Kurkowski 2005 / SIGCOMM-CCR 2018 credibility lineage. Self-audit by design: 10 results moved, only 4 catchable by seeds, 2 protected by passing tests, 3 paper-vs-artifact contradictions.
 
+### ⚠️ MATH AUDIT 2026-08-28 (F43, F44, M4) — read before quoting the exclusion
+
+**Mohamed: "audit all the math deeply and compare it against the simulation."** Every published
+number reproduced. **Nothing was a wrong number.** Every finding is a convention or a limit that
+decides a headline and was never written down — defect class **C2**, the one class the post-F30
+30-seed discipline cannot touch.
+
+- ⚠️ **THE HEADLINE MOVED: "four of seven EU868 rates" is now THREE (F44).** Authorised knowing it
+  might cost the claim. The frame header is 29 B of CBOR **text key names**; the same seven keys as
+  integers cost 7 B, so **H_f 44 → 22 B**, DR3's budget goes 7 B → 29 B, and **DR3 becomes
+  feasible**. docs/01 §2a always said the header was untuned; docs/02 T6 always depended on it;
+  nobody composed them. **What survives is the strong half** — DR0–DR2 stay excluded at a
+  *zero-byte header and a one-byte record* (64 B will not fit 51 B), and the boundary is now
+  **constructive**: it names what would have to change. ⚠️ The wire format is **NOT** changed (D6);
+  `placement/wire_profile.py` measures an alternative and a test fails if it leaks into the wire.
+- ⚠️ **The pre-registered ≥40 % criterion could not have failed (F43c).** It reduces exactly to
+  **1 − 1/b**, so the threshold is `b ≥ 2`, independent of encoding, scheme, placement, H_f and
+  g_a; the V half is satisfied by construction (E17). **The ordering is genuine** and independently
+  verified (`3354ec1` → `a51486a`, ~1.8 days). Keep the date; the abstract no longer implies risk.
+- ⚠️ **H_f is a RANGE, 38–44 B (F43b)**, varying with `src`/`base_seq` because canonical CBOR
+  integers are variable-length. 44 B is the end **most favourable to the exclusion** —
+  `s_max = M − H_f − g_a`. docs/01 §2a analysed the bias for the byte comparison and never for T6,
+  where the sign is opposite.
+- **`D(b)` names the oldest record's age and computes the batch window (F43a).** Simulation
+  confirms both closed forms exactly. `b/Λ` **survives as the worst case** — it is `(b−1)/Λ` plus
+  one sampling quantum — and is kept. ⚠️ Cost stated: the tight reading admits b=5 (**−61.78 %**)
+  where we publish b=4 (−58.68 %). ⚠️ docs/02 §7a's "knife-edge" was an artifact of the convention.
+- **`s` depends on the generator window (F43d).** `e1_dominance` and `p1_sizes` disagree by up to
+  3.7 B on the same quantity and both are right for their protocol. E1's ±0.02 B CI is **~150×**
+  narrower than the systematic term. Direction is conservative.
+- **Bor's `N_max`=4 sits inside his own fit's unreliable region (F43e)** — 40 % of his predicted
+  loss at N=4 is a non-physical intercept. ⚠️ **Never quote "≈2× more pessimistic" as one number:**
+  it is 0.91× at N=2 (*we* are more optimistic there) and 2.1× from N=10 up.
+- **M4 CLOSED by measurement.** The U ceiling is frame-size invariant: crossing **2.367** at 174 B
+  vs **2.435** at 288 B — **0.45 σ**, indistinguishable across a 1.66× change. `tab:envelope`'s
+  absolute 213/100/88/31 keep support they previously only assumed. ⚠️ **N-invariance is still
+  untested** (both arms N=50). ⚠️ My own pre-registration made a *directional* prediction the run
+  had no power to resolve — recorded as a flaw: **a directional prediction needs a power estimate.**
+- **Verified CLEAN against simulation:** OFDM PPDU exact; Ma & Chen vs the independent slot-exact
+  simulator **≤0.08 %** at N=5–50 and vs NS-3 ≤0.51 %; the CFP mechanism reproduced (16.9× at N=50);
+  Bianchi unicast −0.40…+1.29 %; fixed-point residual ≤7×10⁻¹³; the `N_max` first-failure search
+  identical to a full scan over 7 configs × 4 ceilings. ⚠️ Ma & Chen's S(n) is **non-monotone** in N
+  (all three implementations agree — real physics); the search is safe only because U(n)'s explicit
+  factor n outruns it. **Safe by arithmetic, not by construction** — now guarded.
+
 ### The headline numbers, current
 - **Total on-air bytes −58.68 %**, as a **decomposition** (placement×batching 79.2 %, encoding 20.8 %, scheme byte-neutral). ⚠️ **Never quote the bare 75 %** — it is algebraically **1 − 1/b**.
 - **Adopted operating point: Λ=50 Hz, D_max=100 ms** (PX4 `MAVLINK_MODE_ONBOARD`, TS 22.125 compliant). Capacity **18→35** (U<1), **31→100** (V≥0.95). Relaxed (20 Hz/250 ms): 25/32→**103**, 55/88→**213**.

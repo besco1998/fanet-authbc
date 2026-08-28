@@ -183,7 +183,13 @@ and **the single definition of `canonical_bytes`** used everywhere something is 
 **`placement/`** — the placement axis, A/B/C/D. `wire.py` is the frame format and the one place that
 decides *what bytes a signature covers* — the audit boundary. `inline.py` (A), `self_batch.py` (B),
 `relay_agg.py` (C), `block_agg.py` (D). `framer.py` holds `H_F` (44 B, **measured** from `wire.py`)
-and the batch bounds.
+and the batch bounds, plus `measure_frame_header_bytes` / `frame_header_bytes_range` — ⚠️ H_f is a
+**range, 38–44 B**, not a constant (F43b: canonical CBOR integers are variable-length, so it moves
+with `src` and `base_seq`). `wire_profile.py` measures an **integer-keyed alternative** to the
+frozen format (F44): it takes H_f to 22 B and thereby makes EU868 DR3 feasible, turning the
+exclusion from four data rates into three. ⚠️ It is a *measurement*, never the shipped format — D6
+freezes `wire.py`, and `tests/test_wire_profile.py::TestTheFrozenFormatIsUntouched` fails if the
+lean profile ever leaks into it.
 
 **`models/`** — the analytical layer, and where the theorems live.
 
@@ -283,7 +289,9 @@ Spot-checks that a reproduction is genuine:
 | E5 optimized row | delta / ed25519 / placement B / b=4, 71.998 B/record, V=0.95 |
 | auth-byte cut | exactly **75.00 %** — and it must stay 75.00 % if you change `H_f` or `g_a`, because it is `1 − 1/b` |
 | total-byte cut | 58.68 % |
-| T6 on EU868 | DR0–2 "signature", DR3 "encoding", DR4–6 feasible |
+| T6 on EU868 | DR0–2 "signature", DR3 "encoding", DR4–6 feasible. ⚠️ DR3's tier holds only for H_f ≥ 39 B; at the integer-keyed H_f = 22 B it is *feasible* (F44) |
+| H_f range | `frame_header_bytes_range(4)` → `(38, 44)` |
+| U crossing, both frames | 2.435 at 288 B, 2.367 at 174 B — 0.45 σ apart (M4) |
 | unicast ↔ Bianchi | +1.29 / −0.40 % (ns-3.48, 30 seeds) |
 
 ---
