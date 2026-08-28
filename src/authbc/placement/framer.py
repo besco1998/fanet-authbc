@@ -76,3 +76,48 @@ class Framer(ABC):
         and required there would break substitutability (LSP).
         """
         ...
+
+
+# --------------------------------------------------------------------------- H_f is a RANGE
+# ⚠️ 2026-08-28 math audit. `H_F` above is a single constant, and docs/01 §2a reports it as
+# "44 B ... at every batch 1 ≤ b ≤ 23, stepping to 46 B at b ≥ 24" — constant in b. It IS
+# constant in b. It is NOT constant in the magnitudes of `src` and `base_seq`, because canonical
+# CBOR encodes an integer 0..23 in one byte and one ≥ 65536 in five. Measured:
+#
+#     src=0     base_seq=0        ->  H_f = 38 B     (first records of a flight, low node id)
+#     src=24    base_seq=24       ->  H_f = 39 B
+#     src=256   base_seq=256      ->  H_f = 40 B
+#     src=40000 base_seq=180000   ->  H_f = 44 B     (1 h into flight at 50 Hz — the documented
+#                                                     value, and the top of the range)
+#
+# WHY THIS MATTERS, and it is not the byte model. T6's exclusion bound is s_max = M − H_f − g_a,
+# so a LARGER H_f makes exclusion MORE likely. DR3 (M=115, g_a=64, s_min=13) is excluded for
+# H_f ≥ 39 and FEASIBLE at H_f ≤ 38 — at which point the paper's headline goes from "four of
+# seven EU868 rates excluded" to three. docs/01 §2a analyses the direction of bias for the byte
+# comparison (where 44 B is conservative) and never for T6, where the sign is opposite.
+#
+# The constant is left at 44 deliberately: it is the steady-state value for any realistic flight,
+# every frozen artifact depends on it, and it is the conservative choice for the byte results.
+# What changes is that the range is now measurable rather than assumed.
+def measure_frame_header_bytes(batch: int = 4, *, src: int = 40_000,
+                               base_seq: int = 180_000) -> int:
+    """H_f measured from the implemented wire format at a given (batch, src, base_seq).
+
+    H_f = len(encode_frame(F)) − Σ len(record canonical bytes) − len(auth), exactly the
+    definition in docs/01 §2a. Defaults reproduce the documented 44 B.
+    """
+    from authbc.ledger.record import Record
+    from authbc.placement.wire import Frame, Placement, encode_frame
+
+    recs = tuple(Record(src=src, seq=base_seq + i, ts=1_000 + i,
+                        prev_hash=b"\x11" * 32, pl={"a": 1})
+                 for i in range(batch))
+    frame = Frame(t=Placement.B, src=src, base_seq=base_seq, recs=recs, auth=b"\x00" * 64)
+    return len(encode_frame(frame)) - sum(len(r.canonical()) for r in recs) - 64
+
+
+def frame_header_bytes_range(batch: int = 4) -> tuple[int, int]:
+    """(min, max) H_f over the legal (src, base_seq) domain at a given batch size."""
+    lo = measure_frame_header_bytes(batch, src=0, base_seq=0)
+    hi = measure_frame_header_bytes(batch, src=65_535, base_seq=4_294_967_000)
+    return lo, hi

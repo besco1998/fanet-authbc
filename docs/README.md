@@ -29,7 +29,7 @@ sit at three different values in three files. Start here.*
 |---|---|
 | [`LOGBOOK.md`](LOGBOOK.md) | **Method and trial**, newest first — including the paths that failed and the claims that were retracted. If you are about to try something, check here first |
 | [`TECHNICAL_NARRATIVE.md`](TECHNICAL_NARRATIVE.md) | The results told as a story, phase by phase |
-| [`audits/model_provenance.md`](audits/model_provenance.md) | **The findings register: F1–F42**, each with evidence. **Retractions are kept visible** — T7, F15, F18, and the Direction C literature claim (2026-08-08) |
+| [`audits/model_provenance.md`](audits/model_provenance.md) | **The findings register: F1–F43**, each with evidence. **Retractions are kept visible** — T7, F15, F18, and the Direction C literature claim (2026-08-08) |
 | [`audits/p0.md` … `p7.md`](audits/) | Per-phase audits, contemporaneous |
 | [`audits/scientific_implementation_audit.md`](audits/scientific_implementation_audit.md) | The 2026-08 scientific-implementation, idea/framing and full-paper audits (S1–S10, I1–I4, P1–P2) |
 
@@ -67,7 +67,7 @@ sit at three different values in three files. Start here.*
 | whether something is still open | `OPEN_ITEMS.md` — nowhere else |
 | what a failed attempt looked like | `LOGBOOK.md` |
 | whether a source supports or attacks us | `literature/README.md` — each entry states its role |
-| why LoRa `N_max` is 3 and not 1000 | `literature/README.md` §5 and **F19** — 1 channel / 1 demodulator / 1 SF, so it is a **worst case**; we are ≈2.1× *more pessimistic* than the published model (**F18 said the opposite and is retracted**). ⚠️ Quote it as **3, 95 % CI [2, 3]**; the per-realisation reading gives **1** (S3) |
+| why LoRa `N_max` is 3 and not 1000 | `literature/README.md` §5 and **F19** — 1 channel / 1 demodulator / 1 SF, so it is a **worst case**; we are more pessimistic than the published model above N≈3 (**F18 said the opposite and is retracted**) — ⚠️ but quote the **curve, not a ratio**: it runs 0.91× at N=2 (we are the more *optimistic* model there), 1.07× at N=3, 2.09–2.17× from N=10 up, and the sign change sits in exactly the region where N_max is decided. ⚠️ Quote it as **3, 95 % CI [2, 3]**; the per-realisation reading gives **1** (S3) |
 | how to re-run an experiment | `05_REPRODUCTION_GUIDE.md` §1–4, or `make help` |
 | what a given source file does | `05_REPRODUCTION_GUIDE.md` §5 |
 | why the build keeps killing WSL | `05_REPRODUCTION_GUIDE.md` §8 (it is the OOM killer) |

@@ -263,6 +263,15 @@ def bor2017_n_max(verifiability: float = 0.95, *, logical_channels: int = 1) -> 
 
     The same V >= 0.95 criterion the AUTHBC simulation uses, applied to the external model, so the
     two capacity numbers are directly comparable rather than merely adjacent.
+
+    ⚠️ **Read `bor2017_intercept_share` before quoting the result.** Their N_max is 4, decided by
+    Eq. (8) at N=4 (4.418 %) and N=5 (5.065 %) — both inside the N < 5 band this module already
+    annotates as "carries the fit's error, not a physical claim", because the quintic does not
+    pass through the origin and predicts 1.783 % loss with no transmitters at all. That intercept
+    is 36 % of the entire 5 % budget the criterion allows.
+
+    Forcing the fit through the origin gives their N_max = 5, which WIDENS the gap against our 3
+    rather than closing it — so quoting 4 is the conservative choice. Say so when quoting it.
     """
     if not 0.0 < verifiability <= 1.0:
         raise ValueError("verifiability must be in (0, 1]")
@@ -327,3 +336,33 @@ def max_range_for_verifiability(verifiability: float = 0.95) -> float | None:
     ok = [r for r in sorted(_ZIRAK2021_FIELD_PDR_FIRST_HOP)
           if _ZIRAK2021_FIELD_PDR_FIRST_HOP[r] >= verifiability]
     return float(max(ok)) if ok else None
+
+
+def bor2017_intercept_share(n_devices: float, *, logical_channels: int = 1) -> float:
+    """Fraction of Bor Eq. (8)'s predicted loss at *n_devices* contributed by its N=0 intercept.
+
+    Eq. (8) is a fit, not a mechanism, and it predicts 1.783 % loss at zero transmitters. Near the
+    V >= 0.95 crossing — which is where their N_max is decided — that non-physical constant is a
+    large share of the whole budget, so a comparison drawn there compares our simulation against
+    their *fit residual* as much as against their physics. Returns 1.0 at n = 0.
+    """
+    total = bor2017_loss_pct(n_devices, logical_channels=logical_channels)
+    if total <= 0.0:
+        return 1.0
+    return bor2017_loss_pct(0.0) / total
+
+
+def bor2017_pessimism_ratio(measured_loss_pct: float, n_devices: float,
+                            *, logical_channels: int = 1) -> float:
+    """our loss / theirs at *n_devices*. > 1 means WE are the more pessimistic model.
+
+    ⚠️ Quote this as a CURVE, never as one number. It is not stable across N and it changes SIGN:
+    against `lora_external_check.csv` it runs 0.91x at N=2 (we are more OPTIMISTIC there), 1.07x
+    at N=3, and 2.09-2.17x from N=10 upward. A single "we are ~2x more pessimistic" summary hides
+    the crossover, and the crossover sits in exactly the N <= 3 region where N_max is decided.
+    Retracted finding F18 was a sign error on this same comparison.
+    """
+    theirs = bor2017_loss_pct(n_devices, logical_channels=logical_channels)
+    if theirs <= 0.0:
+        raise ValueError(f"Bor Eq. (8) predicts no loss at n={n_devices}; ratio undefined")
+    return measured_loss_pct / theirs

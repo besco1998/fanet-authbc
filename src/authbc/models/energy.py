@@ -143,6 +143,16 @@ def queueing_delay_s(cfg: EnergyConfig, lam: float) -> float:
     Saturating the frame queue (ρ ≥ 1) means the station cannot clear its own telemetry, so the
     configuration is unusable rather than merely slow; we return infinity so any latency bound
     rejects it instead of reporting a large-but-finite delay.
+
+    ⚠️ **M/M/1 is a conservative stand-in, not the true queue.** Arrivals here are periodic and
+    service is a fixed airtime for a fixed frame size, i.e. D/D/1, whose waiting time is exactly
+    **zero** for ρ < 1. M/M/1 therefore over-states W_q — the safe direction for a latency bound.
+    It is numerically irrelevant either way: ρ ≈ 2·10⁻⁴ at the adopted point, giving W_q well
+    under a microsecond against a 100 ms budget.
+
+    ⚠️ docs/02 §7 claimed this term was "not implemented ... omitted rather than approximated,
+    which makes D(b) a lower bound". That was true when written and false since; the term is
+    implemented here and called by `freshness_delay_s`. Corrected in the docs 2026-08-28.
     """
     if lam <= 0:
         raise ValueError(f"lam must be > 0 records/s, got {lam}")
@@ -153,13 +163,51 @@ def queueing_delay_s(cfg: EnergyConfig, lam: float) -> float:
     return rho * t_air / (1.0 - rho)
 
 
-def freshness_delay_s(cfg: EnergyConfig, lam: float) -> float:
-    """D(b) — freshness of the OLDEST record in a batch [s] (docs/02 §7).
+def batch_window_s(cfg: EnergyConfig, lam: float) -> float:
+    """Duration of the batch window: from the window opening to the b-th record arriving [s].
 
-    D(b) = b/Λ (fill) + T_air (flight) + W_q (queueing). Fill time dominates at telemetry rates,
-    which is why the admissible batch obeys b ≲ Λ·D_max almost independently of everything else.
+    b inter-arrival gaps, hence ``b/Λ``. Confirmed by discrete-event simulation under both
+    deterministic and Poisson arrivals (``tests/test_freshness_convention.py``); for Poisson the
+    window is Erlang(b, Λ), whose mean is exactly b/Λ.
     """
-    return cfg.batch / lam + radio_airtime_s(cfg) + queueing_delay_s(cfg, lam)
+    return cfg.batch / lam
+
+
+def oldest_record_age_s(cfg: EnergyConfig, lam: float) -> float:
+    """Age of the OLDEST record in the batch when the frame is transmitted [s].
+
+    The oldest record is the FIRST to arrive, so it waits out the remaining ``b−1`` gaps:
+    ``(b−1)/Λ``, not ``b/Λ``. Erlang(b−1, Λ) under Poisson arrivals, mean (b−1)/Λ. Both forms
+    are confirmed by simulation to 0.2 % at 200k frames.
+    """
+    return (cfg.batch - 1) / lam
+
+
+def freshness_delay_s(cfg: EnergyConfig, lam: float) -> float:
+    """D(b) — WORST-CASE end-to-end latency of the oldest record in a batch [s] (docs/02 §7).
+
+    ``D(b) = b/Λ + T_air + W_q``.
+
+    ⚠️ **Which quantity b/Λ is, stated because the two differ by a full sampling interval.**
+    ``b/Λ`` is the *batch-window duration* (`batch_window_s`); the *oldest record's age* at
+    transmission is ``(b−1)/Λ`` (`oldest_record_age_s`). Both are verified by simulation. The
+    constraint this feeds is 3GPP TS 22.125 R-5.2.2-011, an end-to-end **message** latency bound,
+    which wants the record age — so on its face ``b/Λ`` charges one gap too many.
+
+    It is nonetheless retained as the **worst case**, and it is exactly that: a record timestamped
+    at its sample instant may describe vehicle state up to ``1/Λ`` older, and
+
+        (b−1)/Λ  +  1/Λ  =  b/Λ
+
+    so ``b/Λ`` bounds end-to-end latency including sampling quantisation. **This is a deliberate
+    conservative choice, not an oversight** — but it was undocumented until the 2026-08-28 math
+    audit, and it is worth ~3 percentage points of headline: at Λ=50/D=100 ms the tight reading
+    admits b=5 (66.6 B/record, −61.78 %) where the worst case admits b=4 (72.0 B, −58.68 %).
+
+    ⚠️ It also drives the "knife-edge" passage in docs/02 §7a, whose 100.37 ms is a worst-case
+    figure; the oldest record there is aged 50.37 ms. See `tests/test_freshness_convention.py`.
+    """
+    return batch_window_s(cfg, lam) + radio_airtime_s(cfg) + queueing_delay_s(cfg, lam)
 
 
 def _sign_cpu_per_record(cfg: EnergyConfig, m: Measured) -> float:

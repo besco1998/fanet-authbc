@@ -20,6 +20,21 @@ Ordered by what a thesis examiner would hit first.
 | **A6** | **T2a prior-art check — DONE 2026-07-30.** The search returned established results: batching amortizes per-transmission overhead with diminishing returns, and the latency trade-off is thoroughly covered by the packet-aggregation literature (alpha-beta cost model) | **CLOSED** | **T2a is analysis, not a novel theorem** — same disposition as T6 (F16). It is a correct and useful statement of *which ceiling binds*, and it is presented that way; no novelty is claimed | Nothing. A3 still confirms the citation formatting |
 | **A7** | **External baseline — RESOLVED for the LoRa arm (F20), argued for the 802.11 arm.** LoRa: Bor et al. 2017's measurement-fitted model is now **implemented and run at our operating point** (`make exp-lora-external`) — it gives **N_max = 4** against our **5**. 802.11: already validated against Bianchi and Ma & Chen. TBRD/TESLA was moved to §Related Work because it offers **no non-repudiation** and so is not a substitute | **CLOSED (LoRa) / ACCEPTED (auth schemes)** | The remaining gap is a measured comparison against another *authentication* scheme. The honest candidate is a VANET CLAS scheme, not TESLA | Optional, needs Mohamed's call on scope |
 
+## A9. Math audit 2026-08-28 (F43) — conventions that decide headlines
+
+*Every item here is defect class **C2 — an unverified constant on the measurement path**. The
+30-seed discipline installed after F30 protects against C1 and offers no protection against these.*
+
+| # | Item | Status | Why it matters | Action |
+|---|---|---|---|---|
+| **M1** | ⚠️ **The abstract calls the exclusion "four … outright" and "cannot move as hardware improves".** DR0–DR2 are unconditional; **DR3 is contingent** on H_f ≥ 39 (of a measured 38–44 range), on the 115 vs 123 B payload column, and on s_min = 13 B | **OPEN — Mohamed's call** | It is the paper's most durable claim, and the one place the abstract is less careful than §Results, which already discloses the payload column | Requalify the abstract: three unconditional, one conditional on stated constants. Or state the H_f condition beside the payload one |
+| **M2** | ⚠️ **The pre-registered ≥40 % criterion reduces to 1 − 1/b and is met by any b ≥ 2** (F43c). The ordering is genuine; the risk was not | **OPEN — Mohamed's call** | The abstract presents it as falsifiability evidence | Keep the pre-registration and the date; drop the implication that it could have failed. Saying so plainly is a stronger methodological point than the claim it replaces |
+| **M3** | `D(b)` uses the worst-case `b/Λ`; the tight reading admits b=5 and −61.78 % | **DOCUMENTED, deliberately not changed** | Under-reports our own saving by ~3 points | Derived in docs/02 §7 with the cost tabulated. Changing it is a ⚠️ D6 re-freeze and is **not** recommended — a latency bound should be an upper bound |
+| **M4** | The U→V crossing (U = 2.435) is measured at **N=50, 288 B only** and applied across N=2…213 and frames 153–299 B | **OPEN** | Ratios are protected (same ceiling both sides); the absolute 213/100/88/31 are not | One paragraph in §Limitations, or one extra `make sim-ns3-delay` sweep at 174 B — the scenario already exists |
+| **M5** | Wire-format redundancy: **10 B/record** (`src`, `seq` duplicated against the frame header) | **ACCEPTED — D6 freezes the wire format** | ~14 % of the 72.0 B headline; inflates s_min, one of the three constants deciding DR3 | Stated as known headroom beside the existing CBOR-text-keys admission. It makes the reported cost an upper bound on an untuned design |
+| **M6** | `N_max`'s first-failure search is sound only because U(n) is monotone, which it is **by arithmetic accident** — Ma & Chen's S(n) is non-monotone in N | **CLOSED — guarded** | A change to W₀ or frame size could silently make it under-report | Pinned by `tests/test_math_audit.py::TestNmaxSearchIsSound` |
+| **M7** | `s` depends on the generator window; E1's ±0.02 B CI is ~150× narrower than the ~2.7 B systematic term | **CLOSED — documented + guarded** | s_cbor is the denominator of the headline and of every capacity ratio | Window stated in docs/04 §1; direction is conservative. Pinned by `TestRecordSizeDependsOnRunLength` |
+
 ## B. Unreferenced or assumed constants
 
 | # | Item | Status | Bias | Action |

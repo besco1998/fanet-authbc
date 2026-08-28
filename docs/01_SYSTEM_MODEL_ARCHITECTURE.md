@@ -127,7 +127,26 @@ real frames and subtracting the record and authentication bytes:
         H_f = len(encode_frame(F)) − Σ len(record canonical bytes) − len(auth)
 
 **Result: H_f = 44 B** for placement B at every batch 1 ≤ b ≤ 23, stepping to 46 B at b ≥ 24 where
-the CBOR array-length and byte-string-length prefixes widen. The empty frame skeleton alone is
+the CBOR array-length and byte-string-length prefixes widen.
+
+> ⚠️ **H_f is a RANGE, 38–44 B — added 2026-08-28.** It is constant in b (below 24). It is **not**
+> constant in the magnitudes of `src` and `base_seq`, because canonical CBOR encodes an integer
+> 0–23 in one byte and one ≥ 65536 in five. Measured with `framer.measure_frame_header_bytes`:
+>
+> | src | base_seq | H_f | state |
+> |---|---|---|---|
+> | 0 | 0 | **38 B** | first 24 records of a flight, low node id |
+> | 24 | 24 | 39 B | — |
+> | 256 | 256 | 40 B | — |
+> | 40 000 | 180 000 | **44 B** | 1 h into flight at 50 Hz — the value above |
+>
+> ⚠️ **And the direction of bias is opposite for T6.** The table below analyses H_f's bias for the
+> *byte comparison*, where 44 B is conservative. T6's bound is `s_max = M − H_f − g_a`, so a
+> **larger H_f makes exclusion MORE likely** — 44 B is the top of the range and therefore the value
+> most favourable to the paper's most durable claim. DR3 is excluded for H_f ≥ 39 and **feasible at
+> H_f ≤ 38**, at which point the headline is *three* of seven EU868 rates, not four. DR0–DR2 are
+> unconditional at any header size (64 B will not fit 51 B). See docs/02 T6 and
+> `tests/test_math_audit.py::TestFrameHeaderIsARange`. The empty frame skeleton alone is
 43 B; most of it is CBOR *text* keys (`v`, `t`, `src`, `base_seq`, `n`, `recs`, `auth`), which an
 integer-keyed profile would shrink substantially — that is a wire-format optimisation this thesis
 does not claim.

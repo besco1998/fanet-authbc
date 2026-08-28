@@ -167,8 +167,18 @@ inconvenience.
 | 4, 5, 6 | 242 B | 134 B | — feasible | |
 | *802.11* | 1500 B | 1392 B | — feasible | |
 
-**The tier-1 result is the strong one.** DR0/DR1/DR2 stay excluded *with a zero-byte header and a
-zero-byte record*: it is the signature alone that does not fit. The only escape is a smaller
+⚠️ **DR3's exclusion is conditional on H_f ≥ 39 B (2026-08-28).** H_f is a measured *range*,
+38–44 B (docs/01 §2a), and `s_max = M − H_f − g_a` means a larger header makes exclusion more
+likely — so the 44 B used here is the end of the range most favourable to this claim. At H_f = 38 B
+the DR3 budget is exactly 13 B, s_min is exactly 13 B, and **DR3 becomes feasible**. Three
+independent levers each flip it: H_f (38 vs 44), the payload column (115 vs Klimiashvili's 123 B),
+and s_min (13 B is this design's smallest record, and per-frame elision of `seq`/`ts` — the same
+argument that justified per-frame chaining in §9b — would go below it). **Report DR3 as excluded
+*under the stated constants*, not as arithmetic that cannot move.**
+
+**The tier-1 result is the strong one, and it is the one that genuinely cannot move.**
+DR0/DR1/DR2 stay excluded *with a zero-byte header and a zero-byte record*: it is the signature
+alone that does not fit. The only escape is a smaller
 authentication object, and the smallest standardised one is **48 B** — a compressed BLS12-381 G1
 point in the `minimal-signature-size` variant of draft-irtf-cfrg-bls-signature-05, which the draft
 states targets **126-bit security** (not 128 — corrected 2026-07-29, item A5). The same draft records
@@ -621,10 +631,17 @@ differs is channel load, and measured against the V ≥ 0.95 boundary:
 | Λ=20 sits between the standard's 10 msg/s floor and PX4 `ONBOARD`'s 50 Hz | A **ledger** freshness argument, not a control-loop one: TS 22.125 §5.2.2 is *collision avoidance*; a tamper-evident provenance log has a genuinely different deadline. This is a **scope argument and must be presented as one.** |
 
 **Why not the compliant corner (Λ=21, D=100 ms)?** It is reported, and it is *not* dismissed — but
-it is a **knife-edge**: at Λ = 20.0 the b=2 frame takes **100.37 ms**, 0.37 ms over, so b collapses
-to 1 and the cut goes to **zero**; at Λ = 20.2 it is 99.38 ms and b=2 holds. A 1 % change in
-telemetry rate flips the result between 50 % and nothing. That fragility is itself a finding about
-how tightly this regime is squeezed, and it is why the corner is reported rather than adopted.
+under the adopted worst-case reading of D(b) it is a **knife-edge**: at Λ = 20.0 the b=2 frame takes
+**100.37 ms**, 0.37 ms over, so b collapses to 1 and the cut goes to **zero**; at Λ = 20.2 it is
+99.38 ms and b=2 holds. A 1 % change in telemetry rate flips the result between 50 % and nothing.
+
+⚠️ **Corrected 2026-08-28 — this fragility is a property of the CONVENTION, not of the design
+space.** The 100.37 ms is the *batch-window* figure `b/Λ + T_air`. The **oldest record in that same
+frame is aged 50.37 ms** (`(b−1)/Λ + T_air`), less than half the bound, and b=2 is not marginal at
+all under the reading the constraint actually asks for (see §7's derivation above). The corner is
+knife-edged only if one insists on the worst case, and the passage previously presented it as a fact
+about how "tightly this regime is squeezed". Pinned by
+`tests/test_math_audit.py::test_the_docs02_7a_knife_edge_is_a_worst_case_figure_not_a_design_fact`.
 
 **Both are in the paper.** Reporting the compliant point costs nothing and forecloses the obvious
 objection: the mechanism does not depend on the relaxed deadline — only b does, and b depends only
@@ -652,6 +669,42 @@ t_vf/b) — implement exactly per placement; document each term. Latency/freshne
 oldest record in a batch: D(b) = b/Λ_i + T_air + queueing (M/M/1 approx at load ρ =
 Λ·T_air(b)/b) — report, and **enforce D ≤ D_max=250 ms in the optimizer**.
 
+#### ⚠️ Which quantity `b/Λ` is — derived 2026-08-28, because it was never derived
+
+`b/Λ` and `(b−1)/Λ` are **different quantities**, and the sentence above names one and computes
+the other. With periodic arrivals at rate Λ, a batch window opening at t=0 and closing when the
+b-th record lands:
+
+| quantity | value | verified |
+|---|---|---|
+| **batch-window duration** (open → transmit) | **b/Λ** — b inter-arrival gaps | simulation, exact |
+| **age of the OLDEST record** at transmit | **(b−1)/Λ** — it waits out the remaining b−1 gaps | simulation, exact |
+
+Under Poisson arrivals the same split holds in expectation: the window is Erlang(b, Λ) with mean
+b/Λ, the oldest record's age is Erlang(b−1, Λ) with mean (b−1)/Λ. Both confirmed by discrete-event
+simulation over 200 000 frames, deterministic and Poisson
+(`tests/test_math_audit.py::TestFreshnessConvention`).
+
+**The constraint wants the record age.** TS 22.125 R-5.2.2-011 bounds *end-to-end message
+latency*, which for a record runs from its sample instant to reception — i.e. (b−1)/Λ + T_air + W_q.
+
+**`b/Λ` is nevertheless retained, as the worst case, and it is exactly that.** A record timestamped
+at its sample instant may describe vehicle state up to 1/Λ older, and
+
+        (b−1)/Λ  +  1/Λ  =  b/Λ
+
+so `b/Λ` bounds end-to-end latency *including sampling quantisation*. This is a deliberate
+conservative choice. **What it costs, stated because this is an optimization problem:**
+
+| reading | Λ=50, D=100 ms | Λ=20, D=250 ms | B/record | total cut |
+|---|---|---|---|---|
+| **worst case `b/Λ` (adopted, published)** | b = **4** | b = **4** | **72.0** | **58.68 %** |
+| tight `(b−1)/Λ` | b = 5 | b = 5 | 66.6 | 61.78 % |
+
+The adopted reading **under-reports our own saving by ~3 points**. It is kept because a latency
+bound should be an upper bound, and because every frozen artifact rests on it. ⚠️ It must not be
+described as "the fill time" without saying which fill.
+
 **Enforcement is real (audit F10, 2026-07-28).** "Soft constraint" had been read as
 "annotated, not filtered", and was then not annotated either: the optimizer computed
 `meets_latency` and discarded it, so the byte-optimal b=31 was reported as the optimum while
@@ -663,9 +716,16 @@ blind to freshness is not solving the co-design problem.
 Since fill time dominates D(b), the freshness-feasible batch obeys **b ≲ Λ·D_max**, independent of
 encoding and scheme (Λ=20, D_max=250 ms ⇒ b ≤ 5; airtime makes b=4 bind).
 
-*Caveat:* the M/M/1 queueing term above is **not implemented** (docs/audits/model_provenance.md P3).
-It is omitted rather than approximated, which makes D(b) a **lower bound** on the true delay — the
-conservative direction for a constraint.
+*Caveat, CORRECTED 2026-08-28:* this paragraph used to read "the M/M/1 queueing term above is
+**not implemented** … which makes D(b) a **lower bound** on the true delay". That was true when
+written and has been false since: `energy.queueing_delay_s` implements it and `freshness_delay_s`
+calls it. ⚠️ **The documentation asserted the opposite of the code.**
+
+Two things about the term, now that it exists. It is numerically irrelevant — ρ ≈ 2·10⁻⁴ at the
+adopted point, so W_q is well under a microsecond against a 100 ms budget. And **M/M/1 is a
+conservative stand-in for the wrong queue**: arrivals here are periodic and service is a fixed
+airtime for a fixed frame size, i.e. **D/D/1, whose waiting time is exactly zero for ρ < 1**. M/M/1
+therefore over-states W_q, which is the safe direction for a latency bound.
 
 ## 8. Statistical methodology (binding for ALL experiments)
 ≥30 seeded repetitions per config (seeds 1..30 logged in CSV); report **median and

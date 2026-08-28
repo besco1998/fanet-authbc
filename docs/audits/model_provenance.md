@@ -2326,3 +2326,150 @@ adjudication — but the earlier "zero" was an artifact of the narrower pattern,
 every adjudication recorded in the CSV rather than held in memory. `UNREADABLE` (< 2000 extracted
 characters) is excluded from the denominator, because scoring a scanned PDF as "reports nothing"
 would manufacture support for our own hypothesis.
+
+## F43 — the math audit: five constants that were conventions, and one that was a range (2026-08-28)
+
+*Requested by Mohamed: "audit all the math deeply and compare it against the simulation."
+Method: re-derive each quantity from its equations, then check it against a discrete-event
+simulation written for the purpose. **Nothing here is a wrong number.** Every finding is a
+convention or a limit that decides a headline and was never written down — and in three of the
+five the unstated choice happens to favour our own claim.*
+
+### The defect class, and why 30 seeds cannot touch it
+
+All of these are **C2 — an unverified constant on the measurement path**. The 30-seed discipline
+installed after F30 protects against C1 (small-sample means), which is the failure that already
+happened. It offers no protection at all against a constant that is precisely reproducible and
+means something other than its label.
+
+### F43a — `D(b)` names the oldest record's age and computes the batch window
+
+With periodic arrivals at rate Λ, a batch window opening at t=0 and closing on the b-th record:
+
+| quantity | value |
+|---|---|
+| batch-window duration (open → transmit) | **b/Λ** |
+| age of the OLDEST record at transmit | **(b−1)/Λ** |
+
+Both confirmed exactly by discrete-event simulation over 200 000 frames, deterministic and Poisson
+(under Poisson: Erlang(b, Λ) and Erlang(b−1, Λ), means b/Λ and (b−1)/Λ). docs/02 §7 wrote
+"freshness of the oldest record in a batch: D(b) = b/Λ_i + T_air + queueing" — naming the second
+and computing the first.
+
+**`b/Λ` survives as the worst case, and it is exactly that:** a record timestamped at its sample
+instant may describe state up to 1/Λ older, and (b−1)/Λ + 1/Λ = b/Λ. So it bounds end-to-end
+latency including sampling quantisation. **Retained unchanged** — a latency bound should be an
+upper bound, and every frozen artifact rests on it. ⚠️ **Cost, now stated:** the tight reading
+admits b=5 at both operating points (66.6 B/record, −61.78 %) where the worst case admits b=4
+(72.0 B, −58.68 %). **We under-report our own saving by ~3 points.**
+
+⚠️ **One consequence was NOT conservative and is corrected.** docs/02 §7a argued the fully-compliant
+corner is a "knife-edge" because "the b=2 frame takes 100.37 ms, 0.37 ms over, so b collapses to 1
+and the cut goes to zero", and presented that as a fact about "how tightly this regime is squeezed".
+It is a fact about the convention: the oldest record in that frame is aged **50.37 ms**, half the
+bound. Corrected in place.
+
+### F43b — H_f is a range, 38–44 B, and 44 is the end that favours the exclusion
+
+Canonical CBOR encodes an integer 0–23 in one byte and one ≥ 65536 in five, so H_f varies with
+`src` and `base_seq`: **38 B** for a fresh low-id node, **44 B** an hour into flight at 50 Hz. The
+documented 44 B and its 46 B step at b≥24 both reproduce exactly at realistic magnitudes, so the
+measurement was sound — docs/01 §2a simply called it constant when it is constant only in b.
+
+⚠️ **The bias direction is opposite for T6.** docs/01 §2a analyses H_f's bias for the *byte
+comparison*, where 44 B is conservative. T6's bound is `s_max = M − H_f − g_a`, so a **larger H_f
+makes exclusion more likely**. DR3 is excluded for H_f ≥ 39 and **feasible at H_f ≤ 38** — where the
+headline becomes *three* of seven EU868 rates, not four. Three independent levers each flip DR3:
+H_f (38 vs 44), the payload column (115 vs Klimiashvili's 123 B — the paper already discloses this
+one), and s_min (13 B is our own smallest record). **DR0–DR2 are untouched and remain
+unconditional at any header size**, which is the half of the claim that genuinely cannot move.
+`framer.measure_frame_header_bytes` makes the range measurable rather than assumed.
+
+### F43c — the pre-registered success criterion could not have failed
+
+The ordering is genuine and independently checkable: the ≥40 % criterion is in `docs/04` at
+`3354ec1` (2026-07-03 04:42), the E5 result at `a51486a` (2026-07-05 00:34). **That part stands.**
+
+But the quantity it tests reduces exactly to **1 − 1/b** — placement A carries `g_a + H_f` per
+record, B carries `(g_a + H_f)/b`, and the ratio is the same identity F13 already forbade quoting.
+So the threshold is `1 − 1/b ≥ 0.40 ⟺ b ≥ 2`, independent of encoding, scheme, placement, H_f and
+g_a. The other half, V ≥ 0.95, E17 already showed is satisfied by construction with zero margin.
+**Both halves are vacuous: no configuration that batches at all could have failed.** Proved for
+every (g_a, H_f, b) in `tests/test_math_audit.py::TestSuccessCriterionIsAnIdentity`.
+
+The pre-registration is real and worth keeping. What must go is the implication that it was a live
+test — the abstract's "meeting a criterion committed to version control two days before the result
+existed" is true about *timing* and false about *risk*.
+
+### F43d — `s` depends on how long you run the generator; its CI is ~150× too narrow
+
+`seq` and `ts` grow with the record index and variable-length encodings charge for the digits, so
+mean record size is a property of (encoding, window), not of the encoding:
+
+| | n=1000 | n=10 000 | e1_dominance (30×1000) | p1_sizes (seed 1, n=10 000) |
+|---|---|---|---|---|
+| json | 191.36 | 193.52 | 191.085 | 193.518 |
+| cbor | 66.73 | 68.94 | 66.252 | 68.936 |
+| msgpack | 66.29 | 68.84 | 65.160 | 68.836 |
+| **delta** | 45.04 | 45.01 | 44.998 | 45.005 |
+
+Delta is flat because it encodes differences. **Two committed artifacts disagree by up to 3.7 B on
+the same named quantity and both are correct for their own protocol.** E1's bootstrap CI for cbor
+is ±0.02 B — *seed* variation — while the systematic window term is ~2.7 B, **≈150× wider**.
+
+Direction is conservative: a longer flight inflates the CBOR *baseline* and leaves the delta
+*optimum* alone, so the reported saving is the pessimistic end (58.68 % at n=1000 vs 59.3 % at
+n=10 000). E1 samples the **first ~50 s of each flight**; that is now stated in docs/04 §1.
+
+### F43e — Bor's N_max = 4 sits inside his own fit's unreliable region
+
+`lora.py` already documents that Eq. (8) does not pass through the origin and predicts 1.783 %
+loss at N=0, and that "below N ~ 5 the intercept dominates". Their N_max = 4 is decided at N=4
+(4.418 %) and N=5 (5.065 %) — **both inside that band**, with the non-physical intercept
+contributing **40 % of the predicted loss at N=4**. Using it as corroboration while the same file
+calls the region unreliable is inconsistent.
+
+Direction is again conservative: forcing the fit through the origin gives their N_max = **5**,
+which *widens* the gap against our 3. So quoting 4 is the safe choice — it simply needs saying.
+
+⚠️ **And the "≈2× more pessimistic" summary hides a sign change.** The ratio runs 0.91× at N=2
+(**we are the more optimistic model there**), 1.07× at N=3, 2.09–2.17× from N=10 up — and the
+crossover sits in exactly the N ≤ 3 region where N_max is decided. F18 was retracted for a sign
+error on this same comparison; a single-number summary is how that happens.
+`bor2017_pessimism_ratio` now refuses to be quoted as one number.
+
+### What the audit CHECKED AND FOUND CLEAN
+
+| check | method | result |
+|---|---|---|
+| OFDM PPDU airtime | hand-derived from 802.11a symbol timing | 1940 µs / 44 µs **exact** |
+| Ma & Chen broadcast closed form | vs `sim.dcf_ladder`, an independent slot-exact Monte Carlo | **≤0.08 %** at N=5–50 |
+| … and vs NS-3 3.48 | 30 seeds | ≤0.51 % |
+| The CFP mechanism | `head_start=False` removes only that asymmetry | collapses to the naive reduction; **16.9× gap at N=50**, reproducing F9 exactly |
+| Bianchi unicast | vs NS-3 | band **−0.40 … +1.29 %**, matching the status board |
+| Bianchi fixed point | residual of both DCF equations, N=1…1000 | ≤ 7×10⁻¹³ |
+| `N_max` first-failure search | exhaustive vs full scan, 7 configs × 4 ceilings | **identical everywhere — search is sound** |
+| −58.68 % and 213/100/88/31 | recomputed from artifacts | reproduce exactly |
+| Pre-registration ordering | git | genuine, ~1.8 days |
+
+⚠️ **One clean result is clean by accident.** Ma & Chen's saturation throughput is **non-monotone
+in N** — it dips near N≈35 and recovers, because each CFP freeze stage contributes an
+n·τ(1−τ)^(n−1) hump peaking at n ≈ W₀^(i+1)/2. All three implementations reproduce it, so it is
+real physics of the model, not a bug. The `N_max` search breaks on the first violating N, which is
+only valid if U(n) is monotone — and U(n) *is* strictly increasing, because its explicit factor n
+outruns the recovery. **Safe by arithmetic, not by construction**, and nothing tested it until now.
+
+### Minor
+
+* `bianchi.tau_of_pc(0.5)` raised `ZeroDivisionError` on a **removable** singularity whose limit is
+  `4/(2W+2+WM)`. p_c crosses 0.5 for N ≳ 21 (0.5518 at N=35, 0.5953 at N=50), so the solver walks
+  through the neighbourhood on every large-N solve. Never triggered; fixed to return the limit.
+* `LLC_SNAP_BYTES` / `MAC_HDR_FCS_BYTES` were dead constants — editing them changed no result while
+  appearing to. Removed.
+* The damped iteration's delivered residual is `_TOL/0.3 ≈ 3.33e-12`, not the documented 1e-12.
+  Immaterial; documented.
+* **Structural, not fixed:** every record carries `src` and `seq` while the frame already carries
+  `src` and `base_seq`; in placement B all records share a sender and have consecutive seq, so both
+  are derivable. **10 B/record, ~14 % of the 72.0 B headline.** D6 freezes the wire format and the
+  saving does not justify re-freezing every artifact — recorded as known headroom, which makes the
+  reported cost an upper bound on an untuned design.

@@ -38,8 +38,14 @@ ACK_BYTES: int = 14       # ACK frame length, bytes
 MAC_OVH_BYTES: int = 36   # LLC/SNAP 8 + MAC header 24 + FCS 4, carried with every data frame
 R_BPS: float = 6e6        # OFDM data rate, bits/s
 
-# tol/budget for the damped fixed-point iteration
+# Convergence budget for the damped fixed-point iteration.
+# ⚠️ The loop tests |0.7·p + 0.3·p_new − p| < _TOL, which equals 0.3·|p_new − p|, so the residual
+# actually delivered on the DCF equations is _TOL/0.3 ≈ 3.33e-12, not _TOL. Measured residuals
+# are 1e-13 … 1e-12 (see `fixed_point_residual`), so nothing depends on the difference — but the
+# docstring used to promise 1e-12 and deliver 3.3× looser, which is the kind of small untrue
+# statement this project removes on sight.
 _TOL: float = 1e-12
+_EFFECTIVE_RESIDUAL_TOL: float = _TOL / 0.3
 _MAX_ITER: int = 100_000
 
 
@@ -52,8 +58,10 @@ _MAX_ITER: int = 100_000
 OFDM_SYMBOL: float = 4e-6       # 802.11a OFDM symbol duration, s
 SERVICE_BITS: int = 16          # PLCP SERVICE field prepended to the PSDU
 TAIL_BITS: int = 6              # convolutional-code tail
-LLC_SNAP_BYTES: int = 8         # 802.2 LLC/SNAP header carried under the MSDU
-MAC_HDR_FCS_BYTES: int = 28     # non-QoS 3-address MAC header (24) + FCS (4)
+# NOTE: MAC_OVH_BYTES = 36 above is the single constant every airtime uses. It decomposes as
+# LLC/SNAP 8 + MAC header 24 + FCS 4; that breakdown used to sit here as two further module
+# constants which nothing referenced, so editing them changed no result while appearing to.
+# Removed rather than left as decoration (CLAUDE.md style: no dead code).
 
 
 def ofdm_ppdu(nbytes: float, rate_bps: float = R_BPS) -> float:
@@ -125,10 +133,32 @@ def t_broadcast(payload_bytes: float) -> float:
     return ofdm_ppdu(mpdu_bytes(payload_bytes)) + DIFS
 
 
+# p_c = 1/2 makes both the numerator and the denominator of τ(p_c) vanish, so the expression
+# is 0/0 there while the FUNCTION is perfectly well behaved — a removable singularity. Its value
+# is the limit, obtained by L'Hôpital on 2(1−2p)/[(1−2p)(W+1) + pW(1−(2p)^M)]:
+#
+#     d/dp numerator   = −4
+#     d/dp denominator = −2(W+1) + W(1−(2p)^M) − pW·M(2p)^(M−1)·2
+#     at p = 1/2:      = −2(W+1) + 0 − W·M  =  −(2W + 2 + WM)
+#     limit            = 4 / (2W + 2 + W·M)
+#
+# This is NOT hypothetical: p_c crosses 1/2 for N ≳ 21 (it solves to 0.5518 at N=35 and 0.5953
+# at N=50), so the damped iteration walks through the neighbourhood on every large-N solve. No
+# float has landed exactly on 0.5 to date, which is precisely the O5 pattern — a latent crash
+# path that is harmless until another number moves. Guarded rather than left to chance.
+_TAU_AT_HALF: float = 4.0 / (2.0 * W + 2.0 + W * M)
+
+
 def tau_of_pc(pc: float) -> float:
-    """τ(p_c) — the Bianchi tx probability given conditional collision prob (docs/02 §6)."""
+    """τ(p_c) — the Bianchi tx probability given conditional collision prob (docs/02 §6).
+
+    Continuous everywhere on [0, 1): at p_c = 1/2 the closed form is 0/0 and the analytic limit
+    ``4/(2W + 2 + W·M)`` is returned instead. See the derivation above ``_TAU_AT_HALF``.
+    """
     two_pc = 2.0 * pc
     denom = (1.0 - two_pc) * (W + 1) + pc * W * (1.0 - two_pc**M)
+    if denom == 0.0:
+        return _TAU_AT_HALF
     return 2.0 * (1.0 - two_pc) / denom
 
 
