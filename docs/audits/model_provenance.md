@@ -2473,3 +2473,66 @@ outruns the recovery. **Safe by arithmetic, not by construction**, and nothing t
   are derivable. **10 B/record, ~14 % of the 72.0 B headline.** D6 freezes the wire format and the
   saving does not justify re-freezing every artifact — recorded as known headroom, which makes the
   reported cost an upper bound on an untuned design.
+
+## F44 — the exclusion bound rests on a header we declined to optimise (2026-08-28)
+
+*Mohamed authorised this investigation knowing it might cost the headline: "yes — investigate it".
+It did. The result is a better paper, and the reasoning is worth keeping visible.*
+
+### Two things this project always knew separately, and never put together
+
+1. **docs/01 §2a**, since it was written: the frame skeleton is 43 B of which most is CBOR *text*
+   key names, "which an integer-keyed profile would shrink substantially — **that is a wire-format
+   optimisation this thesis does not claim**."
+2. **docs/02 T6**, the paper's most durable claim: a link admits authenticated telemetry iff
+   `s_max = M − H_f − g_a ≥ s_min`. **It depends on H_f.**
+
+Nobody joined them. The header this thesis declines to optimise is the reason one of the four
+excluded EU868 data rates is excluded.
+
+### Measured (`placement/wire_profile.py`, `tests/test_wire_profile.py`)
+
+| profile | H_f | B/record | DR3 s_max | DR3 |
+|---|---|---|---|---|
+| current, text keys, `src`+`seq` per record | **44 B** | 94.0 | 7 B | **excluded** |
+| integer keys only | **22 B** | 76.5 | **29 B** | ⚠️ **FEASIBLE** |
+| integer keys + `src`/`seq` elided | 22 B | 66.5 | 29 B | ⚠️ **FEASIBLE** |
+
+Seven text keys cost **29 B**; the same seven as small integers cost **7 B**. That single change —
+no new mechanism, no cleverness, the convention COSE and SenML already use — **halves the header**
+and takes DR3 from missing by six bytes to clearing by sixteen.
+
+⚠️ **The eliding of `src`/`seq` is not even needed.** Integer keys alone do it. The record elision
+is reported separately (10 B/record) so the two mechanisms can be argued with independently.
+
+### What this costs, and why the paper is better for it
+
+**The headline goes from "four of seven EU868 rates excluded" to "three".** Stated plainly because
+it is the paper's most durable claim and it just moved.
+
+**What survives is the part that was always the strong half.** DR0–DR2 stay excluded at a
+**zero-byte header and a one-byte record**, because `M = 51 B < g_a = 64 B`: the *signature alone*
+overflows the payload. No framing, encoding, batching or chain design reaches them, and the
+smallest standardised alternative — a 48 B compressed BLS12-381 G1 point at 126-bit security —
+leaves three bytes for the header and the record together. That is arithmetic and cannot move.
+
+**And the boundary becomes constructive.** It no longer only says where authentication cannot fit;
+it says exactly what would have to change, and shows that for DR3 the answer is a header redesign
+rather than new cryptography. T6's own tier taxonomy always named "encoding" as the tier
+compression can attack — this is that tier being attacked, and moving, exactly as predicted.
+
+⚠️ **The wire format is NOT changed.** D6 freezes it, `placement/wire.py` is untouched, every
+frozen artifact is bit-identical, and `TestTheFrozenFormatIsUntouched` fails if the lean profile
+ever leaks into the shipped format. What changed is that the headroom is now a measured number
+instead of an admission, and T6's dependence on our own framing is visible instead of implicit.
+
+### The methodological point, which is the transferable one
+
+This is the third time in this project that a claim survived because nobody composed two facts
+that were each individually recorded. F18 (quoting a PDF instead of a figure) and the docs/02 §9c
+table (asserting `N_max = 3` one line above a table of 3-seed data saying otherwise) had the same
+shape. **A register that stores facts separately does not compose them; only re-derivation does.**
+
+The audit that found this was authorised in full knowledge that it might cost a headline. It did,
+and the honest version is stronger — which is the argument for running such audits before a
+reviewer does, not after.

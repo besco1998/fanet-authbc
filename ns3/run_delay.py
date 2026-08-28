@@ -36,12 +36,19 @@ from authbc.models.energy import EnergyConfig, Placement, queueing_delay_s  # no
 H_F, G_A, S_DELTA, BATCH = 44, 64, 45.0, 4
 FRAME_BYTES = H_F + G_A + int(BATCH * S_DELTA)     # 288 B, the optimized frame
 
+# ⚠️ M4 (audit F43, 2026-08-28). The V>=0.95 crossing this driver measures — U ~ 2.435 — is the
+# ceiling the capacity envelope applies to EVERY configuration, at frame sizes from 153 B
+# (delta/B at b=1) to 299 B (A+JSON). It was only ever measured at 288 B. Ma & Chen's capacity
+# is recomputed per frame size in the DENOMINATOR of U, but whether the U->V mapping itself is
+# frame-size invariant was assumed, never tested. --frame-bytes makes it testable.
 
-def run_one(n_nodes: int, fps: float, seed: int, sim_time: float) -> dict[str, float]:
+
+def run_one(n_nodes: int, fps: float, seed: int, sim_time: float,
+            frame_bytes: int = FRAME_BYTES) -> dict[str, float]:
     with tempfile.TemporaryDirectory() as td:
         prefix = Path(td) / "d"
         cmd = (f"authbc-delay --nNodes={n_nodes} --framesPerSec={fps} "
-               f"--frameSize={FRAME_BYTES} --simTime={sim_time} --seed={seed} "
+               f"--frameSize={frame_bytes} --simTime={sim_time} --seed={seed} "
                f"--outPrefix={prefix}")
         subprocess.run(["./ns3", "run", cmd], cwd=NS3, check=True,
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -49,7 +56,8 @@ def run_one(n_nodes: int, fps: float, seed: int, sim_time: float) -> dict[str, f
     return {k: float(v) for k, v in rows.items()}
 
 
-def model_non_fill_delay_ms(n_nodes: int, fps: float) -> float:
+def model_non_fill_delay_ms(n_nodes: int, fps: float,
+                            frame_bytes: int = FRAME_BYTES) -> float:
     """What D(b) predicts for everything EXCEPT fill time: airtime + M/M/1 queueing.
 
     Fill time (b/Λ) is excluded because it is an application property, identical in the simulator
@@ -58,7 +66,7 @@ def model_non_fill_delay_ms(n_nodes: int, fps: float) -> float:
     cfg = EnergyConfig(placement=Placement.B, batch=BATCH, record_bytes=S_DELTA,
                        auth_bytes=G_A, frame_hdr_bytes=H_F, n_frames=1)
     lam = fps * BATCH
-    return (bianchi.t_broadcast(FRAME_BYTES) + queueing_delay_s(cfg, lam)) * 1e3
+    return (bianchi.t_broadcast(frame_bytes) + queueing_delay_s(cfg, lam)) * 1e3
 
 
 def main() -> None:
@@ -69,6 +77,9 @@ def main() -> None:
     ap.add_argument("--seeds", type=int, default=30)
     ap.add_argument("--out", default="ns3_delay.csv")
     ap.add_argument("--sim-time", type=float, default=20.0)
+    ap.add_argument("--frame-bytes", type=int, default=FRAME_BYTES,
+                    help="on-air frame size in bytes (default 288 = the optimized delta/B frame; "
+                         "M4 uses 174 = the A+CBOR Pillar-1 baseline frame)")
     # ⚠️ These MUST be the rates that produced the committed `ns3_delay.csv`. The previous default
     # ([1,2,3,5,7,8,9,10,12]) topped out at U = 1.34, so `make sim-ns3-delay` produced a file that
     # could not contain the U ~ 2.44 crossing the paper quotes — the documented entry point did not
@@ -80,17 +91,18 @@ def main() -> None:
 
     out_rows = []
     for fps in args.rates:
-        per_seed = [run_one(args.n_nodes, fps, s, args.sim_time)
+        per_seed = [run_one(args.n_nodes, fps, s, args.sim_time, args.frame_bytes)
                     for s in range(1, args.seeds + 1)]
-        util = optimizer.channel_utilisation(args.n_nodes, fps * BATCH, BATCH, FRAME_BYTES)
+        util = optimizer.channel_utilisation(args.n_nodes, fps * BATCH, BATCH,
+                                            args.frame_bytes)
         def mean(key: str, rows: list[dict[str, float]] = per_seed) -> float:
             return sum(r[key] for r in rows) / len(rows)
 
-        predicted = model_non_fill_delay_ms(args.n_nodes, fps)
+        predicted = model_non_fill_delay_ms(args.n_nodes, fps, args.frame_bytes)
         measured = mean("delay_mean_ms")
         out_rows.append({
             "n_nodes": args.n_nodes, "frames_per_s": fps,
-            "lambda_rec_per_s": round(fps * BATCH, 2), "frame_bytes": FRAME_BYTES,
+            "lambda_rec_per_s": round(fps * BATCH, 2), "frame_bytes": args.frame_bytes,
             "channel_util": round(util, 4),
             "delivered_frac": round(mean("delivered_frac"), 5),
             # F38: this driver reported 30-seed MEANS with no dispersion at all, while the LoRa
@@ -126,7 +138,7 @@ def main() -> None:
     meta = {**provenance.env_block(), "run": "ns3_delay",
             "config_hash": provenance.config_hash(
                 {"n": args.n_nodes, "seeds": args.seeds, "t": args.sim_time,
-                 "rates": args.rates, "frame": FRAME_BYTES})}
+                 "rates": args.rates, "frame": args.frame_bytes})}
     for k, v in meta.items():
         buf.write(f"# {k}={v}\n")
     w = csv.DictWriter(buf, fieldnames=list(out_rows[0]))

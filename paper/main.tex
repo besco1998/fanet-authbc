@@ -27,29 +27,31 @@ mohamed.besco1998@gmail.com}}
 
 \begin{abstract}
 Flying ad-hoc networks stream telemetry records so small that a cryptographic signature
-(64--96\,B) rivals or exceeds the payload (45--190\,B), so per-record signing spends airtime,
-energy and goodput on a shared, lossy channel. The operational question is not how many bytes a
-scheme saves but \emph{which configurations can run at all}. We answer it by searching four design
-choices jointly---record \emph{encoding}, authentication \emph{placement}, signature \emph{scheme}
-and \emph{batch} size---against a byte model, an NS-3-validated 802.11 broadcast model, and energy
-measured on Raspberry~Pi~4 hardware.
+(64--96\,B) rivals or exceeds the payload (45--190\,B), so per-record signing is expensive on a
+shared, lossy channel. The operational question is not how many bytes a scheme saves but
+\emph{which configurations can run at all}. We search four design choices jointly---record
+\emph{encoding}, authentication \emph{placement}, signature \emph{scheme} and \emph{batch}
+size---against a byte model, an NS-3-validated 802.11 broadcast model, and energy measured on
+Raspberry~Pi~4 hardware.
 
-Three results follow, ordered by how durable they are. \textbf{An exclusion:} a link whose payload
-cannot hold one header, one signature and one record carries no per-frame-verifiable telemetry at
-\emph{any} encoding or batch size. This removes the four longest-range LoRa modes outright, and loss
-makes fragmentation no escape, since a unit spanning $n$ frames verifies with probability
-$(1-p)^n$. Being arithmetic, it cannot move as hardware improves. \textbf{A capacity envelope}---the
-result that genuinely requires the coupling: joined to the channel model, the co-design sustains
-$1.9\times$ to $3.2\times$ the neighbourhood of an inline baseline, the range spanning the
-saturation and verifiability thresholds rather than hiding behind whichever flatters it.
-\textbf{Bytes:} $58.7\%$ fewer on air ($72.0$\,B/record) at an operating point compliant with 3GPP
-TS~22.125, meeting a criterion committed to version control two days before the result existed.
+Three results follow, ordered by durability. \textbf{An exclusion:} a link whose payload cannot
+hold one header, one signature and one record carries no per-frame-verifiable telemetry at
+\emph{any} encoding or batch, and fragmentation is no escape, since a unit spanning $n$ frames
+verifies with probability $(1-p)^n$. On EU868 this removes \emph{three} of seven data rates
+unconditionally---at DR0--DR2 the $64$\,B signature alone overflows a $51$\,B payload. A fourth,
+DR3, misses by six bytes against our measured $H_f{=}44$\,B and is recovered by an integer-keyed
+header, so we separate what is arithmetic from what is merely our engineering. \textbf{A capacity
+envelope,} the result that genuinely requires the coupling: the co-design sustains $1.9\times$--$3.2\times$
+the neighbourhood of an inline baseline, reported across the saturation and verifiability
+thresholds rather than at whichever flatters it. \textbf{Bytes:} $58.7\%$ fewer on air
+($72.0$\,B/record) at a 3GPP TS~22.125-compliant point, against a criterion pre-registered two days
+before the result---a criterion that reduces to $1-1/b$, which we report rather than present as a
+test the design could have failed.
 
-A factorial ablation narrows the co-design claim rather than inflating it: only placement and
-batching interact, by exactly $g_a(1{-}1/b)$ and so not at all at $b{=}1$; encoding contributes
-additively and the scheme axis is byte-neutral here. AUTHBC introduces no new cryptographic
-primitive. Its contribution is a reproducible co-design, its quantified trade-offs, and the boundary
-beyond which no choice of cryptography helps.
+A factorial ablation narrows the claim rather than inflating it: only placement and batching
+interact, by exactly $g_a(1{-}1/b)$; encoding is additive and the scheme axis byte-neutral here.
+AUTHBC introduces no new primitive. Its contribution is a reproducible co-design, its quantified
+trade-offs, and the boundary beyond which no choice of cryptography helps.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -80,11 +82,15 @@ implement it (Sec.~\ref{sec:impl}), and test the falsifiable headline of Sec.~\r
 
 \textbf{Contributions.}
 \begin{itemize}
-\item \textbf{An exclusion bound instantiated on a real band.} Applying the payload-exclusion
-argument~\cite{gundogan2021firmware} with a \emph{measured} $H_f{=}44$\,B partitions EU868: DR0--2
-fail on the signature alone and DR3 by six bytes, so four of seven data rates admit no
-per-frame-verifiable telemetry at any encoding or batch (Sec.~\ref{sec:lowrate}). The bound is not
-ours; the instantiation, the measured constant and the fragmentation corollary are.
+\item \textbf{An exclusion bound instantiated on a real band, and separated by durability.}
+Applying the payload-exclusion argument~\cite{gundogan2021firmware} with a \emph{measured}
+$H_f{=}44$\,B partitions EU868. \emph{Three} rates---DR0--DR2---fail on the signature alone and are
+excluded unconditionally: no header, encoding, batch or chain design reaches them. DR3 fails on the
+encoding by six bytes and is therefore contingent on our own framing; we quantify that contingency
+rather than leave it implicit, showing that an integer-keyed profile takes $H_f$ from $44$ to
+$22$\,B and makes DR3 feasible (Sec.~\ref{sec:lowrate}). The bound is not ours; the instantiation,
+the measured constant, the fragmentation corollary and the separation of the arithmetic half from
+the engineering half are.
 \item \textbf{A feasibility envelope, not a byte ratio.} Coupling the byte model to an
 NS-3-validated broadcast model yields the largest neighbourhood each configuration can sustain
 ($1.9$--$3.2\times$ the inline baseline), reported at two thresholds because they answer different

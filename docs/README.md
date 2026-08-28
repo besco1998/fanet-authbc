@@ -29,7 +29,7 @@ sit at three different values in three files. Start here.*
 |---|---|
 | [`LOGBOOK.md`](LOGBOOK.md) | **Method and trial**, newest first — including the paths that failed and the claims that were retracted. If you are about to try something, check here first |
 | [`TECHNICAL_NARRATIVE.md`](TECHNICAL_NARRATIVE.md) | The results told as a story, phase by phase |
-| [`audits/model_provenance.md`](audits/model_provenance.md) | **The findings register: F1–F43**, each with evidence. **Retractions are kept visible** — T7, F15, F18, and the Direction C literature claim (2026-08-08) |
+| [`audits/model_provenance.md`](audits/model_provenance.md) | **The findings register: F1–F44**, each with evidence. **Retractions are kept visible** — T7, F15, F18, and the Direction C literature claim (2026-08-08) |
 | [`audits/p0.md` … `p7.md`](audits/) | Per-phase audits, contemporaneous |
 | [`audits/scientific_implementation_audit.md`](audits/scientific_implementation_audit.md) | The 2026-08 scientific-implementation, idea/framing and full-paper audits (S1–S10, I1–I4, P1–P2) |
 
