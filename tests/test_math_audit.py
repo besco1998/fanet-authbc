@@ -316,3 +316,66 @@ class TestBorComparisonIsQuotedHonestly:
         assert r2 < 1.0 < r50
         assert art["2"]["who_is_optimistic"] == "AUTHBC"
         assert art["50"]["who_is_optimistic"] == "Bor2017"
+
+
+# ===================================================================== M4 — U ceiling invariance
+class TestUCrossingIsFrameSizeInvariant:
+    """The envelope applies ONE measured U ceiling to frames from 153 B to 299 B.
+
+    Measured at 288 B (`ns3_delay_ci.csv`) and, after M4, at 174 B (`ns3_delay_174B.csv`) — the
+    A+CBOR Pillar-1 frame that produces the baselines the capacity ratios divide by. Prediction
+    committed data-free in `docs/M4_EXPECTATIONS.md` (`84adb92`) before either arm was compared.
+    """
+
+    @staticmethod
+    def _crossing(name: str, target: float = 0.95) -> tuple[float, float]:
+        """(interpolated crossing U, its standard error) from a delay artifact."""
+        import math
+        rs = sorted(_rows(name), key=lambda r: float(r["channel_util"]))
+        lo = [r for r in rs if float(r["delivered_frac"]) >= target][-1]
+        hi = [r for r in rs if float(r["delivered_frac"]) < target][0]
+        u0, v0 = float(lo["channel_util"]), float(lo["delivered_frac"])
+        u1, v1 = float(hi["channel_util"]), float(hi["delivered_frac"])
+        crossing = u0 + (v0 - target) / (v0 - v1) * (u1 - u0)
+        slope = (v1 - v0) / (u1 - u0)
+        sem_v = math.hypot(*[float(r["delivered_stdev"]) / math.sqrt(int(r["seeds"]))
+                             for r in (lo, hi)])
+        return crossing, abs(sem_v / slope)
+
+    def test_the_published_crossing_is_still_2_435(self) -> None:
+        c, _ = self._crossing("ns3_delay_ci.csv")
+        assert c == pytest.approx(2.435, abs=0.01)
+
+    def test_the_174B_arm_lands_inside_the_pre_registered_band(self) -> None:
+        """⚠️ The load-bearing prediction: 2.1-2.8. Outside it, the envelope would need a
+        per-configuration crossing and tab:envelope's absolute N_max column would move."""
+        c, _ = self._crossing("ns3_delay_174B.csv")
+        assert 2.1 <= c <= 2.8, (
+            f"174 B crosses at U={c:.3f}, outside the pre-registered 2.1-2.8. The universal "
+            f"ceiling in experiments/capacity/config.yaml is no longer justified — re-derive "
+            f"tab:envelope per configuration (docs/M4_EXPECTATIONS.md)."
+        )
+
+    def test_the_two_crossings_are_statistically_indistinguishable(self) -> None:
+        """⚠️ The shift is 0.45 sigma. Do NOT report its DIRECTION as a finding — the design
+        has no power to resolve the sign, which is recorded as a flaw in the pre-registration."""
+        import math
+        c288, s288 = self._crossing("ns3_delay_ci.csv")
+        c174, s174 = self._crossing("ns3_delay_174B.csv")
+        sigma = abs(c174 - c288) / math.hypot(s288, s174)
+        assert sigma < 2.0, (
+            f"the crossings now differ by {sigma:.2f} sigma across a 1.66x frame-size change. "
+            f"If this becomes resolvable the universal U ceiling needs re-examining."
+        )
+
+    def test_both_arms_still_deliver_above_98_percent_at_u_equals_one(self) -> None:
+        """The result that withdrew theorem T7 must not be frame-size specific."""
+        for name in ("ns3_delay_ci.csv", "ns3_delay_174B.csv"):
+            near = min(_rows(name), key=lambda r: abs(float(r["channel_util"]) - 1.0))
+            assert float(near["delivered_frac"]) >= 0.98
+
+    def test_the_threshold_straddling_reproduces_at_the_second_frame_size(self) -> None:
+        """S3b was not an artifact of 288 B: at 174 B, U=2.321 has mean 0.9529 and 13/30 fail."""
+        straddle = [r for r in _rows("ns3_delay_174B.csv")
+                    if float(r["delivered_frac"]) >= 0.95 and int(r["seeds_failing_v"]) > 5]
+        assert straddle, "no row now clears V on the mean while failing it on a third of seeds"

@@ -2438,6 +2438,27 @@ crossover sits in exactly the N ≤ 3 region where N_max is decided. F18 was ret
 error on this same comparison; a single-number summary is how that happens.
 `bor2017_pessimism_ratio` now refuses to be quoted as one number.
 
+### M4 CLOSED by measurement (2026-08-28)
+
+The U→V crossing was measured at a second frame size: **174 B**, the A+CBOR Pillar-1 frame that
+produces the baselines the capacity ratios divide by. Crossing **2.367** against 288 B's **2.435**
+— a **0.45 σ** difference, statistically indistinguishable across a **1.66×** change in frame size.
+The universal ceiling in `experiments/capacity/config.yaml` is justified, `tab:envelope`'s absolute
+213/100/88/31 keep support they previously only assumed, and **no published number moves**.
+Prediction committed data-free first (`docs/M4_EXPECTATIONS.md`, `84adb92`).
+
+⚠️ **The pre-registration also made a DIRECTIONAL prediction the run had no power to test.** I
+predicted the crossing would drift slightly *higher* at the smaller frame; it drifted lower, at
+0.45 σ against a combined standard error of ±0.151. **Had the noise fallen the other way I would
+have recorded a confirmation I had not earned.** Kept visible as a flaw in my own pre-registration:
+a directional prediction needs a power estimate, or must be stated as a band. The load-bearing
+prediction did carry one (±15 %) and is the reason the run answers its question at all. This is the
+same family as S3/S3b — a number that looks like evidence and is not.
+
+⚠️ **N-invariance remains untested.** Both arms are at N = 50 while the envelope applies the ceiling
+from N = 2 to N = 213. Frame-size invariance was the cheaper half and the half that varies across
+the envelope's rows; the other half is stated, not measured.
+
 ### What the audit CHECKED AND FOUND CLEAN
 
 | check | method | result |
