@@ -1,0 +1,117 @@
+\begin{titlepage}
+\centering
+\vspace*{2cm}
+{\Huge\bfseries AUTHBC\par}
+\vspace{0.6cm}
+{\LARGE Feasibility Boundaries for Authenticated UAV Telemetry\par}
+\vspace{0.3cm}
+{\large An Exclusion Bound, a Capacity Envelope, and Hardware Validation\par}
+\vspace{2.5cm}
+{\Large Mohamed A. Farouk\par}
+\vspace{1.5cm}
+{\large A thesis submitted for the degree of\par}
+\vspace{0.3cm}
+{\large [DEGREE --- TO BE COMPLETED]\par}
+\vspace{1.5cm}
+{\large [DEPARTMENT, INSTITUTION --- TO BE COMPLETED]\par}
+\vspace{2cm}
+{\large \today\par}
+\vfill
+{\small\itshape Draft. Chapter completeness is declared in \texttt{thesis/STATUS.md}.\par}
+\end{titlepage}
+
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+\markboth{Abstract}{Abstract}
+
+Flying ad-hoc networks (FANETs) stream telemetry records so small that a cryptographic signature
+($64$--$96$\,B) rivals or exceeds the payload itself ($45$--$190$\,B). Once the payload has been
+compressed, authentication --- not data --- becomes the dominant on-air cost, and the operational
+question stops being \emph{how many bytes does a scheme save} and becomes \emph{which
+configurations can run at all}.
+
+This thesis answers the second question. It searches four design axes jointly --- record
+\emph{encoding}, authentication \emph{placement}, signature \emph{scheme} and \emph{batch} size ---
+against a byte model, an NS-3-validated IEEE 802.11 broadcast channel model, and energy measured
+on Raspberry~Pi~4 hardware. Three results follow, ordered by how durable they are.
+
+\textbf{An exclusion.} A link whose payload cannot hold one frame header, one signature and one
+record admits no per-frame-verifiable telemetry at any encoding or batch size, and packet loss
+forecloses fragmentation as an escape, because a unit spanning $n$ frames verifies with probability
+$(1-p)^n$. On the EU868 LoRa band this removes \emph{three} of seven data rates unconditionally: at
+DR0--DR2 a $64$\,B signature alone overflows a $51$\,B payload, so the exclusion survives a
+zero-byte header and a one-byte record. A fourth rate, DR3, misses by six bytes against a measured
+frame header of $44$\,B --- and is recovered by an integer-keyed header profile, so the boundary is
+reported \emph{constructively}: it names not only where authentication cannot fit, but what would
+have to change.
+
+\textbf{A capacity envelope.} Joining the byte model to the channel model yields the largest
+neighbourhood each configuration can sustain. The co-designed configuration carries
+$1.9\times$--$3.2\times$ the neighbourhood of an inline-signing baseline, reported across both the
+saturation and the verifiability threshold rather than at whichever flatters the result.
+
+\textbf{Bytes, and what they cost.} The adopted configuration puts $58.7\%$ fewer bytes on air
+($72.0$\,B per record) at an operating point compliant with 3GPP TS~22.125, against a success
+criterion committed to version control two days before the result existed.
+
+A factorial ablation narrows rather than inflates the co-design claim: only placement and batching
+interact, by exactly $\ga(1-1/b)$; encoding contributes additively and the signature-scheme axis is
+byte-neutral in this regime. AUTHBC introduces no new cryptographic primitive. Its contribution is
+a reproducible co-design, its quantified trade-offs, an honest account of the boundary beyond which
+no choice of existing cryptography helps --- and a methodological record of the defects found while
+establishing it.
+
+\chapter*{Declaration}
+\addcontentsline{toc}{chapter}{Declaration}
+\markboth{Declaration}{Declaration}
+
+\needswork{TO BE COMPLETED by the candidate. Institutional wording required.}
+
+\vspace{1em}
+\noindent\textbf{Use of generative AI.} \needswork{The candidate must state this explicitly and
+accurately; the repository history records the extent of agent involvement in implementation,
+experiment execution and drafting. Institutional policy governs the required wording.}
+
+\chapter*{Acknowledgements}
+\addcontentsline{toc}{chapter}{Acknowledgements}
+\markboth{Acknowledgements}{Acknowledgements}
+
+\needswork{TO BE COMPLETED.}
+
+\chapter*{Nomenclature}
+\addcontentsline{toc}{chapter}{Nomenclature}
+\markboth{Nomenclature}{Nomenclature}
+
+Symbols follow \texttt{docs/01\_SYSTEM\_MODEL\_ARCHITECTURE.md}~\S2, which is the single source of
+truth for notation across the repository, the papers and this thesis.
+
+\begin{center}
+\begin{tabular}{ll l}
+\toprule
+Symbol & Meaning & Default \\
+\midrule
+$s$        & encoded record payload bytes & measured (E1) \\
+$\ga$      & authentication object bytes (scheme $\sigma$) & 64 / 64 / 96 \\
+$\Hf$      & ledger frame header bytes & \textbf{38--44, measured} \\
+$M$        & application MTU budget & 1500 (802.11) \\
+$b$        & records per frame (batch) & decision variable \\
+$p$        & frame loss probability & $\{0.02, 0.05, 0.10\}$ \\
+$\varepsilon$ & verifiability slack; require $V \geq 1-\varepsilon$ & $=p$ \\
+$\Lambda_i$ & per-UAV record rate (rec/s) & 50 (adopted) \\
+$\Lambda$   & aggregate rate a receiver verifies & $\Lambda_i \cdot N_{\text{local}}$ \\
+$N_{\text{local}}$ & neighbours in the collision domain & reported as a curve \\
+$U$        & channel utilisation, offered / deliverable & admission metric \\
+$V$        & $P(\text{record verifiable at receiver})$ & constraint $\geq 1-\varepsilon$ \\
+$R$        & PHY data rate & \SI{6}{\mega\bit\per\second} \\
+$D(b)$     & freshness of the oldest record in a batch & $\leq \Dmax$ \\
+$\smax$    & largest record a single frame admits & $M - \Hf - \ga$ \\
+$\Nmax$    & largest sustainable neighbourhood & derived \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\vspace{1em}
+\noindent\textbf{A note on $\Hf$.} It is reported as a \emph{range}, not a constant. Canonical CBOR
+encodes small integers in one byte and large ones in five, so the measured frame header moves
+between $38$ and $44$\,B with the magnitudes of the sender identifier and sequence number. This
+matters because one of the thesis's own results depends on it; \Cref{ch:lowrate} states where.

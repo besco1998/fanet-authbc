@@ -1,0 +1,170 @@
+\chapter{System Model and Threat Model}\label{ch:sysmodel}
+
+\needswork{STATUS: DRAFTED from \texttt{docs/01}. Needs a figure of the frame layout and one
+worked example of a frame on the wire.}
+
+\section{Network}
+
+$N$ UAVs share an IEEE 802.11 broadcast channel (OFDM, base rate $R = \SI{6}{\mega\bit\per\second}$
+for robustness; application MTU budget $M = 1500$\,B). Frames are lost independently with
+probability $p$, an abstraction of fading, collisions and mobility, with $p \in \{0.02, 0.05,
+0.10\}$ as a declared sensitivity range. Contention is modelled by the DCF (\Cref{ch:theory}) and
+validated against NS-3 (\Cref{ch:validation}). There is no ground control station in the model: the
+substrate is peer-to-peer broadcast.
+
+\subsection{Why broadcast, and why it matters}
+
+IEEE 802.11 broadcast frames carry no acknowledgement and are never retransmitted. Three
+consequences follow, and each shapes a later chapter. A broadcast receiver sees the \emph{raw}
+channel error rate with none of the ARQ that hides loss on a unicast link, which is why the loss
+grid is one to two orders of magnitude more pessimistic than the $99.9\%$ reliability TS~22.125
+specifies for managed command-and-control links \emph{with} retransmission. Overload degrades
+\emph{delivery}, never latency, because excess offered load is dropped rather than queued. And the
+channel model is not Bianchi's --- \Cref{ch:validation} records that using the unicast model with
+the acknowledgement removed under-predicts simulation by $16\times$.
+
+\section{Ledger}
+
+Each UAV maintains an append-only hash chain of its own telemetry records and stores verified
+records overheard from others. A record is
+\[
+\texttt{rec} = \{\texttt{src}, \texttt{seq}, \texttt{ts}, \texttt{prev\_hash}, \texttt{payload}\},
+\qquad \texttt{prev\_hash} = \mathrm{SHA\text{-}256}(\text{previous record bytes}).
+\]
+Only the owner appends to its own chain --- an owned-object model --- so tampering or equivocation
+on a $(\texttt{src}, \texttt{seq})$ pair is detectable by chain verification. Finality and
+witnessing semantics are out of scope; the deliverable is \emph{authenticated dissemination}, not
+consensus.
+
+\section{Traffic and the two arrival rates}
+
+Records are generated at rate $\Lambda_i$ per UAV. The aggregate neighbourhood arrival rate is
+$\Lambda = \Lambda_i \cdot N_{\text{local}}$ --- the rate a \emph{receiver} must verify.
+
+\begin{remark}
+These are different quantities and conflating them is a real defect, recorded as such. A node
+batches its \emph{own} records, so freshness uses $\Lambda_i$; it verifies \emph{everyone's}, so
+the verification-throughput constraint uses $\Lambda$. Using $\Lambda_i$ for both silently models a
+one-sender network and makes cross-signer aggregation look feasible at fleet sizes where the
+receiver cannot keep up.
+\end{remark}
+
+\subsection{The adopted operating point}
+
+$\Lambda_i = 50$\,rec/s at $\Dmax = \SI{100}{\milli\second}$ is adopted. It is PX4's
+\texttt{MAVLINK\_MODE\_ONBOARD} companion-computer rate, read from autopilot source rather than
+from a secondary summary, and it is fully compliant with 3GPP TS~22.125 S5.2.2, which specifies at
+least $10$ messages per second and at most $\SI{100}{\milli\second}$ end-to-end latency for direct
+UAV-to-UAV local broadcast.
+
+The alternative $(20\,\text{rec/s}, \SI{250}{\milli\second})$ point is retained and reported
+because it gives \emph{identical bytes} --- batching obeys $b \leq \Lambda_i \Dmax$, so only the
+product matters, and both give $\Lambda_i \Dmax = 5$, hence $b = 4$ and $72.0$\,B per record.
+
+\begin{table}[t]
+\centering
+\caption{The operating region, with costs stated. Compliance costs swarm size and nothing in bytes.}
+\label{tab:operating}
+\begin{tabular}{lrrrrrrc}
+\toprule
+& $\Lambda_i$ & $\Dmax$ & $b$ & B/rec & $\Nmax$ ($U{<}1$) & $\Nmax$ ($V{\geq}0.95$) & TS 22.125 \\
+\midrule
+\textbf{adopted}    & 50 & 100\,ms & 4 & \textbf{72.0} & 35  & \textbf{100} & yes \\
+alternative         & 20 & 250\,ms & 4 & 72.0          & 103 & 213          & no \\
+---                 & 20 & 100\,ms & 1 & 153.0         & 34  & 98           & yes, no batching \\
+---                 & 10 & 100\,ms & 1 & 153.0         & 78  & 180          & yes, no batching \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{The floor of the region, which is a real constraint on the application}
+
+Holding $b \geq 4$ under a $\SI{100}{\milli\second}$ deadline requires $\Lambda_i \geq 40$\,Hz. At
+$20$ or $10$\,Hz the same deadline forces $b = 1$ and the saving collapses from $58.7\%$ to
+$12.2\%$. \textbf{The batching benefit is not available at every compliant operating point}: it
+requires a telemetry rate fast enough to fill a batch inside the deadline. More structurally, any
+batching at all needs $\Lambda_i \geq 1/\Dmax$ --- at the standard's $\SI{100}{\milli\second}$
+bound, exactly the standard's own minimum message rate. At an ArduPilot Copter default of $0$\,Hz,
+where streams are requested by a ground station rather than pushed, this thesis's mechanism does
+not apply at all.
+
+\section{Threat model}
+
+The adversary may inject, replay, modify or forge frames, but does not hold any honest UAV's
+private key; key compromise is out of scope by charter. The security requirements are existential
+unforgeability under chosen-message attack at the 128-bit level, replay rejection via monotonic
+$(\texttt{src}, \texttt{seq})$ per chain, and integrity via the hash chain.
+
+\begin{remark}
+Availability under loss is a \emph{robustness} metric in this thesis, not a security claim. The
+quantity $V$, the probability that a record is verifiable at a receiver, is treated throughout as a
+design constraint rather than as a guarantee against an adversary who controls the channel.
+\end{remark}
+
+\section{The decision space}
+
+\subsection{Authentication placements}
+
+\begin{description}
+\item[A --- inline per record.] Every record carries its own signature. The baseline.
+\item[B --- self-batch.] One UAV packs $b$ of its \emph{own} records into a frame and signs the
+      frame once. Per-record authentication cost $(\ga + \Hf)/b$. Self-contained, hence loss-local.
+\item[C --- cross-signer aggregate.] A frame carries $b$ records from \emph{different}
+      originators, each originally signed; the signatures aggregate into one. Required only when
+      forwarding others' records or combining attestations.
+\item[D --- block-level aggregate.] One signature over $b$ records spanning $n > 1$ frames.
+      All-or-nothing under loss; \Cref{ch:theory} shows when this is dominated.
+\end{description}
+
+\subsection{Schemes and encodings}
+
+Signature schemes are ECDSA-P256 ($64$\,B, legacy baseline), Ed25519 ($64$\,B, fast) and BLS12-381.
+The BLS object is $96$\,B, not the $48$\,B minimum-signature variant originally specified: the
+available library ships only the minimum-pubkey scheme. That deviation is recorded and applied
+consistently, and it makes BLS lose the byte comparison outside multi-signer aggregation.
+
+Encodings are JSON (baseline), canonical CBOR, MessagePack, and delta-CBOR with keyframes every
+$K = 16$ records. $K$ is fixed and not optimised --- a real design variable left on the table, and
+declared as such.
+
+\section{The frame header, which is a range}
+
+$\Hf$ feeds the batching theory, the exclusion bound, the batch bounds, the channel-utilisation
+constraint and the energy model. It is measured directly from the implemented wire format:
+\[
+\Hf = \operatorname{len}(\texttt{encode\_frame}(F)) - \textstyle\sum \operatorname{len}(\text{record canonical bytes}) - \operatorname{len}(\text{auth}).
+\]
+
+\begin{table}[t]
+\centering
+\caption{$\Hf$ is not a constant. Canonical CBOR encodes integers 0--23 in one byte and those
+$\geq 65536$ in five, so the measured header moves with field magnitude.}
+\label{tab:hf}
+\begin{tabular}{rrl}
+\toprule
+\texttt{src} & \texttt{base\_seq} & $\Hf$ \\
+\midrule
+0      & 0       & \textbf{38\,B} --- first records of a flight, low node id \\
+24     & 24      & 39\,B \\
+256    & 256     & 40\,B \\
+40\,000 & 180\,000 & \textbf{44\,B} --- one hour into flight at 50\,Hz \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The value $44$\,B is used throughout, and it is the steady-state value for any realistic flight. It
+is also the \emph{top} of the measured range, and \Cref{ch:lowrate} shows that this matters: the
+exclusion bound is $\smax = M - \Hf - \ga$, so a larger header makes exclusion \emph{more} likely.
+Using the top of a measured range is the choice most favourable to that result, and the thesis says
+so where the result is stated.
+
+\begin{remark}[Known headroom, not claimed]
+The empty frame skeleton is $43$\,B, of which $29$\,B are CBOR \emph{text key names}. An
+integer-keyed profile costs $7$\,B for the same seven keys, giving $\Hf = 22$\,B. Additionally,
+every record carries \texttt{src} and \texttt{seq} while the frame already carries \texttt{src} and
+\texttt{base\_seq}; in placement B all records share a sender and have consecutive sequence
+numbers, so both fields are derivable --- a further $10$\,B per record. Neither optimisation is
+adopted, because the wire format is frozen for reproducibility. Both are \emph{measured} rather
+than merely admitted, which makes every byte figure in this thesis an upper bound on an untuned
+design. \Cref{ch:lowrate} shows that one of the thesis's own results turns on this.
+\end{remark}

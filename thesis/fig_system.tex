@@ -1,0 +1,85 @@
+% System overview. Drawn in TikZ rather than exported as a PNG, deliberately:
+% three shipped PNGs went stale against their data (audit I6) because nothing re-ran their
+% generators. A figure compiled from source cannot drift from the paper it lives in.
+%
+% What it must convey, in this order of importance:
+%   1. the four design axes and where each one acts on the pipeline;
+%   2. the PROVENANCE of every block -- measured / NS-3-validated / closed-form. A reviewer's
+%      first question about a feasibility claim is "which parts of this are real?";
+%   3. where each of the three boundaries bites.
+\begin{figure*}[t]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+  font=\small,
+  blk/.style={draw, rounded corners=2pt, align=center, text width=2.15cm,
+              minimum height=1.15cm, inner sep=2pt},
+  meas/.style={blk, fill=black!12, very thick},
+  sim/.style={blk, dashed, thick},
+  mod/.style={blk},
+  knob/.style={circle, draw, fill=white, font=\footnotesize\bfseries, inner sep=1.2pt},
+  ar/.style={-{Latex[length=2mm]}, thick},
+  bnd/.style={align=left, font=\footnotesize, text width=4.1cm},
+  bar/.style={{Latex[length=1.6mm]}-, gray, thick, shorten <=1pt},
+]
+
+% ---- pipeline -------------------------------------------------------------
+\node[mod]  (rec)   at (0,0)     {\textbf{Telemetry}\\ record\\ $s = 45$--$190$\,B};
+\node[meas] (enc)   at (3.0,0)   {\textbf{Encoding}\\ JSON $\vert$ CBOR\\ MsgPack $\vert$ delta};
+\node[mod]  (plc)   at (6.0,0)   {\textbf{Placement}\\ A inline\\ B self-batch\\ D block};
+\node[meas] (sig)   at (9.0,0)   {\textbf{Scheme}\\ ECDSA $\vert$ Ed25519\\ BLS12-381};
+\node[mod]  (frm)   at (12.0,0)  {\textbf{Frame}\\ $b\,s + \ba + H_f$\\ $H_f = 44$\,B meas.};
+\node[sim]  (wifi)  at (15.2,1.1){\textbf{802.11a}\\ broadcast, 6\,Mb/s};
+\node[sim]  (lora)  at (15.2,-1.1){\textbf{LoRa} SF7--SF12\\ EU868, 1\,\% duty};
+\node[mod]  (led)   at (18.3,0)  {\textbf{Verifier}\\ hash-chained\\ ledger};
+
+\foreach \a/\b in {rec/enc, enc/plc, plc/sig, sig/frm} \draw[ar] (\a) -- (\b);
+\draw[ar] (frm) -- (wifi);
+\draw[ar] (frm) -- (lora);
+\draw[ar] (wifi) -- (led);
+\draw[ar] (lora) -- (led);
+
+% ---- the four design axes -------------------------------------------------
+\node[knob] at (enc.north west) {1};
+\node[knob] at (plc.north west) {2};
+\node[knob] at (sig.north west) {3};
+\node[knob] (k4) at (7.5,1.5) {4};
+\node[font=\footnotesize, anchor=west] at (7.75,1.5) {batch size $b$};
+\draw[gray, thick, {Latex[length=1.6mm]}-] (plc.north east) -- (k4.south west);
+
+% ---- the three boundaries -------------------------------------------------
+% No connector lines: all three boundaries bite at the right-hand end of the pipeline, so
+% left-to-right arrows would cross. Each names its locus in words instead.
+\node[draw, rounded corners=2pt, fill=black!4, anchor=north west,
+      minimum width=13.4cm, minimum height=2.5cm] (band) at (6.4,-2.05) {};
+\node[anchor=north west, font=\footnotesize\itshape] at (6.55,-2.15)
+  {Feasibility boundaries --- the structure of the results:};
+\node[bnd, anchor=north west] at (6.55,-2.62)
+  {\textbf{1. Impossible} (\S\ref{sec:t6})\\ \emph{at the LoRa PHY}: payload\\
+   exclusion --- SF10--SF12\\ cannot carry one record};
+\node[bnd, anchor=north west] at (10.95,-2.62)
+  {\textbf{2. Capacity-limited}\\ \emph{at the channel}: envelope\\
+   $N_{\max}$ under $U<1$ and\\ under $V \geq 0.95$};
+\node[bnd, anchor=north west] at (15.35,-2.62)
+  {\textbf{3. Runs}\\ \emph{end to end}: an operating\\
+   point, at a measured\\ energy cost};
+
+% ---- provenance legend ----------------------------------------------------
+\node[anchor=west, font=\footnotesize\itshape] at (0.0,-2.15) {Evidence:};
+\node[meas, text width=0.5cm, minimum height=0.4cm] at (0.35,-2.75) {};
+\node[anchor=west, font=\footnotesize] at (0.75,-2.75) {measured, Pi~4};
+\node[sim, text width=0.5cm, minimum height=0.4cm] at (0.35,-3.35) {};
+\node[anchor=west, font=\footnotesize] at (0.75,-3.35) {NS-3, 30 seeds};
+\node[mod, text width=0.5cm, minimum height=0.4cm] at (0.35,-3.95) {};
+\node[anchor=west, font=\footnotesize] at (0.75,-3.95) {byte model};
+
+\end{tikzpicture}}
+\caption{System model and the provenance of every stage. Four design axes
+(\raisebox{0.2ex}{\textcircled{\scriptsize 1}}--\raisebox{0.2ex}{\textcircled{\scriptsize 4}}) are
+searched jointly; only encoding and placement interact appreciably
+(Table~\ref{tab:decomp}). Shading records \emph{what kind of evidence} supports each stage: shaded
+blocks are measured on hardware, dashed blocks are simulated and validated against closed-form
+models over 30 seeds, plain blocks are the byte model itself. The three boundaries below are the
+paper's structure --- a configuration is impossible, capacity-limited, or it runs.}
+\label{fig:system}
+\end{figure*}

@@ -1,0 +1,240 @@
+\chapter{Theoretical Framework}\label{ch:theory}
+
+\needswork{STATUS: DRAFTED from \texttt{docs/02}. Proofs are complete for T1--T3 and T6; T5 is
+stated honestly as an empirical separability result rather than a theorem, which is what it is.}
+
+This chapter develops the closed-form results. Each carries its empirical validation hook, and
+where a result is \emph{applied} rather than novel, that is stated at the point of statement rather
+than buried in related work.
+
+\section{T1 --- the overhead-dominance threshold}
+
+\begin{theorem}[Overhead dominance]\label{thm:t1}
+With inline per-record authentication, the authentication byte fraction is
+$\varphi(s, \ga) = \ga/(s + \ga)$, and $\varphi \geq \alpha \iff s \leq \ga(1-\alpha)/\alpha$. In
+particular authentication dominates ($\alpha = \tfrac12$) exactly when $s \leq \ga$.
+\end{theorem}
+
+\begin{proof}
+$\varphi \geq \alpha \iff \ga \geq \alpha(s + \ga) \iff \ga(1-\alpha) \geq \alpha s$.
+\end{proof}
+
+The threshold is trivial; its \emph{instantiation} is the motivating result. At $\ga = 64$\,B and
+measured record sizes, JSON at $191$\,B gives $\varphi = 25.1\%$, CBOR at $66$\,B gives $49.1\%$,
+and delta-CBOR at $45$\,B gives $58.7\%$. Compression moved the bottleneck from data to
+cryptography. Validated by E1 (\Cref{ch:bytes}).
+
+\section{T2 --- frame-level batching and the amplification law}
+
+Placement B or C packs $b$ records, one authentication object of $\ga$ bytes and a header of $\Hf$
+bytes into one frame, subject to $b \leq \bmaxx(s) = \lfloor (M - \Hf - \ga)/s \rfloor$.
+
+\begin{proposition}\label{prop:t2}
+Per-record authentication overhead $\omega(b) = (\ga + \Hf)/b$ is strictly decreasing, so the
+byte-minimal feasible batch is $b = \bmaxx(s)$. Relaxing integrality, per-record on-air bytes are
+$C(s) = s \cdot A$ with amplification $A = M/(M - \Hf - \ga) \geq 1$.
+\end{proposition}
+
+\begin{proof}
+$\omega'(b) < 0$ gives the first claim. For the second, substitute $b = (M - \Hf - \ga)/s$ into
+$s + \omega(b)$ and factor.
+\end{proof}
+
+So every payload byte saved by compression saves $A$ on-air bytes --- \emph{in the MTU-limited
+regime}. This is MTU-efficiency algebra, not a new law, and \Cref{thm:t2a} shows the regime is
+never reached on 802.11.
+
+\section{T2a --- which ceiling binds, and what compression is therefore worth}
+
+\begin{theorem}[Binding constraint]\label{thm:t2a}
+Let $b^\star = \min(b_{\mathrm{MTU}}, b_{\mathrm{fresh}})$ with
+$b_{\mathrm{MTU}} = \lfloor (M - \Hf - \ga)/s \rfloor$ and
+$b_{\mathrm{fresh}} = \lfloor \Lambda_i \Dmax \rfloor$. Then
+\[
+\frac{\mathrm{d}C}{\mathrm{d}s} =
+\begin{cases}
+A = \dfrac{M}{M - \Hf - \ga}, & \text{MTU-limited},\\[2ex]
+1 \ \text{exactly}, & \text{freshness-limited}.
+\end{cases}
+\]
+Freshness binds exactly when $s < (M - \Hf - \ga)/(\lfloor \Lambda_i \Dmax \rfloor + 1)$.
+\end{theorem}
+
+\begin{proof}
+Differentiate $C$ in each regime; in the second, $b$ is constant in $s$.
+\end{proof}
+
+The consequence is sharp and negative for the 802.11 arm. At $M = 1500$, $\Hf = 44$, $\ga = 64$,
+$\Lambda_i \Dmax = 5$, the boundary is $s < 232.7$\,B. Every encoding studied lies below it ---
+delta $45$, MessagePack $65$, CBOR $66$, JSON $191$ --- so \textbf{freshness binds for all of them
+and $A$ is never operative on 802.11}. Compression pays exactly $1\times$, and the residual
+authentication cost is a floor $(\ga + \Hf)/(\Lambda_i \Dmax)$ that compression cannot touch.
+
+On a low-rate link ($M = 242$) the boundary falls to $s < 29.7$\,B, so the MTU binds and $A$ is
+operative. \textbf{The leverage that motivates compression is exclusive to the low-rate arm}, which
+strengthens rather than weakens that chapter's motivation.
+
+\section{T3 --- the loss-robustness frontier}
+
+Frame-level placements are self-verifiable, so $V_B = 1-p$ and a loss costs $b$ records.
+Block-level placement D spans $n(b) = \lceil (bs + \ga + \Hf)/M \rceil$ frames under one signature,
+so $V_D = (1-p)^n$.
+
+\begin{theorem}[Fragmentation is foreclosed]\label{thm:t3}
+The constraint $V \geq 1-\varepsilon$ admits at most
+$n_{\max} = \lfloor \ln(1-\varepsilon)/\ln(1-p) \rfloor$ frames. If $\varepsilon \leq p$ then
+$n_{\max} = 1$: block-level authentication is infeasible beyond a single frame.
+\end{theorem}
+
+\begin{proof}
+Solve $(1-p)^n \geq 1-\varepsilon$ for $n$. At $\varepsilon = p$ the right-hand side is $1-p$ and
+$n \leq 1$.
+\end{proof}
+
+\begin{theorem}[Robustness to correlated loss]\label{thm:t3c}
+For \emph{any} stationary loss process of mean rate $p$, whatever its correlation structure,
+\[
+V_D(n) = P(\text{all } n \text{ frames arrive}) \leq P(\text{one given frame arrives}) = 1-p = V_B,
+\]
+with equality only at $n = 1$.
+\end{theorem}
+
+\begin{proof}
+A joint probability cannot exceed a marginal.
+\end{proof}
+
+This matters more than it first appears. The $(1-p)^n$ form assumes independent loss, which the
+emulator also implements --- so agreement between measured and theoretical $V$ is a
+\emph{consistency check, not a validation}. \Cref{thm:t3c} rescues the ordering without the
+assumption: independence is the \emph{worst case} for D, and correlation narrows the gap but cannot
+invert it. Gilbert--Elliott simulation at matched mean $p = 0.05$ confirms it: $V_D(n{=}2)$ rises
+from $0.9025$ (independent) to $0.9498$ at a mean burst of 160 frames --- asymptotically $1-p$,
+never past it, and never reaching the feasibility threshold.
+
+\section{T4 --- scheme selection}
+
+For a UAV's \emph{own} records under self-batching, one ordinary signature covers $b$ records, so
+Ed25519 and BLS are near-equivalent in bytes while Ed25519's verification is far cheaper than a
+pairing. Ed25519 wins self-batching outright.
+
+For \emph{relayed} records from distinct signers, Ed25519 must carry $b \cdot 64$\,B while BLS
+aggregates. BLS saves $\Delta(b)$ bytes per record but costs $\Delta t$ extra CPU. BLS is
+energy-optimal iff
+\[
+P_r \cdot \frac{8\Delta(b)}{R} > P_c \cdot \Delta t,
+\]
+and throughput-feasible iff $t_{\mathrm{agg\text{-}verify}}(b)/b \leq 1/\Lambda$. At
+$R = \SI{6}{\mega\bit\per\second}$ the radio side is $\approx P_r \cdot \SI{75}{\micro\second}$
+against a CPU side of $P_c \cdot (1\text{--}3)\,\si{\milli\second}$, so \textbf{Ed25519 wins on
+802.11 and BLS's regime is low-rate links and attestation compression} --- a falsifiable,
+regime-dependent rule.
+
+\section{T5 --- the co-design result, stated as what it is}
+
+\begin{remark}[Not a theorem]
+T5 is often written as a co-design theorem. It is not one. The joint optimum is \emph{empirically
+separable}, verified by exhaustive search over the full grid of $4$ encodings $\times$ $3$ schemes
+$\times$ $4$ placements $\times$ $32$ batches $=$ $1536$ points. A non-separable optimum would have
+been found had one existed; none was. That is evidence, not proof, and the distinction is kept.
+\end{remark}
+
+The recipe: pick the smallest deterministic encoding $e^\star$, placement B for own traffic or C
+for relay, batch $b^\star = \min(\bmaxx(s), \lfloor \Lambda_i \Dmax \rfloor)$ --- on 802.11 the
+second term binds --- and scheme per T4.
+
+A factorial ablation (\Cref{ch:codesign}) narrows this further, and against the project's own
+earlier claim: only placement and batching genuinely interact, by exactly $\ga(1 - 1/b)$, hence not
+at all at $b = 1$. Encoding is perfectly separable and the scheme axis is byte-degenerate here.
+
+\section{T6 --- the authentication-exclusion threshold}
+
+\begin{remark}[Prior art, checked before publication]
+The inequality below is \emph{established}, not novel. Gündoğan \emph{et al.} compute exactly
+$M - \Hf - \ga = \smax$ for 802.15.4/NDN, and the post-quantum literature reports NIST signatures
+as incompatible with 5G SIB1's $372$\,B limit. That a fragmented unit delivers with $(1-p)^n$ is
+likewise standard in 6LoWPAN. T6 is therefore a \emph{synthesis} of two known facts, presented as
+an applied threshold. What has not been found stated elsewhere is the \emph{composition}: that the
+sliced-signature workaround the literature proposes is foreclosed whenever $\varepsilon \leq p$.
+This check was run \emph{before} publication precisely because an earlier novelty claim in this
+project was not.
+\end{remark}
+
+\begin{theorem}[Exclusion]\label{thm:t6}
+A frame that is independently verifiable must carry the header, the authentication object and at
+least one record. A link of maximum payload $M$ therefore admits authenticated telemetry iff
+\[
+\smax(M) = M - \Hf - \ga \geq \smin,
+\]
+and no choice of batch size, chain placement or aggregation changes this: those decide only how the
+space \emph{above} the floor is used.
+\end{theorem}
+
+Fragmentation does not escape it, by \Cref{thm:t3}: at $\varepsilon \leq p$ the entire
+verifiability budget is spent on the first frame, so fragmenting is already a constraint violation
+and T6 is evaluated at $n = 1$.
+
+\subsection{Three tiers, because each names a different escape route}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+tier & condition & what could fix it \\
+\midrule
+\textbf{signature} & $M < \ga$ & a smaller signature scheme \emph{only} \\
+\textbf{framing}   & $\ga \leq M < \Hf + \ga$ & a leaner frame header \\
+\textbf{encoding}  & $\Hf + \ga \leq M < \Hf + \ga + \smin$ & a smaller record encoding \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The tier structure is not decoration: it is what makes the bound \emph{constructive}, and
+\Cref{ch:lowrate} shows the encoding tier being attacked successfully --- at the cost of one of
+this thesis's own claims.
+
+\section{A withdrawn theorem, kept visible}
+
+An earlier version of this framework contained a seventh result, T7, claiming that channel capacity
+excludes configurations at $U \geq 1$, where $U$ is offered load over \emph{saturation} throughput.
+\textbf{It was withdrawn on the day it was written}, by its own validation experiment.
+
+Saturation throughput is what the channel carries when every node is backlogged; a lightly loaded
+channel collides far less and carries substantially more. Simulation at $N = 50$ shows $98.8\%$ of
+frames still delivered at $U = 1.00$, with the verifiability crossing near $U \approx 2.4$. The
+claimed exclusion does not exist, and a ``$50\%$ ceiling'' derived from it was an artifact of the
+wrong threshold.
+
+A second structural error compounded the first: the theorem assumed overload manifests as delay. It
+does not. Broadcast has no ARQ and no queue buildup, so excess load is dropped, not queued --- mean
+delay at nine times saturation is still under $\SI{3}{\milli\second}$. \textbf{Any capacity
+argument here must be made in $V$, not in $D$.}
+
+What survives is a cost rather than an exclusion: because $b \leq \lfloor \Lambda_i \Dmax \rfloor$,
+tightening the freshness deadline shrinks the batch and raises the frame rate the medium must
+carry. Meeting the standard's deadline costs roughly a factor of two in supportable swarm size and
+\emph{nothing} in bytes. That is the honest, measured statement, and it is a better result than the
+theorem it replaces.
+
+\begin{remark}[The lesson, recorded]
+T7 was written from a model quantity treated as a physical limit, and published into the
+documentation before the experiment that tested it existed --- an experiment already scheduled.
+Running it first would have prevented the claim.
+\end{remark}
+
+\section{Freshness, and a convention that had to be derived}
+
+The freshness of the oldest record in a batch is modelled as
+$D(b) = b/\Lambda_i + T_{\mathrm{air}} + W_q$ and enforced as a hard constraint.
+
+\begin{remark}[Which quantity $b/\Lambda_i$ is]
+With periodic arrivals, $b/\Lambda_i$ is the \emph{batch-window duration} --- open to transmit ---
+while the \emph{age of the oldest record} at transmission is $(b-1)/\Lambda_i$, because it waits out
+the remaining $b-1$ gaps. Both were confirmed exactly by discrete-event simulation under
+deterministic and Poisson arrivals. The formulation above names the second and computes the first.
+
+It is retained as the \emph{worst case}, and it is exactly that: a record timestamped at its sample
+instant may describe state up to $1/\Lambda_i$ older, and $(b-1)/\Lambda_i + 1/\Lambda_i =
+b/\Lambda_i$. So it bounds end-to-end latency including sampling quantisation. The cost of the
+choice is stated rather than hidden: the tight reading admits $b = 5$ at both operating points
+($66.6$\,B/record, $-61.8\%$) where the worst case admits $b = 4$ ($72.0$\,B, $-58.7\%$).
+\textbf{This thesis under-reports its own saving by about three percentage points.}
+\end{remark}

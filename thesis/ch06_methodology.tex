@@ -1,0 +1,102 @@
+\chapter{Experimental Methodology}\label{ch:methodology}
+
+\needswork{STATUS: DRAFTED from \texttt{docs/04}. The statistical rules below are binding on every
+result in \Cref{ch:bytes}--\Cref{ch:lowrate}.}
+
+\section{Binding statistical rules}
+
+Every experiment obeys the following, and where a result predates a rule that is recorded rather
+than retrofitted:
+
+\begin{itemize}
+\item At least $30$ seeded repetitions per configuration, with seeds logged in the artifact.
+\item Report median and bootstrap $95\%$ confidence interval over $10^4$ resamples.
+\item Microbenchmarks: $\geq 10^4$ iterations after $10^3$ warm-up, garbage collection disabled,
+      runs spanning a suspend discarded.
+\item Comparisons state effect size; never bare means.
+\item Raw artifacts are immutable once frozen.
+\item Any model-versus-measurement deviation above $10\%$ must be investigated and either explained
+      in writing or the model corrected. \textbf{Silent tolerance widening is forbidden.}
+\end{itemize}
+
+\subsection{Why 30 seeds, and what it does not buy}
+
+The 30-seed rule is not arbitrary and is not original policy --- it was imposed \emph{after} four
+headline numbers were found to have been distorted by small-sample means evaluated against
+thresholds. None was a modelling error; every one was sampling.
+
+\begin{remark}[The limit of the rule]
+More seeds fixes exactly one class of defect: a small-sample mean landing on the wrong side of a
+threshold. It does nothing for a threshold applied to a mean rather than a distribution, for an
+unverified constant on the measurement path, for a configuration change that perturbs the random
+realisation, or for a claim wider than the experiment supports. \Cref{ch:reproducibility}
+catalogues instances of each, several found in this project's own work \emph{after} the 30-seed
+rule was in force.
+\end{remark}
+
+\subsection{Thresholds must be applied to distributions}
+
+A criterion of the form $V \geq 0.95$ is a \emph{reliability} requirement. Applying it to a mean
+across seeds answers a throughput question instead. Where this thesis reports a threshold crossing
+it reports the distribution alongside --- minimum, maximum, standard deviation, and the count of
+seeds that individually fail --- and where the mean and per-realisation readings disagree, both are
+given.
+
+\section{Pre-registration}
+
+Where a run tests a prediction, the prediction is committed to version control \emph{before the
+data exist}, as its own commit, so the ordering is third-party checkable in the repository history.
+
+This practice is enforced rather than aspirational, and it has cost the project a claim: one
+pre-registration assertion was \emph{withdrawn} rather than reconstructed, because writing an
+expectations file after results are known manufactures evidence. It has also exposed a subtler
+defect in this author's own practice, recorded in \Cref{ch:validation}: a pre-registered
+\emph{directional} prediction that the experiment had no statistical power to resolve.
+
+\needswork{TO ADD: a table of every pre-registration in the project with its commit hash, the
+prediction, and the outcome. The material exists in \texttt{docs/}; the table does not.}
+
+\section{Experiment matrix}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Exp & Question & Primary output \\
+\midrule
+E1 & overhead dominance (T1) & bytes/record, $\varphi$ per encoding \\
+E2 & batching cure (T2/T2a) & $\varphi$ and bytes/rec vs $b$; binding-ceiling check \\
+E3 & loss frontier (T3) & measured $V$ vs $(1-p)^n$; goodput; Pareto plot \\
+E4 & scheme selection (T4) & energy/record, verification wall, crossover \\
+E5 & co-design end-to-end (T5) & bytes/energy/goodput vs baselines \\
+E6--E7 & low-rate arm and its co-design & feasibility partition, Pareto front \\
+E8 & capacity envelope & channel utilisation, $\Nmax$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Baselines throughout are A+JSON (naive), A+CBOR (compression-only) and D over-aggregated.
+
+\section{Simulation campaign}
+
+The simulation scenario uses IEEE 802.11a ad-hoc at $\SI{6}{\mega\bit\per\second}$, RTS/CTS off,
+with $N$ saturated senders in \emph{both} unicast and broadcast modes, frame sizes taken from the
+real framer output. Transport is a packet socket rather than a flow monitor, because MAC-level
+goodput with no addressing artifacts is what the models predict.
+
+\begin{remark}[The comparison rule]
+Each mode is compared \emph{only} to its matching analytic variant: unicast to the acknowledged DCF
+model, broadcast to the published broadcast model. Mixing them is the single most effective way to
+fabricate a model gap, and this project did exactly that for several phases before catching it.
+\end{remark}
+
+\section{Hardware campaign}
+
+Two Raspberry Pi 4 units, headless with the performance governor pinned. Timings are re-run from
+the microbenchmark suite; energy uses external current sensors on a separate measurement host with
+a GPIO synchronisation line, so the benchmarked device is not instrumented by itself.
+
+The energy harness prints its \emph{predicted} value before reading the meter, deliberately, so a
+measurement cannot be quietly fitted to expectation.
+
+\needswork{TO ADD: the measurement uncertainty budget for the energy rig. The residual model gap is
+stated in \Cref{ch:validation} but its error bars are not derived.}

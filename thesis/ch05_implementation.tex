@@ -1,0 +1,69 @@
+\chapter{Implementation}\label{ch:implementation}
+
+\needswork{STATUS: DRAFTED from \texttt{docs/05}. Needs a module-dependency figure.}
+
+\section{Design rule: one home per fact}
+
+The implementation follows one architectural rule that is worth stating because it is what makes
+the reproducibility claims of \Cref{ch:reproducibility} possible. \textbf{Every quantity has
+exactly one definition, and everything else refers to it.} There is one function that produces the
+canonical bytes a signature covers; one airtime implementation shared by the channel model, the
+energy model and the simulation comparison; one place where experiment parameters live.
+
+Where that rule was broken, defects followed. A signature-size constant duplicated between two
+modules produced a stale result that survived a re-freeze. An airtime approximation that existed in
+two forms produced a $12\%$ discrepancy on acknowledgement frames.
+
+\section{The library}
+
+\begin{description}
+\item[\texttt{encodings/}] The $e$ axis: JSON, canonical CBOR (RFC 8949 S4.2), MessagePack, and
+delta-CBOR with keyframes every $K = 16$. Delta encoders are \emph{stateful}; a fresh instance per
+record emits all keyframes and silently inflates sizes --- a trap that cost real time.
+
+\item[\texttt{crypto/}] The $\sigma$ axis: Ed25519 and ECDSA-P256 (both $64$\,B), BLS12-381
+($96$\,B). Known-answer tests from RFC 8032, NIST CAVP and the IETF BLS draft are vendored and must
+pass before any timing work.
+
+\item[\texttt{ledger/}] The data structure being authenticated: the canonical record, the hash
+chain, persistence, and verification with replay and equivocation detection.
+
+\item[\texttt{placement/}] The placement axis. \texttt{wire.py} is the frame format and the one
+place that decides \emph{what bytes a signature covers} --- the audit boundary.
+\texttt{framer.py} holds the header constant and the batch bounds. \texttt{wire\_profile.py}
+measures an integer-keyed \emph{alternative} to the frozen format; it is a measurement and never
+the shipped format, and a test fails if it leaks into one.
+
+\item[\texttt{models/}] The analytical layer: the DCF fixed point with exact OFDM-symbol airtime,
+the published broadcast model, the energy and freshness models, the Pareto search with the
+exclusion tiers, the scheme crossover, and the low-rate PHY with every constant transcribed from
+primary specifications.
+
+\item[\texttt{sim/}] A slot-exact backoff simulator written \emph{before} the published broadcast
+model was located, retained as a cross-check that shares none of that model's assumptions. It earns
+its place in \Cref{ch:validation}.
+\end{description}
+
+\section{Wire format}
+
+\[
+\text{Frame} := \{v, t, \texttt{src}, \texttt{base\_seq}, n, \texttt{recs}[\,], \texttt{auth}\}
+\]
+in canonical CBOR, with the authentication block shaped by placement. The signature input is the
+canonical bytes of the covered region, and test vectors are frozen.
+
+\needswork{TO ADD: a byte-level worked example of one frame, which would make
+\Cref{ch:lowrate}'s header argument immediately legible.}
+
+\section{The two-layer data pipeline}
+
+The pipeline splits deliberately. \textbf{Measured} artifacts --- hardware timings, simulation
+outputs --- are non-deterministic, so they are measured once under controlled conditions, committed
+with environment and configuration-hash headers, and never silently re-rolled. \textbf{Derived}
+artifacts are byte-stable functions of those, so an automated gate re-computes every one of them on
+every run and fails if a single row differs.
+
+This buys reproducibility at the price of \emph{silent staleness} risk: a frozen artifact can go
+stale when an upstream decision changes and the artifact is not re-run. That is not hypothetical
+--- it is exactly what produced the project's first recorded defect. The gate exists because the
+risk is real.

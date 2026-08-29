@@ -1,0 +1,89 @@
+%==============================================================================
+% AUTHBC — PhD/MSc thesis, Mohamed A. Farouk
+%
+% STATUS (2026-08-30). This is a DRAFT SKELETON with the technical core written.
+% Chapter completeness is declared honestly in thesis/STATUS.md — do not present
+% this as a finished thesis. Build:  make thesis
+%==============================================================================
+\documentclass[11pt,a4paper,oneside]{report}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[english]{babel}
+\usepackage[margin=3cm]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{siunitx}
+\usepackage{xcolor}
+\usepackage[hidelinks]{hyperref}
+\usepackage{cleveref}
+\usepackage{setspace}
+\usepackage{fancyhdr}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,fit,backgrounds}
+
+\graphicspath{{.}}
+\onehalfspacing
+\setlength{\parskip}{0.4em}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\nouppercase{\leftmark}}
+\fancyhead[R]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% --- theorem environments ----------------------------------------------------
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[chapter]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\theoremstyle{remark}
+\newtheorem*{remark}{Remark}
+
+% --- notation shorthands (docs/01 S2 is the single source of truth) -----------
+\newcommand{\Hf}{H_f}
+\newcommand{\ga}{g_a}
+\newcommand{\smin}{s_{\min}}
+\newcommand{\smax}{s_{\max}}
+\newcommand{\Nmax}{N_{\max}}
+\newcommand{\Dmax}{D_{\max}}
+\newcommand{\bmaxx}{b_{\max}}
+
+% --- an honest-status flag used in draft chapters ----------------------------
+\newcommand{\needswork}[1]{\par\noindent\textcolor{red!70!black}{\small$\blacktriangleright$ \textit{#1}}\par}
+
+\title{AUTHBC: Feasibility Boundaries for Authenticated UAV Telemetry}
+\author{Mohamed A. Farouk}
+\date{Draft --- \today}
+
+\begin{document}
+
+\input{front}
+
+\tableofcontents
+\listoffigures
+\listoftables
+
+\input{ch01_introduction}
+\input{ch02_background}
+\input{ch03_system_model}
+\input{ch04_theory}
+\input{ch05_implementation}
+\input{ch06_methodology}
+\input{ch07_bytes}
+\input{ch08_codesign}
+\input{ch09_validation}
+\input{ch10_lowrate}
+\input{ch11_reproducibility}
+\input{ch12_conclusions}
+
+\bibliographystyle{IEEEtran}
+\bibliography{refs}
+
+\end{document}

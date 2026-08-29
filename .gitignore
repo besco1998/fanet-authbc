@@ -45,3 +45,13 @@ hw/keys/*
 
 # NOTE: results/raw/*.csv are data-of-record and ARE committed (docs/06 §6). Do not ignore.
 *:Zone.Identifier
+
+# thesis build artifacts (main.pdf IS committed; intermediates are not)
+thesis/*.aux
+thesis/*.log
+thesis/*.out
+thesis/*.toc
+thesis/*.lof
+thesis/*.lot
+thesis/*.bbl
+thesis/*.blg

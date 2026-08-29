@@ -1,0 +1,123 @@
+\chapter{Model Validation and Hardware}\label{ch:validation}
+
+\needswork{STATUS: DRAFTED.}
+
+\section{Three independent implementations of the same physics}
+
+The broadcast channel model is the load-bearing input to the capacity envelope, so it is validated
+against two independent sources rather than one.
+
+\begin{table}[h]
+\centering
+\caption{Saturation throughput (Mb/s), $1400$\,B broadcast frames. The slot-exact simulator was
+written \emph{before} the published model was located and shares none of its assumptions.}
+\label{tab:validation}
+\begin{tabular}{rrrrrr}
+\toprule
+$N$ & published model & slot-exact sim & $\Delta$ & NS-3 & $\Delta$ \\
+\midrule
+5  & 4.3329 & 4.3305 & $-0.06\%$ & 4.3318 & $-0.03\%$ \\
+10 & 3.1319 & 3.1321 & $+0.00\%$ & 3.1288 & $-0.10\%$ \\
+20 & 1.7823 & 1.7830 & $+0.04\%$ & 1.7866 & $+0.24\%$ \\
+35 & 1.2407 & 1.2407 & $-0.00\%$ & 1.2343 & $-0.51\%$ \\
+50 & 1.2595 & 1.2585 & $-0.08\%$ & 1.2541 & $-0.43\%$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Agreement is $\leq 0.08\%$ against the independent simulator and $\leq 0.51\%$ against NS-3. Unicast
+agrees with the acknowledged DCF model to $-0.40$/$+1.29\%$ across $N = 5$--$50$, with fixed-point
+residuals below $10^{-12}$.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.75\textwidth]{fig_ns3_bianchi.png}
+\caption{Analytic models against simulation, both modes.}
+\label{fig:validation}
+\end{figure}
+
+\section{The mechanism, confirmed by removing it}
+
+The reason broadcast needs its own model is a specific asymmetry. A station that has just
+transmitted redraws its backoff and may draw zero, taking the medium immediately after the
+interframe space, while every station that deferred necessarily holds a counter of at least one. In
+unicast the acknowledgement timeout blocks colliders from doing this; in broadcast nothing does.
+
+The slot-exact simulator can disable \emph{exactly} that asymmetry and nothing else. Doing so
+collapses it onto the naive reduction --- a $16.9\times$ gap at $N = 50$. \textbf{The mechanism
+attribution is therefore not an inference from agreement; it is a controlled intervention.}
+
+\begin{remark}[An expensive lesson]
+This project used the naive reduction --- the unicast model with the acknowledgement removed and
+the transmission probability fixed --- for several phases. It under-predicts by $16\times$ at
+$N = 50$. The published broadcast model's own authors open by warning that unicast models cannot
+simply be reduced for broadcast analysis. \emph{The failure was reading a model without reading its
+preamble.}
+\end{remark}
+
+\section{A non-monotonicity that is real}
+
+Saturation throughput is \textbf{not monotone decreasing} in $N$: it dips near $N \approx 35$ and
+recovers. All three implementations reproduce it, so it is a property of the freeze-process series
+rather than a bug --- each freeze stage contributes a hump peaking at a station count set by the
+contention window.
+
+This matters operationally. The capacity search breaks on the first violating $N$, which is valid
+only if utilisation is monotone. It is --- because the explicit factor $N$ in the numerator outruns
+the recovery --- but \textbf{that is an arithmetic accident, not a structural guarantee}, and it is
+now verified exhaustively rather than assumed.
+
+\section{Hardware}
+
+Two Raspberry Pi 4 units in ad-hoc mode at $5$\,GHz measured broadcast link loss at
+$p = 2.3 \times 10^{-4}$ and airtime at $1.995$\,ms per frame against $1.99$\,ms predicted --- an
+independent check on the timing constants underlying every airtime figure in this thesis.
+
+\begin{remark}[Two warnings, both earned]
+This validates \emph{airtime}, not contention: one transmitter means zero contention, so the
+broadcast contention model remains simulation-only.
+
+And an initial $2.4$\,GHz sweep produced a tidy $97.45\%$ delivery figure that was \textbf{saturation
+at the 802.11b $1$\,Mb/s broadcast basic rate}, not channel loss. It was caught by a pre-stated
+prediction plus a load sweep, and is kept in the record labelled as what it was. Repeatability did
+not protect against it --- the standard deviation across windows was small. \emph{A precisely
+reproducible measurement of the wrong thing looks exactly like a good measurement.}
+\end{remark}
+
+\section{The utilisation ceiling, and a flaw in the author's own pre-registration}
+
+The capacity envelope applies one measured utilisation ceiling to configurations whose frames span
+$153$--$299$\,B, but that ceiling had only ever been measured at $288$\,B. A second sweep at
+$174$\,B --- the compression-only baseline frame, which produces the denominators the capacity
+ratios divide by --- tested it, with the prediction committed data-free beforehand.
+
+\begin{center}
+\begin{tabular}{lrr}
+\toprule
+& $288$\,B & $174$\,B \\
+\midrule
+$V \geq 0.95$ crossing & 2.435 & 2.367 \\
+combined standard error & \multicolumn{2}{c}{$\pm 0.151$} \\
+significance of the shift & \multicolumn{2}{c}{$0.45\sigma$} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Statistically indistinguishable across a $1.66\times$ change in frame size.} The universal
+ceiling is justified and no published number moves.
+
+\begin{remark}[The prediction that should not have been made]
+The pre-registration also predicted a \emph{direction} --- that the crossing would drift higher ---
+and offered a mechanism. It drifted lower, at $0.45\sigma$. The experiment has no power to resolve
+the sign, so had the noise fallen the other way the author would have recorded a confirmation he
+had not earned, and the mechanism offered is neither supported nor refuted.
+
+This is recorded rather than quietly dropped because it is the same defect class the rest of this
+thesis catalogues: \textbf{a number that looks like evidence and is not}. A directional prediction
+needs a power estimate, or must be stated as a band. The load-bearing prediction did carry one,
+which is why the run answers its question at all.
+\end{remark}
+
+\textbf{Still untested:} invariance in $N$. Both arms are at $N = 50$ while the envelope applies the
+ceiling from $N = 2$ to $N = 213$. Frame-size invariance was the cheaper half of the assumption and
+the half that varies across the envelope's rows; the other half is stated, not measured.

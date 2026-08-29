@@ -1,0 +1,127 @@
+\chapter{Conclusions, Limitations and Future Work}\label{ch:conclusions}
+
+\needswork{STATUS: DRAFTED. The future-work section is the one most likely to be examined for
+evidence that the candidate understands the work's boundaries; it is written accordingly and
+deliberately does not oversell.}
+
+\section{What this thesis establishes}
+
+\begin{enumerate}
+\item After compression, authentication --- not data --- is the dominant on-air cost of a
+tamper-evident UAV telemetry ledger. At the smallest encoding studied, the signature is larger than
+the record it signs.
+
+\item Frame-level self-batching is the correct placement, and it Pareto-dominates block-level
+aggregation under \emph{any} stationary loss process, not merely under the independent-loss
+assumption the emulator implements.
+
+\item On IEEE 802.11 the freshness deadline binds before the frame size does, so the amplification
+law that motivates aggressive compression is never operative: compression pays exactly $1\times$.
+On low-rate links the frame size binds and the leverage is real. \textbf{The regimes are different
+in kind.}
+
+\item Three of seven EU868 data rates admit no per-frame-verifiable telemetry at any encoding,
+batch, header or chain design, because a $64$\,B signature does not fit a $51$\,B payload. This is
+arithmetic and cannot move.
+
+\item Joined to a validated channel model, the co-designed configuration sustains
+$1.9$--$3.2\times$ the neighbourhood of an inline baseline, at $58.7\%$ fewer on-air bytes, at an
+operating point compliant with 3GPP TS~22.125.
+
+\item Of the four design axes, only placement and batching genuinely interact. The four-axis
+co-design claim, as originally stated, was overstated.
+\end{enumerate}
+
+\section{Limitations, stated as such}
+
+\subsection{Modelling scope}
+
+The single collision domain admits no spatial reuse and no hidden terminals; a real formation has
+both, one helping and one hurting. Mobility was tested and found null for collision-limited
+capacity, but per-frame Doppler is unmodelled --- the null result means mobility does not change
+\emph{collision-limited capacity}, not that mobility is harmless to a link. Loss is independent per
+frame; the ordering result survives correlation but absolute verifiability figures do not. The
+keyframe interval is fixed and unoptimised. Post-quantum sizes are projections, not
+implementations.
+
+\subsection{Validation scope}
+
+Simulation validates \emph{throughput}. Latency, energy and loss behaviour are not validated by it,
+and ``simulation-validated'' must not be read as more. Hardware validates \emph{airtime} on a
+two-node link; contention remains simulation-only. The utilisation ceiling is measured at one node
+count. Composed energy is a lower bound by roughly $10$--$14\%$, and the residual is uncharged
+prototype framing overhead --- measured, stated, not corrected away.
+
+\subsection{The low-rate arm}
+
+Analysis and simulation only: no radio metered, no energy column, one spreading factor per run.
+The capacity figure is a within-one-spreading-factor bound, not a network capacity, and its
+confidence interval is a knife edge.
+
+\subsection{The boundary itself}
+
+Three of the four excluded data rates are arithmetic. The fourth was excluded by this design's own
+frame header, and this thesis says so and quantifies the recovery. A reader should treat the
+three-rate claim as durable and the fourth as an engineering statement about \emph{this} wire
+format.
+
+\section{Future work}
+
+\subsection{Immediately available, and cheap}
+
+\begin{description}
+\item[Invariance of the utilisation ceiling in $N$.] Frame-size invariance was measured; node-count
+invariance was not. One additional sweep closes it, and the scenario already exists.
+
+\item[Pricing implicit certificates.] The certificate accounting charges an explicit certificate
+periodically. Implicit (ECQV) certificates are the standard smaller alternative and were never
+modelled. The current charge is an upper bound, which cuts against this work's own comparison ---
+so the gap is safe but should be closed.
+
+\item[An integer-keyed wire profile, adopted rather than measured.] \Cref{ch:lowrate} measures it
+and declines to adopt it, because the format is frozen for reproducibility. A successor should
+adopt it, re-freeze, and report the boundary that results --- which will be a \emph{smaller}
+exclusion and a better-engineered system.
+\end{description}
+
+\subsection{Substantial, and worth doing}
+
+\begin{description}
+\item[Channel-access delay in the freshness model.] The freshness constraint that \emph{sets} the
+batch omits the dominant delay term at high load. It is currently mitigated by reporting
+utilisation alongside, not by fixing the model. A DCF access-delay term would make the freshness
+constraint credible at high utilisation, where it currently is not.
+
+\item[Multi-spreading-factor capacity on the low-rate arm.] Each run fixes one data rate,
+forfeiting the quasi-orthogonality that supplies much of a real deployment's capacity. That answers
+a different question --- deployment capacity rather than per-configuration feasibility --- and it
+is the question an operator would ask next.
+
+\item[Contention on real hardware.] Two radios validate airtime; the contention model, which
+carries the capacity envelope, remains simulation-only. A rig with enough nodes to reach the
+interesting region of the curve is the single most valuable missing measurement in this thesis.
+
+\item[A post-quantum arm that is implemented rather than projected.] The projections show that
+batching cannot rescue post-quantum signature sizes, because freshness caps the batch and one
+signature plus header already exceeds the frame budget. That is a strong negative result and it
+deserves measurement rather than arithmetic.
+\end{description}
+
+\subsection{Speculative, and stated as such}
+
+The exclusion bound is link-agnostic. Instantiating it on other constrained bands --- and on the
+signature sizes the post-quantum standards actually mandate --- would say which of tomorrow's radio
+and cryptographic combinations are feasible before either is deployed. That is the natural
+generalisation, and it is the one this author would pursue.
+
+\section{Closing}
+
+This thesis introduces no new cryptographic primitive and makes no claim to one. Its contribution
+is a reproducible co-design of existing, standardised components; the quantified trade-offs that
+co-design entails; the boundary beyond which no choice of those components helps at all; and an
+account --- unusually explicit for a thesis --- of the errors made in establishing that boundary and
+the classes of defect that survived the safeguards intended to prevent them.
+
+The most durable result here is also the smallest one that survived scrutiny: on the longest-range
+EU868 data rates, a $64$-byte signature does not fit a $51$-byte payload, and nothing in the design
+space changes that.

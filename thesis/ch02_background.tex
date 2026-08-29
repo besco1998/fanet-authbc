@@ -1,0 +1,125 @@
+\chapter{Background and Related Work}\label{ch:background}
+
+\needswork{STATUS: OUTLINED, PARTLY DRAFTED. The positioning below is adapted from the paper's
+Related Work, where every reference was verified against the Crossref record for its DOI. A thesis
+requires materially broader coverage than a 15-page paper: each section below names the reading
+that must still be done. Do not submit this chapter as it stands. See \texttt{thesis/STATUS.md}.}
+
+\section{Citation integrity in this thesis}
+
+One methodological commitment applies to the whole chapter and is stated before any claim is made.
+Every reference was confirmed against the Crossref record for its DOI rather than from a search
+summary, and no figure or number is quoted from a source that has not been read in full. Where a
+source establishes prior art for something this thesis might otherwise have claimed as novel, that
+is said explicitly.
+
+That rule exists because it was broken once. An early finding claimed this work was the
+\emph{more optimistic} of two LoRa capacity models; the claim was drawn from a figure in a paper
+that reported pure-ALOHA results alongside LoRa results, and the wrong figure was read. The finding
+was retracted and the lesson recorded as a rule: \textbf{quoting the paper is not enough --- quote
+the figure}. \Cref{ch:reproducibility} returns to this.
+
+\section{Flying ad-hoc networks and UAV telemetry}
+
+\needswork{TO WRITE. Required coverage: FANET as distinct from MANET/VANET (mobility degree,
+topology change rate, energy asymmetry); the telemetry workload itself, anchored to autopilot
+source rather than secondary summaries --- PX4's \texttt{MAVLINK\_MODE\_ONBOARD} at 50\,Hz and
+ArduPilot's vehicle-specific defaults; and 3GPP TS~22.125 S5.2.2 as the independent standards
+anchor for direct UAV-to-UAV broadcast. Sources are held; the synthesis is not written.}
+
+\section{Tamper-evident telemetry and hash-chained ledgers}
+
+Nakamoto's hash chain~\cite{nakamoto2008} makes an append-only log tamper-evident: altering a
+record invalidates every subsequent link. UAV-blockchain systems, surveyed
+in~\cite{mehta2020blockchainuav}, place telemetry or attestations on such a chain, gaining
+integrity at a per-record overhead cost. This thesis targets exactly that substrate cost and is
+agnostic to the consensus layer above it; finality and witnessing semantics are out of scope.
+
+\needswork{TO EXPAND: the distinction between a hash chain (integrity of ordering) and a signature
+(attribution) is load-bearing for the threat model in \Cref{ch:sysmodel} and deserves a full
+subsection.}
+
+\section{Signatures for constrained authentication}
+
+ECDSA~\cite{fips186} yields $64$\,B P-256 signatures at 128-bit security but is
+randomness-sensitive. Ed25519~\cite{ed25519,rfc8032} uses a twisted-Edwards curve with
+deterministic nonces for fast, misuse-resistant, batchable verification. BLS~\cite{bls2001} gives
+the shortest signatures via pairings, and~\cite{bgls2003} aggregates $n$ signatures into one at the
+cost of expensive pairing verification.
+
+AUTHBC introduces \emph{no new primitive}. It quantifies \emph{where and when} each scheme wins
+once placement and batching are fixed (\Cref{ch:codesign}), finding Ed25519 dominant for
+self-batching and BLS worthwhile only for cross-signer relay traffic.
+
+Independent work on UAV swarms adopts precisely the design this thesis treats as its naive
+baseline: Rotta and Mykytyn attach a HMAC-256 signature with a timestamp to \emph{each} broadcast
+telemetry message, and observe that MAVLink telemetry messages are much smaller than
+$256$\,bytes~\cite{rotta2024telemetrybroadcast} --- corroborating both the premise and the baseline
+from outside this work. Their construction is a symmetric MAC under a group key, so it provides
+integrity and group authenticity but \emph{not} non-repudiation, and therefore cannot underwrite a
+ledger attributable to a specific UAV. That is a different trust model, not a cheaper solution to
+this one.
+
+\section{Batch and aggregate verification}
+
+Zhang \emph{et al.}~\cite{zhang2008batch} let a roadside unit verify multiple received signatures
+simultaneously, motivated by the same pressure from the opposite side: a hard deadline --- DSRC's
+$300$\,ms --- within which sequential verification does not scale. Their batching is
+\emph{receiver-side} and buys verification time; the batching in this thesis is \emph{sender-side}
+and buys airtime. The two are complementary rather than competing. This work generalises from
+receiver batching to authentication \emph{placement}, co-designs it with encoding and scheme, and
+adds a loss-robustness frontier that pure aggregation does not address.
+
+\needswork{TO WRITE: certificateless aggregate signature (CLAS) schemes as the closest external
+comparator. The finding to develop is the \emph{axis}, not a ratio: published CLAS overheads are
+linear in message count (583--859\,B/record) because aggregation compresses the verifier's work,
+not the wire. Do not claim to beat CLAS --- those schemes buy conditional privacy this work does
+not offer, and their group element is $128$\,B against our $64$\,B. Also outstanding: implicit
+(ECQV) certificates from IEEE 1609.2, which were never priced here.}
+
+\section{Compact serialisation and delta coding}
+
+CBOR~\cite{rfc8949} and MessagePack~\cite{msgpack} give compact binary encodings. Delta coding of
+telemetry time series is established practice, most prominently in Gorilla~\cite{pelkonen2015gorilla},
+which stores delta-of-delta timestamps and XOR-folded values for roughly a $10\times$ reduction.
+
+The variant used here differs in one respect the link forces. Gorilla is a database and can chain
+deltas indefinitely; a lossy broadcast link makes an unbounded chain fragile, so this work
+re-anchors on a keyframe every $K$ records and pays the resulting size for loss independence.
+
+\section{Channel models for IEEE 802.11}
+
+Bianchi's fixed-point analysis of the DCF~\cite{bianchi2000} is the standard model for saturated
+unicast throughput. Broadcast is \emph{not} that model with the acknowledgement removed --- a point
+Ma and Chen make explicitly, and which this project rediscovered expensively. Their broadcast
+model~\cite{machen2007,machen2008} accounts for the backoff-counter Consecutive Freeze Process,
+which dominates when the contention window is small relative to the station count. Tinnirello,
+Bianchi and Xiao~\cite{tinnirello2010} supply the anomalous-slot refinement that explains a
+residual small-frame bias observed in \Cref{ch:validation}.
+
+\section{LoRa and LoRaWAN capacity}
+
+Bor \emph{et al.}~\cite{bor2017lora} provide the only published LoRa capacity model found that is
+grounded in hardware interference measurements rather than an analytical collision assumption, and
+state it in closed form so it can be evaluated at this work's operating point rather than merely
+quoted at theirs. Zirak \emph{et al.}~\cite{zirak2021swarm} supply the only air-to-air LoRa PDR-versus-range
+field data located, which range-limits the capacity result of \Cref{ch:lowrate}.
+
+\needswork{TO EXPAND: LoRaWAN's regional parameters as a \emph{regulatory} rather than a
+technical constraint --- the EU868 duty cycle is enforced per sub-band, which is why adding
+channels buys no extra airtime. This is developed in \Cref{ch:lowrate} but belongs partly here.}
+
+\section{Where this thesis sits}
+
+The adjacent literature almost uniformly proposes a \emph{new construction} and evaluates it
+against its predecessors. This thesis deliberately proposes none. Its contribution is a boundary:
+the set of configurations in which no choice of existing, standardised cryptography is feasible at
+all. That result is arithmetic rather than empirical for the part that matters most, so unlike a
+performance figure it does not move as models, hardware or schemes improve --- and it is invisible
+to the byte models the literature optimises against.
+
+\needswork{HONESTY REQUIREMENT for this section. The reference count currently stands at 46,
+short of the 45--60 a thesis of this scope would normally carry, and it stops there deliberately:
+46 is every source held and \emph{read}. Reaching a higher count requires a genuine sourcing pass
+--- find, download, read, then cite. Padding the list would be the same defect this project spent
+its audit removing.}

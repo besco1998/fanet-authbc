@@ -1,0 +1,128 @@
+\chapter{Introduction}\label{ch:intro}
+
+\section{The problem, in one paragraph}
+
+A flying ad-hoc network of unmanned aerial vehicles must do two things at once that pull against
+each other. It must broadcast telemetry often enough to be useful --- position, velocity, battery,
+mode, tens of times a second --- and it must make that telemetry \emph{tamper-evident}, so that a
+record cannot be forged, replayed or silently altered by a participant or an outsider. The second
+requirement costs bytes. A digital signature at the 128-bit security level is $64$\,B for Ed25519
+or ECDSA-P256, and $96$\,B for the BLS12-381 variant actually shipped by the reference
+implementation. A telemetry record, once compressed, is $45$\,B.
+
+That inequality is the whole thesis. \textbf{The signature is larger than the thing it signs.}
+
+\section{Why this is not simply a compression problem}
+
+The obvious response --- compress harder --- fails, and it fails for a reason worth stating
+precisely. Payload compression was the subject of prior work; this thesis begins where that work
+ends. Once a record is squeezed from $191$\,B of JSON to $45$\,B of delta-encoded CBOR, the
+authentication object has gone from $25\%$ of the on-air cost to $59\%$. Every further byte saved
+on the payload increases the fraction spent on cryptography. Compression does not solve the
+problem; \emph{compression is what creates it}.
+
+The design space that remains has four axes, and this thesis searches them jointly:
+
+\begin{itemize}
+\item \textbf{Encoding} $e$ --- how a record is serialised (JSON, CBOR, MessagePack, delta-CBOR).
+\item \textbf{Placement} --- \emph{where} the signature sits relative to the records it covers:
+      inline per record, self-batched over $b$ of one sender's records, cross-signer aggregated,
+      or block-level across multiple frames.
+\item \textbf{Scheme} $\sigma$ --- which signature algorithm, and therefore how many bytes the
+      authentication object costs and how much CPU verification demands.
+\item \textbf{Batch} $b$ --- how many records share one authentication object, bounded by the
+      frame size on one side and by a freshness deadline on the other.
+\end{itemize}
+
+\section{The question this thesis actually asks}
+
+The literature on efficient authentication asks \emph{how many bytes does my scheme save}. That is
+a useful question and it has been answered many times. This thesis asks a different one, because
+for the deployments that motivate it the byte count is not the binding constraint:
+
+\begin{quote}
+\textbf{Which configurations can run at all?}
+\end{quote}
+
+That reframing --- from optimisation to feasibility --- is the thesis's organising decision, and
+\Cref{ch:reproducibility} records why it was made partway through the work rather than at the
+start. Briefly: as a co-design optimisation the result is mid-tier, because the optimisation is
+largely closed-form and a factorial ablation showed only one genuine interaction among the four
+axes. As a \emph{boundary} result the same evidence is stronger, because an impossibility cannot
+drift as models improve --- and four of this project's own performance numbers did drift, and had
+to be corrected.
+
+\section{Research questions}
+
+\begin{description}
+\item[RQ1] How large is authentication overhead after compression, and where is the payload-size
+      threshold below which it dominates?
+\item[RQ2] Which authentication placement minimises on-air bytes while keeping records verifiable
+      under loss, and what does self-batching change relative to cross-signer aggregation?
+\item[RQ3] When does an aggregatable scheme beat a fast conventional one, as a function of relay
+      fraction, arrival rate and the radio/CPU power ratio?
+\item[RQ4] What is the end-to-end optimal configuration, how much does it beat the naive and
+      compression-only baselines, and do the analytical models survive contention simulation and
+      real hardware?
+\item[RQ5] \emph{(added during the work)} Where is the boundary beyond which no choice of
+      \emph{existing} cryptography is feasible at all --- and how much of that boundary is
+      arithmetic rather than an artifact of this design?
+\end{description}
+
+RQ5 was not in the original charter. It emerged from the low-rate arm and became the thesis's most
+durable result; \Cref{ch:lowrate} develops it and is honest about which part of it survives
+scrutiny and which part does not.
+
+\section{Contributions}
+
+\begin{enumerate}
+\item \textbf{An overhead-dominance characterisation} for compressed authenticated FANET ledgers,
+      with the threshold stated in closed form and measured across four encodings
+      (\Cref{ch:theory}, \Cref{ch:bytes}).
+
+\item \textbf{A placement theory} distinguishing self-batching from cross-signer aggregation, with
+      a loss-robustness frontier proving that frame-level batching Pareto-dominates block-level
+      under any stationary loss process --- not merely under the independent-loss assumption the
+      emulator implements (\Cref{ch:theory}).
+
+\item \textbf{An exclusion bound instantiated on a real band, separated by durability.} Three EU868
+      data rates are excluded \emph{unconditionally}: a $64$\,B signature will not fit a $51$\,B
+      payload at a zero-byte header. A fourth is excluded by \emph{our own} frame header, and the
+      thesis quantifies that contingency rather than leaving it implicit (\Cref{ch:lowrate}).
+
+\item \textbf{A feasibility envelope} rather than a byte ratio: the largest neighbourhood each
+      configuration sustains, at $1.9\times$--$3.2\times$ the inline baseline, reported at two
+      thresholds because they answer different questions (\Cref{ch:codesign}).
+
+\item \textbf{Validated models with their gaps stated}, including a broadcast channel model
+      validated to $\leq 0.08\%$ against an independent slot-exact simulator and $\leq 0.51\%$
+      against NS-3, plus two-radio hardware measurement of the airtime constants
+      (\Cref{ch:validation}).
+
+\item \textbf{An ablation that narrows our own claim}, showing that only placement and batching
+      genuinely interact, and that an apparent encoding interaction was a ratio-scale artifact
+      (\Cref{ch:codesign}).
+
+\item \textbf{A reproducible testbed and a defect taxonomy.} Every model-derived artifact is
+      re-derived byte-identically by an automated gate, and the classes of defect that survived
+      that gate are catalogued --- including the ones found in this work
+      (\Cref{ch:reproducibility}).
+\end{enumerate}
+
+\section{Explicit non-goals}
+
+This thesis introduces no new cryptographic primitive, no new consensus protocol and no
+post-quantum implementation; post-quantum sizes appear only as analytical projections. Key
+compromise, multi-hop routing research and finality semantics are out of scope. The low-rate arm is
+a \emph{modelling} chapter: no LoRa radio was metered and no energy column exists for it.
+
+\section{Structure of this thesis}
+
+\Cref{ch:background} places the work in its literature. \Cref{ch:sysmodel} fixes the system and
+threat models and the notation. \Cref{ch:theory} develops the theory. \Cref{ch:implementation}
+describes what was built and \Cref{ch:methodology} how it was measured. \Cref{ch:bytes} and
+\Cref{ch:codesign} give the 802.11 results; \Cref{ch:validation} the channel-model validation and
+hardware; \Cref{ch:lowrate} the low-rate regime and the exclusion bound.
+\Cref{ch:reproducibility} is unusual for a thesis and deliberate: it reports the errors found in
+this project's own results, how they were found, and what class of defect resisted the safeguards.
+\Cref{ch:conclusions} concludes.

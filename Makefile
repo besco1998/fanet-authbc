@@ -12,7 +12,7 @@ BIN    := $(VENV)/bin
 .DEFAULT_GOAL := help
 .PHONY: help setup lint test verify-frozen all hw-capture hw-reduce \
         bench-micro bench-macro exp-e1 exp-e2 exp-e3 exp-e4 exp-e5 exp-capacity exp-operating-region exp-lora exp-lora-external exp-lora-codesign \
-        sim-ns3 sim-ns3-matrix sim-ns3-dcf sim-ns3-delay sim-lora-capacity sim-ns3-sensitivity export-framesizes figures
+        sim-ns3 sim-ns3-matrix sim-ns3-dcf sim-ns3-delay sim-lora-capacity sim-ns3-sensitivity export-framesizes figures thesis
 
 help:  ## list the supported targets
 	@echo "fanet-authbc — supported targets:"
@@ -116,6 +116,16 @@ hw-capture:  ## P7b (this host): capture the Arduino INA219 stream -> results/hw
 
 hw-reduce:  ## P7b (this host): reduce MANIFEST=… SAMPLES=… -> energy/op + CI
 	$(BIN)/python hw/ina219_capture.py --reduce "$(MANIFEST)" "$(SAMPLES)"
+
+thesis:  ## build thesis/main.pdf  (see thesis/STATUS.md — this is a DRAFT skeleton)
+	@cp -f results/figures/*.png thesis/ 2>/dev/null || true
+	@cp -f paper/refs.bib thesis/refs.bib
+	cd thesis && pdflatex -interaction=nonstopmode main.tex >/dev/null \
+	  && bibtex main >/dev/null \
+	  && pdflatex -interaction=nonstopmode main.tex >/dev/null \
+	  && pdflatex -interaction=nonstopmode main.tex >/dev/null
+	@echo "built thesis/main.pdf (DRAFT)"
+	@echo "DRAFT: $$(grep -ho 'needswork' thesis/*.tex | wc -l) outstanding items; read thesis/STATUS.md before showing this to anyone"
 
 figures:  ## regenerate ALL figures from frozen results/raw -> results/figures/
 	$(BIN)/python analysis/figures_e123.py

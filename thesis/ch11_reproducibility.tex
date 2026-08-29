@@ -1,0 +1,119 @@
+\chapter{Reproducibility, Defects and Research Integrity}\label{ch:reproducibility}
+
+\needswork{STATUS: DRAFTED. This chapter is unusual for a thesis and deliberate. It reports the
+errors found in this project's own results. Examiners should read it as the methodological
+contribution it is intended to be, not as an admission appended to a limitations section.}
+
+\section{Why this chapter exists}
+
+Most theses report what was found. This one also reports \emph{what was found to be wrong, and how}.
+The justification is not confession but transferability: the defects catalogued below are not
+peculiar to this work, and several of them survived safeguards that are widely considered
+sufficient --- version control, a green test suite, seeded runs, committed raw data.
+
+Ten results in this project moved after they were first recorded. Only four were catchable by
+running more seeds. Two were \emph{protected by passing tests}. Three were contradictions between a
+paper and the artifact that generated it.
+
+\section{The defect taxonomy}
+
+\begin{center}
+\begin{tabular}{p{2.2cm}p{5.6cm}p{5.2cm}}
+\toprule
+class & mechanism & instance in this work \\
+\midrule
+\textbf{C1} & small-sample mean lands the wrong side of a threshold & four headline numbers; a
+capacity value $5 \rightarrow 3$ \\
+\textbf{C2} & an unverified constant on the measurement path & the $2.4$\,GHz basic-rate
+saturation; the frame header treated as a constant \\
+\textbf{C3} & a threshold applied to a mean rather than a distribution & the capacity criterion;
+the utilisation crossing \\
+\textbf{C4} & a configuration change that perturbs the random realisation & simulator stream
+displacement under mobility \\
+\textbf{C5} & a claim wider than the experiment supports & two-node hardware described as
+validating contention \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{remark}[The load-bearing observation]
+\textbf{More seeds fixes only C1.} C2--C5 are immune to sample size. ``We ran thirty seeds'' is
+therefore not a statement of correctness, and the discipline installed after the C1 failures gave
+no protection at all against the C2 failures found later.
+\end{remark}
+
+\section{An automated staleness gate, and what it does not cover}
+
+Every model-derived artifact is re-derived from current code on every run and compared row by row;
+a single differing value fails the build. This makes silent staleness of \emph{derived} data
+impossible.
+
+It does not make staleness impossible. Two limits were found the hard way:
+
+\begin{itemize}
+\item \textbf{Scope.} Every drift guard originally parsed the paper. The specification documents
+were outside that scope, so corrections propagated into the paper and not into the documents for
+three weeks --- including a table built verbatim on data the project had already purged and
+superseded.
+\item \textbf{Direction.} Retracting a finding in a register does not remove it from the prose. One
+retracted claim was found alive in the paper months later, one hundred lines below a sentence
+stating the opposite, and later again in the open-items register. \textbf{When you retract, grep the
+whole repository.}
+\end{itemize}
+
+\section{Practices that earned their place}
+
+\begin{description}
+\item[Pre-registration, committed data-free.] Predictions are committed as their own commit before
+data exist, so the ordering is third-party checkable. This cost the project a claim once: an
+assertion of pre-registration was \emph{withdrawn} rather than reconstructed, because writing an
+expectations file after results are known manufactures evidence.
+
+\item[Stating the expected value before measuring.] This is what caught the $2.4$\,GHz
+basic-rate artifact, which repeatability would never have caught.
+
+\item[Retaining a discarded model as a labelled failure curve.] The naive broadcast reduction
+remains in the codebase, clearly marked, so the $16\times$ error it produces can be shown rather
+than described.
+
+\item[Keeping per-seed raw data, not summaries.] This allowed validation bands to be re-derived at
+thirty seeds without re-simulating.
+
+\item[An independent second implementation.] The slot-exact simulator, written before the published
+model was found, shares none of its assumptions and is what turns agreement into evidence.
+\end{description}
+
+\section{Two defects worth stating individually}
+
+\subsection{A test that asserted a bug}
+
+A utilisation function returned exactly zero for a single node, with a unit test asserting that a
+lone sender never contends. The function conflated \emph{contention} with \emph{utilisation}: a lone
+sender does not collide but still occupies airtime, and returning zero declared a single node able
+to carry unbounded traffic. The defect was harmless until another result began reporting
+single-node cases --- \textbf{and it was protected by a passing test that had encoded the wrong
+behaviour as intended behaviour}.
+
+\subsection{A criterion that could not fail}
+
+The project pre-registered a success criterion requiring at least a $40\%$ reduction in
+authentication bytes, and committed it to version control two days before the result existed. The
+ordering is genuine and verifiable.
+
+The quantity it tests, however, reduces exactly to $1 - 1/b$. The threshold is therefore
+$b \geq 2$ --- independent of encoding, scheme, placement, header size and signature size. The
+companion condition on verifiability is satisfied by construction with zero margin. \textbf{No
+configuration that batches at all could have failed the test.}
+
+The pre-registration is real and worth keeping; what had to go was the implication that it
+constituted a risk the design might not have survived.
+
+\section{What a reader should take from this}
+
+Three times in this project a claim survived because two facts were each individually recorded and
+never placed side by side. A register that stores facts separately does not compose them.
+\textbf{Only re-derivation does.}
+
+\needswork{TO ADD: a comparison with the reproducibility literature --- the simulation-credibility
+lineage in particular --- so this chapter reads as a contribution to that conversation rather than
+as a project post-mortem. The companion methods paper does this; the material needs porting.}
