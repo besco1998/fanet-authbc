@@ -9,6 +9,8 @@ sit at three different values in three files. Start here.*
 |---|---|---|
 | 0 | **[`NEXT_STEPS.md`](NEXT_STEPS.md)** | **What to do next** — the prioritised work plan, the strategy decision, and decisions not to re-litigate. Start here if you are resuming |
 | 1 | [`../CLAUDE.md`](../CLAUDE.md) | Standing policy, the Eight Laws, and the **current status board** — always current, read first |
+| 1b | **[`THE_STORY.md`](THE_STORY.md)** | **What we did, in plain language.** The problem, how we thought, the results, the mistakes, the decisions and why. Start here if you want to *understand* the work rather than run or verify it |
+| 1c | **[`HONEST_ASSESSMENT.md`](HONEST_ASSESSMENT.md)** | **What the work is actually worth.** Adversarial self-assessment: which claims survive a hostile reviewer, where this sits in the field, what genuinely lacks, and ranked future work. Written to be uncomfortable |
 | 2 | [`00_PROJECT_CHARTER.md`](00_PROJECT_CHARTER.md) | Scope, research questions, contributions, what is explicitly out of scope |
 | 3 | [`01_SYSTEM_MODEL_ARCHITECTURE.md`](01_SYSTEM_MODEL_ARCHITECTURE.md) | System model, traffic, security model, and the **notation table** (single source of truth for symbols) |
 | 4 | [`02_MATHEMATICAL_FOUNDATIONS.md`](02_MATHEMATICAL_FOUNDATIONS.md) | Theorems **T1–T7**, the channel and energy models, the operating region |
@@ -31,6 +33,7 @@ sit at three different values in three files. Start here.*
 | [`TECHNICAL_NARRATIVE.md`](TECHNICAL_NARRATIVE.md) | The results told as a story, phase by phase |
 | [`audits/model_provenance.md`](audits/model_provenance.md) | **The findings register: F1–F44**, each with evidence. **Retractions are kept visible** — T7, F15, F18, and the Direction C literature claim (2026-08-08) |
 | [`audits/p0.md` … `p7.md`](audits/) | Per-phase audits, contemporaneous |
+| **[`CLAIM_AUDIT.md`](CLAIM_AUDIT.md)** | **Every headline number re-derived from first principles and checked against simulation** (F43/F44, 2026-08-28). ⚠️ Nothing was a wrong number; five constants were conventions nobody wrote down, and one of them moved the headline from four excluded EU868 rates to three |
 | [`audits/scientific_implementation_audit.md`](audits/scientific_implementation_audit.md) | The 2026-08 scientific-implementation, idea/framing and full-paper audits (S1–S10, I1–I4, P1–P2) |
 
 ## Reference
@@ -43,6 +46,7 @@ sit at three different values in three files. Start here.*
 | [`../hw/SETUP.md`](../hw/SETUP.md) | Hardware inventory and the tiered measurement campaign |
 | **[`literature/`](literature/)** | **Primary sources, with a register stating what role each plays** — `USED` / `VALIDATES` / `PRIOR ART` / `POSITIONING`. 50 PDFs. Read [`literature/README.md`](literature/README.md) before citing anything |
 | [`prompts/`](prompts/) | Phase prompts and templates |
+| **[`../thesis/`](../thesis/)** | The thesis. ⚠️ **A DRAFT SKELETON** — build with `make thesis`, and read [`../thesis/STATUS.md`](../thesis/STATUS.md) first, which grades every chapter honestly. It builds to 60 pages with 0 errors, and that number will mislead you: ch. 2 is outlined only, and 24 `\needswork` markers are real outstanding items |
 | **Pre-registrations** | [`DR6_EXPECTATIONS.md`](DR6_EXPECTATIONS.md), [`M4_EXPECTATIONS.md`](M4_EXPECTATIONS.md), [`DIRECTION_C_SURVEY_PROTOCOL.md`](DIRECTION_C_SURVEY_PROTOCOL.md) — each **committed data-free** so the ordering is checkable in git. ⚠️ F40 forced a pre-registration claim to be withdrawn once because the file had never been committed |
 
 ## Historical — kept for provenance, **not** current
@@ -70,6 +74,9 @@ sit at three different values in three files. Start here.*
 | whether a source supports or attacks us | `literature/README.md` — each entry states its role |
 | why LoRa `N_max` is 3 and not 1000 | `literature/README.md` §5 and **F19** — 1 channel / 1 demodulator / 1 SF, so it is a **worst case**; we are more pessimistic than the published model above N≈3 (**F18 said the opposite and is retracted**) — ⚠️ but quote the **curve, not a ratio**: it runs 0.91× at N=2 (we are the more *optimistic* model there), 1.07× at N=3, 2.09–2.17× from N=10 up, and the sign change sits in exactly the region where N_max is decided. ⚠️ Quote it as **3, 95 % CI [2, 3]**; the per-realisation reading gives **1** (S3) |
 | how to re-run an experiment | `05_REPRODUCTION_GUIDE.md` §1–4, or `make help` |
+| a plain-language explanation of anything here | [`THE_STORY.md`](THE_STORY.md) |
+| whether a claim will survive review | [`HONEST_ASSESSMENT.md`](HONEST_ASSESSMENT.md) — graded claim by claim |
+| whether a number was independently re-derived | [`CLAIM_AUDIT.md`](CLAIM_AUDIT.md) |
 | why the exclusion is **three** rates and not four | **F44** — `placement/wire_profile.py`. DR0–DR2 are unconditional; DR3 turns on our own untuned header (H_f 44 → 22 B under integer keys) |
 | what H_f actually is | **a range, 38–44 B** — `framer.measure_frame_header_bytes` (F43b). ⚠️ 44 B is the end most favourable to T6 |
 | whether the U ceiling is frame-size invariant | **yes, measured** — `M4_EXPECTATIONS.md`, 2.367 vs 2.435 at 0.45 σ. ⚠️ N-invariance is still untested |
