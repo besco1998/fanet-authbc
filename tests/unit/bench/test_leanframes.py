@@ -127,3 +127,20 @@ class TestTheAdditiveLayout:
         layout = leanframes.v1_delta_layout()
         assert layout.header_bytes == 44 and layout.link_bytes == 0
         assert layout.frame_bytes(64, 4) == pytest.approx(299.85, abs=0.01)
+
+
+class TestEverySingleBitFlipIsRefused:
+    """Exhaustive for one frame, where the property test in `test_wire_v2.py` samples."""
+
+    CENSUS = leanframes.bit_flip_census(4)
+
+    def test_every_bit_of_the_frame_was_flipped_once(self) -> None:
+        assert self.CENSUS["flips"] == 8 * self.CENSUS["frame_bytes"] == 1392
+
+    def test_none_is_accepted(self) -> None:
+        assert self.CENSUS["accepted_altered"] == 0 == self.CENSUS["accepted_unchanged"]
+        assert self.CENSUS["undecodable"] + self.CENSUS["bad_signature"] == self.CENSUS["flips"]
+
+    def test_most_are_caught_by_the_signature_not_by_the_parser(self) -> None:
+        """Structure is not the defence: five flips in six still parse as a frame."""
+        assert self.CENSUS["bad_signature"] > 5 * self.CENSUS["undecodable"]

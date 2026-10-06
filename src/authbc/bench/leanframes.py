@@ -26,10 +26,12 @@ from statistics import mean
 
 from authbc.bench import telemgen
 from authbc.bench.framesizes import RECORDS_PER_SEED, SIZE_SEEDS
+from authbc.crypto.ed25519 import Ed25519Scheme
 from authbc.encodings.delta_enc import DeltaEncoder
 from authbc.ledger.record import Record
 from authbc.models import frame as frame_model
 from authbc.placement import wire_v2
+from authbc.placement.wire import WireDecodeError
 
 CONVENTION_SRC: int = 40_000
 CONVENTION_BASE_SEQ: int = 180_000
@@ -172,6 +174,38 @@ def _frame_len(chunk: Sequence[Record], prev: Record | None, *, inline: bool,
     f = wire_v2.FrameV2(t=t, src=chunk[0].src, base_seq=chunk[0].seq, link=chunk[0].prev_hash,
                         recs=tuple(chunk), auth=auth)
     return len(wire_v2.encode_frame_v2(f, prev=prev))
+
+
+def bit_flip_census(batch: int = 4, seed: int = 1) -> dict[str, int]:
+    """Flip every bit of one signed frame in turn and count what the receiver does with each.
+
+    A statement like "tampering is detected" is otherwise sampled; this is exhaustive for one
+    frame. `accepted_altered` is the number that matters and must be zero: a flipped frame that
+    decodes, verifies AND yields records other than the ones signed.
+    """
+    scheme = Ed25519Scheme()
+    sk, pk = scheme.keygen(seed=bytes(range(32)))
+    recs = tuple(chained_records(seed, batch))
+    data = wire_v2.encode_frame_v2(wire_v2.build_B_v2(recs, sk))
+    census = {"frame_bytes": len(data), "flips": 0, "undecodable": 0, "bad_signature": 0,
+              "accepted_unchanged": 0, "accepted_altered": 0}
+    for pos in range(len(data)):
+        for bit in range(8):
+            flipped = bytearray(data)
+            flipped[pos] ^= 1 << bit
+            census["flips"] += 1
+            try:
+                frame = wire_v2.decode_frame_v2(bytes(flipped))
+            except (WireDecodeError, wire_v2.DesyncError):
+                census["undecodable"] += 1
+                continue
+            if not wire_v2.verify_v2(frame, pk):
+                census["bad_signature"] += 1
+            elif frame.recs == recs:
+                census["accepted_unchanged"] += 1
+            else:
+                census["accepted_altered"] += 1
+    return census
 
 
 def lean_layout(*, stride: int = 1) -> frame_model.FlatLayout:

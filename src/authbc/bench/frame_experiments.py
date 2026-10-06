@@ -115,6 +115,13 @@ def run_frame_components(cfg: dict) -> list[dict]:
     low = leanframes.lean_frame_sizes(1, src=0, base_seq=0, ts0=0)
     rows.append(_row("frame", "lean", "self-batch at sender 0 and time zero", low, batch=1,
                      ref_interval=1, bytes_per_rec=round(low.mean, 3)))
+
+    # every single-bit flip of one signed frame of the reference batch; `n` is the count
+    census = leanframes.bit_flip_census(cfg["ref_batch"])
+    for outcome in ("flips", "undecodable", "bad_signature", "accepted_unchanged",
+                    "accepted_altered"):
+        rows.append(_row("tamper", "lean", outcome, census["frame_bytes"],
+                         batch=cfg["ref_batch"], ref_interval=1) | {"n": census[outcome]})
     return rows
 
 

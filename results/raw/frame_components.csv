@@ -68,3 +68,8 @@ frame,lean,self-batch,,,4,16,158.96,158,174,7500,39.74
 frame,lean,inline,,,1,1,146.765,143,148,30000,146.765
 frame,lean,inline,,,4,1,371.999,369,373,7500,93.0
 frame,lean,self-batch at sender 0 and time zero,,,1,1,139.558,134,142,30000,139.558
+tamper,lean,flips,,,4,1,174,174,174,1392,
+tamper,lean,undecodable,,,4,1,174,174,174,209,
+tamper,lean,bad_signature,,,4,1,174,174,174,1183,
+tamper,lean,accepted_unchanged,,,4,1,174,174,174,0,
+tamper,lean,accepted_altered,,,4,1,174,174,174,0,

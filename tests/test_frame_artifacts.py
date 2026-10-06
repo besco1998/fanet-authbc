@@ -64,6 +64,11 @@ class TestFrameComponents:
         grows = {r["item"] for r in fields if r["min_bytes"] != r["max_bytes"]}
         assert grows == {"src", "base_seq"}        # only the two integers that grow in flight
 
+    def test_every_single_bit_flip_of_a_design_frame_is_refused(self) -> None:
+        n = {r["item"]: int(r["n"]) for r in self.COMP if r["kind"] == "tamper"}
+        assert n["flips"] == 1392 == n["undecodable"] + n["bad_signature"]
+        assert n["accepted_altered"] == 0 == n["accepted_unchanged"]
+
     def test_every_delta_record_of_the_standard_protocol_has_one_size(self) -> None:
         """What the review called 'looks synthetic', stated as a fact about the generator."""
         for fmt, size in (("first", "44"), ("lean", "9")):

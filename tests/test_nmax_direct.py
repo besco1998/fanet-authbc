@@ -179,6 +179,8 @@ class TestTheCommittedSummaryIsTheCommittedRuns:
             assert float(r["frames_per_s"]) == cell.fps
             assert 0 < rx <= tx * (n - 1)
             assert float(r["delivered_frac"]) == pytest.approx(rx / (tx * (n - 1)), abs=1e-6)
-            # each node sends for sim_time seconds at fps; the first frame leaves one period in
+            # each node sends for sim_time seconds at fps; the first frame leaves one period in.
+            # A rate offset of s ppm lets a node send that much more or less than nominal.
             expected = n * cell.fps * float(r["sim_time_s"])
-            assert expected - 2 * n <= tx <= expected
+            skew = float(r["skew_ppm"]) * 1e-6
+            assert expected * (1 - skew) - 2 * n <= tx <= expected * (1 + skew)

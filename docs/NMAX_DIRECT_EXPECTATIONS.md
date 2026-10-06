@@ -340,3 +340,69 @@ best), under all five sources.
   `docs/OPEN_ITEMS.md` as an open question rather than being given a story.
 * *3 or 4 fails.* The mechanism in (c) is withdrawn as an explanation of the spread, whatever
   1 and 2 say.
+
+---
+
+# Follow-up F1b — outcome (2026-10-06)
+
+Sweep: 120 runs (`ns3_nmax_direct_runs.csv`). Per-node: 20 runs
+(`results/raw/ns3_phase_lock_diagnostic.csv`, `ns3/run_phase_lock_diagnostic.py`). The rebuilt
+scenario reproduces eight stored strictly periodic runs and six stored jittered runs exactly.
+
+| point | J = one period | sweep (0.1 ms, ±5000 ppm) | difference of means |
+|---|---|---|---|
+| A, N = 29 | 0.9610 (0.0016) | 0.9618 (0.0052) | +0.0008 |
+| A, N = 33 | 0.9480 (0.0016) | 0.9490 (0.0040) | +0.0010 |
+| D, N = 109 | 0.9625 (0.0015) | 0.9630 (0.0029) | +0.0005 |
+| D, N = 131 | 0.9436 (0.0018) | 0.9425 (0.0057) | −0.0011 |
+
+1. **The spread is the configuration — FAILS as stated.** The sweep's per-seed standard deviation
+   is 0.0052, 0.0040, 0.0029 and 0.0057: under the 0.004 predicted at one point of four. It is
+   four to eight times below the strictly periodic value and still two to four times above
+   J = one period. A sweep of ±5000 ppm does not visit configurations as thoroughly as redrawing
+   them does, and whether a faster one would is untested.
+2. **All sources estimate one number — holds.** The sweep mean is within 0.0011 of the
+   J = one period mean at every point. Strictly periodic traffic whose phases move and traffic
+   re-drawn every period deliver the same. (The 0.005 by which J = 1 ms sat above J = one period
+   in cell A is gone under the sweep: it was one sample of thirty configurations, as suspected.)
+3. **Frozen loss sits on a few nodes — holds.** Strictly periodic, seed 6: **four nodes deliver
+   0 %**, 22 deliver exactly 100 %, the median node 100 %. Seed 13: two nodes at 0 %, one at 78 %,
+   median 100 %. Seed 16: no node under 94 %, 25 at exactly 100 %.
+4. **Moving phases spread it out — holds.** Under J = one period every node delivers 0.948–0.973
+   in all four seeds; under the sweep 0.921–0.981.
+
+**What the per-node data say that the totals could not.** A strictly periodic run is not a noisy
+sample of the mean. It is close to deterministic: most nodes never lose a frame, and a few —
+those whose fixed phase puts them inside the same busy period, or within 4 µs of another node —
+lose a sixteenth, an eighth, or all of theirs, for the whole run. The 30-seed mean of such runs
+is unbiased (F1, and prediction 2 here), but each run is one phase configuration, and the
+dispersion across runs describes the lottery of configurations, not a property of the channel.
+
+**Decision, by the rule registered above ("1 fails").** The remaining runs use
+**J = one period**: unbiased against every other source tested (twelve comparisons in F1, four
+here), and the tightest. The sweep is not used. That the sweep's spread stopped at 0.003–0.006
+rather than collapsing further is **not explained**, and goes to `docs/OPEN_ITEMS.md` as a
+question, not a story. Stage-1 values (strictly periodic) stay in the record beside the new
+ones. The per-run criterion is reported for J = one period only.
+
+# Amendment to F2 — made before any held-out cell is run with the designated source
+
+F2 above was written for "the source F1 designates" and with constants fitted to the **strictly
+periodic** stage-1 crossings. The designated source is now J = one period, and the two F1 points
+that exist under both sources put the crossing about 4 % higher under it (cell A: 31.0 → 32.4;
+cell D: 118.3 → 123.5), which is inside the stage-1 intervals but would eat most of F2's ±6 %
+tolerance for a reason that has nothing to do with the question F2 asks.
+
+So the calibration is moved to the same source as the test, **by a procedure fixed here**:
+
+1. The six registered cells A–F are run with J = one period.
+2. From their interpolated crossings N*ᵢ, aᵢ = (0.05 / (N*ᵢ·Λ/b) − c) / Tᵢ with c = 8 µs
+   unchanged, and **a = the mean of the six**. Nothing else is fitted, and no held-out cell is
+   looked at.
+3. The seven held-out predictions are recomputed with that a and committed, **before** any
+   held-out cell is run.
+
+The prediction keeps its form and its tolerance: all seven within ±6 % of the airtime line, and
+closer to it than to the single ceiling in the five diagnostic cells. The predictions made with
+the original a = 0.0749 stay in the table above and their outcome is reported too; a result
+that holds only with the re-estimated constant is reported as exactly that.
