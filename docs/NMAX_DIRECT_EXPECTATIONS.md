@@ -440,15 +440,35 @@ stage-1 intervals contain five of the six new values (E is 0.13 nodes above its 
 by **0.0031** on average (10 of 14 positive; the largest single difference is 1.81 standard
 errors).
 
-⚠️ That is not six confirmations of a bias, and it is not none. The 30 seeds are the same 30
-draws of start offsets in every cell — offsets are drawn as a fraction of the period, in node
-order — so the strictly periodic sample's error is common to all six cells and cannot average out
-across them. The data on hand cannot separate "these 30 phase configurations happen to be a
-little unlucky" from "a frozen source delivers 0.003 less". F1's registered criterion (every
-difference under 2.5 standard errors, average within ±0.005) is met by the larger set as it was
-by the first; what F1 did **not** establish is that the difference is zero. In nodes, 0.003 is one
-to three. Deciding it needs strictly periodic runs on fresh seeds: `docs/OPEN_ITEMS.md` G6. No
-reported capacity depends on the answer — they are all from the source designated in F1b.
+> ⚠️ **The next paragraph is WRONG and was committed (`fad28e0`). Kept struck through; the
+> correction follows it.**
+>
+> ~~That is not six confirmations of a bias, and it is not none. The 30 seeds are the same 30
+> draws of start offsets in every cell — offsets are drawn as a fraction of the period, in node
+> order — so the strictly periodic sample's error is common to all six cells and cannot average
+> out across them. The data on hand cannot separate "these 30 phase configurations happen to be a
+> little unlucky" from "a frozen source delivers 0.003 less".~~
+
+**Correction, same day, before any held-out result was read.** The struck paragraph explained the
+common sign by shared phase draws. I had inferred that from reading the scenario and did not
+check it. Checked: under the strictly periodic source, per-seed delivery at *different* node
+counts of one cell is uncorrelated (30 adjacent pairs: mean correlation +0.01, range −0.27 to
++0.44), and between two cells at the *same* node count it is almost perfectly correlated (A and C
+at N = 31: 0.98). ns-3 hands out random streams in creation order, so the start offsets depend on
+N and not on the cell. Of the 14 common points only A/31 and C/31 share draws.
+
+So the 14 differences are close to independent, and their average, **+0.0031, has a standard
+error of 0.0014** (2.2 standard errors; weighted by precision, +0.0019 ± 0.0012). That is weak
+evidence of a real difference of about 0.002–0.003, not sampling error shared between cells —
+and it is not established. If the phases are uniform and a period's losses depend only on that
+period's phases, the expected difference is zero, so a real one would need a mechanism that is
+not yet identified.
+
+F1's registered criterion (every difference under 2.5 standard errors, average within ±0.005) is
+met by the larger set as it was by the first; what F1 did **not** establish is that the
+difference is zero. In nodes, 0.003 is one to three. More strictly periodic runs would decide it
+(`docs/OPEN_ITEMS.md` G6). No reported capacity depends on the answer — they are all from the
+source designated in F1b.
 
 *Correction to the disclosure above:* the LoRaWAN library, rebuilt in the same pass as the
 scenario, has since been re-checked. `run_lora_capacity.py` at N = 2, 3 and 5 (90 runs)
