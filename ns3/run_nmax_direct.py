@@ -10,9 +10,9 @@ Predictions and the decision rule were committed before the first run, and each 
 before its own runs: `docs/NMAX_DIRECT_EXPECTATIONS.md`.
 
 Writes two files:
-  results/raw/ns3_nmax_direct_runs.csv   one row per (cell, jitter, N, seed) — raw simulator output
-  results/raw/ns3_nmax_direct.csv        per-(cell, jitter, N) dispersion, then one CROSSING row
-                                         per (cell, jitter)
+  results/raw/ns3_nmax_direct_runs.csv   one row per (cell, source, N, seed) — raw simulator output
+  results/raw/ns3_nmax_direct.csv        per-(cell, source, N) dispersion, then one CROSSING row
+                                         per (cell, source); a source is (jitter, rate offset)
 
 The summary is a pure function of the runs file (`summarise`), so it can be rebuilt and checked on
 a machine without NS-3: `--summarise-only`, and `tests/test_nmax_direct.py`.
@@ -101,9 +101,34 @@ def default_grid(model_n: int) -> list[int]:
     return [model_n + k * step for k in (-3, -2, -1, 0, 1, 2)]
 
 
-def jitter_ms_of(spec: str, fps: float) -> float:
-    """`--jitter` as milliseconds: a number, or ``period`` for one full sending period."""
-    return 1000.0 / fps if spec == "period" else float(spec)
+def source_of(spec: str, fps: float) -> tuple[float, float]:
+    """A traffic-source spec as (jitter in ms, rate offset in ppm).
+
+    ``J`` or ``J/S``. J is the per-frame send jitter: a number of milliseconds, or ``period`` for
+    one full sending period; 0 is the published strictly periodic source. S, if given, offsets
+    each node's rate by up to ±S ppm so that relative phases sweep during the run.
+    """
+    jitter, _, skew = spec.partition("/")
+    return (1000.0 / fps if jitter == "period" else float(jitter)), float(skew or 0.0)
+
+
+def read_plan(path: Path) -> list[tuple[str, str, list[int]]]:
+    """A run plan: one `cell source n1 n2 ...` per line (source as `--source`); `#` comments.
+
+    One process then holds every result in memory from start to finish, so a long campaign is
+    written by a single writer and cannot lose rows to a second invocation re-reading a file
+    that something else (a commit hook stashing the working tree) had momentarily reverted.
+    """
+    plan = []
+    for line in path.read_text().splitlines():
+        fields = line.split("#", 1)[0].split()
+        if not fields:
+            continue
+        cell, source, *ns = fields
+        if cell not in CELLS or not ns:
+            raise SystemExit(f"bad plan line: {line!r}")
+        plan.append((cell, source, [int(n) for n in ns]))
+    return plan
 
 
 def _binary() -> tuple[Path, Path]:
@@ -112,7 +137,8 @@ def _binary() -> tuple[Path, Path]:
 
 
 def run_one(frame_bytes: int, fps: float, n_nodes: int, seed: int, sim_time: float,
-            *, jitter_ms: float = 0.0, via_ns3: bool = False) -> dict[str, float]:
+            *, jitter_ms: float = 0.0, skew_ppm: float = 0.0,
+            via_ns3: bool = False) -> dict[str, float]:
     root, binary = _binary()
     with tempfile.TemporaryDirectory() as td:
         prefix = Path(td) / "d"
@@ -120,6 +146,8 @@ def run_one(frame_bytes: int, fps: float, n_nodes: int, seed: int, sim_time: flo
                 f"--simTime={sim_time}", f"--seed={seed}", f"--outPrefix={prefix}"]
         if jitter_ms > 0.0:                 # absent by default: the published scenario, untouched
             args.append(f"--txJitterMs={jitter_ms!r}")
+        if skew_ppm > 0.0:
+            args.append(f"--txSkewPpm={skew_ppm!r}")
         if via_ns3:
             cmd = ["./ns3", "run", "authbc-delay " + " ".join(args)]
             env = None
@@ -145,18 +173,20 @@ def verify(sim_time: float) -> None:
 
 
 def read_runs(path: Path) -> list[dict[str, str]]:
-    """The raw runs. Rows written before the jitter option existed are jitter 0 by construction."""
+    """The raw runs. Rows written before a source option existed did not use it: it reads as 0."""
     if not path.exists():
         return []
     rows = list(csv.DictReader(ln for ln in path.read_text().splitlines()
                                if not ln.startswith("#")))
     for r in rows:
         r["jitter_ms"] = r.get("jitter_ms") or "0"
+        r["skew_ppm"] = r.get("skew_ppm") or "0"
     return rows
 
 
-def _run_key(r: dict[str, str]) -> tuple[str, float, int, int]:
-    return (r["cell"], float(r["jitter_ms"]), int(r["n_nodes"]), int(r["seed"]))
+def _run_key(r: dict[str, str]) -> tuple[str, float, float, int, int]:
+    return (r["cell"], float(r["jitter_ms"]), float(r["skew_ppm"]), int(r["n_nodes"]),
+            int(r["seed"]))
 
 
 def _write(path: Path, rows: list[dict], run: str, config: dict) -> None:
@@ -178,24 +208,25 @@ def _per_run_crossing(per_n: dict[int, list[float]]) -> int:
 
 
 def summarise(runs: list[dict[str, str]], seeds: int) -> list[dict]:
-    """Per-(cell, jitter, N) dispersion rows, then one CROSSING row per (cell, jitter).
+    """Per-(cell, source, N) dispersion rows, then one CROSSING row per (cell, source).
 
-    A node count enters only once all ``seeds`` runs are on file, so a half-finished sweep can be
-    summarised without a short sample being compared against the threshold.
+    A source is a (jitter, rate offset) pair. A node count enters only once all ``seeds`` runs
+    are on file, so a half-finished sweep can be summarised without a short sample being compared
+    against the threshold.
     """
-    groups: dict[tuple[str, float], dict[int, list[float]]] = {}
+    groups: dict[tuple[str, float, float], dict[int, list[float]]] = {}
     for r in runs:
-        cell, jitter, n, _ = _run_key(r)
-        groups.setdefault((cell, jitter), {}).setdefault(n, []).append(
+        cell, jitter, skew, n, _ = _run_key(r)
+        groups.setdefault((cell, jitter, skew), {}).setdefault(n, []).append(
             float(r["delivered_frac"]))
     out: list[dict] = []
-    for cell, jitter in sorted(groups, key=lambda k: (list(CELLS).index(k[0]), k[1])):
+    for cell, jitter, skew in sorted(groups, key=lambda k: (list(CELLS).index(k[0]), *k[1:])):
         c = CELLS[cell]
-        per_n = {n: v for n, v in groups[(cell, jitter)].items() if len(v) == seeds}
+        per_n = {n: v for n, v in groups[(cell, jitter, skew)].items() if len(v) == seeds}
         if not per_n:
             continue
         head = {"cell": cell, "config": c.label, "frame_bytes": c.frame_bytes, "batch": c.batch,
-                "lambda_rec_per_s": c.lam, "jitter_ms": f"{jitter:g}"}
+                "lambda_rec_per_s": c.lam, "jitter_ms": f"{jitter:g}", "skew_ppm": f"{skew:g}"}
         frame_s = bianchi.t_broadcast(c.frame_bytes)
         for n in sorted(per_n):
             v = per_n[n]
@@ -236,12 +267,15 @@ def summarise(runs: list[dict[str, str]], seeds: int) -> list[dict]:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--plan", type=Path,
+                    help="file of `cell source n1 n2 ...` lines, run in order by this one process")
     ap.add_argument("--cells", nargs="+", default=list("ABCDEF"), choices=list(CELLS))
     ap.add_argument("--n", type=int, nargs="+",
                     help="explicit node counts (one cell only); default: a grid round the model")
-    ap.add_argument("--jitter", default="0",
-                    help="per-frame send jitter in ms, or 'period' for one full period; "
-                         "0 = the published strictly periodic source (default)")
+    ap.add_argument("--source", default="0",
+                    help="traffic source as J or J/S: per-frame jitter J in ms (or 'period'), "
+                         "optional rate offset S in ppm; 0 = the published strictly periodic "
+                         "source (default)")
     ap.add_argument("--seeds", type=int, default=30)
     ap.add_argument("--sim-time", type=float, default=20.0)
     ap.add_argument("--workers", type=int, default=8)
@@ -253,31 +287,36 @@ def main() -> None:
         return
     if args.n and len(args.cells) != 1:
         raise SystemExit("--n applies to exactly one cell")
+    plan = read_plan(args.plan) if args.plan else [
+        (cell, args.source, args.n or default_grid(CELLS[cell].model_n)) for cell in args.cells]
 
     runs_path = RAW / "ns3_nmax_direct_runs.csv"
     runs = read_runs(runs_path)
     done = {_run_key(r) for r in runs}
+    on_file = len(done)
     todo = []
     if not args.summarise_only:
-        for cell in args.cells:
-            c = CELLS[cell]
-            jitter = jitter_ms_of(args.jitter, c.fps)
-            for n in (args.n or default_grid(c.model_n)):
+        for cell, spec, ns in plan:
+            jitter, skew = source_of(spec, CELLS[cell].fps)
+            for n in ns:
                 for seed in range(1, args.seeds + 1):
-                    if (cell, jitter, n, seed) not in done:
-                        todo.append((cell, jitter, n, seed))
-    print(f"{len(done)} runs on file, {len(todo)} to do, {args.workers} at a time", flush=True)
+                    key = (cell, jitter, skew, n, seed)
+                    if key not in done:
+                        todo.append(key)
+                        done.add(key)                 # a plan may name a point twice
+    print(f"{on_file} runs on file, {len(todo)} to do, {args.workers} at a time", flush=True)
 
-    def job(t: tuple[str, float, int, int]) -> dict:
-        cell, jitter, n, seed = t
+    def job(t: tuple[str, float, float, int, int]) -> dict:
+        cell, jitter, skew, n, seed = t
         c = CELLS[cell]
-        r = run_one(c.frame_bytes, c.fps, n, seed, args.sim_time, jitter_ms=jitter)
+        r = run_one(c.frame_bytes, c.fps, n, seed, args.sim_time, jitter_ms=jitter,
+                    skew_ppm=skew)
         return {"cell": cell, "frame_bytes": c.frame_bytes, "frames_per_s": c.fps, "n_nodes": n,
                 "seed": seed, "sim_time_s": args.sim_time,
                 "tx_frames": int(r["tx_frames"]), "rx_frames": int(r["rx_frames"]),
                 "delivered_frac": r["delivered_frac"], "delay_mean_ms": r["delay_mean_ms"],
                 "delay_p99_ms": r["delay_p99_ms"], "delay_max_ms": r["delay_max_ms"],
-                "jitter_ms": f"{jitter:g}"}
+                "jitter_ms": f"{jitter:g}", "skew_ppm": f"{skew:g}"}
 
     config = {"seeds": args.seeds, "t": args.sim_time,
               "cells": {k: vars(c) for k, c in CELLS.items()}}
@@ -295,7 +334,8 @@ def main() -> None:
         if r["n_nodes"] == "CROSSING":
             interp = (f"  interp {r['n_cross_interp']} [{r['n_cross_interp_lo']}, "
                       f"{r['n_cross_interp_hi']}]" if "n_cross_interp" in r else "")
-            print(f"  {r['cell']:<2} {r['config']:<28} jitter {r['jitter_ms']:>4} ms  "
+            print(f"  {r['cell']:<2} {r['config']:<28} jitter {r['jitter_ms']:>4} ms "
+                  f"skew {r['skew_ppm']:>5} ppm  "
                   f"N_max = {r['n_max_mean']} [{r['n_max_ci_lo']}, {r['n_max_ci_hi']}]{interp}  "
                   f"per-run {r['n_max_per_run']}  model {r['model_n_max']} "
                   f"({r['deviation_pct']:+.1f} %)  "

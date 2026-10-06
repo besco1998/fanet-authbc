@@ -34,15 +34,11 @@ def _rows(path: Path) -> list[dict[str, str]]:
                                if not ln.startswith("#")))
 
 
-def _runs(cell: str, per_n: dict[int, list[float]], jitter: str | None = None) -> list[dict]:
-    out = []
-    for n, values in per_n.items():
-        for seed, v in enumerate(values, 1):
-            row = {"cell": cell, "n_nodes": str(n), "seed": str(seed), "delivered_frac": str(v)}
-            if jitter is not None:
-                row["jitter_ms"] = jitter
-            out.append(row)
-    return out
+def _runs(cell: str, per_n: dict[int, list[float]], jitter: str = "0",
+          skew: str = "0") -> list[dict]:
+    return [{"cell": cell, "n_nodes": str(n), "seed": str(seed), "delivered_frac": str(v),
+             "jitter_ms": jitter, "skew_ppm": skew}
+            for n, values in per_n.items() for seed, v in enumerate(values, 1)]
 
 
 class TestSummaryLogic:
@@ -50,8 +46,6 @@ class TestSummaryLogic:
              32: [0.90] * 4}
 
     def _crossing(self, runs: list[dict], seeds: int = 4) -> dict:
-        for r in runs:
-            r.setdefault("jitter_ms", "0")
         return next(r for r in drv.summarise(runs, seeds) if r["n_nodes"] == "CROSSING")
 
     def test_n_max_is_the_samples_crossing(self) -> None:
@@ -86,30 +80,53 @@ class TestSummaryLogic:
         row = self._crossing(_runs("A", {20: [0.99] * 4, 24: [0.98] * 4}))
         assert row["bracketed"] == 0 and "n_cross_interp" not in row
 
-    def test_jitter_settings_are_summarised_separately(self) -> None:
-        runs = _runs("A", self.PER_N, "0") + _runs("A", {20: [0.99] * 4, 24: [0.9] * 4}, "1")
+    def test_each_traffic_source_is_summarised_separately(self) -> None:
+        other = {20: [0.99] * 4, 24: [0.9] * 4}
+        runs = (_runs("A", self.PER_N) + _runs("A", other, "1")
+                + _runs("A", {20: [0.9] * 4}, "1", "5000"))
         rows = [r for r in drv.summarise(runs, 4) if r["n_nodes"] == "CROSSING"]
-        assert [(r["jitter_ms"], r["n_max_mean"]) for r in rows] == [("0", 24), ("1", 20)]
+        assert [(r["jitter_ms"], r["skew_ppm"], r["n_max_mean"]) for r in rows] == [
+            ("0", "0", 24), ("1", "0", 20), ("1", "5000", 0)]
 
     def test_each_row_carries_the_load_in_both_units(self) -> None:
-        row = next(r for r in drv.summarise(
-            [dict(r, jitter_ms="0") for r in _runs("D", {120: [0.95] * 4})], 4)
-            if r["n_nodes"] == 120)
+        row = next(r for r in drv.summarise(_runs("D", {120: [0.95] * 4}), 4)
+                   if r["n_nodes"] == 120)
         # 120 nodes x 12.5 frames/s x 338 us of busy medium per 173 B frame
         assert row["airtime_occupancy"] == pytest.approx(120 * 12.5 * 338e-6, abs=1e-4)
         assert row["model_util"] == pytest.approx(2.011, abs=1e-3)
 
 
-class TestJitterOption:
+class TestTrafficSource:
     def test_a_number_is_milliseconds_and_period_is_one_sending_period(self) -> None:
-        assert drv.jitter_ms_of("0", 12.5) == 0.0
-        assert drv.jitter_ms_of("0.1", 12.5) == 0.1
-        assert drv.jitter_ms_of("period", 12.5) == 80.0 and drv.jitter_ms_of("period", 50) == 20.0
+        assert drv.source_of("0", 12.5) == (0.0, 0.0)
+        assert drv.source_of("0.1", 12.5) == (0.1, 0.0)
+        assert drv.source_of("period", 12.5) == (80.0, 0.0)
+        assert drv.source_of("period", 50) == (20.0, 0.0)
 
-    def test_runs_recorded_before_the_option_existed_are_strictly_periodic(self, tmp_path) -> None:
+    def test_a_rate_offset_follows_a_slash(self) -> None:
+        assert drv.source_of("0.1/5000", 50) == (0.1, 5000.0)
+
+    def test_runs_recorded_before_an_option_existed_did_not_use_it(self, tmp_path) -> None:
         p = tmp_path / "runs.csv"
         p.write_text("# old\ncell,n_nodes,seed,delivered_frac\nA,25,1,0.97\n")
-        assert drv.read_runs(p)[0]["jitter_ms"] == "0"
+        (row,) = drv.read_runs(p)
+        assert (row["jitter_ms"], row["skew_ppm"]) == ("0", "0")
+
+
+class TestRunPlan:
+    def test_lines_are_cell_jitter_and_node_counts(self, tmp_path) -> None:
+        p = tmp_path / "plan.txt"
+        p.write_text("# stage 2\nA 0.1/5000 28 30 32   # fine grid\n\nRD period 240 300\n")
+        assert drv.read_plan(p) == [("A", "0.1/5000", [28, 30, 32]),
+                                    ("RD", "period", [240, 300])]
+
+    @pytest.mark.parametrize("line", ["Z 1 30", "A 1"])
+    def test_an_unknown_cell_or_a_line_without_node_counts_is_refused(self, tmp_path,
+                                                                      line: str) -> None:
+        p = tmp_path / "plan.txt"
+        p.write_text(line + "\n")
+        with pytest.raises(SystemExit, match="bad plan line"):
+            drv.read_plan(p)
 
 
 class TestCellsAreTheLaddersFrames:
@@ -145,11 +162,13 @@ class TestTheCommittedSummaryIsTheCommittedRuns:
         assert [{k: str(r.get(k, "")) for k in fields} for r in rebuilt] == self.SUMMARY
 
     def test_every_summarised_point_has_thirty_seeds_numbered_1_to_30(self) -> None:
+        def point(r: dict[str, str]) -> tuple[str, ...]:
+            return (r["cell"], r["jitter_ms"], r.get("skew_ppm") or "0", r["n_nodes"])
+
         seeds: dict[tuple, set[int]] = {}
         for r in self.RUNS:
-            seeds.setdefault((r["cell"], r["jitter_ms"], r["n_nodes"]), set()).add(int(r["seed"]))
-        points = {(r["cell"], r["jitter_ms"], r["n_nodes"]) for r in self.SUMMARY
-                  if r["n_nodes"] != "CROSSING"}
+            seeds.setdefault(point(r), set()).add(int(r["seed"]))
+        points = {point(r) for r in self.SUMMARY if r["n_nodes"] != "CROSSING"}
         assert points and all(seeds[p] == set(range(1, 31)) for p in points)
 
     def test_every_run_is_a_possible_simulator_output(self) -> None:

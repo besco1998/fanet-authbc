@@ -89,6 +89,48 @@ Quantified by Gilbert–Elliott simulation at matched mean p=0.05: V_D(n=2) rise
 (independent) to 0.9447 at a mean burst of 10 frames and 0.9498 at 160 — asymptotically 1−p, never
 past it, and never reaching the 0.95 feasibility threshold.
 
+### T3′ — a frame coded against its predecessor is not self-verifiable (2026-10-06, audit F46) ⚠️
+
+*Implemented: `models/frame.py` (`verifiability`, `verifiability_gilbert`, `max_ref_interval`);
+measured with the decoder in the loop: `results/raw/e3_codec_loss.csv`.*
+
+T3 says V_B = 1 − p because "each frame is self-verifiable". **That premise fails for a delta
+encoding whose keyframes are rarer than its frames**, and the design this document headlined was
+one: keyframe every K = 16 records, batch b = 4, so only one frame in R = K/b = 4 can be decoded
+without the frame before it. A receiver cannot verify what it cannot rebuild — the signature is
+over the records, not over the bytes on air — so a lost frame takes every later frame with it
+until the next self-contained one.
+
+**Statement.** Let one frame in R be self-contained (R = 1: every frame is). Frame j of a group
+(j = 1…R) verifies iff it and the j − 1 before it in the group all arrive, so under independent
+loss
+
+        V(R, p) = (1/R) · Σ_{j=1..R} (1 − p)^j                                   (T3′)
+
+V(1, p) = 1 − p is T3. V(4, 0.05) = **0.8811**: the published design missed V ≥ 0.95 at the
+p = 0.05 it was specified for. The byte model had amortised the keyframe over frames that T3
+treated as independent; the two had never been evaluated on one object (F45).
+
+**Corollary — at ε ≤ p every frame must decode alone.** V(R, p) < 1 − p for all R > 1, so the
+target V ≥ 1 − ε with ε ≤ p admits R = 1 only. This is claim (i) of T3 applied to a second kind
+of multi-frame unit. A cleaner link buys a longer interval — R = 4 at p = 0.02 (V = 0.951),
+R = 8 at p = 0.01 — and what it buys is small: 43.25 B per record at R = 1 against 39.73 at
+R = 16.
+
+**Burst loss.** For a two-state (Gilbert) process with mean loss p̄ and mean burst length B
+frames, let a = p̄ / (B·(1 − p̄)) be the good-to-bad transition probability. Then
+
+        V = (1 − p̄)/R · Σ_{j=1..R} (1 − a)^{j−1}
+
+which is T3′ at B = 1/(1 − p̄) (memoryless) and is **larger** for longer bursts: losses that
+arrive together waste fewer good frames. At p̄ = 0.05, R = 4: 0.881 independent, 0.931 at B = 4.
+Bursts never rescue a dependent design at ε ≤ p̄, since V ≤ 1 − p̄ with equality only at R = 1 —
+the same joint-versus-marginal argument as claim (iii).
+
+**What changed in the design.** R = 1: every frame carries one keyframe and b − 1 deltas. The
+first format then costs 74.96 B per record instead of 71.99 (−56.98 % instead of −58.68 %); the
+lean format costs 43.25 (−70.33 %).
+
 ## T4 — Scheme selection: Ed25519 self-batch vs BLS cross-signer aggregation
 **Own records (self-batch).** One ordinary signature covers b own records, so for
 byte-cost Ed25519 and BLS are near-equivalent (64 vs 48 B amortized over b). Ed25519's
@@ -126,71 +168,96 @@ MTU binds. **Validate:** E5 end-to-end vs baselines {A+JSON, A+CBOR, D-overagg}.
 > workaround the literature proposes is foreclosed whenever ε ≤ p. The EU868 partition is
 > application of a known bound to a link nobody had applied it to. This check was run *before*
 > publication precisely because F9 was not.
-*Implemented: `models/optimizer.py` (`max_fragments`, `max_record_bytes`, `exclusion_tier`);
-pinned: `tests/unit/models/test_exclusion_t6.py`.*
+*Implemented: `models/frame.py` (`FlatLayout.exclusion`) and `models/optimizer.py`
+(`max_fragments`); pinned: `tests/unit/models/test_exclusion_t6.py`; evaluated over every data
+rate: `results/raw/exclusion_matrix.csv`.*
+
+> ⚠️ **CORRECTED 2026-10-06 (audit F47). What this section said until then, kept visible.**
+> The statement was `s_max(M) = M − H_f − g_a ≥ s_min` with s_min = 13 B, applied to seven data
+> rates: DR0–2 excluded by the signature, DR3 excluded "by six bytes" (7 B of room for a 13 B
+> record) and — after F44 — *feasible* under an integer-keyed header (29 B of room). Two things a
+> frame must carry were never charged: **the chain link**, which per-frame chaining (§9b) moves
+> out of the records and into the frame, and **a record that decodes alone** (13 B was the mean
+> *delta* record less its link; T3′ requires a keyframe). And the standard defines twelve data
+> rates, not seven. F44's conclusion is withdrawn. The DR0–2 result was right and stands.
 
 T1–T5 ask what a saved byte **buys**. T6 asks the prior question: **whether the link admits
-authenticated telemetry at all.** It is a closed form, needs no simulation, and is link-agnostic —
-LoRa is just where it bites.
+authenticated, hash-chained telemetry at all.** It is a closed form, needs no simulation, and is
+link-agnostic — LoRaWAN is just where it bites.
 
-**Statement.** A frame that is independently verifiable must carry the frame header H_f, the
-authentication object g_a, and at least one record s. So a link of maximum payload M admits
-authenticated telemetry **iff**
+**Statement (T6′).** A frame that verifies alone carries a header H_f, one chain link L, an
+authentication object g_a, and at least one record that decodes alone, s_key. A link of maximum
+payload M admits such a frame **iff**
 
-        s_max(M) = M − H_f − g_a  ≥  s_min                                        (T6)
+        M  ≥  H_f + L + g_a + s_key                                              (T6′)
 
-and no choice of batch size, chain placement, or aggregation changes this: those decide only how
-the space *above* the floor is used.
+and no choice of batch size, encoding of later records, or aggregation changes this: those decide
+only how the space above the floor is used. Each term is evaluated at its smallest — a claim of
+exclusion is made against the smallest frame the format can emit **at all**, not against the
+frames one telemetry stream happened to produce.
 
-**Fragmentation does not escape it.** The obvious objection is to split an oversized signature
-across frames. T3 forecloses that: a unit spanning n frames verifies with probability (1−p)^n, so
-V ≥ 1−ε requires n ≤ ⌊ln(1−ε)/ln(1−p)⌋. **At ε ≤ p this is exactly n = 1** — the entire
-verifiability budget is spent on the first frame. At the study's ε = p = 0.05, fragmenting is
-already a constraint violation, so (T6) is evaluated at n = 1 and is an exclusion, not an
-inconvenience.
+**Scope — four conditions, each necessary.**
+1. *The payload limit is the link's.* The limits below are LoRaWAN's regional parameters. The raw
+   LoRa PHY carries 255 B at every spreading factor and is not excluded by them.
+2. *One public-key signature in every frame.* A symmetric tag is smaller and authenticates a
+   link, not an originator; schemes that sign once per several frames trade this bound for the
+   one in T3′.
+3. *No loss recovery.* Retransmission or coding across frames changes what "arrives" means.
+4. *ε ≤ p.* This is what closes fragmentation: a unit spanning n frames verifies with probability
+   (1 − p)^n, so V ≥ 1 − ε requires n ≤ ⌊ln(1 − ε)/ln(1 − p)⌋, which is 1 exactly when ε ≤ p.
+   At p = 0.01 and ε = 0.05 a unit may span five frames and a signature *can* be split.
 
-**Three tiers, because each one names a different escape route** (`exclusion_tier`):
+**Four nested tiers, each naming what a redesign would have to change** (`FlatLayout.exclusion`):
 
-| tier | condition | what could fix it | what cannot |
+| tier | condition | what could fix it |
+|---|---|---|
+| **signature** | M < g_a | a smaller authentication object only |
+| **header** | g_a ≤ M < g_a + H_f | a leaner header |
+| **chain link** | … < g_a + H_f + L | taking the link off the air |
+| **record** | … < g_a + H_f + L + s_key | a smaller self-contained record |
+
+**The floor of the lean format.** Node 0, sequence 0, one record of zeros — every integer at its
+minimum width: H_f = 16 B, L = 35 B (32 B and its field), g_a = 64 B, s_key = 9 B. The frame is
+**124 B**, and it was emitted, signed and verified, not computed. Note 16 + 35 + 64 = **115**:
+header, link and signature alone are a whole 115 B payload. The first format's floor is 146 B.
+
+**Applied to EU863-870** (RP002-1.0.3 Tables 12 and 13; all twelve data rates; 64 B signature):
+
+| payload M | data rates | verdict | tier at the floor |
 |---|---|---|---|
-| **signature** | M < g_a | a smaller signature scheme only | header design, *any* encoding, batching, chaining |
-| **framing** | g_a ≤ M < H_f + g_a | a leaner frame header | the encoding |
-| **encoding** | H_f + g_a ≤ M < H_f + g_a + s_min | a smaller record encoding — **and here T2a's A applies** | — |
+| 50 / 51 B | DR0, DR1, DR2, DR8, DR10 | **excluded** | signature — 64 B does not fit |
+| 115 B | DR3, DR9, DR11 | **excluded** | record — nothing is left after header, link and signature |
+| 222 / 242 B | DR4, DR5, DR6, DR7 | feasible | |
+| *802.11* | 1500 B | feasible | |
 
-**Applied to EU868** (H_f = 44 B **measured**, docs/01 §2a; g_a = 64 B for Ed25519/ECDSA; s_min =
-13 B, the delta record under the adopted per-frame chaining of §9b):
+**Eight of twelve are excluded, in both formats and under both payload tables**, and none of the
+eight depends on the telemetry: each is against the format's floor.
 
-| DR | M (RP002 T.13) | s_max | tier | note |
-|---|---|---|---|---|
-| 0, 1, 2 | 51 B | −57 | **signature** | 64 B signature alone overflows a 51 B payload |
-| 3 | 115 B | **7 B** | **encoding** | misses by **6 bytes** — 7 B of room, 13 B record |
-| 4, 5, 6 | 242 B | 134 B | — feasible | |
-| *802.11* | 1500 B | 1392 B | — feasible | |
+**What each relaxation buys** (same artifact):
 
-⚠️ **DR3's exclusion is conditional on H_f ≥ 39 B (2026-08-28).** H_f is a measured *range*,
-38–44 B (docs/01 §2a), and `s_max = M − H_f − g_a` means a larger header makes exclusion more
-likely — so the 44 B used here is the end of the range most favourable to this claim. At H_f = 38 B
-the DR3 budget is exactly 13 B, s_min is exactly 13 B, and **DR3 becomes feasible**. Three
-independent levers each flip it: H_f (38 vs 44), the payload column (115 vs Klimiashvili's 123 B),
-and s_min (13 B is this design's smallest record, and per-frame elision of `seq`/`ts` — the same
-argument that justified per-frame chaining in §9b — would go below it). **Report DR3 as excluded
-*under the stated constants*, not as arithmetic that cannot move.**
+| relaxation | 50 / 51 B rates | 115 B rates |
+|---|---|---|
+| none | excluded | excluded |
+| chain link not sent on air (floor 89 B; 99–112 B measured) | excluded | **feasible** |
+| 48 B signature, the smallest standardised (floor 108 B; 118–131 B measured) | excluded (header) | ⚠️ *excluded for this telemetry only* |
+| 13 B symmetric tag (floor 72 B; 82–95 B measured) | excluded | feasible |
+| 13 B tag **and** no on-air link (floor 37 B; 47–60 B measured) | marginal | feasible |
 
-**The tier-1 result is the strong one, and it is the one that genuinely cannot move.**
-DR0/DR1/DR2 stay excluded *with a zero-byte header and a zero-byte record*: it is the signature
-alone that does not fit. The only escape is a smaller
-authentication object, and the smallest standardised one is **48 B** — a compressed BLS12-381 G1
-point in the `minimal-signature-size` variant of draft-irtf-cfrg-bls-signature-05, which the draft
-states targets **126-bit security** (not 128 — corrected 2026-07-29, item A5). The same draft records
-ECDSA at 64 B, so 48 B is genuinely the short end of the standardised range. It *does* fit 51 B, but
-leaves **3 bytes** for the header and the record together. So the
-exclusion is not an artifact of this design: **the four longest-range LoRa modes cannot carry
-per-frame-verifiable telemetry at 128-bit security, period.**
+Three readings of that table:
+* The 115 B rates are excluded **by the chain link**, not by the signature: remove the link and
+  they fit with 64 B signatures.
+* ⚠️ A 48 B signature misses 115 B by **three bytes** for this telemetry (118 B) while a frame of
+  zeros would fit (108 B). That is not an exclusion and is not counted as one.
+* At 50 / 51 B header and link are 51–58 B before any tag or record: **a hash-chained frame does
+  not fit under any authenticator.** The exclusion there is two independent facts, not one.
 
-**Why this matters to the thesis.** It converts the LoRa arm from a table of numbers into a
-*negative result with a proof*: co-design has a domain of validity, and T6 is its boundary. It also
-locates exactly where compression is worth pursuing — tier 3 (DR3) is the only regime an encoder can
-attack, and T2a says that is precisely where the amplification A is operative.
+48 B is a compressed BLS12-381 G1 point in the `minimal-signature-size` variant of
+draft-irtf-cfrg-bls-signature-05, which the draft states targets **126-bit security** (not 128 —
+corrected 2026-07-29, item A5); the same draft records ECDSA at 64 B.
+
+**Why this matters to the thesis.** It converts the low-rate arm from a table of numbers into a
+negative result with a stated domain: co-design has a boundary, T6′ is that boundary, and the
+table of relaxations says what each way across it costs.
 
 ## ~~T7 — Medium-exclusion threshold~~ — **WITHDRAWN 2026-07-29, same day it was written** ⚠️
 *Retracted by its own validation experiment (D3, `results/raw/ns3_delay.csv`). Kept visible rather
@@ -505,6 +572,24 @@ because the regional payload limit binds — so smaller records convert into *mo
 
 **≈3.0× the sustainable telemetry rate for the same regulatory budget**, versus a 26 % airtime
 saving and *no* extra records on 802.11 (where freshness, not size, is the wall).
+
+> ⚠️ **CORRECTED 2026-10-06 (audit F48, F46). The per-frame rows above are overstated.** They size
+> every record at 33 B/record from a 13 B record body, which is the delta record measured with
+> records **50 ms apart**; at 0.18 records/s they are **5.5 s apart**, where a difference costs
+> 13.6–17.9 B. They also carry no keyframe, so no frame decodes without the one before it (T3′).
+> Sized at the spacing the batch itself implies, with every frame self-contained
+> (`results/raw/lora_budget.csv`, 242 B payload):
+>
+> | DR | as above | first format, corrected | lean format (`wire_v2`) |
+> |---|---|---|---|
+> | 4 | b = 7, 0.1035 rec/s | b = 4, **0.060** | b = 7, **0.1005** |
+> | 5 | b = 7, 0.1822 rec/s | b = 5, **0.127** | b = 8, **0.200** |
+> | 6 | b = 7, 0.3643 rec/s | b = 5, **0.254** | b = 8, **0.406** |
+>
+> So per-frame chaining is worth about **2.1×** in the first format at DR5 (0.127 against 0.0601), not
+> 3.0×, and the 3× figure is recovered — slightly exceeded — only by the lean format, which also
+> shortens the header and the record. The decision below stands: its argument is that the payload
+> limit binds, and that is unchanged. The frozen LoRa artifacts keep the published frames (D6).
 
 *Two corrections landed here on 2026-07-29, both raising the benefit.* The measured H_f = 44 B
 (docs/01 §2a) tightened every batch, and the batch grid was **sparse** — it listed

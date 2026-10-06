@@ -255,3 +255,88 @@ validated against saturated runs and is not a delivery threshold.
   been re-checked against its artifacts (`docs/OPEN_ITEMS.md`).
 * Stage 1 said the relaxed point would stay model-based because a run "costs several minutes".
   It costs about 90 s, so RA–RD are simulated after all.
+
+---
+
+# Follow-up F1 — outcome (2026-10-06)
+
+360 runs, `results/raw/ns3_nmax_direct_runs.csv`. Each cell is the 30-seed mean delivered fraction
+and, in brackets, its per-seed standard deviation.
+
+| point | strictly periodic | J = 0.1 ms | J = 1 ms | J = one period |
+|---|---|---|---|---|
+| A, N = 29 | 0.9625 (0.0343) | 0.9662 (0.0183) | 0.9664 (0.0114) | 0.9610 (0.0016) |
+| A, N = 33 | 0.9408 (0.0305) | 0.9527 (0.0229) | 0.9536 (0.0182) | 0.9480 (0.0016) |
+| D, N = 109 | 0.9644 (0.0136) | 0.9620 (0.0103) | 0.9618 (0.0090) | 0.9625 (0.0015) |
+| D, N = 131 | 0.9421 (0.0205) | 0.9419 (0.0117) | 0.9422 (0.0093) | 0.9436 (0.0018) |
+
+**Mean unchanged — holds.** All twelve differences from the strictly periodic mean are under
+2.5 standard errors (the largest is 1.97, at A/33 with J = 1 ms), and their average is +0.0027,
+inside ±0.005. Freezing the phases does not bias the 30-seed mean.
+
+**Spread collapses — fails as predicted, and holds where it was not.** At J = 1 ms the standard
+deviation falls to 0.33, 0.60, 0.67 and 0.45 of its strictly periodic value: under half at two
+points of four, not at all four. (No run in cell A falls below 0.90 at J ≥ 1 ms; that part holds.)
+At J = one period it falls to 0.05–0.11 of it — a ten- to twenty-fold collapse — at every point.
+
+So explanation (c) is **incomplete**, and the rule registered above applies: it is not to be
+relied on, and the spread is investigated before anything else is run. What the four columns say:
+
+* 0.1 ms of jitter is more than enough to break a 4 µs lock, and it removes only a quarter to a
+  half of the spread. Locked pairs are real and are not most of it.
+* What remains at 0.1 ms and 1 ms is removed only when every phase is redrawn every period. So it
+  belongs to the **phase configuration as a whole** — which nodes share a busy period, period after
+  period — at the time scale of a frame (0.3 ms) and longer, not of a preamble.
+* The stage-1 verdict does not depend on any of this. Cell D crosses at 118.3 [115.0, 125.1]
+  strictly periodic, 122.3 [119.6, 125.0] at J = 1 ms and 123.5 [123.0, 124.1] at J = one period:
+  outside 142 ± 10 % every way it has been measured.
+
+One reading that the data do **not** support, noted so it is not picked up later: in cell A the
+J = one period mean is 0.005 below the J = 1 ms mean at both node counts, which looks like a
+second effect. In cell D the sign reverses. The two node counts of a cell share seeds, and a seed
+fixes the same phase draws, so the two cell-A differences are one observation, not two.
+
+# Follow-up F1b — is the remaining spread the frozen configuration? Written before its runs
+
+Two instruments, both added to `authbc-delay` behind options that leave the default run untouched.
+
+**A phase sweep** (`--txSkewPpm`). Each node's period is stretched by its own factor from
+U(−5000, +5000) ppm, with 0.1 ms of jitter. Every node stays strictly periodic — one frame per
+period of its own, which is what makes the traffic telemetry — but every pair now drifts through
+every relative phase during a run, so one run time-averages what otherwise takes many frozen
+seeds. Real oscillators do this at 20–50 ppm, a hundred times more slowly; the offset is a
+numerical device for visiting the configurations in 20 s, not a claim about crystals. Rates
+differ by at most 0.5 %, and their sum by about 0.05 %.
+
+**Per-node delivery** (`--perNode`), which says *which* nodes lose frames.
+
+**Runs.** The sweep at the four F1 points, 30 seeds. Per-node output for cell A at N = 29, seeds
+6 and 13 (the two worst strictly periodic runs, 0.859 and 0.866), 15 (the median) and 16 (the
+best), under all five sources.
+
+**Predictions.**
+
+1. *The spread is the configuration.* Under the sweep the per-seed standard deviation is below
+   **0.004** at all four points.
+2. *All sources estimate one number.* The sweep mean is within **0.002** of the J = one period
+   mean at each point. (Both are precise to about 0.0003, so this is a real test: it fails if
+   strictly periodic traffic and traffic re-drawn every period deliver differently.)
+3. *Frozen loss sits on a few nodes.* In strictly periodic seeds 6 and 13, at least **two nodes
+   deliver under 20 %** of their frames while the median node delivers over 95 %; in seed 16 no
+   node is under 90 %.
+4. *Moving phases spread it out.* Under the sweep and under J = one period, in all four seeds,
+   every node delivers between 0.92 and 0.995.
+
+**What each outcome means.**
+
+* *1 and 2 hold.* The sweep is the source for every remaining run: it is the same traffic as the
+  published scenario, measured without the accident of one frozen configuration per seed. Stage-1
+  values stay in the record beside it. The per-run criterion is reported for the sweep, where a
+  run is no longer a single configuration.
+* *1 holds, 2 fails.* Regular and re-drawn traffic differ. The sweep is still the source (it is
+  the regular one), and the difference is reported as a finding about traffic models.
+* *1 fails.* The spread is not explained. The remaining runs use J = one period, which F1 has
+  shown to be unbiased within noise and tight, and the unexplained spread goes to
+  `docs/OPEN_ITEMS.md` as an open question rather than being given a story.
+* *3 or 4 fails.* The mechanism in (c) is withdrawn as an explanation of the spread, whatever
+  1 and 2 say.
