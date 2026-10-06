@@ -58,8 +58,14 @@ STRATA: dict[str, tuple[tuple[str, ...], int]] = {
     "fixed wing": (("Fixed Wing",), 3),
     "vtol": (("VTOL Standard", "Tiltrotor VTOL"), 3),
 }
-TOPICS = ("vehicle_global_position", "vehicle_local_position", "battery_status",
-          "vehicle_status", "vehicle_land_detected")
+REQUIRED_FIELDS: dict[str, tuple[str, ...]] = {
+    "vehicle_global_position": ("lat", "lon", "alt"),
+    "vehicle_local_position": ("vx", "vy", "vz"),
+    "battery_status": ("remaining",),
+    "vehicle_status": ("nav_state",),
+    "vehicle_land_detected": ("landed",),
+}
+TOPICS = tuple(REQUIRED_FIELDS)
 
 GENERATOR_STEP_MS = 50                       # the generator emits one record every 50 ms
 # Record spacing -> generator records per seed at that spacing. Every spacing is a multiple of
@@ -184,8 +190,13 @@ def unusable(path: Path) -> str:
     missing = [t for t in TOPICS if t not in topics]
     if missing:
         return "no topic " + ", ".join(missing)
-    if not {"lat", "lon", "alt"} <= set(topics["vehicle_global_position"]):
-        return "global position without lat/lon/alt"
+    for topic, fields in REQUIRED_FIELDS.items():
+        absent = [f for f in fields if f not in topics[topic]]
+        if absent:
+            return f"{topic} without {', '.join(absent)}"
+        dead = [f for f in fields if not np.isfinite(topics[topic][f].astype(float)).any()]
+        if dead:
+            return f"{topic}.{', '.join(dead)} is never valid"
     if len(flight_runs(topics, 1000)) == 0:
         return f"under {MIN_FLIGHT_S:.0f} s of flight"
     return ""
@@ -196,7 +207,8 @@ def flight_runs(topics: dict[str, dict[str, np.ndarray]], spacing_ms: int
     """In-flight records on a `spacing_ms` grid, as runs of consecutive grid points.
 
     Each record is (ts_ms, lat, lon, alt, vx, vy, vz, battery, mode) in the generator's units.
-    A run ends where the vehicle lands, so no difference is ever taken across a gap.
+    A run ends where the vehicle lands or a field is invalid, so no difference is ever taken
+    across a gap.
     """
     gp, lp = topics["vehicle_global_position"], topics["vehicle_local_position"]
     start = max(t["timestamp"][0] for t in topics.values())
@@ -204,20 +216,23 @@ def flight_runs(topics: dict[str, dict[str, np.ndarray]], spacing_ms: int
     t_us = np.arange(start, stop, spacing_ms * 1000, dtype=np.int64)
     if t_us.size == 0:
         return []
-    flying = _flight_mask(t_us, topics)
+    battery = _hold(topics["battery_status"], "remaining", t_us)
+    raw = np.column_stack([
+        _hold(gp, "lat", t_us) * 1e7, _hold(gp, "lon", t_us) * 1e7, _hold(gp, "alt", t_us) * 100.0,
+        _hold(lp, "vx", t_us) * 100.0, _hold(lp, "vy", t_us) * 100.0,
+        _hold(lp, "vz", t_us) * 100.0, np.clip(battery, 0.0, 1.0) * 100.0,
+    ])
+    # A sample-and-hold of a NaN is a NaN, and a NaN cast to an integer is garbage: a grid point
+    # with any invalid field ends the run exactly as a landing does.
+    usable = _flight_mask(t_us, topics) & np.isfinite(raw).all(axis=1)
     cols = np.column_stack([
-        t_us // 1000,
-        np.rint(_hold(gp, "lat", t_us) * 1e7), np.rint(_hold(gp, "lon", t_us) * 1e7),
-        np.rint(_hold(gp, "alt", t_us) * 100.0),
-        np.rint(_hold(lp, "vx", t_us) * 100.0), np.rint(_hold(lp, "vy", t_us) * 100.0),
-        np.rint(_hold(lp, "vz", t_us) * 100.0),
-        np.clip(np.rint(_hold(topics["battery_status"], "remaining", t_us) * 100.0), 0, 100),
+        t_us // 1000, np.rint(np.nan_to_num(raw)),
         # PX4 has more navigation states than the schema has modes; folded, one byte either way
         _hold(topics["vehicle_status"], "nav_state", t_us) % N_MODES,
     ]).astype(np.int64)
     runs: list[list[tuple[int, ...]]] = []
     current: list[tuple[int, ...]] = []
-    for row, up in zip(cols.tolist(), flying.tolist(), strict=True):
+    for row, up in zip(cols.tolist(), usable.tolist(), strict=True):
         if up:
             current.append(tuple(row))
         elif current:

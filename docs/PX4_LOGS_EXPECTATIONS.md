@@ -70,3 +70,31 @@ least 68 %** (generator: 70.3 % at 50 ms).
 
 Sizes only: no loss, capacity or energy result uses the logs. Twelve logs are a check on a
 generator, not a census of UAV telemetry. Nothing is measured at 50 Hz.
+
+---
+
+# Amendment — after the logs were selected, before any size was computed (2026-10-06)
+
+Selecting the logs meant opening them far enough to see which topics they carry, at what rate,
+and whether the values are valid. No record was encoded and no size was computed. Two things
+that the rule above did not foresee, and what is done about each:
+
+**1. The logs carry global position at 5 Hz, not 10.** In all twelve,
+`vehicle_global_position` arrives every 200 ms and `vehicle_local_position` every 100 ms. By the
+rule above — no grid finer than the log's own position rate — **the 0.1 s row cannot be
+measured, and the load-bearing prediction was written at 0.1 s.** It is not re-pointed at
+whatever spacing looks best afterwards. It is applied, unchanged in its numbers, at the finest
+spacing the logs support:
+
+> **at 0.2 s spacing the mean delta over the twelve logs is at most 13 B, and the lean design's
+> saving against the one-record frame at that spacing is at least 68 %.**
+
+This is the stricter of the two readings: a difference taken over 0.2 s is never smaller than one
+taken over 0.1 s, and the thresholds are the ones set for 0.1 s. The 1 s and 5.5 s rows stand as
+written. The 0.1 s prediction itself is recorded as **untested**, not as passed.
+
+**2. One selected log has no battery estimate.** `battery_status.remaining` is NaN in every sample
+of `0007e5ac…`; cast to an integer that is garbage, and it would have entered the sizes as a
+ten-byte field. A field that is never valid is a missing field, so by the rule's own skip clause
+the log is replaced by the next in its stratum and the skip is recorded. The script now also ends
+a run at any grid point where a field is invalid, exactly as it does at a landing.
