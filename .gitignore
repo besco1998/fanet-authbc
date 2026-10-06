@@ -55,3 +55,6 @@ thesis/*.lof
 thesis/*.lot
 thesis/*.bbl
 thesis/*.blg
+
+# Downloaded third-party inputs (public flight logs): pinned by hash in a manifest, never committed
+.cache/
