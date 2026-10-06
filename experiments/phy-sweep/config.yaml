@@ -1,0 +1,8 @@
+# E12 — the capacity model at other OFDM rates (docs/02 §6c; review comment 4.7). MODEL ONLY:
+# validated against NS-3 at 20 MHz / 6 Mb/s and nowhere else.
+experiment: phy-sweep
+lambda_rec_per_s: 50
+batch: 4
+phys:
+  20MHz: [6, 12, 24]                  # the 802.11a mandatory rates
+  10MHz: [3, 6, 12]                   # the 802.11p mandatory rates

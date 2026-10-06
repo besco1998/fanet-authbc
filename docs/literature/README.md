@@ -43,7 +43,7 @@ not a comparator · `TO READ` — identified but not yet studied in full.
 |---|---|---|
 | **Semtech SX1276/77/78/79 datasheet, Rev. 7, 2020** | `USED` | §4.1.1.5 symbol rate, §4.1.1.7 time-on-air. Every LoRa timing constant transcribed from here |
 | **LoRa Alliance RP002-1.0.3 Regional Parameters, 2021** | `USED` | EU868 Table 8 (data rates), **Table 13** (max payload, non-repeater), duty cycle < 1 %. ⚠️ The NS-3 module enforces **Table 12** (repeater-compatible, 222 B) instead — a defensible alternative reading, recorded in TRADEOFFS |
-| **Bor, Roedig, Voigt & Alonso, *LoRa Scalability: A Simulation Model Based on Interference Measurements*, Sensors 17(6), 2017** — PDF here | `USED` `VALIDATES` | **Not just quoted — IMPLEMENTED.** Their Eq. (8) is now `lora.bor2017_loss_pct()`, validated against the four loss figures their own text states, and run at our operating point via `make exp-lora-external` (F20). **It gives N_max = 4 against our corrected 3** — the LoRa arm's external baseline. ⚠️ Always note which FIGURE a number comes from: collapsing Fig. 6/14/15 produced the retracted F18 |
+| **Haxhibeqiri, Van den Abeele, Moerman & Hoebeke, *LoRa Scalability: A Simulation Model Based on Interference Measurements*, Sensors 17(6), 2017** — PDF here | `USED` `VALIDATES` | **Not just quoted — IMPLEMENTED.** Their Eq. (8) is now `lora.haxhibeqiri2017_loss_pct()`, validated against the four loss figures their own text states, and run at our operating point via `make exp-lora-external` (F20). **It gives N_max = 4 against our corrected 3** — the LoRa arm's external baseline. ⚠️ Always note which FIGURE a number comes from: collapsing Fig. 6/14/15 produced the retracted F18 |
 | **Magrin et al., signetlabdei/lorawan ns-3 module** | `USED` | The simulator behind our capacity result. Requires our `patch_lorawan.py`. ⚠️ **Its `ALOHA` region preset = 1 channel + 1 demodulation path**; the `EU` preset = 3 channels + 8 paths. We used `ALOHA`. The preset choice dominates the capacity number — see §5 |
 
 ## 4a. Sources added by the A3 citation pass (see `A3_CITATION_VERIFICATION.md`)
@@ -144,7 +144,7 @@ exclusion result is untouched and remains ours.
 ⚠️ **This section previously said the opposite. It was wrong (F18, retracted). Read the correction,
 not the memory of it.**
 
-**What Bor et al. actually report**, by figure — the distinction that I collapsed and must not be
+**What Haxhibeqiri et al. actually report**, by figure — the distinction that I collapsed and must not be
 collapsed again:
 
 | figure | configuration | access scheme | loss at 1000 nodes |
@@ -166,7 +166,7 @@ RP002-provisioned gateway (`EU` region: 3 channels, 8 demodulation paths).
 
 **The like-for-like comparison, and it does not flatter us.** Both studies transmit at the 1 %
 duty-cycle ceiling, so per-node channel occupancy is 1 % in both and offered load scales identically
-as `G = N × 0.01`. Bor's own curve fit, `f_MCH_MSF(x) = f_SCH_SSF(x/18)`, maps their multi-channel
+as `G = N × 0.01`. Haxhibeqiri et al.'s own curve fit, `f_MCH_MSF(x) = f_SCH_SSF(x/18)`, maps their multi-channel
 1000-node point onto **56 nodes on one channel with one SF, at ~32 % loss**. We measure **74.7 % loss
 at N = 50** in that configuration.
 
@@ -299,7 +299,7 @@ complementary to — not a comparator for — the airtime constraint that binds 
 
 ⚠️ **The "9 of 9" tally previously recorded here was inflated** and is retracted. It counted papers
 that do not meet the inclusion criteria later fixed in
-`docs/DIRECTION_C_SURVEY_PROTOCOL.md` §2 — Bor et al. used **LoRaSim, not ns-3** (its lone ns-3
+`docs/DIRECTION_C_SURVEY_PROTOCOL.md` §2 — Haxhibeqiri et al. used **their own simulator, not ns-3** (its lone ns-3
 mention is future work); Mehta et al. is a **survey**; Bhatt et al. is ns-3 but **802.11ah, not
 LoRa**. Applying the criteria strictly leaves **4** qualifying papers, all `NONE`.
 

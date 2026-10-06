@@ -666,7 +666,7 @@ dict (`prev_hash` becomes a hex string).
 
 ## ~~F18 — the LoRa capacity result corroborated against published measurements~~ ⚠️ **RETRACTED 2026-07-30, same day, by Mohamed**
 
-**The claim was: "our simulation is slightly more optimistic than Bor et al.'s measurement-based
+**The claim was: "our simulation is slightly more optimistic than Haxhibeqiri et al.'s measurement-based
 model, so N_max = 5 is not an artifact." That is false, and it was false in the direction that
 flattered us.** Superseded by F19. Kept visible because the *way* it went wrong matters more than
 the finding did.
@@ -697,7 +697,7 @@ and LoRaWAN scalability papers routinely quote node counts in the hundreds to th
 who knows that literature will read `5` as evidence of a broken simulation. Until now the number
 rested on our own NS-3 runs alone.
 
-**What we checked it against.** Bor, Roedig, Voigt & Alonso, *LoRa Scalability: A Simulation Model
+**What we checked it against.** Haxhibeqiri, Van den Abeele, Moerman & Hoebeke, *LoRa Scalability: A Simulation Model
 Based on Interference Measurements*, Sensors 17(6), 2017 — a model built on measured interference
 rather than an analytical idealisation, i.e. an independent and unfavourable comparison.
 
@@ -710,7 +710,7 @@ result. **Quote the PDF, never the summary** — the same discipline as F9 and F
 **The reconciliation.** Normalising both studies to per-node channel occupancy, computed with our
 own `lora.frame_time_on_air_s`:
 
-| | Bor et al. | AUTHBC |
+| | Haxhibeqiri et al. | AUTHBC |
 |---|---|---|
 | payload / ToA | 20 B / 71.9 ms | **218 B / 363.8 ms** (5.1×) |
 | send interval | 180 s at their 1000-node point | **36.4 s** (the 1 % duty-cycle maximum) |
@@ -740,10 +740,10 @@ stated in the low-rate chapter.
 ## F19 — what our LoRa simulation actually models, and why `N_max = 5` is a worst case (2026-07-30)
 
 **Supersedes the retracted F18.** Prompted by Mohamed asking two questions I could not answer from
-the documentation: *"Bor said 90 % is pure ALOHA and 32 % is LoRaWAN — what is our actual model, and
+the documentation: *"Haxhibeqiri et al. said 90 % is pure ALOHA and 32 % is LoRaWAN — what is our actual model, and
 did we use pure ALOHA or LoRaWAN?"* Both answers required reading source, not notes.
 
-### What Bor et al. report, by figure
+### What Haxhibeqiri et al. report, by figure
 
 | figure | configuration | access | loss @ 1000 nodes |
 |---|---|---|---|
@@ -769,7 +769,7 @@ preset: one channel, one demodulator, one forced spreading factor.**
 
 ### The like-for-like comparison, which does not flatter us
 
-Both studies transmit at the 1 % duty-cycle ceiling (Bor: *"packets were transmitted as soon as
+Both studies transmit at the 1 % duty-cycle ceiling (Haxhibeqiri et al.: *"packets were transmitted as soon as
 possible, just after the waiting time imposed by the radio duty cycle mechanism"*), so per-node
 occupancy is 1 % in both and offered load scales identically as `G = N × 0.01`. **The 25× per-node
 load ratio asserted in F18 was an artifact of assuming their traffic was sparse; it is not.**
@@ -808,14 +808,14 @@ Extend the rule: when a comparison rests on a source's operating point, state an
 
 ## F20 — the LoRa arm now has an external baseline, and it agrees (2026-07-30)
 
-**Prompted by Mohamed:** *"why didn't we use Bor et al.'s model and test it with our optimizer and
+**Prompted by Mohamed:** *"why didn't we use Haxhibeqiri et al.'s model and test it with our optimizer and
 add them as a comparison?"* There was no good reason. I read the paper *after* the LoRa result
 existed and treated it as a yardstick to quote rather than a model to run. It is stated in closed
 form and was implementable all along.
 
 ### What was implemented
 
-`lora.bor2017_loss_pct()` and `lora.bor2017_n_max()` implement their **Eq. (8)** — a degree-5
+`lora.haxhibeqiri2017_loss_pct()` and `lora.haxhibeqiri2017_n_max()` implement their **Eq. (8)** — a degree-5
 polynomial fitted at R² = 0.997 to *total* packet loss (collisions **plus** wrong-payload-CRC),
 measured on real SX1301 hardware — together with the scaling laws Eqs. (9)–(11) that generalise it
 by the number of non-interfering logical channels.
@@ -836,11 +836,11 @@ This is the same normalisation that F19 established; here it is load-bearing rat
 
 Three land within ~3 points. The fourth looks 5 points high until you read the quantity that
 sentence names: Fig. 8's 75 % is **collisions only**, while Eq. (8) fits the *total*, so the model
-*must* come out above it. Asserted as such in `tests/test_bor2017_external_model.py`.
+*must* come out above it. Asserted as such in `tests/test_haxhibeqiri2017_external_model.py`.
 
 ### The result
 
-| | AUTHBC ns-3 | Bor et al. 2017 |
+| | AUTHBC ns-3 | Haxhibeqiri et al. 2017 |
 |---|---|---|
 | **N_max at V ≥ 0.95** | **5** | **4** |
 
@@ -858,7 +858,7 @@ independently; it is not a precision result.
 
 There is a **crossover at N ≈ 8**:
 
-| N | AUTHBC loss | Bor loss | |
+| N | AUTHBC loss | Haxhibeqiri et al. loss | |
 |---|---|---|---|
 | 5 | 0.0 % | 5.1 % | we are **more optimistic** |
 | 8 | 13.4 % | 7.0 % | we are 1.9× more pessimistic |
@@ -1164,7 +1164,7 @@ would have cost more later.
 
 ### 1. E9 — the gateway preset: N_max = 8, and my prediction was wrong
 
-**Predicted N_max ≥ 14**, from Bor et al. Eq. (10) (3 channels ≈ 3× nodes) plus the removal of the
+**Predicted N_max ≥ 14**, from Haxhibeqiri et al. Eq. (10) (3 channels ≈ 3× nodes) plus the removal of the
 single-demodulator bottleneck. **Measured: 8.**
 
 | N | `aloha` (1 ch, 1 path) | `EU` (3 ch, 8 paths) | ratio |
@@ -1471,7 +1471,7 @@ should track. Correcting it brings the two into agreement across the whole sweep
 |---|---|
 | our corrected NS-3 simulation | **3** |
 | closed-form periodic ALOHA | **3** |
-| Bor et al. 2017, measurement-fitted | **4** |
+| Haxhibeqiri et al. 2017, measurement-fitted | **4** |
 
 Stronger corroboration than the retracted F18 ever claimed, and obtained by fixing our own defect
 rather than by reinterpreting someone else's figure.
@@ -2306,7 +2306,7 @@ not the discovery. ⚠️ Any draft claiming the phenomenon is unreported must b
 Applying §2 strictly (simulation results **for LoRa**, simulator **is ns-3**, machine-readable,
 non-duplicate) to every held PDF, only **4** qualify. The pilot's nine had counted:
 
-* **Bor et al. 2017** — used **LoRaSim**, not ns-3. Its single ns-3 mention is future work:
+* **Haxhibeqiri et al. 2017** — used **their own simulator**, not ns-3. Its single ns-3 mention is future work:
   *"Implementation of modules in system level simulator, like ns-3, … will further be studied."*
 * **Mehta et al. 2020** — a **survey**; its ns-3 mentions describe other people's work in a table.
 * **Bhatt et al. 2025** — ns-3, but **802.11ah, not LoRa**.
@@ -2421,7 +2421,7 @@ Direction is conservative: a longer flight inflates the CBOR *baseline* and leav
 *optimum* alone, so the reported saving is the pessimistic end (58.68 % at n=1000 vs 59.3 % at
 n=10 000). E1 samples the **first ~50 s of each flight**; that is now stated in docs/04 §1.
 
-### F43e — Bor's N_max = 4 sits inside his own fit's unreliable region
+### F43e — Haxhibeqiri et al.'s N_max = 4 sits inside their own fit's unreliable region
 
 `lora.py` already documents that Eq. (8) does not pass through the origin and predicts 1.783 %
 loss at N=0, and that "below N ~ 5 the intercept dominates". Their N_max = 4 is decided at N=4
@@ -2436,7 +2436,7 @@ which *widens* the gap against our 3. So quoting 4 is the safe choice — it sim
 (**we are the more optimistic model there**), 1.07× at N=3, 2.09–2.17× from N=10 up — and the
 crossover sits in exactly the N ≤ 3 region where N_max is decided. F18 was retracted for a sign
 error on this same comparison; a single-number summary is how that happens.
-`bor2017_pessimism_ratio` now refuses to be quoted as one number.
+`haxhibeqiri2017_pessimism_ratio` now refuses to be quoted as one number.
 
 ### M4 CLOSED by measurement (2026-08-28)
 
@@ -2557,3 +2557,233 @@ shape. **A register that stores facts separately does not compose them; only re-
 The audit that found this was authorised in full knowledge that it might cost a headline. It did,
 and the honest version is stronger — which is the argument for running such audits before a
 reviewer does, not after.
+
+---
+
+# 2026-10 — findings from an external review of the paper (F45–)
+
+*`paper/main.tex` was reviewed externally. The comments were audited one statement at a time
+against the code and the artifacts. Most were right. The five findings below are the ones that
+were **errors in the work**, not in its presentation; each was reproduced before anything was
+changed, and each retraction is kept visible where the claim used to live.*
+
+*What they have in common is in F45, and it is the same shape as F44's own closing paragraph —
+which is uncomfortable, because F44 is one of the casualties.*
+
+## F45 — the headline design was a sum of sizes; no such frame had ever been built (2026-10-06)
+
+**What was claimed.** The paper's design — delta records, one signature per four records — at
+71.99 B per record, −58.68 % against the baseline.
+
+**What it was.** Three numbers measured in three places and added: a delta record size from
+`encodings/delta_enc.py`, a header measured on canonical-CBOR frames by `placement/wire.py`, and a
+signature length. **No frame carrying delta records was ever encoded, sent or decoded.** The
+receiver that would have to decode one did not exist.
+
+That is why three composition errors survived two audits and 1296 green tests: each number was
+individually correct, so re-deriving any one of them reproduced it. They are F46, F47 and F48.
+
+**What was done.** The design was built as one object. `placement/wire_v2.py` is a frame format
+(integer keys, one chain link per frame, a varint record stream, the same signed bytes as v1);
+`placement/session_v2.py` is a sender and a receiver that chain, verify, store and refuse replays.
+Every size the lean design now reports is the length of a byte string that was emitted, decoded
+and verified. The first format (`wire.py`) is untouched and its artifacts are bit-identical (D6).
+
+Measured (`results/raw/frame_components.csv`, 30 seeds × 1000 records):
+
+| | first format | lean format |
+|---|---|---|
+| header `H_f` | 44 B (38–44 over a flight) | **23 B** (17–23) |
+| chain link | 32 B in **every record** | 35 B **once per frame** |
+| self-contained record | 59.85 B (56–61), link included | **24.0 B** (21–25) |
+| delta record, 50 ms apart | 44.0 B, link included | **9.0 B** |
+| one-record signed frame | 174.25 B (byte model) | **145.77 B** (emitted) |
+| design frame, 4 records, decodes alone | 299.85 B = 74.96 B/rec (byte model) | **173.0 B = 43.25 B/rec** (emitted) |
+
+**What the headline becomes** (`results/raw/design_ladder.csv`, adopted point):
+
+| | bytes per record | saving against its own one-record baseline |
+|---|---|---|
+| first format, as published (one keyframe per four frames) | 71.99 | 58.68 % — ⚠️ **does not meet V ≥ 0.95, see F46** |
+| first format, every frame decodes alone | 74.96 | **56.98 %** |
+| lean format, every frame decodes alone | 43.25 | **70.33 %** |
+
+The decomposition claim (placement × batching carries most of it, the scheme is byte-neutral among
+64 B signatures) is unchanged in kind and is re-measured in the same artifact.
+
+**Guards.** `tests/unit/placement/test_wire_v2.py` (57), `test_session_v2.py` (19),
+`tests/unit/models/test_frame.py`, `tests/unit/bench/test_leanframes.py`; every one of 1328
+single-bit flips of a frame fails verification; the lean frame arithmetic is held equal to emitted
+frames over sender, sequence number and batch.
+
+**The transferable point.** F44 ended: *"A register that stores facts separately does not compose
+them; only re-derivation does."* Re-derivation was not enough either. What composes facts is
+**building the object they describe** and making it run.
+
+## F46 — delta coding across frames makes frames depend on each other; the published design missed its own target (2026-10-06)
+
+**What was claimed.** Verifiability V = 1 − p for one-frame placements (T3), so the design meets
+V ≥ 0.95 at the p = 0.05 it is specified for.
+
+**What is true.** The published design keyframes every K = 16 records and batches b = 4, so only
+one frame in R = 4 decodes without its predecessor. A lost frame takes every later frame with it
+until the next self-contained one. With R the number of frames per self-contained frame:
+
+    V = (1/R) · Σ_{j=1..R} (1 − p)^j
+
+At R = 4, p = 0.05: **V = 0.8811**, not 0.95. The byte model had amortised a keyframe over frames
+that the verifiability model treated as independent. The two models had never met in one object.
+
+**Measured with the decoder in the loop** (`results/raw/e3_codec_loss.csv`: 30 seeds × 240 frames
+per cell through `LeanSender` → loss → `LeanReceiver`):
+
+| frames per self-contained frame | V at p = 0.05, independent loss | closed form | bytes per record |
+|---|---|---|---|
+| **1** | **0.9518** [0.9469, 0.9565] | 0.9500 | 43.25 |
+| 2 | 0.9213 [0.9163, 0.9268] | 0.9263 | 41.38 |
+| 4 (as published) | 0.8764 [0.8635, 0.8894] | 0.8811 | 40.44 |
+| 16 | 0.6546 [0.6185, 0.6904] | 0.6649 | 39.73 |
+
+Only R = 1 meets the target at p = 0.05. A cleaner link admits a longer interval — by the
+closed form R = 4 at p = 0.02 (V = 0.951, barely) and R = 8 at p = 0.01 — but **the whole prize is
+3.5 B per record** (43.25 → 39.73), so the design simply uses R = 1: every frame carries a
+keyframe and decodes alone.
+
+Burst loss (Gilbert, mean burst four frames, same mean loss) costs a dependent design *less* —
+0.929 at R = 4 against 0.876 — because losses that arrive together waste fewer good frames. It
+never rescues it. The closed form for the burst case was cross-checked against an independent
+three-million-frame simulation.
+
+**Consequence.** The −58.68 % headline belonged to a design that did not meet its constraint. The
+corrected first-format figure is 56.98 % (F45). T3 is restated as T3′ in `docs/02`.
+
+**Guards.** `models/frame.py::verifiability`, `verifiability_gilbert`, `max_ref_interval`;
+`tests/test_frame_artifacts.py::TestVerifiabilityWithTheCodecInTheLoop`.
+
+⚠️ **A defect of the same kind in a frozen artifact, found on the way and not changed.**
+`run_e3` reports the *mean* V with a bootstrap interval of the *median* (`bootstrap_ci` defaults
+to the median), so `e3_loss.csv` has intervals that need not contain their own point. The new
+runner passes `statistic=np.mean`. The frozen file is left as it is (D6) and listed in
+`docs/OPEN_ITEMS.md`.
+
+## F47 — the exclusion test charged neither the chain link nor a record that decodes alone. ⚠️ F44 is WITHDRAWN (2026-10-06)
+
+**What was claimed.** T6: a link admits authenticated telemetry iff `s_max = M − H_f − g_a ≥ s_min`,
+with s_min = 13 B. Hence DR3 (115 B) "misses by six bytes" under the 44 B header — and, in **F44**,
+that an integer-keyed header "rescues" it, taking the count from four excluded rates to three. The
+abstract of the paper said so.
+
+**What is true.** Two things a frame must carry were never charged:
+
+* the **chain link**. Per-frame chaining (adopted on the LoRa arm, F5) moves the 32 B link out of
+  the records and into the frame — where it still has to travel. The test subtracted it from the
+  record and added it nowhere.
+* a **record that decodes alone**. 13 B was the *mean delta* record less its link. A frame that
+  verifies without its predecessor needs a keyframe: 19–25 B in the lean format.
+
+Charged, the smallest lean frame the format can emit at all — node 0, sequence 0, one record of
+zeros — is
+
+    16 (header) + 35 (link) + 64 (signature) + 9 (record) = 124 B
+
+and **header + link + signature alone are 115 B: the whole DR3 payload, before any record.**
+DR3 is excluded under either header, whatever the telemetry. F44's "29 B of room" was 29 − 35 < 0.
+
+**The count was also wrong for a second reason.** RP002-1.0.3 defines **twelve** EU863-870 data
+rates, not seven: DR7 (FSK) and DR8–DR11 (LR-FHSS) were never considered.
+
+`results/raw/exclusion_matrix.csv`, 64 B signature, both formats:
+
+| payload limit | data rates | verdict | why |
+|---|---|---|---|
+| 50 / 51 B | DR0, DR1, DR2, DR8, DR10 | **excluded** | the signature alone overflows |
+| 115 B | DR3, DR9, DR11 | **excluded** | header + link + signature fill the payload |
+| 222 / 242 B | DR4, DR5, DR6, DR7 | feasible | |
+
+**Eight of twelve excluded; four feasible** — in both formats, under both payload tables.
+
+What each relaxation buys, from the same file:
+
+* **Take the chain link off the air** (arithmetic, not an implemented format): the three 115 B
+  rates become feasible (99–112 B frames). The five 50/51 B rates do not.
+* **A 48 B signature** (BLS12-381, minimal signature size): the signature now fits 51 B and leaves
+  3 B. On the 115 B rates a frame of zeros would fit (108 B) but this telemetry's smallest frame
+  is 118 B. ⚠️ **A three-byte miss is not an exclusion** and the artifact grades it separately
+  (`excluded for this telemetry`).
+* **A 13 B symmetric tag** (the MAVLink 2 signing trailer — which authenticates a link, not an
+  originator): fits the 115 B rates. At 50/51 B header + link are already 51–58 B, so **a
+  hash-chained frame does not fit there under any authenticator.**
+
+**Scope, stated because the review asked and it is right.** The result holds for (i) LoRaWAN's
+regional payload limits — the raw LoRa PHY carries 255 B and is not excluded; (ii) one public-key
+signature in every frame; (iii) no loss recovery; (iv) ε ≤ p, which is what stops a signature
+being fragmented across frames (`optimizer.max_fragments`). At p = 0.01 and ε = 0.05 a unit may
+span five frames and the exclusion no longer holds as stated.
+
+**What was removed.** `placement/wire_profile.py` and `tests/test_wire_profile.py`, which measured
+the "alternative profile" F44 rested on: the lean format now exists for real and says the
+opposite. `optimizer.exclusion_tier` and `max_record_bytes`: the size half of T6 is now
+`models/frame.py::FlatLayout.exclusion`, one definition shared with the byte and verifiability
+results. `tests/unit/models/test_exclusion_t6.py::TestTheWithdrawnArithmetic` pins the old numbers
+(7, 29, 13) beside the emitted frames that contradict them.
+
+**Still true from F44:** key names are 29 of the first header's 44 B and 7 of the lean header's
+23 B, and DR0–DR2 are excluded at a zero-byte header.
+
+## F48 — the LoRa record size was measured at 50 ms spacing and used at 5.5 s (2026-10-06)
+
+**What was claimed.** On DR5 a 231 B frame carries b = 7 records of 13 B each (plus header, link
+and signature), sustaining 0.182 records/s under the 1 % duty cycle.
+
+**What is true.** 13 B is the delta record measured with records 50 ms apart. At 0.182 records/s
+they are **5.5 s apart**, and a difference grows with the time it spans
+(`frame_components.csv`, lean format):
+
+| spacing | 50 ms | 0.1 s | 1 s | 5.5 s | 16.5 s |
+|---|---|---|---|---|---|
+| delta record | 9.0 B | 10.1 B | 12.5 B | 13.6 B | 16.2 B |
+
+and the frame also needs one keyframe to decode alone (F46). Sized at the spacing the batch itself
+implies (`results/raw/lora_budget.csv`, DR5, 242 B payload):
+
+| | records per frame | frame | sustained rate |
+|---|---|---|---|
+| as published | 7 | 231 B | 0.182 rec/s |
+| first format, corrected | **5** | 239.6 B | **0.127 rec/s** |
+| lean format | **8** | 241.2 B | **0.200 rec/s** |
+
+The frozen LoRa artifacts (`lora_codesign.csv`, the `lora_capacity*` files) were produced with the
+published frames and are left as they are (D6). The capacity simulation sent a 218 B frame on the
+222 B payload table; the corrected frames on that table are 214.0 B (lean, six records) and
+221.7 B (first format, four records), within 2 % of it in size and airtime. So the capacity result
+— `N_max = 3`, within ≈ 500 m — is not re-run; what changes is how many *records* each of those
+frames carries, which is the table above.
+
+## F49 — four bibliography entries had wrong metadata; one paper was cited under another paper's authors for two months (2026-10-06)
+
+**What was wrong** (`paper/refs.bib`):
+
+| entry | was | is |
+|---|---|---|
+| the LoRa scalability model (F20, F43e) | "Bor et al." | **Haxhibeqiri, Van den Abeele, Moerman, Hoebeke**, *Sensors* 17(6):1193, 2017 |
+| the CLAS comparison source (F34) | attributed to authors of two of the schemes it compares | **Li et al.**, *PLOS ONE*, 2025 |
+| Tito-Lara et al. | given names wrong | corrected from the registry record |
+| the NDSS 2024 certificate-policy source | shortened title | full title and DOI |
+
+The first is the serious one. The name was in the paper, the thesis, the code
+(`lora.bor2017_loss_pct`), eight documents and a test file name. Each of these sources had been
+read, each was recorded as verified in `A3_CITATION_VERIFICATION.md`, **and the paper carried a
+paragraph saying so.** The verification had checked that the DOI resolved and the claim was in the
+PDF. It had not compared the author list.
+
+**What was done.** Everything renamed (`haxhibeqiri2017_*`), with a dated correction note at the
+definition. `analysis/verify_citations.py` (`make verify-citations`) compares **every** entry with
+its Crossref / DataCite / arXiv record — family names in order, given-name initials, title, year —
+and writes `results/raw/citation_check.csv`; entries with no registry record must name the held
+file they were checked against. 58 entries: 45 verified against a registry, 13 against held
+documents, 0 failing. `tests/test_citations.py` holds that the recorded check covers every entry
+and is not stale. The paper's "citation integrity" paragraph is deleted: a claim like that belongs
+in a check that runs, not in prose.
+
+⚠️ F18's lesson was *"quoting the PDF is not enough: quote the figure."* This one is narrower and
+more embarrassing: **check the title page.**

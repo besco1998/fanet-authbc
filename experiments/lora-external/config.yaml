@@ -1,6 +1,6 @@
 # LoRa external cross-check (items A7, F20) — our ns-3 result against a published model.
 #
-# Bor, Roedig, Voigt & Alonso, "LoRa Scalability: A Simulation Model Based on Interference
+# Haxhibeqiri, Van den Abeele, Moerman & Hoebeke, "LoRa Scalability: A Simulation Model Based on Interference
 # Measurements", Sensors 17(6):1193, 2017 (PDF in docs/literature/). Their Eq. (8) is a
 # closed-form fit (R^2 = 0.997) to TOTAL packet loss — collisions plus wrong-payload-CRC —
 # measured on real hardware, so it is an independent yardstick rather than another simulation

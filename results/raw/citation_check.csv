@@ -1,0 +1,62 @@
+# run=citation_check
+# checked=2026-10-06
+# bib=paper/refs.bib
+key,kind,identifier,registry,authors_bib,authors_registry,authors_match,title_match,year_bib,years_registry,year_match,status,fingerprint
+bianchi2000,doi,10.1109/49.840210,crossref,bianchi,G. Bianchi,1,1.00,2000,2000,1,ok,c1cc699a34bca9c9
+machen2007,doi,10.1109/LCOMM.2007.070040,crossref,ma; chen,Xiaomin Ma; Xianbo Chen,1,1.00,2007,2007,1,ok,ee923356fd9e52f2
+machen2008,doi,10.1109/TVT.2008.918731,crossref,ma; chen,Xiaomin Ma; Xianbo Chen,1,1.00,2008,2008,1,ok,34c6885f8cf59dfa
+tinnirello2010,doi,10.1109/TVT.2009.2029118,crossref,tinnirello; bianchi; xiao,I. Tinnirello; G. Bianchi; Yang Xiao,1,1.00,2010,2010,1,ok,46650f3b320c481b
+bls2001,doi,10.1007/3-540-45682-1_30,crossref,boneh; lynn; shacham,Dan Boneh; Ben Lynn; Hovav Shacham,1,1.00,2001,2001,1,ok,996f3cb42c54c11b
+bgls2003,doi,10.1007/3-540-39200-9_26,crossref,boneh; gentry; lynn; shacham,Dan Boneh; Craig Gentry; Ben Lynn; Hovav Shacham,1,1.00,2003,2003,1,ok,acec607512823ee7
+ed25519,doi,10.1007/978-3-642-23951-9_9,crossref,bernstein; duif; lange; schwabe; yang,Daniel J. Bernstein; Niels Duif; Tanja Lange; Peter Schwabe; Bo-Yin Yang,1,1.00,2011,2011,1,ok,26216efa0eb66bca
+rfc8032,doi,10.17487/RFC8032,crossref,josefsson; liusvaara,S. Josefsson; I. Liusvaara,1,1.00,2017,2017,1,ok,48ab33f39d64efbf
+fips186,doi,10.6028/NIST.FIPS.186-5,crossref,national institute of standards and technology,National Institute of Standards and Technology (US),1,1.00,2023,2023,1,ok,5573806dfa2e6ffd
+cfrg_bls,document,web: datatracker.ietf.org/doc/draft-irtf-cfrg-bls-signature/05,,boneh; gorbunov; wahby; wee; wood; zhang,,,,2022,,,document,cfc33816ad0c3069
+wong1999flows,doi,10.1109/90.793005,crossref,wong; lam,Chung Kei Wong; S.S. Lam,1,1.00,1999,1999,1,ok,2be9044ad17b129e
+gennaro1997streams,doi,10.1007/BFb0052235,crossref,gennaro; rohatgi,Rosario Gennaro; Pankaj Rohatgi,1,1.00,1997,1997/2006,1,ok,6c8715ec2e59a3f0
+perrig2000emss,doi,10.1109/SECPRI.2000.848446,crossref,perrig; canetti; tygar; song,A. Perrig; R. Canetti; J.D. Tygar; Dawn Song,1,1.00,2000,,n/a,ok,966a52eeae26404b
+perrig2002tesla,document,docs/literature/perrig2002_tesla_cryptobytes.pdf,,perrig; canetti; tygar; song,,,,2002,,,document,3bda3c2c98985f4c
+veara2025tbrd,arxiv,2510.11343,arxiv,veara; jain; moy; ranganathan,Jason Veara; Manav Jain; Kyle Moy; Aanjhan Ranganathan,1,1.00,2025,2025,1,ok,508d6b0c5da54995
+rotta2024telemetrybroadcast,arxiv,2401.11915,arxiv,rotta; mykytyn,Randolf Rotta; Pavlo Mykytyn,1,1.00,2024,2024,1,ok,8ca5b2d45243566e
+mavlink2signing,document,"web: mavlink.io/en/guide/message_signing.html, read 2026-10-06",,mavlink development team,,,,2026,,,document,21f9077e9439da9f
+zhang2008batch,doi,10.1109/INFOCOM.2008.58,crossref,zhang; lu; lin; ho; shen,C. Zhang; R. Lu; X. Lin; P.-H. Ho; X. Shen,1,1.00,2008,2008,1,ok,b80dca2a9d75237b
+li2025clas,doi,10.1371/journal.pone.0317047,crossref,li; shen; huang; wu,Huimin Li; Chucheng Shen; Hui Huang; Chenhuang Wu,1,1.00,2025,2025,1,ok,813b7a1f6c63d763
+ndss2024pqv2v,doi,10.14722/ndss.2024.24267,crossref,twardokus; bindel; rahbari; mccarthy,Geoff Twardokus; Nina Bindel; Hanif Rahbari; Sarah McCarthy,1,1.00,2024,2024,1,ok,853fe9beec649e7a
+etsi_ts103097,document,docs/literature/etsi_ts103097_its_security_header.pdf,,etsi,,,,2015,,,document,6427327c0c8f48ff
+arxiv2510pqsib1,arxiv,2510.23457,arxiv,darzi; rahman; karim; behnia; yavuz; bertino,Saleh Darzi; Mirza Masfiqur Rahman; Imtiaz Karim; Rouzbeh Behnia; Attila A Yavuz; Elisa Bertino,1,1.00,2025,2025/2026,1,ok,4a07c46f252ee571
+almajmaie2026pqfanet,arxiv,2604.18819,arxiv,al majmaie; ghajari; bhatta; amsaad,Sufian Al majmaie; Ghazal Ghajari; Niraj Prasad Bhatta; Fathi Amsaad,1,1.00,2026,2026,1,ok,151b3fef06e1b7dd
+sobati2025fragmentsec,arxiv,2506.01767,arxiv,sobati moghadam,Somayeh Sobati-M,1,1.00,2025,2025,1,ok,b598062fa2a88078
+gundogan2021firmware,doi,10.1145/3460417.3482974,crossref,gundogan; amsuss; schmidt; wahlisch,Cenk Gündoğan; Christian Amsüss; Thomas C. Schmidt; Matthias Wählisch,1,1.00,2021,2021,1,ok,f938fd29f86efec3
+haber1991timestamp,doi,10.1007/BF00196791,crossref,haber; stornetta,Stuart Haber; W. Scott Stornetta,1,1.00,1991,1991,1,ok,ec3644cd968df7e6
+nakamoto2008,document,web: bitcoin.org/bitcoin.pdf,,nakamoto,,,,2008,,,document,a9e5272750a201eb
+mehta2020blockchainuav,doi,10.1016/j.comcom.2020.01.023,crossref,mehta; gupta; tanwar,Parimal Mehta; Rajesh Gupta; Sudeep Tanwar,1,1.00,2020,2020,1,ok,a45a51890092dd71
+rfc8949,doi,10.17487/RFC8949,crossref,bormann; hoffman,C. Bormann; P. Hoffman,1,1.00,2020,2020,1,ok,5fad382a27a7ee3c
+msgpack,document,web: msgpack.org,,furuhashi,,,,2008,,,document,37ad38d154de96a5
+pelkonen2015gorilla,doi,10.14778/2824032.2824078,crossref,pelkonen; franklin; teller; cavallaro; huang; meza; veeraraghavan,Tuomas Pelkonen; Scott Franklin; Justin Teller; Paul Cavallaro; Qi Huang; Justin Meza; Kaushik Veeraraghavan,1,1.00,2015,2015,1,ok,782ef52abf9e1a62
+3gpp_ts22125,document,docs/literature/3gpp_ts22125_v17.6.0_uav_requirements.pdf,,3gpp,,,,2022,,,document,61c2b035dac0bf6b
+px4_mavlink_streams,document,"web: source code, read 2026-07-29",,px4 development team,,,,2026,,,document,63bb8ee146f3f15f
+ardupilot_stream_rates,document,"web: source code, read 2026-07-29",,ardupilot development team,,,,2026,,,document,f7e9bbc021ac98e8
+nsnam,document,"software: ns3/ns-3.48, release notes dated 2026-06-02",,ns 3 consortium,,,,2026,,,document,00d21e4859229200
+semtech_sx1276,document,docs/literature/semtech_sx1276_datasheet_rev4.pdf,,semtech corporation,,,,2015,,,document,1771a87f6a186d79
+lora_rp002,document,docs/literature/lora_alliance_rp002-1.0.3_regional_parameters.pdf,,lora alliance,,,,2021,,,document,b6727948c1ede077
+lorawan_ts001,document,docs/literature/lora_alliance_ts001-1.0.4_l2_specification.pdf,,lora alliance,,,,2020,,,document,322c886955a4670b
+chen2020uavswarm,doi,10.3390/app10103661,crossref,chen; tang; lao,Xi Chen; Jun Tang; Songyang Lao,1,1.00,2020,2020,1,ok,c3daa30da1604955
+bhatt2025uavswarmmac,arxiv,2510.10236,arxiv,bhatt; penumatsa; kumar,Dhrumil Bhatt; Siddharth Penumatsa; Vidushi Kumar,1,1.00,2025,2025,1,ok,778cfae341f5ba3b
+haxhibeqiri2017lora,doi,10.3390/s17061193,crossref,haxhibeqiri; van den abeele; moerman; hoebeke,Jetmir Haxhibeqiri; Floris Van den Abeele; Ingrid Moerman; Jeroen Hoebeke,1,1.00,2017,2017,1,ok,6b28e8fc6e5d77ac
+vandenabeele2017scalability,doi,10.1109/JIOT.2017.2768498,crossref,van den abeele; haxhibeqiri; moerman; hoebeke,Floris Van den Abeele; Jetmir Haxhibeqiri; Ingrid Moerman; Jeroen Hoebeke,1,1.00,2017,2017,1,ok,eddaba4be5e01625
+paredes2023lorafanet,doi,10.3390/s23052403,crossref,paredes; kaushal; vakilinia; prodanoff,William David Paredes; Hemani Kaushal; Iman Vakilinia; Zornitza Prodanoff,1,1.00,2023,2023,1,ok,24a7078b323c1412
+berto2021loramesh,doi,10.3390/s21134314,crossref,berto; napoletano; savi,Riccardo Berto; Paolo Napoletano; Marco Savi,1,1.00,2021,2021,1,ok,61a652fc62ec2c1a
+davoli2021hybridlora,doi,10.3390/drones5020026,crossref,davoli; pagliari; ferrari,Luca Davoli; Emanuele Pagliari; Gianluigi Ferrari,1,1.00,2021,2021,1,ok,e13736178653fd47
+zirak2021swarm,doi,10.1109/ICIT52682.2021.9491655,crossref,zirak; shashev; shidlovskiy,Qazawat Zirak; Dmitriy Shashev; Stanislav Shidlovskiy,1,1.00,2021,2021,1,ok,5c21b20cac7c2ce4
+centelles2021beyondstar,doi,10.1109/MPRV.2021.3063443,crossref,centelles; freitag; meseguer; navarro,Roger Pueyo Centelles; Felix Freitag; Roc Meseguer; Leandro Navarro,1,1.00,2021,2021,1,ok,63409a874a084716
+abrardo2019multihoplora,doi,10.3390/s19020402,crossref,abrardo; pozzebon,Andrea Abrardo; Alessandro Pozzebon,1,1.00,2019,2019,1,ok,ddb986bf7abf74bb
+jiang2020hybridlpwan,doi,10.1109/JIOT.2020.3009228,crossref,jiang; zhang; barsallo yi; raghunathan; mousoulis; chaterji; peroulis; shakouri; bagchi,Xiaofan Jiang; Heng Zhang; Edgardo Alberto Barsallo Yi; Nithin Raghunathan; Charilaos Mousoulis; Somali Chaterji; Dimitrios Peroulis; Ali Shakouri; Saurabh Bagchi,1,1.00,2021,2021,1,ok,8fee4e3e8557535d
+durand2025loramesh,doi,10.3390/s25051602,crossref,durand; booysen,Thomas Gerhardus Durand; Marthinus Johannes Booysen,1,1.00,2025,2025,1,ok,c7618af1f27e541f
+to2018loracsma,doi,10.1109/ICC.2018.8422800,crossref,to; duda,Thanh-Hai To; Andrzej Duda,1,1.00,2018,2018,1,ok,e5d6fd412309002b
+traspadini2025lorantn,arxiv,2509.02811,arxiv,traspadini; zorzi; giordani,Alessandro Traspadini; Michele Zorzi; Marco Giordani,1,1.00,2025,2025,1,ok,b6a63051781be8f9
+klimiashvili2020loravswifi,doi,10.1109/ICNC47757.2020.9049724,crossref,klimiashvili; tapparello; heinzelman,George Klimiashvili; Cristiano Tapparello; Wendi Heinzelman,1,1.00,2020,2020,1,ok,33a36326c16db97a
+reliableuplink2019,doi,10.1109/DCOSS.2019.00042,crossref,khan; jurdak; portmann,Furqan Hameed Khan; Raja Jurdak; Marius Portmann,1,1.00,2019,2019,1,ok,8d3a9c5db696411f
+titolara2025interference,doi,10.3390/s25226924,crossref,tito lara; dominguez limaico; maya olalla; cuzme rodriguez,Mateo Tito-Lara; Mauricio Domínguez-Limaico; Edgar Maya-Olalla; Fabián Cuzme-Rodríguez,1,1.00,2025,2025,1,ok,56d0bf248fdedb73
+magrin2020thorough,doi,10.1109/JIOT.2019.2946487,crossref,magrin; capuzzo; zanella,Davide Magrin; Martina Capuzzo; Andrea Zanella,1,1.00,2020,2020,1,ok,a3496e3da0a55de3
+kurkowski2005incredibles,doi,10.1145/1096166.1096174,crossref,kurkowski; camp; colagrosso,Stuart Kurkowski; Tracy Camp; Michael Colagrosso,1,1.00,2005,2005,1,ok,9e3c156a27c16ea3
+cavalcanti2018vanet,doi,10.1145/3213232.3213237,crossref,cavalcanti; de souza; spohn; gomes; costa,Elmano Ramalho Cavalcanti; Jose Anderson Rodrigues de Souza; Marco Aurelio Spohn; Reinaldo Cezar de Morais Gomes; Anderson Fabiano Batista Ferreira da Costa,1,1.00,2018,2018,1,ok,bca8b8a6c9e179da

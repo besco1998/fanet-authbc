@@ -1,0 +1,38 @@
+# E8 — the design ladder (docs/04 §2; review comments 2.3, 2.4, 4.1, 4.3).
+# One row per rung per operating point: bytes, verifiability, delay, capacity at both
+# thresholds, receiver CPU, energy. Each rung changes ONE thing about the rung before it, in both
+# frame formats, so no step of the gain is credited to the wrong cause.
+experiment: design-ladder
+
+# [label, Lambda_i rec/s, D_max s]. `adopted` is the TS 22.125-compliant point (B3, 2026-07-30).
+operating_points:
+  - ["adopted", 50, 0.100]
+  - ["relaxed", 20, 0.250]
+
+mtu: 1500
+epsilon: 0.05
+p_loss: 0.05
+
+# Capacity thresholds: saturation, and the measured V >= 0.95 crossing (ns3_delay.csv, F30).
+u_saturation: 1.000
+u_v95: 2.435
+n_ceiling: 800
+
+# Exhaustive search (the SEARCH_OPTIMUM rows): batch 1..search_max_batch, these intervals.
+search_max_batch: 12
+ref_candidates: [1, 2, 4, 8, 16]
+
+# Certificate policy of the deployed V2X standard: a full certificate in every fifth message and
+# an 8-octet digest in the other four (NDSS 2024; ETSI TS 103 097 HashedId8). Charged per FRAME.
+cert_bytes: 162
+cert_period: 5
+cert_digest_bytes: 8
+
+# Measured on the Raspberry Pi 4 (decision D8) — the same inputs E5 uses.
+crypto_csv: p1_crypto.authbc-pi4a.csv
+t_hash_ns: 2745.5
+p_cpu_w: 0.749
+p_radio_w: 0.218
+# Encode time per record, authbc-pi4a. ⚠️ Measured for the FIRST format's encoders only; the lean
+# codec has not been timed on the Pi, so lean rows report radio energy and leave the total blank.
+t_enc_ns: {cbor: 50407, delta: 47759}

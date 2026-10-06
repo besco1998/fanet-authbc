@@ -1,21 +1,23 @@
-"""External LoRa references: Bor et al. 2017 (capacity) and Zirak et al. 2021 (measured link).
+"""External LoRa references: Haxhibeqiri et al. 2017 (capacity), Zirak et al. 2021 (measured link).
 
 This is the LoRa arm's external baseline (item A7): a published, closed-form, *hardware-measurement
 grounded* capacity model that can be evaluated at OUR operating point rather than quoted at theirs.
 Every expected value below is a figure the paper states in prose, cited by its figure number, so
 these tests fail if the implementation of Eq. (8) drifts from the source.
 
-Source: Bor, Roedig, Voigt & Alonso, "LoRa Scalability: A Simulation Model Based on Interference
-Measurements", Sensors 17(6):1193, 2017. PDF in docs/literature/.
+Source: Haxhibeqiri, Van den Abeele, Moerman & Hoebeke, "LoRa Scalability: A Simulation Model Based
+on Interference Measurements", Sensors 17(6):1193, 2017. PDF in docs/literature/. ⚠️ Attributed to
+"Bor et al." throughout this project until 2026-10-06 (audit F49); `TestTheSourceIsNamedCorrectly`
+below is the guard.
 """
 
 import pytest
 
 from authbc.models import lora
 from authbc.models.lora import (
-    BOR2017_VALID_MAX_X,
-    bor2017_loss_pct,
-    bor2017_n_max,
+    HAXHIBEQIRI2017_VALID_MAX_X,
+    haxhibeqiri2017_loss_pct,
+    haxhibeqiri2017_n_max,
 )
 
 
@@ -31,7 +33,7 @@ class TestReproducesThePapersOwnFigures:
         ],
     )
     def test_total_loss_at_1000_nodes(self, logical_channels, stated_pct, tol, figure):
-        got = bor2017_loss_pct(999.9, logical_channels=logical_channels)
+        got = haxhibeqiri2017_loss_pct(999.9, logical_channels=logical_channels)
         assert got == pytest.approx(stated_pct, abs=tol), figure
 
     def test_three_channels_single_sf_exceeds_the_collision_only_figure(self):
@@ -41,35 +43,35 @@ class TestReproducesThePapersOwnFigures:
         This test exists because the 5-point gap looks like an implementation error until you read
         which quantity that sentence names.
         """
-        total = bor2017_loss_pct(999.9, logical_channels=3)
+        total = haxhibeqiri2017_loss_pct(999.9, logical_channels=3)
         assert 75.0 < total < 85.0
 
 
 class TestDomainIsEnforcedNotExtrapolated:
     def test_rejects_x_at_or_beyond_the_fits_stated_limit(self):
         with pytest.raises(ValueError, match="x < 1000"):
-            bor2017_loss_pct(BOR2017_VALID_MAX_X)
+            haxhibeqiri2017_loss_pct(HAXHIBEQIRI2017_VALID_MAX_X)
 
     def test_scaling_extends_the_node_domain_but_not_the_x_domain(self):
         # 18 logical channels admit 18x the nodes because the fit sees x = N/18.
-        assert bor2017_loss_pct(17_000, logical_channels=18) > 0
+        assert haxhibeqiri2017_loss_pct(17_000, logical_channels=18) > 0
         with pytest.raises(ValueError):
-            bor2017_loss_pct(18_000, logical_channels=18)
+            haxhibeqiri2017_loss_pct(18_000, logical_channels=18)
 
     @pytest.mark.parametrize("bad", [-1.0])
     def test_rejects_negative_node_counts(self, bad):
         with pytest.raises(ValueError):
-            bor2017_loss_pct(bad)
+            haxhibeqiri2017_loss_pct(bad)
 
     def test_rejects_zero_logical_channels(self):
         with pytest.raises(ValueError):
-            bor2017_loss_pct(10, logical_channels=0)
+            haxhibeqiri2017_loss_pct(10, logical_channels=0)
 
 
 class TestShape:
     def test_loss_is_monotone_increasing_over_the_usable_range(self):
         """Monotone up to N=700, which covers our operating region (N <= 50) with wide margin."""
-        vals = [bor2017_loss_pct(n) for n in range(0, 701, 5)]
+        vals = [haxhibeqiri2017_loss_pct(n) for n in range(0, 701, 5)]
         assert all(b >= a for a, b in zip(vals, vals[1:], strict=False))
 
     def test_high_end_non_monotonicity_is_a_known_fit_artifact(self):
@@ -84,8 +86,8 @@ class TestShape:
         this explanation instead of concluding our implementation is broken. It does not touch any
         AUTHBC result: our operating region is N <= 50.
         """
-        peak = bor2017_loss_pct(723)
-        trough = bor2017_loss_pct(923)
+        peak = haxhibeqiri2017_loss_pct(723)
+        trough = haxhibeqiri2017_loss_pct(923)
         assert trough < peak, "the documented artifact has vanished — re-derive the coefficients"
         assert peak - trough < 2.0, "artifact larger than the fit residual: check the coefficients"
         # and it stays clear of our operating region by an order of magnitude
@@ -93,7 +95,7 @@ class TestShape:
 
     def test_more_logical_channels_never_increase_loss(self):
         for n in (50, 200, 900):
-            assert bor2017_loss_pct(n, logical_channels=18) <= bor2017_loss_pct(n)
+            assert haxhibeqiri2017_loss_pct(n, logical_channels=18) <= haxhibeqiri2017_loss_pct(n)
 
     def test_the_fit_does_not_pass_through_the_origin(self):
         """Documented limitation, asserted so nobody 'fixes' it into a physical claim.
@@ -102,7 +104,7 @@ class TestShape:
         a curve-fitting artifact over x<1000, and it means small-N predictions carry the fit's
         error rather than a measurement. Our N_max comparison is reported with that caveat.
         """
-        assert bor2017_loss_pct(0) == pytest.approx(1.7833, abs=1e-4)
+        assert haxhibeqiri2017_loss_pct(0) == pytest.approx(1.7833, abs=1e-4)
 
 
 class TestCapacityAgreesWithOurSimulation:
@@ -111,20 +113,21 @@ class TestCapacityAgreesWithOurSimulation:
     def test_n_max_matches_the_authbc_simulation_within_one_node(self):
         """AUTHBC ns-3 measures N_max = 5 at DR5, V >= 0.95, 1 channel / 1 SF / 1 demod path.
 
-        Bor et al.'s measurement-fitted model, evaluated under the identical V >= 0.95 criterion,
-        gives 4. Two independent methods, one node apart. See finding F20.
+        Haxhibeqiri et al.'s measurement-fitted model, evaluated under the identical V >= 0.95
+        criterion, gives 4. Two independent methods, one node apart. See finding F20.
         """
-        assert bor2017_n_max(0.95, logical_channels=1) == 4
+        assert haxhibeqiri2017_n_max(0.95, logical_channels=1) == 4
 
     def test_n_max_grows_with_logical_channels(self):
-        single = bor2017_n_max(0.95, logical_channels=1)
-        full = bor2017_n_max(0.95, logical_channels=18)
+        single = haxhibeqiri2017_n_max(0.95, logical_channels=1)
+        full = haxhibeqiri2017_n_max(0.95, logical_channels=18)
         assert full > single
         # 18 orthogonal logical channels should buy close to 18x the nodes.
         assert full == pytest.approx(18 * single, rel=0.35)
 
     def test_stricter_verifiability_never_admits_more_nodes(self):
-        assert bor2017_n_max(0.99) <= bor2017_n_max(0.95) <= bor2017_n_max(0.90)
+        n99, n95, n90 = (haxhibeqiri2017_n_max(v) for v in (0.99, 0.95, 0.90))
+        assert n99 <= n95 <= n90
 
 
 class TestZirak2021MeasuredAirToAirLink:

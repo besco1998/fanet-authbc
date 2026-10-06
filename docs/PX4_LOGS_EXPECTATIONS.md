@@ -98,3 +98,53 @@ of `0007e5ac…`; cast to an integer that is garbage, and it would have entered 
 ten-byte field. A field that is never valid is a missing field, so by the rule's own skip clause
 the log is replaced by the next in its stratum and the skip is recorded. The script now also ends
 a run at any grid point where a field is invalid, exactly as it does at a landing.
+
+---
+
+# Outcome (2026-10-06)
+
+`results/raw/px4_log_sizes.csv`: twelve logs, 29 092 in-flight records at 0.2 s. Each log counts
+once. The generator is run through the same sizing code at the same spacing.
+
+| spacing | real: keyframe | real: delta (range of the twelve log means) | generator: delta | real: saving | generator: saving |
+|---|---|---|---|---|---|
+| 0.05 s | *not measurable — position is logged at 5 Hz* | | 9.00 B | | 70.33 % |
+| 0.1 s | *not measurable* | | 10.06 B | | 69.78 % |
+| **0.2 s** | 21.98 B (19–24) | **11.06 B** (10.00–13.21) | 10.83 B | **69.08 %** | 69.38 % |
+| 1 s | 21.98 B | 12.38 B (10.01–15.23) | 12.52 B | 68.38 % | 68.51 % |
+| 5.5 s | 21.98 B | 13.40 B (10.03–16.90) | 13.60 B | 67.85 % | 67.96 % |
+
+**The amended load-bearing prediction holds:** mean delta at 0.2 s is 11.06 B (≤ 13) and the
+saving is 69.08 % (≥ 68 %). The 0.1 s prediction is **untested**, as recorded in the amendment.
+
+Against the ranges predicted from the encoding rules: delta at 1 s, 12.38 B (predicted 12–15) ✓;
+at 5.5 s, 13.40 B (13–17) ✓; **keyframe 21.98 B (predicted 22–25) ✗ — under by 0.02 B.** The
+prediction assumed two-byte velocities; multicopters fly slowly enough for one.
+
+What the data say beyond the prediction:
+
+* **At matched spacing the generator is within 0.25 B of real telemetry** in every row, and errs
+  high as often as low. Its keyframe is 2 B *larger* than a real one, mostly because the project's
+  convention places it an hour into a flight (a four-byte timestamp) and these logs are minutes
+  long.
+* **The spread is by speed, as the encoding rules say it should be.** The three fixed wings
+  (median ground speed 16, 16 and 31 m/s) need a second byte for position and average
+  12.5–13.2 B at 0.2 s; the six multicopters average 10.0–10.5 B. One fixed-wing log (13.21 B)
+  is above the 13 B set for the mean.
+* ⚠️ **The mean flatters a fast swarm.** Five of the six multicopter logs are mostly hover
+  (median ground speed under 1.5 m/s), and one octorotor (`0050ea4f…`) moves 0.3 m in 553 s and
+  sits at the 10 B floor. They were selected by the rule and stay, but a neighbourhood of
+  vehicles in forward flight is described by the fixed-wing rows, not by the mean: up to 13.2 B
+  per delta at 0.2 s (46.3 B per record, a saving of 68.2 %) — about one point under the
+  generator.
+* **The generator's flat 9 B at 50 ms is not contradicted, and is not confirmed.** Nine bytes is
+  the floor of the format (nine fields, one byte each); a real delta at 50 ms lies between that
+  floor and its 0.2 s value. So with real telemetry the design is between 43.25 and 44.29 B per
+  record, and its saving between 69.1 and 70.3 %.
+
+Cross-check: the mean delta and keyframe of three (log, spacing) cells were re-derived with a
+stand-alone varint routine sharing no code with `wire_v2`; all three agree to the third decimal.
+
+**What this does not license.** Twelve logs chosen from the default-logging-profile end of one
+autopilot's public archive. No statement about telemetry at 50 Hz, and none about any loss,
+capacity or energy result.

@@ -1,0 +1,6 @@
+# E11 — the LoRa batch at the record spacing it implies (docs/02 §9d; audit F48).
+experiment: lora-budget
+data_rates: [4, 5, 6]
+duty_cycle: 0.01
+# Record spacings at which a delta record is measured (generator steps of 50 ms): 2.5 s … 30 s.
+strides: [50, 80, 110, 160, 220, 330, 440, 600]

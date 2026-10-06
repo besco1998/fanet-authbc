@@ -259,8 +259,8 @@ class TestLoraExternalTable:
     **F18**, which the project had already RETRACTED -- while a paragraph 100 lines earlier said
     the opposite in bold. The paper contradicted itself on a retracted claim.
 
-    The Bor column was correct throughout, which is what made this hard to see: half the table
-    agreed with its source.
+    The Haxhibeqiri et al. column was correct throughout, which is what made this hard to see: half
+    the table agreed with its source.
     """
 
     CSV = REPO / "results" / "raw" / "lora_external_check.csv"
@@ -271,7 +271,7 @@ class TestLoraExternalTable:
                                 if not ln.startswith("#")):
             if r["authbc_ns3_loss_pct"]:
                 out[int(r["n_devices"])] = (float(r["authbc_ns3_loss_pct"]),
-                                            float(r["bor2017_loss_pct"]))
+                                            float(r["haxhibeqiri2017_loss_pct"]))
         return out
 
     def _paper_rows(self) -> dict[int, tuple[float, float]]:
@@ -320,8 +320,9 @@ class TestLoraExternalTable:
         ours, theirs = int(m.group(1)), int(m.group(2))
         assert (ours, theirs) == (3, 4), (
             f"N_max reads ({ours}, {theirs}). The canonical run is lora_capacity.csv (30 seeds, "
-            f"jittered): 0.95981 at N=3 passes, 0.9167 at N=5 fails, so ours=3. Bor's closed form "
-            f"gives 4 (4.418% at N=4, 5.065% at N=5). ⚠️ ours=5 is the purged 3-seed value. "
+            f"jittered): 0.95981 at N=3 passes, 0.9167 at N=5 fails, so ours=3. Haxhibeqiri et "
+            f"al.'s closed form gives 4 (4.418% at N=4, 5.065% at N=5). ⚠️ ours=5 is the purged "
+            f"3-seed value. "
             f"⚠️ Do NOT cite lora_capacity_30seed.csv here — despite its name it is the "
             f"NO-JITTER CONTROL, not the canonical run."
         )

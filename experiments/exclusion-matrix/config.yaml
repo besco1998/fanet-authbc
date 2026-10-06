@@ -1,0 +1,10 @@
+# E9 — which EU863-870 data rate carries one self-contained authenticated frame (docs/02 T6').
+# Payload limits are RP002-1.0.3 Tables 12 and 13, for all TWELVE data rates (models/lora.py).
+experiment: exclusion-matrix
+# [name, bytes]. 64: Ed25519 / ECDSA-P256. 48: the smallest standardised public-key signature
+# (BLS12-381, minimal-signature-size, 126-bit). 13: the MAVLink 2 signing trailer — a symmetric
+# tag with a 6-byte timestamp, which authenticates a link, not an originator.
+auth_objects:
+  - ["Ed25519 / ECDSA-P256 signature", 64]
+  - ["BLS12-381 minimal signature", 48]
+  - ["MAVLink 2 symmetric tag", 13]

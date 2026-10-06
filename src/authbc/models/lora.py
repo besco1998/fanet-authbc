@@ -88,6 +88,42 @@ EU868_DATA_RATES: dict[int, DataRate] = {
 }
 
 
+
+@dataclass(frozen=True)
+class PayloadLimit:
+    """Maximum application payload N of one EU863-870 data rate (RP002-1.0.3 §2.4.6)."""
+
+    dr: int
+    modulation: str
+    n_not_repeater: int       # Table 13
+    n_repeater: int           # Table 12
+
+
+# ALL twelve data rates RP002-1.0.3 Table 8 defines for EU863-870, not only the seven LoRa ones:
+# DR7 is FSK and DR8–DR11 are LR-FHSS. The exclusion bound (docs/02 T6') is a statement about a
+# payload limit, so it applies to every row; counting "seven data rates" silently dropped five
+# (review comment 2.2d, audit F47). Transcribed 2026-10-06 from the document held in
+# docs/literature/. ⚠️ These are LoRaWAN REGIONAL-PARAMETER limits. The radio itself accepts a
+# payload of 1 to 255 bytes at every spreading factor (SX1276 datasheet §4.1.1.7), and §2.4.3 of
+# RP002 states that EU863-870 has no dwell-time limitation — so a link that does not run LoRaWAN is
+# not bound by this table, only by the duty cycle.
+EU868_PAYLOAD_LIMITS: dict[int, PayloadLimit] = {
+    0: PayloadLimit(0, "LoRa SF12 / 125 kHz", 51, 51),
+    1: PayloadLimit(1, "LoRa SF11 / 125 kHz", 51, 51),
+    2: PayloadLimit(2, "LoRa SF10 / 125 kHz", 51, 51),
+    3: PayloadLimit(3, "LoRa SF9 / 125 kHz", 115, 115),
+    4: PayloadLimit(4, "LoRa SF8 / 125 kHz", 242, 222),
+    5: PayloadLimit(5, "LoRa SF7 / 125 kHz", 242, 222),
+    6: PayloadLimit(6, "LoRa SF7 / 250 kHz", 242, 222),
+    7: PayloadLimit(7, "FSK 50 kb/s", 242, 222),
+    8: PayloadLimit(8, "LR-FHSS CR1/3, 137 kHz", 50, 50),
+    9: PayloadLimit(9, "LR-FHSS CR2/3, 137 kHz", 115, 115),
+    10: PayloadLimit(10, "LR-FHSS CR1/3, 336 kHz", 50, 50),
+    11: PayloadLimit(11, "LR-FHSS CR2/3, 336 kHz", 115, 115),
+}
+LORA_PHY_MAX_PAYLOAD: int = 255   # SX1276 §4.1.1.7: "PL is the number of Payload bytes (1 to 255)"
+
+
 def relative_range(dr: int, reference_dr: int = 6, path_loss_exponent: float = 2.0) -> float:
     """Range of *dr* relative to *reference_dr*, from the sensitivity difference alone.
 
@@ -190,9 +226,16 @@ def _rate(dr: int) -> DataRate:
     return EU868_DATA_RATES[dr]
 
 
-# --------------------------------------------------------------- external model (Bor et al. 2017)
-# Bor, Roedig, Voigt & Alonso, "LoRa Scalability: A Simulation Model Based on Interference
-# Measurements", Sensors 17(6):1193, 2017. DOI 10.3390/s17061193. PDF in docs/literature/.
+# ------------------------------------------------- external model (Haxhibeqiri et al. 2017)
+# Haxhibeqiri, Van den Abeele, Moerman & Hoebeke, "LoRa Scalability: A Simulation Model Based on
+# Interference Measurements", Sensors 17(6):1193, 2017. DOI 10.3390/s17061193. PDF in
+# docs/literature/.
+#
+# ⚠️ Corrected 2026-10-06 (audit F49). Until then this paper was attributed, here and everywhere
+# else in the project, to "Bor, Roedig, Voigt & Alonso" — the authors of a DIFFERENT LoRa
+# scalability paper (MSWiM 2016). The title, journal, DOI and every equation were always this
+# paper's; only the names were wrong. Found by comparing the DOI with its Crossref record and with
+# page 1 of the PDF we hold. The functions below were called `bor2017_*`.
 #
 # Why this belongs in our codebase: it is the only published LoRa capacity model we found that is
 # grounded in *hardware interference measurements* rather than an analytical collision assumption,
@@ -214,14 +257,14 @@ def _rate(dr: int) -> DataRate:
 #    throughput rather than in loss fraction — consistent with the duty-cycle normalisation above.
 #  * ⚠️ It is only valid for x < 1000, and the polynomial does not pass through the origin: it
 #    predicts 1.78 % loss at N = 0. Below N ~ 5 the intercept dominates, so small-N predictions
-#    carry the fit's error, not a physical claim. `bor2017_loss_pct` clamps to [0, 100] but does
-#    NOT hide the intercept, because hiding it would misrepresent their model.
+#    carry the fit's error, not a physical claim. `haxhibeqiri2017_loss_pct` clamps to [0, 100]
+#    but does NOT hide the intercept, because hiding it would misrepresent their model.
 #  * ⚠️ The quintic is also NOT monotone near the top of its domain: it peaks at x ~ 723 (86.61 %),
 #    falls to 85.01 % at x ~ 923, then rises again. Loss cannot fall as nodes are added, so this
 #    is a fitting artifact — but it is only 1.6 points on a 0-90 % curve, i.e. inside the fit's own
 #    residual at R^2 = 0.997. Documented and asserted in tests rather than smoothed away; it does
 #    not touch AUTHBC results, whose operating region is N <= 50.
-_BOR2017_EQ8_COEFFS = (  # highest power first, Eq. (8)
+_HAXHIBEQIRI2017_EQ8_COEFFS = (  # highest power first, Eq. (8)
     1.1318e-12,   # x^5
     -3.4342e-9,   # x^4
     4.0194e-6,    # x^3
@@ -229,11 +272,11 @@ _BOR2017_EQ8_COEFFS = (  # highest power first, Eq. (8)
     0.6678,       # x^1
     1.7833,       # x^0
 )
-BOR2017_VALID_MAX_X = 1000  # Eqs. (8)–(11) are stated "x < 1000"
+HAXHIBEQIRI2017_VALID_MAX_X = 1000  # Eqs. (8)–(11) are stated "x < 1000"
 
 
-def bor2017_loss_pct(n_devices: float, *, logical_channels: int = 1) -> float:
-    """Total packet loss (%) predicted by Bor et al. 2017 Eq. (8), scaled per Eqs. (9)-(11).
+def haxhibeqiri2017_loss_pct(n_devices: float, *, logical_channels: int = 1) -> float:
+    """Total packet loss (%) predicted by Haxhibeqiri et al. 2017 Eq. (8), scaled per Eqs. (9)-(11).
 
     ``logical_channels`` is the number of non-interfering (channel x SF) combinations: 1 for a
     single channel and single SF, 6 for one channel and six SFs, 3 for three channels and one SF,
@@ -247,28 +290,28 @@ def bor2017_loss_pct(n_devices: float, *, logical_channels: int = 1) -> float:
     if logical_channels < 1:
         raise ValueError("logical_channels must be >= 1")
     x = n_devices / logical_channels
-    if x >= BOR2017_VALID_MAX_X:
+    if x >= HAXHIBEQIRI2017_VALID_MAX_X:
         raise ValueError(
-            f"Bor et al. Eq. (8) is stated for x < {BOR2017_VALID_MAX_X}; got x={x:.1f} "
-            f"(n_devices={n_devices}, logical_channels={logical_channels})"
+            f"Haxhibeqiri et al. Eq. (8) is stated for x < {HAXHIBEQIRI2017_VALID_MAX_X}; "
+            f"got x={x:.1f} (n_devices={n_devices}, logical_channels={logical_channels})"
         )
     y = 0.0
-    for c in _BOR2017_EQ8_COEFFS:
+    for c in _HAXHIBEQIRI2017_EQ8_COEFFS:
         y = y * x + c
     return min(100.0, max(0.0, y))
 
 
-def bor2017_n_max(verifiability: float = 0.95, *, logical_channels: int = 1) -> int:
-    """Largest N whose predicted delivery ratio still meets ``verifiability`` under Bor et al.
+def haxhibeqiri2017_n_max(verifiability: float = 0.95, *, logical_channels: int = 1) -> int:
+    """Largest N whose predicted delivery still meets ``verifiability`` under Haxhibeqiri et al.
 
     The same V >= 0.95 criterion the AUTHBC simulation uses, applied to the external model, so the
     two capacity numbers are directly comparable rather than merely adjacent.
 
-    ⚠️ **Read `bor2017_intercept_share` before quoting the result.** Their N_max is 4, decided by
-    Eq. (8) at N=4 (4.418 %) and N=5 (5.065 %) — both inside the N < 5 band this module already
-    annotates as "carries the fit's error, not a physical claim", because the quintic does not
-    pass through the origin and predicts 1.783 % loss with no transmitters at all. That intercept
-    is 36 % of the entire 5 % budget the criterion allows.
+    ⚠️ **Read `haxhibeqiri2017_intercept_share` before quoting the result.** Their N_max is 4,
+    decided by Eq. (8) at N=4 (4.418 %) and N=5 (5.065 %) — both inside the N < 5 band this module
+    already annotates as "carries the fit's error, not a physical claim", because the quintic does
+    not pass through the origin and predicts 1.783 % loss with no transmitters at all. That
+    intercept is 36 % of the entire 5 % budget the criterion allows.
 
     Forcing the fit through the origin gives their N_max = 5, which WIDENS the gap against our 3
     rather than closing it — so quoting 4 is the conservative choice. Say so when quoting it.
@@ -277,8 +320,8 @@ def bor2017_n_max(verifiability: float = 0.95, *, logical_channels: int = 1) -> 
         raise ValueError("verifiability must be in (0, 1]")
     max_loss_pct = 100.0 * (1.0 - verifiability)
     n = 0
-    for cand in range(1, BOR2017_VALID_MAX_X * logical_channels):
-        if bor2017_loss_pct(cand, logical_channels=logical_channels) > max_loss_pct:
+    for cand in range(1, HAXHIBEQIRI2017_VALID_MAX_X * logical_channels):
+        if haxhibeqiri2017_loss_pct(cand, logical_channels=logical_channels) > max_loss_pct:
             break
         n = cand
     return n
@@ -338,21 +381,21 @@ def max_range_for_verifiability(verifiability: float = 0.95) -> float | None:
     return float(max(ok)) if ok else None
 
 
-def bor2017_intercept_share(n_devices: float, *, logical_channels: int = 1) -> float:
-    """Fraction of Bor Eq. (8)'s predicted loss at *n_devices* contributed by its N=0 intercept.
+def haxhibeqiri2017_intercept_share(n_devices: float, *, logical_channels: int = 1) -> float:
+    """Fraction of Eq. (8)'s predicted loss at *n_devices* that is its N=0 intercept.
 
     Eq. (8) is a fit, not a mechanism, and it predicts 1.783 % loss at zero transmitters. Near the
     V >= 0.95 crossing — which is where their N_max is decided — that non-physical constant is a
     large share of the whole budget, so a comparison drawn there compares our simulation against
     their *fit residual* as much as against their physics. Returns 1.0 at n = 0.
     """
-    total = bor2017_loss_pct(n_devices, logical_channels=logical_channels)
+    total = haxhibeqiri2017_loss_pct(n_devices, logical_channels=logical_channels)
     if total <= 0.0:
         return 1.0
-    return bor2017_loss_pct(0.0) / total
+    return haxhibeqiri2017_loss_pct(0.0) / total
 
 
-def bor2017_pessimism_ratio(measured_loss_pct: float, n_devices: float,
+def haxhibeqiri2017_pessimism_ratio(measured_loss_pct: float, n_devices: float,
                             *, logical_channels: int = 1) -> float:
     """our loss / theirs at *n_devices*. > 1 means WE are the more pessimistic model.
 
@@ -362,7 +405,8 @@ def bor2017_pessimism_ratio(measured_loss_pct: float, n_devices: float,
     the crossover, and the crossover sits in exactly the N <= 3 region where N_max is decided.
     Retracted finding F18 was a sign error on this same comparison.
     """
-    theirs = bor2017_loss_pct(n_devices, logical_channels=logical_channels)
+    theirs = haxhibeqiri2017_loss_pct(n_devices, logical_channels=logical_channels)
     if theirs <= 0.0:
-        raise ValueError(f"Bor Eq. (8) predicts no loss at n={n_devices}; ratio undefined")
+        raise ValueError(
+            f"Haxhibeqiri et al. Eq. (8) predicts no loss at n={n_devices}; ratio undefined")
     return measured_loss_pct / theirs

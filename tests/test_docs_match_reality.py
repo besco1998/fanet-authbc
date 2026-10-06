@@ -217,18 +217,19 @@ class TestSpecDocsMatchArtifacts:
         )
 
     def test_no_spec_doc_revives_the_retracted_optimism_claim(self):
-        """⚠️ F18 is retracted. Bor2017 is the MORE OPTIMISTIC model above the crossover."""
+        """⚠️ F18 is retracted. Haxhibeqiri2017 is the MORE OPTIMISTIC model above the crossover."""
         who = {r["n_devices"]: r["who_is_optimistic"] for r in _rows("lora_external_check.csv")}
-        assert who.get("50") == "Bor2017", (
+        assert who.get("50") == "Haxhibeqiri2017", (
             f"lora_external_check.csv now says {who.get('50')} — "
             "re-derive before touching this test"
         )
         bad = [name for name, text in _spec_text()
                if re.search(r"(we|our\s+\w+)\s+(?:is|are)\s+\w*\s*more optimistic", text, re.I)]
         assert not bad, (
-            "retracted finding F18 ('we are the more optimistic model vs Bor') is back in: "
+            "retracted finding F18 ('we are the more optimistic model vs Haxhibeqiri et al.') "
+            "is back in: "
             + ", ".join(bad)
-            + ". The artifact has who_is_optimistic=Bor2017 at every N>=3."
+            + ". The artifact has who_is_optimistic=Haxhibeqiri2017 at every N>=3."
         )
 
     def test_lora_table_in_docs02_is_not_the_purged_three_seed_run(self):

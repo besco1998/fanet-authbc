@@ -158,7 +158,7 @@ The longest correction run in the project. Everything below was found by attacki
 233/116→213/100. The models were right the whole time. Drivers now default to 30 seeds and emit
 min/max/σ so the next instance is visible in the artifact.
 
-**Two of my own claims were retracted.** F18 (I said we were the *more optimistic* model vs Bor —
+**Two of my own claims were retracted.** F18 (I said we were the *more optimistic* model vs Haxhibeqiri et al. —
 I had quoted their pure-ALOHA figure as their LoRa one) and the "no capture" correction, where I had
 attributed our low-N margin to capture that our interference matrix does not implement.
 
@@ -226,7 +226,7 @@ wrong. See §3.
 
 ## 3. `N_max = 5` checked against published measurements — and a secondary source caught lying
 
-**The trap.** A search summary attributed *"32 % loss at 1000 nodes"* to Bor et al. 2017. Reading
+**The trap.** A search summary attributed *"32 % loss at 1000 nodes"* to Haxhibeqiri et al. 2017. Reading
 the PDF: **"For 1000 nodes per gateway, around 90 % of packets collide."** Using the snippet would
 have manufactured a disagreement with our own result that does not exist. **This is the third time
 the rule has paid: quote the PDF, never the summary** (cf. F9, F16).
@@ -276,7 +276,7 @@ exercise the paths that get called, and this defect lived in the path nobody cal
 
 ## 6. Mohamed's three corrections, and what each cost
 
-**(a) "Bor said 90 % is pure ALOHA and 32 % is LoRaWAN."** Correct. I had quoted their Fig. 14
+**(a) "Haxhibeqiri et al. said 90 % is pure ALOHA and 32 % is LoRaWAN."** Correct. I had quoted their Fig. 14
 (pure ALOHA) as their LoRa result — after "correcting" a search snippet that had it right. F18
 retracted, F19 written, and the wrong wording chased out of four other files with a grep on the
 *wording*, not the name (the F9 rule).
@@ -289,7 +289,7 @@ bracket it (E9, needs an NS-3 rebuild, not yet run).
 
 **(c) "Why didn't we implement their model and run it with our optimizer?"** No good reason — I read
 the paper after the result existed and treated it as a yardstick rather than a model. It is stated in
-closed form. Now implemented (`lora.bor2017_loss_pct`), validated against their own four prose
+closed form. Now implemented (`lora.haxhibeqiri2017_loss_pct`), validated against their own four prose
 figures, and run at our operating point: **their N_max = 4, ours = 5.** That closed A7 for the LoRa
 arm and is a far stronger statement than the one F18 claimed. Implementing it also surfaced two
 defects in *their* published fit — a 1.78 % intercept at N=0 and a non-monotone stretch at

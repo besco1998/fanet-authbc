@@ -124,7 +124,7 @@ the same named quantity and both are correct for their own protocol.** E1's boot
 Direction is conservative: a longer flight inflates the CBOR *baseline* and leaves the delta
 *optimum* alone. E1 samples the **first ~50 s of each flight**, now stated in `docs/04` §1.
 
-### F43e — Bor's `N_max`=4 sits inside his own fit's unreliable region
+### F43e — Haxhibeqiri et al.'s `N_max`=4 sits inside their own fit's unreliable region
 
 `lora.py` already documents that Eq. (8) does not pass through the origin and predicts 1.783 % loss
 at N=0, and that "below N ~ 5 the intercept dominates". Their N_max = 4 is decided at N=4 (4.418 %)
@@ -137,7 +137,7 @@ the gap against our 3. So quoting 4 is the safe choice — it simply needs sayin
 ⚠️ **"≈2× more pessimistic" hides a sign change.** The ratio runs **0.91× at N=2** (*we* are the more
 optimistic model there), 1.07× at N=3, and 2.09–2.17× from N=10 up — and the crossover sits in
 exactly the region where N_max is decided. F18 was retracted for a sign error on this same
-comparison. `bor2017_pessimism_ratio` now refuses to be quoted as one number.
+comparison. `haxhibeqiri2017_pessimism_ratio` now refuses to be quoted as one number.
 
 ---
 

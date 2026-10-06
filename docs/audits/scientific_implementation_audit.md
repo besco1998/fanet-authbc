@@ -484,7 +484,7 @@ point of use with its 95 % interval $[2,3]$, the 9-of-30 failure count, and the 
 
 ### ⚠️ Re-audit pass 2 — the worst finding came last: a table built on the PURGED 3-seed run
 
-`tab:lora-external` (the Bor cross-check) still carried the superseded data. Its AUTHBC column
+`tab:lora-external` (the Haxhibeqiri et al. cross-check) still carried the superseded data. Its AUTHBC column
 matched `lora_capacity_3seed_SUPERSEDED.csv` **to three decimals**:
 
 | N | paper had | 3-seed (purged) | 30-seed (current) |
@@ -501,13 +501,13 @@ against a threshold — was still being printed, after the audit that named it.
 Two claims rode on the stale column:
 
 1. **`N_max` was quoted as 5.** The 30-seed run gives **3** (0.9508 at $N{=}3$, 0.8981 at $N{=}4$);
-   Bor's closed form gives **4** (4.418 % at $N{=}4$, 5.065 % at $N{=}5$). CLAUDE.md had said "their
+   Haxhibeqiri et al.'s closed form gives **4** (4.418 % at $N{=}4$, 5.065 % at $N{=}5$). CLAUDE.md had said "their
    N_max=4 vs our 3" all along — the status board was right and the paper was wrong.
 2. ⚠️ **The row annotated "we are more optimistic" restated retracted finding F18** — while a bold
    sentence 100 lines earlier said the exact opposite. The crossover is at $N{\approx}3$, not
    $N{=}8$: beyond it we are the *more pessimistic* model (1.6× at $N{=}5$, 2.1× at $N{=}50$).
 
-**Why it survived three passes:** the Bor column was correct throughout. Half the table agreed with
+**Why it survived three passes:** the Haxhibeqiri et al. column was correct throughout. Half the table agreed with
 its source, so it read as verified. ⚠️ *A partially-correct table is harder to catch than a wholly
 wrong one.*
 

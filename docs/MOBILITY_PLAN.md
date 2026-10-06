@@ -173,4 +173,4 @@ stay byte-reproducible, the frozen gate keeps passing untouched, and the mobilit
 | do they model Doppler/fast fading, or only position? | tells us whether §4 Phase M4's caveat is standard or a gap |
 
 The survey output is a table of published configurations, and our scenario is then set to sit inside
-that envelope — the same discipline used for the LoRa arm's Bor and Zirak comparisons.
+that envelope — the same discipline used for the LoRa arm's Haxhibeqiri et al. and Zirak comparisons.

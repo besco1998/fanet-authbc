@@ -1,0 +1,15 @@
+# E7 — verifiability with the decoder in the loop (docs/02 T3'; audit F46).
+# Real lean frames, real signatures, a real receiver; a frame counts only if it is decoded,
+# verified and stored. Compare with E3, which drew a Bernoulli variable per frame.
+experiment: e3-codec
+batch: 4
+ref_intervals: [1, 2, 4, 8, 16]       # 1 = every frame decodes alone
+# 0.00023 is the link loss measured on the two-Pi 5 GHz link (F35); 0.05 is the design budget.
+p_values: [0.00023, 0.01, 0.02, 0.05, 0.10]
+loss_models: [iid, gilbert]
+mean_burst_frames: 4.0                # Gilbert: mean length of a loss burst, in frames
+epsilon: 0.05                         # V >= 1 - epsilon
+frames_per_seed: 240                  # a multiple of every interval, so groups are whole
+seeds: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+        21, 22, 23, 24, 25, 26, 27, 28, 29, 30]
+base_seed: 4242

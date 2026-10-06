@@ -1,0 +1,21 @@
+# E13 — energy per record, metered and modelled (docs/02 §7; review comment 4.1).
+# Reduces the INA219 end-to-end runs of item D1 (results/hw/energy/e2e/, Raspberry Pi 4, 60 s
+# windows, five idle/load pairs per configuration) to one row per configuration.
+experiment: energy-table
+
+# name: [file stem under results/hw/energy/e2e/, encoding, batch, role in e5_codesign.csv]
+configurations:
+  "design: delta with one signature per 4 records":   [d1, delta, 4, optimized]
+  "baseline: CBOR with every record signed":          [d1_baseline, cbor, 1, A+CBOR]
+  "naive: JSON with every record signed":             [ajson, json, 1, A+JSON]
+  "over-aggregated: CBOR with 40 records in 2 frames": [doveragg, cbor, 40, D-overagg]
+
+# A repetition is kept only if its idle window is within this fraction of the campaign's median
+# idle power; an idle window that was not idle makes the incremental power meaningless.
+idle_tolerance: 0.05
+min_clean_reps: 3
+
+crypto_csv: p1_crypto.authbc-pi4a.csv
+t_hash_ns: 2745.5
+p_cpu_w: 0.749
+t_enc_ns: {json: 51370, cbor: 50407, delta: 47759}

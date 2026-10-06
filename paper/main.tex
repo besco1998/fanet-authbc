@@ -865,7 +865,7 @@ configuration, not disagreement. We simulate the LoRa physical layer --- real mo
 module's measured interference and capture model --- but on its harshest MAC provisioning: a single
 logical channel, a single gateway demodulation path, and one forced spreading factor, since the data
 rate is a design variable here and each run therefore fixes it. Comparison with measurement-based
-published results~\cite{bor2017lora} must respect that. Both studies transmit at the $1\%$
+published results~\cite{haxhibeqiri2017lora} must respect that. Both studies transmit at the $1\%$
 duty-cycle ceiling, so per-node occupancy is $1\%$ in both and offered load scales identically as
 $G = 0.01N$; mapping their multi-channel result through their own fit
 $f_{\mathrm{MCH,MSF}}(x) = f_{\mathrm{SCH,SSF}}(x/18)$ places their ${\approx}32\%$ loss at $56$
@@ -959,7 +959,7 @@ would mislead.
 
 \subsection{An external check on the low-rate capacity}\label{sec:lora-external}
 The 802.11 arm is validated against two published analytical models. The low-rate arm rested on a
-single simulator, so we gave it the same treatment. Bor \emph{et al.}~\cite{bor2017lora} publish
+single simulator, so we gave it the same treatment. Haxhibeqiri \emph{et al.}~\cite{haxhibeqiri2017lora} publish
 their capacity result in closed form --- a quintic fitted at $R^2 = 0.997$ to \emph{total} packet
 loss (collisions plus wrong-payload-CRC) measured on SX1301 hardware --- which means it can be
 \emph{evaluated at our operating point} rather than quoted at theirs. We implemented it, validated
@@ -972,7 +972,7 @@ and applied the identical $V \geq 0.95$ criterion.
 \label{tab:lora-external}
 \begin{tabular}{lrrl}
 \toprule
-$N$ & AUTHBC (NS-3) & Bor \emph{et al.} & \\
+$N$ & AUTHBC (NS-3) & Haxhibeqiri \emph{et al.} & \\
 \midrule
 2  & $2.8\%$ & $3.1\%$ & we are more optimistic \\
 3  & $4.0\%$ & $3.8\%$ & crossover \\

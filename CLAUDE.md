@@ -105,7 +105,7 @@ type hints; no dead code; comments explain WHY, not what.
 - ⚠️ **DIRECTION C, 2026-08-07 (F42) — two self-corrections, both from pre-registering the protocol first.**
   - **The protocol was committed BEFORE any data** (`docs/DIRECTION_C_SURVEY_PROTOCOL.md`, `eb3eda5`, data-free) — the F40 lesson applied. Harness `make survey-direction-c`; artifact `results/raw/direction_c_survey.csv` with every keyword hit adjudicated in writing.
   - ⚠️ **The phenomenon has PRIOR ART.** Durand & Booysen 2025 attribute their own bimodal delivery to nodes that "always transmit on a specific SF, time, and channel", giving "certain packet collisions being repeated for every transmission cycle". **Direction C did not discover the frozen-phase artifact.** What remains ours is the *quantification* (2–8× CV inflation) and the link to replication reporting. Any draft saying it is unobserved must be corrected.
-  - ⚠️ **"9 of 9" was inflated and is RETRACTED.** Under the pre-registered inclusion criteria only **4** papers qualify (Bor used **LoRaSim not ns-3**; Mehta is a **survey**; Bhatt is **802.11ah not LoRa**). Honest baseline: **4/4 report no replication.** The paper said "nine studies" for a few hours today; corrected.
+  - ⚠️ **"9 of 9" was inflated and is RETRACTED.** Under the pre-registered inclusion criteria only **4** papers qualify (Haxhibeqiri et al. used **their own simulator, not ns-3**; Mehta is a **survey**; Bhatt is **802.11ah not LoRa**). Honest baseline: **4/4 report no replication.** The paper said "nine studies" for a few hours today; corrected.
   - ⚠️ **UNREADABLE (<2000 chars extracted) is EXCLUDED from the denominator** — scoring a scanned PDF as "reports nothing" would manufacture support for our own hypothesis. Zirak extracts 5 characters.
 - **The taxonomy to check new numbers against:** C1 small-sample mean vs threshold · C2 unverified constant on the measurement path · C3 threshold applied to a mean not a distribution · C4 config change perturbing the random realisation · C5 claim wider than the experiment. **Only C1 is fixed by more seeds.**
 
@@ -144,7 +144,7 @@ decides a headline and was never written down — defect class **C2**, the one c
 - **`s` depends on the generator window (F43d).** `e1_dominance` and `p1_sizes` disagree by up to
   3.7 B on the same quantity and both are right for their protocol. E1's ±0.02 B CI is **~150×**
   narrower than the systematic term. Direction is conservative.
-- **Bor's `N_max`=4 sits inside his own fit's unreliable region (F43e)** — 40 % of his predicted
+- **Haxhibeqiri et al.'s `N_max`=4 sits inside their own fit's unreliable region (F43e)** — 40 % of their predicted
   loss at N=4 is a non-physical intercept. ⚠️ **Never quote "≈2× more pessimistic" as one number:**
   it is 0.91× at N=2 (*we* are more optimistic there) and 2.1× from N=10 up.
 - **M4 CLOSED by measurement.** The U ceiling is frame-size invariant: crossing **2.367** at 174 B
@@ -168,17 +168,17 @@ decides a headline and was never written down — defect class **C2**, the one c
 
 ### ⚠️ THE PATTERN of the whole audit — read this before trusting any new number
 **Four headline numbers were distorted by small-sample means against thresholds. NONE was a modelling error; every one was sampling.** Drivers now default to **30 seeds** and emit min/max/σ. Before reporting any threshold crossing, look at the *distribution*.
-> ⚠️ **And a table survived the purge.** Six 3-seed artifacts were deleted (F38), but `tab:lora-external` was still built on `lora_capacity_3seed_SUPERSEDED.csv` — matching it to three decimals — until 2026-08-07. It quoted `N_max`=5 where the 30-seed run gives **3**. It survived three read-throughs because the *other* column (Bor) was correct: **a half-correct table reads as verified.** Purging an artifact is not enough — re-derive everything that consumed it.
+> ⚠️ **And a table survived the purge.** Six 3-seed artifacts were deleted (F38), but `tab:lora-external` was still built on `lora_capacity_3seed_SUPERSEDED.csv` — matching it to three decimals — until 2026-08-07. It quoted `N_max`=5 where the 30-seed run gives **3**. It survived three read-throughs because the *other* column (Haxhibeqiri et al.) was correct: **a half-correct table reads as verified.** Purging an artifact is not enough — re-derive everything that consumed it.
 
 ### External baselines (A7 closed)
-- **Bor et al. 2017 implemented** (`lora.bor2017_loss_pct`), validated against their own four figures: **their N_max=4 vs our 3**; closed-form periodic ALOHA also gives 3.
+- **Haxhibeqiri et al. 2017 implemented** (`lora.haxhibeqiri2017_loss_pct`), validated against their own four figures: **their N_max=4 vs our 3**; closed-form periodic ALOHA also gives 3.
 - **Zirak et al. 2021** — the only **hardware** air-to-air LoRa PDR-vs-range data; it range-limits our result.
 - **CLAS (F34).** ⚠️ **The finding is the AXIS, not the ratio:** every published CLAS overhead is **linear in message count** (583–859 B/rec) because aggregation compresses the *verifier's work*, not the wire; ours is **80.1 B/rec** with certificates charged at the standards policy (162 B every 5th frame, NDSS 2024). **Do NOT claim we beat CLAS** — they buy conditional privacy we do not offer, and their group element is 128 B vs our 64 B.
 - ⚠️ **METHOD RULE:** the certificate-byte term was added **BEFORE** the CLAS numbers were fetched. Doing it after would have been fitting the correction to the answer. Defaults are 0/1 so frozen artifacts stay bit-identical.
 
 ### Retractions, kept visible
 **WITHDRAWN 2026-08-08 — the Direction C literature claim.** We claimed ns-3 LoRa studies do not report replication. Pre-registered threshold: abandon at ≥25 % reporting. As retrieval improved the estimate walked to **21.7 % (5/23), 95 % CI [7.5, 43.7]** — **the interval contains the threshold**, so the test cannot answer its own question. Claim cut from the paper; corpus and protocol kept in-repo as a null result. ⚠️ Two temptations resisted and recorded: the point estimate sits on the favourable side of 25 %, and the non-arXiv subset reads **28.6 %** (above threshold, p=0.61, *not* reported as a finding). Guarded by `TestDirectionCSurvey`, which fails if the claim returns.
-**T7** (capacity excludes at U≥1) · **F15** (the ≤0.36 % validation) · **F18** (I claimed we were the *more optimistic* model vs Bor — I quoted their **pure-ALOHA** figure as their LoRa result). ⚠️ **Quoting the PDF is not enough: quote the FIGURE.**
+**T7** (capacity excludes at U≥1) · **F15** (the ≤0.36 % validation) · **F18** (I claimed we were the *more optimistic* model vs Haxhibeqiri et al. — I quoted their **pure-ALOHA** figure as their LoRa result). ⚠️ **Quoting the PDF is not enough: quote the FIGURE.**
 > ⚠️ **F18 came back.** On 2026-08-07 it was found still printed in `tab:lora-external` ("we are more optimistic" at N=5) — 100 lines below a bold sentence saying the opposite. **Retracting a finding in the register does not remove it from the paper.** When you retract, grep the paper. Guarded now by `test_no_row_revives_the_retracted_optimism_claim`, which checks the *artifact* rather than the wording.
 
 ### Where things live

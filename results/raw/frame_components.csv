@@ -1,0 +1,70 @@
+# python=3.12.3
+# platform=Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=frame_components
+# config_hash=a9b5e662735a83f4
+kind,format,item,stride,spacing_s,batch,ref_interval,mean_bytes,min_bytes,max_bytes,n,bytes_per_rec
+header,first,sender 0 / record 0,,,,,38,38,38,1,
+header,lean,sender 0 / record 0,,,,,17,17,17,1,
+header,first,sender 24 / record 24,,,,,40,40,40,1,
+header,lean,sender 24 / record 24,,,,,19,19,19,1,
+header,first,sender 256 / record 256,,,,,42,42,42,1,
+header,lean,sender 256 / record 256,,,,,21,21,21,1,
+header,first,sender 40000 / one hour at 50 Hz,,,,,44,44,44,1,
+header,lean,sender 40000 / one hour at 50 Hz,,,,,23,23,23,1,
+link,first,per record (inside the record),,,,,32,32,32,1,
+link,lean,per frame (its own field),,,,,35,35,35,1,
+header_field,first,map,,,,,1,1,1,4,
+header_field,first,v,,,,,3,3,3,4,
+header_field,first,t,,,,,3,3,3,4,
+header_field,first,src,,,,,7,5,7,4,
+header_field,first,base_seq,,,,,14,10,14,4,
+header_field,first,n,,,,,3,3,3,4,
+header_field,first,recs,,,,,6,6,6,4,
+header_field,first,auth,,,,,7,7,7,4,
+header_field,lean,map,,,,,1,1,1,4,
+header_field,lean,v,,,,,2,2,2,4,
+header_field,lean,t,,,,,2,2,2,4,
+header_field,lean,src,,,,,4,2,4,4,
+header_field,lean,base_seq,,,,,6,2,6,4,
+header_field,lean,n,,,,,2,2,2,4,
+header_field,lean,recs,,,,,3,3,3,4,
+header_field,lean,auth,,,,,3,3,3,4,
+record,first,keyframe,1,0.05,,,59.85,56,61,30000,
+record,first,delta,1,0.05,,,44,44,44,29970,
+record,lean,keyframe,1,0.05,,,23.996,21,25,30000,
+record,lean,delta,1,0.05,,,9,9,9,29970,
+record,first,keyframe,2,0.1,,,59.804,56,61,30000,
+record,first,delta,2,0.1,,,45.061,45,46,29970,
+record,lean,keyframe,2,0.1,,,23.956,20,25,30000,
+record,lean,delta,2,0.1,,,10.061,10,11,29970,
+record,first,keyframe,20,1.0,,,59.435,56,61,6000,
+record,first,delta,20,1.0,,,47.52,45,49,5970,
+record,lean,keyframe,20,1.0,,,24.002,20,25,6000,
+record,lean,delta,20,1.0,,,12.52,10,14,5970,
+record,first,keyframe,110,5.5,,,59.271,56,61,1920,
+record,first,delta,110,5.5,,,49.597,47,52,1890,
+record,lean,keyframe,110,5.5,,,24.03,20,25,1920,
+record,lean,delta,110,5.5,,,13.597,11,16,1890,
+record,first,keyframe,330,16.5,,,59.857,56,62,1920,
+record,first,delta,330,16.5,,,52.222,49,56,1890,
+record,lean,keyframe,330,16.5,,,24.178,21,25,1920,
+record,lean,delta,330,16.5,,,16.222,13,20,1890,
+record,lean,keyframe at time zero,1,0.05,,,22.665,19,24,30000,
+frame,lean,self-batch,,,1,1,145.765,142,147,30000,145.765
+frame,lean,self-batch,,,2,1,154.997,152,156,15000,77.498
+frame,lean,self-batch,,,4,1,172.999,170,174,7500,43.25
+frame,lean,self-batch,,,5,1,181.999,179,183,6000,36.4
+frame,lean,self-batch,,,8,1,208.998,206,210,3750,26.125
+frame,lean,self-batch,,,4,2,165.499,158,174,7500,41.375
+frame,lean,self-batch,,,4,4,161.779,158,174,7500,40.445
+frame,lean,self-batch,,,4,8,159.92,158,174,7500,39.98
+frame,lean,self-batch,,,4,16,158.96,158,174,7500,39.74
+frame,lean,inline,,,1,1,146.765,143,148,30000,146.765
+frame,lean,inline,,,4,1,371.999,369,373,7500,93.0
+frame,lean,self-batch at sender 0 and time zero,,,1,1,139.558,134,142,30000,139.558
