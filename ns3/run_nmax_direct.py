@@ -131,6 +131,35 @@ def read_plan(path: Path) -> list[tuple[str, str, list[int]]]:
     return plan
 
 
+def plan_of(runs: list[dict]) -> list[tuple[str, str, list[int]]]:
+    """The plan that reproduces a runs file: every (cell, source) on file with its node counts.
+
+    Runs are independent and seeded by (cell, N, seed), so the order they were made in is not
+    part of the result; this is the whole of what has to be kept to run the campaign again.
+    """
+    points: dict[tuple[int, float, float], set[int]] = {}
+    for r in runs:
+        _, jitter, skew, n, _ = _run_key(r)
+        points.setdefault((list(CELLS).index(r["cell"]), jitter, skew), set()).add(n)
+    plan = []
+    for (cell_index, jitter, skew), ns in sorted(points.items()):
+        cell = list(CELLS)[cell_index]
+        spec = "period" if jitter == 1000.0 / CELLS[cell].fps else f"{jitter:g}"
+        plan.append((cell, spec + (f"/{skew:g}" if skew else ""), sorted(ns)))
+    return plan
+
+
+def render_plan(plan: list[tuple[str, str, list[int]]]) -> str:
+    """A plan as the text `read_plan` reads."""
+    head = ("# Every node count simulated for results/raw/ns3_nmax_direct_runs.csv, 30 seeds.\n"
+            "# cell  source  N ...   source: send jitter in ms (`period` = one sending period),\n"
+            "#                       then /S for a rate offset of up to ±S ppm; 0 = strictly\n"
+            "#                       periodic.\n"
+            "# Written by `run_nmax_direct.py --write-plan`; the registrations that decided each\n"
+            "# stage are in docs/NMAX_DIRECT_EXPECTATIONS.md.\n")
+    return head + "".join(f"{cell} {spec} {' '.join(map(str, ns))}\n" for cell, spec, ns in plan)
+
+
 def _binary() -> tuple[Path, Path]:
     root = ns3_root()
     return root, root / "build" / "scratch" / "ns3.48-authbc-delay-optimized"
@@ -281,9 +310,15 @@ def main() -> None:
     ap.add_argument("--workers", type=int, default=8)
     ap.add_argument("--verify", action="store_true", help="check binary == ./ns3 run, then exit")
     ap.add_argument("--summarise-only", action="store_true")
+    ap.add_argument("--write-plan", type=Path,
+                    help="write the plan that reproduces the runs on file, then exit")
     args = ap.parse_args()
     if args.verify:
         verify(args.sim_time)
+        return
+    if args.write_plan:
+        runs_on_file = read_runs(RAW / "ns3_nmax_direct_runs.csv")
+        args.write_plan.write_text(render_plan(plan_of(runs_on_file)))
         return
     if args.n and len(args.cells) != 1:
         raise SystemExit("--n applies to exactly one cell")

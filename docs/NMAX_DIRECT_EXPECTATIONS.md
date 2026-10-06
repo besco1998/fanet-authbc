@@ -406,3 +406,85 @@ The prediction keeps its form and its tolerance: all seven within ±6 % of the a
 closer to it than to the single ceiling in the five diagnostic cells. The predictions made with
 the original a = 0.0749 stay in the table above and their outcome is reported too; a result
 that holds only with the re-estimated constant is reported as exactly that.
+
+---
+
+# The six registered cells under the designated source — outcome (2026-10-06)
+
+750 runs with J = one period: seven node counts per cell at unit or near-unit steps round the
+crossing (eight for D), 30 seeds each. `results/raw/ns3_nmax_direct.csv`, rows with
+`jitter_ms` = one sending period.
+
+| cell | `N_max` on the grid [95 %] | interpolated [95 %] | per-run `N_max` | single ceiling | deviation (grid / interpolated) | stage 1, interpolated |
+|---|---|---|---|---|---|---|
+| A | **32** [32, 32] | 32.32 [32.17, 32.46] | 31 | 31 | +3.2 % / +4.3 % | 31.0 |
+| B | **88** [88, 89] | 88.85 [88.42, 89.26] | 86 | 97 | −9.3 % / −8.4 % | 87.8 |
+| C | **35** [35, 35] | 35.26 [35.15, 35.36] | 34 | 34 | +2.9 % / +3.7 % | 32.4 |
+| D | **124** [124, 125] | 124.55 [124.07, 125.02] | 120 | 142 | **−12.7 % / −12.3 %** | 118.3 |
+| E | **56** [56, 56] | 56.28 [56.05, 56.45] | 54 | 49 | **+14.3 % / +14.9 %** | 54.7 |
+| F | **76** [76, 77] | 76.83 [76.63, 77.07] | 73 | 80 | −5.0 % / −4.0 % | 74.8 |
+
+**The stage-1 verdict does not depend on the source.** D and E are outside ±10 % by either
+estimator, in opposite directions. The utilisation at the crossing runs from 2.09 (D) to 2.66 (E)
+against the 2.435 the envelope applied.
+
+**What the source bought.** The per-seed standard deviation is 0.0013–0.0030 (0.014–0.044
+strictly periodic, at the points simulated under both), so the interval on a crossing is a fraction of a node. The per-run criterion,
+which was 0 in every cell of stage 1, is now a number: 31, 86, 34, 120, 54, 73 — one to four
+nodes below the criterion on the mean.
+
+**Exploratory, found after the data — and it qualifies F1.** Every one of the six interpolated
+crossings is higher than its strictly periodic value: by 4.4, 1.2, 8.8, 5.3, 2.8 and 2.8 %. The
+stage-1 intervals contain five of the six new values (E is 0.13 nodes above its interval). At the
+14 (cell, N) points simulated under both sources, mean delivery is higher under J = one period
+by **0.0031** on average (10 of 14 positive; the largest single difference is 1.81 standard
+errors).
+
+⚠️ That is not six confirmations of a bias, and it is not none. The 30 seeds are the same 30
+draws of start offsets in every cell — offsets are drawn as a fraction of the period, in node
+order — so the strictly periodic sample's error is common to all six cells and cannot average out
+across them. The data on hand cannot separate "these 30 phase configurations happen to be a
+little unlucky" from "a frozen source delivers 0.003 less". F1's registered criterion (every
+difference under 2.5 standard errors, average within ±0.005) is met by the larger set as it was
+by the first; what F1 did **not** establish is that the difference is zero. In nodes, 0.003 is one
+to three. Deciding it needs strictly periodic runs on fresh seeds: `docs/OPEN_ITEMS.md` G6. No
+reported capacity depends on the answer — they are all from the source designated in F1b.
+
+*Correction to the disclosure above:* the LoRaWAN library, rebuilt in the same pass as the
+scenario, has since been re-checked. `run_lora_capacity.py` at N = 2, 3 and 5 (90 runs)
+reproduces the stored rows of `lora_capacity.csv` in every cell.
+
+# F2 — the recalibrated predictions. Committed before any held-out cell is run
+
+By the amended procedure, from the six interpolated crossings above
+(`analysis/nmax_airtime_line.py`; its tests reproduce the stage-1 slope and the seven original
+predictions to the digit given):
+
+    a_i:  A 0.0679   B 0.0732   C 0.0674   D 0.0713   E 0.0732   F 0.0732
+    a  =  0.0710  (mean of six),   c = 8 µs unchanged
+
+In-sample the line misses the six crossings by +3.4, −2.4, +3.8, −0.3, −2.6 and −2.5 %.
+⚠️ Recorded before the test, not adjusted for: the two cells at 50 frames/s give 0.068 and the
+four at 12.5 frames/s give 0.071–0.073. If the slope depends on the frame rate, the relaxed cells
+— at 20 and 5 frames/s, where no calibration cell sits — are where the line will fail.
+
+| cell | frame | frames/s | **airtime line, a = 0.0710** | ±6 % band | airtime line as first registered (a = 0.0749) | single ceiling | node counts to be run |
+|---|---|---|---|---|---|---|---|
+| G | 373 B | 12.5 | **78.4** | 73.7–83.1 | 74.9 | 79 | 70 73 76 79 82 85 88 |
+| H | 218 B | 12.5 | **110.3** | 103.7–116.9 | 105.8 | 123 | 100 105 110 115 120 125 130 |
+| I | 288 B | 12.5 | **93.5** | 87.8–99.1 | 89.5 | 100 | 84 88 92 96 100 104 108 |
+| RA | 174 B | 20 | **78.1** | 73.4–82.8 | 75.1 | 88 | 70 74 78 82 86 90 94 |
+| RB | 300 B | 5 | **227.6** | 213.9–241.2 | 217.9 | 208 | 195 205 215 225 235 245 255 |
+| RC | 146 B | 20 | **84.9** | 79.8–90.0 | 81.7 | 101 | 76 81 86 91 96 101 106 |
+| RD | 173 B | 5 | **312.4** | 293.7–331.2 | 300.2 | 269 | 255 270 285 300 315 330 345 |
+
+**The prediction, unchanged in form.** In all seven cells the interpolated crossing lies inside
+the ±6 % band of the line with a = 0.0710; and in H, I, RA, RC and RD it is closer to that line
+than to the single ceiling. The outcome against the line as first registered is reported beside
+it. In G the two rules now differ by under 1 %, so G can confirm neither over the other.
+
+**What will be run.** Seven node counts per cell as listed — chosen to span both rules and the
+band — 30 seeds, 20 s, J = one period: 1470 runs. A cell whose crossing falls outside its grid is
+extended and the extension is reported as one. Afterwards the cells the paper tabulates get a
+unit-step grid round their crossing, as A–F did; those runs locate `N_max` and are not part of
+the test, which is on the seven-point grids above.

@@ -1,0 +1,24 @@
+# Every node count simulated for results/raw/ns3_nmax_direct_runs.csv, 30 seeds.
+# cell  source  N ...   source: send jitter in ms (`period` = one sending period),
+#                       then /S for a rate offset of up to ±S ppm; 0 = strictly
+#                       periodic.
+# Written by `run_nmax_direct.py --write-plan`; the registrations that decided each
+# stage are in docs/NMAX_DIRECT_EXPECTATIONS.md.
+A 0 25 27 29 31 33 35
+A 0.1 29 33
+A 0.1/5000 29 33
+A 1 29 33
+A period 29 30 31 32 33 34 35
+B 0 73 81 89 97 105 113
+B period 86 88 89 90 91 92 94
+C 0 25 28 31 34 37 40
+C period 31 32 33 34 35 36 37
+D 0 109 120 131 142 153 164
+D 0.1 109 131
+D 0.1/5000 109 131
+D 1 109 131
+D period 109 120 122 123 124 125 127 131
+E 0 37 41 45 49 53 57
+E period 52 53 54 55 56 57
+F 0 62 68 74 80 86 92
+F period 72 73 74 75 76 77 78
