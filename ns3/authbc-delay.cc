@@ -30,6 +30,7 @@
 #include "ns3/wifi-module.h"
 
 #include <algorithm>
+#include <deque>
 #include <fstream>
 #include <map>
 #include <numeric>
@@ -75,6 +76,72 @@ Percentile(std::vector<double>& v, double q)
     return (lo == hi) ? v[lo] : v[lo] + (pos - lo) * (v[hi] - v[lo]);
 }
 
+// A periodic source whose every frame is delayed by its own small random amount.
+//
+// WHY THIS EXISTS (direct N_max search, 2026-10-06). The default OnOff source is strictly periodic
+// and is de-synchronised only by one start offset per node, so two nodes' relative phase is FROZEN
+// for the whole run. ns-3 raises CCA-busy only at the end of its 4 us preamble-detection period
+// (WifiPhy::GetPreambleDetectionDuration), so two nodes whose phases fall within 4 us of each
+// other both see an idle medium and collide — and with frozen phases they do so in EVERY period.
+// Real senders are not phase-locked to the microsecond: an OS timer jitters by far more than
+// 4 us. This source keeps the mean rate exactly and moves each frame by U(0, jitter) from its
+// place on the node's own grid, so that the two readings can be compared: whether frozen phases
+// change the 30-seed mean or only its spread is a measurement, recorded with its prediction in
+// docs/NMAX_DIRECT_EXPECTATIONS.md.
+//
+// It is used ONLY when --txJitterMs > 0; the default path is untouched and bit-identical.
+class JitteredPeriodicSource : public Application
+{
+  public:
+    JitteredPeriodicSource(Address dest, Time period, Time jitter, uint32_t pktSize)
+        : m_dest(dest), m_period(period), m_jitter(jitter), m_pktSize(pktSize)
+    {
+        m_rand = CreateObject<UniformRandomVariable>();
+    }
+
+  private:
+    void StartApplication() override
+    {
+        m_socket = Socket::CreateSocket(GetNode(), PacketSocketFactory::GetTypeId());
+        m_socket->Bind();
+        m_socket->Connect(m_dest);
+        // First frame one period after start, as OnOff does at a constant rate.
+        m_tick = Simulator::Schedule(m_period, &JitteredPeriodicSource::Tick, this);
+    }
+
+    void StopApplication() override
+    {
+        Simulator::Cancel(m_tick);
+        for (auto& e : m_pending) Simulator::Cancel(e);
+        m_pending.clear();
+    }
+
+    // The grid itself never moves: jitter is added to each frame, not accumulated into the phase.
+    void Tick()
+    {
+        const Time extra = Seconds(m_rand->GetValue(0.0, m_jitter.GetSeconds()));
+        m_pending.push_back(Simulator::Schedule(extra, &JitteredPeriodicSource::Send, this));
+        m_tick = Simulator::Schedule(m_period, &JitteredPeriodicSource::Tick, this);
+    }
+
+    void Send()
+    {
+        m_pending.pop_front();          // jitter <= period, so frames leave in grid order
+        Ptr<Packet> p = Create<Packet>(m_pktSize);
+        AppTxTrace(p);
+        m_socket->Send(p);
+    }
+
+    Address m_dest;
+    Time m_period;
+    Time m_jitter;
+    uint32_t m_pktSize;
+    Ptr<UniformRandomVariable> m_rand;
+    Ptr<Socket> m_socket;
+    EventId m_tick;
+    std::deque<EventId> m_pending;
+};
+
 int
 main(int argc, char* argv[])
 {
@@ -84,6 +151,7 @@ main(int argc, char* argv[])
     uint32_t seed = 1;
     std::string outPrefix = "ns3_delay";
     double framesPerSec = 5.0;    // per node: Lambda/b = 20/4 at the reference operating point
+    double txJitterMs = 0.0;      // 0 = the published strictly periodic source (see above)
 
     CommandLine cmd(__FILE__);
     cmd.AddValue("nNodes", "number of nodes in the collision domain", nNodes);
@@ -92,7 +160,12 @@ main(int argc, char* argv[])
     cmd.AddValue("seed", "RNG run number", seed);
     cmd.AddValue("outPrefix", "output file prefix", outPrefix);
     cmd.AddValue("framesPerSec", "per-node offered frame rate (Lambda/b)", framesPerSec);
+    cmd.AddValue("txJitterMs",
+                 "per-frame uniform send jitter in ms, at most one period; 0 = strictly periodic",
+                 txJitterMs);
     cmd.Parse(argc, argv);
+    NS_ABORT_MSG_IF(txJitterMs < 0.0 || txJitterMs * 1e-3 > 1.0 / framesPerSec,
+                    "txJitterMs must lie in [0, one period]");
 
     RngSeedManager::SetSeed(1);
     RngSeedManager::SetRun(seed);
@@ -151,6 +224,15 @@ main(int argc, char* argv[])
         dest.SetSingleDevice(devices.Get(i)->GetIfIndex());
         dest.SetPhysicalAddress(devices.Get(i)->GetBroadcast());
         dest.SetProtocol(protocol);
+        if (txJitterMs > 0.0)
+        {
+            Ptr<JitteredPeriodicSource> src = CreateObject<JitteredPeriodicSource>(
+                Address(dest), Seconds(1.0 / framesPerSec), Seconds(txJitterMs * 1e-3),
+                frameSize);
+            nodes.Get(i)->AddApplication(src);
+            srcApps.Add(src);
+            continue;
+        }
         OnOffHelper onoff("ns3::PacketSocketFactory", Address(dest));
         onoff.SetAttribute("OnTime", StringValue("ns3::ConstantRandomVariable[Constant=1]"));
         onoff.SetAttribute("OffTime", StringValue("ns3::ConstantRandomVariable[Constant=0]"));
@@ -173,8 +255,11 @@ main(int argc, char* argv[])
     sinkApps.Start(Seconds(0.0));
     sinkApps.Stop(Seconds(1.0 + simTime));
 
-    for (uint32_t i = 0; i < srcApps.GetN(); ++i)
-        srcApps.Get(i)->TraceConnectWithoutContext("Tx", MakeCallback(&AppTxTrace));
+    if (txJitterMs <= 0.0)      // the jittered source records its own sends
+    {
+        for (uint32_t i = 0; i < srcApps.GetN(); ++i)
+            srcApps.Get(i)->TraceConnectWithoutContext("Tx", MakeCallback(&AppTxTrace));
+    }
     for (uint32_t i = 0; i < sinkApps.GetN(); ++i)
         sinkApps.Get(i)->TraceConnectWithoutContext("Rx", MakeCallback(&SinkRxTrace));
 
@@ -201,6 +286,7 @@ main(int argc, char* argv[])
         << "delay_p95_ms," << Percentile(g_delays, 0.95) * 1e3 << "\n"
         << "delay_p99_ms," << Percentile(g_delays, 0.99) * 1e3 << "\n"
         << "delay_max_ms," << (g_delays.empty() ? 0.0 : *std::max_element(g_delays.begin(), g_delays.end())) * 1e3 << "\n";
+    if (txJitterMs > 0.0) out << "tx_jitter_ms," << txJitterMs << "\n";
     out.close();
     Simulator::Destroy();
     return 0;
