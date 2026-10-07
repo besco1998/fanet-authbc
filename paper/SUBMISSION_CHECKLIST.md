@@ -15,19 +15,16 @@ it was and are kept only so the change is visible.*
 | 2 | **ORCID** | Required by Elsevier and MDPI, optional for IEEE. Register at orcid.org if you do not have one. |
 | 3 | **Funding statement** | If the work was funded, every venue requires the grant number. If unfunded, say so explicitly — silence is not accepted. |
 | 4 | **Supervisor / co-authors** | The paper is currently single-author. If your supervisor is to be a co-author, that must be settled before submission, not after. |
-| 5 | **Two citations** | See below — both are behind MDPI's script block. |
+| 5 | **One citation** | See below — the other of the two was obtained, read and cited on 2026-10-07. |
 
-### The two citations still needed
+### The one citation still open
 
-Both are one browser click. Save into `docs/literature/` with these names:
+| paper | status |
+|---|---|
+| Rajasekaran, Maria, Al-Turjman, Altrjman & Mostarda, *Anonymous Mutual and Batch Authentication with Location Privacy of UAV in FANET*, Drones 6(1):14, 2022 · `10.3390/drones6010014` | **DONE 2026-10-07.** Held (CC BY, in `docs/literature/`), read in full, checked against Crossref (five authors, not the four listed here before), cited in the related work of the paper and the thesis (`docs/audits/model_provenance.md` F57). |
+| Al Majmaie, Ghajari, Bhatta & Ibrahem, *SSDBFAN: Scalable and Secure Cluster-Based Data Aggregation with Blockchain for FANETs*, Sensors 26(9):2585, 2026 · `10.3390/s26092585` | **Obtainable, not read, not cited.** Defensive only: same group as `almajmaie2026pqfanet`, which is cited. The publisher's static server serves it (`mdpi-res.com/d_attachment/sensors/sensors-26-02585/article_deploy/sensors-26-02585.pdf`); a copy is on the author's machine outside the repository. It is cited only if someone reads it and it says something the paper needs. |
 
-| paper | why it matters | save as |
-|---|---|---|
-| Rajasekaran, Maria, Al-turjman & Altrjman, *Anonymous Mutual and Batch Authentication with Location Privacy of UAV in FANET*, Drones 6(1):14, 2022 · `10.3390/drones6010014` | ⚠️ **A real gap.** We cite Zhang 2008 (*vehicular* batch verification) as our batch-verification comparator. This is the **UAV-specific** equivalent, 20 citations, in the exact community that will review us. Its absence is the kind of thing a reviewer notices first. | `rajasekaran2022_uav_batch_auth_fanet.pdf` |
-| Al Majmaie, Ghajari, Bhatta & Ibrahem, *SSDBFAN: Scalable and Secure Cluster-Based Data Aggregation with Blockchain for FANETs*, Sensors 26(9):2585, 2026 · `10.3390/s26092585` | Defensive. Same group as `almajmaie2026pqfanet`, which we already cite; FANET + blockchain + aggregation, ns-3, 2026. Adjacent enough that omitting it looks like we stopped reading in 2025. | `almajmaie2026_ssdbfan_fanet_ns3.pdf` |
-
-⚠️ Per the project's own rule, a source is not cited unless it is held and read. I will not add
-either citation until the PDFs are in the repository.
+⚠️ Per the project's own rule, a source is not cited unless it is held and read.
 
 ---
 
@@ -43,8 +40,8 @@ either citation until the PDFs are in the repository.
 
 ## DONE in the 2026-10 revision
 
-- [x] **The design is built**: a frame format with a sender and a receiver; every lean size in
-      the paper is the length of an emitted frame
+- [x] **The design is built**: a frame format with a sender and a receiver; the design and its
+      baseline are emitted frames, and every size that is a sum of measured parts is marked
 - [x] **No typed results**: every number is a macro generated from `results/`; a test fails if
       one is typed, stale or unused
 - [x] **Every bibliography entry compared with its registry record** by a script

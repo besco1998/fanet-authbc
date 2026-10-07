@@ -139,7 +139,33 @@ def frames() -> dict[str, str]:
 
     m |= {"bprLeanFive": f(five["bytes_per_rec"], 1), "saveLeanFive": f(saving(five), 1),
           "saveFiveGain": f(saving(five) - saving(four), 1)}
-    return m | _records_within_the_mtu(comp)
+    return m | _records_within_the_mtu(comp) | _where_the_link_sits(comp)
+
+
+def _where_the_link_sits(comp: list[dict[str, str]]) -> dict[str, str]:
+    """The three curves of fig_bytes_vs_batch at the adopted batch, and what separates them.
+
+    The text says the first format with one link per frame lands between the two formats at
+    every batch above one, and that a link in every record leaves a floor no batch removes.
+    """
+    def curve(fmt: str, item: str) -> dict[int, float]:
+        return {int(r["batch"]): float(r["bytes_per_rec"]) for r in comp
+                if (r["kind"], r["format"], r["item"], r["ref_interval"])
+                == ("frame", fmt, item, "1")}
+
+    per_record = curve("first", "self-batch (byte model)")
+    per_frame = curve("first", "self-batch; one link per frame (byte model)")
+    lean = curve("lean", "self-batch")
+    if not all(per_record[b] > per_frame[b] > lean[b] for b in lean if b > 1):
+        raise ValueError("the text orders the three link placements; the artifact disagrees")
+    if not min(per_record.values()) > per_frame[4]:
+        raise ValueError("the text says no batch up to twelve brings a per-record link below "
+                         "what one link per frame reaches at four records")
+    return {"bprFirstLinkFrame": f(per_frame[4], 1),
+            "linkMoveSave": f(per_record[4] - per_frame[4], 0),
+            "leanHeaderSave": f(per_frame[4] - lean[4], 1),
+            "bprFirstTwelve": f(per_record[max(per_record)], 1),
+            "curveMaxBatch": str(max(per_record))}
 
 
 def _records_within_the_mtu(comp: list[dict[str, str]], mtu: int = 1500) -> dict[str, str]:
@@ -202,7 +228,11 @@ def ladder() -> dict[str, str]:
                 m[f"ratio{rel}{tag}"] = f(int(design["n_max_v95"]) / int(base["n_max_v95"]), 1)
             if rel:
                 m |= {f"nmaxRel{tag}Base": whole(base["n_max_v95"], what),
-                      f"nmaxRel{tag}Design": whole(design["n_max_v95"], what)}
+                      f"nmaxRel{tag}Design": whole(design["n_max_v95"], what),
+                      f"ciRel{tag}Base": interval(base["n_max_v95_ci_lo"],
+                                                  base["n_max_v95_ci_hi"], what),
+                      f"ciRel{tag}Design": interval(design["n_max_v95_ci_lo"],
+                                                    design["n_max_v95_ci_hi"], what)}
         if "??" not in (m[f"ratio{tag}"], m[f"ratioRel{tag}"]):
             ratios[tag] = (float(m[f"ratio{tag}"]), float(m[f"ratioRel{tag}"]))
         # the search must return the rung the paper calls the design, or the paper is wrong
@@ -291,7 +321,20 @@ def loss() -> dict[str, str]:
     for p, ref in (("0.02", 4), ("0.01", 8)):
         if frame_model.max_ref_interval(float(p), 0.05, (1, 2, 4, 8, 16)) != ref:
             raise ValueError(f"the text says R={ref} is the longest interval at p={p}")
-    return m | _length_dependent_loss(table)
+    return m | _length_dependent_loss(table) | _at_the_measured_loss(table)
+
+
+def _at_the_measured_loss(table: list[dict[str, str]]) -> dict[str, str]:
+    """At the loss measured on the bench every reference interval meets the target.
+
+    The text says so, to show that the keyframe in every frame is bought by the specified loss
+    budget (p = ε) and not by the link that was measured.
+    """
+    clean = [r for r in table if r["loss_model"] == "iid" and r["p"] == "0.00023"]
+    if not clean or any(r["meets_target"] != "1" for r in clean):
+        raise ValueError("the text says every interval meets V at the measured loss rate")
+    longest = max(clean, key=lambda r: int(r["ref_interval"]))
+    return {"lossCleanR": longest["ref_interval"], "lossCleanV": f(longest["V_theory"], 3)}
 
 
 def _length_dependent_loss(table: list[dict[str, str]]) -> dict[str, str]:
@@ -321,15 +364,23 @@ def stream() -> dict[str, str]:
     m: dict[str, str] = {}
     for scheme, tag in tags.items():
         r = table[scheme]
+        what = f"simulated N_max of the {scheme} frame"
         m |= {f"strAuth{tag}": f(r["auth_bytes_per_record"], 0),
               f"strBpr{tag}": f(r["bytes_per_rec"], 1),
-              f"strFps{tag}": f(r["frames_per_s"], 1), f"strNsat{tag}": r["n_sat"]}
-    best = max(int(r["n_sat"]) for s, r in table.items() if s != "authbc")
-    if not best < int(table["authbc"]["n_sat"]) / 2:
-        raise ValueError("the text says no frame-per-record scheme reaches half the design's "
-                         "saturation capacity; the artifact disagrees")
-    if best != int(table["mavlink2"]["n_sat"]):
-        raise ValueError("the text names the 13 B tag as the best frame-per-record scheme")
+              f"strFps{tag}": f(r["frames_per_s"], 1), f"strNsat{tag}": r["n_sat"],
+              f"strNmax{tag}": whole(r["n_max_v95"], what),
+              f"strCi{tag}": interval(r["n_max_v95_ci_lo"], r["n_max_v95_ci_hi"], what)}
+    # the two sentences of the text, held for the saturation bound and for the simulated capacity
+    for column, name in (("n_sat", "saturation"), ("n_max_v95", "simulated")):
+        if any(r[column] == "" for r in table.values()):
+            continue                                  # recorded as missing by `whole` above
+        best = max(int(r[column]) for s, r in table.items() if s != "authbc")
+        if not best < int(table["authbc"][column]) / 2:
+            raise ValueError("the text says no frame-per-record scheme reaches half the "
+                             f"design's {name} capacity; the artifact disagrees")
+        if best != int(table["mavlink2"][column]):
+            raise ValueError(f"the text names the 13 B tag as the best frame-per-record scheme "
+                             f"({name})")
     return m
 
 
@@ -522,7 +573,17 @@ def low_rate() -> dict[str, str]:
         wifi = thousands(int(round(total, -2)))
     published = one(budget, dr="5", payload_limit="242", design=(
         "first; link per frame; AS PUBLISHED (13 B bodies and no keyframe)"))
-    return {"loraRecsLean": lean["batch"], "loraRateLean": f(lean["lambda_rec_per_s"], 2),
+    # The simulator's module carries 222 B at most, so the capacity was simulated at that
+    # payload table; the text says the lean frame holds as many records there as were simulated.
+    fits_module = one(budget, dr="5", payload_limit="222", design="lean; frames decode alone")
+    if fits_module["batch"] != at_limit["batch"]:
+        raise ValueError("the simulated LoRa batch is not the lean frame's batch at 222 B")
+    if abs(float(fits_module["toa_ms"]) / (float(at_limit["app_period_s"]) * 10) - 1) > 0.02:
+        raise ValueError("the simulated LoRa frame's airtime is not the lean frame's within 2%")
+    return {"loraSimRecs": WORDS[int(at_limit["batch"])], "loraSimBytes": at_limit["payload_bytes"],
+            "loraSimPeriod": f(at_limit["app_period_s"], 0),
+            "loraSimRate": f(at_limit["lambda_rec_per_s"], 3),
+            "loraRecsLean": lean["batch"], "loraRateLean": f(lean["lambda_rec_per_s"], 2),
             "loraRecsFirst": first["batch"], "loraRateFirst": f(first["lambda_rec_per_s"], 2),
             "loraFrmLean": f(lean["frame_bytes"], 0), "loraFrmFirst": f(first["frame_bytes"], 0),
             "loraRecsPub": published["batch"], "loraFrmPub": f(published["frame_bytes"], 0),
@@ -635,13 +696,45 @@ def capacity_rule() -> dict[str, str]:
     for c in airtime.HELD_OUT:          # prediction, measured, and the two deviations, signed
         per_cell |= {f"lineP{c}": f(predicted[c], 1), f"lineM{c}": f(got[c], 1),
                      f"lineD{c}": signed(vs_line[c]), f"lineC{c}": signed(vs_ceiling[c])}
-    return per_cell | {
+    stream_cells = _stream_cells_against_the_line()
+    tested = list(airtime.CALIBRATION + airtime.HELD_OUT + airtime.STREAM)
+    # the neighbourhood sizes the rule was checked at, as the tables print them (N_max, not the
+    # interpolated crossing: 28 and 306, where the interpolation gives 29.0 and 308.0)
+    n_max = [int(measured[c]["n_max_mean"]) for c in tested if c in measured]
+    return per_cell | stream_cells | {
             "lineA": f(slope, 3),
             "lineWorst": f(max(abs(v) for v in vs_line.values()), 1),
             "lineFitWorst": f(max(abs(v) for v in fit), 1),
             "lineCeilWorst": f(max(abs(v) for v in vs_ceiling.values()), 0),
-            "lineNlo": str(math.floor(min(got.values()))),
-            "lineNhi": str(math.floor(max(got.values())))}
+            "lineNlo": str(min(n_max)),
+            "lineNhi": str(max(n_max)),
+            "lineFrameLo": str(min(drv.CELLS[c].frame_bytes for c in tested)),
+            "lineFrameHi": str(max(drv.CELLS[c].frame_bytes for c in tested)),
+            "lineFpsLo": f"{min(drv.CELLS[c].fps for c in tested):g}",
+            "lineFpsHi": f"{max(drv.CELLS[c].fps for c in tested):g}"}
+
+
+def _stream_cells_against_the_line() -> dict[str, str]:
+    """Follow-up F3: the five stream-scheme frames, predicted with the same slope, then run.
+
+    The text says all five fell inside the registered tolerance and above the line.
+    """
+    scores = airtime.stream_scores()
+    names = [f"line{kind}{c}" for c in airtime.STREAM for kind in "PMD"]
+    if set(scores) != set(airtime.STREAM):
+        MISSING.append("the crossings of the five stream-scheme cells")
+        return dict.fromkeys([*names, "lineStreamWorst", "lineStreamLeast"], "??")
+    if not all(s["within_band"] for s in scores.values()):
+        raise ValueError("the text says every stream cell is within the registered tolerance")
+    if min(s["vs_line_pct"] for s in scores.values()) <= 0:
+        raise ValueError("the text says all five stream cells cross above the line")
+    out = {}
+    for c, s in scores.items():
+        out |= {f"lineP{c}": f(s["line"], 1), f"lineM{c}": f(s["measured"], 1),
+                f"lineD{c}": signed(s["vs_line_pct"])}
+    deviations = [s["vs_line_pct"] for s in scores.values()]
+    return out | {"lineStreamWorst": f(max(deviations), 1),
+                  "lineStreamLeast": f(min(deviations), 1)}
 
 
 def signed(percent: float) -> str:

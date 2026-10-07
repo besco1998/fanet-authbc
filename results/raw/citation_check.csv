@@ -1,5 +1,5 @@
 # run=citation_check
-# checked=2026-10-06
+# checked=2026-10-07
 # bib=paper/refs.bib
 key,kind,identifier,registry,authors_bib,authors_registry,authors_match,title_match,year_bib,years_registry,year_match,status,fingerprint
 bianchi2000,doi,10.1109/49.840210,crossref,bianchi,G. Bianchi,1,1.00,2000,2000,1,ok,c1cc699a34bca9c9
@@ -20,6 +20,7 @@ veara2025tbrd,arxiv,2510.11343,arxiv,veara; jain; moy; ranganathan,Jason Veara; 
 rotta2024telemetrybroadcast,arxiv,2401.11915,arxiv,rotta; mykytyn,Randolf Rotta; Pavlo Mykytyn,1,1.00,2024,2024,1,ok,8ca5b2d45243566e
 mavlink2signing,document,"web: mavlink.io/en/guide/message_signing.html, read 2026-10-06",,mavlink development team,,,,2026,,,document,21f9077e9439da9f
 zhang2008batch,doi,10.1109/INFOCOM.2008.58,crossref,zhang; lu; lin; ho; shen,C. Zhang; R. Lu; X. Lin; P.-H. Ho; X. Shen,1,1.00,2008,2008,1,ok,b80dca2a9d75237b
+rajasekaran2022batchfanet,doi,10.3390/drones6010014,crossref,rajasekaran; maria; al turjman; altrjman; mostarda,Arun Sekar Rajasekaran; Azees Maria; Fadi Al-Turjman; Chadi Altrjman; Leonardo Mostarda,1,1.00,2022,2022,1,ok,ca8dc7a65db845b8
 li2025clas,doi,10.1371/journal.pone.0317047,crossref,li; shen; huang; wu,Huimin Li; Chucheng Shen; Hui Huang; Chenhuang Wu,1,1.00,2025,2025,1,ok,813b7a1f6c63d763
 ndss2024pqv2v,doi,10.14722/ndss.2024.24267,crossref,twardokus; bindel; rahbari; mccarthy,Geoff Twardokus; Nina Bindel; Hanif Rahbari; Sarah McCarthy,1,1.00,2024,2024,1,ok,853fe9beec649e7a
 etsi_ts103097,document,docs/literature/etsi_ts103097_its_security_header.pdf,,etsi,,,,2015,,,document,6427327c0c8f48ff

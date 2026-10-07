@@ -18,7 +18,7 @@ verdict rather than a number — "eight of twelve", "does not meet the target" �
 same script, which stops if the artifact no longer says so.
 
 * Change a result → re-run its experiment, then `make paper`. Never edit `numbers.tex`.
-* `make paper` regenerates the numbers and the two figures the paper draws from artifacts, builds
+* `make paper` regenerates the numbers and the three figures the paper draws from artifacts, builds
   the PDF, and fails on an undefined reference or an undefined macro.
 * `tests/test_paper_numbers.py` fails if `numbers.tex` is stale, if a macro is defined and used
   nowhere, if a result is typed into `main.tex`, or if a phrase this project has had to retract

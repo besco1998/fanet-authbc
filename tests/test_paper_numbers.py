@@ -165,6 +165,12 @@ class TestWhatTheReviewAskedForIsInTheText:
         assert "Feasibility Boundaries for Authenticated UAV Telemetry" in title
         assert "An Exclusion Bound and a Capacity Envelope" in " ".join(title.split())
 
+    def test_the_body_uses_the_two_nouns_its_title_promises(self) -> None:
+        """A title that names something the body never names is how "Hardware Validation" stood
+        over a two-node airtime check."""
+        body = BODY[BODY.index("\\section{Introduction}"):]
+        assert "exclusion bound" in body and "capacity envelope" in body
+
     def test_the_one_line_message_does_not_overclaim_about_signature_schemes(self) -> None:
         """'No signature scheme changes that' was the over-claim: a 48 B or 13 B authenticator
         changes the exclusion, and BLS is excluded by CPU. The claim is about 64 B schemes."""
@@ -197,3 +203,65 @@ class TestWhatTheReviewAskedForIsInTheText:
         start = BODY.index("\\section*{Use of Generative AI}")
         statement = BODY[start:BODY.index("\\bibliographystyle", start)]
         assert 10 < len(statement.split()) < 60
+
+    def test_the_abstract_is_about_180_words(self) -> None:
+        """The review asked for about 180; the looser bound above let it stand at about 200 as
+        printed. This counter gives 179 for the abstract that prints as about 180 words."""
+        abstract = BODY[BODY.index("\\begin{abstract}"):BODY.index("\\end{abstract}")]
+        plain = re.sub(r"\\[a-zA-Z]+", "w", abstract.replace("\\begin{abstract}", ""))
+        assert len(re.sub(r"[{}$~]", " ", plain).split()) <= 185
+
+    def test_captions_are_one_or_two_lines(self) -> None:
+        """The review asked for captions of one or two lines. A column holds about eleven words
+        a line; the one full-width table holds about twenty-three."""
+        too_long = {}
+        for caption, label in re.findall(r"\\caption\{(.*?)\}\s*\\label\{([^}]+)\}", BODY, re.S):
+            plain = re.sub(r"\\cite\{[^}]*\}", "", caption)
+            words = len(re.sub(r"[{}$~]", " ", re.sub(r"\\[a-zA-Z]+", "w", plain)).split())
+            if words > (46 if label == "tab:ladder" else 27):
+                too_long[label] = words
+        assert not too_long, too_long
+
+    def test_the_hash_chain_is_not_credited_to_the_bitcoin_paper(self) -> None:
+        related = _section("Background and Related Work")
+        assert "haber1991timestamp" in related and "nakamoto2008" not in BODY
+
+    def test_the_ladder_marks_every_size_that_is_not_an_emitted_frame(self) -> None:
+        """The caption once said "all lean sizes are emitted frames"; row 7 is a sum of parts,
+        and so is every first-format row."""
+        ladder = {(r["format"], r["rung"]): r["sized_from"]
+                  for r in gen.rows(gen.RAW / "design_ladder.csv")
+                  if r["op"] == "adopted" and r["scheme"] == "ed25519"}
+        start = BODY.index("\\label{tab:ladder}")
+        table = BODY[start:BODY.index("\\end{table*}", start)]
+        first_header = table[table.index("First format"):table.index("\\\\", table.index(
+            "First format"))]
+        assert "$^\\dagger$" in first_header
+        assert all(ladder["first", r] != "emitted frames"
+                   for r in ("inline-1", "inline-b", "batch-cbor", "batch-delta"))
+        marked = {"batch-keys": True, "inline-1": False, "inline-b": False, "batch-delta": False}
+        rows_by_rung = dict(zip(("inline-1", "inline-b", "batch-keys", "batch-delta"),
+                                re.findall(r"^[5-8] & (.*?) & [14] &", table, re.M), strict=True))
+        for rung, is_marked in marked.items():
+            assert ("dagger" in rows_by_rung[rung]) is is_marked, rung
+            assert (ladder["lean", rung] != "emitted frames") is is_marked, rung
+
+    def test_the_twelve_data_rates_are_named_by_modulation(self) -> None:
+        """The review asked for a note on DR7, which is FSK and not LoRa."""
+        low = _section("Low-Rate Links: Where No Batch Helps")
+        assert "seven LoRa (DR0--DR6), one FSK (DR7) and four LR-FHSS (DR8--DR11)" in low
+        kind = {r["dr"]: r["modulation"].strip('"').split()[0]
+                for r in gen.rows(gen.RAW / "exclusion_matrix.csv")}
+        assert len(kind) == 12
+        assert [dr for dr, k in kind.items() if k == "FSK"] == ["7"]
+        assert sorted(int(dr) for dr, k in kind.items() if k == "LoRa") == list(range(7))
+        assert sorted(int(dr) for dr, k in kind.items() if k == "LR-FHSS") == [8, 9, 10, 11]
+
+    def test_the_lora_capacity_names_the_configuration_that_was_simulated(self) -> None:
+        """The paragraph gave the 242 B frame's rate and the 222 B simulation's total, the same
+        kind of mismatch the review listed under inconsistencies."""
+        low = _section("Low-Rate Links: Where No Batch Helps")
+        carry = low[low.index("What the feasible rates carry"):]
+        for macro in ("\\loraSimBytes", "\\loraSimRecs", "\\loraSimRate", "222"):
+            assert macro in carry, macro
+        assert carry.index("\\loraSimRate") < carry.index("\\loraAgg")
