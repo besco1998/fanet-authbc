@@ -508,3 +508,61 @@ band — 30 seeds, 20 s, J = one period: 1470 runs. A cell whose crossing falls 
 extended and the extension is reported as one. Afterwards the cells the paper tabulates get a
 unit-step grid round their crossing, as A–F did; those runs locate `N_max` and are not part of
 the test, which is on the seven-point grids above.
+
+---
+
+# F2 — outcome (2026-10-07)
+
+1470 runs: the seven held-out cells on the seven-point grids listed above, 30 seeds, 20 s,
+J = one period. Scored by `analysis/nmax_airtime_line.py`, which was committed with the
+predictions (`fad28e0`) and has not changed.
+
+| cell | frame, rate | interpolated crossing [95 %] | **line, a = 0.0710** | deviation | line as first registered | deviation | single ceiling | deviation |
+|---|---|---|---|---|---|---|---|---|
+| G | 373 B, 12.5 /s | 76.25 [75.71, 76.64] | 78.4 | **−2.7 %** | 74.9 | +1.7 % | 79 | −3.5 % |
+| H | 218 B, 12.5 /s | 108.89 [108.40, 109.50] | 110.3 | **−1.3 %** | 105.8 | +2.9 % | 123 | −11.5 % |
+| I | 288 B, 12.5 /s | 91.34 [90.90, 91.91] | 93.5 | **−2.3 %** | 89.5 | +2.0 % | 100 | −8.7 % |
+| RA | 174 B, 20 /s | 78.35 [77.97, 78.69] | 78.1 | **+0.3 %** | 75.1 | +4.4 % | 88 | −11.0 % |
+| RB | 300 B, 5 /s | 219.83 [218.87, 220.77] | 227.6 | **−3.4 %** | 217.9 | +0.9 % | 208 | +5.7 % |
+| RC | 146 B, 20 /s | 85.52 [85.09, 86.04] | 84.9 | **+0.7 %** | 81.7 | +4.7 % | 101 | −15.3 % |
+| RD | 173 B, 5 /s | 308.06 [307.13, 309.02] | 312.4 | **−1.4 %** | 300.2 | +2.6 % | 269 | +14.5 % |
+
+**The prediction holds, in both forms.**
+
+1. *All seven within ±6 % of the line.* The largest deviation is 3.4 % (RB), and every interval
+   lies inside its band.
+2. *Closer to the line than to the ceiling in H, I, RA, RC and RD.* In all five, by a factor of
+   four to thirty.
+
+It also holds with the slope **as first registered** (a = 0.0749, from the strictly periodic
+crossings): all seven within 4.7 %, and closer to that line than to the ceiling in the same five
+cells. So the result does not depend on the recalibration the amendment introduced. Against the
+first-registered line every deviation is positive (mean +2.8 %), which is the shift between the
+two traffic sources seen in the six calibration cells.
+
+**What follows, as registered under "Holds".** The V ≥ 0.95 crossing of a configuration is set by
+the frame rate it offers and the time its frames hold the medium, not by N as such:
+
+    N_max ≈ 0.05 / ( f · (a·T + c) ),    a = 0.0710,  c = 8 µs
+
+with f the frames per second a node sends and T = `bianchi.t_broadcast` (airtime plus DIFS). It
+replaces the single load ceiling as the closed form the paper states, **with its domain**: one
+collision domain, 802.11a at 6 Mb/s, the 5 % loss level, frames of 146–565 B, 5–50 frames/s,
+32–308 nodes, send instants redrawn each period, in ns-3. The tables quote simulated values, not
+the line. Over the thirteen cells the single ceiling misses by up to 15.3 %, in both directions.
+
+**What the test does not show — read before leaning on the line.**
+
+* **The residuals are not noise.** By frame rate they average +3.6 % at 50 /s (the two
+  calibration cells), +0.5 % at 20 /s, −2.0 % at 12.5 /s and −2.4 % at 5 /s. The slope falls
+  slowly as the frame rate rises; one constant absorbs that to within ±4 % over a tenfold range
+  of rates. This is the pattern recorded before the test. It did not break the prediction, and
+  it means the line should not be extrapolated beyond 5–50 frames/s.
+* **One loss level.** Loss is convex in load; nothing here says the line holds at 1 % or 10 %.
+* **G cannot discriminate.** There the line and the ceiling differ by under 1 %.
+* **It is a fit to a simulator.** The constant c is tied to ns-3's 4 µs preamble-detection
+  period; on radios it would be whatever the hardware's detection latency is.
+* **`N_max` on these grids is coarse.** The grids were chosen to test the line, in steps of 3 to
+  15 nodes, so the grid value under-reports by up to a step (RD: 300 on the grid, 308
+  interpolated). The cells the paper tabulates get unit or two-node steps round their crossing
+  next; those runs are not part of this test, and the table above is fixed as of this commit.
