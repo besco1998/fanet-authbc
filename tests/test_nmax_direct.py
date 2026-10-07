@@ -162,8 +162,18 @@ class TestCellsAreTheLaddersFrames:
 
     LADDER = {(r["op"], r["format"], r["rung"]): r for r in _rows(RAW / "design_ladder.csv")
               if r["scheme"] == "ed25519"}
+    STREAM = {r["scheme"]: r for r in _rows(RAW / "stream_baselines.csv")}
 
-    @pytest.mark.parametrize("name", sorted(drv.CELLS))
+    @pytest.mark.parametrize("name", sorted(k for k, c in drv.CELLS.items()
+                                            if c.label.startswith("stream/")))
+    def test_a_stream_cell_is_the_frame_and_rate_of_the_stream_table(self, name: str) -> None:
+        cell = drv.CELLS[name]
+        row = self.STREAM[cell.label.removeprefix("stream/")]
+        assert cell.frame_bytes == round(float(row["frame_bytes"]))
+        assert (cell.batch, cell.fps) == (1, float(row["frames_per_s"]))
+
+    @pytest.mark.parametrize("name", sorted(k for k, c in drv.CELLS.items()
+                                            if not c.label.startswith("stream/")))
     def test_frame_rate_and_model_value(self, name: str) -> None:
         cell = drv.CELLS[name]
         op = {50.0: "adopted", 20.0: "relaxed"}[cell.lam]

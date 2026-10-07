@@ -92,6 +92,14 @@ CELLS: dict[str, Cell] = {
     "RG": Cell("first/batch-cbor", 373, 4, 20.0, 184),
     "RH": Cell("lean/batch-keys", 218, 4, 20.0, 243),
     "RI": Cell("first/batch-delta-published", 288, 4, 20.0, 213),
+    # --- the classical stream-signing schemes of results/raw/stream_baselines.csv: the lean
+    #     one-record frame with each scheme's authenticator, one frame per record (follow-up F3).
+    #     EMSS adds one signature packet per hundred, simulated as 50.5 frames/s of one size. ---
+    "SM": Cell("stream/mavlink2", 94, 1, 50.0, 44),
+    "ST": Cell("stream/tesla", 106, 1, 50.0, 41),
+    "SG": Cell("stream/gennaro-rohatgi", 114, 1, 50.0, 39),
+    "SE": Cell("stream/emss", 146, 1, 50.5, 34),
+    "SW": Cell("stream/wong-lam-tree", 211, 1, 50.0, 28),
 }
 
 

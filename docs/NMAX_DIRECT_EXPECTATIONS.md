@@ -600,3 +600,42 @@ below 0.95); all agree.
 
 Three crossings sit on a knife edge and their intervals say so: H (mean 0.95042 at 108, 0.94996
 at 109), RB (0.95005 at 219, 0.94977 at 220) and RD (0.95109 at 306, 0.94997 at 308).
+
+---
+
+# Follow-up F3 — the stream-signing baselines, simulated. Written before their runs (2026-10-07)
+
+**Why.** `results/raw/stream_baselines.csv` places five classical stream-signing schemes at the
+adopted point as the lean one-record frame with each scheme's authenticator. Their capacity
+there is the saturation bound only, while every rung of the design ladder has a simulated
+`N_max`. The review this revision answers called the baselines weak; a baseline with a modelled
+capacity beside a design with a simulated one is still weak. Each is one more (frame, rate) cell.
+
+**What is run.** Five cells, J = one period, 30 seeds, 20 s, seven node counts at unit steps:
+
+| cell | scheme | frame | frames/s | airtime line (a = 0.0710, unchanged) | ±6 % band | single ceiling | node counts |
+|---|---|---|---|---|---|---|---|
+| SM | MAVLink 2 tag | 94 B | 50 | **40.6** | 38.2–43.1 | 44 | 39 40 41 42 43 44 45 |
+| ST | TESLA | 106 B | 50 | **38.8** | 36.5–41.2 | 41 | 37 38 39 40 41 42 43 |
+| SG | Gennaro–Rohatgi | 114 B | 50 | **38.0** | 35.7–40.3 | 39 | 36 37 38 39 40 41 42 |
+| SE | EMSS | 146 B | 50.5 | **33.6** | 31.6–35.6 | 34 | 32 33 34 35 36 37 38 |
+| SW | Wong–Lam tree, block of 4 | 211 B | 50 | **28.0** | 26.3–29.7 | 28 | 26 27 28 29 30 31 32 |
+
+**Prediction.** In all five the interpolated crossing lies inside the ±6 % band of the line, with
+the slope and the constant exactly as calibrated before F2 — nothing is re-fitted.
+
+**Recorded expectation, weaker than a prediction.** These cells are at 50 frames/s, where the
+two calibration cells sat 3.4 and 3.8 % *above* the line. If that residual is a property of the
+frame rate, all five will be above it too, by about that much: 42, 40, 39.5, 35 and 29.
+
+**What this cannot show.** (i) Here the line and the single ceiling differ by 1–8 %, so these
+cells do not discriminate between them; F2 did that. (ii) ⚠️ **A simulated delivery is an upper
+bound on what three of these schemes verify.** A TESLA packet waits for a later key, an EMSS
+packet for a later signature packet, and a Gennaro–Rohatgi packet needs every packet before it;
+delivery of a frame is not verification of its record. Only the MAVLink 2 and Wong–Lam rows, and
+the two rows already simulated (per-record signature, cell C; the design, cell D), are frames
+that verify alone. (iii) EMSS's signature packets are simulated as data-sized frames at
+50.5 frames/s. (iv) The schemes are still not implemented: this is the channel cost of their
+frames, nothing more.
+
+A crossing that falls outside its grid is extended and the extension is reported as one.

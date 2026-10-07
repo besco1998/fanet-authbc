@@ -42,6 +42,7 @@ C_S: float = 8e-6                   # fixed, not fitted
 CALIBRATION = tuple("ABCDEF")
 HELD_OUT = ("G", "H", "I", "RA", "RB", "RC", "RD")
 DIAGNOSTIC = ("H", "I", "RA", "RC", "RD")    # where the two rules differ by more than 10 %
+STREAM = ("SM", "ST", "SG", "SE", "SW")      # follow-up F3: the stream-signing baselines
 TOLERANCE: float = 0.06
 # The seven node counts per held-out cell that the test was registered on (fad28e0).
 F2_GRIDS: dict[str, tuple[int, ...]] = {
@@ -123,11 +124,11 @@ def calibrate(rows: dict[str, dict[str, str]]) -> tuple[float, dict[str, float]]
     return st.mean(per_cell.values()), per_cell
 
 
-def predictions(a: float) -> dict[str, float]:
-    """The line's crossing for each held-out cell."""
+def predictions(a: float, cells: tuple[str, ...] = HELD_OUT) -> dict[str, float]:
+    """The line's crossing for each of `cells` (the F2 held-out cells unless told otherwise)."""
     import run_nmax_direct as drv
     return {cell: n_line(a, drv.CELLS[cell].fps, bianchi.t_broadcast(drv.CELLS[cell].frame_bytes))
-            for cell in HELD_OUT}
+            for cell in cells}
 
 
 def main() -> None:
