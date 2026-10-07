@@ -12,6 +12,92 @@ where the durable record lives. If you want the conclusion only, follow the poin
 
 ---
 
+# 2026-10-07 — the second pass: auditing the revision, not the description of it
+
+*Mohamed: "think deeply of the current state and the remaining open and decision points and give
+me options for each, then edit the paper and thesis and re-audit them against the latest reviewer
+comment".*
+
+## Method
+
+The review was read again in full, from the PDF. Each request was then looked up **in the built
+paper**, not in the response that had been written about it, and not from memory of the edit.
+The thesis was read against the same list, because a claim the paper had lost could still be
+standing in a chapter.
+
+## What it found
+
+Eleven places in the paper where the response said "done" and the text did not yet do it (F55).
+The three that matter:
+
+* **The LoRa paragraph had re-created the mismatch the review listed** — the batch and rate of a
+  242 B frame beside the capacity of a simulation run at 222 B.
+* **"All lean sizes are emitted frames" was false for one row** of the ladder, in the paper, the
+  thesis and the checklist; and every first-format row is a sum of parts too. This is the review's
+  root concern in miniature, written by the revision that answered it.
+* **The curve the review asked for did not exist.** Drawing it gave the cleanest statement yet of
+  what the lean format buys: 24 of the 31.7 B per record between the two designs are *where the
+  chain link sits*, and a link in every record costs more at twelve records per frame than one
+  link per frame costs at four.
+
+And in the thesis, which the first pass had corrected chapter by chapter but not re-read whole:
+
+* **"No choice of existing cryptography helps"** — the review's own example of an over-claim —
+  **was still in four places**: the abstract, research question 5, the positioning section and the
+  closing paragraph. The paper had lost it; the thesis had not.
+* The abstract still gave the payload as "45–190 B", sizes that include the record's own 32 B
+  chain link. Chapters 1, 4 and 7 never said so. A remark now does: 13 B of telemetry, 32 B of
+  link; signature and link are 88 % of what is sent, not the 58.7 % that φ gave.
+* Ed25519 batch verification was mentioned in the paper and not in the thesis.
+
+## Tried and did NOT work, or was wrong the first time
+
+* **A response row written before measuring.** I wrote "related work is about half the length
+  (about 540 words)" from the edit I intended; the count after the edit was 587. Corrected before
+  anything was sent. Cutting further would have removed a prior-art citation, so the length stays
+  and the response states the real figure.
+* **The figure's first labels** overlapped the legend, and matplotlib printed 43.25 as "43.2"
+  where the paper prints 43.3. Labels are now rounded half-up, as the generator rounds.
+* **The project's red/green pair fails a colour-blindness check** (ΔE 2.5 under deuteranopia).
+  The new figure uses a checked three-colour set with different markers. The older two-panel
+  figure is not affected in practice — its series are in separate, titled panels.
+* **Unpaywall was queried with the author's e-mail address in the URL** while looking for an
+  open-access copy. That was a mistake: the address is for identification only. One request, to
+  one service; reported to Mohamed.
+
+## The baselines got the same instrument as the design (follow-up F3)
+
+The stream-signing schemes had a saturation bound where the design had a simulated capacity. Five
+more cells went through the direct search, their crossings predicted with the airtime line and
+committed first (`f72db7f`). **All five held**, 3.5–4.2 % above the line — the offset written
+down beforehand for cells at 50 frames per second. A 13 B tag in place of a 64 B signature takes
+the neighbourhood from 35 to 42; four records in a frame take it to 124 (F56).
+
+**And the scoring caught a defect in the readers.** Its first table had four rows. The summary
+stores the send jitter to six significant figures and three readers looked it up by the exact
+period — invisible while every period was a round number of milliseconds, fatal for EMSS's
+1000/50.5. Fixed at the root with one function and three regression tests. It was caught only
+because the scorer's output was compared with the list of cells it was supposed to contain.
+
+## A source that "needed a browser" did not
+
+Rajasekaran et al. 2022 had been on the checklist since August as a missing FANET comparator.
+The publisher's article page refuses scripts; its static file server does not. Read in full,
+checked against Crossref (five authors, not the four the checklist listed), cited in one
+sentence. It supports the same point as the CLAS table: its communication cost for n
+authentications is n times the cost of one (F57).
+
+## The pattern
+
+*A response to a review is one more document that can drift from the text it describes.* The
+project already had the rule at two levels — check the figure, not the quotation; build the
+object, not the sum. This is the third: **audit the deliverable, not the description of it.**
+
+**Durable records:** F55–F57 in `audits/model_provenance.md`; open items G19–G21 in
+`OPEN_ITEMS.md`; follow-up F3 in `NMAX_DIRECT_EXPECTATIONS.md`.
+
+---
+
 # 2026-10-06 — an outside reader: the design had never been built
 
 *Mohamed's supervisor reviewed the paper. Mohamed: "understand and analyse it deeply … plan how to

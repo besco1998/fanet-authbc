@@ -60,7 +60,7 @@ type hints; no dead code; comments explain WHY, not what.
 - ⚠️ **Repo is PUBLIC and history was REWRITTEN** to purge the 84 MB vendored NS-3 tree. **The remote is authoritative — never force-push an older local branch over it.** Copyrighted PDFs in `docs/literature/` stay by Mohamed's decision (risk accepted, `DECISIONS.md`).
 - **Phase: P9 — revision after the supervisor's review (2026-10).** Branch `p9-supervisor-revision`, cut from `p8-audit-and-corrections`. Work from any machine: `git clone`, `git checkout p9-supervisor-revision`, `make setup && make all`.
 - ⚠️ **TWO COPIES OF THIS FILE EXIST.** Sessions that start in `~/authbc_package` auto-load `~/authbc_package/CLAUDE.md`, which is an OLD copy. **This file, in the repository, is the status board.** A stale count read from the other one was "corrected" into the thesis on 2026-10-06 and had to be reverted.
-- **Green:** 1829 fast + **34** frozen-gate tests (**1863**), `ruff` clean, **`mypy` clean (0 / 56 files)**, paper builds (**9 pp**, **35 refs**, 0 undefined, abstract **188 w**), methods paper 4 pp, thesis 89 pp (44 refs). `make all` exit 0.
+- **Green:** 1872 fast + **35** frozen-gate tests (**1907**), `ruff` clean, **`mypy` clean (0 / 56 files)**, paper builds (**9 pp**, **35 refs**, 0 undefined, abstract **174 w** by the board's counter, about 180 as printed), methods paper 4 pp, thesis 92 pp (45 refs). `make all` exit 0.
 - **METHODOLOGY (Mohamed):** this is an optimization problem — *state everything, choose what to stick with, state the trade-offs for every decision*. **`docs/TRADEOFFS.md` is required reading before quoting any number.**
 - **LICENSE = all rights reserved** (© 2026 Mohamed A. Farouk). Vendored NS-3 + `signetlabdei/lorawan` stay GPLv2, **not** redistributed.
 
@@ -69,7 +69,7 @@ type hints; no dead code; comments explain WHY, not what.
 **Mohamed's supervisor reviewed the paper. Every statement of the review held; behind several of
 them was one cause it did not name: the headline design was a SUM OF SIZES and had never existed
 as a frame** (a record size from one module, a header measured on frames of another encoding, a
-signature length). Findings **F45–F54**; method and wrong turns in the top entry of
+signature length). Findings **F45–F57**; method and wrong turns in the top entry of
 `docs/LOGBOOK.md`; decisions **R1–R18** in `docs/DECISIONS.md`; what is open in
 `docs/OPEN_ITEMS.md` §G.
 
@@ -90,6 +90,32 @@ and bit-identical (D6).
 | capacities 31→100, 88→213, ratios "1.9–3.2×" from the ceiling **U = 2.435** | **the ceiling is not N-invariant (F50; a pre-registered ±10 % prediction FAILED).** Capacities are simulated per configuration, 30 seeds, bootstrap interval — quote them from `results/raw/design_ladder.csv`, never from the ceiling |
 | "ratios are protected by construction" | **withdrawn** — the ceiling's error depends on the frame and does not cancel |
 | "Bor et al." | **Haxhibeqiri, Van den Abeele, Moerman & Hoebeke** (F49). Renamed everywhere |
+
+### ⚠️ SECOND PASS 2026-10-07 — the revision was audited again, against the built PDF (F55–F57)
+Mohamed asked for a re-audit against the review. **Eleven places in the paper said less than the
+response claimed, and the thesis still carried the review's own example of an over-claim in four
+places** ("no choice of existing cryptography helps"). All fixed, each with a test. What a later
+session must know:
+- ⚠️ **AUDIT THE DELIVERABLE, NOT THE DESCRIPTION OF IT.** Look each "done" up in the built PDF.
+  And re-read the thesis whole — a claim the paper lost was still standing in a chapter.
+- ⚠️ **Not every size is an emitted frame.** In the ladder, lean rows 5, 6 and 8 are; row 7 (no
+  delta coding) and all four first-format rows are sums of measured parts and are marked †
+  (`design_ladder.csv`, column `sized_from`). Never write "all lean sizes are emitted frames".
+- **The curve** (`fig_bytes_vs_batch.png`, `analysis/figures_frames.py`): of the 31.71 B/record
+  between the two designs at b = 4, **24 B is where the chain link sits**; the first format with
+  one link per frame would be 50.96 B. A link in every record costs 54.32 B at twelve records.
+- ⚠️ **The first format's "45 B record" is 13 B of telemetry + 32 B of chain link.** Signature
+  and link are 96 of 109 B = **88 %**; φ = 58.7 % counted the link as data.
+- **LoRa capacity was simulated at 218 B / six records / 0.165 rec/s** (the simulator's module
+  carries 222 B at most), not at the 242 B / eight-record frame. Quote the pair together.
+- **Stream-signing baselines are now simulated as frames** (follow-up F3, predictions committed
+  first) — sizes from the schemes' definitions; ⚠️ for the three whose packets do not verify alone
+  a simulated delivery is an *upper bound*.
+- **New PDFs:** a CC BY one may be committed (Rajasekaran et al. 2022 was); a copyrighted one
+  goes in `HELD_LOCALLY.csv`. MDPI article pages refuse scripts; the publisher's static server
+  does not (`paper/SUBMISSION_CHECKLIST.md`).
+- ⚠️ **Never send Mohamed's e-mail address to an outside service.** It went to one (Unpaywall)
+  on 2026-10-07, by mistake; reported to him.
 
 ### The headline numbers, current (2026-10)
 - **43.25 B/record** against 145.77 B for a signature on every record: **−70.33 %** (lean format, emitted frames). First format: 74.96 against 174.25, −56.98 %.
@@ -119,7 +145,7 @@ and bit-identical (D6).
 - ⚠️ **CHECK THE PLAN AGAINST THE DELIVERABLE, ROW BY ROW.** The first rewrite of the paper silently departed from the approved plan (a new title; the exclusion after the 802.11 results) and left two approved items undone. No test could see that.
 
 ### Decisions PENDING from Mohamed (do not settle these yourself)
-G1 the wording of the name ("authenticated telemetry for a blockchain-style, hash-chained ledger") · G1b the paper's title (the August one, less "Hardware Validation"; a design-first alternative is recorded) · **R17** venue and page target · **R18** whether the analysis of the review goes in this public repo (**it stays in `~/authbc_package/docs/` until decided, with the point-by-point response**) · G5 one chain link per frame on 802.11 as well as LoRa · the methods paper's new title ("Nine Ways…").
+**The options for each, with a recommendation, are in the private file `~/authbc_package/docs/SUPERVISOR_REVIEW_AUDIT_2026-10.md` §7.6 (D17–D34).** G1 the wording of the name ("authenticated telemetry for a blockchain-style, hash-chained ledger") · G1b the paper's title (the August one, less "Hardware Validation"; a design-first alternative is recorded) · **R17** venue and page target · **R18** whether the analysis of the review goes in this public repo (**it stays in `~/authbc_package/docs/` until decided, with the point-by-point response**) · G5 one chain link per frame on 802.11 as well as LoRa · the methods paper's new title ("Nine Ways…").
 
 **DECIDED by Mohamed 2026-10-07 — new PDFs are not published.** Eleven of the twelve sources added in October were stripped from the branch before its first push; the unpublished commits from `e9d9e44` on were rewritten for that (dates preserved; the four pre-registration commits before it kept their hashes). ⚠️ **A new source goes in `HELD_LOCALLY.csv` and `.gitignore`, not in a commit, unless its licence allows redistribution.** A local branch `p9-backup-before-strip` still holds the old commits — **never push it.**
 
@@ -242,7 +268,7 @@ decides a headline and was never written down — defect class **C2**, the one c
 > ⚠️ **F18 came back.** On 2026-08-07 it was found still printed in `tab:lora-external` ("we are more optimistic" at N=5) — 100 lines below a bold sentence saying the opposite. **Retracting a finding in the register does not remove it from the paper.** When you retract, grep the paper. Guarded now by `test_no_row_revives_the_retracted_optimism_claim`, which checks the *artifact* rather than the wording.
 
 ### Where things live
-`docs/README.md` is the index. Findings **F1–F54** in `docs/audits/model_provenance.md`. Open items **only** in `docs/OPEN_ITEMS.md`. Trade-offs in `docs/TRADEOFFS.md`. Method and failed attempts in `docs/LOGBOOK.md`. **51 PDFs** in `docs/literature/` with each source's ROLE stated, and **11 more held on Mohamed's machine but NOT redistributed** (`docs/literature/HELD_LOCALLY.csv`, git-ignored files — ⚠️ never `git add -f` them); every bibliography entry is checked against its registry record by `make verify-citations` (`A3_CITATION_VERIFICATION.md` is the August record of a check that turned out not to compare authors — F49).
+`docs/README.md` is the index. Findings **F1–F57** in `docs/audits/model_provenance.md`. Open items **only** in `docs/OPEN_ITEMS.md`. Trade-offs in `docs/TRADEOFFS.md`. Method and failed attempts in `docs/LOGBOOK.md`. **51 PDFs** in `docs/literature/` with each source's ROLE stated, and **11 more held on Mohamed's machine but NOT redistributed** (`docs/literature/HELD_LOCALLY.csv`, git-ignored files — ⚠️ never `git add -f` them); every bibliography entry is checked against its registry record by `make verify-citations` (`A3_CITATION_VERIFICATION.md` is the August record of a check that turned out not to compare authors — F49).
 
 ### Deferred by Mohamed — plans written, DO NOT START unprompted
 - **Mobility (E20)** — `docs/MOBILITY_PLAN.md`. **Separate NEW scenario files**, literature survey first. Not for the 802.11 arm (Bianchi/Ma&Chen have no position term).

@@ -128,7 +128,7 @@ Ordered by what a thesis examiner would hit first.
 
 ## G. Opened by the 2026-10-06 revision
 
-*What the external review and the work that answered it left open. Findings F45–F54, decisions
+*What the external review and the work that answered it left open. Findings F45–F57, decisions
 R1–R18 (`DECISIONS.md`).*
 
 | # | Item | Status | Why it matters | Action |
@@ -147,11 +147,14 @@ R1–R18 (`DECISIONS.md`).*
 | **G11** | **The A+JSON energy row is not reportable** — three of its five repetitions have an idle window 0.4–0.5 W above the campaign's | **OPEN** | The table shows it as not reportable instead of dropping it | Re-meter with ≥ 10 repetitions (R15's larger option) |
 | **G12** | **No real telemetry at the operating rate.** Public PX4 logs carry position at 5 Hz (F52) | **OPEN** | The delta record at 20 ms spacing rests on the generator; real data bound it between 9.0 and 11.1 B | A 50 Hz log, or software-in-the-loop |
 | **G13** | **Capacities are simulated without certificate bytes, at one PHY rate, and for some rungs only** | **ACCEPTED — stated** | One frame in five would be 162 B longer; other rates are a model (E15); a rung that was not simulated has no V ≥ 0.95 capacity in any artifact | — |
-| **G14** | **The classical stream-signing schemes are modelled, not implemented** (E17) | **ACCEPTED — stated** | Their rows are a one-record frame with a different authenticator and a saturation bound | Implementing EMSS in the loss emulator was the rejected option of R5 |
+| **G14** | **The classical stream-signing schemes are sized from their definitions and simulated as frames, not implemented** (E17; F56) | **ACCEPTED — stated** | Since 2026-10-07 each row has a simulated N_max as well as a saturation bound. ⚠️ For TESLA, EMSS and Gennaro–Rohatgi a delivered frame is not a verified record: their N_max is an upper bound | Implementing EMSS in the loss emulator was the rejected option of R5 |
 | **G15** | **Crypto timing on the Pi 3B+ and the BeagleBone** — where does the receiver's CPU become the limit on a smaller board? | **OPEN — cheap** | N_cpu is one board, one core (docs/02 §6c) | Run the P1 micro suite on both; supersedes D5 |
 | **G16** | **Twelve PDFs were added to `docs/literature/` in a public repository** | **CLOSED 2026-10-07 — Mohamed: do not publish them** | Eleven were removed from the branch before its first push and are held locally (`docs/literature/HELD_LOCALLY.csv`); the CC BY one stays | Done. New sources follow the same rule (`DECISIONS.md`) |
 | **G18** | **The airtime line holds at one loss level and has a residual ordered by frame rate** (+3.6 % at 50 /s to −2.4 % at 5 /s, F54) | **OPEN — would make it a model** | It is a fit over 5–50 frames/s. A slope near 1/W₀ suggests a mechanism (two deferring stations drawing the same backoff slot) that has not been derived | Derive the slope from the DCF, or measure it at W₀ = 32; test a second loss level (1 % or 10 %) with the prediction written first |
 | **G17** | **`OPEN_ITEMS` item ids E1–E24 share a prefix with experiment ids E1–E17** | **ACCEPTED** | Confusing, harmless | Write "item E9" / "experiment E9" |
+| **G19** | **Ed25519 batch verification is quoted, not measured.** The paper gives the figure of the Ed25519 paper (under 134 000 cycles per signature in a batch of 64, against 273 364 for one) and says it was not used | **OPEN — needs a library** | It is one of the stronger alternatives the review named, and it would roughly halve the receiver's CPU share. Neither `cryptography` nor the installed toolchain exposes a batch API | Build a batch verifier (ed25519-donna, or ed25519-dalek's `verify_batch`) on the Pi 4 and time it in the P1 harness; N_cpu then has a second row |
+| **G20** | **Row 7 of the ladder (lean, one signature per frame, no delta coding) is not an emitted frame** | **ACCEPTED — marked in both tables (F55)** | The lean codec always delta-codes, so the row is the sum of its measured parts. Its capacity was simulated at that size | A codec switch that emits keyframes only would make it a frame; nothing else depends on it |
+| **G21** | **One listed source is obtainable but unread:** Al Majmaie et al., *SSDBFAN*, Sensors 26(9):2585, 2026 | **OPEN — defensive only** | Same group as a paper already cited; FANET + blockchain + aggregation in ns-3 | Read it; cite only if it says something the paper needs (`paper/SUBMISSION_CHECKLIST.md`) |
 
 ---
 

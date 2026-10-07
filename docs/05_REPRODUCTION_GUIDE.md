@@ -34,7 +34,7 @@ data; everything derived from that data is re-computed and checked on every run.
 git clone https://github.com/besco1998/fanet-authbc.git
 cd fanet-authbc
 make setup            # creates .venv with Python >=3.12 and pinned deps
-make all              # lint + mypy + 1829 fast tests + the 34-test frozen gate
+make all              # lint + mypy + 1872 fast tests + the 35-test frozen gate
 ```
 
 `make all` green means **you have reproduced the thesis's deterministic layer.** The frozen gate

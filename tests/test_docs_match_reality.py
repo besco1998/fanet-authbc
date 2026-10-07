@@ -326,6 +326,27 @@ class TestDocs02OctoberSectionsMatchTheirArtifacts:
             assert float(cells[2]) == float(rows[scheme]["frames_per_s"]), scheme
             assert abs(float(cells[3]) - float(rows[scheme]["bytes_per_rec"])) <= 0.05, scheme
             assert cells[4] == rows[scheme]["n_sat"], scheme
+            r = rows[scheme]
+            simulated = f"{r['n_max_v95']} [{r['n_max_v95_ci_lo']}, {r['n_max_v95_ci_hi']}]"
+            assert cells[5].startswith(simulated), scheme
+            # a delivered frame is not a verified record where a packet does not verify alone
+            assert ("upper bound" in cells[5]) is (r["verifies_alone"] == "no"), scheme
+
+    def test_the_link_placement_figures_are_the_artifact(self):
+        frames = {(r["item"], r["batch"]): float(r["bytes_per_rec"])
+                  for r in _rows("frame_components.csv")
+                  if r["kind"] == "frame" and r["ref_interval"] == "1" and r["format"] == "first"}
+        per_record, per_frame = "self-batch (byte model)", (
+            "self-batch; one link per frame (byte model)")
+        lean = next(float(r["bytes_per_rec"]) for r in _rows("frame_components.csv")
+                    if (r["kind"], r["format"], r["item"], r["batch"], r["ref_interval"])
+                    == ("frame", "lean", "self-batch", "4", "1"))
+        assert f"it still costs **{frames[per_record, '12']:.2f} B**" in self.DOC
+        assert f"which gives **{frames[per_frame, '4']:.2f} B**" in self.DOC
+        assert f"the remaining {frames[per_frame, '4'] - lean:.2f} B" in self.DOC
+        assert f"the {frames[per_record, '4'] - lean:.2f} B between the two designs" in self.DOC
+        moved = frames[per_record, "4"] - frames[per_frame, "4"]
+        assert 0.74 < moved / (frames[per_record, "4"] - lean) < 0.77      # "three quarters"
 
     def test_the_receiver_cpu_table_is_the_ladder(self):
         ladder = [r for r in _rows("design_ladder.csv") if r["op"] == "adopted"]

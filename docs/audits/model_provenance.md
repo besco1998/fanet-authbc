@@ -2980,3 +2980,101 @@ This is the third pre-registered prediction of the capacity study to be scored, 
 hold. The two that failed (the ±10 % of F50, and two spread predictions of F51) are what made
 this one worth testing properly.
 
+
+---
+
+## F55 — re-auditing the revision against the review: eleven places where "done" was not yet true (2026-10-07)
+
+**How it was found.** Mohamed asked for the revised paper and thesis to be audited again against
+the review. The review was re-read in full and each of its requests was looked up in the built
+PDF, not in the response that had been written about it. Every one of the items below had been
+recorded as done.
+
+| # | what the review asked | what the text actually did | now |
+|---|---|---|---|
+| 1 | one LoRa batch and rate (its list of inconsistencies) | the paragraph gave the 242 B frame's batch and rate (eight records, 0.20 rec/s), then the capacity and the neighbourhood total of a simulation run at 222 B (six records, 0.165 rec/s) — **the same kind of mismatch, re-created** | the simulated configuration is named and generated (`\loraSim*`); the generator refuses to run unless the lean frame at 222 B holds the simulated batch and is within 2 % of its airtime |
+| 2 | (its root concern: sizes that are sums) | the ladder caption, the thesis caption, the checklist and the first contribution said every lean size is an emitted frame. **Row 7 is not** — the codec always delta-codes, so "no delta coding" is sized from measured parts — and neither is any first-format row | † on every such row in both tables; the contribution claims emitted frames for the design and its baseline only; a test compares the marks with `sized_from` |
+| 3 | a curve of bytes against batch size with the chain link per record and per frame | no curve; the response said the lean format *was* the answer | `fig_bytes_vs_batch.png` (`analysis/figures_frames.py`), three curves from `frame_components.csv`. **Of the 31.71 B between the two designs at b = 4, 24 B is where the link sits.** With a link in every record, twelve records per frame (54.32 B) still cost more than one link per frame at four (50.96 B) |
+| 4 | captions of one or two lines | six ran to three or four lines | cut; a test bounds every caption |
+| 5 | the hash chain cited to Haber–Stornetta *instead of* the Bitcoin paper | both were cited | the paper cites the first only; the thesis credits the construction to it and Bitcoin with the blockchain |
+| 6 | an abstract of about 180 words | about 200 as printed (the test allowed 200 by its own, looser count) | **about 180 as printed** — 186 tokens, 179 when a unit is counted with its number; the test bound is tightened to match |
+| 7 | a note that DR7 is FSK | all twelve rates were counted, none named | "seven LoRa (DR0–DR6), one FSK (DR7) and four LR-FHSS (DR8–DR11)"; a test checks it against the matrix |
+| 8 | a loss budget equal to the target leaves the design no margin, by construction | the length-dependent loss was added, the margin at the *measured* loss was not | one sentence: at the 2.3 × 10⁻⁴ measured between two radios every interval meets the target (V = 0.998 at r = 16). The keyframe per frame is bought by the specified budget, not by the measured link |
+| 9 | intervals on the 802.11 capacities | in the ladder, not in the two-point capacity table | both tables |
+| 10 | 802.11p | a "10 MHz channel" was modelled and not named | named (`phy.ofdm_10mhz` uses its timing: 13 µs slot, 32 µs SIFS); still a model, and said so |
+| 11 | the hash is 71 % of the delta record | fixed in the design, **never stated in the thesis**: chapters 1, 4 and 7 still called 45 B "the record" and computed φ = 58.7 % on it | a remark in ch. 7: 13 B of telemetry and 32 B of link; signature and link are 96 of 109 B, **88 %**. φ as defined understated its own point |
+
+Also aligned: the body now uses the two nouns of the title (*exclusion bound*, *capacity
+envelope*), which until now appeared in the title only.
+
+**Lesson.** A response to a review is a second document that can drift from the text, exactly as
+a paper drifts from its artifacts. Items 1, 2 and 4–6 were written as done from memory of the
+edit, not from the built PDF. **Audit the deliverable, not the description of it** — the same rule
+as "check the figure, not the quotation", one level up.
+
+## F56 — the stream-signing baselines simulated as frames: a second prediction that held, and a defect its scoring caught (2026-10-07)
+
+**Why.** The comparison with Wong–Lam, Gennaro–Rohatgi, EMSS, TESLA and MAVLink 2 signing gave
+each scheme a saturation bound only, beside a design whose capacity is simulated. A baseline
+measured with a weaker instrument than the design is still a weak baseline.
+
+**What was done** (follow-up F3 of `docs/NMAX_DIRECT_EXPECTATIONS.md`, registered in `f72db7f`
+before any run). Five cells — each scheme's frame at its rate — through the same direct search as
+the ladder: 30 seeds, seven node counts at unit steps, 1,050 runs. The airtime line's crossing
+for each was committed first, with the slope calibrated before F2 and nothing re-fitted.
+
+**Outcome.** All five inside the ±6 % band, points and intervals:
+
+| scheme | frame | line | simulated | N_max [95 %] | vs line |
+|---|---|---|---|---|---|
+| MAVLink 2 tag | 94 B | 40.6 | 42.15 | 42 [41, 42] | +3.8 % |
+| TESLA | 106 B | 38.8 | 40.44 | 40 [40, 40] | +4.2 % |
+| Gennaro–Rohatgi | 114 B | 38.0 | 39.44 | 39 [39, 39] | +3.8 % |
+| EMSS | 146 B, 50.5 /s | 33.6 | 34.81 | 34 [34, 34] | +3.5 % |
+| Wong–Lam tree | 211 B | 28.0 | 29.00 | 28 [28, 29] | +3.5 % |
+
+So the finding the saturation bound gave survives simulation, and with the same instrument on
+both sides: **replacing a 64 B signature by a 13 B tag moves N_max from 35 to 42; putting four
+records in a frame moves it to 124.** These schemes amortise the cost of signing; what binds is
+the frame.
+
+All five sit 3.5–4.2 % *above* the line. That was written down beforehand as an expectation
+(the two calibration cells at 50 frames/s sat 3.4 and 3.8 % above it): the residual ordered by
+frame rate of F54 is repeatable, a bias and not noise.
+
+⚠️ **What it does not license.** A simulated delivery is an **upper bound** on what TESLA, EMSS
+and Gennaro–Rohatgi verify — their packets wait for a later key, a later signature packet, or
+every earlier packet. The table marks those three. No scheme is implemented.
+
+**The defect.** The first scored table had **four** rows, not five. `ns3_nmax_direct.csv`
+stores the send jitter with six significant figures (`f"{jitter:g}"`), and three readers looked a
+cell up by the *exact* period: the scorer, the builder of `stream_baselines.csv`, and the plan
+writer. Every period until now was 20, 50, 80 or 200 ms. EMSS sends 50.5 frames/s; its period,
+19.80198… ms, is stored as 19.802. The cell was silently absent from all three — in the artifact
+it would have been an empty capacity, and a resumed campaign would have re-run it whole.
+
+* **Why it was caught:** the scorer returns only bracketed cells and its caller compared the set
+  of cells with the registered five. A scorer that printed "what it found" would have shown four
+  plausible rows.
+* **Root cause, not symptom:** one function, `provenance.as_written`, now says what a number is
+  once a result file holds it, and the driver, the artifact builder, the analysis, the figure and
+  the tests all compare through it. No tolerance was introduced.
+* **Regression tests:** a 19.802 ms run is recovered by the plan as `period`; every cell summarised
+  at about one period is matched as one; the scored set is exactly the five.
+
+**Lesson.** The same shape as the waiter that matched its own command line (`docs/06` §10): *a lookup that can miss must be
+checked against the list of what it was supposed to find.* Silence from a filter is not a result.
+
+## F57 — a FANET batch-authentication source obtained, read and cited; it supports the axis finding (2026-10-07)
+
+The submission checklist had listed Rajasekaran et al. (Drones 6(1):14, 2022) since August as a
+missing comparator that "needs a browser". The publisher's article page answers a script with 403;
+its static file server does not. The PDF (CC BY 4.0) is in `docs/literature/`, was read in full,
+and its bibliography entry was checked against Crossref — which shows **five** authors where the
+checklist had four.
+
+What it supports is what F34 found for CLAS: in its Table 5 the communication cost of n
+authentications is **n times the cost of one** (1184·n bits). Batch authentication shares the
+verifier's work; the bytes stay linear. One sentence in the paper's related work and one in the
+thesis say that and no more: the scheme authenticates drones to a user, it is not broadcast
+telemetry, and no size of ours is compared with it.

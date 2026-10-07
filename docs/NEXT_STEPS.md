@@ -10,24 +10,34 @@ superseded wherever the two disagree — in particular the framing section's "fo
 **What happened.** The supervisor reviewed the paper. Checking the review exposed that the
 headline design had never been built as a frame. It was built (`wire_v2`, sender, receiver), every
 result was recomputed from it, the paper was rewritten around it, and the thesis chapters were
-brought into line. Findings F45–F54; the method and the wrong turns are the top entry of
-`LOGBOOK.md`.
+brought into line. Findings F45–F54; the method and the wrong turns are in `LOGBOOK.md`.
+
+**Then it was audited again (2026-10-07).** Mohamed asked for the revised paper and thesis to be
+checked against the review once more. Looking each request up in the built PDF found eleven
+places where the paper did less than the response claimed, and four places in the thesis that
+still carried an over-claim the paper had lost. All fixed (F55); a figure, a simulation of the
+stream-signing baselines (follow-up F3) and one more source were added (F56, F57). The top entry
+of `LOGBOOK.md` is that pass.
 
 **What is waiting, in the order it should be done:**
 
 1. **Mohamed's decisions** — nothing below can be submitted without them. The list is in
    `CLAUDE.md` ("Decisions PENDING") and `OPEN_ITEMS.md` G1–G5: the wording of the name, the
    paper's title, venue and page target, whether the analysis of the review may be committed here,
-   and one chain link per frame on 802.11.
+   and one chain link per frame on 802.11. **Each now has its options and a recommendation** in
+   §7.6 of the private audit (`~/authbc_package/docs/SUPERVISOR_REVIEW_AUDIT_2026-10.md`), with
+   the bench work, the merge into `main` and the things the agent can do unattended.
 2. **Send the response to the supervisor.** It is written, point by point, at
    `~/authbc_package/docs/SUPERVISOR_RESPONSE_2026-10.md` — outside this repository on purpose
    (R18). The audit it is built from is beside it.
 3. **The one experiment that would change what the paper can claim: contention on real radios**
    (`OPEN_ITEMS` G4). Two Pi 4 and a Pi 3B+ make three stations on 5 GHz. Plan it, write the
    prediction, commit it data-free, then run. Every capacity in the paper is simulated.
-4. **Cheap and worth doing:** time the lean codec on the Pi (G9) so the energy table covers the
-   design that is reported; re-meter the one energy row that is not reportable (G11); crypto
-   timing on the Pi 3B+ (G15).
+4. **Cheap and worth doing, in one bench session:** time the lean codec on the Pi (G9) so the
+   energy table covers the design that is reported; re-meter the one energy row that is not
+   reportable (G11); crypto timing on the Pi 3B+ (G15); Ed25519 batch verification (G19).
+   **Needs no hardware:** PX4 software-in-the-loop for records at 50 Hz and the real stream's
+   timing (G7, G12).
 5. **Open questions about the simulator** (G6): why two traffic sources differ by 0.003 in mean
    delivery, and why a rate offset leaves more spread than predicted. Neither touches a reported
    number.
@@ -84,7 +94,7 @@ cd fanet-authbc && git checkout p8-audit-and-corrections
 make setup && make all          # green == you have reproduced the deterministic layer
 ```
 
-`make all` = lint + mypy + 1829 fast tests + the 34-test frozen gate. NS-3 and the Pi rig are
+`make all` = lint + mypy + 1872 fast tests + the 35-test frozen gate. NS-3 and the Pi rig are
 optional (`docs/05_REPRODUCTION_GUIDE.md`). ⚠️ A fresh clone has **no NS-3 tree** — it is gitignored
 by design. Fetch it from the **GitLab** archive; `nsnam.org/releases/...` returns an HTML error page.
 
@@ -201,7 +211,7 @@ audit spent its time removing.
 | # | work | why | effort |
 |---|---|---|---|
 | ~~6~~ | ~~PQC extension section~~ | **DONE** — Limitations §, backed by `results/raw/pqc_projection.csv` | — |
-| 7 | References **35** rendered in the revised paper (58 in the shared bibliography; **46** before the October rewrite) → 45–60 | 29→39 done from held+read sources; the rest needs sourcing **and reading** | 1 wk |
+| 7 | References **35** rendered in the revised paper (59 in the shared bibliography; **46** before the October rewrite) → 45–60 | 29→39 done from held+read sources; the rest needs sourcing **and reading** | 1 wk |
 | ~~S9~~ | ~~Re-state or drop the pre-registration claim~~ | **DONE (F40)** — withdrawn, not reconstructed | — |
 
 ### Optional

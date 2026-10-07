@@ -146,6 +146,15 @@ comparison in this project is at equal *frame* loss and carries this qualificati
 first format then costs 74.96 B per record instead of 71.99 (−56.98 % instead of −58.68 %); the
 lean format costs 43.25 (−70.33 %).
 
+**Where the chain link sits decides the floor** (`frame_components.csv`, the two `byte model`
+frame rows of the first format; drawn in `fig_bytes_vs_batch.png` by `analysis/figures_frames.py`).
+With a link in every record, a record of the first format cannot cost less than its delta record,
+44 B, at any batch: at b = 12 it still costs **54.32 B**. Moving that link to the frame saves
+32·(1 − 1/b) B per record — 24 B at b = 4, which gives **50.96 B** — and the lean header and
+record coding take the remaining 7.71 B, to 43.25 B. So of the 31.71 B between the two designs at
+b = 4, three quarters is the placement of the link. ⚠️ The two first-format curves are sums of
+measured parts; only the lean curve is emitted frames.
+
 ## T4 — Scheme selection: Ed25519 self-batch vs BLS cross-signer aggregation
 **Own records (self-batch).** One ordinary signature covers b own records, so for
 byte-cost Ed25519 and BLS are near-equivalent (64 vs 48 B amortized over b). Ed25519's
@@ -572,31 +581,36 @@ frames of 146–565 B, 5–50 frames/s, 32–308 nodes, in ns-3. The residuals a
 rate (+3.6 % at 50 /s to −2.4 % at 5 /s) — do not extrapolate. **The line is for interpolating
 and for understanding; a quoted capacity is always a simulated value.**
 
-### 6f. Where the classical stream-signing schemes stand (2026-10-06, E17) — MODEL ONLY
+### 6f. Where the classical stream-signing schemes stand (2026-10-06, E17) — sizes MODELLED, capacity SIMULATED (F3, 2026-10-07)
 
 Amortising one signature over many packets is a classical problem, and the review asked where
 this work stands against it. `models/stream_auth.py` works each scheme's per-packet cost from
 the paper that defined it; `results/raw/stream_baselines.csv` (`make exp-frames`) places each at
 the adopted point as **the lean one-record frame with that authenticator in place of the
-signature** — same header, same chain link, same record. ⚠️ None is implemented or simulated;
+signature** — same header, same chain link, same record. ⚠️ None is implemented;
 digest and signature sizes are this project's (SHA-256 32 B, Ed25519 64 B), not the papers'
-(MD5, SHA-1, RSA, 80-bit truncations); capacity is the saturation bound N_sat of §6a.
+(MD5, SHA-1, RSA, 80-bit truncations). Two capacities are given: the saturation bound N_sat of
+§6a, and **N_max from the direct ns-3 search of §6e on a frame of that size at that rate**
+(five more cells; their crossings were predicted with the airtime line and committed before
+the runs — `docs/NMAX_DIRECT_EXPECTATIONS.md`, follow-up F3; all five held). ⚠️ For a scheme
+whose packets do not verify alone, N_max counts frames *delivered* and is an upper bound on
+records *verified*.
 
-| scheme | authenticator per packet | frames/s per node | B/record | N_sat | verifies alone | non-repudiation |
-|---|---|---|---|---|---|---|
-| MAVLink 2 signing | 1 + 6 + 6 = **13 B** | 50 | 93.8 | **23** | yes | no — any holder of the shared key can sign |
-| TESLA (Perrig et al. 2000, prototype) | MAC 10 + key 10 + index 4 = **24 B** | 50 | 105.8 | 22 | no — after the key is disclosed | no — the MAC key is disclosed |
-| Gennaro–Rohatgi 1997 | digest of the next packet, **32 B** | 50 | 113.8 | 21 | no — needs every earlier packet | yes |
-| EMSS (two digests, signature packet per 100) | **64 B** (+128 B per 100) | 50.5 | 147.3 | 20 | no — after the next signature packet | yes |
-| Wong–Lam tree, block of 4 | 64 + 2·32 + 1 = **129 B** | 50 | 210.8 | 17 | yes | yes |
-| a signature on every record | **64 B** | 50 | 145.8 | 20 | yes | yes |
-| **this design**, b = 4 | 64 B per frame = 16 B/record | **12.5** | **43.25** | **52** | yes (per frame) | yes |
+| scheme | authenticator per packet | frames/s per node | B/record | N_sat | N_max [95 %] | verifies alone | non-repudiation |
+|---|---|---|---|---|---|---|---|
+| MAVLink 2 signing | 1 + 6 + 6 = **13 B** | 50 | 93.8 | **23** | **42** [41, 42] | yes | no — any holder of the shared key can sign |
+| TESLA (Perrig et al. 2000, prototype) | MAC 10 + key 10 + index 4 = **24 B** | 50 | 105.8 | 22 | 40 [40, 40] ⚠️ upper bound | no — after the key is disclosed | no — the MAC key is disclosed |
+| Gennaro–Rohatgi 1997 | digest of the next packet, **32 B** | 50 | 113.8 | 21 | 39 [39, 39] ⚠️ upper bound | no — needs every earlier packet | yes |
+| EMSS (two digests, signature packet per 100) | **64 B** (+128 B per 100) | 50.5 | 147.3 | 20 | 34 [34, 34] ⚠️ upper bound | no — after the next signature packet | yes |
+| Wong–Lam tree, block of 4 | 64 + 2·32 + 1 = **129 B** | 50 | 210.8 | 17 | 28 [28, 29] | yes | yes |
+| a signature on every record | **64 B** | 50 | 145.8 | 20 | 35 [35, 35] | yes | yes |
+| **this design**, b = 4 | 64 B per frame = 16 B/record | **12.5** | **43.25** | **52** | **124** [124, 125] | yes (per frame) | yes |
 
 **What the table shows.** Every one of these schemes spreads *one authenticator across packets*
 and still sends **a frame per record**. On a contended channel a frame costs 173 µs before its
 first payload byte (§6c), so the authenticator's size hardly matters: replacing a 64 B signature
-by a 13 B tag — giving up non-repudiation — moves N_sat from 20 to **23**. Putting four records in a
-frame moves it to **52**. The stream-signing literature amortises the signing *cost*; the cost
+by a 13 B tag — giving up non-repudiation — moves N_sat from 20 to **23** and the simulated N_max
+from 35 to **42**. Putting four records in a frame moves them to **52** and **124**. The stream-signing literature amortises the signing *cost*; the cost
 that binds here is the *frame*, and only batching divides it.
 
 **What it does not show.** (i) Tree chaining is the one classical scheme that keeps both
