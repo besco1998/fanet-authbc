@@ -1,7 +1,9 @@
 # Submission checklist — `main.tex`
 
 *Venue-agnostic. Everything that does not depend on the venue is done; the rest is listed with
-what changes per venue. Written 2026-08-08.*
+what changes per venue. Written 2026-08-08; **rewritten in part 2026-10-06** after the paper was
+revised in answer to an external review — the sections marked ⚠️ SUPERSEDED describe the paper as
+it was and are kept only so the change is visible.*
 
 ---
 
@@ -29,7 +31,32 @@ either citation until the PDFs are in the repository.
 
 ---
 
-## DONE — venue-independent
+## ⚠️ NEW BLOCKERS since the 2026-10 revision — Mohamed's decisions
+
+| # | item | what is needed |
+|---|---|---|
+| 6 | **Title** | *"AUTHBC: Feasibility Boundaries for Authenticated UAV Telemetry — An Exclusion Bound and a Capacity Envelope"*: the August title less "Hardware Validation". A design-first alternative is recorded in `docs/DECISIONS.md` if Mohamed prefers it. |
+| 7 | **What "AUTHBC" stands for** | The paper defines it once as "authenticated telemetry for a blockchain-style, hash-chained ledger". The wording is the agent's. |
+| 8 | **Venue and page target** | The paper builds to 8–9 pages in the conference class. |
+| 9 | **One chain link per frame on 802.11** | The lean format extends to 802.11 what was decided for LoRa only (`docs/OPEN_ITEMS.md` G5). |
+| 10 | **The supervisor's sign-off on the revision** | The point-by-point response is kept outside this repository until Mohamed decides where it lives. |
+
+## DONE in the 2026-10 revision
+
+- [x] **The design is built**: a frame format with a sender and a receiver; every lean size in
+      the paper is the length of an emitted frame
+- [x] **No typed results**: every number is a macro generated from `results/`; a test fails if
+      one is typed, stale or unused
+- [x] **Every bibliography entry compared with its registry record** by a script
+      (`make verify-citations`); two wrong author lists corrected
+- [x] **Threat model, protocol description, field-by-field byte table, tamper census**
+- [x] **Related work** on per-message authentication, stream signing, aggregate signatures and
+      hash-linked records, with the stream-signing schemes placed in a table
+- [x] **Confidence intervals on every simulated capacity**, from a direct search per configuration
+- [x] **Limitations section** naming what is simulated, modelled or synthetic
+- [x] Declarations: data and code availability, competing interests, use of generative AI
+
+## DONE — venue-independent (as of 2026-08; ⚠️ SUPERSEDED where it quotes results)
 
 - [x] **Data and Code Availability** statement, naming what the gate does re-derive (16 artifacts,
       byte-identically) and what it cannot (NS-3, hardware rig) rather than claiming "all results"
@@ -55,15 +82,23 @@ either citation until the PDFs are in the repository.
 | | Ad Hoc Networks (Elsevier) | IEEE IoT-J | MDPI Drones |
 |---|---|---|---|
 | template | `elsarticle`, single column, line numbers | `IEEEtran` **`journal`** (currently `conference` — must change) | MDPI LaTeX template |
-| page cost at 15 pp | **none** (subscription) | **$1,225** mandatory overlength ($175 × 7 pp over 8) | ~2,600 CHF APC |
+| page cost | **none** (subscription) | overlength charge per page over 8 — ⚠️ the paper is now 8–9 pp in the conference class and will be longer in the journal class; re-check the venue's current fee | APC — re-check the current fee |
 | first decision | ~8 weeks | 6.9 weeks | ~2–3 weeks |
 | extras | **Highlights** (3–5 bullets, ≤85 chars each) + graphical abstract optional | none | graphical abstract |
 | CRediT | required | not required | required |
 
 ⚠️ **`\documentclass[conference]{IEEEtran}` is wrong for any journal submission.** It is fine for
-the current draft, but a 15-page paper must not go to a journal in the conference class.
+the current draft; switch the class before a journal submission and re-check the page count.
 
-### Draft Highlights (for Elsevier, if chosen)
+### Draft Highlights (for Elsevier, if chosen) — rewritten 2026-10-06
+
+* One signature and one chain link cover four records; every frame verifies alone
+* Built as a frame format with sender and receiver; sizes are emitted frames
+* A frame that depends on its predecessor misses its verifiability target
+* Capacity found by direct simulation per configuration, with bootstrap intervals
+* Eight of twelve EU863-870 LoRaWAN data rates cannot carry one signed, chained frame
+
+### ⚠️ SUPERSEDED highlights (the paper as it was in 2026-08)
 
 * Signature bytes exclude three of seven EU868 rates outright, at any encoding, batch or header
 * That exclusion is arithmetic, so it cannot move as models or hardware improve
@@ -74,7 +109,27 @@ the current draft, but a 15-page paper must not go to a journal in the conferenc
 
 ---
 
-## Suggested cover-letter argument
+## Suggested cover-letter argument — rewritten 2026-10-06
+
+The reviewer question is still *"where is your new scheme?"*. The answer is two boundaries, and
+the object they are boundaries of:
+
+> We introduce no new primitive. We change the unit that is authenticated — from the record to
+> the frame — and build it: a frame format, a sender and a receiver in which one signature and one
+> chain link cover several records and every frame still decodes and verifies alone. What such a
+> frame must carry decides where it can be sent at all, and we give that boundary on a real band
+> with its conditions. Where it can be sent, we show what it buys in neighbours. The classical
+> stream-signing schemes amortise the cost of *signing*; on a contended channel the cost that
+> binds is the *frame*.
+
+Worth saying plainly, because it is unusual and checkable from the public history: an earlier
+version of this work reported the design as a sum of separately measured sizes. Building it
+changed three results — the design as first specified missed its own verifiability target, the
+low-rate exclusion was restated over the full set of data rates, and every capacity was
+re-measured by direct simulation after a pre-registered prediction failed. Those corrections are
+recorded in the repository and in a companion methods paper, not removed.
+
+## ⚠️ SUPERSEDED cover-letter argument (the paper as it was in 2026-08)
 
 The reviewer question this paper must survive is *"where is your new scheme?"* — because every
 adjacent recent paper proposes one. The answer, and it should be the cover letter's first

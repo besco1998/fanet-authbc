@@ -10,11 +10,14 @@
 \graphicspath{{../results/figures/}}
 \newcommand{\us}{\,\ensuremath{\mu}s}
 \newcommand{\ba}{\ensuremath{g_a}}
+% Every measured or derived number in this paper is a macro defined in numbers.tex, which
+% analysis/paper_numbers.py writes from the artifacts in results/raw/. Do not type results here.
+\input{numbers}
 
 \begin{document}
 
 \title{AUTHBC: Feasibility Boundaries for Authenticated UAV Telemetry ---
-An Exclusion Bound, a Capacity Envelope, and Hardware Validation}
+An Exclusion Bound and a Capacity Envelope}
 
 % !! SUBMISSION BLOCKER: affiliation, email and ORCID are placeholders and must be
 % completed by Mohamed before this goes anywhere. See paper/SUBMISSION_CHECKLIST.md.
@@ -26,1163 +29,796 @@ mohamed.besco1998@gmail.com}}
 \maketitle
 
 \begin{abstract}
-Flying ad-hoc networks stream telemetry records so small that a cryptographic signature
-(64--96\,B) rivals or exceeds the payload (45--190\,B), so per-record signing is expensive on a
-shared, lossy channel. The operational question is not how many bytes a scheme saves but
-\emph{which configurations can run at all}. We search four design choices jointly---record
-\emph{encoding}, authentication \emph{placement}, signature \emph{scheme} and \emph{batch}
-size---against a byte model, an NS-3-validated 802.11 broadcast model, and energy measured on
-Raspberry~Pi~4 hardware.
-
-Three results follow, ordered by durability. \textbf{An exclusion:} a link whose payload cannot
-hold one header, one signature and one record carries no per-frame-verifiable telemetry at
-\emph{any} encoding or batch, and fragmentation is no escape, since a unit spanning $n$ frames
-verifies with probability $(1-p)^n$. On EU868 this removes \emph{three} of seven data rates
-unconditionally---at DR0--DR2 the $64$\,B signature alone overflows a $51$\,B payload. A fourth,
-DR3, misses by six bytes against our measured $H_f{=}44$\,B and is recovered by an integer-keyed
-header, so we separate what is arithmetic from what is merely our engineering. \textbf{A capacity
-envelope,} the result that genuinely requires the coupling: the co-design sustains $1.9\times$--$3.2\times$
-the neighbourhood of an inline baseline, reported across the saturation and verifiability
-thresholds rather than at whichever flatters it. \textbf{Bytes:} $58.7\%$ fewer on air
-($72.0$\,B/record) at a 3GPP TS~22.125-compliant point, against a criterion pre-registered two days
-before the result---a criterion that reduces to $1-1/b$, which we report rather than present as a
-test the design could have failed.
-
-A factorial ablation narrows the claim rather than inflating it: only placement and batching
-interact, by exactly $g_a(1{-}1/b)$; encoding is additive and the scheme axis byte-neutral here.
-AUTHBC introduces no new primitive. Its contribution is a reproducible co-design, its quantified
-trade-offs, and the boundary beyond which no choice of cryptography helps.
+A UAV that broadcasts signed, hash-chained telemetry spends more bytes on authentication than on
+data: a 64\,B signature and a 32\,B chain link accompany a record of about \keyLean\,B. AUTHBC
+makes the frame the unit of design: a format, a sender and a receiver in which one signature and
+one chain link cover $b$ records and every frame decodes and verifies alone. Batch size, encoding
+and signature scheme are chosen together under freshness, verifiability, channel capacity and
+receiver CPU. Two boundaries follow. Where the frame does not fit: when every frame must verify
+alone, \exclCount{} of the twelve EU863-870 LoRaWAN data rates cannot carry one. Where it does: at
+50~records/s and a 100\,ms deadline the design sends \bprLeanDesign\,B per record against
+\bprLeanBase\,B for per-record signing, and in ns-3 one 802.11a collision domain delivers 95\% of
+frames from \nmaxLeanDesign{} neighbours instead of \nmaxLeanBase, found by direct search with a
+bootstrap interval. Batching and header design decide what can run; among 64\,B elliptic-curve
+signatures the scheme does not. Sender energy is measured on a Raspberry~Pi~4; contention is
+simulated, and record sizes come from a synthetic generator checked against twelve public flight
+logs.
 \end{abstract}
 
 \begin{IEEEkeywords}
-FANET, UAV telemetry, authentication overhead, feasibility analysis, LoRaWAN, ns-3, signature aggregation, hash-chained ledger, CBOR, IEEE 802.11 DCF, reproducibility.
+UAV telemetry, broadcast authentication, digital signatures, hash chain, batching, IEEE 802.11 DCF,
+LoRaWAN, ns-3.
 \end{IEEEkeywords}
 
 \section{Introduction}
-A fleet of UAVs streams telemetry---position, velocity, altitude, battery, mode---at tens of
-records per second per node over 802.11 into a blockchain-grade, hash-chained, signed ledger. We
-adopt $\Lambda = 50$\,rec/s with a $D_{\max} = 100$\,ms freshness bound as the primary operating
-point: it is PX4's \texttt{MAVLINK\_MODE\_ONBOARD} companion stream rate and it satisfies 3GPP
-TS~22.125~\cite{3gpp_ts22125}, and we report the surrounding region rather than defend a point
-(Sec.~\ref{sec:results}). Each record must be \emph{authenticated} (a signature so a verifier trusts its origin) and
-\emph{chained} (a hash of the previous record, so the log is tamper-evident).
+Unmanned aircraft in a swarm tell each other where they are many times a second. If those
+reports are to be evidence afterwards --- of who was where, and of what each vehicle claimed ---
+each one must be attributable to its sender and the sequence must be tamper-evident. The textbook
+construction signs every record and links it to its predecessor by a hash. The textbook cost is
+that the protection is larger than the thing protected: an Ed25519 or ECDSA signature is 64\,B and
+a SHA-256 link is 32\,B, while a compactly encoded position, velocity and status record is about
+\keyLean\,B. On a shared radio channel those bytes are airtime, and airtime decides how many
+neighbours can be heard.
 
-The difficulty is scale mismatch. Telemetry records are tens of bytes; an Ed25519/ECDSA signature is
-64\,B, a SHA-256 chain hash is 32\,B, and a BLS signature is 96\,B. Signing every record inline makes
-authentication overhead rival or exceed the payload, and on a shared, contended, lossy channel that
-wasted airtime directly costs goodput, energy, and freshness. How much overhead one actually pays
-depends on four choices: the record \emph{encoding} $e$ (setting the size $s$), the
-authentication \emph{placement} (inline, self-batch, relay-aggregate, or block-level), the signature
-\emph{scheme} $\sigma$, and the \emph{batch} size $b$. Our thesis is that tuning any one in isolation
-leaves saving on the table, and that the coupling is concentrated in one specific pair: a factorial
-ablation (Sec.~\ref{sec:results}) finds placement and batching interact exactly---placement is worth
-nothing without batching---while encoding contributes additively and the scheme axis is byte-neutral
-here. Calling all four ``inseparable'' would overstate what the model supports. We make this precise (Sec.~\ref{sec:theory}),
-implement it (Sec.~\ref{sec:impl}), and test the falsifiable headline of Sec.~\ref{sec:results}.
+Practice today signs per message. MAVLink~2 appends a 13\,B symmetric tag to each
+message~\cite{mavlink2signing}; vehicular standards attach an ECDSA signature, and periodically a
+certificate, to each one~\cite{etsi_ts103097}. The obvious alternative is to let several records
+share one frame, one signature and one chain link. Batching is not new, and its price is known in
+kind: records wait for the frame to fill, and a lost frame loses all of them. What a designer
+lacks is the accounting. What must a frame carry so that a receiver can verify it without any
+other frame? On which links does such a frame not fit, whatever the batch? Where it fits, which
+constraint caps the batch, and what do the saved bytes buy on a contended channel, in neighbours
+and not in percent?
 
-\textbf{Contributions.}
+We answer these for one concrete system. AUTHBC --- authenticated telemetry for a
+blockchain-style, hash-chained ledger --- is a frame format, a sender and a receiver. We built it,
+measured it, and searched its parameters. Our contributions are:
+
 \begin{itemize}
-\item \textbf{An exclusion bound instantiated on a real band, and separated by durability.}
-Applying the payload-exclusion argument~\cite{gundogan2021firmware} with a \emph{measured}
-$H_f{=}44$\,B partitions EU868. \emph{Three} rates---DR0--DR2---fail on the signature alone and are
-excluded unconditionally: no header, encoding, batch or chain design reaches them. DR3 fails on the
-encoding by six bytes and is therefore contingent on our own framing; we quantify that contingency
-rather than leave it implicit, showing that an integer-keyed profile takes $H_f$ from $44$ to
-$22$\,B and makes DR3 feasible (Sec.~\ref{sec:lowrate}). The bound is not ours; the instantiation,
-the measured constant, the fragmentation corollary and the separation of the arithmetic half from
-the engineering half are.
-\item \textbf{A feasibility envelope, not a byte ratio.} Coupling the byte model to an
-NS-3-validated broadcast model yields the largest neighbourhood each configuration can sustain
-($1.9$--$3.2\times$ the inline baseline), reported at two thresholds because they answer different
-questions (Sec.~\ref{sec:results}).
-\item \textbf{An ablation that narrows our own claim.} Only placement$\times$batching interact, by
-exactly $g_a(1{-}1/b)$; encoding is additive and scheme is byte-neutral here. We report this
-because it contradicts the four-axis framing we began with.
-\item \textbf{Reproducibility as a result, not a promise.} A staleness gate re-derives all
-\emph{16} model-derived artifacts byte-identically on every commit; the remainder require NS-3 or
-the hardware rig and carry provenance headers instead, and we say which is which rather than
-claiming ``all results''. The success criterion was committed to version control two days before
-the result existed, and the corrections this discipline forced---including retractions---are
-recorded rather than quietly absorbed (Sec.~\ref{sec:repro}).
+\item \textbf{A frame as one object.} Every size we report is the length of a frame that was
+emitted, decoded and verified (Sec.~\ref{sec:frame}). We give the field-level byte budget of two
+formats: a first, text-keyed one and a lean one that is \leanVsFirstPct\% smaller.
+\item \textbf{An exclusion with its scope.} On LoRaWAN, \exclCount{} of twelve EU863-870 data
+rates cannot carry one signed, chained frame; we state the four conditions under which that
+holds and what each relaxation buys (Sec.~\ref{sec:lowrate}).
+\item \textbf{A ladder that separates causes.} Sharing a frame, sharing a signature and delta
+coding are separate steps, and we report bytes, capacity, receiver CPU and energy for each
+(Sec.~\ref{sec:results}). Capacity is found by simulating each configuration at its own frame size
+and rate, with \seeds{} seeds and a bootstrap interval, not by applying one load ceiling to all.
+\item \textbf{Constraints that bind in an unexpected order.} Freshness, not the MTU, caps the
+batch at four records. A delta-coded frame that depends on its predecessor misses the
+verifiability target at its own loss budget, so every frame carries one self-contained record.
+One CPU core verifies \ncpuBatch{} neighbours' frames with Ed25519 and \ncpuBls{} with BLS.
 \end{itemize}
 
-\section{Related Work and Positioning}
-\emph{Citation integrity.} Every reference in this section was confirmed against the Crossref record
-for its DOI, and no figure is quoted from a source we have not read. Where a source establishes prior
-art for something we might otherwise have claimed, that is said explicitly rather than left to the
-reader.
+The message is short: batching and header design decide what can run, and among standard 64\,B
+elliptic-curve signatures the scheme does not change it. AUTHBC introduces no new cryptographic
+primitive. What is measured, what is simulated and what is only modelled is stated with each
+result and collected in Sec.~\ref{sec:limits}.
 
-\textbf{(a) Signatures for constrained authentication.} ECDSA~\cite{fips186} yields 64\,B P-256
-signatures at 128-bit security but is randomness-sensitive; Ed25519~\cite{ed25519,rfc8032} uses a
-twisted-Edwards curve with deterministic nonces for fast, misuse-resistant, batchable verification;
-BLS~\cite{bls2001} gives the shortest signatures via pairings, and~\cite{bgls2003} aggregates $n$
-signatures into one at the cost of expensive pairing verification. AUTHBC introduces \emph{no new
-primitive}; it quantifies \emph{where and when} each scheme wins once placement and batching are fixed
-(Sec.~\ref{sec:t4}), finding Ed25519 dominant for self-batch and BLS worthwhile only for cross-signer
-relay traffic.
+\section{Background and Related Work}\label{sec:related}
 
-Independent work on UAV swarms adopts exactly the design we treat as the naive baseline:
-Rotta and Mykytyn attach ``a HMAC-256 signature with a timestamp'' to \emph{each} broadcast
-telemetry message, and observe that ``telemetry messages in the MAVLink protocol are much smaller
-than 256 bytes''~\cite{rotta2024telemetrybroadcast}---corroborating both our premise and our
-baseline from outside this work. Their construction is a symmetric MAC under a group key, so it
-provides integrity and group authenticity but \emph{not} non-repudiation, and therefore cannot
-underwrite a tamper-evident ledger attributable to a specific UAV. That is a different trust model,
-not a cheaper solution to ours.
+\textbf{Per-message authentication.} MAVLink~2 signing appends a link identifier, a 48-bit
+timestamp and a 48-bit truncated SHA-256 tag computed with a shared secret~\cite{mavlink2signing}.
+It is cheap and it authenticates a \emph{link}: any holder of the key can produce any message, so
+a record cannot be attributed to one vehicle afterwards. Rotta and Mykytyn likewise attach an
+HMAC and a timestamp to each broadcast telemetry message of a swarm, noting how small such
+messages are~\cite{rotta2024telemetrybroadcast}. Vehicular broadcast uses public-key
+signatures: ECDSA over each message, with the signer's certificate in some messages and an
+eight-octet digest of it in the others~\cite{etsi_ts103097,ndss2024pqv2v}. That is the trust model
+we adopt, and the per-message cost we start from.
 
-\textbf{(b) Batch/aggregate verification in vehicular/IoT networks.} Zhang \emph{et
-al.}~\cite{zhang2008batch} let a roadside unit ``verify multiple received signatures at the same
-time'', motivated by exactly the pressure we face from the other side: a hard deadline, in their case
-DSRC's 300\,ms, within which sequential verification does not scale. Their batching is
-\emph{receiver-side} and buys verification time; ours is \emph{sender-side} and buys airtime, and
-the two are complementary rather than competing. AUTHBC generalizes from receiver batching to
-authentication \emph{placement}, co-designs it with encoding and scheme, and adds the
-loss-robustness frontier that pure aggregation ignores.
+\textbf{Signing streams.} Amortising one signature over many packets is a classical problem.
+Gennaro and Rohatgi sign the first packet and chain the rest by hashes~\cite{gennaro1997streams};
+one lost packet breaks the chain. Wong and Lam sign a hash tree over a block and send in every
+packet the hashes needed to reach the root~\cite{wong1999flows}, so each packet verifies alone;
+the signing cost is amortised, the bytes are not. EMSS tolerates loss by carrying several hashes
+per packet and a periodic signature packet, and TESLA replaces the signature by a MAC whose key
+is disclosed later~\cite{perrig2000emss,perrig2002tesla}; TBRD applies TESLA to UAS Remote ID and
+reports about half the overhead of signatures~\cite{veara2025tbrd}. These schemes spread
+\emph{one authenticator across packets} and so make packets depend on each other or on a later
+one. We do the opposite: we put \emph{several records in one packet}, which is possible only
+because a telemetry record is a small fraction of a frame. Each frame then stays self-verifying
+and the cost moves to latency, at the sender. TESLA delays verification at the receiver instead,
+and a disclosed MAC key gives no non-repudiation, which a ledger needs.
+Section~\ref{sec:clas} places these schemes at our operating point.
 
-\textbf{(c) Blockchain/hash-chained ledgers for UAV/IoT provenance.} Nakamoto's hash
-chain~\cite{nakamoto2008} makes a log tamper-evident. UAV swarm communication architectures and
-their routing assumptions are reviewed in~\cite{chen2020uavswarm}, and recent NS-3 swarm studies
-combine a hybrid MAC with per-layer security~\cite{bhatt2025uavswarmmac}; UAV-blockchain systems, surveyed
-in~\cite{mehta2020blockchainuav},
-place telemetry or attestations on such a chain, gaining integrity at per-record overhead cost. AUTHBC
-targets exactly that substrate byte/energy cost and is agnostic to the consensus layer.
+\textbf{Aggregate and batch verification.} BLS signatures aggregate~\cite{bls2001,bgls2003}, and
+certificateless aggregate schemes (CLAS) for vehicular networks build on such
+constructions~\cite{li2025clas}. Zhang \emph{et al.} verify many signatures at once at a
+roadside unit~\cite{zhang2008batch}. Both reduce the verifier's \emph{work}; each message still
+carries its own signature material, so neither reduces what is sent. Section~\ref{sec:clas}
+compares bytes.
 
-\textbf{(d) Compact serialization and delta coding.} CBOR~\cite{rfc8949} and
-MessagePack~\cite{msgpack} give compact binary encodings; delta coding of telemetry time series is
-established practice, most prominently in Gorilla~\cite{pelkonen2015gorilla}, which stores
-delta-of-delta timestamps and XOR-folded values for a $10\times$ reduction. Our variant differs in
-one respect that the link forces: Gorilla is a database and can chain deltas indefinitely, whereas a
-lossy broadcast link makes an unbounded chain fragile, so we re-anchor on a keyframe every $K$
-records and pay the resulting size for loss independence. AUTHBC measures these head-to-head. A smaller payload raises the auth
-\emph{fraction}, so batching returns a larger \emph{percentage} of the frame; but the absolute saving
-is $(H_f{+}g_a)(1{-}1/b)$, identical for every encoding, so that is a ratio-scale effect and not an
-interaction.
+\textbf{Hash-linked records.} Linking each record to the hash of its predecessor to make a
+sequence tamper-evident is due to Haber and Stornetta~\cite{haber1991timestamp} and is the chain
+in every blockchain~\cite{nakamoto2008}; UAV uses are surveyed in~\cite{mehta2020blockchainuav}.
+We take the chain as given and ask what it costs on air.
 
-\textbf{(e) Analytical 802.11 modelling.} Bianchi~\cite{bianchi2000} models the DCF as a per-station
-Markov chain whose fixed point yields closed-form saturation throughput. AUTHBC uses it as the airtime
-cost model inside the optimizer and validates it against NS-3~\cite{nsnam}.
+\textbf{Small payloads.} That a signature leaves little room in a small frame is known:
+G{\"u}ndo{\u{g}}an \emph{et al.} find 9\,B of application data left beside an Ed25519 signature in
+an 802.15.4 frame~\cite{gundogan2021firmware}, and post-quantum signatures do not fit one 5G
+broadcast block~\cite{arxiv2510pqsib1}. Section~\ref{sec:lowrate} applies the same arithmetic to
+LoRaWAN with the chain link included. Compact encodings~\cite{rfc8949} and delta coding of time
+series~\cite{pelkonen2015gorilla} are established; a lossy link limits how far a delta chain may
+run, which Sec.~\ref{sec:loss} quantifies.
 
-\textbf{(f) Broadcast authentication for UAS, and why it is not a baseline.} The closest published
-system is TBRD~\cite{veara2025tbrd}, a TESLA-based~\cite{perrig2002tesla} authenticator for UAS
-Remote ID broadcast, reporting ${\approx}50\%$ lower authentication overhead than digital signatures.
-It is \emph{not} a comparator for this work, and the reason is instructive rather than incidental:
-TESLA authenticates with a MAC and discloses the key later, so it is symmetric and provides \emph{no
-non-repudiation}. A provenance ledger needs a record to remain attributable to its originator after
-the fact, which a disclosed key cannot deliver. The two systems are therefore not substitutes, and a
-byte-for-byte overhead comparison between them would be misleading.
+\textbf{Channel models.} Bianchi's model gives the saturation throughput of the 802.11
+DCF~\cite{bianchi2000}. Broadcast frames are not acknowledged and the contention window never
+doubles, which changes the fixed point; Ma and Chen give the broadcast
+model~\cite{machen2007,machen2008}, which we use and validate against ns-3~\cite{nsnam}. For
+LoRa, Haxhibeqiri \emph{et al.} model single-gateway scalability~\cite{haxhibeqiri2017lora} and
+Zirak \emph{et al.} report air-to-air delivery against range on hardware~\cite{zirak2021swarm}.
 
-What makes the pairing worth stating is that both buy authentication bytes with the \emph{same}
-currency --- latency --- but spend it at opposite ends of the link (Table~\ref{tab:external}).
-
-\begin{table*}[t]\centering\footnotesize
-\caption{Two ways to buy authentication bytes with latency. Not competing designs: the last row is a
-hard requirement for a ledger, and it is what rules TESLA out here.}
-\label{tab:external}
-\begin{tabular}{lll}
-\toprule
- & TESLA / TBRD~\cite{veara2025tbrd} & AUTHBC (this work) \\
-\midrule
-auth bytes/msg & ${\approx}50\%$ of a signature & $(H_f{+}\ba)/b = 27$\,B at $b{=}4$ \\
-what is delayed & \emph{verification} (key disclosure) & \emph{transmission} (batch fill) \\
-where the delay sits & at the receiver & at the sender \\
-verifiable on arrival & no --- awaits the next interval & yes --- each frame self-verifies \\
-loss of one unit & breaks a whole key interval & loses one frame, $V=1-p$ \\
-non-repudiation & \textbf{no} (symmetric MAC) & \textbf{yes} (signature) \\
-\bottomrule
-\end{tabular}
-\end{table*}
-
-TESLA is preferable where staleness of \emph{data} is intolerable but staleness of \emph{trust} is
-acceptable; the reverse holds for a tamper-evident ledger, where a record that cannot yet be verified
-cannot yet be committed. We claim no superiority over TBRD. What our analysis contributes to that
-comparison is that the byte saving from batching is exactly $1-1/b$ and hence bounded by the
-freshness budget --- a constraint TESLA sidesteps by moving the delay to the receiver, and one that
-any future hybrid would have to confront.
-
-\textbf{Overall.} AUTHBC is a hardware-validated co-design and measurement study, not a new
-construction. Prior work typically fixes three of the four knobs; we search all four jointly under a
-single pre-registered criterion, and report which of them actually interact rather than assuming
-they all do. Where the vehicular literature builds
-\emph{new} aggregate-signature constructions to cut broadcast overhead, we ask a complementary
-question: which combination of \emph{existing, standardised} primitives and system parameters is
-feasible on a given link, and where is no combination feasible at all.
-
-\section{System Model and Theory}\label{sec:theory}
+\section{System and Threat Model}\label{sec:model}
 \input{fig_system}
 
-Fig.~\ref{fig:system} gives the pipeline, the four design axes, and
-the kind of evidence behind each stage.
+\textbf{Network and traffic.} $N$ UAVs share one channel and hear each other: one collision
+domain. Each produces $\Lambda$ telemetry records per second and broadcasts them; there are no
+acknowledgements and no retransmissions. A record holds a millisecond timestamp, latitude,
+longitude and altitude, three velocity components, battery level and flight mode, all integers.
+Our primary operating point is $\Lambda = 50$~records/s with a freshness bound
+$D_{\max} = 100$\,ms: the rate is PX4's companion-computer stream rate~\cite{px4_mavlink_streams}
+and the pair meets the direct UAV-to-UAV broadcast requirements of
+3GPP~\cite{3gpp_ts22125}. A relaxed point, 20~records/s and 250\,ms, is reported for comparison.
 
-A record is integer-only fixed-point (floats break canonical-CBOR determinism) with a 32\,B
-\texttt{prev\_hash} chain link; its encoded size is $s$. A frame carries $b$ records, a header $H_f = 44$\,B
-\emph{measured} from the implemented wire format, and an authentication object $\ba$ (64\,B Ed25519/ECDSA, 96\,B BLS), bounded by the MTU
-$M = 1500$\,B. On-air bytes per record, by placement:
-\begin{align}
-\text{A (inline)} &: s + \ba + H_f/b, \label{eq:A}\\
-\text{B (self-batch)} &: s + (\ba + H_f)/b, \label{eq:B}\\
-\text{D (block, $n$ frames)} &: s + (\ba + n H_f)/b. \label{eq:D}
-\end{align}
+\textbf{Ledger.} Each UAV keeps an append-only chain of its own records,
+$\mathit{prev\_hash}_{i} = \mathrm{SHA\mbox{-}256}(\mathit{rec}_{i-1})$, and stores the verified
+records it hears from others. There is no consensus layer; the subject of this paper is
+authenticated dissemination.
 
-\subsection{T1: overhead dominance}
-For inline authentication the pure-authentication fraction is
-\begin{equation}
-\varphi = \frac{\ba}{s+\ba}.
-\end{equation}
-For $s = 45$--$190$\,B and $\ba=64$\,B, $\varphi = 25$--$59\%$: the smaller the payload, the more the
-signature dominates. T2--T5 quantify what can be done about this, and where it stops.
+\textbf{Adversary.} The adversary controls the radio: it reads, injects, replays, modifies,
+delays and drops frames, and may operate many radios. It holds no honest UAV's private key.
 
-\subsection{T2: batching cure and amplification}
-Self-batch folds $b$ records under one signature, so the per-record auth cost $(\ba+H_f)/b \to 0$.
-Packing to the MTU gives a goodput amplification over single-record framing:
-\begin{equation}
-A = \frac{M}{M - H_f - \ba},
-\end{equation}
-since at the MTU-filling batch $b_{\max}$ the frame $\approx M$ and $b_{\max}s \approx M-H_f-\ba$.
-Inline (A) can \emph{never} amortize its per-record signature (only $H_f/b$ shrinks).
+\textbf{What is protected.} (i)~\emph{Origin and integrity:} a stored record was produced by the
+UAV it names and was not altered, by a public-key signature checked before anything is stored.
+(ii)~\emph{Replay:} sequence numbers are strictly increasing per sender; a repeated frame is
+refused. (iii)~\emph{Equivocation:} two validly signed records for one sequence number are kept
+as a pair, which is transferable evidence because both carry the sender's signature.
+(iv)~\emph{Continuity:} omission or reordering within what a receiver holds is detected through
+the chain.
 
-\textbf{T2a: when does $A$ apply?} (\emph{applied analysis, not a new result} --- the
-diminishing-returns structure below is standard in the packet-aggregation literature.) The derivation assumes the \emph{MTU} caps the batch. Under a
-freshness bound the cap is instead $b=\lfloor\Lambda D_{\max}\rfloor$, which does not depend on $s$;
-then $C(s)=s+(\ba+H_f)/b$ and $dC/ds=1$ \emph{exactly}---compression pays $1\times$, not $A\times$,
-and the residual authentication cost is a floor compression cannot reach. The boundary is
-$s<(M-H_f-\ba)/(\lfloor\Lambda D_{\max}\rfloor+1)$. At $\Lambda{=}20$\,rec/s and
-$D_{\max}{=}250$\,ms this is $232.0$\,B on 802.11, above every encoding studied, so
-\textbf{$A$ is never operative there}; on a low-rate link ($M{=}222$) the MTU binds again and
-$A{=}1.95$ \emph{is} operative. The ``compression pays $\times A$'' leverage is therefore real and
-\emph{exclusive to low-rate links}.
+\textbf{What is not.} Telemetry is sent in clear. Jamming is not resisted: loss appears as the
+robustness measure $V$ below, not as a security property. Replay is refused by sequence number,
+not by time, so a frame that an attacker withholds and delivers later is accepted, authentic and
+in order, however stale; refusing it needs a clock shared with the sender, which we do not assume.
+A UAV with a valid key can sign false data; only inconsistent falsehood is detectable. Key
+distribution, revocation and admission are assumed: receivers hold senders' public keys, and we
+charge the bytes of delivering certificates separately (Sec.~\ref{sec:certs}). Senders are not
+anonymous.
 
-\subsection{T3: loss-robustness frontier}
-Let $p$ be per-frame loss and $V=\Pr[\text{a received record is independently verifiable}]$. Self-batch
-frames self-verify, so $V_B = 1-p$, \emph{independent of $b$}. A block signature spanning
-$n(b)=\lceil (bs+\ba+H_f)/M\rceil$ frames needs all fragments, so $V_D = (1-p)^n$. Whenever $n>1$,
-$V_B = 1-p > V_D = (1-p)^n$: self-batch Pareto-dominates the marginal byte saving of over-aggregation.
+\textbf{Verifiability.} $V$ is the probability that a record a UAV generates is received,
+decoded and verified by a given neighbour. The requirement is $V \geq 1-\epsilon$ with
+$\epsilon = 0.05$.
 
-\subsection{T4: power-independent scheme crossover}\label{sec:t4}
-Per-record energy is $E = P_c\,(\text{CPU time}) + P_r\,(\text{radio time})$. Comparing Ed25519 and
-BLS, which wins depends on the powers \emph{only} through their ratio $\kappa = P_r/P_c$:
-\begin{equation}
-\text{BLS wins} \iff \kappa > \kappa^\ast = \frac{\Delta \text{CPU}}{\Delta \text{RADIO}},
-\end{equation}
-where $\Delta\text{CPU}$ is BLS's extra CPU and $\Delta\text{RADIO}$ its radio-time saving. $\kappa^\ast$
-is the break-even power ratio, obtained without measuring a single watt. Wi-Fi receive power sits below
-CPU-active power, so plausible platforms have $\kappa \lesssim 0.5$.
-
-\subsection{T5: co-design optimum}
-Enumerate $(e,\sigma,\text{placement},b)$ and take the Pareto front over $\{$min bytes, min energy,
-min staleness, max $V\}$ subject to MTU fit, $V \geq 1-\epsilon$, freshness $D(b)\leq D_{\max}$, and
-verify-throughput $t_{\text{verify}}(b)\,\Lambda \leq 1$. The optimum is the smallest deterministic
-encoding under self-batch at the largest \emph{freshness}-feasible batch --- not the largest
-MTU-feasible one. Which ceiling binds is itself a result (T2a): at telemetry rates fill time
-dominates $D(b)$, so $b \lesssim \Lambda D_{\max}$ and the MTU is never reached.
-
-\subsection{The payload-exclusion bound (applied, not new)}\label{sec:t6}
-T1--T5 ask what a saved byte buys. This bound asks the prior question --- whether a link admits
-authenticated telemetry at all. The inequality is not ours: Gündo{\u{g}}an et
-al.~\cite{gundogan2021firmware} compute exactly this residual for 802.15.4/NDN, and the
-post-quantum literature reports NIST signatures as incompatible with 5G SIB1's 372\,B limit. We
-restate it because it delimits our contribution, and because one composition of it appears not to
-have been made explicit (below). A frame that is independently verifiable must carry the header, the
-authentication object and at least one record, so a link of maximum payload $M$ is usable iff
-\begin{equation}
-s_{\max}(M) = M - H_f - \ba \;\geq\; s_{\min}.
-\label{eq:t6}
-\end{equation}
-Fragmenting an oversized signature is no escape: by T3 a unit spanning $n$ frames verifies with
-probability $(1-p)^n$, so $V\geq 1-\epsilon$ forces $n \leq \lfloor\ln(1-\epsilon)/\ln(1-p)\rfloor$,
-which is at most $1$ whenever $\epsilon \leq p$ --- fragmentation is excluded outright. Equation~\eqref{eq:t6} is therefore evaluated at
-$n{=}1$ and is an exclusion, not an inconvenience. Both ingredients are individually known --- the
-residual above, and that a fragmented unit needs every fragment --- but the consequence is worth
-stating: the \emph{sliced-signature} workaround proposed for constrained links is unavailable in
-any regime where the verifiability target is no looser than the loss rate.
-
-Three tiers follow, and each names a different escape route: $M < \ba$ (only a smaller signature
-helps --- no header design, encoding, batching or chaining can), $\ba \leq M < H_f+\ba$ (only a
-leaner header), and $H_f+\ba \leq M < H_f+\ba+s_{\min}$ (the sole regime an encoder can attack, and
-where T2's amplification is operative). Section~\ref{sec:lowrate} applies this to LoRa.
-
-\subsection{Channel and energy models}
-At the 6\,Mb/s OFDM base rate, broadcast airtime is $T_{\text{air}}(L)=T_{\text{phy}}+8(L+\text{MAC})/R
-+\text{DIFS}+\delta$ (fixed part $\approx 100${\us}); unicast adds SIFS and an ACK ($\approx 156${\us}).
-Under contention among $N$ saturated stations, the Bianchi DCF fixed point is
-\begin{align}
-\tau = \frac{2(1-2p_c)}{(1-2p_c)(W+1)+p_c W\left(1-(2p_c)^m\right)}, \\
-p_c = 1-(1-\tau)^{N-1}, \nonumber
-\end{align}
-with $W=16$, $m=6$, solved by damped iteration; saturation throughput $S = P_{tr}P_s\,8L/E[\text{slot}]$.
-Self-batch per-record energy is $E = P_c(t_{\text{enc}}+2t_{\text{hash}}+t_{\text{sign}}/b+
-t_{\text{verify}}/b) + P_r\,T_{\text{air}}(\text{frame})/b$. The hash term is the chain link
-$\mathit{prev\_hash}=H(\text{record})$, charged twice per record because the sender extends the
-chain and the receiver re-verifies it; unlike the signature it does \emph{not} amortize over $b$.
-
-\section{Implementation and Validation}\label{sec:impl}
-Everything reported here is produced by one codebase, from measured inputs, under a fixed
-reproduction procedure. We describe what was built and how each component was checked, because the
-credibility of a feasibility boundary rests entirely on the models that draw it.
-
-\textbf{Encoders and schemes.} Four record encodings (JSON, CBOR, MessagePack, and a delta codec
-with a keyframe every $K{=}16$ records) and three signature schemes (ECDSA-P256, Ed25519, BLS12-381)
-are implemented behind one interface. Records are integer-only fixed point: floating point breaks
-canonical-CBOR determinism, and a non-deterministic encoding cannot be hash-chained. Each scheme is
-checked against published known-answer vectors (RFC~8032, Wycheproof, the Chia BLS suite) before any
-timing is taken.
-
-\textbf{Timing harness.} Crypto and encode timings are medians over repeated runs with the garbage
-collector disabled, a warmup phase, a checksum on the work performed to prevent dead-code
-elimination, and bootstrap confidence intervals. Timings used by the optimizer are measured
-\emph{on the Raspberry~Pi~4 target}, not on the development host: the two disagree on which
-signature scheme is faster (Sec.~\ref{sec:t4}), so using x86 numbers would select the wrong scheme.
-
-\textbf{Wire format and placements.} A hash-chained store produces canonical-CBOR wire vectors, from
-which the frame header is \emph{measured} at $H_f{=}44$\,B rather than assumed. All four placements
-are implemented over that format, so the byte model is validated against bytes actually emitted.
-
-\textbf{Channel model.} The 802.11a airtime model keeps broadcast and unicast separate --- they are
-not the same model with an ACK removed, which Sec.~\ref{sec:results} shows quantitatively. Both are
-validated against NS-3~3.48 over 30 seeds, and the broadcast airtime is additionally checked against
-two Raspberry~Pi~4 radios.
-
-\textbf{Optimizer.} An exhaustive search over (encoding $\times$ scheme $\times$ placement $\times$
-batch) evaluates the byte, energy, freshness and verifiability models at every point and returns the
-Pareto front, so the reported optimum is not the output of a heuristic.
-
-\textbf{Reproduction procedure.} Every artifact carries an environment and configuration-hash
-header. A gate re-derives all 16 model-derived artifacts byte-identically on each commit and fails
-if any differs; artifacts requiring NS-3 or the hardware rig cannot be re-derived in that gate and
-are labelled as such rather than counted as reproduced. Figures are regenerated from the same frozen
-CSVs, and a separate check asserts that every figure the paper cites is still produced by a
-generator that runs --- added after three figures were found plotting superseded constants
-(Sec.~\ref{sec:repro}).
-
-\section{Results}\label{sec:results}
-
-\textbf{Three boundaries, in order of how durable they are.} The question an operator has is not
-how many bytes a scheme saves but \emph{which configurations can run at all}. We answer it as three
-separate boundaries, and we order them by how likely each is to survive contact with a better model:
-
-\begin{enumerate}
-\item \textbf{Impossible} (Sec.~\ref{sec:lowrate}). A link whose payload cannot hold one header, one
-signature and one record admits no per-frame-verifiable telemetry at \emph{any} encoding, batch or
-scheme. With a measured $H_f{=}44$\,B this excludes four of seven EU868 data rates. It is
-arithmetic, so unlike everything else here it cannot move.
-\item \textbf{Capacity-limited} (Table~\ref{tab:envelope}). Above that floor the binding constraint is the
-shared medium. Coupling the byte model to an NS-3-validated broadcast model gives the largest
-neighbourhood each configuration sustains: the co-design carries $1.9$--$3.2\times$ the inline
-baseline, reported at two thresholds because they answer different questions.
-\item \textbf{Runs} --- and what it costs. The byte reduction ($58.7\%$ total,
-$72.0$\,B/record) is best read as the \emph{mechanism} that moves the boundary outward, not as the
-result. Its authentication component reduces to $1-1/b$ and is invariant to header size, signature
-size, encoding and scheme, so quoting it as a headline would credit four axes for what two produce.
-\end{enumerate}
-
-The airtime model underneath boundary~2 is validated twice: against NS-3 over 30 seeds, and against
-two Raspberry~Pi~4 radios, where the predicted $1.988$\,ms broadcast airtime measures $1.995$\,ms,
-a $0.36\%$ gap (equivalently, a $502.98$\,fps ceiling measured at $501.19$).
-
-All values are from frozen CSVs. Byte and model results were derived on an x86 host
-(Intel~i5-14400F); the crypto timings, encode timings and both power figures feeding the energy
-column are \emph{measured on the Raspberry~Pi~4} thesis platform (decision D8), so the energy
-column is platform-consistent ARM throughout.
+\section{The AUTHBC Frame}\label{sec:frame}
 
 \begin{table}[t]\centering\footnotesize
-\caption{E1: overhead dominance (T1), 30 seeds. $\varphi = 64/(s+64)$.}
-\label{tab:e1}
-\begin{tabular}{lrr}
-\toprule
-encoding & mean bytes $s$ & $\varphi$ \\
-\midrule
-JSON & 191.1 & 25.1\% \\
-CBOR & 66.25 & 49.1\% \\
-MessagePack & 65.16 & 49.6\% \\
-\textbf{delta} & \textbf{45.00} & \textbf{58.7\%} \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\textbf{E1 (Table~\ref{tab:e1}).} The auth fraction climbs from 25\% (JSON) to 59\% (delta): compressing
-the payload makes a fixed 64\,B signature dominate---T1 confirmed.
-
-\textbf{P1 crypto (x86 medians).} ECDSA-P256 sign/verify $26.2/78.5${\us}; Ed25519 $29.1/95.0${\us}; BLS
-$324.6/1016.5${\us}; BLS aggregate-verify$(b{=}8)$ $3445${\us}. Notably, ECDSA \emph{beats} Ed25519 on
-x86 (OpenSSL P-256 assembly)---the reverse of the usual ordering. The ordering \emph{flips} on the
-ARM target (Ed25519 259.5 vs ECDSA 326.9{\us} verify), which is what the optimizer uses; both are
-64\,B, so the byte results are identical either way. Because both are 64\,B the tie is broken on
-measured energy, and on the ARM target that selects \textbf{Ed25519} --- which is what the
-optimizer reports.
-
-\textbf{E2 (T2/T2a).} At MTU 1500, self-batch, the measured amplification
-$A_{@b}=(\text{bytes/rec})/s$ matches $A = M/(M-H_f-\ba)$ within $5\%$ (integer-$b$ slack, shrinking
-with $s$); delta reaches $b_{\max}=30$ with $A_{@b}=A=1.0776$ exactly. The MTU sweep also straddles
-the T2a boundary: $M{=}256$ is MTU-limited ($A{=}1.73$ realised), while $M{=}576$ and $M{=}1500$ are
-freshness-limited and realise $A{=}1.0000$---i.e.\ the $b_{\max}{=}30$ above is \emph{unreachable}
-at telemetry rates.
-
-\textbf{E3 (T3).} $V_B \approx 1-p$ flat in $b$ (0.90 at $p{=}0.10$); $V_D=(1-p)^n$ drops the moment a
-block spans $n>1$ frames (0.81 at $p{=}0.10$, $b{=}40$)---the frontier is exactly T3.
-
-\textbf{E4 (T4, Fig.~\ref{fig:e4}).} On ARM---the thesis platform---Ed25519 verify is $33.2\times$
-cheaper than BLS verify ($10.7\times$ on x86). Across the
-full relay-fraction $\times$ batch $\times$ rate grid (80 points), Ed25519 wins \emph{every} one
-(minimum $\kappa^\ast = 31.6 \gg 0.5$). At 96\,B, BLS carries more auth bytes than Ed25519 on own
-self-batch traffic ($\kappa^\ast=\infty$) and saves bytes only on relay traffic for $b\geq 2$; its
-$33.2\times$ verify cost on ARM keeps Ed25519 optimal for any plausible power ratio.
-
-\begin{figure}[t]\centering
-\includegraphics[width=\columnwidth]{e4_crossover.png}
-\caption{E4: break-even power ratio $\kappa^\ast(b)$ per relay fraction. Every curve sits far above the
-plausible band ($\kappa \leq 0.5$), so Ed25519 wins on 802.11; the $\rho{=}0$ curve is $\infty$ (BLS
-costs bytes on own traffic).}
-\label{fig:e4}
-\end{figure}
-
-\begin{table*}[t]\centering\footnotesize
-\caption{E5: co-design headline (T5) under $V\geq0.95$, $p{=}0.05$ and $D\leq250$\,ms.
-Total-byte cut $=(174.3-72.0)/174.3=58.7\%$; auth cut $=(108-27.0)/108=75.0\% \geq 40\% \Rightarrow$ PASS.
-$H_f{=}44$\,B is measured from the implemented wire format, not assumed.}
-\label{tab:e5}
-\begin{tabular}{llll r r r r}
-\toprule
-config & enc & $\sigma$ & place & auth B/rec & total B/rec & $V$ & $D$ (ms) \\
-\midrule
-\textbf{optimized} & delta & Ed & B,$b{=}4$ & \textbf{27.00} & \textbf{72.00} & 0.95 & 200 \\
-A+CBOR (Pillar-1) & cbor & Ed & A & 108.0 & 174.25 & 0.95 & 50 \\
-A+JSON (naive) & json & Ed & A & 108.0 & 299.09 & 0.95 & 51 \\
-D-over-agg & cbor & Ed & D,$b{=}40$ & 3.80 & 70.05 & 0.9025 & 2004 \\
-\bottomrule
-\end{tabular}
-\end{table*}
-
-\begin{table}[t]\centering\footnotesize
-\caption{Attribution of the E5 saving. The authentication term is $1-1/b$ and is invariant to $H_f$,
-$g_a$, encoding and scheme; the encoding term moves payload only. Reporting the single 75.0\% figure
-would credit four axes for what two produce.}
-\label{tab:decomp}
+\caption{Byte budget of a frame, field by field, for a sender with a five-digit identifier one
+hour into a 50\,Hz flight. Smaller values earlier in a flight are in parentheses.}
+\label{tab:fields}
+\setlength{\tabcolsep}{4pt}
 \begin{tabular}{l l r r}
 \toprule
-axis & what it moves & reduction & share \\
+field & content & first & lean \\
 \midrule
-placement $\times$ batching & auth B 108$\to$27.0 & 75.0\% & 79.2\% \\
-encoding & payload B 66.25$\to$45.0 & 32.1\% & 20.8\% \\
-scheme & neither (both 64\,B) & --- & --- \\
+(map) & CBOR map header & \fldFirstMap & \fldLeanMap \\
+\texttt{v}, \texttt{t} & version; frame type & \fldFirstVT & \fldLeanVT \\
+\texttt{src} & sender identifier, 16 bit & \fldFirstSrc & \fldLeanSrc \\
+\texttt{base\_seq} & sequence no.\ of first record & \fldFirstSeq & \fldLeanSeq \\
+\texttt{n} & records in the frame & \fldFirstN & \fldLeanN \\
+\texttt{recs} & key, length of records & \fldFirstRecs & \fldLeanRecs \\
+\texttt{auth} & key, length of signature & \fldFirstAuth & \fldLeanAuth \\
 \midrule
-\textbf{combined} & \textbf{total B 174.3$\to$72.0} & \textbf{58.7\%} & 100\% \\
+\multicolumn{2}{l}{\textbf{header} $H_f$} & \textbf{\hdrFirst} (\hdrFirstLo) & \textbf{\hdrLean} (\hdrLeanLo) \\
+\multicolumn{2}{l}{chain link} & 32 per record & \linkField{} per frame \\
+\multicolumn{2}{l}{signature \ba{} (Ed25519, ECDSA)} & 64 & 64 \\
+\multicolumn{2}{l}{keyframe record $s_k$} & \keyFirst$^\ast$ & \keyLean \\
+\multicolumn{2}{l}{delta record $s_\delta$, 50\,ms apart} & \deltaFirst$^\ast$ & \deltaLean \\
 \bottomrule
+\multicolumn{4}{l}{$^\ast$ includes that record's own 32\,B chain link.}
 \end{tabular}
 \end{table}
 
-\begin{table}[t]\centering\footnotesize
-\caption{Feasibility across the operating region, not at one chosen point (802.11a 6\,Mb/s,
-broadcast model of~\cite{machen2007}). $N_{\max}$ is given at both thresholds: saturation ($U<1$)
-and the measured $V{\geq}0.95$ boundary ($U{\approx}2.44$, interpolated between the
-measured $U{=}2.23$ and $U{=}3.34$ rows). Batch obeys $b \leq \Lambda D_{\max}$,
-so \textbf{bytes depend only on the product} --- the first two blocks are byte-identical and differ
-only in capacity and in compliance.}
-\label{tab:envelope}
-\setlength{\tabcolsep}{4pt}
-\begin{tabular}{l r r r r r r}
-\toprule
-configuration & $\Lambda$ & $D_{\max}$ & $b$ & \multicolumn{3}{c}{$N_{\max}$} \\
- & (rec/s) & (ms) & & $U{<}1$ & $V{\geq}0.95$ & $V{\geq}0.95$ \\
- & & & & & (mean) & (per run) \\
-\midrule
-\multicolumn{7}{l}{\emph{Primary: compliant with 3GPP TS~22.125}~\cite{3gpp_ts22125}} \\
-\textbf{optimized} delta/B & 50 & 100 & 4 & \textbf{35} & \textbf{100} & 64--91 \\
-A+CBOR (Pillar-1) & 50 & 100 & 1 & 18 & 31 & 24--29 \\
-\midrule
-\multicolumn{7}{l}{\emph{Relaxed freshness: same bytes, larger swarm, exceeds the standard}} \\
-optimized delta/B & 20 & 250 & 4 & 103 & 213 & 163--201 \\
-A+CBOR (Pillar-1) & 20 & 250 & 1 & 32 & 88 & 54--80 \\
-A+JSON (naive) & 20 & 250 & 1 & 25 & 53 & 35--48 \\
-\midrule
-\multicolumn{7}{l}{\emph{Compliant but below the batching threshold} ($\Lambda D_{\max} < 4$)} \\
-optimized delta/B & 20 & 100 & 1 & 34 & 98 & 62--89 \\
-optimized delta/B & 10 & 100 & 1 & 78 & 180 & 134--169 \\
-\bottomrule
-\end{tabular}
-\end{table}
+A frame is one canonical CBOR map~\cite{rfc8949} with integer keys (Table~\ref{tab:fields}).
+\texttt{src} and \texttt{base\_seq} name the sender and the sequence number of the first record;
+\texttt{link} is the hash of the record before it; \texttt{recs} is the record stream and
+\texttt{auth} one signature. A record in the stream is nine variable-length integers. The first
+record of a frame is a \emph{keyframe}, carrying absolute values (\keyLean\,B on average); each
+later one is a \emph{delta} from the record before it (\deltaLean\,B when records are 50\,ms
+apart). Sender and sequence number are not repeated in the records.
 
-\textbf{E5 (Table~\ref{tab:e5}, Fig.~\ref{fig:e5}).} The optimizer selects delta + Ed25519 +
-self-batch at $b{=}4$, cutting total on-air bytes from 174.3 to \textbf{72.0\,B/record}---a
-\textbf{58.7\%} reduction versus the Pillar-1 baseline at $V=0.95$, $p=0.05$. Hand-checked:
-$45.0+108/4=72.0$\,B/record. The same $b{=}4$ is reached at either operating point, with freshness
-$4/50=80$\,ms at the adopted compliant point and $4/20=200$\,ms at the relaxed one.
+\textbf{What is signed} is not the stream but the canonical ledger records, each with its own
+\texttt{prev\_hash}. The receiver rebuilds them --- the first \texttt{prev\_hash} is
+\texttt{link}, each later one is the hash of the record just rebuilt --- and only then checks the
+signature. A frame that cannot be decoded therefore cannot be verified, and nothing unverified is
+stored. Each verified record is offered to the ledger store, which refuses a sequence number that
+is not newer, keeps an equivocating pair as evidence, and flags a link that contradicts a record
+it holds. The state against which a later frame would be decoded advances only after a frame has
+been verified and stored, so a replayed frame cannot desynchronise a stream. Flipping any single
+bit of a frame makes verification fail (all \bitflips{} positions of a four-record frame were
+tried).
 
-\textbf{Feasibility is the co-design result (Table~\ref{tab:envelope}).} The substantive claim is not
-how many bytes are saved but which configurations \emph{can run}. Coupling the byte model to the
-broadcast channel model gives the largest neighbourhood each configuration sustains. Two thresholds
-are reported because they answer different questions. \emph{Saturation} throughput ($U<1$) is what
-the medium carries when every node is backlogged, and it is conservative: simulation shows $98.9\%$
-delivery still at $U{=}1$, with \emph{measured} verifiability $V_{\mathrm{meas}}$ crossing $0.95$
-only near $U{\approx}2.44$. We
-report both rather than choose, because choosing would select the flattering one.
+\textbf{When a frame is lost,} the next one still decodes and verifies, because it starts with a
+keyframe. Its \texttt{link} then names a record this receiver does not hold: the gap shows in the
+sequence numbers, and the link is stored unchecked, to be checked by any party that holds the
+missing record. A late copy of the lost frame is refused, since sequence numbers must increase;
+the gap is not repaired.
 
-A third column is reported because the second one is a statement about a \emph{mean}. The
-$V{\geq}0.95$ crossing is located where the mean delivered fraction across seeds meets the target,
-but $V$ is a reliability requirement, and at the crossing the distribution straddles it: at
-$U{=}2.23$ the mean is $0.962$ while $10$ of $30$ seeds fall below $0.95$. Reading the criterion
-per realisation instead---at least $95\%$ of runs must individually meet $V$---places the crossing
-in $U \in (1.67, 2.23]$ and gives the ranges in the last column. We headline the mean, because it is
-the reading under which the two thresholds are computed consistently, and report the per-run figures
-beside it because they are what an operator promising a reliability target would need. \textbf{The
-co-design advantage is insensitive to the choice}: the ratio spans $1.94\times$--$3.23\times$ under
-the mean reading and $2.51\times$--$3.14\times$ under the per-run reading, so the conclusion does not
-depend on which criterion a reader prefers.
+\textbf{One link per frame.} Inside a frame the order and content of records rest on the frame
+signature alone; in the first format below each record also carries an independent hash. A frame
+is signed and accepted as a unit, so no strength is lost, but one mechanism remains where there
+were two.
 
-Across the operating region the co-design multiplies the supportable swarm by between
-$1.9\times$ and $3.2\times$ (Table~\ref{tab:envelope}): $1.94\times$ and $3.23\times$ at the two
-thresholds for the compliant point, $3.22\times$ and $2.42\times$ for the relaxed one. \textbf{The
-advantage is robust in existence and variable in size}, and we state it that way; a single
-``${\approx}3\times$'' would be true of two of those four numbers and misleading about the other
-two. What no single axis produces is the advantage itself: it needs the encoding (frame size) and the
-placement--batch pair (frames per second) \emph{together with} the channel model. The scheme axis is
-byte-neutral here and contributes nothing to this figure; it is decided on energy instead (T4).
+\textbf{The first format.} For comparison we keep the format we built first: text keys, and in
+every record its own chain link, sender identifier and sequence number. Its header is
+\hdrFirst\,B, of which \keyNamesFirst\,B are key names. That format is implemented and frozen;
+its delta-coded frames, however, are a sum of separately measured parts and were never emitted,
+and we mark them as a byte model wherever they appear.
 
-\begin{figure}[t]\centering
-\includegraphics[width=\columnwidth]{fig_envelope.png}
-\caption{Boundary~2. Largest single collision domain each configuration sustains. This is the
-result that requires the coupling: the byte model alone cannot produce it, and the channel model
-alone does not know the frame size. The co-design advantage is visible as horizontal displacement,
-and it is variable in size --- see Table~\ref{tab:envelope} for both thresholds.}
-\label{fig:envelope}
-\end{figure}
+\textbf{Design parameters.} A configuration is the batch size $b$; whether a signature covers
+each record (\emph{inline}; \texttt{auth} is then an array of $b$ signatures) or the frame
+(\emph{batch}); the signature scheme (Ed25519~\cite{ed25519} and ECDSA P-256~\cite{fips186} at
+64\,B, BLS12-381~\cite{bls2001} at 96\,B in the library used); and the reference interval $r$:
+one frame in $r$ starts with a keyframe, the others with a delta against the previous frame.
 
-\textbf{Choosing the operating point, and what it costs (item B3).} Because $b \leq \Lambda D_{\max}$,
-\emph{only the product} $\Lambda D_{\max}$ sets the batch, and therefore the bytes. Two very
-different operating points give the same $b{=}4$ and the same $72.0$\,B/record: $(20\,\text{Hz},
-250\,\text{ms})$ and $(50\,\text{Hz}, 100\,\text{ms})$. They are not equivalent, because 3GPP
-TS~22.125~\cite{3gpp_ts22125} requires ${\geq}10$\,msg/s \emph{and} ${\leq}100$\,ms latency, which
-the first violates. \textbf{We adopt the compliant point $(50\,\text{Hz}, 100\,\text{ms})$ as
-primary.} It is not a contrived rate: $50$\,Hz is PX4's \texttt{MAVLINK\_MODE\_ONBOARD} companion
-stream rate, read from \texttt{mavlink\_main.cpp}~\cite{px4_mavlink_streams}; ArduPilot's
-defaults are vehicle-specific rather than a single rate~\cite{ardupilot_stream_rates}. The byte result is unchanged; what it costs is
-swarm size, $213 \to 100$ at the $V{\geq}0.95$ boundary and $103 \to 35$ at saturation. The relaxed
-point is retained in Table~\ref{tab:envelope} because a deployment outside the standard's scope may
-prefer it, and because reporting only the compliant point would hide the size of the trade.
+\section{Constraints}\label{sec:constraints}
 
-The region also has a floor. Keeping $b \geq 4$ under a $100$\,ms bound needs $\Lambda \geq 40$\,Hz;
-at $20$ or $10$\,Hz the same deadline forces $b{=}1$ and the co-design collapses to a $12.2\%$
-saving. \textbf{The batching benefit is therefore not available at every compliant operating point}
---- it requires a telemetry rate high enough that four records accumulate within the deadline, which
-is a constraint on the application, not on the cryptography.
+\textbf{Bytes.} With header $H_f$, link field $L$, signature \ba, keyframe $s_k$ and delta
+$s_\delta$, a self-contained batch frame costs, per record,
+\begin{equation}
+B(b) = \frac{H_f + L + \ba + s_k + (b-1)\,s_\delta}{b}.
+\label{eq:bytes}
+\end{equation}
+$B(1)$ is our baseline: one record, one signature, one frame. Signing each record of a shared
+frame replaces \ba{} by $b\,\ba$. Equation~\eqref{eq:bytes} is exact to within a byte of CBOR length
+prefix; the sizes we report are those of emitted frames.
 
-\textbf{Attributing the saving (Table~\ref{tab:decomp}).} We separate the axes rather than report one
-figure, because they are not equal contributors. Authentication overhead per record is
-$(H_f+g_a)/b$; the record size does not appear, so the auth-byte reduction
-$\bigl[(H_f{+}g_a)-(H_f{+}g_a)/b\bigr]/(H_f{+}g_a) = 1-1/b$ is invariant to header size, signature
-size, encoding and scheme. We verified this by substitution over $H_f\in\{20,40,80,200\}$\,B
-$\times\,g_a\in\{48,64,96\}$\,B: all twelve give 75.0000\%, and measuring $H_f$ at 44\,B rather than
-the assumed 40\,B moved it not at all. Independently, the frozen E2 data gives the same auth overhead
-to three decimals for all four encodings. The encoding axis is nonetheless load-bearing---it spans
-$3\times$ on total bytes---but it acts on payload, contributing 20.8\% of the saving against
-placement and batching's 79.2\%. The scheme axis is byte-neutral here (Ed25519 and ECDSA are both
-64\,B) and is decided on energy and verification throughput instead (T4).
+\textbf{Freshness.} The oldest record in a frame waits for the frame to fill. Adding the
+channel-access and airtime delay $T_{ch}$ and the verification time $t_v$,
+\begin{equation}
+D(b) = \frac{b}{\Lambda} + T_{ch} + t_v \;\leq\; D_{\max}.
+\label{eq:fresh}
+\end{equation}
+Fill time dominates. At both operating points $\Lambda D_{\max} = 5$: five records fill in exactly
+$D_{\max}$ and leave nothing for the channel, so $b \leq 4$ whatever the encoding or the scheme.
+The 1500\,B MTU would admit \mtuRecsFirst{} records in the first format and \mtuRecsLean{} in
+the lean one.
 
-\textbf{The pre-registered criterion, and how much of it was actually at risk.} The success
-criterion---cut on-air authentication bytes by ${\geq}40\%$ versus A+CBOR while holding
-$V_{\mathrm{tgt}} \geq 0.95$ at $p{=}0.05$---was committed to version control in the project's
-initial scaffold, two days before the result it judges existed; both commits are in the public
-history, so the ordering is checkable rather than asserted. We report it as pre-registered even
-though our own later analysis showed the authentication ratio to be a weak headline: moving the
-goalposts after seeing the data would be the larger error.
+\textbf{Verifiability.} If one frame in $r$ is self-contained, frame $j$ of a group verifies only
+if it and the $j-1$ frames before it arrive. With independent frame loss $p$,
+\begin{equation}
+V(r,p) = \frac{1}{r}\sum_{j=1}^{r}(1-p)^{j},
+\label{eq:v}
+\end{equation}
+which equals $1-p$ at $r=1$ and is smaller for every $r>1$. A target $V \geq 1-\epsilon$ with
+$\epsilon \leq p$ therefore admits $r=1$ only. The same argument forbids splitting a signed unit
+over $n$ frames, which verifies with probability $(1-p)^n$.
 
-Its two halves were not equally at risk, and we state that rather than let the word
-``falsifiable'' do work it has not earned. For the frame-level placements
-$V_{\mathrm{tgt}} = 1-p$ independently of encoding, batch and scheme, so with $p$ fixed at $0.05$
-and $\epsilon = 0.05$ the verifiability half is satisfied \emph{exactly, by construction}---indeed
-feasibility requires $p \leq \epsilon$ identically, since $1-p$ is the best verifiability any
-placement attains. \textbf{The byte reduction carried the falsifiability on its own.} Measured
-verifiability, written $V_{\mathrm{meas}}$ throughout, is a separate quantity obtained from
-simulation and is not what this criterion tested.
+\textbf{Channel.} For a configuration --- a frame size and a frame rate per node --- $N_{\max}$
+is the largest neighbourhood in which the mean delivered fraction of frames is at least
+$1-\epsilon$. We find it by simulation (Sec.~\ref{sec:method}). As a conservative companion we
+give $N_{\mathrm{sat}}$, the largest $N$ whose offered frame rate does not exceed the saturation
+throughput of the broadcast DCF model~\cite{machen2008}.
 
-\textbf{Sensitivity to $p$.} Fixing $p{=}0.05$ invites the question of how much rides on it, so we swept it. The answer is that nothing does, until everything does: for every $p \leq \epsilon$ the optimizer returns the \emph{same} configuration (delta, Ed25519, self-batch $b{=}4$, $72.0$\,B/record) from the same $44$ feasible points, and at $p{=}0.051$ the feasible set is \textbf{empty}. This is not a gradient but the cliff of T3: frame-level placements attain $V=1-p$ at best, so $p > \epsilon$ excludes every configuration rather than shifting the choice among them. The operating point is therefore insensitive to $p$ in the only sense available --- and the sensitivity that matters is not to the value of $p$ but to whether it exceeds the target.
+\textbf{Receiver CPU.} A receiver verifies every neighbour's frames. With $k$ signatures per frame,
+verification time $t_v$ and hash time $t_h$, one neighbour costs
+$(\Lambda/b)\,k\,t_v + \Lambda\,t_h$ seconds of CPU per second, and one core serves
+\begin{equation}
+N_{\mathrm{cpu}} = 1 + \left\lfloor \frac{1}{(\Lambda/b)\,k\,t_v + \Lambda\,t_h} \right\rfloor
+\label{eq:cpu}
+\end{equation}
+nodes.
 
-\textbf{Ablation: which axes actually interact.} A decomposition attributes a total and is possible
-even when the axes are independent, so it cannot establish the co-design claim on its own. We
-therefore ran the full factorial on bytes/record. Every interaction involving \emph{encoding} is
-\textbf{exactly zero}---$s$ enters $s+(H_f{+}g_a)/b$ additively, so it cannot interact---while
-placement$\times$batching is $-24.0$\,B/rec, equal in magnitude to placement's own main effect. That
-equality is the signature of a pure interaction, and the closed form says why: the placement benefit
-is $g_a(1-1/b)$, which is \textbf{identically zero at $b{=}1$}. Placement A and B are byte-identical
-on a single-record frame; batching is what gives placement anything to amortize.
+\textbf{Payload.} A frame that verifies alone must fit the link's maximum payload $M$:
+\begin{equation}
+M \;\geq\; H_f + L + \ba + s_k .
+\label{eq:excl}
+\end{equation}
+The residual room beside a signature has been computed before for
+802.15.4~\cite{gundogan2021firmware}; here the chain link and a record that decodes alone are
+charged as well.
 
-\textbf{So the coupling is real but narrower than ``four coupled knobs'' suggests}, and we state it
-that way: one genuine two-axis interaction (placement$\times$batching), one additive contributor
-(encoding, $146$\,B/rec of the saving and the largest main effect), and one axis that does not move
-bytes at the operating point (scheme). The intuition that a smaller payload ``increases the value
-of batching'' holds only on the \emph{percentage} scale---the absolute saving is $81.0$\,B for JSON,
-CBOR and delta alike---and two effects that are additive on an absolute scale always appear to
-interact once expressed as ratios.
+\textbf{Relayed records.} A node that forwards records of $b$ different originators cannot
+re-sign them. It carries their $b$ signatures, $64\,b$\,B, or one BLS aggregate of
+96\,B~\cite{bgls2003}, saving $64 - 96/b$\,B per record at the price of a pairing-based
+verification. Both placements are implemented. We evaluate only a sender's own records;
+multi-hop forwarding is outside this paper.
 
-\textbf{Which constraint binds is itself the result.} Ignoring freshness, the byte-optimal batch is
-$b{=}30$ at the MTU knee, cutting 96.7\%---but the oldest record in such a batch waits
-\textbf{1.50\,s}, $6.0\times$ over $D_{\max}$. Because fill time dominates the delay, the admissible
-batch obeys $b\lesssim\Lambda D_{\max}$ \emph{independent of encoding and scheme}, so freshness binds
-long before the MTU does at telemetry rates. The co-design answer is therefore a frontier, not a
-point: $b{=}1{\rightarrow}4$ trades $0/50/66.7/75\%$ auth-byte reduction against $50/100/150/200$\,ms
-of staleness, with sharply diminishing returns. Over-aggregation (D) is byte-competitive (3.60\,B)
-but \emph{fails} $V\geq0.95$ ($0.9025=(1-p)^2$)---a live demonstration of the T3 frontier---and misses
-freshness by $8\times$.
+\section{Method}\label{sec:method}
 
-\begin{figure}[t]\centering
-\includegraphics[width=\columnwidth]{fig_e5_codesign.png}
-\caption{E5: on-air bytes/record (payload + authentication) for the optimized configuration versus the
-baselines. Authentication overhead falls from $108$\,B to $27.0$\,B under the 250\,ms freshness bound
-($H_f{=}44$\,B measured, $g_a{=}64$\,B, $b{=}4$).}
-\label{fig:e5}
-\end{figure}
+\textbf{Implementation.} Formats, sender, receiver and store are one Python code base with four
+record encodings (JSON, CBOR, MessagePack, delta) and three signature schemes behind common
+interfaces, each scheme checked against published test vectors (for Ed25519,
+those of~\cite{rfc8032}). Every table in this
+paper is generated from result files that the code writes; a gate re-derives the deterministic ones
+on each commit.
 
-\textbf{NS-3 validation (Table~\ref{tab:ns3}, Fig.~\ref{fig:ns3}).} Unicast validates the Bianchi
-model~\cite{bianchi2000} to $+1.29$/$-0.40\%$ across $N=5$--$50$ (mean over 30 seeds; the
-median-based derivation in Table~\ref{tab:ns3} gives $+1.33$/$-0.37\%$). Broadcast requires a \emph{different}
-model, not the same one with the ACK removed. Reducing the unicast model by fixing $\tau=2/(W{+}1)$
-under-predicts NS-3 by $17.3\times$ at $N{=}50$ (Table~\ref{tab:ns3}). PHY-trace instrumentation shows the cause is not frame
-capture---which we measure at \textbf{0\%}, every successful decode arriving from a single-transmitter
-busy period---but the \emph{backoff counter consecutive freeze process}: with no ACK the contention
-window never doubles, so a station that has just transmitted may redraw a zero backoff and seize the
-medium one slot ahead of every deferring station, whose counter is necessarily $\geq 1$. This is
-precisely the effect analysed by Ma and Chen~\cite{machen2007,machen2008}, whose closed form reproduces
-our measurements to within $0.51\%$ on throughput (30 seeds) and $2.49\%$ on the looser
-success-probability and idle-slot-occupancy statistics; the
-unicast counterpart is the ``anomalous slot'' analysis of Tinnirello \emph{et al.}~\cite{tinnirello2010},
-which our unicast traces independently confirm. We claim no novelty for the mechanism; our contribution
-is its validation at $W_0{=}16$ under 802.11a timing (the original studies used $W_0{=}32,128$ at
-1\,Mb/s) and a direct slot-level measurement of it.
+\textbf{Telemetry.} Records come from a seeded random-walk generator: \seeds{} seeds of 1000
+records at 50\,ms spacing. Header fields are sized for a five-digit sender identifier one hour into
+a 50\,Hz flight. Section~\ref{sec:px4} checks the generator against flight logs.
 
-\begin{table}[t]\centering\footnotesize
-\caption{Analytic DCF models vs.\ NS-3 3.48, relative gap $(\text{sim}-\text{model})/\text{model}$.
-Median over 30 seeds, exact OFDM airtimes; regenerated from the frozen
-\texttt{ns3\_contention.csv}. The naive reduction is the unicast model with $\tau$ fixed at
-$2/(W{+}1)$, and it under-predicts by $17.3\times$ at $N{=}50$ --- the column exists to show
-that broadcast needs a different model, not a modified one.}
-\label{tab:ns3}
-\begin{tabular}{rrrr}
-\toprule
-$N$ & unicast vs.~\cite{bianchi2000} & broadcast vs.~naive reduction & broadcast vs.~\cite{machen2008} \\
-\midrule
-5 & $+0.54\%$ & $+0.1\%$ & $-0.07\%$ \\
-10 & $+1.33\%$ & $+3.4\%$ & $-0.12\%$ \\
-20 & $+1.14\%$ & $+32.8\%$ & $+0.39\%$ \\
-35 & $+0.24\%$ & $+268\%$ & $-0.56\%$ \\
-50 & $\mathbf{-0.37\%}$ & $\mathbf{+1631\%}$ & $\mathbf{-0.27\%}$ \\
-\bottomrule
-\end{tabular}
-\end{table}
+\textbf{Timing and energy.} Signing, verification, hashing and encoding are timed on a
+Raspberry~Pi~4 (medians; Ed25519 sign/verify \tSignEd/\tVerEd\us, ECDSA \tSignEc/\tVerEc\us, BLS
+\tSignBls/\tVerBls\,ms, SHA-256 \tHash\us). Sender energy is metered on the same board with an
+INA219 on the supply rail, five repetitions per configuration, idle power subtracted.
 
-\begin{figure}[t]\centering
-\includegraphics[width=\columnwidth]{fig_ns3_bianchi.png}
-\caption{Analytic DCF models vs.\ NS-3 3.48 saturation throughput. Unicast matches Bianchi within
-$+1.29$/$-0.40\%$ (mean, 30 seeds); broadcast matches Ma and Chen~\cite{machen2008} within
-$0.51\%$, while the naive reduction of the unicast model (dashed) under-predicts by $17.3\times$ at $N{=}50$.}
-\label{fig:ns3}
-\end{figure}
+\textbf{Channel simulation.} ns-3.48~\cite{nsnam}: IEEE~802.11a at 6\,Mb/s, ad hoc mode,
+broadcast frames, all nodes in range at equal received power, so there is no capture and no
+hidden terminal. Each node sends one frame every $b/\Lambda$ seconds. Its send instant is drawn uniformly within each period, so the relative phases of the nodes change from frame to frame. A strictly periodic source freezes each node's phase for a whole run. A run then samples a
+single phase configuration, in which a few nodes may collide in every period while the others
+lose nothing; over \srcPoints{} points run under both sources the mean delivered fraction
+differs by \srcMeanDiff, and the capacities read from the strictly periodic source are
+\srcShiftLo--\srcShiftHi\% lower and far less precise. A run
+lasts 20\,s; each point is \seeds{} runs. $N_{\max}$ is the largest simulated $N$ whose mean
+delivered fraction is at least 0.95 with every smaller simulated $N$ also passing; its interval
+is the 2.5--97.5 percentile of that quantity over 10\,000 bootstrap resamples of the seeds. The
+saturation models were validated separately against saturated ns-3 runs
+(Sec.~\ref{sec:validation}).
 
-\subsection{Comparison against a published external scheme}\label{sec:clas}
-Every baseline so far is internal --- inline signing under different encodings --- which measures
-improvement but not standing. The nearest published comparators are certificateless aggregate
-signature (CLAS) schemes for vehicular broadcast, which target the same shape of problem: many
-small, individually-attributable messages on a byte-constrained shared medium.
+\section{Low-Rate Links: Where No Batch Helps}\label{sec:lowrate}
 
-\textbf{A correction we had to make first.} Our byte model charged certificate bytes to \emph{no}
-scheme, silently assuming out-of-band credential distribution. That assumption flatters public-key
-infrastructure and penalises certificateless designs, whose entire advertised advantage is carrying
-no certificate --- so comparing without it would have decided the result in our favour before any
-measurement. We therefore charge certificates explicitly, using an ECDSA certificate of $162$\,B and
-the transmission policy of the deployed standard, one full certificate every fifth
-message~\cite{ndss2024pqv2v}.
-
-\begin{table}[t]\centering\footnotesize
-\caption{On-air cost per record against published CLAS schemes. CLAS figures are read from the
-scheme's own comparison table under its own stated parameters~\cite{plos2025clas}; a $67$\,B traffic
-message is subtracted to isolate security overhead.}
-\label{tab:clas}
-\begin{tabular}{lrr}
-\toprule
- & total B/rec & security overhead \\
-\midrule
-Wang \emph{et al.} & 859 & 792 \\
-Liang \emph{et al.} & 735 & 668 \\
-Xu \emph{et al.} & 596 & 529 \\
-Cahyadi \emph{et al.}~\cite{plos2025clas} & 583 & 516 \\
-\midrule
-AUTHBC, $b{=}4$, cert every 5th frame & \textbf{80.1} & 35.1 \\
-AUTHBC, $b{=}4$, cert every frame & 112.5 & 67.5 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\textbf{The informative result is not the ratio.} Every published CLAS overhead in
-Table~\ref{tab:clas} is \emph{linear in the number of messages}: the aggregate compresses the
-verifier's work, not the wire, because each message still carries its own identity, verification key
-and signature components. Batching compresses the wire. \textbf{The two techniques operate on
-different axes}, which is the same distinction we drew for receiver-side batch
-verification~\cite{zhang2008batch}, now with a measurement rather than an argument.
-
-\textbf{What this does not establish.} We do not claim to beat CLAS. Those schemes buy
-\emph{conditional privacy} --- a per-message pseudonymous identity that an authority can trace ---
-which AUTHBC does not provide and a provenance ledger arguably does not want. Part of their overhead
-purchases a property we decline. Their group element is also $128$\,B against our $64$\,B signature,
-so some of the gap is curve and encoding choice rather than design. The defensible statement is
-narrower and more useful than a ratio: \emph{on a byte-constrained broadcast link, aggregate
-signatures do not reduce airtime; placement and batching do.}
-
-\section{Boundary 1 --- Impossibility: the Low-Rate Regime}\label{sec:lowrate}
-Everything so far concerns a companion-class 802.11 link. The natural question is how far the
-co-design carries, and the honest answer is that it stops --- which is not a caveat but the most
-durable result in this paper. A capacity figure moves when the model improves; an exclusion does
-not.
-
-This section is \emph{analysis and simulation, not measurement}. No LoRa hardware was instrumented
-and no LoRa energy figure is reported: the only metered radio power in this work is a Wi-Fi figure,
-and reusing it would be fabrication. Every LoRa constant is transcribed from the SX1276 datasheet
-(Rev.~7, \S4.1.1.5/\S4.1.1.7)~\cite{semtech_sx1276} and LoRaWAN RP002-1.0.3~\cite{lora_rp002}
-(Tables~8 and~13, EU868 duty cycle $<1\%$).
-
-\subsection{T6 excludes the four longest-range modes}
-With $H_f = 44$\,B and a 64\,B Ed25519 signature, Eq.~\eqref{eq:t6} partitions EU868
-(Table~\ref{tab:t6}). DR0--DR2 fail on the \emph{signature alone}: 64\,B does not fit a 51\,B
-payload, so the exclusion holds even with a zero-byte header and a zero-byte record. The only
-escape is a smaller authentication object, and the smallest standardised one is a 48\,B compressed
-BLS12-381 $\mathbb{G}_1$ point~\cite{cfrg_bls} at 126-bit security --- which does fit 51\,B, leaving
-three bytes for the header and the record together. DR3 fails on the encoding, and by six bytes. The $s_{\min}{=}13$\,B it is measured against is the smallest record this design can emit: the $45$\,B delta record of Table~\ref{tab:e1} minus the $32$\,B chain link, once chaining moves to once-per-frame (Sec.~\ref{sec:chaining}). That is the most favourable value available to us, so DR3's exclusion does not rest on a pessimistic choice --- a leaner record would have to beat $13$\,B while remaining hash-chainable.
-
-\textbf{Which payload column, and why it decides DR3.} Published EU868 tables differ: Klimiashvili
-\emph{et al.} list DR3 at $123$\,B~\cite{klimiashvili2020loravswifi} where we use $115$\,B. Both
-read RP002-1.0.3 correctly --- $123$ is $M$, the maximum \emph{MACPayload}, and $115$ is $N$, the
-maximum \emph{application} payload, the two differing by the $8$\,B \texttt{FHDR} and
-\texttt{FPort}. $N$ is the applicable figure here, because our header, signature and record travel
-inside \texttt{FRMPayload}. \textbf{The distinction decides the verdict}: at $M{=}123$ the residual
-is $15$\,B and DR3 would be \emph{feasible}; at $N{=}115$ it is $7$\,B and DR3 is excluded. We
-state it because the exclusion is this paper's most durable claim, and a reader holding the other
-table would otherwise find it contradicted rather than explained.
+The first question is not what a design saves but whether its frame can be sent at all.
 
 \begin{figure}[t]\centering
 \includegraphics[width=\columnwidth]{fig_t6_exclusion.png}
-\caption{Boundary~1. The payload-exclusion tiers across EU868 data rates at $H_f{=}44$\,B measured
-and $g_a{=}64$\,B. DR0--2 are excluded by the signature alone --- no header design, encoding,
-batching or chaining reaches them --- and DR3 misses on the record by six bytes. Only DR4--6 admit
-per-frame-verifiable telemetry. The boundary is arithmetic, so unlike the capacity results it does
-not move with the channel model.}
-\label{fig:t6}
+\caption{Maximum payload of the twelve EU863-870 data rates against the smallest frame the lean
+format can emit and the frames this telemetry produces (64\,B signature).}
+\label{fig:excl}
 \end{figure}
 
 \begin{table}[t]\centering\footnotesize
-\caption{T6 applied to EU868 ($H_f{=}44$\,B measured, $\ba{=}64$\,B, $s_{\min}{=}13$\,B).}
-\label{tab:t6}
-\begin{tabular}{l r r l}
+\caption{Whether one self-contained frame fits, by payload limit, and what each relaxation buys
+(lean format). Floor: every field zero. Range: frames of this telemetry.}
+\label{tab:excl}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{l r r c c c}
 \toprule
-DR & $M$ (B) & $s_{\max}$ & verdict \\
+ & floor & range & 50/51\,B & 115\,B & 222/242\,B \\
+ & (B) & (B) & 5 rates & 3 rates & 4 rates \\
 \midrule
-0, 1, 2 & 51 & $-57$ & excluded --- signature alone overflows \\
-3 & 115 & 7 & excluded --- no record fits (misses by 6\,B) \\
-4, 5, 6 & 242 & 134 & feasible \\
+64\,B signature, chain link & \exFloor & \exLo--\exHi & no & no & yes \\
+\ldots{} link not sent on air & \exFloorNoLink & \exLoNoLink--\exHiNoLink & no & yes & yes \\
+48\,B BLS signature & \exFloorBls & \exLoBls--\exHiBls & no & no$^\ast$ & yes \\
+13\,B symmetric tag & \exFloorTag & \exLoTag--\exHiTag & no & yes & yes \\
+\bottomrule
+\multicolumn{6}{l}{$^\ast$ a frame of zeros would fit; no frame of this telemetry does.}
+\end{tabular}
+\end{table}
+
+LoRaWAN limits the payload of a frame by data rate, and its EU863-870 plan defines twelve data
+rates~\cite{lora_rp002}. By Eq.~\eqref{eq:excl} a frame that verifies alone needs a header, a
+chain link, a signature and one record that decodes alone. The smallest such frame the lean
+format can emit at all --- sender 0, sequence 0, every field zero --- is
+$\exFloorHdr + \linkField + 64 + \exFloorRec = \exFloor$\,B, and we emitted, signed and verified
+it. Header, link and signature alone are \exFloorNoRec\,B.
+
+Figure~\ref{fig:excl} sets that against the payload limits. Five data rates (DR0--DR2, DR8, DR10)
+allow 50 or 51\,B: the signature alone does not fit. Three (DR3, DR9, DR11) allow 115\,B: header,
+link and signature fill the payload and no record fits. Four (DR4--DR7) allow 222 or 242\,B and
+are feasible. \textbf{\exclCountCap{} of twelve data rates cannot carry one signed, chained frame}, in
+either format and under either of the standard's payload tables. None of the eight depends on the
+telemetry, since each is excluded against the format's floor.
+
+\textbf{Scope.} The result holds under four conditions. (i)~The limits are LoRaWAN's regional
+parameters; the LoRa PHY itself carries 255\,B~\cite{semtech_sx1276} and is not excluded.
+(ii)~Every frame carries a public-key signature. (iii)~There is no loss recovery. (iv)~$\epsilon
+\leq p$, which by Eq.~\eqref{eq:v} forbids spreading a signature over several frames; at
+$p=0.01$ and $\epsilon=0.05$ a signed unit may span five frames and the exclusion no longer holds
+as stated.
+
+\textbf{What each relaxation buys} (Table~\ref{tab:excl}). Taking the chain link off the air
+frees the three 115\,B rates: they are excluded by the link, not by the signature. The smallest
+standardised signature, 48\,B BLS12-381~\cite{cfrg_bls}, fits a 51\,B payload and leaves 3\,B; at
+115\,B a frame of zeros would fit (\exFloorBls\,B) but the smallest frame of our telemetry is
+\exLoBls\,B, a three-byte miss that we do not count as an exclusion. A 13\,B symmetric tag, as in
+MAVLink~2, fits the 115\,B rates, but at 50 or 51\,B header and link already take
+\exHdrLinkLo--\exHdrLinkHi\,B: a hash-chained frame does not fit there under any authenticator.
+
+\textbf{What the feasible rates carry.} At DR5 under the 1\% duty cycle a 242\,B frame holds
+\loraRecsLean{} records and sustains \loraRateLean~records/s per node (\loraRecsFirst{} records
+and \loraRateFirst{} in the first format). The batch must be sized at the record spacing it
+implies: a delta that spans \loraSpacing\,s costs \deltaLeanFar\,B, not the \deltaLean\,B it
+costs at 50\,ms. Simulated with the ns-3 LoRaWAN module on one channel with one demodulator and
+no capture, the largest neighbourhood with mean $V \geq 0.95$ is \loraNmax{} nodes (95\%
+interval \loraNmaxCi; \loraNmaxRun{} if 95\% of runs must each reach it); the closed-form
+model of Haxhibeqiri \emph{et al.}~\cite{haxhibeqiri2017lora}, fitted to hardware interference
+measurements and evaluated at the same operating point, gives \loraNmaxExt. Such a neighbourhood
+carries about \loraAgg~records/s in all, where the 802.11 design of
+Section~\ref{sec:results} carries some \wifiAgg. On these
+links a ledger is a slow record of provenance, not a smaller version of the same design.
+
+\section{Results on 802.11}\label{sec:results}
+
+On a link that carries the frame, the questions are what each design choice buys and how many
+neighbours one channel then serves.
+
+\subsection{The design ladder}
+
+\begin{table*}[t]\centering\footnotesize
+\caption{The design ladder at 50~records/s and $D_{\max}=100$\,ms. $N_{\mathrm{sat}}$:
+saturation bound. $N_{\max}$: largest neighbourhood with mean delivery $\geq 0.95$ in ns-3
+[95\% bootstrap interval]. CPU: share of one receiver core at $N_{\max}$. $^\dagger$~byte model;
+all lean sizes are emitted frames.}
+\label{tab:ladder}
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{l l r r r r r r r}
+\toprule
+ & configuration & $b$ & frame (B) & B/record & with cert. & $N_{\mathrm{sat}}$ & $N_{\max}$ & CPU \\
+\midrule
+\multicolumn{9}{l}{\emph{First format: text keys, a chain link in every record}} \\
+1 & sign every record, one record per frame (baseline) & 1 & \frmFirstBase & \bprFirstBase & \certFirstBase & \nsatFirstBase & \nmaxFirstBase\ \ciFirstBase & \cpuFirstBase\% \\
+2 & sign every record, share the frame & 4 & \frmFirstInline & \bprFirstInline & \certFirstInline & \nsatFirstInline & \nmaxFirstInline\ \ciFirstInline & \cpuFirstInline\% \\
+3 & one signature per frame & 4 & \frmFirstCbor & \bprFirstCbor & \certFirstCbor & \nsatFirstCbor & \nmaxFirstCbor\ \ciFirstCbor & \cpuFirstCbor\% \\
+4 & \ldots{} and delta records$^\dagger$ & 4 & \frmFirstDesign & \bprFirstDesign & \certFirstDesign & \nsatFirstDesign & \nmaxFirstDesign\ \ciFirstDesign & \cpuFirstDesign\% \\
+\midrule
+\multicolumn{9}{l}{\emph{Lean format: integer keys, one chain link per frame}} \\
+5 & sign every record, one record per frame (baseline) & 1 & \frmLeanBase & \bprLeanBase & \certLeanBase & \nsatLeanBase & \nmaxLeanBase\ \ciLeanBase & \cpuLeanBase\% \\
+6 & sign every record, share the frame (delta records) & 4 & \frmLeanInline & \bprLeanInline & \certLeanInline & \nsatLeanInline & \nmaxLeanInline\ \ciLeanInline & \cpuLeanInline\% \\
+7 & one signature per frame, no delta coding & 4 & \frmLeanKeys & \bprLeanKeys & \certLeanKeys & \nsatLeanKeys & \nmaxLeanKeys\ \ciLeanKeys & \cpuLeanKeys\% \\
+8 & one signature per frame, delta records \textbf{(the design)} & 4 & \textbf{\frmLeanDesign} & \textbf{\bprLeanDesign} & \certLeanDesign & \nsatLeanDesign & \textbf{\nmaxLeanDesign}\ \ciLeanDesign & \cpuLeanDesign\% \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+Table~\ref{tab:ladder} takes the design apart. A baseline that signs every record and sends it
+alone confounds two things, so rows 2 and 6 separate them: four records share a frame but each
+keeps its signature. In the lean format that step takes \bprLeanBase\,B per record to
+\bprLeanInline: the header and the chain link are paid once per four records, and the three
+records that follow the first can be coded as deltas. Sharing the signature as well gives
+\textbf{\bprLeanDesign\,B, \saveLean\% below the baseline}; row~7 is the same frame without
+delta coding, \bprLeanKeys\,B. In the first format the steps are sharing the frame
+(\bprFirstBase{} to \bprFirstInline\,B), sharing the signature (\bprFirstCbor) and delta coding
+(\bprFirstDesign, \saveFirst\% below its baseline). It ends higher because each of its records
+carries a 32\,B link of its own, which no batch size amortises.
+
+An exhaustive search over placement, batch size 1--12 and reference interval returns row~8 as the
+byte-minimal configuration that meets the freshness, verifiability and MTU constraints, and
+row~4 for the first format. The batch is set by freshness (Eq.~\ref{eq:fresh}), not by the MTU.
+
+The choices are made together because they are not independent. One signature per frame saves
+$\ba(1-1/b)$ per record, and delta coding saves $(1-1/b)$ of the difference between a
+self-contained record and a delta, since each frame must start with a self-contained one. Both
+vanish at $b=1$, where rows 1 and 5 already are the design. Batching is the choice the other two
+gains depend on, and the deadline sets it.
+
+Signature scheme does not move these rows among the 64\,B schemes: Ed25519 and ECDSA produce
+identical frames. BLS adds 32\,B per frame and, as shown below, fails on CPU.
+
+\subsection{Loss, and why every frame carries a keyframe}\label{sec:loss}
+
+\begin{table}[t]\centering\footnotesize
+\caption{Verifiability at frame loss $p=0.05$ with one self-contained frame in $r$ ($b=4$, lean
+format). Measured: \lossFrames{} frames per cell through the sender, an i.i.d.\ loss process and the
+receiver; mean and 95\% bootstrap interval over \seeds{} seeds.}
+\label{tab:loss}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{r r l r c}
+\toprule
+$r$ & B/record & $V$ measured & Eq.~\eqref{eq:v} & $V \geq 0.95$ \\
+\midrule
+1 & \lossBprOne & \lossVOne\ \lossCiOne & \lossThOne & yes \\
+2 & \lossBprTwo & \lossVTwo\ \lossCiTwo & \lossThTwo & no \\
+4 & \lossBprFour & \lossVFour\ \lossCiFour & \lossThFour & no \\
+16 & \lossBprSixteen & \lossVSixteen\ \lossCiSixteen & \lossThSixteen & no \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\subsection{Where the design changes: chaining}\label{sec:chaining}
-On 802.11 freshness binds, so the batch is fixed by $\Lambda D_{\max}$ and saving payload bytes buys
-nothing extra. On LoRa the \emph{regional payload limit} binds, so bytes convert directly into more
-records per frame. Moving the 32\,B chain link from per-record to once-per-frame --- the receiver
-re-derives the rest from $\mathit{prev\_hash}_{i+1}=H(\text{record}_i)$, leaving the stored ledger
-byte-identical --- raises the DR5 batch from 2 to 7 and the sustainable rate from 0.060 to
-$0.182$\,rec/s, a factor of $3.03$. We adopt it \emph{on this arm only}: the same change on 802.11
-buys ${\approx}6\%$ energy and no extra records, which does not pay for losing independently
-transmitted per-record tamper evidence.
+Delta coding is usually run with a keyframe every $K$ records. With $K=16$ and $b=4$ only one
+frame in four decodes without its predecessor, and a lost frame takes the following ones with it.
+Table~\ref{tab:loss} measures this with the codec in the loop: at the loss rate the system is
+specified for, $r=4$ verifies \lossVFour{} of records, not 0.95. Equation~\eqref{eq:v} predicts
+the measurement at every $r$. Bursty loss is kinder to a dependent design --- a Gilbert process
+with the same mean and bursts of four frames gives \lossVFourBurst{} at $r=4$ --- but never
+reaches $1-p$. A cleaner link would admit a longer interval ($r=4$ at $p=0.02$, $r=8$ at
+$p=0.01$), and the whole prize is \lossPrize\,B per record. The design therefore uses $r=1$:
+each frame starts with a keyframe, costs \bprLeanDesign\,B per record, and loses only its own
+records when it is lost.
 
-\subsection{Capacity: the two penalties compound}
-Time on air and the duty cycle are deterministic, so simulating them would be circular. One
-quantity is not derivable that way --- how many nodes share the channel --- because LoRaWAN uplinks
-are pure ALOHA, with no carrier sense and no acknowledgement. Simulating LoRaWAN scalability in ns-3
-is established practice~\cite{vandenabeele2017scalability}, including proposals to replace the ALOHA
-MAC with carrier sense~\cite{to2018loracsma} and recent extensions to non-terrestrial
-links~\cite{traspadini2025lorantn}.
+These figures give every frame the same loss probability. At a fixed bit error rate a longer
+frame is lost more often, and a batch is a longer frame: on a channel that loses 5\% of the
+baseline's one-record frames, the design's frame is lost with probability \lossBerP, so
+\lossBerTh{} of its records are expected to verify (measured: \lossBerV~\lossBerCi) --- below
+the target it meets at equal frame loss. It reaches 0.95 only while one-record frames are lost
+at most \lossBerPmax{} of the time. The comparisons in Table~\ref{tab:ladder} are at equal frame loss
+and carry that qualification.
 
-\textbf{A topology caveat, stated because it differs from the 802.11 arm.} LoRaWAN is by
-specification a star-of-stars with no peer-to-peer mode: a recent FANET survey notes that it
-``presents some limitations regarding its star topology, its medium access control (MAC) layer and
-its lack of routing procedures''~\cite{paredes2023lorafanet}, and published peer-to-peer LoRa meshes
-are built by discarding the LoRaWAN MAC entirely, ``not relying on LoRaWAN\ldots without the use of
-gateways''~\cite{berto2021loramesh}. A LoRa FANET that was actually flown reports the same
-constraint --- ``LoRaWAN only supports star topology'' --- and hybrid LoRa/802.11s UAV meshes
-reach for a second radio for the same reason~\cite{davoli2021hybridlora}; having built one, it converges on a
-\emph{single channel} and on dedicated transmit and receive radios to work around
-half-duplex~\cite{zirak2021swarm}, which is the configuration we model. Nor is the gateway framing
-unrepresentative of the multi-hop literature: a review of mesh proposals for LoRa finds that even
-those pursuing flexible topologies retain ``a predominant nodes $\rightarrow$ gateway/sink data
-flow'', with ``fewer proposals'' targeting genuinely decentralized architectures, and lists
-``network scalability with hundreds, or even thousands, of nodes'' among the challenges that remain
-open~\cite{centelles2021beyondstar}; concrete multi-hop LoRa deployments keep the same
-sink-directed shape~\cite{abrardo2019multihoplora,jiang2020hybridlpwan}, and a 2025 ns-3 LoRa mesh
-study states plainly that ``there is currently no standardised and commercialised multi-hop
-LoRa-based network''~\cite{durand2025loramesh}. Our scenario is therefore $N$ end devices reporting to one
-gateway, whereas the 802.11 arm is a genuine broadcast among peers. \textbf{The two arms bracket the
-design space rather than repeating one experiment at two data rates}, and the low-rate result should
-be read as the infrastructure-collected variant. What transfers
-is the part that matters: collision statistics at a receiver depend on how many transmitters are
-concurrently in range, not on what the receiver is attached to, so the measurement models a single
-receiver in an ad hoc network with $N{+}1$ nodes. It is also why the single-demodulator provisioning
-is the right one here and not, as it would be for a gateway, an artificially harsh one: \emph{a UAV
-peer has one radio}. Two ad hoc effects remain outside the model. A half-duplex radio cannot receive
-during its own $364$\,ms frame, costing a peer ${\approx}2\%$ of every other peer's frames, a loss no
-gateway suffers --- and not an artifact of our setup, since Class A devices are specified as
-half-duplex pure-ALOHA transceivers~\cite{paredes2023lorafanet} and peer-to-peer LoRa implementations
-report designing around exactly this constraint~\cite{berto2021loramesh}. And $V$ is a \emph{per-receiver} metric, as in the 802.11 arm: a record reaching
-\emph{every} peer in a single broadcast has probability ${\approx}(1-p)^{N-1}$, so single-hop full
-replication is not what $V$ measures and would require gossip or relay --- an application-layer
-mechanism we do not study. Simulating the AUTHBC frame at DR5
-under the same $0.95$ threshold used for 802.11 --- here applied to \emph{measured} delivery
-$V_{\mathrm{meas}}$, not to the assumed $V_{\mathrm{tgt}}$ of the byte model --- gives
-$N_{\max} = 3$, with a sharp cliff: delivery is $0.960$ at $N{=}3$ and $0.917$ at $N{=}5$.
-There is no backoff to absorb contention. We give this figure with its uncertainty, as we do on
-the 802.11 arm: bootstrapping the crossing over the 30 seeds puts it at $3$ with a $95\%$ interval
-of $[2,3]$, and at the certified $N{=}3$ the mean clears $0.95$ while \emph{nine of thirty}
-individual runs do not. Read per realisation the value is $1$. The mean-based figure is the one
-quoted, for consistency with the 802.11 thresholds, but a deployment promising a reliability target
-should use the per-run reading.
-
-\textbf{Why DR5 and not DR6, and what DR6 would buy.} Our own exclusion table admits DR4, DR5 and
-DR6 equally --- all three carry $N{=}242$\,B and leave the same $134$\,B residual --- and DR6
-(SF7/250\,kHz) runs at $11$\,kb/s against DR5's $5\,470$, so the choice needs stating.
-\emph{Capacity does not change.} At a fixed duty cycle $d$ the transmissions falling inside one
-$2T_{\text{air}}$ vulnerability window number $N \cdot 2T_{\text{air}}/T_{\text{period}} = 2Nd$:
-\textbf{the airtime cancels}, so $P(\text{deliver}) = e^{-2(N-1)d}$ is rate-independent and
-$N_{\max}$ is the same at either rate. That closed form reproduces the measured DR5 run to within
-$0.9$ percentage points across $N{=}2$--$10$ (exactly at $N{=}8$) and returns $N_{\max}=3$, matching
-the simulation. DR6 therefore doubles the aggregate to ${\approx}0.99$\,rec/s \emph{at the same
-three nodes}, and pays for it in link budget: $-120$ against $-123$\,dBm is $3$\,dB, or
-$1.41\times$ less range under free-space spreading. Since range is the only reason to accept this
-data rate's costs at all, we report DR5 and note DR6 as the throughput-preferring alternative.
-
-\textbf{We derive this rather than simulate it, and the reason is a limitation worth recording.}
-The module's sensitivity vectors are indexed by \emph{spreading factor alone} --- there is no
-bandwidth dimension in \texttt{EndDeviceLoraPhy::SENSITIVITY} or its gateway counterpart, and none
-in the interference helper. Forcing SF7 onto a 250\,kHz channel would have returned DR6's doubled
-bit rate while silently keeping DR5's noise floor, so the $3$\,dB penalty --- DR6's entire cost ---
-would have been invisible in a run that completed cleanly and repeated across all 30 seeds. We
-state the derivation and label it as one; it is weaker than a measurement.
-
-This figure is far below the node counts usually quoted for LoRaWAN, and the discrepancy is
-configuration, not disagreement. We simulate the LoRa physical layer --- real modulation, with the
-module's measured interference and capture model --- but on its harshest MAC provisioning: a single
-logical channel, a single gateway demodulation path, and one forced spreading factor, since the data
-rate is a design variable here and each run therefore fixes it. Comparison with measurement-based
-published results~\cite{haxhibeqiri2017lora} must respect that. Both studies transmit at the $1\%$
-duty-cycle ceiling, so per-node occupancy is $1\%$ in both and offered load scales identically as
-$G = 0.01N$; mapping their multi-channel result through their own fit
-$f_{\mathrm{MCH,MSF}}(x) = f_{\mathrm{SCH,SSF}}(x/18)$ places their ${\approx}32\%$ loss at $56$
-nodes on one channel and one SF, where we measure ${\approx}62\%$ at $N{=}50$. \textbf{Our model is
-therefore roughly $2\times$ more pessimistic than theirs, not more optimistic}, most plausibly
-because a single demodulation path rejects a second concurrent arrival outright instead of granting
-it the capture chance their measurements support. Our own configuration is deliberately the pessimistic one in a further respect: the interference
-matrix treats \emph{any} same-spreading-factor overlap as fatal, so there is no capture at all,
-where a real LoRa receiver recovers the stronger of two colliding frames. Enabling a 6\,dB capture
-threshold raises delivery by $2.7$ points at $N{=}8$ and by $1.29\times$ at $N{=}50$ without moving
-$N_{\max}$. The small margin over the Poisson curve $e^{-2G}$ at low load is not capture but traffic
-regularity: sources are periodic rather than Poisson, for which the escape probability is
-$(1-2\tau/T)^{N-1} = 0.868$ at $N{=}8$ against $0.871$ measured.
-
-\textbf{The result is also range-limited, and that limit binds before capacity does.} Our channel
-model attributes all loss to collisions, and this is not an option we simply left switched off:
-enabling correlated shadowing changes the outcome on no row at either $500$ or $1000$\,m. That is a
-property of the link budget, not a wiring error --- with $14$\,dBm transmit power and the
-$-130$\,dBm SF7 gateway sensitivity, log-distance path loss leaves $28.8$\,dB of margin at
-$500$\,m and $17.5$\,dB at $1000$\,m, which an ${\approx}8$\,dB shadowing standard deviation cannot
-erode; simulated failure onset is near $4200$\,m, and shadowing does bite there ($1.000$ falls to
-$0.515$ at $4000$\,m). \emph{Our propagation parameters describe a considerably better link than a
-real drone-to-drone channel, and no option the scenario exposes closes that gap.} Field measurements of
-air-to-air LoRa on real drones~\cite{zirak2021swarm} show a link losing frames to range alone: PDR
-falls from $0.9711$ at $200$\,m to $0.9550$ at $500$\,m and $0.9045$ at $1000$\,m, measured with
-two drones and a base station, where contention is negligible. Since the two loss mechanisms are
-independent, delivery is $P_{\text{link}}(d) \times P_{\text{no-coll}}(N)$, and any range whose link
-PDR already misses the target makes it unreachable at \emph{every} node count. Composing their
-measured link with our measured collision curve is sharper than either term alone:
-
-\begin{center}\footnotesize
-\begin{tabular}{lrrr}
-\toprule
-$V$ target & $200$\,m & $500$\,m & $1000$\,m \\
-\midrule
-$0.95$ & 1 & 1 & 0 \\
-$0.90$ & 3 & 3 & 1 \\
-$0.85$ & 5 & 5 & 3 \\
-$0.80$ & 10 & 8 & 5 \\
-\bottomrule
-\end{tabular}
-\end{center}
-
-\textbf{At $V \geq 0.95$ the regime admits no multi-node network at all.} The link alone delivers
-$0.9711$ at $200$\,m, leaving $0.0039$ of headroom, while our least-loaded measured point ($N{=}2$)
-already spends $0.0283$ on collisions. A lone transmitter passes; two do not. The capacity figure is
-therefore conditional not only on range but on the threshold: relaxing to $V \geq 0.90$ restores
-$N_{\max} = 3$, and to $0.85$ restores $5$. We report the curve rather than a point because the
-choice of threshold, not the physics, is what decides whether this regime is usable --- and that
-choice belongs to the deployment, not to us. At the $1000$\,m radius our own scenario configures,
-an idealised channel is $9.6$ percentage points optimistic; this mirrors the 802.11 arm, where the
-idealised model is $39\%$ optimistic at $500$\,m.
-
-\textbf{$N_{\max}=3$ should therefore be read as a worst-case bound at short range --- one channel,
-one demodulator, one spreading factor, $d \leq 500$\,m --- rather than as a LoRaWAN network
-capacity.} \textbf{It also carries wide uncertainty.} Every device transmits on one exact period and
-ALOHA has no backoff, so relative phases are fixed for a whole run: a pair that collides once
-collides always. Delivery is consequently bimodal rather than noisy about a mean --- over 30 seeds at
-$N{=}5$, $22$ runs deliver exactly $1.000$ and the rest fall to $0.20$--$0.84$, giving a mean of
-$0.891$ with $\sigma = 0.21$. A three-seed mean, which is what the figure above rests on, cannot
-characterise that distribution. At realistic $\pm20$\,ppm crystal tolerance the accumulated drift
-over an hour ($144$\,ms) is too small to break a $728$\,ms collision window, so the effect is
-physical for a naive periodic sender; real LoRaWAN Class~A devices randomise transmission timing
-precisely to avoid it, which the simulated sender does not model. A distribution of this
-shape is only visible to a reader when the replication behind a figure is stated, which is why we
-state ours. The phenomenon itself is \emph{not} unobserved: Durand and
-Booysen attribute their own bimodal delivery to nodes that ``always transmit on a specific SF, time,
-and channel'', producing ``certain packet collisions being repeated for every transmission
-cycle''~\cite{durand2025loramesh}. What is absent is any quantification of the resulting dispersion,
-or the replication information a reader would need to detect it. We report the figure with this
-caveat rather than restate it as a precise capacity. It is conservative
-in the direction that matters least for the claim being made: the point of this section is that the
-low-rate regime is qualitatively different, and a conservative bound does not manufacture that
-difference, it understates the margin. It is conservative in one further respect: LoRaWAN Class~A
-specifies pure ALOHA~\cite{paredes2023lorafanet} and we model it, whereas a purpose-built LoRa FANET
-adds listen-before-talk~\cite{zirak2021swarm} and would collide less.
-
-\subsection{What infrastructure collection would buy}\label{sec:lora-gateway}
-The single-demodulator, single-channel provisioning above models a UAV peer. The complementary
-question --- what if a ground gateway collected the ledger instead? --- is a configuration change,
-and we ran it: three channels and eight demodulation paths, the RP002 provisioning, with the same
-forced data rate. Delivery improves substantially and the improvement grows with load, reaching
-$1.90\times$ at $N{=}50$ ($0.3755 \rightarrow 0.7134$) and still $0.5071$ at $N{=}100$, which the
-peer configuration cannot reach at all. \textbf{Yet $N_{\max}$ moves only from 3 to 8} (95\% CI $[5,8]$; the bare value must not be quoted). The
-$V \geq 0.95$ criterion sits on a near-vertical part of the delivery curve --- the gateway passes at
-$N{=}8$ with $0.9526$ and fails at $N{=}10$ with $0.9398$ --- so a threefold reduction in offered
-load per channel shifts the threshold barely at all. This is the same duality the 802.11 arm shows
-between saturation and the measured verifiability boundary: \emph{a capacity metric and a
-strict-reliability metric respond very differently to the same change}, and reporting either alone
-would mislead.
-
-\subsection{An external check on the low-rate capacity}\label{sec:lora-external}
-The 802.11 arm is validated against two published analytical models. The low-rate arm rested on a
-single simulator, so we gave it the same treatment. Haxhibeqiri \emph{et al.}~\cite{haxhibeqiri2017lora} publish
-their capacity result in closed form --- a quintic fitted at $R^2 = 0.997$ to \emph{total} packet
-loss (collisions plus wrong-payload-CRC) measured on SX1301 hardware --- which means it can be
-\emph{evaluated at our operating point} rather than quoted at theirs. We implemented it, validated
-the implementation against the four loss figures their own text states (three land within
-${\approx}3$ points; the fourth is stated as collisions-only, so our total correctly exceeds it),
-and applied the identical $V \geq 0.95$ criterion.
+\subsection{Freshness}
 
 \begin{table}[t]\centering\footnotesize
-\caption{The low-rate capacity, by two independent methods.}
-\label{tab:lora-external}
-\begin{tabular}{lrrl}
+\caption{Delay of the oldest record in a frame, $b=4$, $\Lambda = 50$~records/s. Channel delay is
+simulated at the heaviest load that still delivers 95\% of frames.}
+\label{tab:fresh}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{l r r r r r}
 \toprule
-$N$ & AUTHBC (NS-3) & Haxhibeqiri \emph{et al.} & \\
+ & fill & channel & verify & total & margin \\
+ & (ms) & (ms) & (ms) & (ms) & (ms) \\
 \midrule
-2  & $2.8\%$ & $3.1\%$ & we are more optimistic \\
-3  & $4.0\%$ & $3.8\%$ & crossover \\
-5  & $8.3\%$ & $5.1\%$ & we are $1.64\times$ more pessimistic \\
-8  & $12.9\%$ & $7.0\%$ & we are $1.85\times$ more pessimistic \\
-30 & $43.0\%$ & $19.9\%$ & we are $2.16\times$ more pessimistic \\
-50 & $62.5\%$ & $29.9\%$ & we are $2.09\times$ more pessimistic \\
-\midrule
-\multicolumn{2}{l}{$\mathbf{N_{\max}}$ \textbf{at} $\mathbf{V \geq 0.95}$} & & \\
-& \textbf{3} & \textbf{4} & \\
+Ed25519, mean channel delay & \frFill & \frChMean & \frVerEd & \frTotMean & \frMarMean \\
+Ed25519, 99th percentile & \frFill & \frChPnn & \frVerEd & \frTotPnn & \frMarPnn \\
+Ed25519, worst observed & \frFill & \frChMax & \frVerEd & \frTotMax & \frMarMax \\
+BLS, worst observed & \frFill & \frChMax & \frVerBls & \frTotBls & \frMarBls \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-A discrete-event simulation of the LoRa physical layer and a polynomial fitted to hardware
-interference measurements land \textbf{one node apart} on the quantity this section rests on
-(Table~\ref{tab:lora-external}). The agreement should not be over-read --- below $N \approx 10$
-their fit is dominated by a $1.78\%$ intercept that is an artifact rather than a measurement --- but
-it is obtained independently and it is the right order. The disagreement in \emph{shape} is the more
-informative part, and it matches the configuration difference: our runs model no capture at all and
-a single demodulation path, where their measurement-based model grants both, so beyond the crossover at
-$N{\approx}3$ we reject concurrent arrivals that their gateway would still recover.
+Table~\ref{tab:fresh} adds the terms of Eq.~\eqref{eq:fresh}. The frame fills in \frFill\,ms;
+channel access and airtime add \frChMean\,ms on average and \frChMax\,ms at worst; one Ed25519
+verification adds \frVerEd\,ms. The oldest record is verified within \frTotMax\,ms, leaving
+\frMarMax\,ms of the 100\,ms budget. A fifth record would need a fill time of 100\,ms by itself.
+Batching $b$ records needs a record rate above $b/D_{\max}$, here 40~records/s: at
+20~records/s with the same 100\,ms bound the batch is one record and nothing is gained.
+
+\subsection{Capacity}\label{sec:capacity}
+
+\begin{figure}[t]\centering
+\includegraphics[width=\columnwidth]{fig_nmax_direct.png}
+\caption{Delivered fraction of frames against neighbourhood size in ns-3, lean format: baseline
+(row~5) and design (row~8). Mean of \seeds{} runs; bars span the runs. $N_{\max}$ is where a curve
+leaves the 0.95 line.}
+\label{fig:nmax}
+\end{figure}
 
 \begin{table}[t]\centering\footnotesize
-\caption{The low-rate regime is not a slower version of the same problem.}
-\label{tab:lowrate}
+\caption{$N_{\max}$ of baseline and design at both operating points (ns-3, \seeds{} seeds).}
+\label{tab:capacity}
+\setlength{\tabcolsep}{4pt}
 \begin{tabular}{l r r r}
 \toprule
- & per node & $N_{\max}$ & aggregate \\
+ & baseline & design & ratio \\
 \midrule
-802.11a, delta/B, $b{=}4$ & 20 rec/s & 103 & 2060 rec/s \\
-LoRa EU868 DR5, $b{=}6$ & 0.165 rec/s & 3 & 0.495 rec/s \\
+\multicolumn{4}{l}{\emph{50 records/s, 100\,ms}} \\
+first format & \nmaxFirstBase & \nmaxFirstDesign & \ratioFirst$\times$ \\
+lean format & \nmaxLeanBase & \nmaxLeanDesign & \ratioLean$\times$ \\
 \midrule
-ratio & $121\times$ & $34\times$ & $\mathbf{\approx}\mathbf{4200}\boldsymbol{\times}$ \\
+\multicolumn{4}{l}{\emph{20 records/s, 250\,ms}} \\
+first format & \nmaxRelFirstBase & \nmaxRelFirstDesign & \ratioRelFirst$\times$ \\
+lean format & \nmaxRelLeanBase & \nmaxRelLeanDesign & \ratioRelLean$\times$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The arm is ${\approx}120\times$ slower per node \emph{and} ${\approx}34\times$ smaller per domain,
-and it is the product that matters (Table~\ref{tab:lowrate}). LoRa is not a slow 802.11; it is a
-different regime, in which authenticated per-record telemetry is not the right application at all.
-Its defensible role is long-range \emph{provenance} --- a tamper-evident trickle --- not live
-telemetry. An independent ns-3 comparison of the two technologies reaches the same structural
-conclusion from a different direction: Klimiashvili \emph{et al.} find neither uniformly better,
-with WiFi ad hoc winning on delay at every file size while it remains single-hop and LoRa winning on
-energy only where WiFi has degraded into a multi-hop route, and they recommend \emph{selecting
-between} the two rather than tuning one~\cite{klimiashvili2020loravswifi}. \textbf{We take that
-agreement as qualitative only.} Their headline ratio --- WiFi's theoretical throughput ``almost
-5000 times'' LoRa's --- is a \emph{PHY bit-rate} comparison (against DR6's $11$\,kb/s) carrying no
-duty cycle, framing or authentication, whereas our ${\approx}4200\times$ is an application-level
-aggregate of authenticated records per second across a domain. The two are close in magnitude and
-are \emph{not} the same quantity, so we do not offer either as confirming the other.
+Bytes matter because they are airtime. Figure~\ref{fig:nmax} shows delivery falling as
+neighbours are added, and Table~\ref{tab:ladder} gives the resulting $N_{\max}$ for every row.
+The lean baseline holds \nmaxLeanBase{} neighbours at 95\% delivery and the design
+\nmaxLeanDesign{} (\ratioLean$\times$); in the first format the figures are \nmaxFirstBase{} and
+\nmaxFirstDesign{} (\ratioFirst$\times$). The larger step is sending a quarter as many
+frames: row~6, which shares the frame but not the signature, already reaches \nmaxLeanInline{}
+(\stepShareLean$\times$ the baseline), and sharing the signature as well adds
+\stepSignLean$\times$.
+Each frame pays a preamble, an inter-frame space, a backoff and MAC framing whatever its
+length --- about \fixedCost\us, \fixedSharePct\% of what a baseline frame costs the channel ---
+so removing three frames in four is worth more than their bytes.
 
-One caveat of provenance. The simulator enforces RP002 Table~12 (repeater-compatible, 222\,B) while
-our analytical model uses Table~13 (non-repeater, 242\,B); at DR5 that caps the batch at 6 rather
-than 7. Both are defensible readings of the same standard, and we simulate what the implementation
-accepts rather than reconcile them silently.
+These figures hold the mean over runs to the 0.95 target. Requiring that 95\% of individual
+runs reach it gives \nrunLeanBase{} and \nrunLeanDesign{} (\nrunFirstBase{} and
+\nrunFirstDesign{} in the first format), at most \nrunGap{} nodes fewer.
 
-\section{Reproducibility and Scientific Integrity}\label{sec:repro}
+Table~\ref{tab:capacity} repeats the comparison at the relaxed operating point. The ratio hardly
+moves with the operating point --- \ratioLean$\times$ and \ratioRelLean$\times$ in the lean
+format, \ratioFirst$\times$ and \ratioRelFirst$\times$ in the first --- and it depends on the
+format, so we quote it with the format and not as one number.
 
-\textbf{A simulator artifact large enough to change what a reader should believe.} The ns-3 LoRaWAN
-module's periodic sender fires on an exact interval, and LoRaWAN ALOHA has no backoff, so relative
-transmission phases are frozen for an entire run: a pair that collides once collides on every cycle.
-Delivery becomes \emph{bimodal} rather than noisy about a mean. Over 30 seeds at $N{=}5$, 22 runs
-deliver exactly $1.000$ and the rest fall to $0.20$--$0.84$. We measure the consequence: the
-coefficient of variation is inflated \textbf{2--8$\times$} relative to a sender with one-second
-transmission jitter, the inflation growing with node count ($2.9\times$ at $N{=}5$, $7.9\times$ at
-$N{=}100$). Real LoRaWAN Class~A devices are required to randomise transmission timing; the module
-does not.
+\textbf{A rule for the crossing.} At the 5\% level, loss follows a line in airtime. With
+$f = \Lambda/b$ the frames per second a node sends and $T$ the time one frame holds the medium
+(its airtime plus DIFS),
+\begin{equation}
+N_{\max} \approx \frac{0.05}{f\,(a\,T + c)}, \qquad a = \lineA,\quad c = 8\,\mu\mathrm{s},
+\label{eq:line}
+\end{equation}
+where $c$ is twice the simulator's preamble-detection time and $a$ was fitted to six rows of
+Table~\ref{tab:ladder} (1, 2, 4, 5, 6 and 8), which it reproduces within \lineFitWorst\%. We
+wrote down what the rule gives for seven other configurations --- rows 3 and 7, the design with
+one keyframe in four frames, and both formats at the relaxed point --- before simulating them.
+All seven fell within \lineWorst\% of it. The shortcut we had used before, one utilisation
+ceiling measured at a single point, misses the thirteen by up to \lineCeilWorst\%, in both
+directions. Equation~\eqref{eq:line} is a fit at one loss level and one PHY rate, for frames of
+146--565\,B, 5--50~frames/s and \lineNlo--\lineNhi{} nodes; the tables quote simulated values,
+not the rule.
 
-\textbf{We claim the measurement, not the observation.} Durand and Booysen report the same effect
-in their own results, attributing bimodal delivery to nodes that ``always transmit on a specific SF,
-time, and channel'', producing ``certain packet collisions being repeated for every transmission
-cycle''~\cite{durand2025loramesh}. What we add is the
-\emph{quantification}: the dispersion this induces, measured, rather than the effect noted.
 
-That is why every capacity figure in this paper is reported at 30 seeds with its distribution, and
-why a threshold crossing is given as an interval rather than a point: at $N{=}3$ the mean clears
-$V{\geq}0.95$ while nine of thirty individual runs do not.
+\textbf{Receiver CPU.} By Eq.~\eqref{eq:cpu} one core of the Raspberry~Pi~4 verifies the frames
+of \ncpuBatch{} neighbours when each frame carries one Ed25519 signature and of \ncpuInline{} when
+every record is signed. At its $N_{\max}$ the design uses \cpuLeanDesign\% of a core, so the
+channel binds first. Row~6 shows the constraint is not idle: with a signature on every record it
+reaches the channel's limit at \cpuLeanInline\% of a core. With BLS a verification takes \tVerBls\,ms and one core serves
+\ncpuBls{} neighbours: on this hardware BLS is excluded by CPU long before the channel is
+reached, in addition to its larger signature. These figures verify one signature at a time.
+Ed25519 was designed for batch verification --- its authors report under 134\,000 cycles per
+signature in a batch of 64, against 273\,364 for one~\cite{ed25519} --- which would roughly
+halve the receiver's cost; we did not use it, and ECDSA does not admit it.
 
-\textbf{A claim we withdrew.} We had intended to report that this dispersion is undetectable in the
-ns-3 LoRa literature because that literature does not state replication information, and we
-pre-registered a survey to test it --- inclusion criteria, keyword set and a $25\%$ falsification
-threshold, all committed before the corpus was assembled. At the achieved $n{=}23$ the result is
-$21.7\%$ reporting with a $95\%$ interval of $[7.5, 43.7]\%$. \textbf{That interval contains the
-threshold, so the survey cannot answer its own question, and we make no claim about the
-literature.} The protocol, corpus and adjudications are in the repository as a null result rather
-than deleted. Our own reporting discipline is argued on its merits above and needs no such claim to
-justify it.
+\textbf{Other PHY rates.} We simulated one rate. Evaluating the saturation bound with the same
+model at 12 and 24\,Mb/s, and on a 10\,MHz channel at 3--12\,Mb/s, gives design-to-baseline
+ratios of $N_{\mathrm{sat}}$ from \phyRatioLo$\times$ to \phyRatioHi$\times$, lowest at the
+slowest rate, because the fixed cost per frame does not shrink with the payload.
 
-Beyond the results, the project's second product is its discipline. Anomalies were root-caused, not
-patched over: a stateful delta codec used statelessly (60$\to$45\,B); string-keyed CBOR replaced by
-canonical arrays (110$\to$66\,B); the BLS size corrected 48$\to$96\,B (with the T4 model updated); and,
-on the broadcast channel, three successive explanations retracted in writing---an ``18$\times$
-capture'' over-claim, then the capture effect itself (PHY instrumentation measured it at 0\%), and
-finally our own claim to have discovered the responsible mechanism, which a literature check showed had
-been published in 2007~\cite{machen2007}. A whole-repo audit re-derived every formula against the code and hand-checked one point per
-experiment. Finally, freezing raw data risks \emph{silent staleness}, so an automated gate re-derives
-every deterministic frozen artifact from the current code and fails on any drift---verified to catch the
-exact regression it was built for. No result is fabricated, no test skipped, no tolerance widened.
+\subsection{Certificates}\label{sec:certs}
+The rows so far assume that receivers already hold the senders' public keys. Vehicular practice
+sends a full certificate in every fifth message and an eight-octet digest in the
+others~\cite{ndss2024pqv2v}. Charging that to every frame --- a \certBytes\,B certificate, so
+\certPerFrame\,B per frame on average --- gives the ``with cert.'' column of
+Table~\ref{tab:ladder}: \certLeanDesign\,B per record for the design against \certLeanBase{} for
+the baseline. Certificates are a per-frame cost, so batching amortises them too.
 
-\section{Limitations and Future Work}
+\subsection{Energy}
 
-\textbf{Post-quantum signatures: a projection, not a contribution.} Practical PQ authentication for
-vehicular broadcast is already solved at NDSS level~\cite{ndss2024pqv2v} and for 5G
-broadcast~\cite{arxiv2510pqsib1}; we claim nothing there. But the substitution is mechanical in our
-model, so we report it rather than leave a foreseeable question unanswered. Taking sizes from those
-sources---ML-DSA/Dilithium2 at 2420\,B and SPHINCS+ at 7856\,B per signature---and holding the
-adopted operating point, bytes/record at $b{=}4$ move from $72.0$\,B (Ed25519) to $661.0$\,B
-($9.2\times$) and $2020.0$\,B ($28.1\times$).
+\begin{table}[t]\centering\footnotesize
+\caption{Sender energy per record on a Raspberry~Pi~4, first format, metered (median and range of
+five repetitions) against the composed model.}
+\label{tab:energy}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{l r r r}
+\toprule
+ & metered ($\mu$J) & model ($\mu$J) & gap \\
+\midrule
+every record signed & \enBaseMeas\ \enBaseRange & \enBaseModel & \enBaseGap\% \\
+one signature per 4 & \enDesignMeas\ \enDesignRange & \enDesignModel & \enDesignGap\% \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-\textbf{The binding problem is not the ratio, it is that batching cannot rescue it.} Two of our own
-constraints collide. Freshness caps the batch at $b \leq \lfloor \Lambda D_{\max} \rfloor = 5$, so
-there is almost nothing to amortize a kilobyte-scale signature over: reaching Ed25519's $27$\,B/record
-of overhead would need $b{=}91$ for ML-DSA, a $1.83$\,s fill---$18\times$ the $100$\,ms deadline. And
-the MTU binds harder still: an ML-DSA signature plus the $44$\,B header is $2464$\,B, which
-\emph{exceeds the 1500\,B MTU on its own}, so placement B stops fitting in a single frame at
-\emph{any} batch size. That is precisely why~\cite{ndss2024pqv2v} needs a fragmentation design
-($\beta{=}4$ frames for Dilithium, $8$ for SPHINCS+ in their Table~III) rather than a larger batch.
-Fragmenting authenticated payloads is itself a security surface in constrained
-networks~\cite{sobati2025fragmentsec}, so the change is not only a byte-accounting one. PQ
-identity-based signatures with aggregation are being proposed for fog-enabled FANETs
-specifically~\cite{almajmaie2026pqfanet}; that line optimises signing and verification cost, which
-is complementary to the wire-byte constraint that binds here.
-The honest conclusion is that AUTHBC's amortization argument does not survive the transition
-unchanged: a PQ variant would be a different design, not a re-parameterisation, and the placement
-axis would have to be re-derived against fragmentation rather than against the MTU.
+Table~\ref{tab:energy} meters the sender: encoding, hashing and signing a record costs
+\enDesignMeas\,$\mu$J in the batched configuration against \enBaseMeas\,$\mu$J when every record
+is signed, \enSavePct\% less. The model composed from separately measured times and powers is
+\enDesignGap--\enBaseGap\% low, the gap being frame assembly in an interpreted prototype. These
+measurements are of the first format's encoders; the lean codec has not been timed on the
+board. Receiver and radio energy are modelled, not metered: adding one receiver and the radio,
+the model gives \enDesignEndToEnd{} against \enBaseEndToEnd\,$\mu$J per record.
 
-The 802.11 and LoRa arms are evaluated separately and are not combined into a single heterogeneous scenario; a gateway-relayed hybrid is future work. Energy is now measured on a Raspberry~Pi~4 with
-INA219 meters ($P_\mathrm{cpu}=0.634$\,W, $P_\mathrm{radio}=0.218$\,W---both nominal values were
-$3$--$5\times$ too high), and the byte-based headline is power-free either way. The energy model is
-\emph{composed} from separately measured powers and timings, so we metered the composition
-end-to-end on four configurations. It was initially ${\approx}32\%$ low; both causes were identified
-and corrected---an omitted per-record chain-hash term (SHA-256, 2745.5\,ns measured on ARM, charged
-twice per record and not amortized over $b$), and a $P_\mathrm{cpu}$ measured over \emph{isolated}
-primitives (0.634\,W) that understates any composed pipeline by $18.2\%$ (four configurations meter
-0.732--0.760\,W, a $3.8\%$ spread, so a single constant remains appropriate; we adopt 0.749\,W). The
-residual is $+7.5$ to $+14.3\%$ and is entirely frame assembly between crypto calls, which we
-deliberately do not charge because it is interpreter overhead of a prototype rather than a property
-of the design. Absolute energy figures should therefore be read as lower bounds by ${\approx}10$--$14\%$;
-byte results are power-free. The channel models are
-validated only in the idealised single-collision-domain regime they describe: a spread, mobile
-formation introduces spatial reuse and, at long range, hidden terminals that neither model
-represents. We bound this: sweeping a realistic air-to-air scenario (Friis, 3D cluster, Nakagami
-fading) shows the idealised model is a \emph{conservative} lower bound up to a ${\approx}300$--400\,m
-cluster --- a boundary an independent ns-3 study corroborates from the other side, finding that a
-WiFi ad hoc network spanning $300$\,m already needs four hops in a linear topology and 21 nodes in
-a random one~\cite{klimiashvili2020loravswifi}, i.e.\ it has stopped being one collision domain
-at precisely the range our own sweep flags --- (goodput $+42$ to $+51\%$ from spatial reuse) but becomes \emph{optimistic} by $39\%$ at
-500\,m, where links break down; Rayleigh fading ($m{=}1$) costs a further 27 points. These two
-marginal-link figures moved substantially when we migrated NS-3 3.41$\to$3.48 (from $15.7\%$ and
-9 points), while every near-field scenario moved under $2\%$ --- consistent with that release's
-\texttt{InterferenceHelper} and \texttt{WifiPhy} fixes, which bite hardest at marginal SNR. We
-report the newer simulator's figures. \textbf{The hardware validation is two-node, with a single transmitter, so it involves zero contention and therefore does \emph{not} validate Bianchi or Ma \& Chen.} What it validates is the 802.11a timing constants those models are built on, and the link loss; the contention models themselves remain simulation-validated only. On ARM the scheme tie breaks toward Ed25519
-rather than ECDSA, with an identical auth-byte cut.
+\subsection{Is the synthetic telemetry representative?}\label{sec:px4}
+Every size above comes from one generator, whose delta record is exactly \deltaLean\,B in every
+sample --- the floor of the format. We ran twelve public PX4 flight logs (four quadrotors, two
+hexa/octorotors, three fixed wings, three VTOLs; \pxRecords{} in-flight records), chosen by a rule
+fixed before any was opened, through the same encoder. The logs carry position at 5\,Hz, so the
+comparison is at 0.2\,s spacing and above, not at the 50\,Hz of the operating point. At 0.2\,s a
+real delta record averages \pxDelta\,B against the generator's \pxDeltaGen\,B, and a real
+keyframe \pxKey\,B against \pxKeyGen. The spread is by speed: the six multicopters, mostly
+hovering, average \pxDeltaSlow\,B and the three fixed wings up to \pxDeltaFast\,B. With real
+sizes at 0.2\,s the design saves \pxSave\% (\pxSaveWorst\% in the least favourable log) where
+the generator gives \pxSaveGen\%. The generator is representative to within about one
+percentage point, and optimistic for fast vehicles.
+
+\subsection{Validation of the models}\label{sec:validation}
+The unicast DCF model~\cite{bianchi2000} matches saturated ns-3 runs within
+$+\valUniHi$/$-\valUniLo$\% and the broadcast model~\cite{machen2008} within
+$\pm\valBcast$\% over $N=5$--50 (\seeds{} seeds). On two Raspberry~Pi~4 radios with a single
+transmitter, the airtime of a 1400\,B broadcast frame measures \hwAirtime\,ms against a predicted
+\hwAirtimeModel\,ms (\hwAirtimeGap\%) and \hwLossFrames{} frames in \hwSentFrames{} are lost
+($p = \hwLoss$). That experiment has no contention. The capacities in this paper rest on
+simulation.
+
+\section{Comparison with Published Schemes}\label{sec:clas}
+
+\begin{table}[t]\centering\footnotesize
+\caption{Bytes per message of certificateless aggregate signature schemes for vehicular
+broadcast, as reported in~\cite{li2025clas} (Table~2 there, including a 67\,B traffic message),
+and bytes per record of AUTHBC with certificates charged.}
+\label{tab:clas}
+\begin{tabular}{l r}
+\toprule
+ & bytes per message \\
+\midrule
+Wang \emph{et al.}$^\ast$ & 859 \\
+Liang \emph{et al.}$^\ast$ & 735 \\
+Xu \emph{et al.}$^\ast$ & 596 \\
+Cahyadi \emph{et al.}$^\ast$ & 583 \\
+Li \emph{et al.}~\cite{li2025clas} & 583 \\
+\midrule
+AUTHBC baseline (row~5), with certificates & \certLeanBase \\
+AUTHBC design (row~8), with certificates & \certLeanDesign \\
+\bottomrule
+\multicolumn{2}{l}{$^\ast$ as reported in~\cite{li2025clas}; not read at source.}
+\end{tabular}
+\end{table}
+
+\begin{table}[t]\centering\footnotesize
+\caption{Stream-signing schemes at 50~records/s, each as the lean one-record frame with its
+authenticator in place of the signature (32\,B digests, 64\,B signatures). A model, not an
+implementation; $N_{\mathrm{sat}}$ is the saturation bound of Section~\ref{sec:constraints}.}
+\label{tab:stream}
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{l r r r r}
+\toprule
+ & \multicolumn{1}{c}{auth.} & frames & \multicolumn{1}{c}{total} & \\
+scheme & B/record & per s & B/record & $N_{\mathrm{sat}}$ \\
+\midrule
+MAVLink~2 tag$^{\dagger}$ & \strAuthMav & \strFpsMav & \strBprMav & \strNsatMav \\
+TESLA$^{\dagger\ddagger}$ & \strAuthTesla & \strFpsTesla & \strBprTesla & \strNsatTesla \\
+Gennaro--Rohatgi$^{\ddagger}$ & \strAuthGr & \strFpsGr & \strBprGr & \strNsatGr \\
+EMSS$^{\ddagger}$ & \strAuthEmss & \strFpsEmss & \strBprEmss & \strNsatEmss \\
+Wong--Lam tree, block of 4 & \strAuthWl & \strFpsWl & \strBprWl & \strNsatWl \\
+signature per record (row~5) & \strAuthSig & \strFpsSig & \strBprSig & \strNsatSig \\
+AUTHBC design (row~8) & \strAuthDesign & \strFpsDesign & \strBprDesign & \strNsatDesign \\
+\bottomrule
+\multicolumn{5}{l}{$^\dagger$ no non-repudiation.\quad $^\ddagger$ a packet does
+not verify alone.}
+\end{tabular}
+\end{table}
+
+\textbf{Stream signing.} Table~\ref{tab:stream} places the schemes of Section~\ref{sec:related}
+at our operating point. None is implemented here: each row is the lean one-record frame with
+that scheme's authenticator, sized from its definition, in place of the signature. All of them
+send a frame per record, so the fixed channel time of a frame is paid for every record whatever
+the authenticator weighs. A 13\,B tag in place of a 64\,B signature raises the saturation bound
+from \strNsatSig{} to \strNsatMav{} neighbours and gives up non-repudiation; four records in a frame
+raise it to \strNsatDesign. Tree chaining is the one scheme that keeps what a ledger needs
+--- every packet verifies alone and its origin can be shown to a third party --- and it pays \strAuthWl\,B per packet for
+it. These schemes amortise the cost of signing; on a contended channel the cost that binds is
+the frame.
+
+\textbf{Aggregate signatures.} The nearest published comparators are certificateless aggregate signature schemes for vehicular
+broadcast. Table~\ref{tab:clas} lists the per-message size each reports. In every one the cost
+for $n$ messages is $n$ times the cost of one: aggregation reduces the verifier's work, while
+each message still carries its own identity, key and signature components. Batching reduces what
+is sent. The two act on different quantities, and the table should not be read as a ranking:
+those schemes provide conditional privacy, which AUTHBC does not; their group elements are
+128\,B where our signature is 64\,B; and their figures are for a different message. What the
+comparison does show is that per-message authentication of this kind costs several hundred
+bytes, against which a telemetry record is small, and that aggregation alone does not change
+that.
+
+\section{Limitations}\label{sec:limits}
+
+\textbf{Contention is simulated.} The hardware experiment has one transmitter. The capacities in
+Table~\ref{tab:ladder} come from ns-3 with one collision domain, equal received power and static
+nodes; capture, hidden terminals, spatial reuse and mobility are absent. Send instants are
+redrawn within each period; how regular a real autopilot's stream is was not measured, and a
+strictly periodic source gives capacities up to \srcShiftHi\% lower with a much wider spread
+between runs. A contention
+experiment on three or four radios is the next measurement.
+
+\textbf{Telemetry is synthetic.} Record sizes come from a generator. The check against flight
+logs covers twelve logs of one autopilot at 5\,Hz position resolution; nothing was measured at
+50\,Hz.
+
+\textbf{One PHY, generated loss.} Capacity was simulated at 6\,Mb/s only. The loss experiment
+uses independent, Gilbert and length-dependent loss, all generated at the frame level, not a
+channel trace; under the last, the design is below its target where the baseline's frame loses
+5\% (Sec.~\ref{sec:loss}). The stream-signing schemes of Table~\ref{tab:stream} are modelled,
+not implemented.
+
+\textbf{Energy.} Only the sender is metered, and only the first format; receiver and radio energy
+are modelled.
+
+\textbf{Security scope.} Confidentiality, availability, key management and protection against a
+delaying attacker are outside the design (Sec.~\ref{sec:model}). With one link per frame,
+continuity inside a frame rests on the frame signature alone.
+
+\textbf{Post-quantum signatures.} An ML-DSA signature is 2420\,B~\cite{ndss2024pqv2v} and exceeds
+the 1500\,B MTU with any header, so it cannot ride in one frame at any batch size; freshness caps
+the batch at four, so it could not be amortised either. A post-quantum variant would be a
+different design, built around fragmentation~\cite{ndss2024pqv2v,sobati2025fragmentsec}.
+
+\textbf{Multi-hop.} Relayed records and more than one collision domain are not evaluated.
 
 \section{Conclusion}
-Authentication overhead dominates tiny UAV telemetry, and the useful question is not how much of it
-a scheme removes but \textbf{which configurations can run at all}. We answered that as three
-boundaries. The first is an \emph{impossibility}: a link whose payload cannot hold one header, one
-signature and one record carries no per-frame-verifiable telemetry at any encoding or batch size,
-excluding four of seven EU868 data rates. The second is \emph{capacity}: above that floor the
-medium binds, and the co-design sustains $1.9$--$3.2\times$ the neighbourhood of an inline baseline
-on an NS-3-validated channel whose airtime we confirmed on hardware to $0.36\%$. The third is what
-running costs: $58.7\%$ fewer on-air bytes at a 3GPP TS~22.125-compliant operating point, meeting a
-criterion committed to version control before the result existed.
-
-We are deliberate about where that result comes from. The authentication component, taken alone,
-reduces to $1-1/b$: the header and signature sizes cancel, and neither the encoding nor the scheme
-appears. Reported as a headline percentage it would overstate what four coupled axes contribute. The
-contribution that genuinely requires the coupling is \emph{feasibility}---which configurations can
-run at all. Joining the byte model to the channel model shows the inline baselines exhaust a single
-collision domain at 25--32 neighbours while the co-designed configuration reaches 103. We resist
-rounding that to ``${\approx}3\times$'': against the CBOR baseline it is $3.22\times$ at saturation
-but $2.42\times$ at the measured verifiability boundary, and quoting one figure for both would
-repeat the error Sec.~\ref{sec:results} warns against. The advantage is robust in existence
-($>1.9\times$ under every threshold and criterion we tested) and variable in size.
-
-Pushed to its limit, the same coupling yields an exclusion result that we regard as the more durable
-contribution. A link whose payload cannot hold one header, one signature and one record carries no
-per-frame-verifiable telemetry at \emph{any} encoding or batch size, which removes the four
-longest-range LoRa modes outright; loss makes fragmentation no escape, since a unit spanning $n$
-frames verifies with probability $(1-p)^n$ and the target is already spent at $n{=}1$ whenever
-$\epsilon \leq p$. It is not escapable by better cryptography, and it is not visible to a byte model
-alone. Capacity, by contrast, turned out to constrain rather than exclude: simulation shows the
-channel still delivering $98.9\%$ of frames at nominal saturation load, so adopting the
-100\,ms bound of 3GPP TS~22.125~\cite{3gpp_ts22125} costs swarm size---$N{\leq}100$ instead of
-$N{\leq}213$---and nothing in bytes, provided the telemetry rate is high enough for the batch to
-fill inside the deadline. An NS-3-validated channel model and an automated
-reproducibility gate keep the study honest and repeatable.
+For small telemetry records the frame, not the record, is the right unit of authentication, and
+what a frame must carry decides where it can be sent. A frame that verifies alone needs a header,
+a chain link, a signature and one self-contained record: \exclCount{} of twelve LoRaWAN data
+rates cannot carry that, at any batch size. Where the frame fits, one signature and one chain
+link per four records cut the bytes per record by \saveLean\% and let one 802.11a collision
+domain carry \nmaxLeanDesign{} neighbours where per-record signing carries \nmaxLeanBase. Two
+constraints shape the design and are easy to get wrong: the batch is capped by freshness, not by
+the MTU, and a frame that depends on its predecessor does not meet a verifiability target equal
+to the loss rate. Batching and header design decide what can run; among 64\,B signatures the
+scheme does not. The capacity figures are simulated and await a contention experiment on
+hardware.
 
 \section*{Data and Code Availability}
-All model-derived results in this paper are reproducible from the public repository at
-\url{https://github.com/besco1998/fanet-authbc}. It contains the source, the frozen raw CSVs with
-environment and configuration-hash headers, the figure generators, and the test suite. A staleness
-gate re-derives all 16 model-derived artifacts byte-identically on every commit and fails if any
-differs; artifacts requiring NS-3 or the two-radio hardware rig cannot be re-derived in that gate
-and are labelled as such rather than counted as reproduced. The NS-3 scenarios, the hardware capture
-scripts and the raw hardware traces are included. Corrections and retractions made during the study
-are recorded in the repository rather than removed.
+Source code, result files with their environment and configuration headers, figure generators,
+simulation scenarios, hardware traces and the test suite are at
+\url{https://github.com/besco1998/fanet-authbc}. Every number in this paper is generated from
+those result files.
 
 \section*{Declaration of Competing Interests}
-The author declares no competing financial interests or personal relationships that could have
-appeared to influence the work reported in this paper.
+The author declares no competing interests.
 
 \section*{Use of Generative AI}
-The experiments, analysis code, figures and manuscript were developed with the assistance of an
-AI coding agent under the author's direction. All results are produced by the committed code from
-the frozen inputs, and every number reported here is regenerated by the reproduction gate described
-above. The author takes full responsibility for the content.
+An AI coding agent assisted with code, analysis and drafting under the author's direction. The
+author reviewed the work and takes responsibility for its content.
 
 \bibliographystyle{IEEEtran}
 \bibliography{refs}
