@@ -58,10 +58,68 @@ type hints; no dead code; comments explain WHY, not what.
 ## Current status board (agent updates this section every session)
 - **NEXT SESSION: read `docs/NEXT_STEPS.md` first** — prioritised work plan, strategy decision, and decisions not to re-litigate.
 - ⚠️ **Repo is PUBLIC and history was REWRITTEN** to purge the 84 MB vendored NS-3 tree. **The remote is authoritative — never force-push an older local branch over it.** Copyrighted PDFs in `docs/literature/` stay by Mohamed's decision (risk accepted, `DECISIONS.md`).
-- **Phase: P8 audit complete. COMMITTED AND PUSHED** to branch `p8-audit-and-corrections`. Work from any machine: `git clone`, `git checkout p8-audit-and-corrections`, `make setup && make all`.
-- **Green:** 1296 fast + **24** frozen-gate tests (**1320**), `ruff` clean, **`mypy` clean (0 / 49 files)**, paper builds (**15 pp**, **46 refs**, 0 undefined, abstract **278 w**). `make all` exit 0.
+- **Phase: P9 — revision after the supervisor's review (2026-10).** Branch `p9-supervisor-revision`, cut from `p8-audit-and-corrections`. Work from any machine: `git clone`, `git checkout p9-supervisor-revision`, `make setup && make all`.
+- ⚠️ **TWO COPIES OF THIS FILE EXIST.** Sessions that start in `~/authbc_package` auto-load `~/authbc_package/CLAUDE.md`, which is an OLD copy. **This file, in the repository, is the status board.** A stale count read from the other one was "corrected" into the thesis on 2026-10-06 and had to be reverted.
+- **Green:** 1825 fast + **34** frozen-gate tests (**1859**), `ruff` clean, **`mypy` clean (0 / 56 files)**, paper builds (**9 pp**, **35 refs**, 0 undefined, abstract **188 w**), methods paper 4 pp, thesis 89 pp (44 refs). `make all` exit 0.
 - **METHODOLOGY (Mohamed):** this is an optimization problem — *state everything, choose what to stick with, state the trade-offs for every decision*. **`docs/TRADEOFFS.md` is required reading before quoting any number.**
 - **LICENSE = all rights reserved** (© 2026 Mohamed A. Farouk). Vendored NS-3 + `signetlabdei/lorawan` stay GPLv2, **not** redistributed.
+
+### ⚠️⚠️ OCTOBER 2026 — THE DESIGN WAS BUILT, AND THREE HEADLINE RESULTS CHANGED. READ THIS FIRST
+
+**Mohamed's supervisor reviewed the paper. Every statement of the review held; behind several of
+them was one cause it did not name: the headline design was a SUM OF SIZES and had never existed
+as a frame** (a record size from one module, a header measured on frames of another encoding, a
+signature length). Findings **F45–F54**; method and wrong turns in the top entry of
+`docs/LOGBOOK.md`; decisions **R1–R18** in `docs/DECISIONS.md`; what is open in
+`docs/OPEN_ITEMS.md` §G.
+
+**What exists now that did not:** a second frame format (`placement/wire_v2.py`, "lean") with a
+sender and a receiver (`session_v2.py`); one definition of a frame (`models/frame.py`) held equal
+to emitted frames by a test; nine experiments on it (E9–E17, `make exp-frames`); a direct ns-3
+capacity search (`make sim-ns3-nmax`); **and no typed results** — `analysis/paper_numbers.py`
+writes every number the paper prints into `paper/numbers.tex` and stops if an artifact no longer
+supports a sentence. ⚠️ The first format (`wire.py`) and every pre-October artifact are untouched
+and bit-identical (D6).
+
+**What it cost — everything below this section that contradicts these is SUPERSEDED:**
+
+| below, you will read | what is true |
+|---|---|
+| total bytes **−58.68 %**, 72.0 B/record | that design verifies **0.881** of its records at p = 0.05, not 0.95 (F46: a delta-coded frame needs its predecessor). With a keyframe in every frame: **74.96 B (−56.98 %)** first format, **43.25 B (−70.33 %)** lean format |
+| "**three** of seven" (or "four") EU868 rates excluded; F44; `wire_profile.py` | **F44 is WITHDRAWN** and the file deleted. **Eight of twelve** EU863-870 data rates cannot carry one self-contained, chained, signed frame — five by the signature alone, three by header + link + signature (F47). Four stated conditions |
+| capacities 31→100, 88→213, ratios "1.9–3.2×" from the ceiling **U = 2.435** | **the ceiling is not N-invariant (F50; a pre-registered ±10 % prediction FAILED).** Capacities are simulated per configuration, 30 seeds, bootstrap interval — quote them from `results/raw/design_ladder.csv`, never from the ceiling |
+| "ratios are protected by construction" | **withdrawn** — the ceiling's error depends on the frame and does not cancel |
+| "Bor et al." | **Haxhibeqiri, Van den Abeele, Moerman & Hoebeke** (F49). Renamed everywhere |
+
+### The headline numbers, current (2026-10)
+- **43.25 B/record** against 145.77 B for a signature on every record: **−70.33 %** (lean format, emitted frames). First format: 74.96 against 174.25, −56.98 %.
+- **Capacity at V ≥ 0.95, ns-3 direct search, 30 seeds, bootstrap interval** (`design_ladder.csv`):
+
+  | | per-record signing | design | ratio |
+  |---|---|---|---|
+  | adopted (50 rec/s, 100 ms), lean | 35 [35, 35] | **124** [124, 125] | 3.5× |
+  | adopted, first format | 32 [32, 32] | 88 [88, 89] | 2.8× |
+  | relaxed (20 rec/s, 250 ms), lean | 85 [85, 86] | 306 [306, 308] | 3.6× |
+  | relaxed, first format | 78 [77, 78] | 219 [215, 221] | 2.8× |
+
+  Ladder at the adopted point: first 32 → 56 → 76 → 88; lean 35 → 76 → 108 → 124. ⚠️ **The ratio depends on the FORMAT and hardly on the operating point** — quote it with the format; "1.9–3.2×" is dead. ⚠️ Never quote a capacity for a rung that was not simulated; the artifact leaves those cells empty on purpose.
+- **A closed form that passed a held-out test (F54):** N_max ≈ 0.05 / (f·(a·T + c)), f = Λ/b frames/s, T = airtime + DIFS, **a = 0.0710, c = 8 µs**. Seven configurations it was not fitted to, predicted before they were simulated, all within **3.4 %** (tolerance 6 %). ⚠️ **A fit, with a narrow domain** — 5 % loss level only, 802.11a 6 Mb/s, 5–50 frames/s, ns-3; residuals ordered by frame rate. **Never quote it as a capacity; quote the simulated value.**
+- **Exclusion: eight of twelve** EU863-870 data rates, with its four conditions. ⚠️ Never without the conditions; never "no cryptography helps" (a 48 B signature fits 51 B; a 13 B tag fits 115 B).
+- **Receiver CPU:** one Pi 4 core verifies **296** neighbours (Ed25519, one signature per frame), **77** (a signature per record), **10** (BLS).
+- ⚠️ **At equal BIT error rate the design is BELOW its V target at the 5 % point (0.943)** — a batch is a longer frame. Stated in the paper; every comparison is at equal *frame* loss.
+- **Real telemetry (12 public PX4 logs):** delta 11.06 B vs the generator's 10.83 at 0.2 s. ⚠️ Logs are 5 Hz; nothing is tested at 50 Hz.
+- **The one-line message:** *batching and header design decide what can run; among standard 64 B elliptic-curve signatures the scheme does not change it.* ⚠️ Not "no signature scheme changes that".
+
+### ⚠️ THE PATTERN of October — three classes seeds, audits and tests could not catch
+- **C7 — a composite that was never built.** Each part was right, so re-deriving any number reproduced it. **What composes facts is building the thing they describe and making it run.**
+- **C8 — a simulated source more regular than any real one.** Strictly periodic senders freeze their phases; ns-3 raises carrier sense only after a 4 µs preamble-detection period. In the worst run 4 of 29 nodes deliver nothing and 22 lose nothing. **All capacities use a send time redrawn each period** (`nmax_source: period`). ⚠️ The two sources differ by **+0.003** in mean delivery (≈ 2 standard errors) — inside the registered tolerance, not zero, not explained (G6).
+- **C9 — a source taken on trust.** A wrong author list for two months; a survey quoted in the methods paper that was never held. `make verify-citations` now compares every entry with its registry record.
+- ⚠️ **AN EXPLANATION IS A CLAIM.** On 2026-10-06 I explained a result away ("the seeds share phase draws across cells") from reading code, committed it, and it was false — one correlation on data already on disk refuted it. Check explanations like numbers.
+- ⚠️ **A `pgrep -f pattern` WAITER MUST NOT MATCH ITSELF** — use `'[p]attern'`. One sat four hours after the campaign it was watching had finished (docs/06 §10).
+- ⚠️ **CHECK THE PLAN AGAINST THE DELIVERABLE, ROW BY ROW.** The first rewrite of the paper silently departed from the approved plan (a new title; the exclusion after the 802.11 results) and left two approved items undone. No test could see that.
+
+### Decisions PENDING from Mohamed (do not settle these yourself)
+G1 the wording of the name ("authenticated telemetry for a blockchain-style, hash-chained ledger") · G1b the paper's title (the August one, less "Hardware Validation"; a design-first alternative is recorded) · **R17** venue and page target · **R18** whether the analysis of the review goes in this public repo (**it stays in `~/authbc_package/docs/` until decided, with the point-by-point response**) · G5 one chain link per frame on 802.11 as well as LoRa · the methods paper's new title ("Nine Ways…") · twelve PDFs added to `docs/literature/`.
 
 ### Hardware 802.11 channel validation — DONE 2026-08-05 (F35), the 802.11 arm is no longer simulation-only
 - Two-Pi ad-hoc IBSS, **5 GHz ch 36**: broadcast **link loss p = 2.3 × 10⁻⁴** (99.9773 % pooled, 8 windows, σ = 0.024 pp, 0 duplicates) and **airtime 1.995 ms/frame vs 1.99 ms predicted** — an independent check on the 802.11a timing constants under Bianchi and Ma & Chen.
@@ -159,7 +217,7 @@ decides a headline and was never written down — defect class **C2**, the one c
   (all three implementations agree — real physics); the search is safe only because U(n)'s explicit
   factor n outruns it. **Safe by arithmetic, not by construction** — now guarded.
 
-### The headline numbers, current
+### The headline numbers as of AUGUST 2026 — ⚠️ SUPERSEDED, see the October section at the top
 - **Total on-air bytes −58.68 %**, as a **decomposition** (placement×batching 79.2 %, encoding 20.8 %, scheme byte-neutral). ⚠️ **Never quote the bare 75 %** — it is algebraically **1 − 1/b**.
 - **Adopted operating point: Λ=50 Hz, D_max=100 ms** (PX4 `MAVLINK_MODE_ONBOARD`, TS 22.125 compliant). Capacity **18→35** (U<1), **31→100** (V≥0.95). Relaxed (20 Hz/250 ms): 25/32→**103**, 55/88→**213**.
 - ⚠️ **Do NOT say "≈3× holds across readings"** — the four combinations are **1.94× / 3.23× / 3.22× / 2.42×**. Quote the **range 1.9–3.2×**. (Recomputed 2026-08-07 from `capacity_envelope.csv`: Λ=50 U<1 18→35, V 31→100; Λ=20 U<1 32→103, V 88→213. The board previously said 2.24/3.31 and "1.9–3.3×" — both wrong; guarded now by `test_abstract_ratio_range_matches_artifact`.)
@@ -182,7 +240,7 @@ decides a headline and was never written down — defect class **C2**, the one c
 > ⚠️ **F18 came back.** On 2026-08-07 it was found still printed in `tab:lora-external` ("we are more optimistic" at N=5) — 100 lines below a bold sentence saying the opposite. **Retracting a finding in the register does not remove it from the paper.** When you retract, grep the paper. Guarded now by `test_no_row_revives_the_retracted_optimism_claim`, which checks the *artifact* rather than the wording.
 
 ### Where things live
-`docs/README.md` is the index. Findings **F1–F44** in `docs/audits/model_provenance.md`. Open items **only** in `docs/OPEN_ITEMS.md`. Trade-offs in `docs/TRADEOFFS.md`. Method and failed attempts in `docs/LOGBOOK.md`. **50 PDFs** in `docs/literature/` with each source's ROLE stated; `A3_CITATION_VERIFICATION.md` records how every citation was checked (Crossref by DOI).
+`docs/README.md` is the index. Findings **F1–F54** in `docs/audits/model_provenance.md`. Open items **only** in `docs/OPEN_ITEMS.md`. Trade-offs in `docs/TRADEOFFS.md`. Method and failed attempts in `docs/LOGBOOK.md`. **62 PDFs** in `docs/literature/` with each source's ROLE stated; every bibliography entry is checked against its registry record by `make verify-citations` (`A3_CITATION_VERIFICATION.md` is the August record of a check that turned out not to compare authors — F49).
 
 ### Deferred by Mohamed — plans written, DO NOT START unprompted
 - **Mobility (E20)** — `docs/MOBILITY_PLAN.md`. **Separate NEW scenario files**, literature survey first. Not for the 802.11 arm (Bianchi/Ma&Chen have no position term).

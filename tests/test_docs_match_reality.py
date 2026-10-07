@@ -284,3 +284,102 @@ class TestSpecDocsMatchArtifacts:
         assert not re.search(r"wget\s+\S*ns-allinone-3\.41", kb), (
             "docs/06 still instructs a fresh machine to build ns-3.41; D4 was amended to 3.48"
         )
+
+
+class TestDocs02OctoberSectionsMatchTheirArtifacts:
+    """docs/02 §6c, §6f and the T3′ length note each print a table or a figure from an artifact.
+
+    Added with the sections (2026-10-06), because every earlier table in that document was found
+    stale at least once and none had a guard when it was written.
+    """
+
+    DOC = (REPO / "docs" / "02_MATHEMATICAL_FOUNDATIONS.md").read_text()
+
+    def _row(self, label: str) -> list[str]:
+        (line,) = [ln for ln in self.DOC.splitlines() if ln.startswith(f"| {label}")]
+        return [c.strip().replace("*", "") for c in line.strip().strip("|").split("|")]
+
+    def test_the_stream_signing_table_is_the_artifact(self):
+        rows = {r["scheme"]: r for r in _rows("stream_baselines.csv")}
+        labels = {"mavlink2": "MAVLink 2 signing", "tesla": "TESLA (", "emss": "EMSS (",
+                  "gennaro-rohatgi": "Gennaro–Rohatgi 1997", "wong-lam-tree": "Wong–Lam tree",
+                  "per-record signature": "a signature on every record",
+                  "authbc": "**this design**"}
+        for scheme, label in labels.items():
+            cells = self._row(label)
+            assert float(cells[2]) == float(rows[scheme]["frames_per_s"]), scheme
+            assert abs(float(cells[3]) - float(rows[scheme]["bytes_per_rec"])) <= 0.05, scheme
+            assert cells[4] == rows[scheme]["n_sat"], scheme
+
+    def test_the_receiver_cpu_table_is_the_ladder(self):
+        ladder = [r for r in _rows("design_ladder.csv") if r["op"] == "adopted"]
+
+        def n_cpu(rung: str, scheme: str) -> str:
+            return next(r["n_cpu_one_core"] for r in ladder
+                        if (r["format"], r["rung"], r["scheme"]) == ("lean", rung, scheme))
+
+        assert self._row("Ed25519, one signature per frame")[1] == n_cpu("batch-delta", "ed25519")
+        assert self._row("Ed25519, a signature on every record")[1] == n_cpu("inline-1", "ed25519")
+        assert self._row("ECDSA P-256, one signature per frame")[1] == \
+            n_cpu("batch-delta", "ecdsa_p256")
+        assert self._row("BLS (96 B")[1] == n_cpu("batch-delta", "bls")
+
+    def test_the_length_note_quotes_the_measured_row(self):
+        (row,) = [r for r in _rows("e3_codec_loss.csv")
+                  if (r["loss_model"], r["p"], r["ref_interval"]) == ("ber", "0.05", "1")]
+        assert f"**{float(row['p_frame']):.4f}**" in self.DOC
+        assert f"**V = {float(row['V_theory']):.4f}**" in self.DOC
+        assert f"measured {float(row['V_meas']):.3f}" in self.DOC
+        assert row["meets_target"] == "0" and "below the" in self.DOC
+
+
+class TestTheFrontPageMatchesTheArtifacts:
+    """The repository README is what a visitor reads first, and it went stale twice: it quoted a
+    LoRa capacity two corrections old, and a byte saving for a design that had not been built."""
+
+    README = (REPO / "README.md").read_text()
+
+    def _ladder(self, fmt: str, rung: str) -> dict[str, str]:
+        (row,) = [r for r in _rows("design_ladder.csv")
+                  if (r["op"], r["format"], r["rung"], r["scheme"])
+                  == ("adopted", fmt, rung, "ed25519")]
+        return row
+
+    def test_bytes_per_record_and_the_saving(self):
+        base, design = self._ladder("lean", "inline-1"), self._ladder("lean", "batch-delta")
+        from decimal import ROUND_HALF_UP, Decimal
+
+        def two(v: str) -> str:      # half up, as the paper's generator rounds: 145.765 -> 145.77
+            return str(Decimal(v).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))
+
+        b, d = float(base["bytes_per_rec"]), float(design["bytes_per_rec"])
+        assert f"**{two(design['bytes_per_rec'])} B** against {two(base['bytes_per_rec'])} B" \
+            in self.README
+        assert f"**{100 * (1 - d / b):.1f} % fewer**" in self.README
+
+    def test_the_two_capacities_and_their_intervals(self):
+        base, design = self._ladder("lean", "inline-1"), self._ladder("lean", "batch-delta")
+        for r in (base, design):
+            assert f"**{r['n_max_v95']}** [{r['n_max_v95_ci_lo']}, {r['n_max_v95_ci_hi']}]" \
+                in self.README
+
+    def test_the_exclusion_count(self):
+        rates = {r["dr"]: r["verdict"] for r in _rows("exclusion_matrix.csv")
+                 if r["design"] == "lean" and r["auth_bytes"] == "64"}
+        excluded = sum(v == "excluded" for v in rates.values())
+        assert (len(rates), excluded) == (12, 8)
+        assert "eight of the twelve" in self.README
+
+    def test_the_dependent_frame_and_the_cpu_figures(self):
+        (row,) = [r for r in _rows("e3_codec_loss.csv")
+                  if (r["loss_model"], r["p"], r["ref_interval"]) == ("iid", "0.05", "4")]
+        assert f"**{float(row['V_theory']):.3f}**" in self.README
+        design = self._ladder("lean", "batch-delta")
+        assert f"verifies {design['n_cpu_one_core']} neighbours" in self.README
+
+    def test_no_superseded_headline_is_stated_as_current(self):
+        live = _live_prose(self.README)
+        current = live[:live.index("This page said something else")] \
+            + live[live.index("## Status"):]
+        for stale in ("58.68", "N ≤ 5", "2500×", "four longest-range", "≈3×"):
+            assert stale not in current, stale

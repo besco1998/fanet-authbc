@@ -2626,12 +2626,12 @@ them; only re-derivation does."* Re-derivation was not enough either. What compo
 V ≥ 0.95 at the p = 0.05 it is specified for.
 
 **What is true.** The published design keyframes every K = 16 records and batches b = 4, so only
-one frame in R = 4 decodes without its predecessor. A lost frame takes every later frame with it
-until the next self-contained one. With R the number of frames per self-contained frame:
+one frame in r = 4 decodes without its predecessor. A lost frame takes every later frame with it
+until the next self-contained one. With r the number of frames per self-contained frame:
 
-    V = (1/R) · Σ_{j=1..R} (1 − p)^j
+    V = (1/r) · Σ_{j=1..r} (1 − p)^j
 
-At R = 4, p = 0.05: **V = 0.8811**, not 0.95. The byte model had amortised a keyframe over frames
+At r = 4, p = 0.05: **V = 0.8811**, not 0.95. The byte model had amortised a keyframe over frames
 that the verifiability model treated as independent. The two models had never met in one object.
 
 **Measured with the decoder in the loop** (`results/raw/e3_codec_loss.csv`: 30 seeds × 240 frames
@@ -2644,13 +2644,13 @@ per cell through `LeanSender` → loss → `LeanReceiver`):
 | 4 (as published) | 0.8764 [0.8635, 0.8894] | 0.8811 | 40.44 |
 | 16 | 0.6546 [0.6185, 0.6904] | 0.6649 | 39.73 |
 
-Only R = 1 meets the target at p = 0.05. A cleaner link admits a longer interval — by the
-closed form R = 4 at p = 0.02 (V = 0.951, barely) and R = 8 at p = 0.01 — but **the whole prize is
-3.5 B per record** (43.25 → 39.73), so the design simply uses R = 1: every frame carries a
+Only r = 1 meets the target at p = 0.05. A cleaner link admits a longer interval — by the
+closed form r = 4 at p = 0.02 (V = 0.951, barely) and r = 8 at p = 0.01 — but **the whole prize is
+3.5 B per record** (43.25 → 39.73), so the design simply uses r = 1: every frame carries a
 keyframe and decodes alone.
 
 Burst loss (Gilbert, mean burst four frames, same mean loss) costs a dependent design *less* —
-0.929 at R = 4 against 0.876 — because losses that arrive together waste fewer good frames. It
+0.929 at r = 4 against 0.876 — because losses that arrive together waste fewer good frames. It
 never rescues it. The closed form for the burst case was cross-checked against an independent
 three-million-frame simulation.
 
@@ -2787,3 +2787,196 @@ in a check that runs, not in prose.
 
 ⚠️ F18's lesson was *"quoting the PDF is not enough: quote the figure."* This one is narrower and
 more embarrassing: **check the title page.**
+
+## F50 — the load ceiling U = 2.435 is not N-invariant; a pre-registered prediction failed (2026-10-06)
+
+**What was claimed.** Every "N_max at V ≥ 0.95" on the 802.11 arm — 31, 100, 55/88, 213, and the
+1.9–3.3× range built on them — was `n_max(…, u_ceiling = 2.435)`: one utilisation ceiling,
+measured in ns-3 at **N = 50 with a 288 B frame** (D3), applied to every configuration. The
+status board called the ratios "protected by construction". Nothing had ever simulated a
+configuration at its own claimed capacity.
+
+**What was done.** `docs/NMAX_DIRECT_EXPECTATIONS.md` was committed data-free (`6f82599`) with the
+prediction that a direct search would land within ±10 % of the ceiling's figure in each of six
+cells. 1080 runs later it **failed**: the lean design crosses at 109 on the grid (118.3
+interpolated) against 142 — −23.2 % / −16.7 %, the whole interval below the band — while the
+long-frame cell E crosses *above* its figure (+8.2 % / +11.7 %). The utilisation at the simulated
+crossing ranges over U\* = 1.98–2.61. The signs differ, so this is not a constant to re-tune.
+
+**Consequences.** (1) A V ≥ 0.95 capacity is now a simulated quantity, per configuration, with a
+bootstrap interval (docs/02 §6e); the ceiling's figure survives only in the column
+`n_max_load_ceiling`, beside its error. (2) Every capacity and ratio on the status board that
+came from the ceiling is superseded by `design_ladder.csv`; the paper's and thesis's are
+generated from it. (3) A configuration that was not simulated has no V ≥ 0.95 capacity anywhere.
+
+**Three defects in the measurement itself**, each found before a number was quoted, are in the
+outcome section of that document: the driver printed the bootstrap median as the estimate; the
+interpolated crossing was added after the data; the power estimate was optimistic.
+
+⚠️ **Defect class C5** (a claim wider than its experiment): a ceiling measured at one (N, frame)
+applied at all. It is the same error as E8's "U is a feasibility boundary", one level up — and
+T7's withdrawal, F12 and the D3 note on E8 had each walked past it.
+
+## F51 — strictly periodic senders freeze their phases on 802.11 too: the spread is an artifact; the mean moves by under 0.005 (2026-10-06)
+
+**Observed.** In stage 1 of F50 the per-run criterion failed at *every* node count: even well
+below the crossing, two to five of 30 runs delivered under 0.95. Per-node data
+(`ns3/run_phase_lock_diagnostic.py`, `ns3_phase_lock_diagnostic.csv`, 580 rows) show why: in the
+worst seed at N = 29, **four nodes deliver nothing and 22 lose nothing**.
+
+**Mechanism.** `authbc-delay.cc`'s default OnOff sources are strictly periodic with a random
+start, so relative phases are fixed for a run. ns-3.48 raises CCA-busy only at the **end of a
+4 µs preamble-detection period**; two nodes whose phases fall within it never hear each other
+start, and collide in every period. A run is one phase configuration, not a sample of the
+channel. This is the 802.11 counterpart of the LoRaWAN frozen-phase artifact (F42), softened by
+carrier sense and not removed by it.
+
+**Tested, with predictions registered before each run** (follow-ups F1 and F1b in
+`docs/NMAX_DIRECT_EXPECTATIONS.md`; new scenario options `--txJitterMs`, `--txSkewPpm`,
+`--perNode`; the published path is bit-identical with all three at zero):
+
+| prediction | outcome |
+|---|---|
+| the source does not change the **mean** delivery | **holds** — every \|z\| < 2.5, mean difference +0.0027 |
+| a 1 ms send jitter at least halves the per-run spread | **fails** — ratios 0.33 / 0.60 / 0.67 / 0.45 |
+| a ±5000 ppm rate offset brings the spread under 0.004 | **fails** — 0.0052 / 0.0040 / 0.0029 / 0.0057 |
+| the offset source and the redraw-every-period source agree in the mean | **holds** — within 0.0011 |
+| per-node: no node silent, none loss-free, once phases move | **holds** (both) |
+
+Redrawing the send time within every period brings the per-run sd to 0.05–0.11 of the frozen
+value. By the rule registered in F1b, **every reported capacity uses that source**
+(`nmax_source: period`). The two failures are recorded as failures; the residual spread of the
+rate-offset source is unexplained and is an open item.
+
+⚠️ **"Holds" in the first row means "within the tolerance registered", not "zero".** With all six
+cells run under both sources: mean delivery is **+0.0031** higher with redrawn phases over 14
+common points (10 positive, none beyond 1.81 standard errors), and all six interpolated crossings
+are higher, by 1–9 %. The points are close to independent — per-seed delivery is uncorrelated
+between node counts (mean correlation +0.01 over 30 pairs), because ns-3 assigns random streams
+in creation order — so the average has a standard error of 0.0014: **about two standard errors.
+Weak evidence of a real difference, not established.** Stated in the paper as a measured
+difference, not as "the same mean"; more strictly periodic runs would decide it (`OPEN_ITEMS`
+G6).
+
+⚠️ **A wrong explanation was written first, and committed** (`fad28e0`): that the 30 seeds are
+the same 30 phase draws in every cell, so the common sign was one sample agreeing with itself.
+That was inferred from reading the scenario and is false — the draws are shared only between
+cells at the *same* node count (A and C at N = 31 correlate at 0.98). Corrected in the
+pre-registration document with the wrong paragraph left visible. It is defect class C2 in
+miniature: a mechanism asserted from the code and not checked against the data that was already
+on disk.
+
+⚠️ **Defect class C8** (a simulated source more regular than any real one; classes as numbered in
+`paper/methods.tex`). Seeds do not remove
+it — each seed is one more frozen configuration — and averaged over 30 seeds it reads as noise
+about a mean. **Scope of the damage:** the saturation validation (F30: unicast and broadcast
+goodput) is unaffected, because a saturated sender has no period. The D3 delay sweep and its
+U = 2.435 crossing did use the strictly periodic source: by the first row above its mean is not
+biased, but its seed-to-seed spread includes this artifact.
+
+## F52 — record sizes checked against twelve public PX4 flight logs (2026-10-06)
+
+Every record size in the project comes from a synthetic generator (`bench/telemetry.py`). A
+reviewer asked whether real telemetry compresses the same way. `docs/PX4_LOGS_EXPECTATIONS.md`
+fixes the selection rule and the prediction, committed data-free (`e4e3cdf`); the logs are pinned
+by SHA-256 in `experiments/px4-logs/manifest.yaml`.
+
+| | real (12 logs, 29 092 records) | generator, same spacing |
+|---|---|---|
+| delta record at 0.2 s | **11.06 B** (10.00–13.21 across logs) | 10.83 B |
+| keyframe | 21.98 B | 24.0 B |
+| saving of the design over per-record signing | **69.08 %** | 69.38 % |
+
+**The load-bearing prediction holds** (delta ≤ 13 B, saving ≥ 68 %). One range prediction
+**missed**: keyframe 21.98 B against a predicted 22–25.
+
+⚠️ **Three limits, all stated in the paper.** (i) The public logs carry position at **5 Hz**, so
+the prediction was amended — before any size was computed (`c2080fd`) — to 0.2 s; the delta
+record at the 20 ms of the adopted point is **untested** against real data and lies between the
+9 B floor of the format and the 0.2 s value. (ii) The mean flatters a fast swarm: five of six
+multicopter logs are mostly hover; fixed wings need up to 13.2 B (saving 68.2 %). (iii) One
+autopilot's public archive, default logging profile.
+
+## F53 — eight small defects found while building the above (2026-10-06)
+
+1. **`e3_loss.csv` reports a mean with the bootstrap interval of the median.** `run_e3` takes
+   `mean(V by seed)` and calls `bootstrap_ci`, whose default statistic is the median. Checked
+   against the frozen artifact: the interval contains the reported mean in **all 120 rows** (the
+   mean sits up to 0.78 half-widths from its centre), and no paper or thesis number reads those
+   interval columns. **Left unchanged** — the artifact is frozen (D6) and no conclusion moves —
+   and recorded here so the columns are not quoted as the interval of the mean. The new loss
+   experiment (E10, `e3_codec_loss.csv`) passes `statistic=np.mean` and adds `V_se`.
+2. **Two rows of the header-size table were wrong** in docs/01 and in a `framer.py` comment: H_f
+   for 24/24-bit and 256/256-value fields is **40 B and 42 B**, not 39 and 40. The endpoints
+   (38, 44) were right, so F43b's range stands. Now derived by `frame.first_header_fields` and
+   held by a test.
+3. **The ns-3 scenario was rebuilt** (system headers had changed; all 1007 translation units
+   recompiled). Eight stored runs reproduce exactly with the old and the new binary. The
+   LoRaWAN library was rebuilt in the same pass; `run_lora_capacity.py` re-run at N = 2, 3 and 5
+   (90 runs) reproduces the stored rows of `lora_capacity.csv` in every cell.
+4. **A symbol was used twice:** R for the PHY rate and for the keyframe interval. The interval is
+   now r everywhere (paper, thesis, docs/02, F46).
+5. **The Semtech datasheet cited is not the revision the constants name.** `models/lora.py` says
+   its constants were transcribed from Rev. 7 (May 2020); the copy held, and the one the
+   bibliography cites, is Rev. 4 (March 2015). Checked value by value against the held copy: the
+   symbol-rate and time-on-air formulas and all seven sensitivity figures the model uses are
+   identical. No number moves. Recorded at the definition and in the literature register.
+6. **The methods paper quoted a survey that was never held** (Kurkowski et al. 2005): its years
+   given as 2000–2004 (the publisher's abstract says 2000–2005), a "fewer than 15 %" figure
+   attributed to "follow-up work" (the held follow-up, Cavalcanti et al. 2018, attributes it to
+   Kurkowski et al. themselves), and "none of 84 papers referenced public code", which nothing
+   held supports. Rewritten to what Cavalcanti et al. report, with that attribution. The PDF is
+   still not held — open item G8. This is F49's class in the document written to describe it.
+7. **"LoRaWAN Class A devices are required to randomise transmission timing" had no source** —
+   in the thesis, in F28's text, and in three scenario comments. It is true, and now cited:
+   TS001-1.0.4 (held) lists as a transmission rule that an end-device "pseudo-randomly changes its
+   transmit periodicity to prevent systematic synchronization of populations of end-device
+   transmissions". The standard names the artifact F28, F42 and F51 measured.
+8. **`models/broadcast_dcf.py` still quoted "all agree to ≤ 0.36 %"**, the figure docs/02 had
+   corrected on 2026-07-29 (idle slots reach 0.75 % on ns-3.41; the current bound is ±0.51 % on
+   goodput at 30 seeds). A correction that never reached a docstring: class C6.
+
+## F54 — a line in airtime predicts the V ≥ 0.95 capacity of configurations it was not fitted to (2026-10-07)
+
+**The question F50 left.** One utilisation ceiling does not give the capacity of every
+configuration. Is there any closed form that does, or only a table of simulated values?
+
+**The hypothesis**, found by looking at the six stage-1 crossings and therefore treated as a
+hypothesis: at the 5 % level, loss is a line in airtime,
+
+    0.05 = N·f·(a·T + c)        f = Λ/b frames per second per node,  T = airtime + DIFS,
+                                 c = 8 µs fixed (twice ns-3's preamble-detection period)
+
+with one fitted constant a. N·f·T is the fraction of time the neighbourhood's frames occupy the
+medium; c·N·f is the chance that another frame starts inside the window in which a station cannot
+yet hear it.
+
+**The test** (follow-up F2 in `docs/NMAX_DIRECT_EXPECTATIONS.md`). Seven configurations that had
+not been simulated were named; the line's value for each was written down with a tolerance of
+±6 %, and a second condition — closer to the line than to the single ceiling in the five cells
+where the two differ by more than a tenth; both were committed before any of the seven was run
+(`47ebbbb`, amended in `2b58082`, recalibrated predictions in `fad28e0`). a = 0.0710 is the mean of
+the six calibration cells' slopes.
+
+**Outcome: it holds** (`ebd316c`). Simulated against predicted: G −2.7 %, H −1.3 %, I −2.3 %,
+RA +0.3 %, RB −3.4 %, RC +0.7 %, RD −1.4 %; the single ceiling misses the same seven by −3.5 to
+−15.3 % and +5.7 to +14.5 %. It holds equally with the slope as first registered (0.0749; all
+within 4.7 %), so it does not rest on the recalibration.
+
+**What it licenses.** The paper may state the line as the closed form for this threshold, with
+its domain, in place of the ceiling. It may not quote the line *as* a capacity: every N_max in
+the tables is a simulated value (`design_ladder.csv`).
+
+⚠️ **What it does not.** (i) The residuals are ordered by frame rate — +3.6 % at 50 /s, +0.5 %
+at 20 /s, −2.0 % at 12.5 /s, −2.4 % at 5 /s — so the slope is not quite constant and the line
+must not be extrapolated beyond 5–50 frames/s. That pattern was written down before the test.
+(ii) One loss level: loss is convex in load. (iii) One PHY rate, one collision domain. (iv) A fit
+to a simulator; c is ns-3's detection latency, not a radio's. (v) A slope of 0.071 is close to
+1/W₀ = 0.0625, the chance that two deferring stations draw the same backoff slot. That is an
+observation and **not** a derivation; it is recorded here so that nobody presents it as one
+without doing the work.
+
+This is the third pre-registered prediction of the capacity study to be scored, and the first to
+hold. The two that failed (the ±10 % of F50, and two spread predictions of F51) are what made
+this one worth testing properly.
+

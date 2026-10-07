@@ -102,3 +102,40 @@ Suspiciously perfect model fits (<1% everywhere) · CI widths ~0 · throughput a
 theoretical PHY bound · verify faster than sign for the same scheme · byte counts that
 change between identical seeded runs · any KAT/determinism failure · any urge to widen a
 tolerance to make a test pass.
+· a design that exists only as a sum of sizes measured separately · an explanation of a result
+that was not itself checked against the data.
+
+## 10. Long simulation campaigns — facts learned the hard way (2026-10)
+
+- **A background task started through the agent harness dies when the session ends.** Two
+  campaigns were killed that way, one at 300 of 1140 runs. Launch anything longer than a few
+  minutes detached — `nohup setsid … > log 2>&1 < /dev/null &` — and wait on it with a separate
+  `until ! pgrep -f <pattern>; do sleep 20; done`. The driver is resumable, so a kill costs at
+  most the last checkpoint (30 runs).
+  ⚠️ **Write the pattern so it cannot match the waiter's own command line** — `'[p]lan.txt'`,
+  not `'plan.txt'`. A waiter that greps for a string its own shell command contains finds itself
+  and never returns; one such loop sat for four hours after the campaign had finished.
+- **`pre-commit` stashes unstaged changes while its hooks run, then restores them.** A simulation
+  writing a tracked CSV at that moment has its file reverted under it. Before a long run:
+  `git update-index --skip-worktree` on the files it writes; `--no-skip-worktree` before
+  committing them. One process, one writer: give the driver a plan file, never run two drivers on
+  one runs file.
+- **`ns3/run_nmax_direct.py` summarises a node count only when it has exactly `--seeds` runs.**
+  Adding seeds 31–90 to a point already holding 1–30 silently drops it from the summary. Extra
+  seeds need their own runs file.
+- **ns-3 assigns random streams in creation order.** A sender's start offset therefore depends on
+  how many objects were created before it — on N — and not on the cell: runs at different N with
+  the same seed are independent draws; two configurations at the *same* N share them (measured:
+  correlation 0.98). This is the F37 lesson again, and it was misread once more on 2026-10-06.
+- **`./ns3 build` after a system-header update recompiles every translation unit** (1007 of
+  them); with ccache it takes minutes. It changes no result — check with
+  `run_nmax_direct.py --verify` and by re-running a few stored runs.
+- **Throughput on this host** (i5-14400F, 16 threads): 14 workers give about 10–12 runs a minute
+  at N ≈ 80 and 12.5 frames/s; a run at N = 270 takes about 90 s on its own.
+- **PDF text:** `pdftotext` is not installed; `pymupdf` is, in the venv
+  (`import pymupdf; pymupdf.open(path)[i].get_text()`).
+
+## 11. Where the failure report went
+§7's template names `docs/failures/`. That directory is **retired**: a failure is recorded as a
+finding in `docs/audits/model_provenance.md` (what is true now) and as an entry in
+`docs/LOGBOOK.md` (how it was found, and what was tried). The fields of §7 still apply.

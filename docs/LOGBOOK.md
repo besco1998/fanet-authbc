@@ -12,6 +12,141 @@ where the durable record lives. If you want the conclusion only, follow the poin
 
 ---
 
+# 2026-10-06 — an outside reader: the design had never been built
+
+*Mohamed's supervisor reviewed the paper. Mohamed: "understand and analyse it deeply … plan how to
+fix these comments", then "re-read and re-audit the comments and don't skip any tiny detail",
+then "think deeper while fixing, do the recommended decision, and double-check everything after
+editing or running".*
+
+## What the review found that two audits had not
+
+Not a wrong number. **A missing object.** The configuration every result headlined — delta
+records, one signature per four — was a *sum*: a record size from one module, a header measured
+on frames of a different encoding, a signature length. No frame carrying delta records had ever
+been encoded, sent or decoded, and the receiver that would decode one did not exist. Each part was
+right, so re-deriving any number reproduced it — which is exactly what the August audits did.
+
+Four errors followed from that one (F45–F48), and a fifth was unrelated (F49, a paper cited for
+two months under another paper's authors).
+
+## Method: build it, then recompute everything from the one definition
+
+1. **A second frame format, `wire_v2` ("lean")**, with a sender and a receiver
+   (`placement/session_v2.py`): integer keys, one chain link per frame, a keyframe then deltas.
+   The first format is untouched and its artifacts are bit-identical (D6).
+2. **One definition of a frame** (`models/frame.py`), whose arithmetic a test holds equal to the
+   frames the code emits. Bytes, loss and exclusion are all computed from it.
+3. **Nine experiments on that object** (E9–E17, `make exp-frames`), all in the frozen gate.
+4. **No typed results.** `analysis/paper_numbers.py` writes every number the paper and the
+   corrected thesis chapters print, from the artifacts, and refuses to run if an artifact stops
+   supporting a sentence ("eight of twelve", "does not meet the target").
+5. **The paper was rewritten** around the frame, not patched. Retraction history moved to the
+   methods paper and thesis ch. 11 (decision R12); the low-rate section became the exclusion
+   matrix and one paragraph, the rest moving to thesis ch. 10 (R11).
+
+## What it cost
+
+* **The design misses its own target as published.** One keyframe per four frames at p = 0.05
+  verifies 0.881 of records, not 0.95 (T3′). Fixed by a keyframe in every frame: +3 B per record
+  in the first format.
+* **"Three of seven" excluded data rates is withdrawn** — and so is F44, the August finding that
+  produced it. With the chain link and a record that decodes alone charged, over the twelve rates
+  the standard defines, **eight** cannot carry one frame.
+* **The LoRa batch was sized with a record measured at the wrong time scale** (50 ms spacing used
+  at 5.5 s): five records per frame in the first format, not seven.
+* **Every 802.11 capacity changed**, because the review asked for confidence intervals and
+  producing them meant simulating each configuration (below).
+
+## The capacity search — a prediction that failed, and what chasing it found
+
+Pre-registered data-free (`6f82599`): direct simulation would agree with the single load ceiling
+U = 2.435 within ±10 %. **It did not** (−23 % for the lean design, +8 % for the long-frame cell).
+The ceiling was measured at one N with one frame and is not invariant (F50).
+
+The per-run spread then looked wrong: at node counts well under the crossing, a few runs in
+thirty fell below 0.95. Per-node output showed why — in the worst run four nodes delivered
+nothing and 22 lost nothing. Strictly periodic senders keep their phases; the simulator raises
+carrier sense only after a 4 µs preamble-detection period; a pair inside that window collides
+every period (F51).
+
+**Tried, each registered before it was run:**
+
+| follow-up | prediction | outcome |
+|---|---|---|
+| F1 | the source moves the mean by under 0.005 | **held** — and later data put the difference at +0.003, of one sign in all six cells; see below |
+| F1 | 1 ms of send jitter halves the per-run spread | **failed** |
+| F1b | a ±5000 ppm rate offset brings the spread under 0.004 | **failed** |
+| F1b | the offset source and the redraw-every-period source agree in the mean | **held** |
+
+By the rule F1b registered, every reported capacity uses a send time redrawn within each period.
+
+**A wrong explanation, written down and committed before it was checked.** When all six cells
+had been run under both sources, every crossing was higher with redrawn phases. I explained the
+common sign away: seed *s*, I wrote, draws the same start offsets in every cell, so the thirty
+strictly periodic runs are one sample six times over. That came from reading the scenario. The
+runs file was on disk; one correlation would have tested it. It was false — per-seed delivery is
+uncorrelated between node counts, because ns-3 assigns random streams in creation order — and it
+went into the pre-registration document, a commit message (`fad28e0`), the findings register and
+the thesis within ten minutes. The correct reading is duller: fourteen nearly independent
+differences averaging +0.003 ± 0.0014. Weak evidence of something real, with no mechanism.
+**The lesson is the project's own, again: an explanation is a claim, and it gets checked like
+one.**
+
+**The one prediction that held.** Looking at the six crossings suggested a line in airtime,
+0.05 = N·f·(a·T + c). It was found by looking, so it was tested as a hypothesis: seven
+configurations it had not seen, its value for each written down with a ±6 % tolerance, committed,
+then simulated (1470 runs). All seven fell within 3.4 %; the old ceiling misses them by up to
+15 %. It replaces the ceiling as the closed form the paper states — with a domain, and with the
+residual pattern (ordered by frame rate) written beside it (F54).
+
+## Tried and did NOT work, or was wrong the first time
+
+* **The driver printed the wrong estimate** — the median of the bootstrap replicates instead of
+  the sample's own crossing. They differed in one cell (31 against 29). Caught before a number
+  was quoted.
+* **Three sentences in my own outcome text were wrong against the raw data** ("at least three of
+  30" was two to five; "three of 60" was five; "−11 %" was −10.5 %). Found by re-reading each
+  claim against the CSV, not by a test.
+* **The keyframe-size prediction for real flight logs missed** by 0.02 B (F52). Recorded as a miss.
+* **PX4 logs carry position at 5 Hz, not 50.** The prediction had to be amended to 0.2 s spacing
+  — done, and committed, before any size was computed. The 20 ms delta stays untested.
+* **Two approved items were found undelivered on a second pass** over the decision list: the
+  analytic table of classical stream-signing schemes, and loss that grows with frame length.
+  Both are now in (E17; the `ber` rows of E10). The second cost the design something: at equal
+  bit error rate its longer frame is lost more often and V = 0.943 at the 5 % point.
+* **A citation check found the methods paper misquoting a source that was never held** —
+  survey years wrong, a figure attributed to the wrong paper, another unsupported. Corrected to
+  what the held follow-up reports. This is the F49 class again, in the document written to
+  describe it.
+* **The first rewrite of the paper departed from the approved plan twice, silently.** It carried a
+  new, design-first title, and it put the exclusion after the 802.11 results. The plan Mohamed
+  approved said to drop one phrase from the title and to put the exclusion *first*. Found by
+  re-reading the plan row by row against the paper, not by any test; both undone, and a test now
+  holds the order. The same pass found the abstract did not state the condition under which the
+  exclusion holds, the paper never said what a receiver does after a lost frame, and the
+  receiver-CPU paragraph lacked the batch-verification sentence the plan promised.
+* **Four hours lost to a wait that could not end.** The loop waiting for the held-out campaign
+  grepped the process list for a string its own command line contained. The campaign finished at
+  05:31; the loop was still "waiting" at 09:20.
+* **`thirteen hundred tests`**: I "corrected" this to eleven hundred from a stale copy of the
+  status board, checked the repository's own, and reverted. The copy of `CLAUDE.md` outside the
+  repository is older than the one inside it.
+
+## The pattern
+
+The August chapter ended: *a register that stores facts separately does not compose them; only
+re-derivation does.* That was not enough — these errors were re-derived, repeatedly, and
+reproduced, because each part was right. **What composes facts is building the thing they
+describe and making it run.** A design that exists only as a sum has no receiver to refuse a
+frame it cannot decode.
+
+**Durable records:** findings F45–F54 in `audits/model_provenance.md`; pre-registrations
+`NMAX_DIRECT_EXPECTATIONS.md`, `PX4_LOGS_EXPECTATIONS.md`; decisions R1–R16 in `DECISIONS.md`;
+what is still open in `OPEN_ITEMS.md` §G.
+
+---
+
 # 2026-08-28 — the math audit: nothing was wrong, and the headline still moved
 
 *Mohamed: "analyze then audit deeply each scientific claim, number, result, implementation,

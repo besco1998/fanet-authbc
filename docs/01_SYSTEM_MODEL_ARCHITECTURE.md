@@ -57,6 +57,7 @@ headline.
 
 **Why the switch is free in bytes.** Batching obeys **b ≤ Λ_i·D_max**, so only the *product*
 matters. Both points give Λ·D = 5 ⇒ **b = 4 ⇒ 72.0 B/record ⇒ −58.68 %**. Identical.
+*(Corrected 2026-10-06: 72.0 B is the design with one keyframe per four frames, which misses V — F46. With a keyframe in every frame b = 4 gives 74.96 B, −56.98 %, in this format and 43.25 B, −70.33 %, in the lean one; still identical at both points.)*
 
 **What it costs, stated because this is an optimization problem:**
 
@@ -184,8 +185,8 @@ the CBOR array-length and byte-string-length prefixes widen.
 > | src | base_seq | H_f | state |
 > |---|---|---|---|
 > | 0 | 0 | **38 B** | first 24 records of a flight, low node id |
-> | 24 | 24 | 39 B | — |
-> | 256 | 256 | 40 B | — |
+> | 24 | 24 | **40 B** | — |
+> | 256 | 256 | **42 B** | — |
 > | 40 000 | 180 000 | **44 B** | 1 h into flight at 50 Hz — the value above |
 >
 > ⚠️ **And the direction of bias is opposite for T6.** The table below analyses H_f's bias for the
@@ -194,10 +195,21 @@ the CBOR array-length and byte-string-length prefixes widen.
 > most favourable to the paper's most durable claim. DR3 is excluded for H_f ≥ 39 and **feasible at
 > H_f ≤ 38**, at which point the headline is *three* of seven EU868 rates, not four. DR0–DR2 are
 > unconditional at any header size (64 B will not fit 51 B). See docs/02 T6 and
-> `tests/test_math_audit.py::TestFrameHeaderIsARange`. The empty frame skeleton alone is
+> `tests/test_math_audit.py::TestFrameHeaderIsARange`.
+>
+> ⚠️ **CORRECTED 2026-10-06 (audit F47, F52). Two things in this box were wrong.**
+> (1) The paragraph above is **withdrawn**: DR3's exclusion does not turn on H_f. The bound it
+> uses charged neither the chain link nor a record that decodes alone; the signature plus the
+> smallest self-contained record of this format is already 120 B, so DR3 is excluded at every
+> header size including zero (docs/02 T6′). (2) The two middle rows of the table read 39 B and
+> 40 B until today. The encoder gives **40 B and 42 B**: `src` and `base_seq` each cross a width
+> boundary at 24 and again at 256, so each row is two steps above the last, not one. The
+> endpoints, 38 and 44 B, which are the only values any result uses, were right.
+
+The empty frame skeleton alone is
 43 B; most of it is CBOR *text* keys (`v`, `t`, `src`, `base_seq`, `n`, `recs`, `auth`), which an
-integer-keyed profile would shrink substantially — that is a wire-format optimisation this thesis
-does not claim.
+integer-keyed profile would shrink substantially. Until 2026-10 this sentence ended "that is a
+wire-format optimisation this thesis does not claim"; it is now built — §4b, 23 B.
 
 **The model uses a single H_f, but the real value is placement-dependent.** Measured:
 
