@@ -34,6 +34,7 @@ GENERATORS = [
     "figures_envelope_lora.py",
     "figures_ns3.py",
     "figures_nmax.py",
+    "figures_frames.py",
 ]
 
 
@@ -47,15 +48,16 @@ def test_every_figure_the_paper_cites_exists():
     assert not missing, f"paper cites figures that are not in results/figures/: {missing}"
 
 
-def test_the_paper_cites_its_two_data_figures():
-    """The exclusion and the capacity search each have a figure drawn from their artifact.
+def test_the_paper_cites_its_data_figures():
+    """The exclusion, the capacity search and the bytes-against-batch curve each have a figure
+    drawn from their artifact.
 
     (Until 2026-10 this test required `fig_envelope.png`, the capacity envelope computed from one
     load ceiling. The direct search replaced that envelope — docs/NMAX_DIRECT_EXPECTATIONS.md —
     and the figure went with it; the thesis keeps it, labelled as the approximation it is.)
     """
     cited = _figures_cited_by_the_paper()
-    for required in ("fig_t6_exclusion.png", "fig_nmax_direct.png"):
+    for required in ("fig_t6_exclusion.png", "fig_nmax_direct.png", "fig_bytes_vs_batch.png"):
         assert required in cited, f"{required} is generated but no longer cited by the paper"
 
 

@@ -97,6 +97,7 @@ paper:  ## build the paper -> paper/main.pdf (numbers.tex and its figures are ge
 	$(BIN)/python analysis/paper_numbers.py
 	$(BIN)/python analysis/figures_envelope_lora.py >/dev/null
 	$(BIN)/python analysis/figures_nmax.py >/dev/null
+	$(BIN)/python analysis/figures_frames.py >/dev/null
 	cd paper && pdflatex -interaction=nonstopmode main.tex >/dev/null \
 	  && bibtex main >/dev/null \
 	  && pdflatex -interaction=nonstopmode main.tex >/dev/null \
@@ -163,3 +164,4 @@ figures:  ## regenerate ALL figures from frozen results/raw -> results/figures/
 	$(BIN)/python analysis/figures_envelope_lora.py
 	$(BIN)/python analysis/figures_ns3.py
 	$(BIN)/python analysis/figures_nmax.py
+	$(BIN)/python analysis/figures_frames.py

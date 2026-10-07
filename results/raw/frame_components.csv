@@ -7,7 +7,7 @@
 # cbor2=5.8.0
 # msgpack=1.2.1
 # run=frame_components
-# config_hash=a9b5e662735a83f4
+# config_hash=535d0fc015040e68
 kind,format,item,stride,spacing_s,batch,ref_interval,mean_bytes,min_bytes,max_bytes,n,bytes_per_rec
 header,first,sender 0 / record 0,,,,,38,38,38,1,
 header,lean,sender 0 / record 0,,,,,17,17,17,1,
@@ -58,15 +58,37 @@ record,lean,delta,330,16.5,,,16.222,13,20,1890,
 record,lean,keyframe at time zero,1,0.05,,,22.665,19,24,30000,
 frame,lean,self-batch,,,1,1,145.765,142,147,30000,145.765
 frame,lean,self-batch,,,2,1,154.997,152,156,15000,77.498
+frame,lean,self-batch,,,3,1,163.995,161,165,9990,54.665
 frame,lean,self-batch,,,4,1,172.999,170,174,7500,43.25
 frame,lean,self-batch,,,5,1,181.999,179,183,6000,36.4
+frame,lean,self-batch,,,6,1,190.997,188,192,4980,31.833
 frame,lean,self-batch,,,8,1,208.998,206,210,3750,26.125
+frame,lean,self-batch,,,10,1,226.997,224,228,3000,22.7
+frame,lean,self-batch,,,12,1,244.994,242,246,2490,20.416
 frame,lean,self-batch,,,4,2,165.499,158,174,7500,41.375
 frame,lean,self-batch,,,4,4,161.779,158,174,7500,40.445
 frame,lean,self-batch,,,4,8,159.92,158,174,7500,39.98
 frame,lean,self-batch,,,4,16,158.96,158,174,7500,39.74
 frame,lean,inline,,,1,1,146.765,143,148,30000,146.765
 frame,lean,inline,,,4,1,371.999,369,373,7500,93.0
+frame,first,self-batch (byte model),,,1,1,167.85,167.85,167.85,1,167.85
+frame,first,self-batch (byte model),,,2,1,211.85,211.85,211.85,1,105.925
+frame,first,self-batch (byte model),,,3,1,255.85,255.85,255.85,1,85.283
+frame,first,self-batch (byte model),,,4,1,299.85,299.85,299.85,1,74.963
+frame,first,self-batch (byte model),,,5,1,343.85,343.85,343.85,1,68.77
+frame,first,self-batch (byte model),,,6,1,387.85,387.85,387.85,1,64.642
+frame,first,self-batch (byte model),,,8,1,475.85,475.85,475.85,1,59.481
+frame,first,self-batch (byte model),,,10,1,563.85,563.85,563.85,1,56.385
+frame,first,self-batch (byte model),,,12,1,651.85,651.85,651.85,1,54.321
+frame,first,self-batch; one link per frame (byte model),,,1,1,167.85,167.85,167.85,1,167.85
+frame,first,self-batch; one link per frame (byte model),,,2,1,179.85,179.85,179.85,1,89.925
+frame,first,self-batch; one link per frame (byte model),,,3,1,191.85,191.85,191.85,1,63.95
+frame,first,self-batch; one link per frame (byte model),,,4,1,203.85,203.85,203.85,1,50.962
+frame,first,self-batch; one link per frame (byte model),,,5,1,215.85,215.85,215.85,1,43.17
+frame,first,self-batch; one link per frame (byte model),,,6,1,227.85,227.85,227.85,1,37.975
+frame,first,self-batch; one link per frame (byte model),,,8,1,251.85,251.85,251.85,1,31.481
+frame,first,self-batch; one link per frame (byte model),,,10,1,275.85,275.85,275.85,1,27.585
+frame,first,self-batch; one link per frame (byte model),,,12,1,299.85,299.85,299.85,1,24.988
 frame,lean,self-batch at sender 0 and time zero,,,1,1,139.558,134,142,30000,139.558
 tamper,lean,flips,,,4,1,174,174,174,1392,
 tamper,lean,undecodable,,,4,1,174,174,174,209,

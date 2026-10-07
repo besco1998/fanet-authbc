@@ -1,6 +1,7 @@
 # E17 — the classical stream-signing schemes at this work's operating point (docs/02 §6f;
-# review comments 2.3b, 2.3c). MODEL ONLY: no scheme here is implemented or simulated. Each is
-# the lean one-record frame with its authenticator in place of the signature.
+# review comments 2.3b, 2.3c). Sizes are a MODEL: no scheme here is implemented. Each is the lean
+# one-record frame with its authenticator in place of the signature. Its V >= 0.95 capacity is
+# the direct ns-3 search on a frame of that size (docs/NMAX_DIRECT_EXPECTATIONS.md, follow-up F3).
 experiment: stream-baselines
 lambda_rec_per_s: 50
 batch: 4
@@ -20,3 +21,7 @@ tesla: {mac_bytes: 10, key_bytes: 10, index_bytes: 4}
 
 u_saturation: 1.000
 n_ceiling: 800
+
+# The simulated capacities, read for the same traffic source as the design ladder's.
+nmax_csv: ns3_nmax_direct.csv
+nmax_source: period

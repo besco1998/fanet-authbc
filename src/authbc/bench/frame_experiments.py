@@ -26,7 +26,7 @@ from typing import Any
 
 import numpy as np
 
-from authbc.bench import framesizes, leanframes
+from authbc.bench import framesizes, leanframes, provenance
 from authbc.bench.experiments import CI_SEED, _read_raw, _Runner
 from authbc.bench.stats import bootstrap_ci
 from authbc.bench.telemgen import TelemetryRecord
@@ -113,6 +113,19 @@ def run_frame_components(cfg: dict) -> list[dict]:
         s = leanframes.lean_frame_sizes(batch, inline=True)
         rows.append(_row("frame", "lean", "inline", s, batch=batch, ref_interval=1,
                          bytes_per_rec=round(s.mean / batch, 3)))
+    # The first format at the same batches, as a byte model, with its chain link where it is
+    # (in every record) and where the review suggested moving it (once per frame): the curve
+    # that separates what the link's placement buys from what the lean header buys.
+    per_record = leanframes.v1_delta_layout()
+    per_frame = FlatLayout("first/link-per-frame", per_record.header_bytes, 32.0,
+                           per_record.key_record_bytes - 32.0,
+                           per_record.delta_record_bytes - 32.0)
+    for item, layout in (("self-batch (byte model)", per_record),
+                         ("self-batch; one link per frame (byte model)", per_frame)):
+        for batch in cfg["batches"]:
+            size = round(layout.frame_bytes(64, batch), 3)
+            rows.append(_row("frame", "first", item, size, batch=batch, ref_interval=1,
+                             bytes_per_rec=round(size / batch, 3)))
     low = leanframes.lean_frame_sizes(1, src=0, base_seq=0, ts0=0)
     rows.append(_row("frame", "lean", "self-batch at sender 0 and time zero", low, batch=1,
                      ref_interval=1, bytes_per_rec=round(low.mean, 3)))
@@ -316,7 +329,7 @@ def _direct_crossings(cfg: dict) -> dict[tuple[str, float], dict[str, str]]:
             continue
         period_ms = 1000.0 * float(r["batch"]) / float(r["lambda_rec_per_s"])
         want = period_ms if cfg["nmax_source"] == "period" else float(cfg["nmax_source"])
-        if float(r["jitter_ms"]) == want:
+        if float(r["jitter_ms"]) == provenance.as_written(want):
             out[(r["config"], float(r["lambda_rec_per_s"]))] = r
     return out
 
@@ -791,15 +804,41 @@ def run_energy_table(cfg: dict) -> list[dict]:
 
 
 # ====================================================================== E17 stream-signing schemes
+# scheme -> configuration label of its cell in the direct ns-3 search (ns3/run_nmax_direct.py)
+_STREAM_CELLS = {"mavlink2": "stream/mavlink2", "tesla": "stream/tesla",
+                 "gennaro-rohatgi": "stream/gennaro-rohatgi", "emss": "stream/emss",
+                 "wong-lam-tree": "stream/wong-lam-tree", "per-record signature": "lean/inline-1",
+                 "authbc": "lean/batch-delta"}
+
+
+def _simulated_capacity(direct: dict[tuple[str, float], dict[str, str]], scheme: str,
+                        frame_bytes: float, lam_cell: float) -> dict[str, Any]:
+    """N_max of the frame a scheme sends, from the direct search; empty where it was not run.
+
+    ⚠️ What is simulated is the delivery of a frame of that size at that rate. For a scheme whose
+    packets do not verify alone that is an upper bound on what verifies (`verifies_alone`).
+    """
+    cols: dict[str, Any] = {"n_max_v95": "", "n_max_v95_ci_lo": "", "n_max_v95_ci_hi": ""}
+    row = direct.get((_STREAM_CELLS[scheme], lam_cell))
+    if row is None or row["bracketed"] != "1":
+        return cols
+    if abs(int(row["frame_bytes"]) - frame_bytes) >= 1.0:
+        raise ValueError(f"{scheme}: simulated at {row['frame_bytes']} B, sized at {frame_bytes}")
+    return {"n_max_v95": int(row["n_max_mean"]), "n_max_v95_ci_lo": int(row["n_max_ci_lo"]),
+            "n_max_v95_ci_hi": int(row["n_max_ci_hi"])}
+
+
 def run_stream_baselines(cfg: dict) -> list[dict]:
-    """The classical stream-signing schemes at this work's operating point (MODEL ONLY).
+    """The classical stream-signing schemes at this work's operating point (sizes are a MODEL).
 
     None of them is implemented. Each is the lean one-record frame with its authenticator in
     place of the signature — the same header, chain link and record — so the only things that
     differ between rows are the two a scheme decides: authenticator bytes and frames per record.
-    Capacity is the saturation bound of the validated broadcast model; no row here was simulated.
+    `n_sat` is the saturation bound of the validated broadcast model; `n_max_v95` is the direct
+    ns-3 search on a frame of that size at that rate (follow-up F3), as for the design ladder.
     """
     lam, batch = cfg["lambda_rec_per_s"], cfg["batch"]
+    direct = _direct_crossings(cfg)
     h, sig = cfg["hash_bytes"], cfg["sig_bytes"]
     emss = stream_auth.emss(hashes_per_packet=cfg["emss_hashes_per_packet"], hash_bytes=h,
                             sig_bytes=sig, sig_period=cfg["emss_sig_period"])
@@ -837,6 +876,7 @@ def run_stream_baselines(cfg: dict) -> list[dict]:
             "n_sat": n_max(lam * ppr, 1, frame, cfg["u_saturation"], cfg["n_ceiling"]),
             "verifies_alone": alone, "waits_for": waits, "a_lost_packet_costs": lost,
             "non_repudiation": non_repudiation,
+            **_simulated_capacity(direct, name, frame, lam * ppr),
         })
     design = _lean_measured(batch, False)
     rows.append({
@@ -846,6 +886,7 @@ def run_stream_baselines(cfg: dict) -> list[dict]:
         "n_sat": n_max(lam, batch, design, cfg["u_saturation"], cfg["n_ceiling"]),
         "verifies_alone": "yes", "waits_for": "its batch to fill (sender)",
         "a_lost_packet_costs": f"its {batch} records", "non_repudiation": "yes",
+        **_simulated_capacity(direct, "authbc", design, lam),
     })
     return rows
 

@@ -84,6 +84,47 @@ class TestFrameComponents:
 
 
 # ------------------------------------------------------------------ E10 / F46
+class TestBytesAgainstBatchSize:
+    """Review 2.3: bytes against batch size with the chain link per record, per frame, and lean."""
+
+    FRAMES = [r for r in rows("frame_components.csv") if r["kind"] == "frame"
+              and r["ref_interval"] == "1"]
+
+    def _curve(self, fmt: str, item: str) -> dict[int, float]:
+        return {int(r["batch"]): float(r["bytes_per_rec"]) for r in self.FRAMES
+                if (r["format"], r["item"]) == (fmt, item)}
+
+    def test_three_curves_on_the_same_batches(self) -> None:
+        a = self._curve("first", "self-batch (byte model)")
+        b = self._curve("first", "self-batch; one link per frame (byte model)")
+        c = self._curve("lean", "self-batch")
+        assert sorted(a) == sorted(b) == sorted(c) == [1, 2, 3, 4, 5, 6, 8, 10, 12]
+        for curve in (a, b, c):
+            values = [curve[k] for k in sorted(curve)]
+            assert values == sorted(values, reverse=True)
+
+    def test_at_four_records_the_three_designs(self) -> None:
+        a = self._curve("first", "self-batch (byte model)")[4]
+        b = self._curve("first", "self-batch; one link per frame (byte model)")[4]
+        c = self._curve("lean", "self-batch")[4]
+        assert (a, c) == (74.963, 43.25)
+        assert b == pytest.approx(50.963, abs=0.001)
+
+    def test_moving_the_link_to_the_frame_saves_32_bytes_times_one_minus_one_over_b(self) -> None:
+        a = self._curve("first", "self-batch (byte model)")
+        b = self._curve("first", "self-batch; one link per frame (byte model)")
+        for batch in a:
+            assert a[batch] - b[batch] == pytest.approx(32.0 * (1 - 1 / batch), abs=0.002)
+
+    def test_no_batch_brings_a_per_record_link_under_what_the_frame_link_reaches_at_four(
+            self) -> None:
+        """A link in every record leaves a floor of 44 B per record; at twelve records the
+        first format is still above what one link per frame gives at four."""
+        a = self._curve("first", "self-batch (byte model)")
+        b = self._curve("first", "self-batch; one link per frame (byte model)")
+        assert min(a.values()) > b[4]
+
+
 class TestVerifiabilityWithTheCodecInTheLoop:
     def _row(self, model: str, p: str, ref: str) -> dict[str, str]:
         (hit,) = [r for r in LOSS
@@ -222,9 +263,13 @@ class TestTheDesignAtTheAdoptedPoint:
                     float(design["bytes_per_rec"]), abs=0.01)
 
     def test_lean_sizes_are_emitted_frames_and_first_format_sizes_a_byte_model(self) -> None:
-        assert rung("adopted", "lean", "batch-delta")["sized_from"] == "emitted frames"
-        assert rung("adopted", "lean", "inline-1")["sized_from"] == "emitted frames"
-        assert rung("adopted", "first", "batch-delta")["sized_from"] == "byte model"
+        """One lean row is not emitted: the codec always delta-codes, so "no delta coding" is
+        sized from its measured parts. The paper and thesis mark it and every first-format row."""
+        for name in ("batch-delta", "inline-1", "inline-b"):
+            assert rung("adopted", "lean", name)["sized_from"] == "emitted frames"
+        assert rung("adopted", "lean", "batch-keys")["sized_from"] == "measured components"
+        for name in ("inline-1", "inline-b", "batch-cbor", "batch-delta"):
+            assert rung("adopted", "first", name)["sized_from"] == "byte model"
 
     def test_certificates_add_a_fifth_of_a_certificate_and_four_fifths_of_a_digest_per_frame(
             self) -> None:
@@ -271,6 +316,53 @@ class TestStreamSigningSchemesPlaced:
         assert both == {"per-record signature", "wong-lam-tree", "authbc"}
         assert float(STREAM["wong-lam-tree"]["bytes_per_rec"]) > \
             float(STREAM["per-record signature"]["bytes_per_rec"])
+
+
+class TestStreamSchemesAreSimulatedAsFrames:
+    """Follow-up F3: each stream scheme's frame through the same direct search as the ladder.
+
+    What is simulated is a frame of the scheme's size at its rate. For a scheme whose packets do
+    not verify alone, delivery is an upper bound on verification, and the table says so.
+    """
+
+    CELL = {"mavlink2": "stream/mavlink2", "tesla": "stream/tesla",
+            "gennaro-rohatgi": "stream/gennaro-rohatgi", "emss": "stream/emss",
+            "wong-lam-tree": "stream/wong-lam-tree", "per-record signature": "lean/inline-1",
+            "authbc": "lean/batch-delta"}
+
+    def _search(self, scheme: str) -> dict[str, str]:
+        rate = float(STREAM[scheme]["frames_per_s"]) * (4 if scheme == "authbc" else 1)
+        (hit,) = [r for r in rows("ns3_nmax_direct.csv")
+                  if r["n_nodes"] == "CROSSING" and r["skew_ppm"] == "0"
+                  and r["config"] == self.CELL[scheme]
+                  and float(r["lambda_rec_per_s"]) == rate
+                  and float(r["jitter_ms"]) == float(f"{1000 * float(r['batch']) / rate:g}")]
+        return hit
+
+    @pytest.mark.parametrize("scheme", sorted(CELL))
+    def test_every_capacity_is_the_direct_searchs_own_bracketed_row(self, scheme: str) -> None:
+        s, r = self._search(scheme), STREAM[scheme]
+        assert s["bracketed"] == "1" and s["seeds"] == "30"
+        assert (r["n_max_v95"], r["n_max_v95_ci_lo"], r["n_max_v95_ci_hi"]) == \
+            (s["n_max_mean"], s["n_max_ci_lo"], s["n_max_ci_hi"])
+        assert abs(int(s["frame_bytes"]) - float(r["frame_bytes"])) < 1.0
+
+    def test_the_two_ends_are_the_ladders_simulated_capacities(self) -> None:
+        for scheme, name in (("per-record signature", "inline-1"), ("authbc", "batch-delta")):
+            assert STREAM[scheme]["n_max_v95"] == rung("adopted", "lean", name)["n_max_v95"]
+
+    def test_no_scheme_that_sends_a_frame_per_record_reaches_half_the_designs_capacity(
+            self) -> None:
+        design = int(STREAM["authbc"]["n_max_v95"])
+        per_packet = {s: int(r["n_max_v95"]) for s, r in STREAM.items() if s != "authbc"}
+        assert max(per_packet, key=per_packet.__getitem__) == "mavlink2"
+        assert max(per_packet.values()) < design / 2
+
+    def test_capacity_falls_as_the_frame_grows_at_one_frame_per_record(self) -> None:
+        at_50 = sorted((float(r["frame_bytes"]), int(r["n_max_v95"])) for s, r in STREAM.items()
+                       if r["frames_per_s"] == "50.0")
+        capacities = [n for _, n in at_50]
+        assert len(at_50) == 5 and capacities == sorted(capacities, reverse=True)
 
 
 class TestCapacityIsSimulatedPerConfiguration:
