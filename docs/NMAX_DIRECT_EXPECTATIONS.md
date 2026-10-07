@@ -566,3 +566,37 @@ the line. Over the thirteen cells the single ceiling misses by up to 15.3 %, in 
   15 nodes, so the grid value under-reports by up to a step (RD: 300 on the grid, 308
   interpolated). The cells the paper tabulates get unit or two-node steps round their crossing
   next; those runs are not part of this test, and the table above is fixed as of this commit.
+
+
+---
+
+# Fine grids — the capacities the paper tabulates (2026-10-07)
+
+810 further runs at unit or two-node steps round the crossings of G, H, I, RA, RB, RC and RD,
+as A–F had. They locate `N_max`; **they are not part of the F2 test**, which stays scored on the
+seven-point grids above (`analysis/nmax_airtime_line.py` restricts itself to `F2_GRIDS`, and a
+test holds the seven recorded crossings). 4980 runs in all; every node count simulated is in
+`experiments/nmax-direct/plan.txt`.
+
+| cell | configuration | `N_max` [95 %] | interpolated [95 %] | per-run | single ceiling | deviation of the ceiling's figure |
+|---|---|---|---|---|---|---|
+| A | first, per-record signing | **32** [32, 32] | 32.32 [32.17, 32.46] | 31 | 31 | +3.2 % |
+| B | first, design | **88** [88, 89] | 88.85 [88.42, 89.26] | 86 | 97 | -9.3 % |
+| C | lean, per-record signing | **35** [35, 35] | 35.26 [35.15, 35.36] | 34 | 34 | +2.9 % |
+| D | lean, design | **124** [124, 125] | 124.55 [124.07, 125.02] | 120 | 142 | -12.7 % |
+| E | first, shared frame | **56** [56, 56] | 56.28 [56.05, 56.45] | 54 | 49 | +14.3 % |
+| F | lean, shared frame | **76** [76, 77] | 76.83 [76.63, 77.07] | 73 | 80 | -5.0 % |
+| G | first, one signature per frame | **76** [75, 76] | 76.26 [75.81, 76.62] | 73 | 79 | -3.8 % |
+| H | lean, one signature, no delta | **108** [107, 109] | 108.91 [107.96, 109.45] | 106 | 123 | -12.2 % |
+| I | first, design as first specified | **91** [90, 91] | 91.34 [90.84, 91.83] | 89 | 100 | -9.0 % |
+| RA | relaxed: first, per-record signing | **78** [77, 78] | 78.35 [77.98, 78.67] | 76 | 88 | -11.4 % |
+| RB | relaxed: first, design | **219** [215, 221] | 219.19 [217.76, 221.14] | 205 | 208 | +5.3 % |
+| RC | relaxed: lean, per-record signing | **85** [85, 86] | 85.58 [85.28, 86.03] | 84 | 101 | -15.8 % |
+| RD | relaxed: lean, design | **306** [306, 308] | 307.95 [307.13, 309.4] | 300 | 269 | +13.8 % |
+
+`deviation` is (N_max − ceiling) / ceiling on the grid. Each `N_max` was recomputed from the raw
+runs with a few lines sharing no code with the summary (first node count whose 30-run mean falls
+below 0.95); all agree.
+
+Three crossings sit on a knife edge and their intervals say so: H (mean 0.95042 at 108, 0.94996
+at 109), RB (0.95005 at 219, 0.94977 at 220) and RD (0.95109 at 306, 0.94997 at 308).

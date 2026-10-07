@@ -68,3 +68,44 @@ class TestTheRegisteredProcedure:
         got = line.predictions(a)
         for cell, n in registered.items():
             assert round(got[cell], 1) == n, cell
+
+
+class TestTheHeldOutTestAsScored:
+    """F2's outcome, on the grids it was registered on (docs/NMAX_DIRECT_EXPECTATIONS.md).
+
+    Finer grids were run round the same crossings afterwards; they must not move this.
+    """
+
+    SCORED = {"G": 76.25, "H": 108.89, "I": 91.34, "RA": 78.35, "RB": 219.83, "RC": 85.52,
+              "RD": 308.06}
+
+    def test_the_registered_grids_have_seven_node_counts_each(self) -> None:
+        assert set(line.F2_GRIDS) == set(line.HELD_OUT)
+        assert all(len(g) == 7 and list(g) == sorted(g) for g in line.F2_GRIDS.values())
+
+    def test_the_crossings_are_the_ones_recorded_in_the_outcome(self) -> None:
+        got = line.held_out_crossings()
+        assert {c: round(v[0], 2) for c, v in got.items()} == self.SCORED
+
+    def test_every_held_out_cell_is_inside_the_tolerance_of_the_line(self) -> None:
+        a, _ = line.calibrate(line.crossings("period"))
+        predicted = line.predictions(a)
+        for cell, (measured, lo, hi) in line.held_out_crossings().items():
+            band = (predicted[cell] * (1 - line.TOLERANCE), predicted[cell] * (1 + line.TOLERANCE))
+            assert band[0] <= lo <= measured <= hi <= band[1], cell
+
+    def test_the_line_beats_the_single_ceiling_in_every_diagnostic_cell(self) -> None:
+        import run_nmax_direct as drv
+        a, _ = line.calibrate(line.crossings("period"))
+        predicted = line.predictions(a)
+        got = line.held_out_crossings()
+        for cell in line.DIAGNOSTIC:
+            measured = got[cell][0]
+            assert abs(measured - predicted[cell]) / predicted[cell] < \
+                abs(measured - drv.CELLS[cell].model_n) / drv.CELLS[cell].model_n, cell
+
+    def test_it_also_holds_with_the_slope_as_first_registered(self) -> None:
+        a, _ = line.calibrate(line.crossings("0"))
+        predicted = line.predictions(a)
+        for cell, (measured, _, _) in line.held_out_crossings().items():
+            assert abs(measured - predicted[cell]) / predicted[cell] <= line.TOLERANCE, cell
