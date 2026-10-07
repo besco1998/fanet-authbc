@@ -146,6 +146,35 @@ class TestThePlanIsWhatWasRun:
         runs = _runs("D", {120: [0.9]}, jitter="80") + _runs("D", {121: [0.9]}, jitter="20")
         assert drv.plan_of(runs) == [("D", "20", [121]), ("D", "period", [120])]
 
+    def test_a_period_six_figures_cannot_hold_is_still_one_period(self) -> None:
+        """EMSS sends 50.5 frames/s: one period is 19.80198… ms, written as 19.802 (F56).
+
+        Compared with the exact value it is no longer "one period": the plan would name it as a
+        number, a resumed campaign would run it all again, and three readers dropped the cell.
+        """
+        from authbc.bench import provenance
+
+        exact = 1000.0 / drv.CELLS["SE"].fps
+        assert f"{exact:g}" == "19.802" and float("19.802") != exact
+        assert provenance.as_written(exact) == float("19.802")
+        runs = _runs("SE", {34: [0.9]}, jitter="19.802")
+        assert drv.plan_of(runs) == [("SE", "period", [34])]
+
+    def test_every_cell_run_at_one_period_is_summarised_as_one_period(self) -> None:
+        from authbc.bench import provenance
+
+        crossings = [r for r in _rows(RAW / "ns3_nmax_direct.csv")
+                     if r["n_nodes"] == "CROSSING" and r["skew_ppm"] == "0"]
+
+        def period(r: dict[str, str]) -> float:
+            return 1000.0 / drv.CELLS[r["cell"]].fps
+
+        near = {r["cell"] for r in crossings
+                if abs(float(r["jitter_ms"]) - period(r)) < 1e-3 * period(r)}
+        matched = {r["cell"] for r in crossings
+                   if float(r["jitter_ms"]) == provenance.as_written(period(r))}
+        assert matched == near and {"SM", "ST", "SG", "SE", "SW"} <= matched
+
     def test_the_committed_plan_names_exactly_the_points_on_file(self) -> None:
         runs = drv.read_runs(RAW / "ns3_nmax_direct_runs.csv")
         assert drv.read_plan(self.PLAN) == drv.plan_of(runs)

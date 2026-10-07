@@ -152,7 +152,8 @@ def plan_of(runs: list[dict]) -> list[tuple[str, str, list[int]]]:
     plan = []
     for (cell_index, jitter, skew), ns in sorted(points.items()):
         cell = list(CELLS)[cell_index]
-        spec = "period" if jitter == 1000.0 / CELLS[cell].fps else f"{jitter:g}"
+        one_period = provenance.as_written(1000.0 / CELLS[cell].fps)
+        spec = "period" if jitter == one_period else f"{jitter:g}"
         plan.append((cell, spec + (f"/{skew:g}" if skew else ""), sorted(ns)))
     return plan
 
@@ -344,9 +345,12 @@ def main() -> None:
             for n in ns:
                 for seed in range(1, args.seeds + 1):
                     key = (cell, jitter, skew, n, seed)
-                    if key not in done:
+                    # runs on file are keyed by the jitter as it was written, not as computed
+                    filed = (cell, provenance.as_written(jitter), provenance.as_written(skew),
+                             n, seed)
+                    if filed not in done:
                         todo.append(key)
-                        done.add(key)                 # a plan may name a point twice
+                        done.add(filed)               # a plan may name a point twice
     print(f"{on_file} runs on file, {len(todo)} to do, {args.workers} at a time", flush=True)
 
     def job(t: tuple[str, float, float, int, int]) -> dict:

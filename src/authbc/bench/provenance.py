@@ -13,6 +13,17 @@ import sys
 from importlib.metadata import version
 
 
+def as_written(value: float) -> float:
+    """A number as a result file holds it: six significant figures (the `:g` the drivers write).
+
+    A reader that compares a stored value with the exact one it was computed from misses every
+    value six figures cannot hold. That stayed invisible while every sending period was 20, 50,
+    80 or 200 ms, and dropped a whole cell the first time one was 1000/50.5 ms: stored 19.802,
+    looked up as 19.801980198… (finding F56). Compare `float(stored) == as_written(exact)`.
+    """
+    return float(f"{value:g}")
+
+
 def cpu_model() -> str:
     try:
         with open("/proc/cpuinfo") as fh:

@@ -639,3 +639,43 @@ that verify alone. (iii) EMSS's signature packets are simulated as data-sized fr
 frames, nothing more.
 
 A crossing that falls outside its grid is extended and the extension is reported as one.
+
+## F3 — outcome (2026-10-07, 1,050 runs, 19:22)
+
+**The prediction held in all five cells.** Slope and constant exactly as calibrated before F2.
+
+| cell | scheme | frame | line | band | simulated crossing [95 %] | `N_max` [95 %] | vs line | inside the band | recorded expectation |
+|---|---|---|---|---|---|---|---|---|---|
+| SM | MAVLink 2 tag | 94 B | 40.6 | 38.2–43.1 | 42.15 [41.96, 42.29] | **42** [41, 42] | +3.8 % | yes | 42 |
+| ST | TESLA | 106 B | 38.8 | 36.5–41.2 | 40.44 [40.20, 40.65] | **40** [40, 40] | +4.2 % | yes | 40 |
+| SG | Gennaro–Rohatgi | 114 B | 38.0 | 35.7–40.3 | 39.44 [39.27, 39.57] | **39** [39, 39] | +3.8 % | yes | 39.5 |
+| SE | EMSS | 146 B, 50.5 /s | 33.6 | 31.6–35.6 | 34.81 [34.69, 34.96] | **34** [34, 34] | +3.5 % | yes | 35 |
+| SW | Wong–Lam tree, block of 4 | 211 B | 28.0 | 26.3–29.7 | 29.00 [28.86, 29.14] | **28** [28, 29] | +3.5 % | yes | 29 |
+
+(`python analysis/nmax_airtime_line.py --stream`; held by `tests/test_nmax_airtime_line.py`.)
+Every interval lies inside its band as well as every point. No grid had to be extended.
+
+**The recorded expectation was met too.** All five cross 3.5–4.2 % *above* the line, where the
+two calibration cells at 50 frames/s had sat 3.4 and 3.8 % above it. The line's error at this
+frame rate is therefore a small, repeatable bias and not noise — the residual ordered by frame
+rate that F54 recorded, seen again on frames it had not seen. It is one more reason the line is
+never quoted as a capacity.
+
+**Checks made before recording it** (Law 6). (i) `N_max` of all five recomputed from the raw
+runs with code that shares nothing with the summary — first node count whose thirty-run mean
+falls below 0.95: 42, 40, 39, 34, 28, the same. (ii) An internal cross-check that needs no
+model: the EMSS frame is the per-record-signature frame (146 B) sent 1 % more often, and its
+crossing is 34.81 where cell C's is 35.26 — 1.3 % lower. (iii) Capacity falls monotonically with
+frame length at one frame per record: 42 > 40 > 39 > 35 > 28.
+
+**What it does not show** is unchanged from the registration: these cells do not separate the
+line from the single ceiling; a delivered frame is not a verified record for TESLA, EMSS and
+Gennaro–Rohatgi; nothing is implemented.
+
+⚠️ **One defect was found while scoring, and it would have passed unnoticed if the scoring had
+not been written to refuse a missing cell.** The first scored table had four rows. The summary
+stores the send jitter to six significant figures; three readers looked it up by its exact value.
+Every period so far had been 20, 50, 80 or 200 ms. EMSS's is 1000/50.5 = 19.80198… ms, stored as
+19.802, and its cell was dropped by the scorer, by the artifact that fills the stream table, and
+by the plan writer (which would also have made a resumed campaign run it all again). Fixed at the
+root (`provenance.as_written`), with regression tests; F56.

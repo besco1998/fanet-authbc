@@ -109,3 +109,37 @@ class TestTheHeldOutTestAsScored:
         predicted = line.predictions(a)
         for cell, (measured, _, _) in line.held_out_crossings().items():
             assert abs(measured - predicted[cell]) / predicted[cell] <= line.TOLERANCE, cell
+
+
+class TestTheStreamBaselinesAsScored:
+    """F3's outcome: five cells that were predicted, committed, then simulated.
+
+    The slope is the one calibrated before F2; nothing was re-fitted for these.
+    """
+
+    SCORED = {"SM": 42.15, "ST": 40.44, "SG": 39.44, "SE": 34.81, "SW": 29.00}
+    REGISTERED_LINE = {"SM": 40.6, "ST": 38.8, "SG": 38.0, "SE": 33.6, "SW": 28.0}
+
+    def test_all_five_cells_are_scored(self) -> None:
+        """The first scoring silently had four: the EMSS cell's period is not a round number of
+        milliseconds and was looked up by its exact value (F56)."""
+        assert set(line.stream_scores()) == set(line.STREAM)
+
+    def test_the_predictions_are_the_ones_that_were_registered(self) -> None:
+        got = {c: round(s["line"], 1) for c, s in line.stream_scores().items()}
+        assert got == self.REGISTERED_LINE
+
+    def test_the_crossings_are_the_ones_recorded_in_the_outcome(self) -> None:
+        assert {c: round(s["measured"], 2) for c, s in line.stream_scores().items()} == self.SCORED
+
+    def test_every_cell_is_inside_the_registered_tolerance_interval_and_all(self) -> None:
+        for cell, s in line.stream_scores().items():
+            lo, hi = s["line"] * (1 - line.TOLERANCE), s["line"] * (1 + line.TOLERANCE)
+            assert lo <= s["lo"] <= s["measured"] <= s["hi"] <= hi, cell
+
+    def test_all_five_sit_above_the_line_by_what_was_expected_at_this_frame_rate(self) -> None:
+        """Recorded beforehand as an expectation, not a prediction: about +3.5 %, because the two
+        calibration cells at 50 frames/s sat 3.4 and 3.8 % above the line."""
+        deviations = [s["vs_line_pct"] for s in line.stream_scores().values()]
+        assert all(3.0 < d < 4.5 for d in deviations), deviations
+

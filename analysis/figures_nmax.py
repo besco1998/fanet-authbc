@@ -40,7 +40,7 @@ def fig_nmax_direct() -> None:
         period_ms = 1000.0 * float(r["batch"]) / float(r["lambda_rec_per_s"])
         want = period_ms if cfg["nmax_source"] == "period" else float(cfg["nmax_source"])
         return (float(r["lambda_rec_per_s"]) == lam and float(r["skew_ppm"]) == 0.0
-                and float(r["jitter_ms"]) == want)
+                and float(r["jitter_ms"]) == float(f"{want:g}"))    # as the driver writes it
 
     mine = [r for r in _rows() if designated(r)]
     fig, axes = plt.subplots(1, 2, figsize=(7.2, 2.9), sharey=True)

@@ -14,6 +14,7 @@ constant a. The procedure is registered there and this script is only its arithm
 
     python analysis/nmax_airtime_line.py                  # designated source (one period)
     python analysis/nmax_airtime_line.py --source 0       # the strictly periodic stage-1 data
+    python analysis/nmax_airtime_line.py --stream         # follow-up F3: the stream baselines
 
 N* is the INTERPOLATED crossing of `results/raw/ns3_nmax_direct.csv`, as registered.
 
@@ -34,6 +35,7 @@ REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "src"))
 sys.path.insert(0, str(REPO / "ns3"))
 
+from authbc.bench.provenance import as_written  # noqa: E402
 from authbc.models import bianchi  # noqa: E402
 
 RAW = REPO / "results" / "raw"
@@ -79,7 +81,7 @@ def crossings(source: str) -> dict[str, dict[str, str]]:
             if r["n_nodes"] != "CROSSING" or float(r["skew_ppm"]) != 0.0:
                 continue
             jitter, _ = drv.source_of(source, drv.CELLS[r["cell"]].fps)
-            if float(r["jitter_ms"]) == jitter:
+            if float(r["jitter_ms"]) == as_written(jitter):
                 out[r["cell"]] = r
     return out
 
@@ -98,7 +100,7 @@ def held_out_crossings() -> dict[str, tuple[float, float, float]]:
         cell, n = r["cell"], int(r["n_nodes"])
         if cell not in F2_GRIDS or n not in F2_GRIDS[cell] or float(r["skew_ppm"]) != 0.0:
             continue
-        if float(r["jitter_ms"]) == 1000.0 / drv.CELLS[cell].fps:
+        if float(r["jitter_ms"]) == as_written(1000.0 / drv.CELLS[cell].fps):
             per_cell[cell].setdefault(n, []).append(float(r["delivered_frac"]))
     out = {}
     for cell, per_n in per_cell.items():
@@ -131,12 +133,52 @@ def predictions(a: float, cells: tuple[str, ...] = HELD_OUT) -> dict[str, float]
             for cell in cells}
 
 
+def stream_scores() -> dict[str, dict[str, float]]:
+    """Follow-up F3, scored: each stream cell's crossing against the line it was registered with.
+
+    The slope is the one calibrated on cells A–F before F2; nothing is re-fitted. A cell whose
+    crossing is not bracketed by its grid is absent, so an incomplete campaign cannot pass.
+    """
+    import run_nmax_direct as drv
+    rows = crossings("period")
+    a, _ = calibrate(rows)
+    out = {}
+    for cell, n_pred in predictions(a, STREAM).items():
+        r = rows.get(cell)
+        if r is None or r["bracketed"] != "1" or r["n_cross_interp"] == "":
+            continue
+        measured = float(r["n_cross_interp"])
+        out[cell] = {"line": n_pred, "measured": measured,
+                     "lo": float(r["n_cross_interp_lo"]), "hi": float(r["n_cross_interp_hi"]),
+                     "n_max": float(r["n_max_mean"]), "ceiling": float(drv.CELLS[cell].model_n),
+                     "vs_line_pct": 100 * (measured - n_pred) / n_pred,
+                     "within_band": float(abs(measured - n_pred) <= TOLERANCE * n_pred)}
+    return out
+
+
+def _print_stream() -> None:
+    import run_nmax_direct as drv
+    print("| cell | scheme | frame | line | band | measured [95 %] | N_max | vs line | in band |")
+    print("|---|---|---|---|---|---|---|---|---|")
+    for cell, s in stream_scores().items():
+        c = drv.CELLS[cell]
+        band = f"{(1 - TOLERANCE) * s['line']:.1f}–{(1 + TOLERANCE) * s['line']:.1f}"
+        print(f"| {cell} | {c.label.split('/')[1]} | {c.frame_bytes} B | {s['line']:.1f} | {band} "
+              f"| {s['measured']:.2f} [{s['lo']:.2f}, {s['hi']:.2f}] | {s['n_max']:.0f} | "
+              f"{s['vs_line_pct']:+.1f} % | {'yes' if s['within_band'] else 'NO'} |")
+
+
 def main() -> None:
     import run_nmax_direct as drv
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--source", default="period")
+    ap.add_argument("--stream", action="store_true",
+                    help="score follow-up F3 (the stream-signing baselines) and stop")
     args = ap.parse_args()
+    if args.stream:
+        _print_stream()
+        return
     rows = crossings(args.source)
     a, per_cell = calibrate(rows)
     # the slope the original registration used: the same mean over the strictly periodic stage-1
