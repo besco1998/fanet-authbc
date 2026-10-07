@@ -11,9 +11,14 @@ The justification is not confession but transferability: the defects catalogued 
 peculiar to this work, and several of them survived safeguards that are widely considered
 sufficient --- version control, a green test suite, seeded runs, committed raw data.
 
-Ten results in this project moved after they were first recorded. Only four were catchable by
-running more seeds. Two were \emph{protected by passing tests}. Three were contradictions between a
-paper and the artifact that generated it.
+By August 2026 ten results in this project had moved after they were first recorded. Only four
+were catchable by running more seeds. Two were \emph{protected by passing tests}. Three were
+contradictions between a paper and the artifact that generated it.
+
+In October an external review of the paper found five more, and they were of a kind the first ten
+had not prepared the project for (\Cref{sec:october}). Every one of them had survived two full
+audits and a green suite of thirteen hundred tests, and one of them was a ``correction'' the
+second audit had itself introduced.
 
 \section{The defect taxonomy}
 
@@ -31,16 +36,111 @@ the utilisation crossing \\
 \textbf{C4} & a configuration change that perturbs the random realisation & simulator stream
 displacement under mobility \\
 \textbf{C5} & a claim wider than the experiment supports & two-node hardware described as
-validating contention \\
+validating contention; a load ceiling measured at one $N$ applied at all \\
+\textbf{C6} & a correction made once, at its source, that does not reach the copies & five
+constants derived from a re-measured header; a retracted finding still printed in a table \\
+\textbf{C7} & a composite that was never built: a result summed from parts measured separately &
+the headline design; its verifiability; the exclusion test; the low-rate batch \\
+\textbf{C8} & a simulated source more regular than any real one & phase-locked senders, on both
+arms \\
+\textbf{C9} & a source taken on trust & a paper cited for two months under another paper's
+authors; figures quoted from a paper that was not held \\
 \bottomrule
 \end{tabular}
 \end{center}
 
 \begin{remark}[The load-bearing observation]
-\textbf{More seeds fixes only C1.} C2--C5 are immune to sample size. ``We ran thirty seeds'' is
+\textbf{More seeds fixes only C1.} C2--C9 are immune to sample size. ``We ran thirty seeds'' is
 therefore not a statement of correctness, and the discipline installed after the C1 failures gave
-no protection at all against the C2 failures found later.
+no protection at all against the C2 failures found later --- nor did the discipline installed
+after those protect against C7.
 \end{remark}
+
+\section{October 2026: five errors that survived two audits}\label{sec:october}
+
+\begin{description}
+\item[The design had never been built.] The configuration the results headlined --- delta
+records, one signature per four --- was a \emph{sum of sizes}: a record size from one module, a
+header measured on frames of a different encoding from another, and a signature length. No frame
+carrying delta records had been encoded, sent or decoded, and the receiver that would decode one
+did not exist. Each number was individually correct, so re-deriving any one of them reproduced it.
+
+\item[Its verifiability was wrong.] The byte model amortised one keyframe over four frames; the
+verifiability model treated the four as independent. At its own loss budget the design verified
+$\lossThFour$ of its records, not $0.95$ (\Cref{thm:t3prime}).
+
+\item[The exclusion test left out two things a frame must carry] --- the chain link and a record
+that decodes alone --- and counted seven data rates where the standard defines twelve. The
+August audit had ``corrected'' the exclusion from four rates to three on the strength of a leaner
+header; with the link charged, that correction is itself wrong (\Cref{sec:excl-history}).
+
+\item[A record size was used at the wrong time scale.] The delta record measured with records
+$50$\,ms apart was used on the low-rate arm, where they are seconds apart and the same record is
+half as large again (\Cref{sec:perframe}).
+
+\item[A source was cited under the wrong authors,] in the paper, the thesis, the code and eight
+documents, for two months. Each citation had been ``verified'': the DOI resolved and the claim
+was in the PDF. Nobody had compared the author list with the title page --- and the paper carried
+a paragraph asserting that every citation had been checked.
+\end{description}
+
+The first four are one error seen four times. What fixed them was not a better audit but an
+object: the frame format was implemented, with a sender and a receiver, and the byte, loss and
+exclusion results were recomputed \emph{from one definition of a frame}, whose arithmetic a test
+holds equal to the frames the code emits. The fifth was fixed by a script that compares every
+bibliography entry with its registry record, and by deleting the paragraph: a claim of that kind
+belongs in a check that runs, not in prose.
+
+\subsection{The capacity ceiling, and a prediction that failed}
+
+The same review asked for confidence intervals on the 802.11 capacities. Producing them meant
+simulating each configuration directly instead of applying one load ceiling, and the prediction
+that the two would agree within $\pm 10\%$ --- committed before the runs --- failed
+(\Cref{ch:validation}). The ratios this thesis had described as ``protected by construction''
+moved with it.
+
+Chasing the per-run spread of those simulations produced the 802.11 counterpart of an artifact
+already known on the low-rate arm (below): strictly periodic senders keep their relative phases
+for a whole run, so a run is one phase configuration, and in an unlucky one a few nodes lose
+every frame while the rest lose none. Three follow-up experiments were registered before they
+were run. Two of their predictions failed and are reported as failures; the third, that the
+choice of source moves the mean by less than a tolerance set in advance, held; with all six
+cells run, the difference is small, consistently of one sign, and not yet explained
+(\Cref{sec:capacity}).
+
+\section{A simulator artifact large enough to change what a reader should believe}
+
+The ns-3 LoRaWAN module's periodic sender fires on an exact interval, and LoRaWAN ALOHA has no
+backoff, so relative transmission phases are frozen for an entire run: a pair that collides once
+collides on every cycle. Delivery becomes \emph{bimodal} instead of noisy about a mean. Over 30
+seeds at $N{=}5$, 22 runs deliver exactly $1.000$ and the rest fall to $0.20$--$0.84$. The
+coefficient of variation is inflated \textbf{2--8$\times$} relative to a sender with one-second
+transmission jitter, the inflation growing with node count ($2.9\times$ at $N{=}5$, $7.9\times$
+at $N{=}100$). The LoRaWAN specification makes it a rule that an end-device ``pseudo-randomly
+changes its transmit periodicity to prevent systematic synchronization of populations of
+end-device transmissions''~\cite{lorawan_ts001}; the module's sender does not.
+
+\textbf{The measurement is claimed, not the observation.} Durand and Booysen report the same
+effect in their own results, attributing bimodal delivery to nodes that ``always transmit on a
+specific SF, time, and channel'', producing ``certain packet collisions being repeated for every
+transmission cycle''~\cite{durand2025loramesh}. What is added here is the quantification.
+
+On 802.11 carrier sense softens the effect and does not remove it. The simulator declares the
+medium busy only at the end of a $4$\,\si{\micro\second} preamble-detection period; two
+strictly periodic nodes whose phases fall inside that window collide in every period. At
+$N = \phaseNodes$ the per-run standard deviation of delivery is \phaseSdFrozen{} with strictly
+periodic sources and \phaseSdRedrawn{} when phases are redrawn every period, with a mean that
+differs by \srcMeanDiff{} over the points run under both.
+
+\subsection{A claim that was withdrawn}
+
+It had been intended to report that this dispersion is undetectable in the ns-3 LoRa literature
+because that literature does not state replication information, and a survey was pre-registered
+to test it --- inclusion criteria, keyword set and a $25\%$ falsification threshold, all committed
+before the corpus was assembled. At the achieved $n{=}23$ the result is $21.7\%$ reporting with a
+$95\%$ interval of $[7.5, 43.7]\%$. \textbf{That interval contains the threshold, so the survey
+cannot answer its own question, and no claim about the literature is made.} The protocol, corpus
+and adjudications are in the repository as a null result.
 
 \section{An automated staleness gate, and what it does not cover}
 
@@ -81,6 +181,15 @@ thirty seeds without re-simulating.
 
 \item[An independent second implementation.] The slot-exact simulator, written before the published
 model was found, shares none of its assumptions and is what turns agreement into evidence.
+
+\item[No typed results.] Since October 2026 every result in the paper, and every corrected result
+in this thesis, is a macro in a file that a script writes from the artifacts. A sentence that
+states a verdict instead of a number --- ``eight of twelve'', ``does not meet the target'' --- is
+held by the same script, which refuses to run if the artifact no longer says so.
+
+\item[A check on the bibliography that runs.] Every entry is compared with its Crossref, DataCite
+or arXiv record --- family names in order, initials, title, year --- and entries with no registry
+record must name the held document they were checked against.
 \end{description}
 
 \section{Two defects worth stating individually}
@@ -110,9 +219,14 @@ constituted a risk the design might not have survived.
 
 \section{What a reader should take from this}
 
-Three times in this project a claim survived because two facts were each individually recorded and
-never placed side by side. A register that stores facts separately does not compose them.
-\textbf{Only re-derivation does.}
+Three times before October 2026 a claim in this project survived because two facts were each
+individually recorded and never placed side by side, and this chapter used to end: a register
+that stores facts separately does not compose them; \emph{only re-derivation does}.
+
+That was not enough. The errors of \Cref{sec:october} were re-derived, repeatedly, and reproduced
+every time, because each part was right. \textbf{What composes facts is building the thing they
+describe and making it run.} A design that exists only as a sum has no receiver to refuse a frame
+it cannot decode, and no encoder to refuse a frame that does not fit.
 
 \needswork{TO ADD: a comparison with the reproducibility literature --- the simulation-credibility
 lineage in particular --- so this chapter reads as a contribution to that conversation rather than

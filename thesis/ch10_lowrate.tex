@@ -1,12 +1,14 @@
 \chapter{The Low-Rate Regime and the Exclusion Bound}\label{ch:lowrate}
 
-\needswork{STATUS: DRAFTED. This chapter carries the thesis's most durable result and also its
-most uncomfortable self-correction. Both are stated here rather than in a limitations section.}
+\needswork{STATUS: DRAFTED, and rewritten in October 2026 after an external review. This chapter
+carries the thesis's most durable result and two successive corrections of it. Both corrections
+are recorded in \Cref{sec:excl-history}, not folded into the text as if the result had always
+been stated this way.}
 
 \section{Why the low-rate arm is a different regime, not a slower one}
 
-The 802.11 numbers do not transfer. They differ by two to three orders of magnitude, and the
-binding constraint differs \emph{in kind}: a regulatory airtime quota rather than a frame size or a
+The 802.11 numbers do not transfer. They differ by two to four orders of magnitude, and the
+binding constraint differs \emph{in kind}: a regulatory airtime quota instead of a frame size or a
 latency budget. This is the third regime in the taxonomy of \Cref{thm:t2a}:
 
 \begin{center}
@@ -25,108 +27,278 @@ On this arm the arrival rate and the freshness are \emph{derived}, not configure
 airtime $T$ may repeat only every $T/\text{duty}$, so the sustainable rate and the staleness of the
 oldest record are the same interval. There is no independent deadline to trade against bytes.
 
-\section{The exclusion, and what part of it is arithmetic}
+This chapter is \emph{analysis and simulation, not measurement}. No LoRa hardware was
+instrumented and no LoRa energy figure is reported: the only metered radio power in this work is a
+Wi-Fi figure, and reusing it for a different transceiver would be fabrication. Every LoRa constant
+is transcribed from the SX1276 datasheet~\cite{semtech_sx1276} and from LoRaWAN
+RP002-1.0.3~\cite{lora_rp002} (Tables~12 and~13; EU863-870 duty cycle below $1\%$).
 
-Applying \Cref{thm:t6} to EU868, with $\Hf = 44$\,B measured, $\ga = 64$\,B and $\smin = 13$\,B:
+\section{The exclusion}\label{sec:excl}
+
+\Cref{thm:t6} says that a link of maximum payload $M$ admits a frame that verifies alone only if
+\[ M \;\geq\; \Hf + L + \ga + s_k , \]
+a header, one chain link, an authentication object and one record that decodes without its
+predecessor. An exclusion is claimed against the \emph{smallest frame the format can emit at
+all}, not against the frames one telemetry stream happened to produce.
+
+\subsection{The floor of the format}
+
+Take the lean format of \Cref{ch:sysmodel} with sender~0, sequence number~0 and one record in which
+every field is zero. Every integer then occupies its minimum width:
+\[ \underbrace{\exFloorHdr}_{\Hf} + \underbrace{\linkField}_{L} + \underbrace{64}_{\ga}
+   + \underbrace{\exFloorRec}_{s_k} = \exFloor \text{ bytes.} \]
+That frame was emitted, signed and verified; it is not an estimate. \textbf{Header, link and
+signature alone are \exFloorNoRec\,B.} The first format's floor is higher still, because its
+record carries its own $32$\,B link and its keys are text.
+
+\subsection{All twelve data rates}
+
+RP002-1.0.3 defines \emph{twelve} EU863-870 data rates: DR0--DR6 are LoRa, DR7 is FSK and
+DR8--DR11 are LR-FHSS. (Earlier versions of this chapter considered seven.)
 
 \begin{table}[h]
 \centering
-\caption{The EU868 partition. \textbf{Read the tier column, not just the verdict}: it says what
-would have to change.}
+\caption{EU863-870 data rates against one self-contained, signed, chained frame ($\ga = 64$\,B).
+The verdict is the same in both frame formats and under both of the standard's payload tables.}
 \label{tab:t6}
-\begin{tabular}{llrll}
+\begin{tabular}{lrll}
 \toprule
-DR & payload $M$ & $\smax$ & tier & durability \\
+data rates & payload $N$ & verdict & what stops it \\
 \midrule
-0, 1, 2 & 51\,B  & $-57$ & \textbf{signature} & \textbf{unconditional} \\
-3       & 115\,B & $7$   & encoding & contingent --- see below \\
-4, 5, 6 & 242\,B & $134$ & ---      & feasible \\
+DR0, DR1, DR2, DR8, DR10 & 50 or 51\,B  & \textbf{excluded} & the signature alone: $64 > 51$ \\
+DR3, DR9, DR11           & 115\,B       & \textbf{excluded} & header, link and signature fill the payload \\
+DR4, DR5, DR6, DR7       & 222 or 242\,B & feasible & --- \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.75\textwidth]{fig_t6_exclusion.png}
-\caption{Exclusion tiers across EU868 data rates.}
+\includegraphics[width=0.8\textwidth]{fig_t6_exclusion.png}
+\caption{Payload limit of each data rate against the floor of the lean format and the frames this
+telemetry produces.}
 \label{fig:t6}
 \end{figure}
 
-\subsection{The three rates that cannot be rescued}
+\textbf{\exclCountCap{} of twelve data rates cannot carry one signed, hash-chained frame.} None
+of the eight depends on the telemetry: each is excluded against the floor. They fall into two
+groups that are excluded for different reasons, and the difference decides what could ever
+rescue them.
 
-DR0--DR2 stay excluded \emph{with a zero-byte header and a one-byte record}. It is the signature
-alone that does not fit: $64 > 51$. No header design, no encoding, no batching and no chain
-placement reaches them. The only escape is a smaller authentication object, and the smallest
-standardised one at comparable security is a $48$\,B compressed BLS12-381 G1 point --- which does
-fit $51$\,B, and leaves \emph{three bytes} for the header and the record together.
+\paragraph{Five rates: the signature.} At $50$ or $51$\,B a $64$\,B signature does not fit. This
+holds with a zero-byte header, no chain link and no record. Only a smaller authentication object
+could change it.
 
-\textbf{This is arithmetic. It does not move as hardware, models or schemes improve.} It is the
-thesis's most durable claim and the reason the work is framed as a boundary.
+\paragraph{Three rates: what a frame must contain.} At $115$\,B the signature fits, and so does
+the header. What does not fit is the chain link together with a record:
+$\exFloorHdr + \linkField + 64 = \exFloorNoRec$, the whole payload, before a single byte of
+telemetry.
 
-\subsection{The fourth rate, which this thesis excluded by its own framing}
-
-DR3 misses by six bytes. That margin rests on three constants, and \textbf{each of them is ours}:
-
-\begin{enumerate}
-\item $\Hf = 44$\,B, which is the \emph{top} of a measured $38$--$44$\,B range
-      (\Cref{tab:hf}), and larger headers make exclusion more likely.
-\item The payload column: published EU868 tables differ, and one source lists DR3 at $123$\,B where
-      this work uses $115$\,B. At $123$\,B the residual is $15$\,B and \textbf{DR3 is feasible}.
-\item $\smin = 13$\,B, the smallest record \emph{this design} can emit.
-\end{enumerate}
-
-\begin{remark}[The self-correction, stated plainly]
-The frame header is $29$\,B of CBOR \emph{text key names}. The same seven keys encoded as small
-integers cost $7$\,B --- the convention COSE and SenML already use. That single change takes
-$\Hf$ from $44$ to $22$\,B, DR3's budget from $7$\,B to $29$\,B, and \textbf{makes DR3 feasible}.
-
-The system-model chapter had always recorded that the header was untuned. The theory chapter had
-always recorded that the bound depends on the header. \emph{Nobody put the two facts side by side.}
-When they were, the headline moved from \textbf{four} excluded data rates to \textbf{three}.
-
-Not even the record-field elision is required; halving the header suffices.
+\begin{remark}[Which payload column]
+Published EU868 tables differ. Klimiashvili \emph{et al.} list DR3 at $123$\,B where this work
+uses $115$\,B~\cite{klimiashvili2020loravswifi}. Both read the standard correctly: $123$ is the
+maximum \emph{MACPayload} and $115$ the maximum \emph{application} payload, the two differing by
+the $8$\,B of \texttt{FHDR} and \texttt{FPort}. The application figure is the applicable one, since
+the frame travels inside \texttt{FRMPayload}. Under the other reading the floor of \exFloor\,B
+still does not fit, by one byte --- too thin a margin to lean on, which is why it is recorded here
+and not offered as a second argument.
 \end{remark}
 
-\subsection{Why the smaller result is the better one}
+\subsection{Scope}
 
-Reporting three rather than four costs a memorable number and buys three things.
+The exclusion is a statement about a particular kind of system. It holds under four conditions,
+and each is necessary.
 
-It is \emph{honest}: the four-rate claim was one reviewer's wire-format question away from being
-wrong, and that reviewer would have been right. It is \emph{durable}: what remains cannot be
-attacked by any framing work. And it makes the boundary \textbf{constructive} --- it says not only
-where authentication cannot fit, but exactly what would have to change, and shows that for DR3 the
-answer is a header redesign rather than new cryptography.
+\begin{enumerate}
+\item \textbf{The limits are LoRaWAN's.} They come from the regional parameters. The LoRa
+      physical layer itself carries $255$\,B at any spreading factor and is not excluded; a
+      private LoRa network that ignores the regional payload table is outside this result.
+\item \textbf{Every frame carries a public-key signature.} A symmetric tag is far smaller, and
+      authenticates a link instead of an originator.
+\item \textbf{There is no loss recovery.} Retransmission or coding across frames changes what it
+      means for a frame to arrive.
+\item \textbf{$\varepsilon \leq p$.} This is what forbids spreading a signature over several
+      frames: a unit spanning $n$ frames verifies with probability $(1-p)^n$, so
+      $V \geq 1-\varepsilon$ needs $n \leq \lfloor \ln(1-\varepsilon)/\ln(1-p) \rfloor$, which is
+      $1$ exactly when $\varepsilon \leq p$. At $p = 0.01$ and $\varepsilon = 0.05$ a signed unit
+      may span five frames, and the exclusion no longer holds as stated.
+\end{enumerate}
 
-The tier taxonomy of \Cref{thm:t6} always named ``encoding'' as the tier compression can attack.
-This is that tier being attacked, and moving, exactly as the taxonomy predicted.
+\subsection{What each relaxation buys}
 
-\section{Per-frame chaining, and why the arms differ}
+\begin{table}[h]
+\centering
+\caption{The lean format under four authentication choices. \emph{Floor}: every field zero.
+\emph{Range}: frames of this telemetry over a flight.}
+\label{tab:t6relax}
+\begin{tabular}{lrrlll}
+\toprule
+ & floor & range & 50/51\,B & 115\,B & 222/242\,B \\
+\midrule
+$64$\,B signature, chain link on air & \exFloor & \exLo--\exHi & no & no & yes \\
+\ldots{} chain link not sent on air & \exFloorNoLink & \exLoNoLink--\exHiNoLink & no & \textbf{yes} & yes \\
+$48$\,B BLS signature & \exFloorBls & \exLoBls--\exHiBls & no & no$^\ast$ & yes \\
+$13$\,B symmetric tag & \exFloorTag & \exLoTag--\exHiTag & no & yes & yes \\
+\bottomrule
+\multicolumn{6}{l}{$^\ast$ a frame of zeros would fit; no frame of this telemetry does.}
+\end{tabular}
+\end{table}
 
-Moving the chain hash from per-record to per-frame is worth far more here than on 802.11, because
-the regional payload limit binds --- so smaller records convert into \emph{more records per frame},
-which the duty cycle turns directly into sustainable rate. Measured across DR4--DR6 it gives
-$\approx 3.0\times$ the sustainable telemetry rate for the same regulatory budget.
+Three readings of \Cref{tab:t6relax} are worth stating.
+
+\textbf{The 115\,B rates are excluded by the chain link, not by the signature.} Remove the link
+from the air and they fit with ordinary $64$\,B signatures. That row is arithmetic, not an
+implemented format: without the link a receiver that has missed a frame cannot rebuild the next
+one, so removing it trades the exclusion for the dependence that \Cref{thm:t3prime} counts.
+
+\textbf{A three-byte miss is not an exclusion.} The smallest standardised signature is a $48$\,B
+BLS12-381 point in the minimal-signature-size variant~\cite{cfrg_bls}, which targets $126$-bit
+security. It fits a $51$\,B payload and leaves three bytes. At $115$\,B a frame of zeros would
+fit (\exFloorBls\,B) while the smallest frame of this telemetry is \exLoBls\,B. That margin is
+within reach of a format change or a different payload, so the artifact grades it separately and
+it is \emph{not} counted among the excluded rates.
+
+\textbf{At 50 or 51\,B, hash chaining itself does not fit.} Header and link are
+\exHdrLinkLo--\exHdrLinkHi\,B before any authenticator or record. Even a $13$\,B symmetric tag, as
+MAVLink~2 uses, leaves no room. The exclusion there rests on two independent facts.
+
+\subsection{How this result reached its present form}\label{sec:excl-history}
+
+This section exists because the result was stated wrongly twice, and the second error was made
+\emph{while correcting the first}.
+
+\paragraph{First statement (July 2026).} $\smax = M - \Hf - \ga \geq \smin$, with $\Hf = 44$\,B,
+$\ga = 64$\,B and $\smin = 13$\,B, applied to seven data rates. DR0--DR2 were excluded by the
+signature and DR3 ``by six bytes'' ($7$\,B of room for a $13$\,B record): \emph{four of seven}.
+
+\paragraph{First correction (August 2026).} The header is $29$\,B of CBOR text key names; the
+same seven keys as small integers cost $7$\,B. An integer-keyed header of $22$\,B gave DR3
+$29$\,B of room, and the headline was changed to \emph{three of seven}, with DR3 ``rescued'' by a
+header redesign. The correction was presented, in this chapter and in the paper's abstract, as an
+example of composing two facts that had been recorded separately.
+
+\paragraph{Second correction (October 2026).} An external review asked what a frame that
+verifies alone must actually carry. Two things had never been charged in either statement:
+
+\begin{itemize}
+\item the \textbf{chain link}. Per-frame chaining (\Cref{sec:perframe}) moves the $32$\,B link
+      out of each record and into the frame, where it still has to travel. The test had
+      subtracted it from the record and added it nowhere.
+\item a \textbf{record that decodes alone}. $13$\,B was the \emph{mean delta} record less its
+      link. A frame that verifies without its predecessor starts with a keyframe.
+\end{itemize}
+
+With both charged, the ``$29$\,B of room'' is $29 - 35 < 0$. DR3 is excluded under either header,
+whatever the telemetry. And the count had been of seven data rates where the standard defines
+twelve.
+
+\begin{remark}[What the second error teaches that the first did not]
+The first correction ended with the sentence: \emph{a register that stores facts separately does
+not compose them; only re-derivation does.} Re-derivation was not enough either. Every number in
+the first correction was re-derived and every one was right. What was wrong was that no frame of
+the proposed kind had ever been \emph{built}: the design was a sum of sizes measured in three
+places. The lean format now exists as code (\Cref{ch:sysmodel}), the floor above is the length of a
+frame it emitted, and the question ``does it fit'' is answered by trying.
+\end{remark}
+
+The half that was right throughout: DR0--DR2 are excluded by the signature alone.
+
+\section{Per-frame chaining, and what it is actually worth}\label{sec:perframe}
+
+On 802.11 freshness binds, so the batch is fixed by $\Lambda_i \Dmax$ and saving payload bytes
+buys no extra records. Here the regional payload limit binds, so bytes convert directly into
+records per frame, and the duty cycle converts records per frame into sustainable rate. Carrying
+the chain link once per frame instead of once per record is therefore worth far more on this arm.
 
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.7\textwidth]{fig_lora_chain.png}
-\caption{Per-frame versus per-record chaining across data rates.}
+\caption{Per-frame versus per-record chaining across data rates, as first computed (see the
+correction below).}
 \label{fig:lorachain}
 \end{figure}
 
-The 802.11 arm keeps per-record chaining, because freshness binds there and the same change buys
-almost nothing in extra records --- too little to pay for losing independently-transmitted
-per-record tamper evidence. \textbf{The two arms carry the same ledger in two framings, and that
-asymmetry is the point rather than an inconsistency.}
+\begin{remark}[Correction, October 2026]
+\Cref{fig:lorachain} and the factor of $3.0$ first reported with it size every record from a
+$13$\,B body --- the delta record measured with records $50$\,ms apart. At the rates this arm
+sustains, records are seconds apart, and a difference grows with the time it spans:
 
-\section{Capacity, and a threshold applied to the wrong thing}
+\begin{center}
+\begin{tabular}{lrrrrr}
+\toprule
+spacing & 50\,ms & 0.1\,s & 1\,s & 5.5\,s & 16.5\,s \\
+\midrule
+lean delta record (B) & \deltaLean & \deltaLeanTenth & \deltaLeanOne & \deltaLeanFar & \deltaLeanSlow \\
+\bottomrule
+\end{tabular}
+\end{center}
 
-Everything else in this arm is analytical and deliberately so --- time on air is a specification
-formula and the sustainable rate is the duty cycle, both deterministic, so simulating them would be
-circular. Exactly one quantity resists that: \emph{how many nodes can share the channel}, because
-uplinks are pure ALOHA with no carrier sense.
+The first figures also carried no keyframe, so no frame decoded without the one before it. Sized
+at the spacing the batch itself implies, with every frame self-contained, DR5 at $242$\,B gives:
 
-Simulation at DR5 gives $\Nmax = 3$ against the $V \geq 0.95$ criterion.
+\begin{center}
+\begin{tabular}{lrrr}
+\toprule
+ & records per frame & frame (B) & records/s per node \\
+\midrule
+as first reported & \loraRecsPub & \loraFrmPub & \loraRatePub \\
+first format, corrected & \loraRecsFirst & \loraFrmFirst & \loraRateFirst \\
+lean format & \loraRecsLean & \loraFrmLean & \loraRateLean \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Per-frame chaining is worth about $2.1\times$ in the first format, not $3.0\times$; the lean
+format recovers the larger figure because it also shortens the header and the record. The
+decision to chain per frame on this arm is unaffected: its argument is that the payload limit
+binds, and that has not changed.
+\end{remark}
+
+In the first format the 802.11 arm keeps a link in every record, because freshness binds there
+and the same change buys no extra records. The lean format carries one link per frame on both
+arms. What that gives up is stated in \Cref{ch:sysmodel}: inside a frame, order and content rest on
+the frame signature alone instead of on a signature and an independent hash.
+
+\section{Capacity}
+
+Time on air and the duty cycle are deterministic, so simulating them would be circular. One
+quantity is not derivable that way --- how many nodes can share the channel --- because LoRaWAN
+uplinks are pure ALOHA, with no carrier sense and no acknowledgement. Simulating LoRaWAN
+scalability in ns-3 is established practice~\cite{vandenabeele2017scalability}, including
+proposals to replace the ALOHA MAC with carrier sense~\cite{to2018loracsma} and extensions to
+non-terrestrial links~\cite{traspadini2025lorantn}.
+
+\subsection{A topology caveat}
+
+LoRaWAN is by specification a star of stars with no peer-to-peer mode: a FANET survey notes that
+it ``presents some limitations regarding its star topology, its medium access control (MAC) layer
+and its lack of routing procedures''~\cite{paredes2023lorafanet}, and published peer-to-peer LoRa
+meshes are built by discarding the LoRaWAN MAC entirely, ``not relying on LoRaWAN\ldots without
+the use of gateways''~\cite{berto2021loramesh}. A LoRa FANET that was actually flown reports the
+same constraint, and hybrid LoRa/802.11s UAV meshes reach for a second radio for the same
+reason~\cite{davoli2021hybridlora}; having built one, Zirak \emph{et al.} converge on a single
+channel and on dedicated transmit and receive radios to work around
+half-duplex~\cite{zirak2021swarm}, which is the configuration modelled here. A review of mesh
+proposals finds that even those pursuing flexible topologies keep ``a predominant nodes
+$\rightarrow$ gateway/sink data flow''~\cite{centelles2021beyondstar}; concrete multi-hop
+deployments keep the same sink-directed shape~\cite{abrardo2019multihoplora,jiang2020hybridlpwan},
+and a 2025 ns-3 LoRa mesh study states that ``there is currently no standardised and
+commercialised multi-hop LoRa-based network''~\cite{durand2025loramesh}.
+
+The scenario is therefore $N$ end devices reporting to one receiver, where the 802.11 arm is a
+broadcast among peers. What transfers is the part that matters: collision statistics at a
+receiver depend on how many transmitters are concurrently in range, not on what the receiver is
+attached to. It is also why a single demodulator is the right provisioning here and not, as it
+would be for a gateway, an artificially harsh one: a UAV peer has one radio. Two ad hoc effects
+remain outside the model. A half-duplex radio cannot receive during its own $364$\,ms frame,
+costing a peer about $2\%$ of every other peer's frames. And $V$ is a per-receiver measure, as on
+the 802.11 arm: a record reaching \emph{every} peer in one broadcast has probability about
+$(1-p)^{N-1}$, which is not what $V$ measures and would need gossip or relay.
+
+\subsection{The result, and how it must be quoted}
+
+Simulating the frame at DR5 under the $0.95$ threshold gives $\Nmax = 3$, with a sharp cliff:
+delivery is $0.960$ at $N{=}3$ and $0.917$ at $N{=}5$. There is no backoff to absorb contention.
 
 \begin{remark}[Never quote this bare]
 The bootstrap interval is $[2, 3]$ --- a knife edge --- and at the certified $N = 3$, \textbf{nine of
@@ -140,9 +312,115 @@ was safe to take only because the comparative result survives either reading.
 An earlier value of $\Nmax = 5$ came from a three-seed sample against a bimodal distribution and is
 retracted; the artifact that produced it is retained, renamed and superseded.
 
+The capacity runs sent a $218$\,B frame of six records on the $222$\,B payload table, which is the
+table the simulator enforces. The corrected frames on that table are $214.0$\,B (lean, six
+records) and $221.7$\,B (first format, four records), within $2\%$ of it in size and airtime, so
+the runs were not repeated.
+
+\subsection{Why DR5 and not DR6}
+
+\Cref{tab:t6} admits DR4, DR5 and DR6 equally, and DR6 (SF7 at $250$\,kHz) runs at twice DR5's bit
+rate, so the choice needs stating. \emph{Capacity does not change.} At a fixed duty cycle $d$ the
+transmissions falling inside one $2T_{\text{air}}$ vulnerability window number
+$N \cdot 2T_{\text{air}}/T_{\text{period}} = 2Nd$: \textbf{the airtime cancels}, so
+$P(\text{deliver}) = e^{-2(N-1)d}$ is rate-independent and $\Nmax$ is the same at either rate.
+That closed form reproduces the measured DR5 run to within $0.9$ percentage points across
+$N{=}2$--$10$ and returns $\Nmax=3$, matching the simulation. DR6 therefore doubles the aggregate
+at the same three nodes, and pays for it in link budget: $-120$ against $-123$\,dBm is $3$\,dB,
+or $1.41\times$ less range under free-space spreading.
+
+\textbf{We derive this rather than simulate it, and the reason is a limitation worth recording.}
+The module's sensitivity vectors are indexed by \emph{spreading factor alone} --- there is no
+bandwidth dimension in \texttt{EndDeviceLoraPhy::SENSITIVITY} or its gateway counterpart, and
+none in the interference helper. Forcing SF7 onto a $250$\,kHz channel would have returned DR6's
+doubled bit rate while silently keeping DR5's noise floor, so the $3$\,dB penalty --- DR6's
+entire cost --- would have been invisible in a run that completed cleanly and repeated across all
+30 seeds.
+
+\subsection{What the configuration models, and what it does not}
+
+$\Nmax = 3$ is far below the node counts usually quoted for LoRaWAN, and the difference is
+configuration. The simulation uses the LoRa physical layer on its harshest MAC provisioning: a
+single logical channel, a single demodulation path and one forced spreading factor, since the
+data rate is a design variable here and each run fixes it. The interference matrix treats
+\emph{any} same-spreading-factor overlap as fatal, so there is no capture, where a real receiver
+recovers the stronger of two colliding frames. Enabling a $6$\,dB capture threshold raises
+delivery by $2.7$ points at $N{=}8$ and by $1.29\times$ at $N{=}50$ without moving $\Nmax$. The
+small margin over the Poisson curve $e^{-2G}$ at low load is traffic regularity, not capture:
+sources are periodic, for which the escape probability is $(1-2\tau/T)^{N-1} = 0.868$ at $N{=}8$
+against $0.871$ measured.
+
+\subsection{The result is range-limited, and that limit binds first}
+
+The channel model attributes all loss to collisions. Enabling correlated shadowing changes the
+outcome on no row at either $500$ or $1000$\,m, and that is a property of the link budget: with
+$14$\,dBm transmit power and $-130$\,dBm SF7 gateway sensitivity, log-distance path loss leaves
+$28.8$\,dB of margin at $500$\,m and $17.5$\,dB at $1000$\,m, which a shadowing standard
+deviation of about $8$\,dB cannot erode. \emph{The propagation parameters describe a considerably
+better link than a real drone-to-drone channel.} Field measurements of air-to-air LoRa on real
+drones~\cite{zirak2021swarm} show a link losing frames to range alone: delivery falls from
+$0.9711$ at $200$\,m to $0.9550$ at $500$\,m and $0.9045$ at $1000$\,m, measured with two drones
+and a base station, where contention is negligible. The two loss mechanisms are independent, so
+delivery is $P_{\text{link}}(d) \times P_{\text{no-coll}}(N)$:
+
+\begin{center}
+\begin{tabular}{lrrr}
+\toprule
+$V$ target & $200$\,m & $500$\,m & $1000$\,m \\
+\midrule
+$0.95$ & 1 & 1 & 0 \\
+$0.90$ & 3 & 3 & 1 \\
+$0.85$ & 5 & 5 & 3 \\
+$0.80$ & 10 & 8 & 5 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{At $V \geq 0.95$ the regime admits no multi-node network at all.} The link alone
+delivers $0.9711$ at $200$\,m, leaving $0.0039$ of headroom, while the least-loaded measured point
+($N{=}2$) already spends $0.0283$ on collisions. Relaxing to $V \geq 0.90$ restores $\Nmax = 3$,
+and to $0.85$ restores $5$. The curve is reported instead of a point because the choice of
+threshold, not the physics, decides whether this regime is usable, and that choice belongs to the
+deployment. \textbf{$\Nmax=3$ is therefore a worst-case bound at short range --- one channel, one
+demodulator, one spreading factor, $d \leq 500$\,m --- and not a LoRaWAN network capacity.}
+
+\subsection{What infrastructure collection would buy}
+
+The complementary question --- what if a ground gateway collected the ledger --- is a
+configuration change: three channels and eight demodulation paths, with the same forced data
+rate. Delivery improves substantially and the improvement grows with load, reaching
+$1.90\times$ at $N{=}50$ ($0.3755 \rightarrow 0.7134$) and still $0.5071$ at $N{=}100$.
+\textbf{Yet $\Nmax$ moves only from 3 to 8} (95\% interval $[5,8]$; the bare value must not be
+quoted). The $V \geq 0.95$ criterion sits on a near-vertical part of the delivery curve --- the
+gateway passes at $N{=}8$ with $0.9526$ and fails at $N{=}10$ with $0.9398$ --- so a threefold
+reduction in offered load per channel moves the threshold barely at all.
+
 \subsection{External corroboration, quoted as a curve}
 
-An external hardware-grounded model gives $\Nmax = 4$ where this work gives $3$.
+Haxhibeqiri \emph{et al.}~\cite{haxhibeqiri2017lora} publish a capacity result in closed form
+--- a quintic fitted at $R^2 = 0.997$ to total packet loss measured on SX1301 hardware --- so it
+can be evaluated at this work's operating point instead of quoted at theirs. It was implemented,
+checked against the four loss figures their own text states, and given the same criterion.
+
+\begin{table}[h]
+\centering
+\caption{The low-rate capacity by two independent methods: frame loss at $N$ transmitters.}
+\label{tab:lora-external}
+\begin{tabular}{lrr}
+\toprule
+$N$ & this work (ns-3) & Haxhibeqiri \emph{et al.} \\
+\midrule
+2  & $2.8\%$ & $3.1\%$ \\
+3  & $4.0\%$ & $3.8\%$ \\
+5  & $8.3\%$ & $5.1\%$ \\
+8  & $12.9\%$ & $7.0\%$ \\
+30 & $43.0\%$ & $19.9\%$ \\
+50 & $62.5\%$ & $29.9\%$ \\
+\midrule
+$\Nmax$ at $V \geq 0.95$ & \textbf{3} & \textbf{4} \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \begin{remark}[Two cautions about that comparison]
 Their $\Nmax$ is decided at $N = 4$ and $N = 5$, both inside the region their own fit is
@@ -156,9 +434,26 @@ upward. The sign changes in exactly the region where $\Nmax$ is decided. An earl
 project quoted a single ratio in the wrong direction and had to be retracted.
 \end{remark}
 
+\begin{remark}[A correction of attribution]
+Until October 2026 this model was cited throughout the project --- in this chapter, the paper,
+the code and eight documents --- under the names of the authors of a \emph{different} paper. The
+source had been read and its figures checked; nobody had compared the author list with the title
+page. Every bibliography entry is now compared with its registry record by a script
+(\Cref{ch:reproducibility}).
+\end{remark}
+
+\section{What the regime is for}
+
+Three nodes at about $0.17$ records per second each are \loraAgg{} records per second in all,
+where the 802.11 design carries some \wifiAgg. The low-rate link is not a slow 802.11. Its
+defensible role for a ledger is long-range \emph{provenance} --- a tamper-evident trickle --- and
+not live telemetry. An independent ns-3 comparison of the two technologies reaches the same
+structural conclusion from a different direction: Klimiashvili \emph{et al.} find neither
+uniformly better and recommend selecting between them instead of tuning
+one~\cite{klimiashvili2020loravswifi}.
+
 \section{Scope of this chapter}
 
 This is simulation and analysis, not measurement. No radio was metered, and there is no energy
-column --- the only measured radio power in this project is a Wi-Fi figure, and reusing it for a
-different transceiver would be fabrication. Airtime per record is reported instead: it is what the
-regulator rations, and it is computed rather than assumed.
+column. Airtime per record is reported instead: it is what the regulator rations, and it is
+computed, not assumed.

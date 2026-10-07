@@ -12,7 +12,12 @@ energy model and the simulation comparison; one place where experiment parameter
 
 Where that rule was broken, defects followed. A signature-size constant duplicated between two
 modules produced a stale result that survived a re-freeze. An airtime approximation that existed in
-two forms produced a $12\%$ discrepancy on acknowledgement frames.
+two forms produced a $12\%$ discrepancy on acknowledgement frames. And the largest instance was
+not a duplicated constant but a \emph{missing object}: for three months the design the results
+headlined existed only as a sum of sizes measured in three modules, with no frame, no sender and
+no receiver behind it --- so the byte model, the verifiability model and the exclusion test each
+evaluated a slightly different thing and none could be checked against the others
+(\Cref{ch:reproducibility}).
 
 \section{The library}
 
@@ -28,16 +33,21 @@ pass before any timing work.
 \item[\texttt{ledger/}] The data structure being authenticated: the canonical record, the hash
 chain, persistence, and verification with replay and equivocation detection.
 
-\item[\texttt{placement/}] The placement axis. \texttt{wire.py} is the frame format and the one
-place that decides \emph{what bytes a signature covers} --- the audit boundary.
-\texttt{framer.py} holds the header constant and the batch bounds. \texttt{wire\_profile.py}
-measures an integer-keyed \emph{alternative} to the frozen format; it is a measurement and never
-the shipped format, and a test fails if it leaks into one.
+\item[\texttt{placement/}] The placement axis. \texttt{wire.py} is the first frame format and the
+one place that decides \emph{what bytes a signature covers} --- the audit boundary; it is frozen.
+\texttt{framer.py} holds its header constant and the batch bounds. \texttt{wire\_v2.py} is the
+lean format of \Cref{sec:formats}: integer keys, one chain link per frame, a variable-length
+record stream, and the same signed bytes as the first format. \texttt{session\_v2.py} is the
+protocol around it --- a sender that emits one self-contained frame per reference interval, and a
+receiver that decodes, verifies, stores and reports what it did with each frame (accepted,
+desynchronised, malformed, unknown sender, bad signature, replay, equivocation, tampered).
 
 \item[\texttt{models/}] The analytical layer: the DCF fixed point with exact OFDM-symbol airtime,
-the published broadcast model, the energy and freshness models, the Pareto search with the
-exclusion tiers, the scheme crossover, and the low-rate PHY with every constant transcribed from
-primary specifications.
+the published broadcast model, the energy and freshness models, the Pareto search, the scheme
+crossover, and the low-rate PHY with every constant transcribed from primary specifications.
+\texttt{frame.py} holds the \emph{one} definition of a frame from which the byte, verifiability
+and exclusion results are all computed, and whose arithmetic is held equal to emitted frames by
+test. \texttt{phy.py} makes the OFDM timing a parameter.
 
 \item[\texttt{sim/}] A slot-exact backoff simulator written \emph{before} the published broadcast
 model was located, retained as a cross-check that shares none of that model's assumptions. It earns
@@ -50,10 +60,10 @@ its place in \Cref{ch:validation}.
 \text{Frame} := \{v, t, \texttt{src}, \texttt{base\_seq}, n, \texttt{recs}[\,], \texttt{auth}\}
 \]
 in canonical CBOR, with the authentication block shaped by placement. The signature input is the
-canonical bytes of the covered region, and test vectors are frozen.
+canonical bytes of the covered region, and test vectors are frozen. The lean format keeps that
+signature input and changes only how the records travel; its field table is \Cref{tab:fields}.
 
-\needswork{TO ADD: a byte-level worked example of one frame, which would make
-\Cref{ch:lowrate}'s header argument immediately legible.}
+\needswork{TO ADD: a byte-level worked example of one lean frame, hex beside fields.}
 
 \section{The two-layer data pipeline}
 

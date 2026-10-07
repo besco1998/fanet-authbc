@@ -82,3 +82,125 @@ simulation at matched mean rate showing $V_D$ approaching but never reaching $1-
 a rate the constraint does not permit.}
 \label{fig:e3}
 \end{figure}
+
+\section{E10 --- loss with the decoder in the loop}\label{sec:e7}
+
+E3 compares one-frame placements with a block that spans frames. It does not exercise the case
+\Cref{thm:t3prime} describes, because in E3 every frame of placement B is assumed to verify alone.
+With delta coding that is true only of a frame that starts with a keyframe.
+
+E10 removes the assumption by removing the model: records go through the lean sender, a loss
+process, and the lean receiver, and $V$ is the fraction of generated records that the receiver
+decoded, verified and stored. Thirty seeds of \lossFrames{} frames per cell in all.
+
+\begin{table}[h]
+\centering
+\caption{Verifiability at frame loss $p = 0.05$ with one self-contained frame in $r$ ($b = 4$).
+Mean and 95\% bootstrap interval over thirty seeds, against \Cref{thm:t3prime}.}
+\label{tab:e7}
+\begin{tabular}{rrlrc}
+\toprule
+$r$ & B/record & $V$ measured & theorem & $V \geq 0.95$ \\
+\midrule
+1 & \lossBprOne & \lossVOne\ \lossCiOne & \lossThOne & yes \\
+2 & \lossBprTwo & \lossVTwo\ \lossCiTwo & \lossThTwo & no \\
+4 & \lossBprFour & \lossVFour\ \lossCiFour & \lossThFour & no \\
+16 & \lossBprSixteen & \lossVSixteen\ \lossCiSixteen & \lossThSixteen & no \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The design as first published is the $r = 4$ row: \lossVFour, not $0.95$. The theorem predicts
+the measurement in every row, and at every other loss rate tried ($p$ from $2.3\times10^{-4}$ to
+$0.10$). With bursty loss of the same mean --- a Gilbert process with bursts of four frames ---
+the $r = 4$ design verifies \lossVFourBurst: better, and still short.
+
+\begin{remark}[What this experiment validates, and what it does not]
+Unlike E3, agreement here is not a tautology: the closed form counts frames, while the experiment
+runs a codec and a receiver that know nothing of the formula, and they agree. What it does not
+validate is the loss process itself, which is synthetic at the frame level in both.
+\end{remark}
+
+The corrected design uses $r = 1$. It costs \lossPrize\,B per record more than $r = 16$ would,
+and it is the only interval that meets the target at the design's own loss rate.
+
+\subsection{When loss grows with frame length}
+
+Everything above gives every frame the same loss probability. At a fixed bit error rate a frame
+of $L$ bytes with $o$ bytes of MAC overhead survives with probability $(1-\beta)^{8(L+o)}$, so
+two frames on one channel are related by
+\[
+p(L) = 1 - (1 - p_{\mathrm{ref}})^{(L+o)/(L_{\mathrm{ref}}+o)} ,
+\]
+and a batch, being a longer frame, is lost more often than the one-record frame it replaces.
+E10 has a third loss process for this: the bit error rate is set so that the \emph{one-record}
+frame of the lean format is lost with probability $p$, and each frame is then lost by its own
+length.
+
+On a channel that loses $5\%$ of one-record frames, the design's frame is lost with probability
+\lossBerP, and \lossBerTh{} of its records are expected to verify (measured:
+\lossBerV~\lossBerCi). \textbf{That is below the target the design meets at equal frame
+loss.} It reaches $0.95$ only while one-record frames are lost at most \lossBerPmax{} of the
+time. The loss budget $p = \varepsilon$ had no margin (\Cref{ch:theory}); under this reading
+the batch spends margin it does not have. The byte and capacity comparisons of
+\Cref{ch:codesign} are at equal frame loss and carry this qualification.
+
+\section{E9 --- what a frame is made of}\label{sec:e6}
+
+\Cref{tab:fields} gives the byte budget of both formats. Two properties of the record sizes in it
+matter for everything downstream, and neither was visible while sizes were quoted as single
+numbers.
+
+\paragraph{A delta is not a constant of the encoder.} It encodes a difference, and a difference
+grows with the time it spans:
+
+\begin{center}
+\begin{tabular}{lrrrrr}
+\toprule
+spacing between records & 50\,ms & 0.1\,s & 1\,s & 5.5\,s & 16.5\,s \\
+\midrule
+lean delta record (B) & \deltaLean & \deltaLeanTenth & \deltaLeanOne & \deltaLeanFar & \deltaLeanSlow \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+At the 50\,Hz of the 802.11 arm the smallest value applies. On the low-rate arm records are
+seconds apart, and using the 50\,ms figure there overstated what a frame could carry
+(\Cref{sec:perframe}).
+
+\paragraph{The generator's delta is the floor of the format.} Every one of 29\,970 delta records
+at 50\,ms spacing is exactly \deltaLean\,B: nine fields, one byte each. A reviewer called that out
+as looking synthetic, and it is. To find out whether it matters, the same encoder was run over
+twelve public PX4 flight logs --- four quadrotors, two hexa- or octorotors, three fixed wings and
+three VTOLs, \pxRecords{} in-flight records --- chosen by a rule committed before any log was
+opened.
+
+\begin{table}[h]
+\centering
+\caption{Record sizes on real flight logs against the generator, at matched spacing. The logs
+carry position at 5\,Hz, so nothing finer than 0.2\,s can be measured from them.}
+\label{tab:px4}
+\begin{tabular}{lrrrr}
+\toprule
+ & keyframe & delta, 0.2\,s apart & B/record at $b{=}4$ & saving \\
+\midrule
+twelve flight logs (mean) & \pxKey & \pxDelta & \pxBpr & \pxSave\% \\
+generator & \pxKeyGen & \pxDeltaGen & \pxBprGen & \pxSaveGen\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+At matched spacing the generator is within a quarter of a byte of real telemetry. The spread is
+by speed: the six multicopters, mostly hovering, average \pxDeltaSlow\,B per delta, and the three
+fixed wings up to \pxDeltaFast\,B, for which the saving is \pxSaveWorst\%. So the mean flatters a
+fast swarm by about a percentage point, and the 50\,Hz spacing of the adopted operating point is
+not covered by any public log found.
+
+\begin{remark}[What was predicted, and what was not testable]
+The prediction committed in advance was a mean delta of at most $13$\,B and a saving of at least
+$68\%$, \emph{at 0.1\,s spacing}. The logs turned out to carry position at 5\,Hz, so the
+prediction was applied, unchanged in its numbers, at 0.2\,s --- the stricter reading, since a
+difference over a longer interval is never smaller --- and holds there. The 0.1\,s prediction
+itself is recorded as untested. One predicted range was missed: the keyframe, predicted at
+22--25\,B, measures \pxKey\,B, because multicopters fly slowly enough for one-byte velocities.
+\end{remark}

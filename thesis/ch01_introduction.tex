@@ -70,8 +70,8 @@ to be corrected.
 \end{description}
 
 RQ5 was not in the original charter. It emerged from the low-rate arm and became the thesis's most
-durable result; \Cref{ch:lowrate} develops it and is honest about which part of it survives
-scrutiny and which part does not.
+durable result; \Cref{ch:lowrate} develops it, and records the two occasions on which this thesis
+stated it wrongly.
 
 \section{Contributions}
 
@@ -85,23 +85,28 @@ scrutiny and which part does not.
       under any stationary loss process --- not merely under the independent-loss assumption the
       emulator implements (\Cref{ch:theory}).
 
-\item \textbf{An exclusion bound instantiated on a real band, separated by durability.} Three EU868
-      data rates are excluded \emph{unconditionally}: a $64$\,B signature will not fit a $51$\,B
-      payload at a zero-byte header. A fourth is excluded by \emph{our own} frame header, and the
-      thesis quantifies that contingency rather than leaving it implicit (\Cref{ch:lowrate}).
+\item \textbf{An exclusion bound instantiated on a real band, with its scope.} \exclCountCap{} of
+      the twelve EU863-870 data rates cannot carry one signed, hash-chained frame: five because a
+      $64$\,B signature will not fit a $51$\,B payload, three because header, chain link and
+      signature fill a $115$\,B payload before any record. The four conditions under which that
+      holds, and what each relaxation buys, are stated with it (\Cref{ch:lowrate}).
 
-\item \textbf{A feasibility envelope} rather than a byte ratio: the largest neighbourhood each
-      configuration sustains, at $1.9\times$--$3.2\times$ the inline baseline, reported at two
-      thresholds because they answer different questions (\Cref{ch:codesign}).
+\item \textbf{The design built as one object, and its capacity measured directly.} A frame
+      format with a sender and a receiver, in which every reported size is the length of an
+      emitted frame; and the largest neighbourhood each configuration sustains, found by
+      simulating each at its own frame size and rate with a bootstrap interval:
+      \nmaxLeanDesign{} neighbours for the design against \nmaxLeanBase{} for per-record signing
+      (\Cref{ch:sysmodel}, \Cref{ch:codesign}).
 
 \item \textbf{Validated models with their gaps stated}, including a broadcast channel model
       validated to $\leq 0.08\%$ against an independent slot-exact simulator and $\leq 0.51\%$
       against NS-3, plus two-radio hardware measurement of the airtime constants
       (\Cref{ch:validation}).
 
-\item \textbf{An ablation that narrows our own claim}, showing that only placement and batching
-      genuinely interact, and that an apparent encoding interaction was a ratio-scale artifact
-      (\Cref{ch:codesign}).
+\item \textbf{An ablation that narrows our own claim}, showing that in the byte model only
+      placement and batching interact, that an apparent encoding interaction was a ratio-scale
+      artifact, and that the one real coupling of encoding to batching appears only when the frame
+      is built (\Cref{ch:codesign}).
 
 \item \textbf{A reproducible testbed and a defect taxonomy.} Every model-derived artifact is
       re-derived byte-identically by an automated gate, and the classes of defect that survived

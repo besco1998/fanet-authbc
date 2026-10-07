@@ -69,18 +69,37 @@ E3 & loss frontier (T3) & measured $V$ vs $(1-p)^n$; goodput; Pareto plot \\
 E4 & scheme selection (T4) & energy/record, verification wall, crossover \\
 E5 & co-design end-to-end (T5) & bytes/energy/goodput vs baselines \\
 E6--E7 & low-rate arm and its co-design & feasibility partition, Pareto front \\
-E8 & capacity envelope & channel utilisation, $\Nmax$ \\
+E8 & capacity envelope from one load ceiling (superseded) & channel utilisation \\
+\midrule
+\multicolumn{3}{l}{\emph{Added October 2026, on the frame built as one object}} \\
+E9 & what a frame is made of & field-level byte budget, both formats \\
+E10 & loss with the decoder in the loop (T3\textquotesingle) & measured $V$ against keyframe interval, three loss processes \\
+E11 & the design ladder & bytes, $\Nmax$, receiver CPU, energy per rung \\
+E12 & which link carries a signed, chained frame (T6) & exclusion matrix, twelve data rates \\
+E13 & freshness with every term & fill, channel, verification against $\Dmax$ \\
+E14 & the low-rate batch at its own record spacing & records per frame, sustainable rate \\
+E15 & other PHY rates (model only) & saturation bound against rate \\
+E16 & sender energy, metered against modelled & \si{\micro\joule} per record \\
+E17 & classical stream-signing schemes (model only) & authenticator bytes, frames/s, saturation bound \\
+--- & direct search for $\Nmax$ (simulation) & delivery against $N$, bootstrap interval \\
+--- & record sizes on public flight logs & keyframe and delta sizes against the generator \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-Baselines throughout are A+JSON (naive), A+CBOR (compression-only) and D over-aggregated.
+Baselines in E1--E8 are A+JSON (naive), A+CBOR (compression-only) and D over-aggregated. From E11
+on the comparison is a ladder in which each rung changes one thing, because A+CBOR signs every
+record \emph{and} sends one record per frame and so confounds two effects.
 
 \section{Simulation campaign}
 
-The simulation scenario uses IEEE 802.11a ad-hoc at $\SI{6}{\mega\bit\per\second}$, RTS/CTS off,
-with $N$ saturated senders in \emph{both} unicast and broadcast modes, frame sizes taken from the
-real framer output. Transport is a packet socket rather than a flow monitor, because MAC-level
+Two scenarios are used, for two different questions. The \emph{saturation} scenario validates the
+channel models: IEEE 802.11a ad-hoc at $\SI{6}{\mega\bit\per\second}$, RTS/CTS off, with $N$
+saturated senders in \emph{both} unicast and broadcast modes, frame sizes taken from the real
+framer output. The \emph{delivery} scenario measures capacity: the same channel with each node
+offering one frame per period, so the network runs at a chosen load and the delivered fraction is
+read at the receivers. The capacities of \Cref{ch:codesign} come from the second, with the send
+instant redrawn in every period for the reasons given in \Cref{sec:capacity}. Transport is a packet socket rather than a flow monitor, because MAC-level
 goodput with no addressing artifacts is what the models predict.
 
 \begin{remark}[The comparison rule]
