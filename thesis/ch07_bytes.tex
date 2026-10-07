@@ -26,6 +26,16 @@ MessagePack & 65.16  & 49.6\% & --- \\
 This is \Cref{thm:t1} instantiated: at delta encoding the signature is \emph{larger} than the record
 it signs. The motivating claim of the thesis is a measurement, not a conjecture.
 
+\begin{remark}[What $s$ contains]
+Every size in \Cref{tab:e1} includes the record's own chain link: $32$\,B in the binary
+encodings, $64$ hexadecimal characters in JSON. The delta record is $13$\,B of telemetry and
+$32$\,B of link, so the link is $71\%$ of what the table calls the record. Counted with the
+signature, authentication material is $96$ of $109$\,B, $88\%$, not $58.7\%$: $\varphi$ as
+defined understates the point it was introduced to make. An external review made this
+observation, and it is what the lean format acts on (\Cref{sec:e6}): the link is carried once
+per frame.
+\end{remark}
+
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.7\textwidth]{fig_e1_dominance.png}
@@ -147,9 +157,8 @@ the batch spends margin it does not have. The byte and capacity comparisons of
 
 \section{E9 --- what a frame is made of}\label{sec:e6}
 
-\Cref{tab:fields} gives the byte budget of both formats. Two properties of the record sizes in it
-matter for everything downstream, and neither was visible while sizes were quoted as single
-numbers.
+\Cref{tab:fields} gives the byte budget of both formats. Three things in it matter for
+everything downstream, and none was visible while sizes were quoted as single numbers.
 
 \paragraph{A delta is not a constant of the encoder.} It encodes a difference, and a difference
 grows with the time it spans:
@@ -167,6 +176,25 @@ lean delta record (B) & \deltaLean & \deltaLeanTenth & \deltaLeanOne & \deltaLea
 At the 50\,Hz of the 802.11 arm the smallest value applies. On the low-rate arm records are
 seconds apart, and using the 50\,ms figure there overstated what a frame could carry
 (\Cref{sec:perframe}).
+
+\paragraph{Where the chain link sits decides the floor.} \Cref{fig:curve} draws bytes per record
+against batch size for three layouts. With a link in every record, the first format cannot fall
+below its delta record however large the batch: at \curveMaxBatch{} records per frame it still
+costs \bprFirstTwelve\,B each. Moving that link to the frame saves $32\,(1-1/b)$\,B per
+record, \linkMoveSave\,B at $b = 4$, and gives \bprFirstLinkFrame\,B --- less than a
+per-record link reaches at any batch drawn. The lean format's shorter header and record coding
+account for the remaining \leanHeaderSave\,B, to \bprLeanDesign\,B. The two first-format
+curves are sums of measured parts; the lean curve is emitted frames.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.7\textwidth]{fig_bytes_vs_batch.png}
+\caption{Bytes per record against batch size, by where the chain link sits. Records are
+delta-coded in all three and a frame starts with a keyframe, so at $b = 1$ the first-format curves
+start below row~1 of \Cref{tab:ladder}, whose records are plain CBOR. The dotted line is the
+batch that freshness allows at the adopted operating point.}
+\label{fig:curve}
+\end{figure}
 
 \paragraph{The generator's delta is the floor of the format.} Every one of 29\,970 delta records
 at 50\,ms spacing is exactly \deltaLean\,B: nine fields, one byte each. A reviewer called that out

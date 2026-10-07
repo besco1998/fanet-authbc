@@ -25,7 +25,8 @@
 \markboth{Abstract}{Abstract}
 
 Flying ad-hoc networks (FANETs) stream telemetry records so small that a cryptographic signature
-($64$--$96$\,B) rivals or exceeds the payload itself ($45$--$190$\,B). Once the payload has been
+($64$--$96$\,B) exceeds the record it signs: compactly encoded, a record is \keyLean\,B, and
+\deltaLean\,B as a difference from its predecessor. Once the payload has been
 compressed, authentication --- not data --- becomes the dominant on-air cost, and the operational
 question stops being \emph{how many bytes does a scheme save} and becomes \emph{which
 configurations can run at all}.
@@ -59,7 +60,8 @@ exactly $\ga(1-1/b)$; in the frame as built, delta coding is conditional on batc
 frame that must decode alone starts with a full record. The signature-scheme axis is byte-neutral
 among $64$\,B schemes. AUTHBC
 introduces no new cryptographic primitive. Its contribution is a reproducible co-design, its
-quantified trade-offs, the boundary beyond which no choice of existing cryptography helps --- and a
+quantified trade-offs, the boundary beyond which no batch size helps, with the conditions under
+which it holds and what each relaxation buys --- and a
 methodological record of the defects found while establishing it, including three results this
 thesis had to correct after an external review.
 

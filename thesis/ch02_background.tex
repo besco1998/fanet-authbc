@@ -33,8 +33,10 @@ anchor for direct UAV-to-UAV broadcast. Sources are held; the synthesis is not w
 
 \section{Tamper-evident telemetry and hash-chained ledgers}
 
-Nakamoto's hash chain~\cite{nakamoto2008} makes an append-only log tamper-evident: altering a
-record invalidates every subsequent link. UAV-blockchain systems, surveyed
+Linking each record to the hash of its predecessor makes an append-only log tamper-evident:
+altering a record invalidates every subsequent link. The construction is Haber and
+Stornetta's~\cite{haber1991timestamp}; Bitcoin made it the spine of a
+blockchain~\cite{nakamoto2008}. UAV-blockchain systems, surveyed
 in~\cite{mehta2020blockchainuav}, place telemetry or attestations on such a chain, gaining
 integrity at a per-record overhead cost. This thesis targets exactly that substrate cost and is
 agnostic to the consensus layer above it; finality and witnessing semantics are out of scope.
@@ -114,7 +116,11 @@ Zhang \emph{et al.}~\cite{zhang2008batch} let a roadside unit verify multiple re
 simultaneously, motivated by the same pressure from the opposite side: a hard deadline --- DSRC's
 $300$\,ms --- within which sequential verification does not scale. Their batching is
 \emph{receiver-side} and buys verification time; the batching in this thesis is \emph{sender-side}
-and buys airtime. The two are complementary rather than competing. This work generalises from
+and buys airtime. The two are complementary rather than competing. The nearest FANET work is
+of the same kind: Rajasekaran \emph{et al.}~\cite{rajasekaran2022batchfanet} authenticate a
+group of drones to a user in one batch check of a pairing-based scheme, and report the communication cost of
+$n$ authentications as $n$ times that of one ($1184\,n$ bits) --- the verifier's work is
+shared, the bytes are not. This work generalises from
 receiver batching to authentication \emph{placement}, co-designs it with encoding and scheme, and
 adds a loss-robustness frontier that pure aggregation does not address.
 
@@ -167,10 +173,12 @@ channels buys no extra airtime. This is developed in \Cref{ch:lowrate} but belon
 
 The adjacent literature almost uniformly proposes a \emph{new construction} and evaluates it
 against its predecessors. This thesis deliberately proposes none. Its contribution is a boundary:
-the set of configurations in which no choice of existing, standardised cryptography is feasible at
-all. That result is arithmetic rather than empirical for the part that matters most, so unlike a
-performance figure it does not move as models, hardware or schemes improve --- and it is invisible
-to the byte models the literature optimises against.
+the links on which a frame that verifies alone cannot be sent at any batch size, stated with the
+conditions under which that holds. For a given authenticator the result is arithmetic rather
+than empirical, so unlike a performance figure it does not move as models or hardware improve. It
+does move with the authenticator --- a $48$\,B signature or a $13$\,B tag fits where a $64$\,B
+signature does not --- and \Cref{ch:lowrate} gives the matrix. It is invisible to the byte
+models the literature optimises against.
 
 \needswork{The bibliography holds every source that is held and has been \emph{read}, and stops
 there deliberately. A thesis of this scope would normally carry more; reaching a higher count

@@ -1,7 +1,7 @@
 # Thesis status — what is drafted, what is not
 
 *Created 2026-08-30; **updated 2026-10-07** after the revision that followed the supervisor's
-review. **This file is the honest inventory.** `main.pdf` builds to about 89 pages with 0 errors
+review. **This file is the honest inventory.** `main.pdf` builds to about 92 pages with 0 errors
 and 0 undefined references, and that number will tempt you to think the thesis is further along
 than it is. It is not. Read this before showing the PDF to anyone.*
 
@@ -74,7 +74,7 @@ the chapters most likely to distinguish the thesis from an ordinary one. Do not 
 
 ## Reference count
 
-44 rendered in the thesis (the shared bibliography has 58 entries; the thesis cites the ones it
+45 rendered in the thesis (the shared bibliography has 59 entries; the thesis cites the ones it
 uses), and it stops there **deliberately**: every one is a source held and *read*. A thesis of
 this scope would normally carry more. Reaching a higher count requires find → download → **read** →
 cite. ⚠️ Padding the list would be the same defect the project's audit spent its time removing.

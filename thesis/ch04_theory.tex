@@ -22,7 +22,8 @@ $\varphi \geq \alpha \iff \ga \geq \alpha(s + \ga) \iff \ga(1-\alpha) \geq \alph
 The threshold is trivial; its \emph{instantiation} is the motivating result. At $\ga = 64$\,B and
 measured record sizes, JSON at $191$\,B gives $\varphi = 25.1\%$, CBOR at $66$\,B gives $49.1\%$,
 and delta-CBOR at $45$\,B gives $58.7\%$. Compression moved the bottleneck from data to
-cryptography. Validated by E1 (\Cref{ch:bytes}).
+cryptography. Validated by E1 (\Cref{ch:bytes}), where a remark states what these record sizes
+contain: $s$ includes the record's own $32$\,B chain link, so $\varphi$ understates the point.
 
 \section{T2 --- frame-level batching and the amplification law}
 

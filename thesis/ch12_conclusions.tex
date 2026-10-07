@@ -135,10 +135,11 @@ generalisation, and it is the one this author would pursue.
 
 This thesis introduces no new cryptographic primitive and makes no claim to one. Its contribution
 is a reproducible co-design of existing, standardised components; the quantified trade-offs that
-co-design entails; the boundary beyond which no choice of those components helps at all; and an
+co-design entails; the boundary beyond which no batch size helps, with its conditions; and an
 account --- unusually explicit for a thesis --- of the errors made in establishing that boundary and
 the classes of defect that survived the safeguards intended to prevent them.
 
 The most durable result here is also the smallest one that survived scrutiny: on five EU863-870
-data rates, a $64$-byte signature does not fit a $51$-byte payload, and nothing in the design
-space changes that.
+data rates, a $64$-byte signature does not fit a $51$-byte payload, and no batch size, encoding
+or placement changes that. A shorter authenticator does, and \Cref{ch:lowrate} says what it
+buys.

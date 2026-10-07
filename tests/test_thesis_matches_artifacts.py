@@ -158,6 +158,51 @@ class TestTheExclusionIsStatedWithItsHistory:
             assert ", ".join(sorted(names, key=lambda d: int(d[2:]))) in LOWRATE, names
 
 
+class TestTheRecordOfTheOpeningChapterNamesItsChainLink:
+    """The first-format record sizes include the record's own 32 B link (review 2.3)."""
+
+    def test_the_figures_typed_in_three_chapters_follow_from_the_measured_record(self) -> None:
+        from authbc.bench import framesizes
+
+        delta = round(framesizes.measured_sizes()["delta"])
+        data, link, sig = delta - 32, 32, 64
+        assert (delta, data) == (45, 13)
+        assert round(100 * link / delta) == 71
+        assert (link + sig, delta + sig) == (96, 109)
+        assert round(100 * (link + sig) / (delta + sig)) == 88
+        intro, bytes_ = _text("ch01_introduction.tex"), _text("ch07_bytes.tex")
+        assert "The data are $13$\\,B." in intro
+        assert "signature and link are $96$ of $109$\\,B" in intro
+        for needle in ("$13$\\,B of telemetry", "$71\\%$", "$96$ of $109$\\,B, $88\\%$"):
+            assert needle in bytes_, needle
+        assert "$s$ includes the record's own $32$\\,B chain link" in _text("ch04_theory.tex")
+
+    def test_the_ladder_marks_every_size_that_is_not_an_emitted_frame(self) -> None:
+        codesign = _text("ch08_codesign.tex")
+        assert "a chain link in every record}$^\\dagger$" in codesign
+        assert "no delta$^\\dagger$" in codesign
+        assert "all lean sizes are emitted frames" not in codesign
+
+
+class TestTheBoundaryIsStatedWithItsScope:
+    """The review found "no choice of cryptography helps" contradicted by the paper's own 48 B
+    row. The paper lost the phrase in October; the thesis kept it in four places until the
+    revision was audited again (F55)."""
+
+    @pytest.mark.parametrize("chapter", ["front.tex", "ch01_introduction.tex",
+                                         "ch02_background.tex", "ch12_conclusions.tex"])
+    def test_no_chapter_says_the_boundary_is_independent_of_the_cryptography(
+            self, chapter: str) -> None:
+        text = _text(chapter)
+        for phrase in ("no choice of existing cryptography", "no choice of \\emph{existing}",
+                       "no choice of existing, standardised cryptography",
+                       "no choice of those components helps"):
+            assert phrase not in text, phrase
+
+    def test_the_abstract_does_not_call_a_record_with_its_chain_link_the_payload(self) -> None:
+        assert "$45$--$190$" not in _text("front.tex")
+
+
 class TestTheStageOneTable:
     """`ch09`: the six registered cells, strictly periodic source — typed, so checked."""
 

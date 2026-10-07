@@ -23,15 +23,15 @@ search returns the same placement and batch with a keyframe in every frame.
 \caption{The design ladder at 50 records/s and $\Dmax = 100$\,ms. $N_{\mathrm{sat}}$: offered
 load within the saturation throughput of the broadcast model. $\Nmax$: largest neighbourhood with
 mean delivery $\geq 0.95$ in simulation, with its 95\% bootstrap interval. CPU: share of one
-receiver core spent verifying at $\Nmax$. First-format delta sizes are a byte model; all lean
-sizes are emitted frames.}
+receiver core spent verifying at $\Nmax$. $^\dagger$~size is a sum of measured parts; rows 5,
+6 and 8 are emitted frames.}
 \label{tab:ladder}
 \small
 \begin{tabular}{llrrrrrl}
 \toprule
  & configuration & $b$ & B/record & with cert. & $N_{\mathrm{sat}}$ & $\Nmax$ & CPU \\
 \midrule
-\multicolumn{8}{l}{\emph{First format: text keys, a chain link in every record}} \\
+\multicolumn{8}{l}{\emph{First format: text keys, a chain link in every record}$^\dagger$} \\
 1 & sign every record, one per frame & 1 & \bprFirstBase & \certFirstBase & \nsatFirstBase & \nmaxFirstBase\ \ciFirstBase & \cpuFirstBase\% \\
 2 & sign every record, share the frame & 4 & \bprFirstInline & \certFirstInline & \nsatFirstInline & \nmaxFirstInline\ \ciFirstInline & \cpuFirstInline\% \\
 3 & one signature per frame & 4 & \bprFirstCbor & \certFirstCbor & \nsatFirstCbor & \nmaxFirstCbor\ \ciFirstCbor & \cpuFirstCbor\% \\
@@ -40,7 +40,7 @@ sizes are emitted frames.}
 \multicolumn{8}{l}{\emph{Lean format: integer keys, one chain link per frame}} \\
 5 & sign every record, one per frame & 1 & \bprLeanBase & \certLeanBase & \nsatLeanBase & \nmaxLeanBase\ \ciLeanBase & \cpuLeanBase\% \\
 6 & sign every record, share the frame & 4 & \bprLeanInline & \certLeanInline & \nsatLeanInline & \nmaxLeanInline\ \ciLeanInline & \cpuLeanInline\% \\
-7 & one signature per frame, no delta & 4 & \bprLeanKeys & \certLeanKeys & \nsatLeanKeys & \nmaxLeanKeys\ \ciLeanKeys & \cpuLeanKeys\% \\
+7 & one signature per frame, no delta$^\dagger$ & 4 & \bprLeanKeys & \certLeanKeys & \nsatLeanKeys & \nmaxLeanKeys\ \ciLeanKeys & \cpuLeanKeys\% \\
 8 & one signature per frame, delta \textbf{(design)} & 4 & \textbf{\bprLeanDesign} & \certLeanDesign & \nsatLeanDesign & \textbf{\nmaxLeanDesign}\ \ciLeanDesign & \cpuLeanDesign\% \\
 \bottomrule
 \end{tabular}
@@ -120,32 +120,44 @@ constraint is not idle: with a signature on every record it reaches the channel'
 \tVerBls\,ms and one core serves \ncpuBls{} neighbours: BLS is excluded by the CPU long before
 the channel is reached, in addition to its larger signature.
 
+These figures verify one signature at a time. Ed25519 was designed for batch verification: its
+authors report under $134\,000$ cycles per signature in a batch of $64$, against $273\,364$ for
+one~\cite{ed25519}, which would roughly halve the receiver's cost. An external review named it
+among the stronger alternatives this work had not considered. It is not used here --- the
+cryptographic library this implementation is built on exposes no batch interface --- so
+$N_{\mathrm{cpu}}$ is conservative for Ed25519 by about that factor, and measuring it on the
+board is open. ECDSA does not admit it.
+
 \section{E17 --- the classical stream-signing schemes, placed}\label{sec:stream}
 
 \Cref{ch:background} describes the schemes that amortise one signature over many packets. None
 is implemented in this thesis. \Cref{tab:stream} places each at the adopted operating point as
 \emph{the lean one-record frame with that scheme's authenticator in place of the signature} ---
 the same header, chain link and record --- with the authenticator sized from the scheme's own
-definition and this thesis's primitives ($32$\,B digests, $64$\,B signatures). Capacity is the
-saturation bound $N_{\mathrm{sat}}$; no row was simulated.
+definition and this thesis's primitives ($32$\,B digests, $64$\,B signatures). Two capacities
+are given: the saturation bound $N_{\mathrm{sat}}$, and $\Nmax$ from the direct search of
+\Cref{sec:capacity} on a frame of that size at that rate --- five more cells, whose crossings
+were predicted and committed before they were run (\Cref{sec:line}).
 
 \begin{table}[h]
 \centering
-\caption{Stream-signing schemes at $50$ records/s. A model, not an implementation.
+\caption{Stream-signing schemes at $50$ records/s. Sizes are modelled; $\Nmax$ is simulated
+for a frame of that size, with its 95\% bootstrap interval.
 $^\dagger$ no non-repudiation: a third party cannot be shown who sent a record;
-$^\ddagger$ a packet does not verify alone.}
+$^\ddagger$ a packet does not verify alone, so $\Nmax$ --- frames delivered --- is an upper
+bound on records verified.}
 \label{tab:stream}
-\begin{tabular}{lrrrr}
+\begin{tabular}{lrrrrl}
 \toprule
-scheme & auth.\ B/record & frames/s & total B/record & $N_{\mathrm{sat}}$ \\
+scheme & auth.\ B/record & frames/s & total B/record & $N_{\mathrm{sat}}$ & $\Nmax$ \\
 \midrule
-MAVLink~2 tag$^{\dagger}$ & \strAuthMav & \strFpsMav & \strBprMav & \strNsatMav \\
-TESLA$^{\dagger\ddagger}$ & \strAuthTesla & \strFpsTesla & \strBprTesla & \strNsatTesla \\
-Gennaro--Rohatgi$^{\ddagger}$ & \strAuthGr & \strFpsGr & \strBprGr & \strNsatGr \\
-EMSS$^{\ddagger}$ & \strAuthEmss & \strFpsEmss & \strBprEmss & \strNsatEmss \\
-Wong--Lam tree, block of 4 & \strAuthWl & \strFpsWl & \strBprWl & \strNsatWl \\
-a signature on every record & \strAuthSig & \strFpsSig & \strBprSig & \strNsatSig \\
-this design, $b = 4$ & \strAuthDesign & \strFpsDesign & \strBprDesign & \strNsatDesign \\
+MAVLink~2 tag$^{\dagger}$ & \strAuthMav & \strFpsMav & \strBprMav & \strNsatMav & \strNmaxMav\ \strCiMav \\
+TESLA$^{\dagger\ddagger}$ & \strAuthTesla & \strFpsTesla & \strBprTesla & \strNsatTesla & \strNmaxTesla\ \strCiTesla \\
+Gennaro--Rohatgi$^{\ddagger}$ & \strAuthGr & \strFpsGr & \strBprGr & \strNsatGr & \strNmaxGr\ \strCiGr \\
+EMSS$^{\ddagger}$ & \strAuthEmss & \strFpsEmss & \strBprEmss & \strNsatEmss & \strNmaxEmss\ \strCiEmss \\
+Wong--Lam tree, block of 4 & \strAuthWl & \strFpsWl & \strBprWl & \strNsatWl & \strNmaxWl\ \strCiWl \\
+a signature on every record & \strAuthSig & \strFpsSig & \strBprSig & \strNsatSig & \strNmaxSig\ \strCiSig \\
+this design, $b = 4$ & \strAuthDesign & \strFpsDesign & \strBprDesign & \strNsatDesign & \strNmaxDesign\ \strCiDesign \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -153,8 +165,9 @@ this design, $b = 4$ & \strAuthDesign & \strFpsDesign & \strBprDesign & \strNsat
 Every one of these schemes spreads an authenticator across packets and still sends a frame per
 record. A frame costs \fixedCost\,\si{\micro\second} of channel time before its first payload byte, so the
 weight of the authenticator hardly matters: replacing a $64$\,B signature by a $13$\,B tag ---
-and giving up non-repudiation --- moves $N_{\mathrm{sat}}$ from \strNsatSig{} to \strNsatMav. Four
-records in a frame move it to \strNsatDesign. The stream-signing literature amortises the
+and giving up non-repudiation --- moves $N_{\mathrm{sat}}$ from \strNsatSig{} to \strNsatMav{}
+and the simulated $\Nmax$ from \strNmaxSig{} to \strNmaxMav. Four records in a frame move them to
+\strNsatDesign{} and \strNmaxDesign. The stream-signing literature amortises the
 \emph{cost of signing}; the cost that binds on a contended channel is the \emph{frame}.
 
 Three things the table does not show. Tree chaining is the one classical scheme that keeps both
@@ -184,19 +197,20 @@ and the design. Mean of thirty runs; bars span the runs.}
 
 \begin{table}[h]
 \centering
-\caption{$\Nmax$ of baseline and design at both operating points.}
+\caption{$\Nmax$ of baseline and design at both operating points, with 95\% bootstrap
+intervals.}
 \label{tab:capacity}
 \begin{tabular}{lrrr}
 \toprule
  & per-record signing & design & ratio \\
 \midrule
 \multicolumn{4}{l}{\emph{50 records/s, 100\,ms (compliant with TS 22.125)}} \\
-first format & \nmaxFirstBase & \nmaxFirstDesign & \ratioFirst$\times$ \\
-lean format & \nmaxLeanBase & \nmaxLeanDesign & \ratioLean$\times$ \\
+first format & \nmaxFirstBase\ \ciFirstBase & \nmaxFirstDesign\ \ciFirstDesign & \ratioFirst$\times$ \\
+lean format & \nmaxLeanBase\ \ciLeanBase & \nmaxLeanDesign\ \ciLeanDesign & \ratioLean$\times$ \\
 \midrule
 \multicolumn{4}{l}{\emph{20 records/s, 250\,ms (relaxed)}} \\
-first format & \nmaxRelFirstBase & \nmaxRelFirstDesign & \ratioRelFirst$\times$ \\
-lean format & \nmaxRelLeanBase & \nmaxRelLeanDesign & \ratioRelLean$\times$ \\
+first format & \nmaxRelFirstBase\ \ciRelFirstBase & \nmaxRelFirstDesign\ \ciRelFirstDesign & \ratioRelFirst$\times$ \\
+lean format & \nmaxRelLeanBase\ \ciRelLeanBase & \nmaxRelLeanDesign\ \ciRelLeanDesign & \ratioRelLean$\times$ \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -275,11 +289,40 @@ each of the five configurations where the two rules disagree by more than a tent
 is closer to the line than to the ceiling, which misses the thirteen simulated configurations by
 up to \lineCeilWorst\%.
 
+\paragraph{A second test, on frames of another kind.} The stream-signing baselines of
+\Cref{tab:stream} are five more frames, all shorter or longer than any the line had seen and all
+at one frame per record. The same procedure was followed: the line's crossing for each, with
+the slope unchanged, was committed before the runs.
+
+\begin{center}
+\begin{tabular}{llrrr}
+\toprule
+scheme & frame, rate & line & simulated & vs line \\
+\midrule
+MAVLink~2 tag & 94\,B, 50/s & \linePSM & \lineMSM & \lineDSM\% \\
+TESLA & 106\,B, 50/s & \linePST & \lineMST & \lineDST\% \\
+Gennaro--Rohatgi & 114\,B, 50/s & \linePSG & \lineMSG & \lineDSG\% \\
+EMSS & 146\,B, 50.5/s & \linePSE & \lineMSE & \lineDSE\% \\
+Wong--Lam tree & 211\,B, 50/s & \linePSW & \lineMSW & \lineDSW\% \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+All five are inside the $\pm 6\%$ band, and all five are \emph{above} the line, by
+\lineStreamLeast--\lineStreamWorst\%. That offset was written down beforehand as an
+expectation, not a prediction: the two calibration configurations at $50$ frames per second sat
+$3.4$ and $3.8\%$ above the line, so if the residual belongs to the frame rate these five would
+too. They do. The line's error is therefore not noise at this rate; it is a small, repeatable
+bias, and it is the reason the remark below forbids quoting the line as a capacity. These cells
+do not separate the line from the ceiling --- at this frame rate the two differ by a few
+percent --- which the registration said in advance.
+
 \begin{remark}[What this licenses, and what it does not]
 \Cref{eq:line} is an empirical fit, not a model. It holds at one loss level --- loss is convex in
 load, so the line says nothing about a $1\%$ or a $10\%$ target --- at one PHY rate, in one
-collision domain, for frames of $146$--$565$\,B, $5$--$50$ frames per second and
-\lineNlo--\lineNhi{} nodes, and in a simulator. Every capacity quoted in this thesis is a
+collision domain, for frames of \lineFrameLo--\lineFrameHi\,B, \lineFpsLo--\lineFpsHi{}
+frames per second and \lineNlo--\lineNhi{} nodes, and in a simulator. Its residual is ordered by
+frame rate, from $+3.6\%$ at $50$ frames per second to $-2.4\%$ at $5$. Every capacity quoted in this thesis is a
 simulated value; the line is what one would use to interpolate between them, and to see why a
 ceiling on \emph{utilisation} could not work: it divides the offered load by the saturation
 throughput of $N$ stations, and loss in a lightly loaded network has no reason to follow that

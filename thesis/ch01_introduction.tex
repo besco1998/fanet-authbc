@@ -8,7 +8,9 @@ mode, tens of times a second --- and it must make that telemetry \emph{tamper-ev
 record cannot be forged, replayed or silently altered by a participant or an outsider. The second
 requirement costs bytes. A digital signature at the 128-bit security level is $64$\,B for Ed25519
 or ECDSA-P256, and $96$\,B for the BLS12-381 variant actually shipped by the reference
-implementation. A telemetry record, once compressed, is $45$\,B.
+implementation. A telemetry record, once compressed, is $45$\,B --- and $32$ of those are not
+telemetry either: they are the hash that links the record to its predecessor. The data are
+$13$\,B.
 
 That inequality is the whole thesis. \textbf{The signature is larger than the thing it signs.}
 
@@ -17,7 +19,8 @@ That inequality is the whole thesis. \textbf{The signature is larger than the th
 The obvious response --- compress harder --- fails, and it fails for a reason worth stating
 precisely. Payload compression was the subject of prior work; this thesis begins where that work
 ends. Once a record is squeezed from $191$\,B of JSON to $45$\,B of delta-encoded CBOR, the
-authentication object has gone from $25\%$ of the on-air cost to $59\%$. Every further byte saved
+signature has gone from $25\%$ of the on-air cost to $59\%$; counted with the chain link inside
+the record, signature and link are $96$ of $109$\,B. Every further byte saved
 on the payload increases the fraction spent on cryptography. Compression does not solve the
 problem; \emph{compression is what creates it}.
 
@@ -64,9 +67,10 @@ to be corrected.
 \item[RQ4] What is the end-to-end optimal configuration, how much does it beat the naive and
       compression-only baselines, and do the analytical models survive contention simulation and
       real hardware?
-\item[RQ5] \emph{(added during the work)} Where is the boundary beyond which no choice of
-      \emph{existing} cryptography is feasible at all --- and how much of that boundary is
-      arithmetic rather than an artifact of this design?
+\item[RQ5] \emph{(added during the work)} Where is the boundary beyond which a signed,
+      hash-chained frame cannot be sent at all, whatever the batch --- under which conditions
+      does it hold, and what does each relaxation (a shorter authenticator, no chain link on
+      air, loss recovery) buy?
 \end{description}
 
 RQ5 was not in the original charter. It emerged from the low-rate arm and became the thesis's most
