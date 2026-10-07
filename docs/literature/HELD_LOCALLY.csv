@@ -1,0 +1,17 @@
+# Sources that are HELD AND READ but NOT redistributed in this repository (decision of 2026-10-07).
+# Each file sits in docs/literature/ on the author's machine and is git-ignored. Anyone who obtains
+# the document can check it is the one that was read: the SHA-256 and the size are below.
+# tests/test_citations.py accepts a `held` file that is absent only if it is listed here, and
+# checks the hash whenever the file is present.
+file,sha256,bytes,bib_key,document,obtain_from
+bernstein2011_ed25519.pdf,820dcf8ad51f90849fd60f16971fdcfedaeb5e7aaed0f300154fe39c0d3da0e2,481903,ed25519,"Bernstein, Duif, Lange, Schwabe, Yang — High-Speed High-Security Signatures, CHES 2011",doi:10.1007/978-3-642-23951-9_9
+cavalcanti2018_vanet_research_credibility_ccr.pdf,d647422cc12056bcf50b5a19086c828edea7cc564a7ed3d00d8e83dc196ad244,674054,cavalcanti2018vanet,"Cavalcanti et al. — VANETs' Research over the Past Decade, ACM SIGCOMM CCR 48(2), 2018",doi:10.1145/3213232.3213237
+gennaro1997_sign_digital_streams.pdf,dcbaced6751a8518a9a9c69e806f0eefef3cf85a6030f6c236cc3fc6533bccf9,1083257,gennaro1997streams,"Gennaro, Rohatgi — How to Sign Digital Streams, CRYPTO '97",doi:10.1007/BFb0052235
+gundogan2021_firmware_updates_icn_arxiv.pdf,0862d4b73c438281e7ba505ce3fd92e8dd82491338b2e354a2ea816835a515df,1496097,gundogan2021firmware,"Gundogan, Amsuss, Schmidt, Wahlisch — Reliable Firmware Updates for the Information-Centric IoT, ACM ICN 2021 (authors' arXiv version)",doi:10.1145/3460417.3482974
+haber1991_timestamp_digital_document.pdf,ef2290c000332967f5753973597b0d92485cc618e19643a60308ce2606b606de,825065,haber1991timestamp,"Haber, Stornetta — How to Time-Stamp a Digital Document, J. Cryptology 3(2), 1991",doi:10.1007/BF00196791
+lora_alliance_rp002-1.0.3_regional_parameters.pdf,7babdb743e051fdc86bce8fdf99716c4f275da6b31f6495ccba9ce956373715c,1940526,lora_rp002,"LoRa Alliance — RP002-1.0.3 LoRaWAN Regional Parameters, 2021","LoRa Alliance resource hub, document RP002-1.0.3"
+lora_alliance_ts001-1.0.4_l2_specification.pdf,d193a4124e984bdfd608a920d7a428b62cbe717171e6fb7e066ab482baad75a5,2167732,lorawan_ts001,"LoRa Alliance — TS001-1.0.4 LoRaWAN L2 1.0.4 Specification, 2020","LoRa Alliance resource hub, document TS001-1.0.4"
+perrig2000_emss_tesla_sp.pdf,c564f8fd26be76c946fa59daeba6061f259bd3dfa08856768e1fc5cc310966aa,508040,perrig2000emss,"Perrig, Canetti, Tygar, Song — Efficient Authentication and Signing of Multicast Streams over Lossy Channels, IEEE S&P 2000",doi:10.1109/SECPRI.2000.848446
+perrig2002_tesla_cryptobytes.pdf,a3177a738b7de5698849a495048757be528ade3c0e2fc9b526b676490532e338,425521,perrig2002tesla,"Perrig, Canetti, Tygar, Song — The TESLA Broadcast Authentication Protocol, RSA CryptoBytes 5(2), 2002","RSA Laboratories CryptoBytes, vol. 5 no. 2 (no DOI)"
+semtech_sx1276_datasheet_rev4.pdf,6c24c19ee54309633d4a9057bb8663d1aacdb7f456bebcc6973728a07bd7854e,3268248,semtech_sx1276,"Semtech — SX1276/77/78/79 datasheet, Rev. 4, March 2015","Semtech, SX1276 product documentation (Rev. 4)"
+wong1999_flow_signatures_ton.pdf,5d80857b02fb9fbc705147946bdb5fd71972a2583d878d55dc4ed2be93f78438,268970,wong1999flows,"Wong, Lam — Digital Signatures for Flows and Multicasts, IEEE/ACM ToN 7(4), 1999",doi:10.1109/90.793005

@@ -57,8 +57,19 @@ def _references() -> int:
     return bbl.read_text().count(r"\bibitem")
 
 
+def _held_locally() -> set[str]:
+    """PDFs that are held but kept out of the repository (docs/literature/HELD_LOCALLY.csv)."""
+    import csv
+    text = (REPO / "docs" / "literature" / "HELD_LOCALLY.csv").read_text()
+    return {r["file"] for r in csv.DictReader(ln for ln in text.splitlines()
+                                              if not ln.startswith("#"))}
+
+
 def _pdfs() -> int:
-    return len(list((REPO / "docs" / "literature").glob("*.pdf")))
+    """PDFs IN THE REPOSITORY. Files of the held-locally manifest may or may not be on disk, so
+    they are left out either way: the count is the same on the author's machine and on a clone."""
+    on_disk = {p.name for p in (REPO / "docs" / "literature").glob("*.pdf")}
+    return len(on_disk - _held_locally())
 
 
 def _highest_finding() -> int:
@@ -106,7 +117,12 @@ class TestLiteratureRegisterCount:
         """⚠️ The register claimed 20 PDFs while 25 sat on disk, five with no entry."""
         claimed = _claim(LITREG, r"\*\*(\d+) PDFs")
         assert claimed is not None, "the register stopped stating a PDF count"
-        assert claimed == _pdfs(), f"register says {claimed} PDFs, {_pdfs()} are on disk"
+        assert claimed == _pdfs(), f"register says {claimed} PDFs, {_pdfs()} are in the repository"
+
+    def test_count_of_sources_held_but_not_redistributed(self):
+        claimed = _claim(LITREG, r"\*\*(\d+) more\*\* are held")
+        assert claimed is not None, "the register stopped saying how many sources it does not carry"
+        assert claimed == len(_held_locally())
 
 
 class TestPickUpGuideCounts:

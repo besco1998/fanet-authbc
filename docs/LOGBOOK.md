@@ -133,6 +133,20 @@ residual pattern (ordered by frame rate) written beside it (F54).
   status board, checked the repository's own, and reverted. The copy of `CLAUDE.md` outside the
   repository is older than the one inside it.
 
+## Before publication: eleven PDFs taken out of the branch (2026-10-07)
+
+Asked before the first push, Mohamed chose not to publish the new PDFs. The unpublished commits
+from the one that added them were rewritten with `git filter-branch`: the eleven files removed,
+nothing else changed, dates kept. Because documents and commit messages cite commit hashes, the
+same pass rewrote each cited hash to its new value as it went (filter-branch's `map`), so no
+reference dangles. The four pre-registration commits that precede the PDFs kept their hashes.
+Checked afterwards: no stripped file reachable from the branch; the old and new tips differ only
+by those files and eight lines of hash references; committer dates identical.
+
+What "held and read" means changed with it. It used to be checkable by cloning. Now a manifest
+gives each withheld file's SHA-256 and where to obtain it, and the tests check the hash wherever
+the file is present.
+
 ## The pattern
 
 The August chapter ended: *a register that stores facts separately does not compose them; only

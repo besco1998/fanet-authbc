@@ -135,6 +135,14 @@ that was not itself checked against the data.
 - **PDF text:** `pdftotext` is not installed; `pymupdf` is, in the venv
   (`import pymupdf; pymupdf.open(path)[i].get_text()`).
 
+## 10b. Rewriting an UNPUBLISHED branch (done once, 2026-10-07)
+To drop files from commits that were never pushed, and keep cited commit hashes valid:
+`git filter-branch --tree-filter '<rm files; sed old→new for each already-rewritten hash>'
+--msg-filter '<same sed>' -- <base>..HEAD`, using filter-branch's `map <old-sha>` inside the
+filters. It preserves author and committer dates. Back up first (`git branch <backup>`, copy the
+files out — the rewrite deletes them from the working tree). ⚠️ **Never on a branch that has been
+pushed**, and never push the backup branch.
+
 ## 11. Where the failure report went
 §7's template names `docs/failures/`. That directory is **retired**: a failure is recorded as a
 finding in `docs/audits/model_provenance.md` (what is true now) and as an entry in

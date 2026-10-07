@@ -32,7 +32,9 @@ registry record names the held document it was checked against in a `held` field
 `../results/raw/citation_check.csv`, and `tests/test_citations.py` fails if it does not cover
 every entry. Sources and the role each plays: `../docs/literature/README.md`.
 
-⚠️ A source is not cited unless it is held and has been read. One exception is open and stated:
+⚠️ A source is not cited unless it is held and has been read. Held does not mean redistributed:
+eleven sources are on the author's machine only, listed with their SHA-256 in
+`../docs/literature/HELD_LOCALLY.csv`. One exception is open and stated:
 Kurkowski et al. 2005 in `methods.tex` is quoted only through a held paper that reports it
 (`../docs/OPEN_ITEMS.md`, G8).
 

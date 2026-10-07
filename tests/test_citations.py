@@ -13,8 +13,10 @@ they hold that the recorded check covers every entry, passed, and is not stale.
 from __future__ import annotations
 
 import csv
+import hashlib
 import importlib.util
 import re
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -28,6 +30,13 @@ _spec = importlib.util.spec_from_file_location("verify_citations",
 assert _spec and _spec.loader
 vc = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(vc)
+
+LITERATURE = REPO / "docs" / "literature"
+# Sources that are held and read but not redistributed here (decision of 2026-10-07): file ->
+# its manifest row. A fresh clone does not have them; the author's machine does.
+HELD_LOCALLY = {r["file"]: r for r in csv.DictReader(
+    ln for ln in (LITERATURE / "HELD_LOCALLY.csv").read_text(encoding="utf-8").splitlines()
+    if not ln.startswith("#"))}
 
 ENTRIES = vc.parse_bib(BIB.read_text(encoding="utf-8"))
 ROWS = {r["key"]: r for r in csv.DictReader(
@@ -65,11 +74,44 @@ class TestWhatCannotBeCheckedSaysSo:
             if vc.kind_of(entry) == "document":
                 assert entry["held"], f"{key} has no doi, no eprint and no `held` field"
 
-    def test_a_held_file_exists(self) -> None:
+    def test_a_held_file_is_in_the_repository_or_in_the_manifest_of_what_is_not(self) -> None:
         for key, entry in ENTRIES.items():
             held = entry["held"]
             if held and not held.startswith(("web:", "software:")):
-                assert (REPO / held).is_file(), f"{key}: held file {held} is not in the repo"
+                path = REPO / held
+                assert path.is_file() or path.name in HELD_LOCALLY, (
+                    f"{key}: held file {held} is neither in the repo nor in HELD_LOCALLY.csv")
+
+
+class TestWhatIsHeldButNotRedistributed:
+    """Eleven PDFs were kept out of the public repository on 2026-10-07. "Held and read" must
+    still be checkable: the manifest gives each file's SHA-256, and wherever the file is present
+    it has to be that file."""
+
+    def test_the_manifest_is_well_formed(self) -> None:
+        assert len(HELD_LOCALLY) == 11
+        for name, row in HELD_LOCALLY.items():
+            assert name.endswith(".pdf") and re.fullmatch(r"[0-9a-f]{64}", row["sha256"]), name
+            assert int(row["bytes"]) > 0 and row["obtain_from"] and row["document"], name
+            assert row["bib_key"] in ENTRIES, f"{name} names a bibliography key that is gone"
+
+    def test_a_file_that_is_present_is_the_file_that_was_read(self) -> None:
+        for name, row in HELD_LOCALLY.items():
+            path = LITERATURE / name
+            if path.is_file():
+                data = path.read_bytes()
+                assert (hashlib.sha256(data).hexdigest(), len(data)) == \
+                    (row["sha256"], int(row["bytes"])), f"{name} is not the manifest's document"
+
+    def test_none_of_them_is_tracked_and_all_are_ignored(self) -> None:
+        tracked = subprocess.run(["git", "ls-files", "docs/literature"], cwd=REPO,
+                                 capture_output=True, text=True)
+        if tracked.returncode != 0:
+            pytest.skip("not a git checkout")
+        names = {Path(p).name for p in tracked.stdout.split()}
+        assert not names & set(HELD_LOCALLY), "a file that is not to be redistributed is tracked"
+        ignore = (REPO / ".gitignore").read_text(encoding="utf-8")
+        assert all(f"docs/literature/{name}" in ignore for name in HELD_LOCALLY)
 
     def test_a_registry_name_override_is_backed_by_the_document(self) -> None:
         """`registryauthors` exists for a registry that abbreviates a name; it must not become a
