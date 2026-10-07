@@ -258,3 +258,48 @@ class TestExclusionChargesTheWholeFrame:
         assert V1_DELTA.max_batch(64, 1500) == 1 + int((1500 - 167.85) // 44)
         with pytest.raises(ValueError, match="zero-byte record"):
             FlatLayout("x", 1, 0, 0, 0).max_batch(64, 500)
+
+
+class TestLossThatGrowsWithFrameLength:
+    """At a fixed bit error rate a longer frame is lost more often (docs/02 T3', length note)."""
+
+    def test_the_reference_frame_keeps_the_reference_loss(self) -> None:
+        assert frame.length_scaled_loss(0.05, 146, ref_frame_bytes=146, overhead_bytes=36) \
+            == pytest.approx(0.05)
+
+    def test_by_hand(self) -> None:
+        # a 173 B frame against a 146 B one, each with 36 B of MAC overhead: exponent 209/182
+        assert frame.length_scaled_loss(0.05, 173, ref_frame_bytes=146, overhead_bytes=36) \
+            == pytest.approx(1 - 0.95 ** (209 / 182))
+
+    def test_a_longer_frame_is_lost_more_often_and_a_shorter_one_less(self) -> None:
+        longer = frame.length_scaled_loss(0.05, 300, ref_frame_bytes=146, overhead_bytes=36)
+        shorter = frame.length_scaled_loss(0.05, 100, ref_frame_bytes=146, overhead_bytes=36)
+        assert shorter < 0.05 < longer
+
+    def test_a_clean_channel_stays_clean_at_any_length(self) -> None:
+        assert frame.length_scaled_loss(0.0, 1500, ref_frame_bytes=146, overhead_bytes=36) == 0.0
+
+    @pytest.mark.parametrize("p, length, ref", [(-0.1, 100, 146), (1.0, 100, 146),
+                                                (0.05, 0, 146), (0.05, 100, 0)])
+    def test_bad_inputs_are_refused(self, p: float, length: float, ref: float) -> None:
+        with pytest.raises(ValueError):
+            frame.length_scaled_loss(p, length, ref_frame_bytes=ref, overhead_bytes=36)
+
+    def test_equal_losses_reduce_to_the_closed_form(self) -> None:
+        for r in (1, 2, 4, 16):
+            assert frame.verifiability_per_frame([0.05] * (r * 6), r) \
+                == pytest.approx(frame.verifiability(0.05, r))
+
+    def test_two_frames_by_hand(self) -> None:
+        # the first frame decodes alone, the second needs both: ((1-p1) + (1-p1)(1-p2)) / 2
+        assert frame.verifiability_per_frame([0.10, 0.02], 2) \
+            == pytest.approx((0.90 + 0.90 * 0.98) / 2)
+
+    def test_with_every_frame_self_contained_it_is_the_mean_delivery(self) -> None:
+        assert frame.verifiability_per_frame([0.10, 0.02, 0.06], 1) \
+            == pytest.approx(1 - (0.10 + 0.02 + 0.06) / 3)
+
+    def test_a_stream_that_is_not_whole_groups_is_refused(self) -> None:
+        with pytest.raises(ValueError, match="whole"):
+            frame.verifiability_per_frame([0.05] * 5, 2)

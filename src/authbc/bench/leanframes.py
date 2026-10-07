@@ -1,4 +1,4 @@
-"""Measured components of the lean frame (docs/04 §2 E6; docs/01 §4b; audit F45, F48).
+"""Measured components of the lean frame (docs/04 §2 E9; docs/01 §4b; audit F45, F48).
 
 Every size the lean design reports comes from here, and every one is the length of a `wire_v2`
 frame or record stream that was actually encoded. Nothing in this module is a model.

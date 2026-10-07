@@ -129,10 +129,39 @@ class TestRunPlan:
             drv.read_plan(p)
 
 
+class TestThePlanIsWhatWasRun:
+    """The node counts simulated are a committed file, so the campaign can be run again."""
+
+    PLAN = REPO / "experiments" / "nmax-direct" / "plan.txt"
+
+    def test_a_plan_is_recovered_from_runs(self) -> None:
+        runs = _runs("A", {29: [0.9], 31: [0.9]}) \
+            + _runs("A", {30: [0.9]}, jitter="20") \
+            + _runs("D", {120: [0.9]}, jitter="0.1", skew="5000")
+        assert drv.plan_of(runs) == [("A", "0", [29, 31]), ("A", "period", [30]),
+                                     ("D", "0.1/5000", [120])]
+
+    def test_a_jitter_of_one_period_is_written_as_the_word(self) -> None:
+        # cell D sends 12.5 frames/s: one period is 80 ms, and 20 ms is not
+        runs = _runs("D", {120: [0.9]}, jitter="80") + _runs("D", {121: [0.9]}, jitter="20")
+        assert drv.plan_of(runs) == [("D", "20", [121]), ("D", "period", [120])]
+
+    def test_the_committed_plan_names_exactly_the_points_on_file(self) -> None:
+        runs = drv.read_runs(RAW / "ns3_nmax_direct_runs.csv")
+        assert drv.read_plan(self.PLAN) == drv.plan_of(runs)
+
+    def test_reading_back_a_written_plan_gives_the_same_plan(self, tmp_path) -> None:
+        plan = [("A", "0", [29, 31]), ("RD", "period", [240, 300]), ("D", "0.1/5000", [120])]
+        out = tmp_path / "plan.txt"
+        out.write_text(drv.render_plan(plan))
+        assert drv.read_plan(out) == plan
+
+
 class TestCellsAreTheLaddersFrames:
     """A cell that simulated a frame the ladder does not list would validate nothing."""
 
-    LADDER = {(r["op"], r["format"], r["rung"]): r for r in _rows(RAW / "design_ladder.csv")}
+    LADDER = {(r["op"], r["format"], r["rung"]): r for r in _rows(RAW / "design_ladder.csv")
+              if r["scheme"] == "ed25519"}
 
     @pytest.mark.parametrize("name", sorted(drv.CELLS))
     def test_frame_rate_and_model_value(self, name: str) -> None:
@@ -142,7 +171,8 @@ class TestCellsAreTheLaddersFrames:
         row = self.LADDER[(op, fmt, rung)]
         assert cell.frame_bytes == round(float(row["frame_bytes"]))
         assert cell.batch == int(row["batch"]) and cell.lam == float(row["lambda_rec_per_s"])
-        assert cell.model_n == int(row["n_max_v95"])
+        # `model_n` is what the single load ceiling predicted — the figure the search tests
+        assert cell.model_n == int(row["n_max_load_ceiling"])
 
     def test_the_registered_six_are_unchanged(self) -> None:
         """Committed data-free in 6f82599; the prediction is only a prediction if these stay."""

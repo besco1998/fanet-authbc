@@ -2,7 +2,7 @@
 
 `make verify-frozen` proves each CSV is what the current code produces. These tests prove what the
 CSVs *mean*: that the new experiments reproduce every published number they overlap, and that the
-statements the paper and thesis draw from them are in the data (docs/04 §2 E6–E13).
+statements the paper and thesis draw from them are in the data (docs/04 §2 E9–E17).
 
 Each class is one review comment or audit finding answered.
 """
@@ -27,14 +27,16 @@ def rows(name: str) -> list[dict[str, str]]:
 LADDER = rows("design_ladder.csv")
 LOSS = rows("e3_codec_loss.csv")
 MATRIX = rows("exclusion_matrix.csv")
+STREAM = {r["scheme"]: r for r in rows("stream_baselines.csv")}
 
 
-def rung(op: str, fmt: str, name: str) -> dict[str, str]:
-    (hit,) = [r for r in LADDER if (r["op"], r["format"], r["rung"]) == (op, fmt, name)]
+def rung(op: str, fmt: str, name: str, scheme: str = "ed25519") -> dict[str, str]:
+    (hit,) = [r for r in LADDER
+              if (r["op"], r["format"], r["rung"], r["scheme"]) == (op, fmt, name, scheme)]
     return hit
 
 
-# ------------------------------------------------------------------ E6
+# ------------------------------------------------------------------ E9
 class TestFrameComponents:
     COMP = rows("frame_components.csv")
 
@@ -81,7 +83,7 @@ class TestFrameComponents:
         assert float(far["mean_bytes"]) / float(near["mean_bytes"]) > 1.5
 
 
-# ------------------------------------------------------------------ E7 / F46
+# ------------------------------------------------------------------ E10 / F46
 class TestVerifiabilityWithTheCodecInTheLoop:
     def _row(self, model: str, p: str, ref: str) -> dict[str, str]:
         (hit,) = [r for r in LOSS
@@ -109,6 +111,25 @@ class TestVerifiabilityWithTheCodecInTheLoop:
         assert float(r["V_theory"]) == pytest.approx(0.8811, abs=1e-4)
         assert float(r["V_ci_hi"]) < 0.95 and r["meets_target"] == "0"
 
+    def test_at_equal_bit_error_rate_the_longer_frame_of_the_design_is_lost_more_often(
+            self) -> None:
+        """Calibrated so the one-record frame loses 5 %, the four-record frame loses 5.7 % — and
+        the design is then BELOW the target it meets at equal frame loss."""
+        r = self._row("ber", "0.05", "1")
+        assert float(r["p_frame"]) == pytest.approx(0.0573, abs=2e-4)
+        assert float(r["V_theory"]) == pytest.approx(1 - float(r["p_frame"]), abs=2e-5)
+        assert float(r["V_theory"]) < 0.95 and r["meets_target"] == "0"
+
+    def test_under_that_model_the_design_needs_a_cleaner_channel_than_the_target(self) -> None:
+        meets = {r["p"] for r in LOSS
+                 if (r["loss_model"], r["ref_interval"], r["meets_target"]) == ("ber", "1", "1")}
+        assert meets == {"0.00023", "0.01", "0.02"}
+
+    def test_length_independent_models_apply_the_loss_they_were_given(self) -> None:
+        for r in LOSS:
+            if r["loss_model"] != "ber":
+                assert float(r["p_frame"]) == float(r["p"])
+
     def test_at_the_design_loss_only_self_contained_frames_meet_the_target(self) -> None:
         for model in ("iid", "gilbert"):
             passing = {r["ref_interval"] for r in LOSS
@@ -135,7 +156,7 @@ class TestVerifiabilityWithTheCodecInTheLoop:
         assert 3.4 < b["1"] - b["16"] < 3.6
 
 
-# ------------------------------------------------------------------ E8 / review 2.1, 2.3, 2.4
+# ------------------------------------------------------------------ E11 / review 2.1, 2.3, 2.4
 class TestTheLadderReproducesWhatWasPublished:
     ENVELOPE = {r["binds"]: r for r in rows("capacity_envelope.csv") if r["n_local"] == "ENVELOPE"}
     E5 = {r["role"]: r for r in rows("e5_codesign.csv")}
@@ -144,7 +165,9 @@ class TestTheLadderReproducesWhatWasPublished:
         ("adopted", "A+CBOR Pillar-1 @3GPP100ms/50Hz"), ("relaxed", "A+CBOR Pillar-1 @250ms")])
     def test_the_baseline_rung_is_the_published_baseline(self, op: str, label: str) -> None:
         r, e = rung(op, "first", "inline-1"), self.ENVELOPE[label]
-        assert (r["n_max_u_lt_1"], r["n_max_v95"]) == (e["n_max_u_lt_1"], e["n_max_v95_mean"])
+        # the published V >= 0.95 figure was the single load ceiling's, kept in its own column
+        assert (r["n_max_u_lt_1"], r["n_max_load_ceiling"]) == \
+            (e["n_max_u_lt_1"], e["n_max_v95_mean"])
         assert float(r["bytes_per_rec"]) == pytest.approx(float(self.E5["A+CBOR"]["bytes_per_rec"]))
         assert float(r["energy_uj"]) == pytest.approx(float(self.E5["A+CBOR"]["energy_uj"]),
                                                       abs=1e-3)
@@ -153,7 +176,8 @@ class TestTheLadderReproducesWhatWasPublished:
         ("adopted", "optimized delta/B @3GPP100ms/50Hz"), ("relaxed", "optimized delta/B @250ms")])
     def test_the_published_design_rung_is_the_published_design(self, op: str, label: str) -> None:
         r, e = rung(op, "first", "batch-delta-published"), self.ENVELOPE[label]
-        assert (r["n_max_u_lt_1"], r["n_max_v95"]) == (e["n_max_u_lt_1"], e["n_max_v95_mean"])
+        assert (r["n_max_u_lt_1"], r["n_max_load_ceiling"]) == \
+            (e["n_max_u_lt_1"], e["n_max_v95_mean"])
         # 72.0 B/record: the published mean has 63 keyframes per 1000 records, the model 62.5
         assert float(r["bytes_per_rec"]) == pytest.approx(
             float(self.E5["optimized"]["bytes_per_rec"]), abs=0.01)
@@ -191,7 +215,8 @@ class TestTheDesignAtTheAdoptedPoint:
     def test_an_exhaustive_search_returns_the_reported_design(self) -> None:
         for op in ("adopted", "relaxed"):
             for fmt in ("first", "lean"):
-                best, design = rung(op, fmt, "SEARCH_OPTIMUM"), rung(op, fmt, "batch-delta")
+                best = rung(op, fmt, "SEARCH_OPTIMUM", scheme="")
+                design = rung(op, fmt, "batch-delta")
                 assert (best["placement"], best["batch"], best["ref_interval"]) == ("B", "4", "1")
                 assert float(best["bytes_per_rec"]) == pytest.approx(
                     float(design["bytes_per_rec"]), abs=0.01)
@@ -210,72 +235,159 @@ class TestTheDesignAtTheAdoptedPoint:
                     (float(r["frame_bytes"]) + per_frame) / int(r["batch"]), abs=1e-3)
 
 
-class TestCapacityIsSeparatedByCause:
-    """Review 2.4a and 2.4b: the gain, one step at a time."""
+class TestStreamSigningSchemesPlaced:
+    """Review 2.3b, 2.3c: schemes that amortise a signature across packets (E17, model only)."""
+
+    PER_PACKET = ("mavlink2", "tesla", "gennaro-rohatgi", "emss", "wong-lam-tree",
+                  "per-record signature")
+
+    def test_the_two_ends_are_rungs_of_the_ladder(self) -> None:
+        assert STREAM["per-record signature"]["n_sat"] == \
+            rung("adopted", "lean", "inline-1")["n_max_u_lt_1"]
+        assert STREAM["authbc"]["n_sat"] == rung("adopted", "lean", "batch-delta")["n_max_u_lt_1"]
+        assert float(STREAM["authbc"]["bytes_per_rec"]) == \
+            float(rung("adopted", "lean", "batch-delta")["bytes_per_rec"])
+
+    def test_no_scheme_that_sends_a_frame_per_record_reaches_half_the_designs_capacity(
+            self) -> None:
+        design = int(STREAM["authbc"]["n_sat"])
+        best = max(int(STREAM[s]["n_sat"]) for s in self.PER_PACKET)
+        assert (best, design) == (23, 52) and best < design / 2
+
+    def test_removing_51_bytes_of_authenticator_buys_three_neighbours(self) -> None:
+        """A 13 B tag in place of a 64 B signature, still one frame per record: 20 -> 23."""
+        assert STREAM["per-record signature"]["n_sat"] == "20"
+        assert STREAM["mavlink2"]["n_sat"] == "23"
+
+    def test_the_design_has_the_fewest_bytes_per_record_of_all(self) -> None:
+        b = {s: float(r["bytes_per_rec"]) for s, r in STREAM.items()}
+        assert min(b, key=b.__getitem__) == "authbc"
+        assert b["mavlink2"] / b["authbc"] > 2.0
+
+    def test_only_tree_chaining_keeps_both_properties_the_ledger_needs(self) -> None:
+        """Verifies alone AND gives non-repudiation: per-record signing, Wong-Lam, the design."""
+        both = {s for s, r in STREAM.items()
+                if r["verifies_alone"] == "yes" and r["non_repudiation"] == "yes"}
+        assert both == {"per-record signature", "wong-lam-tree", "authbc"}
+        assert float(STREAM["wong-lam-tree"]["bytes_per_rec"]) > \
+            float(STREAM["per-record signature"]["bytes_per_rec"])
+
+
+class TestCapacityIsSimulatedPerConfiguration:
+    """Review 2.4a, 2.4b, 4.8: the gain one step at a time, each with an interval (F50)."""
 
     ORDER = ("inline-1", "inline-b", "batch-cbor", "batch-delta")
+    LEAN_ORDER = ("inline-1", "inline-b", "batch-keys", "batch-delta")
+    SEARCH = {(r["config"], r["lambda_rec_per_s"]): r for r in rows("ns3_nmax_direct.csv")
+              if r["n_nodes"] == "CROSSING" and r["skew_ppm"] == "0"
+              and float(r["jitter_ms"]) == 1000 * float(r["batch"]) / float(r["lambda_rec_per_s"])}
 
-    def test_each_step_of_the_first_format_adds_neighbours_at_both_thresholds(self) -> None:
+    def test_every_capacity_in_the_ladder_is_the_direct_searchs_own_row(self) -> None:
+        simulated = [r for r in LADDER if r["n_max_v95"]]
+        assert len(simulated) >= 6
+        for r in simulated:
+            s = self.SEARCH[(f"{r['format']}/{r['rung']}", f"{float(r['lambda_rec_per_s']):.1f}")]
+            assert (r["n_max_v95"], r["n_max_v95_ci_lo"], r["n_max_v95_ci_hi"]) == \
+                (s["n_max_mean"], s["n_max_ci_lo"], s["n_max_ci_hi"])
+            assert s["bracketed"] == "1" and r["scheme"] == "ed25519"
+            assert int(r["n_max_v95_ci_lo"]) <= int(r["n_max_v95"]) <= int(r["n_max_v95_ci_hi"])
+
+    def test_a_configuration_that_was_not_simulated_has_no_capacity_at_all(self) -> None:
+        for r in LADDER:
+            if r["scheme"] != "ed25519" or r["rung"] == "SEARCH_OPTIMUM":
+                assert (r["n_max_v95"], r["n_feasible_v95"], r["cpu_pct_at_n_v95"]) == ("", "", "")
+
+    def test_every_rung_of_both_ladders_at_the_adopted_point(self) -> None:
+        first = [int(rung("adopted", "first", r)["n_max_v95"]) for r in self.ORDER]
+        lean = [int(rung("adopted", "lean", r)["n_max_v95"]) for r in self.LEAN_ORDER]
+        assert (first, lean) == ([32, 56, 76, 88], [35, 76, 108, 124])
+
+    def test_each_step_adds_neighbours_in_both_formats(self) -> None:
+        for fmt, order in (("first", self.ORDER), ("lean", self.LEAN_ORDER)):
+            ns = [int(rung("adopted", fmt, r)["n_max_v95"]) for r in order]
+            assert ns == sorted(ns) and len(set(ns)) == 4
+
+    def test_the_relaxed_point_has_the_two_ends_of_each_ladder_and_nothing_between(self) -> None:
+        got = {(f, r): rung("relaxed", f, r)["n_max_v95"]
+               for f, order in (("first", self.ORDER), ("lean", self.LEAN_ORDER)) for r in order}
+        assert got == {("first", "inline-1"): "78", ("first", "inline-b"): "",
+                       ("first", "batch-cbor"): "", ("first", "batch-delta"): "219",
+                       ("lean", "inline-1"): "85", ("lean", "inline-b"): "",
+                       ("lean", "batch-keys"): "", ("lean", "batch-delta"): "306"}
+
+    def test_the_single_load_ceiling_misses_in_both_directions(self) -> None:
+        """It overstates the design and understates long frames, so it cannot be re-tuned."""
+        assert float(rung("adopted", "lean", "batch-delta")["load_ceiling_error_pct"]) == 14.5
+        assert float(rung("adopted", "first", "inline-b")["load_ceiling_error_pct"]) == -12.5
+        errors = [float(r["load_ceiling_error_pct"]) for r in LADDER if r["load_ceiling_error_pct"]]
+        assert min(errors) < -10 and max(errors) > 10
+
+    def test_the_saturation_bound_rises_at_each_step_in_both_formats(self) -> None:
         for op in ("adopted", "relaxed"):
-            for col in ("n_max_u_lt_1", "n_max_v95"):
-                ns = [int(rung(op, "first", r)[col]) for r in self.ORDER]
+            for fmt, order in (("first", self.ORDER), ("lean", self.LEAN_ORDER)):
+                ns = [int(rung(op, fmt, r)["n_max_u_lt_1"]) for r in order]
                 assert ns == sorted(ns) and len(set(ns)) == 4
 
-    def test_the_three_steps_at_the_adopted_point(self) -> None:
-        ns = [int(rung("adopted", "first", r)["n_max_v95"]) for r in self.ORDER]
-        assert ns == [31, 49, 79, 97]
+    def test_sharing_the_frame_is_the_larger_step_in_the_lean_format(self) -> None:
+        """Review 1.7 expected 'mostly fewer frames': x2.2 for sharing the frame (with delta
+        records), then x1.6 for sharing the signature as well."""
+        base, inline, design = (int(rung("adopted", "lean", r)["n_max_v95"])
+                                for r in ("inline-1", "inline-b", "batch-delta"))
+        assert inline / base == pytest.approx(2.17, abs=0.01)
+        assert design / inline == pytest.approx(1.63, abs=0.01)
 
-    def test_sharing_a_frame_is_not_most_of_the_gain(self) -> None:
-        """The review expected 'mostly fewer frames'. Amortising the signature is as large."""
-        ns = [int(rung("adopted", "first", r)["n_max_v95"]) for r in self.ORDER]
-        share, sign, delta = ns[1] / ns[0], ns[2] / ns[1], ns[3] / ns[2]
-        assert share == pytest.approx(1.58, abs=0.01) and sign == pytest.approx(1.61, abs=0.01)
-        assert delta == pytest.approx(1.23, abs=0.01)
+    def test_the_advantage_depends_on_the_format_and_hardly_on_the_operating_point(self) -> None:
+        """The four ratios an earlier draft rounded to 'about three' — and which, taken from the
+        single ceiling, ran from 1.9 to 3.2 — are 2.8 and 2.8, 3.5 and 3.6."""
+        ratio = {(op, fmt): int(rung(op, fmt, "batch-delta")["n_max_v95"])
+                 / int(rung(op, fmt, "inline-1")["n_max_v95"])
+                 for op in ("adopted", "relaxed") for fmt in ("first", "lean")}
+        assert ratio[("adopted", "first")] == pytest.approx(2.75, abs=0.01)
+        assert ratio[("relaxed", "first")] == pytest.approx(2.81, abs=0.01)
+        assert ratio[("adopted", "lean")] == pytest.approx(3.54, abs=0.01)
+        assert ratio[("relaxed", "lean")] == pytest.approx(3.60, abs=0.01)
 
-    @pytest.mark.parametrize("fmt,lo,hi", [("first", 1.89, 3.13), ("lean", 2.60, 4.18)])
-    def test_the_advantage_over_one_record_per_frame_is_a_range(self, fmt: str, lo: float,
-                                                               hi: float) -> None:
-        ratios = [int(rung(op, fmt, "batch-delta")[c]) / int(rung(op, fmt, "inline-1")[c])
-                  for op in ("adopted", "relaxed") for c in ("n_max_u_lt_1", "n_max_v95")]
-        assert min(ratios) == pytest.approx(lo, abs=0.01)
-        assert max(ratios) == pytest.approx(hi, abs=0.01)
-
-    def test_against_inline_signing_that_already_shares_a_frame_it_is_at_most_twofold(
-            self) -> None:
-        ratios = [int(rung(op, "first", "batch-delta")[c]) / int(rung(op, "first", "inline-b")[c])
-                  for op in ("adopted", "relaxed") for c in ("n_max_u_lt_1", "n_max_v95")]
-        assert min(ratios) == pytest.approx(1.42, abs=0.01)
-        assert max(ratios) == pytest.approx(1.98, abs=0.01)
+    def test_delta_coding_is_the_smallest_step_in_both_formats(self) -> None:
+        for fmt, order in (("first", self.ORDER), ("lean", self.LEAN_ORDER)):
+            ns = [int(rung("adopted", fmt, r)["n_max_v95"]) for r in order]
+            share, sign, delta = ns[1] / ns[0], ns[2] / ns[1], ns[3] / ns[2]
+            assert delta < sign < share, fmt
 
 
 class TestReceiverCpu:
     """Review 2.4c: a receiver verifies the whole neighbourhood."""
 
-    def test_the_design_uses_about_a_third_to_a_half_of_one_core_at_its_limit(self) -> None:
+    def test_the_design_uses_under_half_of_one_core_at_its_capacity(self) -> None:
         assert float(rung("adopted", "first", "batch-delta")["cpu_pct_at_n_v95"]) == \
-            pytest.approx(32.46, abs=0.01)
+            pytest.approx(29.41, abs=0.01)
         assert float(rung("adopted", "lean", "batch-delta")["cpu_pct_at_n_v95"]) == \
-            pytest.approx(47.67, abs=0.01)
+            pytest.approx(41.59, abs=0.01)
 
     def test_one_core_serves_296_batched_neighbours_and_77_inline_ones(self) -> None:
         assert rung("adopted", "first", "batch-delta")["n_cpu_one_core"] == "296"
         assert rung("adopted", "first", "inline-1")["n_cpu_one_core"] == "77"
+        assert rung("adopted", "lean", "batch-delta", "ecdsa_p256")["n_cpu_one_core"] == "237"
+        assert rung("adopted", "lean", "batch-delta", "bls")["n_cpu_one_core"] == "10"
 
-    def test_the_cpu_binds_in_exactly_one_row(self) -> None:
-        bound = [(r["op"], r["format"], r["rung"]) for r in LADDER
-                 if r.get("binds_at_v95") == "cpu"]
-        assert bound == [("adopted", "lean", "inline-b")]
-        r = rung("adopted", "lean", "inline-b")
-        assert (r["n_max_v95"], r["n_cpu_one_core"], r["n_feasible_v95"]) == ("80", "77", "77")
-
-    def test_no_published_row_changes(self) -> None:
-        for op in ("adopted", "relaxed"):
-            for name in ("inline-1", "batch-delta-published"):
-                r = rung(op, "first", name)
+    def test_the_channel_binds_first_in_every_simulated_row(self) -> None:
+        for r in LADDER:
+            if r["n_max_v95"]:
                 assert r["binds_at_v95"] == "channel" and r["n_feasible_v95"] == r["n_max_v95"]
 
+    def test_signing_every_record_of_a_shared_frame_leaves_no_cpu_to_spare(self) -> None:
+        """Lean row 6: the channel allows 76 neighbours and one core verifies 77."""
+        r = rung("adopted", "lean", "inline-b")
+        assert (r["n_max_v95"], r["n_cpu_one_core"]) == ("76", "77")
+        assert float(r["cpu_pct_at_n_v95"]) == pytest.approx(98.34, abs=0.01)
 
-# ------------------------------------------------------------------ E9 / F47, review 2.2
+    def test_bls_is_bound_by_the_cpu_before_the_channel_saturates(self) -> None:
+        for fmt in ("first", "lean"):
+            r = rung("adopted", fmt, "batch-delta", "bls")
+            assert int(r["n_cpu_one_core"]) < int(r["n_max_u_lt_1"])
+            assert r["binds_at_v95"] == "cpu (against N_sat)"
+
+
+# ------------------------------------------------------------------ E12 / F47, review 2.2
 class TestExclusionOverAllTwelveDataRates:
     def _cell(self, dr: int, auth: int, design: str) -> dict[str, str]:
         (hit,) = [r for r in MATRIX if (r["dr"], r["auth_bytes"], r["design"]) ==
@@ -350,7 +462,7 @@ class TestExclusionOverAllTwelveDataRates:
         assert all(r["verdict"] == r["verdict_repeater"] for r in MATRIX)
 
 
-# ------------------------------------------------------------------ E10 / review 4.9
+# ------------------------------------------------------------------ E13 / review 4.9
 class TestFreshnessBudget:
     BUDGET = rows("freshness_budget.csv")
 
@@ -375,7 +487,7 @@ class TestFreshnessBudget:
         assert {r["channel_util_measured_at"] for r in self.BUDGET} == {"2.2299"}
 
 
-# ------------------------------------------------------------------ E11 / F48
+# ------------------------------------------------------------------ E14 / F48
 class TestLoraBudget:
     LORA = rows("lora_budget.csv")
     CODESIGN = rows("lora_codesign.csv")
@@ -414,7 +526,7 @@ class TestLoraBudget:
             assert float(r["frame_bytes"]) <= int(r["payload_limit"])
 
 
-# ------------------------------------------------------------------ E12 / review 4.7
+# ------------------------------------------------------------------ E15 / review 4.7
 class TestPhySweep:
     PHY = rows("phy_sweep.csv")
 
@@ -443,7 +555,7 @@ class TestPhySweep:
         assert (r["fixed_cost_us"], r["fixed_share_of_baseline_pct"]) == ("173.17", "42.3")
 
 
-# ------------------------------------------------------------------ E13 / review 4.1
+# ------------------------------------------------------------------ E16 / review 4.1
 class TestEnergyTable:
     ENERGY = {r["configuration"].split(":")[0]: r for r in rows("energy_table.csv")}
 

@@ -85,8 +85,8 @@ class Framer(ABC):
 # CBOR encodes an integer 0..23 in one byte and one ≥ 65536 in five. Measured:
 #
 #     src=0     base_seq=0        ->  H_f = 38 B     (first records of a flight, low node id)
-#     src=24    base_seq=24       ->  H_f = 39 B
-#     src=256   base_seq=256      ->  H_f = 40 B
+#     src=24    base_seq=24       ->  H_f = 40 B     (this row read 39 and the next 40 until
+#     src=256   base_seq=256      ->  H_f = 42 B      2026-10-06: each is one field's step, not two)
 #     src=40000 base_seq=180000   ->  H_f = 44 B     (1 h into flight at 50 Hz — the documented
 #                                                     value, and the top of the range)
 #

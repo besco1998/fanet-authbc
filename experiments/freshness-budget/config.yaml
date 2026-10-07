@@ -1,4 +1,4 @@
-# E10 — end-to-end delay of the oldest record against D_max (docs/02 §7; review comment 4.9).
+# E13 — end-to-end delay of the oldest record against D_max (docs/02 §7; review comment 4.9).
 experiment: freshness-budget
 operating_points:
   - ["adopted", 50, 0.100]

@@ -1,4 +1,4 @@
-# E6 — measured sizes of both frame formats (docs/04 §2; audit F45, F48).
+# E9 — measured sizes of both frame formats (docs/04 §2; audit F45, F48).
 # `first` = placement/wire.py header + the encodings/ delta encoder (a byte model: no frame
 # carrying delta records in that header was ever emitted). `lean` = placement/wire_v2.py, and
 # every lean row is the length of an emitted frame or record stream.

@@ -1,4 +1,4 @@
-# E9 — which EU863-870 data rate carries one self-contained authenticated frame (docs/02 T6').
+# E12 — which EU863-870 data rate carries one self-contained authenticated frame (docs/02 T6').
 # Payload limits are RP002-1.0.3 Tables 12 and 13, for all TWELVE data rates (models/lora.py).
 experiment: exclusion-matrix
 # [name, bytes]. 64: Ed25519 / ECDSA-P256. 48: the smallest standardised public-key signature

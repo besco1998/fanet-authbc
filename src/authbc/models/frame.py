@@ -200,6 +200,42 @@ def verifiability(p_loss: float, ref_interval: int = 1) -> float:
     return sum(q ** j for j in range(1, ref_interval + 1)) / ref_interval
 
 
+def length_scaled_loss(p_ref: float, frame_bytes: float, *, ref_frame_bytes: float,
+                       overhead_bytes: float) -> float:
+    """Loss of a frame of `frame_bytes` where a frame of `ref_frame_bytes` is lost with `p_ref`.
+
+    Independent bit errors at one rate: a frame survives with probability (1−β)^(8·length), so
+    two frames on the same channel are related by ``1 − (1−p_ref)^((L+o)/(L_ref+o))``, `o` being
+    the bytes every frame carries besides its payload. A batch makes a frame longer, and this is
+    what that costs — the frame-loss probability `p` of T3 is not the same number for a
+    one-record frame and a four-record one.
+    """
+    if not 0.0 <= p_ref < 1.0:
+        raise ValueError(f"p_ref must be in [0, 1), got {p_ref}")
+    if frame_bytes <= 0 or ref_frame_bytes <= 0 or overhead_bytes < 0:
+        raise ValueError("frame lengths must be > 0 and the overhead ≥ 0")
+    exponent = (frame_bytes + overhead_bytes) / (ref_frame_bytes + overhead_bytes)
+    return 1.0 - (1.0 - p_ref) ** exponent
+
+
+def verifiability_per_frame(p_loss: Sequence[float], ref_interval: int = 1) -> float:
+    """V of a stream whose i-th frame is lost with its own probability (T3' without equal p).
+
+    Frames come in groups of `ref_interval`, the first of each decoding alone; the j-th needs
+    every frame of its group up to itself. With equal probabilities this is `verifiability`.
+    """
+    _require_interval(ref_interval)
+    if not p_loss or len(p_loss) % ref_interval:
+        raise ValueError("the stream must be a whole number of groups")
+    total = 0.0
+    for start in range(0, len(p_loss), ref_interval):
+        alive = 1.0
+        for p in p_loss[start:start + ref_interval]:
+            alive *= 1.0 - p
+            total += alive
+    return total / len(p_loss)
+
+
 def verifiability_gilbert(p_mean: float, mean_burst_frames: float, ref_interval: int = 1) -> float:
     """V under two-state (Gilbert) burst loss with the same MEAN loss and a mean burst length.
 

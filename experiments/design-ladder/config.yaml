@@ -1,4 +1,4 @@
-# E8 — the design ladder (docs/04 §2; review comments 2.3, 2.4, 4.1, 4.3).
+# E11 — the design ladder (docs/04 §2; review comments 2.3, 2.4, 4.1, 4.3).
 # One row per rung per operating point: bytes, verifiability, delay, capacity at both
 # thresholds, receiver CPU, energy. Each rung changes ONE thing about the rung before it, in both
 # frame formats, so no step of the gain is credited to the wrong cause.
@@ -13,10 +13,23 @@ mtu: 1500
 epsilon: 0.05
 p_loss: 0.05
 
-# Capacity thresholds: saturation, and the measured V >= 0.95 crossing (ns3_delay.csv, F30).
+# Capacity. `u_saturation` defines N_sat (offered load within the saturation throughput of the
+# broadcast model). The V >= 0.95 capacity is READ from the direct ns-3 search, for the one
+# traffic source named here: `period` = a send jitter of one sending period, the source that
+# follow-up F1b of docs/NMAX_DIRECT_EXPECTATIONS.md designates.
+# `u_v95` is the single load ceiling earlier results applied to every configuration (measured at
+# N = 50 with a 288 B frame). It is kept ONLY to report its error against the direct values.
 u_saturation: 1.000
 u_v95: 2.435
 n_ceiling: 800
+nmax_csv: ns3_nmax_direct.csv
+nmax_source: period
+
+# The design rung under the other two schemes: [scheme, signature bytes]. Sizes as measured in
+# P1 (BLS is 96 B in the library used, not the 48 B of the minimal-signature variant).
+other_schemes:
+  - ["ecdsa_p256", 64]
+  - ["bls", 96]
 
 # Exhaustive search (the SEARCH_OPTIMUM rows): batch 1..search_max_batch, these intervals.
 search_max_batch: 12

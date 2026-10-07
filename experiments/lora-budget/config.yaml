@@ -1,4 +1,4 @@
-# E11 — the LoRa batch at the record spacing it implies (docs/02 §9b, correction of 2026-10-06; audit F48).
+# E14 — the LoRa batch at the record spacing it implies (docs/02 §9b, correction of 2026-10-06; audit F48).
 experiment: lora-budget
 data_rates: [4, 5, 6]
 duty_cycle: 0.01

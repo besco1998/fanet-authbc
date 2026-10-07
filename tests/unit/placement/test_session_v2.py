@@ -82,6 +82,16 @@ class TestWhatALostFrameCosts:
         assert out.records[0].prev_hash == recs[7].record_hash()
         assert [r.seq for r in rx.store.records()] == [0, 1, 2, 3, 8, 9, 10, 11]
 
+    def test_a_late_copy_of_the_lost_frame_is_refused_so_the_gap_is_not_repaired(self) -> None:
+        """Sequence numbers must increase: what the paper says of a lost frame."""
+        frames = _frames(3, ref_interval=1)
+        rx = LeanReceiver({7: _PK})
+        rx.receive(frames[0])
+        rx.receive(frames[2])
+        late = rx.receive(frames[1])                 # authentic, and too old
+        assert late.receipt is Receipt.REPLAY and late.records == ()
+        assert [r.seq for r in rx.store.records()] == [0, 1, 2, 3, 8, 9, 10, 11]
+
 
 class TestReplayAndForgery:
     def test_a_replayed_frame_is_refused_and_stores_nothing(self) -> None:

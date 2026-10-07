@@ -1,4 +1,4 @@
-"""Unit tests of the frame-level experiment runners (docs/04 §2 E6–E13).
+"""Unit tests of the frame-level experiment runners (docs/04 §2 E9–E17).
 
 The full runs are held byte-identical to their artifacts by the frozen gate
 (`tests/integration/test_frozen_reproducibility.py`) and the artifacts' scientific content by
@@ -142,3 +142,79 @@ class TestRegistration:
     def test_no_new_artifact_shadows_an_old_one(self) -> None:
         from authbc.bench.experiments import _RUNNERS
         assert not {r.out for r in fx.RUNNERS.values()} & {r.out for r in _RUNNERS.values()}
+
+
+class TestLengthDependentLoss:
+    """E10's third loss model: one bit error rate, so each frame is lost by its own length."""
+
+    CFG = {"batch": 4, "ref_intervals": [1, 4], "p_values": [0.0, 0.05],
+           "loss_models": ["iid", "ber"], "mean_burst_frames": 4.0, "epsilon": 0.05,
+           "frames_per_seed": 48, "seeds": [1, 2, 3], "base_seed": 7}
+
+    def test_per_frame_probabilities_follow_each_frames_own_length(self) -> None:
+        probs = fx._length_loss_probs([bytes(100), bytes(146), bytes(300)], 0.05, 146.0)
+        assert probs[1] == pytest.approx(0.05)
+        assert probs[0] < 0.05 < probs[2]
+        assert probs[2] == pytest.approx(frame_model.length_scaled_loss(
+            0.05, 300, ref_frame_bytes=146.0, overhead_bytes=36))
+
+    def test_the_design_frame_is_lost_more_often_than_the_one_record_frame(self) -> None:
+        rows = {(r["loss_model"], r["p"], r["ref_interval"]): r
+                for r in fx.run_loss_codec(self.CFG)}
+        ber, iid = rows[("ber", 0.05, 1)], rows[("iid", 0.05, 1)]
+        assert iid["p_frame"] == 0.05
+        assert ber["p_frame"] > 0.05
+        assert ber["V_theory"] == pytest.approx(1 - ber["p_frame"], abs=1e-5)
+        assert ber["V_theory"] < iid["V_theory"]
+
+    def test_a_clean_channel_delivers_everything_under_every_model(self) -> None:
+        for r in fx.run_loss_codec(self.CFG):
+            if r["p"] == 0.0:
+                assert r["V_meas"] == 1.0 and r["V_theory"] == 1.0 and r["p_frame"] == 0.0
+
+    def test_delta_frames_are_shorter_and_so_lost_less_than_their_keyframe(self) -> None:
+        rows = {(r["loss_model"], r["p"], r["ref_interval"]): r
+                for r in fx.run_loss_codec(self.CFG)}
+        # with one keyframe in four the mean frame is shorter, so the mean loss is lower
+        assert rows[("ber", 0.05, 4)]["p_frame"] < rows[("ber", 0.05, 1)]["p_frame"]
+
+
+@pytest.fixture(scope="module")
+def rows() -> dict[str, dict]:
+    return {r["scheme"]: r for r in fx.run_stream_baselines(load_config("stream-baselines"))}
+
+
+class TestStreamBaselines:
+    """E17: the classical stream-signing schemes placed by bytes and by frames per second."""
+
+    def test_every_scheme_of_the_related_work_has_a_row(self, rows: dict[str, dict]) -> None:
+        assert set(rows) == {"mavlink2", "tesla", "gennaro-rohatgi", "emss", "wong-lam-tree",
+                             "per-record signature", "authbc"}
+
+    def test_authenticator_sizes_are_the_schemes_own_arithmetic(self, rows: dict[str, dict]
+                                                                ) -> None:
+        assert rows["mavlink2"]["auth_bytes_per_packet"] == 13
+        assert rows["tesla"]["auth_bytes_per_packet"] == 24
+        assert rows["gennaro-rohatgi"]["auth_bytes_per_packet"] == 32
+        assert rows["emss"]["auth_bytes_per_packet"] == 64
+        assert rows["wong-lam-tree"]["auth_bytes_per_packet"] == 129
+        assert rows["per-record signature"]["auth_bytes_per_packet"] == 64
+
+    def test_only_the_design_sends_fewer_frames_than_records(self, rows: dict[str, dict]) -> None:
+        for name, r in rows.items():
+            if name == "authbc":
+                assert r["frames_per_s"] == pytest.approx(12.5)
+            else:
+                assert r["frames_per_s"] >= 50.0
+        assert rows["emss"]["frames_per_s"] == pytest.approx(50.5)
+
+    def test_the_two_ends_are_the_ladders_own_rungs(self, rows: dict[str, dict]) -> None:
+        assert rows["per-record signature"]["frame_bytes"] == pytest.approx(
+            fx._lean_measured(1, False), abs=1e-3)
+        assert rows["authbc"]["frame_bytes"] == pytest.approx(fx._lean_measured(4, False), abs=1e-3)
+
+    def test_a_smaller_authenticator_never_lowers_capacity(self, rows: dict[str, dict]) -> None:
+        per_packet = sorted((r for n, r in rows.items() if n not in ("authbc", "emss")),
+                            key=lambda r: r["auth_bytes_per_packet"])
+        caps = [r["n_sat"] for r in per_packet]
+        assert caps == sorted(caps, reverse=True)

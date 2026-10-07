@@ -8,6 +8,9 @@ Sources, both retrieved and read in full:
 
 * **Semtech SX1276/77/78/79 datasheet, Rev. 7, May 2020** — §4.1.1.5 (symbol rate) and §4.1.1.7
   ("Time on air", p. 32) give the packet-duration formula implemented in `time_on_air_s`.
+  ⚠️ The copy held in `docs/literature/` and cited in the bibliography is **Rev. 4, March 2015**.
+  Checked against it on 2026-10-06: both formulas (§4.1.1.5 p. 28, §4.1.1.7 p. 31) and every
+  sensitivity figure used below (RFS_L125_HF, RFS_L250_HF, p. 20) are identical.
 * **LoRa Alliance RP002-1.0.3 LoRaWAN® Regional Parameters** (2021) — Table 8 (EU863-870 TX
   DataRate table), Table 13 (maximum payload size, *not* repeater compatible), and the regional
   parameter summary giving EU868 **Duty Cycle < 1 %**.

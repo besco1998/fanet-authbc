@@ -1,4 +1,4 @@
-# E13 — energy per record, metered and modelled (docs/02 §7; review comment 4.1).
+# E16 — energy per record, metered and modelled (docs/02 §7; review comment 4.1).
 # Reduces the INA219 end-to-end runs of item D1 (results/hw/energy/e2e/, Raspberry Pi 4, 60 s
 # windows, five idle/load pairs per configuration) to one row per configuration.
 experiment: energy-table

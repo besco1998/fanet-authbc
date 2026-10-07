@@ -1,4 +1,4 @@
-"""Measured components of the lean frame (docs/04 §2 E6; audit F45, F48)."""
+"""Measured components of the lean frame (docs/04 §2 E9; audit F45, F48)."""
 
 from __future__ import annotations
 

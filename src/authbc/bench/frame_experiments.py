@@ -1,16 +1,17 @@
-"""Experiments built on the single frame definition (docs/04 §2 E6–E12; docs/02 T3', T6').
+"""Experiments built on the single frame definition (docs/04 §2 E9–E17; docs/02 T3', T6').
 
 Added 2026-10 in answer to an external review of the paper. Each runner here either corrects a
 result that rested on a composition error, or supplies evidence the review found missing:
 
-    frame-components   E6   measured sizes of both frame formats            (audit F45, F48)
-    e3-codec           E7   verifiability with the decoder in the loop      (F46)
-    design-ladder      E8   every design rung: bytes, capacity, CPU, energy (review 2.3, 2.4, 4.1)
-    exclusion-matrix   E9   which link carries which authenticated frame    (F47; review 2.2)
-    freshness-budget   E10  fill + channel + verification against D_max     (review 4.9)
-    lora-budget        E11  the LoRa batch at the record spacing it implies (F48)
-    phy-sweep          E12  the capacity model at other PHY rates           (review 4.7)
-    energy-table       E13  metered and modelled energy per record          (review 4.1)
+    frame-components   E9   measured sizes of both frame formats            (audit F45, F48)
+    e3-codec           E10  verifiability with the decoder in the loop      (F46)
+    design-ladder      E11  every design rung: bytes, capacity, CPU, energy (review 2.3, 2.4, 4.1)
+    exclusion-matrix   E12  which link carries which authenticated frame    (F47; review 2.2)
+    freshness-budget   E13  fill + channel + verification against D_max     (review 4.9)
+    lora-budget        E14  the LoRa batch at the record spacing it implies (F48)
+    phy-sweep          E15  the capacity model at other PHY rates           (review 4.7)
+    energy-table       E16  metered and modelled energy per record          (review 4.1)
+    stream-baselines   E17  the classical stream-signing schemes, placed    (review 2.3)
 
 All are deterministic functions of committed code, configs and frozen measured inputs, so all are
 in the frozen-artifact gate. None reads or writes an artifact that existed before 2026-10.
@@ -31,7 +32,7 @@ from authbc.bench.stats import bootstrap_ci
 from authbc.bench.telemgen import TelemetryRecord
 from authbc.crypto.ed25519 import Ed25519Scheme
 from authbc.encodings.delta_enc import DeltaEncoder
-from authbc.models import bianchi, energy, lora, optimizer, phy
+from authbc.models import bianchi, energy, lora, optimizer, phy, stream_auth
 from authbc.models import frame as frame_model
 from authbc.models.energy import EnergyConfig, Measured, Placement
 from authbc.models.frame import FlatLayout
@@ -43,7 +44,7 @@ _ED = Ed25519Scheme()
 GENERATOR_STEP_S: float = 0.05     # the telemetry generator emits one record every 50 ms
 
 
-# =========================================================================== E6 frame components
+# =========================================================================== E9 frame components
 def _row(kind: str, fmt: str, item: str, stats: leanframes.SizeStats | float, **extra: Any
          ) -> dict[str, Any]:
     if isinstance(stats, leanframes.SizeStats):
@@ -125,7 +126,7 @@ def run_frame_components(cfg: dict) -> list[dict]:
     return rows
 
 
-# =========================================================================== E7 loss, codec in loop
+# ========================================================================== E10 loss, codec in loop
 def _loss_mask(rng: np.random.Generator, n: int, p: float, model: str,
                mean_burst: float) -> np.ndarray:
     """True where a frame is lost. `gilbert` loses every frame sent in its bad state."""
@@ -149,6 +150,14 @@ def _theory(model: str, p: float, ref: int, mean_burst: float) -> float:
     return frame_model.verifiability_gilbert(p, mean_burst, ref)
 
 
+def _length_loss_probs(frames: Sequence[bytes], p_ref: float, ref_frame_bytes: float
+                       ) -> np.ndarray:
+    """Loss of each frame at the bit error rate that loses the reference frame with `p_ref`."""
+    return np.array([frame_model.length_scaled_loss(
+        p_ref, len(f), ref_frame_bytes=ref_frame_bytes,
+        overhead_bytes=bianchi.MAC_OVH_BYTES) for f in frames])
+
+
 def run_loss_codec(cfg: dict) -> list[dict]:
     """V measured by sending real lean frames through a lossy channel into a real receiver.
 
@@ -156,6 +165,11 @@ def run_loss_codec(cfg: dict) -> list[dict]:
     involved, so it could not see that a delta-coded record needs every frame since the last
     self-contained one (audit F46). Here a frame counts only if the receiver decodes it, verifies
     its signature and stores its records.
+
+    Three loss processes. `iid` and `gilbert` lose a frame with probability `p` whatever its
+    length. `ber` fixes a bit error rate instead — the one at which the ONE-RECORD frame of this
+    format is lost with probability `p` — so every frame is lost by its own length and a batch
+    pays for being longer. `p_frame` is the mean loss the frames of the row actually saw.
     """
     batch, n_frames, seeds = cfg["batch"], cfg["frames_per_seed"], cfg["seeds"]
     sk, pk = _ED.keygen(seed=bytes(range(32)))
@@ -172,11 +186,14 @@ def run_loss_codec(cfg: dict) -> list[dict]:
         for model in cfg["loss_models"]:
             for p in cfg["p_values"]:
                 v_by_seed, desync, lost_n = [], 0, 0
-                for seed, frames in zip(seeds, streams, strict=True):
+                by_length = [_length_loss_probs(frames, p, _lean_measured(1, False))
+                             for frames in streams] if model == "ber" else []
+                for k, (seed, frames) in enumerate(zip(seeds, streams, strict=True)):
                     rng = np.random.default_rng(
                         [cfg["base_seed"], cfg["loss_models"].index(model), ref,
                          int(round(p * 1e6)), seed])
-                    lost = _loss_mask(rng, n_frames, p, model, cfg["mean_burst_frames"])
+                    lost = rng.random(n_frames) < by_length[k] if model == "ber" else \
+                        _loss_mask(rng, n_frames, p, model, cfg["mean_burst_frames"])
                     rx = LeanReceiver({leanframes.CONVENTION_SRC: pk})
                     for data, gone in zip(frames, lost, strict=True):
                         if not gone:
@@ -192,10 +209,16 @@ def run_loss_codec(cfg: dict) -> list[dict]:
                 # to the median, which is right for timings and wrong here: on a skewed sample
                 # the median's interval need not even contain the mean.
                 lo, hi = bootstrap_ci(v_by_seed, seed=CI_SEED, statistic=np.mean)
-                v_th = _theory(model, p, ref, cfg["mean_burst_frames"])
+                if model == "ber":
+                    v_th = mean(frame_model.verifiability_per_frame(list(q), ref)
+                                for q in by_length)
+                    p_frame = float(np.mean(by_length))
+                else:
+                    v_th, p_frame = _theory(model, p, ref, cfg["mean_burst_frames"]), p
                 sent = n_frames * len(seeds)
                 rows.append({
-                    "loss_model": model, "p": p, "batch": batch, "ref_interval": ref,
+                    "loss_model": model, "p": p, "p_frame": round(p_frame, 5), "batch": batch,
+                    "ref_interval": ref,
                     "frame_bytes": round(frame_bytes, 3),
                     "bytes_per_rec": round(frame_bytes / batch, 3),
                     "V_meas": round(mean(v_by_seed), 5), "V_ci_lo": round(lo, 5),
@@ -208,7 +231,7 @@ def run_loss_codec(cfg: dict) -> list[dict]:
     return rows
 
 
-# =========================================================================== E8 design ladder
+# =========================================================================== E11 design ladder
 def _crypto(cfg: dict) -> dict[tuple[str, str], float]:
     return {(r["scheme"], r["op"]): float(r["median_ns"]) * 1e-9
             for r in _read_raw(cfg["crypto_csv"]) if not r["agg_b"]}
@@ -281,6 +304,50 @@ def _rungs(batch: int) -> list[dict[str, Any]]:
     ]
 
 
+def _direct_crossings(cfg: dict) -> dict[tuple[str, float], dict[str, str]]:
+    """(configuration label, records/s) -> CROSSING row of the direct ns-3 search.
+
+    Read for the one traffic source the config names. `period` means a send jitter of one sending
+    period, which is a different number of milliseconds in every cell, so it is matched per row.
+    """
+    out: dict[tuple[str, float], dict[str, str]] = {}
+    for r in _read_raw(cfg["nmax_csv"]):
+        if r["n_nodes"] != "CROSSING" or float(r["skew_ppm"]) != 0.0:
+            continue
+        period_ms = 1000.0 * float(r["batch"]) / float(r["lambda_rec_per_s"])
+        want = period_ms if cfg["nmax_source"] == "period" else float(cfg["nmax_source"])
+        if float(r["jitter_ms"]) == want:
+            out[(r["config"], float(r["lambda_rec_per_s"]))] = r
+    return out
+
+
+def _capacity_columns(direct: dict[str, str] | None, ceiling_n: int, n_sat: int, n_cpu: int,
+                      per_neighbour_s: float) -> dict[str, Any]:
+    """The V >= 0.95 capacity of one rung: simulated where it was, and labelled where it was not.
+
+    The load-ceiling figure every earlier table used is kept in its own column as the
+    approximation it turned out to be (docs/NMAX_DIRECT_EXPECTATIONS.md), never as the value.
+    """
+    cols: dict[str, Any] = {"n_max_v95": "", "n_max_v95_ci_lo": "", "n_max_v95_ci_hi": "",
+                            "n_max_v95_per_run": "", "n_max_v95_interp": "",
+                            "n_max_load_ceiling": ceiling_n, "load_ceiling_error_pct": "",
+                            "cpu_pct_at_n_v95": "", "n_cpu_one_core": n_cpu,
+                            "n_feasible_v95": "", "binds_at_v95": ""}
+    if direct is None or direct["bracketed"] != "1":
+        # not simulated: the only channel figure is the saturation bound, so compare against that
+        cols["binds_at_v95"] = "cpu (against N_sat)" if n_cpu < n_sat else ""
+        return cols
+    n = int(direct["n_max_mean"])
+    cols |= {"n_max_v95": n, "n_max_v95_ci_lo": int(direct["n_max_ci_lo"]),
+             "n_max_v95_ci_hi": int(direct["n_max_ci_hi"]),
+             "n_max_v95_per_run": int(direct["n_max_per_run"]),
+             "n_max_v95_interp": direct["n_cross_interp"],
+             "load_ceiling_error_pct": round(100.0 * (ceiling_n - n) / n, 1),
+             "cpu_pct_at_n_v95": round(100.0 * (n - 1) * per_neighbour_s, 2),
+             "n_feasible_v95": min(n, n_cpu), "binds_at_v95": "cpu" if n_cpu < n else "channel"}
+    return cols
+
+
 def _latency_s(lam: float, batch: int, frame_bytes: float) -> float:
     """D(b) of a frame of `frame_bytes`, by the model every published result uses (docs/02 §7)."""
     whole = EnergyConfig(placement=Placement.B, batch=batch, record_bytes=frame_bytes / batch,
@@ -311,6 +378,7 @@ def run_design_ladder(cfg: dict) -> list[dict]:
     cert = (cfg["cert_bytes"] + (cfg["cert_period"] - 1) * cfg["cert_digest_bytes"]) \
         / cfg["cert_period"]
     lean = leanframes.lean_layout()
+    crossings = _direct_crossings(cfg)
     rows: list[dict] = []
     for op, lam, d_max in cfg["operating_points"]:
         batch = _freshness_batch(lam, d_max, lambda b: lean.frame_bytes(64, b))
@@ -320,7 +388,7 @@ def run_design_ladder(cfg: dict) -> list[dict]:
             latency = _latency_s(lam, b, frame)
             per_nbr = cpu_seconds_per_neighbour(lam, b, r["sigs"], t_ver, t_hash)
             nu = n_max(lam, b, frame, cfg["u_saturation"], cfg["n_ceiling"])
-            nv = n_max(lam, b, frame, cfg["u_v95"], cfg["n_ceiling"])
+            ceiling = n_max(lam, b, frame, cfg["u_v95"], cfg["n_ceiling"])
             n_cpu = 1 + int(1.0 / per_nbr)       # largest N with (N−1)·per_nbr ≤ one core
             e_radio = cfg["p_radio_w"] * bianchi.t_broadcast(frame) / b
             e_total: float | str = ""
@@ -334,24 +402,58 @@ def run_design_ladder(cfg: dict) -> list[dict]:
                 e_total = round(energy.per_record(ecfg, meas) * 1e6, 3)
             rows.append({
                 "op": op, "lambda_rec_per_s": lam, "d_max_ms": round(d_max * 1e3, 1),
-                "format": r["format"], "rung": r["rung"], "label": r["label"],
+                "format": r["format"], "rung": r["rung"], "scheme": "ed25519",
+                "label": r["label"],
                 "placement": r["placement"], "batch": b, "ref_interval": r["ref"],
                 "sized_from": r["sized_from"], "frame_bytes": round(frame, 3),
                 "bytes_per_rec": round(frame / b, 3),
                 "bytes_per_rec_with_cert": round((frame + cert) / b, 3),
                 "V": round(v, 5), "meets_v": int(v >= 1.0 - cfg["epsilon"]),
                 "latency_ms": round(latency * 1e3, 3), "meets_d_max": int(latency <= d_max),
-                "n_max_u_lt_1": nu, "n_max_v95": nv,
-                "cpu_pct_at_n_v95": round(100.0 * (nv - 1) * per_nbr, 2),
-                "n_cpu_one_core": n_cpu,
-                # The neighbourhood a receiver can actually serve is the smaller of what the
-                # channel delivers and what one core can verify.
-                "n_feasible_v95": min(nv, n_cpu),
-                "binds_at_v95": "cpu" if n_cpu < nv else "channel",
+                "n_max_u_lt_1": nu,
+                **_capacity_columns(crossings.get((f"{r['format']}/{r['rung']}", float(lam))),
+                                    ceiling, nu, n_cpu, per_nbr),
                 "energy_radio_uj": round(e_radio * 1e6, 3), "energy_uj": e_total,
             })
+        rows.extend(_scheme_rows(cfg, op, lam, d_max, batch, crypto, t_hash, cert))
         rows.extend(_search_rows(cfg, op, lam, d_max))
     return rows
+
+
+def _scheme_rows(cfg: dict, op: str, lam: float, d_max: float, batch: int,
+                 crypto: dict[tuple[str, str], float], t_hash: float, cert: float) -> list[dict]:
+    """The design rung under the other two signature schemes: what the scheme axis changes.
+
+    ECDSA P-256 is the same 64 B and so the same frame; only its verification time differs.
+    BLS is 96 B in the library measured and its verification is a pairing. Neither was simulated,
+    so these rows carry the saturation bound and the CPU bound and no V >= 0.95 capacity.
+    """
+    out: list[dict] = []
+    v1 = leanframes.v1_delta_layout()
+    for scheme, sig in cfg["other_schemes"]:
+        t_ver = crypto[(scheme, "verify")]
+        frames = {"first": ("byte model", v1.frame_bytes(sig, batch)),
+                  "lean": ("emitted frames",
+                           leanframes.lean_frame_sizes(batch, sig_bytes=sig).mean)}
+        for fmt, (sized_from, frame) in frames.items():
+            per_nbr = cpu_seconds_per_neighbour(lam, batch, 1, t_ver, t_hash)
+            nu = n_max(lam, batch, frame, cfg["u_saturation"], cfg["n_ceiling"])
+            latency = _latency_s(lam, batch, frame)
+            out.append({
+                "op": op, "lambda_rec_per_s": lam, "d_max_ms": round(d_max * 1e3, 1),
+                "format": fmt, "rung": "batch-delta", "scheme": scheme,
+                "label": f"the design with a {sig} B {scheme} signature",
+                "placement": "B", "batch": batch, "ref_interval": 1, "sized_from": sized_from,
+                "frame_bytes": round(frame, 3), "bytes_per_rec": round(frame / batch, 3),
+                "bytes_per_rec_with_cert": round((frame + cert) / batch, 3),
+                "V": round(frame_model.verifiability(cfg["p_loss"], 1), 5), "meets_v": 1,
+                "latency_ms": round(latency * 1e3, 3), "meets_d_max": int(latency <= d_max),
+                "n_max_u_lt_1": nu,
+                **_capacity_columns(None, n_max(lam, batch, frame, cfg["u_v95"],
+                                                cfg["n_ceiling"]),
+                                    nu, 1 + int(1.0 / per_nbr), per_nbr),
+            })
+    return out
 
 
 def _search_rows(cfg: dict, op: str, lam: float, d_max: float) -> list[dict]:
@@ -394,14 +496,14 @@ def _search_rows(cfg: dict, op: str, lam: float, d_max: float) -> list[dict]:
         if best is None:
             raise ValueError(f"design-ladder: no admissible {fmt} configuration at {op}")
         out.append({"op": op, "lambda_rec_per_s": lam, "d_max_ms": round(d_max * 1e3, 1),
-                    "format": fmt, "rung": "SEARCH_OPTIMUM",
+                    "format": fmt, "rung": "SEARCH_OPTIMUM", "scheme": "",
                     "label": "byte-minimal admissible configuration (exhaustive search)",
                     "sized_from": "measured components", "meets_v": 1, "meets_d_max": 1,
                     **best[1]})
     return out
 
 
-# =========================================================================== E9 exclusion matrix
+# =========================================================================== E12 exclusion matrix
 def _lean_one_record_range(sig_bytes: int) -> tuple[int, int]:
     """(smallest, largest) one-record lean frame over the flight envelope, for a `sig_bytes` tag."""
     lo = leanframes.lean_frame_sizes(1, src=0, base_seq=0, ts0=0, sig_bytes=sig_bytes).lo
@@ -486,7 +588,7 @@ def run_exclusion_matrix(cfg: dict) -> list[dict]:
     return rows
 
 
-# =========================================================================== E10 freshness budget
+# =========================================================================== E13 freshness budget
 def run_freshness_budget(cfg: dict) -> list[dict]:
     """End-to-end delay of the oldest record against D_max, with every term that was left out.
 
@@ -520,7 +622,7 @@ def run_freshness_budget(cfg: dict) -> list[dict]:
     return rows
 
 
-# =========================================================================== E11 LoRa budget
+# =========================================================================== E14 LoRa budget
 @cache
 def _delta_body_at(fmt: str, stride: int) -> float:
     """Mean delta-record body when transmitted records are `stride` generator steps apart.
@@ -604,7 +706,7 @@ def run_lora_budget(cfg: dict) -> list[dict]:
     return rows
 
 
-# =========================================================================== E12 PHY sweep
+# =========================================================================== E15 PHY sweep
 def run_phy_sweep(cfg: dict) -> list[dict]:
     """Saturation capacity of the baseline and the design at other OFDM rates (MODEL ONLY).
 
@@ -641,7 +743,7 @@ def run_phy_sweep(cfg: dict) -> list[dict]:
 
 
 
-# =========================================================================== E13 energy table
+# =========================================================================== E16 energy table
 def run_energy_table(cfg: dict) -> list[dict]:
     """Energy per record, per configuration: what was metered, and what the model adds to it.
 
@@ -688,6 +790,66 @@ def run_energy_table(cfg: dict) -> list[dict]:
     return rows
 
 
+# ====================================================================== E17 stream-signing schemes
+def run_stream_baselines(cfg: dict) -> list[dict]:
+    """The classical stream-signing schemes at this work's operating point (MODEL ONLY).
+
+    None of them is implemented. Each is the lean one-record frame with its authenticator in
+    place of the signature — the same header, chain link and record — so the only things that
+    differ between rows are the two a scheme decides: authenticator bytes and frames per record.
+    Capacity is the saturation bound of the validated broadcast model; no row here was simulated.
+    """
+    lam, batch = cfg["lambda_rec_per_s"], cfg["batch"]
+    h, sig = cfg["hash_bytes"], cfg["sig_bytes"]
+    emss = stream_auth.emss(hashes_per_packet=cfg["emss_hashes_per_packet"], hash_bytes=h,
+                            sig_bytes=sig, sig_period=cfg["emss_sig_period"])
+    lean = leanframes.lean_layout()
+    # scheme, source, authenticator B/packet, auth B/record, packets/record, verifies alone,
+    # what a packet waits for, what a lost packet costs, non-repudiation (can a third party
+    # be shown who sent a record — what a ledger of evidence needs, and more than sender
+    # authentication: TESLA authenticates the sender to a synchronised receiver and still has none)
+    per_packet = [
+        ("mavlink2", "mavlink2signing", stream_auth.MAVLINK2_SIGNATURE_BYTES, None, 1.0, "yes",
+         "", "itself", "no: any holder of the shared key can sign"),
+        ("tesla", "perrig2000emss", stream_auth.tesla_bytes(**cfg["tesla"]), None, 1.0, "no",
+         "the key, disclosed later", "itself", "no: the MAC key is disclosed"),
+        ("gennaro-rohatgi", "gennaro1997streams", stream_auth.gennaro_rohatgi_bytes(hash_bytes=h),
+         None, 1.0, "no", "every earlier packet", "every later packet", "yes"),
+        ("emss", "perrig2000emss", emss.data_packet_bytes, emss.bytes_per_record,
+         emss.packets_per_record, "no", "the next signature packet",
+         "itself, unless its links are lost too", "yes"),
+        ("wong-lam-tree", "wong1999flows",
+         stream_auth.wong_lam_tree_bytes(cfg["wong_lam_block"], hash_bytes=h, sig_bytes=sig),
+         None, 1.0, "yes", "its block to fill (sender)", "itself", "yes"),
+        ("per-record signature", "", sig, None, 1.0, "yes", "", "itself", "yes"),
+    ]
+    rows: list[dict] = []
+    for name, source, auth, auth_rec, ppr, alone, waits, lost, non_repudiation in per_packet:
+        frame = leanframes.lean_frame_sizes(1, sig_bytes=auth).mean
+        # EMSS's signature packets carry no record: a header and their authenticator
+        extra = (lean.header_bytes + emss.signature_packet_bytes) / emss.sig_period \
+            if name == "emss" else 0.0
+        rows.append({
+            "scheme": name, "source": source, "auth_bytes_per_packet": auth,
+            "auth_bytes_per_record": round(auth if auth_rec is None else auth_rec, 3),
+            "frame_bytes": round(frame, 3), "bytes_per_rec": round(frame + extra, 3),
+            "frames_per_s": round(lam * ppr, 3),
+            "n_sat": n_max(lam * ppr, 1, frame, cfg["u_saturation"], cfg["n_ceiling"]),
+            "verifies_alone": alone, "waits_for": waits, "a_lost_packet_costs": lost,
+            "non_repudiation": non_repudiation,
+        })
+    design = _lean_measured(batch, False)
+    rows.append({
+        "scheme": "authbc", "source": "", "auth_bytes_per_packet": sig,
+        "auth_bytes_per_record": round(sig / batch, 3), "frame_bytes": round(design, 3),
+        "bytes_per_rec": round(design / batch, 3), "frames_per_s": round(lam / batch, 3),
+        "n_sat": n_max(lam, batch, design, cfg["u_saturation"], cfg["n_ceiling"]),
+        "verifies_alone": "yes", "waits_for": "its batch to fill (sender)",
+        "a_lost_packet_costs": f"its {batch} records", "non_repudiation": "yes",
+    })
+    return rows
+
+
 RUNNERS: dict[str, _Runner] = {
     "frame-components": _Runner(run_frame_components, "frame_components"),
     "e3-codec": _Runner(run_loss_codec, "e3_codec_loss"),
@@ -697,4 +859,5 @@ RUNNERS: dict[str, _Runner] = {
     "lora-budget": _Runner(run_lora_budget, "lora_budget"),
     "phy-sweep": _Runner(run_phy_sweep, "phy_sweep"),
     "energy-table": _Runner(run_energy_table, "energy_table"),
+    "stream-baselines": _Runner(run_stream_baselines, "stream_baselines"),
 }
