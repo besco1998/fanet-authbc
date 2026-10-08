@@ -174,18 +174,30 @@ def _binary() -> tuple[Path, Path]:
     return root, root / "build" / "scratch" / "ns3.48-authbc-delay-optimized"
 
 
+def scenario_args(frame_bytes: int, fps: float, n_nodes: int, seed: int, sim_time: float,
+                  prefix: Path, *, jitter_ms: float = 0.0, skew_ppm: float = 0.0,
+                  cw_min: int = 0) -> list[str]:
+    """Command-line arguments of one run. An option at its default is left out, so the
+    published scenario is invoked exactly as it always was."""
+    args = [f"--nNodes={n_nodes}", f"--framesPerSec={fps}", f"--frameSize={frame_bytes}",
+            f"--simTime={sim_time}", f"--seed={seed}", f"--outPrefix={prefix}"]
+    if jitter_ms > 0.0:
+        args.append(f"--txJitterMs={jitter_ms!r}")
+    if skew_ppm > 0.0:
+        args.append(f"--txSkewPpm={skew_ppm!r}")
+    if cw_min > 0:
+        args.append(f"--cwMin={cw_min}")
+    return args
+
+
 def run_one(frame_bytes: int, fps: float, n_nodes: int, seed: int, sim_time: float,
-            *, jitter_ms: float = 0.0, skew_ppm: float = 0.0,
+            *, jitter_ms: float = 0.0, skew_ppm: float = 0.0, cw_min: int = 0,
             via_ns3: bool = False) -> dict[str, float]:
     root, binary = _binary()
     with tempfile.TemporaryDirectory() as td:
         prefix = Path(td) / "d"
-        args = [f"--nNodes={n_nodes}", f"--framesPerSec={fps}", f"--frameSize={frame_bytes}",
-                f"--simTime={sim_time}", f"--seed={seed}", f"--outPrefix={prefix}"]
-        if jitter_ms > 0.0:                 # absent by default: the published scenario, untouched
-            args.append(f"--txJitterMs={jitter_ms!r}")
-        if skew_ppm > 0.0:
-            args.append(f"--txSkewPpm={skew_ppm!r}")
+        args = scenario_args(frame_bytes, fps, n_nodes, seed, sim_time, prefix,
+                             jitter_ms=jitter_ms, skew_ppm=skew_ppm, cw_min=cw_min)
         if via_ns3:
             cmd = ["./ns3", "run", "authbc-delay " + " ".join(args)]
             env = None
@@ -341,6 +353,9 @@ def main() -> None:
                     help="results/raw/<stem>_runs.csv and <stem>.csv. A fresh-seed campaign "
                          "takes its own stem, so that every reported point keeps exactly "
                          "--seeds runs, numbered from 1")
+    ap.add_argument("--cw-min", type=int, default=0,
+                    help="minimum contention window given to the scenario (0 = the standard's, "
+                         "the default). Needs its own --out-stem: one file, one window")
     ap.add_argument("--no-summary", action="store_true",
                     help="write the runs only (for a campaign whose analysis is its own script)")
     ap.add_argument("--sim-time", type=float, default=20.0)
@@ -359,6 +374,8 @@ def main() -> None:
         return
     if args.n and len(args.cells) != 1:
         raise SystemExit("--n applies to exactly one cell")
+    if args.cw_min and args.out_stem == "ns3_nmax_direct":
+        raise SystemExit("--cw-min changes the scenario: give it an --out-stem of its own")
     plan = read_plan(args.plan) if args.plan else [
         (cell, args.source, args.n or default_grid(CELLS[cell].model_n)) for cell in args.cells]
 
@@ -373,7 +390,7 @@ def main() -> None:
         cell, jitter, skew, n, seed = t
         c = CELLS[cell]
         r = run_one(c.frame_bytes, c.fps, n, seed, args.sim_time, jitter_ms=jitter,
-                    skew_ppm=skew)
+                    skew_ppm=skew, cw_min=args.cw_min)
         return {"cell": cell, "frame_bytes": c.frame_bytes, "frames_per_s": c.fps, "n_nodes": n,
                 "seed": seed, "sim_time_s": args.sim_time,
                 "tx_frames": int(r["tx_frames"]), "rx_frames": int(r["rx_frames"]),
@@ -385,6 +402,8 @@ def main() -> None:
               "cells": {k: vars(c) for k, c in CELLS.items()}}
     if args.first_seed != 1:                    # absent by default: the reported sample's hash
         config["first_seed"] = args.first_seed
+    if args.cw_min:
+        config["cw_min"] = args.cw_min
     with ThreadPoolExecutor(max_workers=args.workers) as pool:
         for i, row in enumerate(pool.map(job, todo), 1):
             runs.append({k: str(v) for k, v in row.items()})

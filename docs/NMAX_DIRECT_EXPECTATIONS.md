@@ -738,3 +738,83 @@ in means at all.
 
 **What this cannot show.** Nothing about a reported number: every capacity uses the redrawn
 source. It bears only on how the strictly periodic figures of earlier work should be read.
+
+---
+
+# Follow-up F5 — a derivation of the crossing, and three conditions it has never seen. Written before their runs (2026-10-08)
+
+**Why.** The airtime line of F2 is a fit: one constant, a = 0.0710, chosen to pass through six
+crossings at one loss level. F3 showed its error at 50 frames per second is a repeatable bias.
+`OPEN_ITEMS` G18 asked for a derivation, and Mohamed chose (2026-10-08) to do it now.
+
+**What was derived** (docs/02 §6g). A frame is lost in this scenario in exactly two ways:
+
+1. **A tie.** A frame that arrives while the medium is held (another frame, or the DIFS after
+   it) draws a counter from {0 … W−1}. Two stations whose counters reach zero in the same slot
+   send together. Any two stations that are waiting at the same time tie with probability 1/W.
+2. **The detection window.** A station cannot sense a transmission during its first 4 µs, so one
+   that decides to send inside that window sends as well.
+
+Counting the first with a queue (a share ρ of frames defers; each meets ρ/(1−ρ) others) and the
+second directly gives, with ρ = (N−1)·f·T and nothing fitted,
+
+    loss ≈ ρ · [1 − (1 − 1/W)^(ρ/(1−ρ))] + (N−1)·f·8 µs
+
+which puts all eighteen simulated crossings within 5.5 % (mean 2.3 %), and says what the fitted
+slope *is*: a = ρ/(W·(1−ρ)), which equals 0.071 at ρ = 0.53 — the occupancy at which loss reaches
+5 %. It was near 1/W by that coincidence and no other.
+
+**The model that is tested** is the exact version of the same two mechanisms:
+`src/authbc/sim/dcf_unsaturated.py`, an event simulator of the access rule alone — arrival
+times, the carrier-sense rule, counters. No PHY, no channel, no packets, no line of ns-3, and no
+fitted constant: the slot, DIFS, W = 16 and the 4 µs are the standard's and the simulator's.
+Against the eighteen configurations already simulated (`results/raw/dcf_model_vs_ns3.csv`):
+**every crossing within −1.2 … +0.6 % (mean 0.5 %), every one of the 153 delivered fractions within 0.0023.**
+
+⚠️ That agreement is **not a prediction**: the model was written, and one omission in it found
+and fixed (half of the detection window), while looking at one of those eighteen cells. What
+follows is.
+
+**What is run.** Six crossings in conditions no run has been made at, cells C (146 B, 50
+frames/s) and D (173 B, 12.5 frames/s), 30 seeds, 20 s, send time redrawn each period; into their
+own files, so the reported sample is untouched:
+
+| case | window | delivered level | **model crossing** | band (±3 %) | node counts | file |
+|---|---|---|---|---|---|---|
+| C, window doubled | 32 | 0.95 | **39.09** | 37.92–40.27 | 36 37 38 39 40 41 42 | `ns3_rule_cw31_runs.csv` |
+| D, window doubled | 32 | 0.95 | **139.03** | 134.86–143.20 | 131 135 139 143 147 | 〃 |
+| C, 10 % loss | 16 | 0.90 | **46.77** | 45.36–48.17 | 44 45 46 47 48 49 50 | `ns3_rule_levels_runs.csv` |
+| D, 10 % loss | 16 | 0.90 | **165.30** | 160.34–170.26 | 157 161 165 169 173 | 〃 |
+| C, 2 % loss | 16 | 0.98 | **22.49** | 21.82–23.17 | 20 21 22 23 24 25 26 | 〃 |
+| D, 2 % loss | 16 | 0.98 | **79.65** | 77.26–82.04 | 74 77 80 83 86 | 〃 |
+
+(`results/raw/dcf_model_predictions.csv`, written by `analysis/dcf_model_check.py --predict`
+and committed with this text.) The doubled window needs a scenario option, `--cwMin`, which is
+absent by default; the binary is rebuilt only after the F4 campaign has finished, and stored
+runs must reproduce bit for bit with it before any new run is made.
+
+**Prediction.** **All six ns-3 crossings fall inside ±3 % of the model's.** The model's worst
+error on the eighteen it was built beside is 1.2 %; 3 % leaves room for conditions further from
+them.
+
+**Why these three conditions.** They are where the candidate explanations part:
+
+| | fitted line, slope scaled by 1/W | closed form above | **event model** |
+|---|---|---|---|
+| C, window doubled | 53.4 | 42.6 | **39.1** |
+| C, 10 % loss | 67.9 (the line has no other level) | 45.0 | **46.8** |
+| C, 2 % loss | 13.6 | 23.6 | **22.5** |
+
+If doubling the window nearly doubled the capacity, ties would be the whole story and the line's
+slope a pure 1/W. The model says the capacity rises by an eighth: a longer countdown keeps
+stations waiting longer, so more of them wait together, and the detection window is untouched.
+
+**How it will be read.** Six inside: the capacities of this scenario are explained by two named
+mechanisms and constants of the standard, and the paper may say so. Any outside: reported as a
+failure, with the size and sign of the miss, and the model is not adjusted to fit — a second
+model would need its own registration. A crossing outside its grid is extended and the
+extension reported.
+
+**What this cannot show.** That ns-3's access rule is a radio's. The model and ns-3 implement
+the same standard; their agreement says the capacities follow from that rule and the 4 µs, not
+that either describes hardware. That is `OPEN_ITEMS` G4.

@@ -176,6 +176,10 @@ main(int argc, char* argv[])
     // periodic (one frame per period of its own); only the relative phases move. Real crystals
     // do the same thing at 20-50 ppm, a hundred times more slowly.
     double txSkewPpm = 0.0;
+    // Contention window. 0 leaves the standard's value (CWmin = 15 for 802.11a) and the scenario
+    // exactly as published. Any other value tests the derivation of docs/02 §6g, which says
+    // how the capacity must move when the window is widened.
+    uint32_t cwMin = 0;
 
     CommandLine cmd(__FILE__);
     cmd.AddValue("nNodes", "number of nodes in the collision domain", nNodes);
@@ -191,6 +195,7 @@ main(int argc, char* argv[])
     cmd.AddValue("txSkewPpm",
                  "per-node period offset drawn from U(-x, +x) ppm (needs txJitterMs > 0)",
                  txSkewPpm);
+    cmd.AddValue("cwMin", "minimum contention window; 0 = the standard's (default)", cwMin);
     cmd.Parse(argc, argv);
     NS_ABORT_MSG_IF(txJitterMs < 0.0 || txJitterMs * 1e-3 > 1.0 / framesPerSec,
                     "txJitterMs must lie in [0, one period]");
@@ -223,6 +228,18 @@ main(int argc, char* argv[])
     NetDeviceContainer devices = wifi.Install(phy, mac, nodes);
     Config::Set("/NodeList/*/DeviceList/*/$ns3::WifiNetDevice/RemoteStationManager/RtsCtsThreshold",
                 UintegerValue(4692480)); // RTS/CTS off
+    if (cwMin > 0)
+    {
+        // Broadcast frames are never retransmitted, so the window stays at its minimum.
+        for (uint32_t i = 0; i < nNodes; ++i)
+        {
+            Ptr<WifiNetDevice> dev = DynamicCast<WifiNetDevice>(devices.Get(i));
+            Ptr<Txop> txop = dev->GetMac()->GetTxop();
+            NS_ABORT_MSG_IF(!txop, "the scenario's MAC has no DCF Txop");
+            txop->SetMinCw(cwMin);
+            txop->SetMaxCw(std::max(cwMin, txop->GetMaxCw()));
+        }
+    }
 
     MobilityHelper mobility;
     Ptr<ListPositionAllocator> posAlloc = CreateObject<ListPositionAllocator>();

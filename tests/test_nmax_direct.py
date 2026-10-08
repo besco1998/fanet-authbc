@@ -209,6 +209,22 @@ class TestWhichRunsAPlanStillNeeds:
         assert jitter == 1000.0 / drv.CELLS["SE"].fps
 
 
+class TestTheScenarioIsInvokedAsPublishedUnlessToldOtherwise:
+    BASE = ["--nNodes=29", "--framesPerSec=50.0", "--frameSize=174", "--simTime=20.0",
+            "--seed=1", "--outPrefix=p"]
+
+    def test_defaults_add_no_argument(self) -> None:
+        assert drv.scenario_args(174, 50.0, 29, 1, 20.0, Path("p")) == self.BASE
+
+    def test_each_option_adds_its_own_argument_and_only_that(self) -> None:
+        def extra(**kw: float) -> list[str]:
+            return drv.scenario_args(174, 50.0, 29, 1, 20.0, Path("p"), **kw)[len(self.BASE):]
+
+        assert extra(jitter_ms=20.0) == ["--txJitterMs=20.0"]
+        assert extra(jitter_ms=0.1, skew_ppm=5000.0) == ["--txJitterMs=0.1", "--txSkewPpm=5000.0"]
+        assert extra(cw_min=31) == ["--cwMin=31"]
+
+
 class TestCellsAreTheLaddersFrames:
     """A cell that simulated a frame the ladder does not list would validate nothing."""
 

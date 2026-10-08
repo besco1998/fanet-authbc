@@ -1,0 +1,6 @@
+# Follow-up F5 (docs/NMAX_DIRECT_EXPECTATIONS.md): the access-rule model's predictions with the
+# contention window doubled (CWmin 31), cells C and D, the 5 % level.
+#   python ns3/run_nmax_direct.py --plan <this file> --cw-min 31 --out-stem ns3_rule_cw31 \
+#       --no-summary
+C period 36 37 38 39 40 41 42
+D period 131 135 139 143 147
