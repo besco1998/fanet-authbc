@@ -881,3 +881,62 @@ delivery, and thirty periodic runs locate a capacity about ten times less precis
 mechanism ("an early chance failure is likelier, so the rule reads low") into a registration
 because it sounded right. This time it was written as something to be checked, it was checked,
 and it was wrong — which is the difference a registration makes.
+
+## F5 — outcome, loss levels (2026-10-08, 720 runs)
+
+The four crossings at the standard window, scored against `dcf_model_predictions.csv`
+(`python analysis/dcf_model_check.py --score`):
+
+| case | delivered level | model predicted | band (±3 %) | ns-3 | difference | inside |
+|---|---|---|---|---|---|---|
+| C, 2 % loss | 0.98 | 22.49 | 21.82–23.17 | **22.40** | −0.39 % | yes |
+| D, 2 % loss | 0.98 | 79.65 | 77.26–82.04 | **78.27** | −1.73 % | yes |
+| C, 10 % loss | 0.90 | 46.77 | 45.36–48.17 | **47.36** | +1.26 % | yes |
+| D, 10 % loss | 0.90 | 165.30 | 160.34–170.26 | **166.79** | +0.90 % | yes |
+
+For the per-record cell the three readings had said, at 10 % loss: 67.9 (the fitted line),
+45.0 (the closed form), 46.8 (the event model); ns-3 gives 47.4. At 2 %: 13.6, 23.6, 22.5;
+ns-3 gives 22.4. The line fitted at 5 % is off by a factor at any other level, as a tangent
+must be; the closed form is within 5 %; the event model within 2 %.
+
+## F5 — outcome, contention window doubled (2026-10-08, 360 runs), and the whole test
+
+The scenario was rebuilt with `--cwMin`. Before any new run, nine stored runs — one of every
+kind on file: both sources, a rate offset, fresh seeds, four frame sizes — were repeated with
+the new binary and came back **bit for bit**; `--cwMin=15` returned exactly what no option
+returns.
+
+| case | window | model predicted | band (±3 %) | ns-3 | difference | inside |
+|---|---|---|---|---|---|---|
+| C, window doubled | 32 | 39.09 | 37.92–40.27 | **39.18** | +0.23 % | yes |
+| D, window doubled | 32 | 139.03 | 134.86–143.20 | **139.61** | +0.42 % | yes |
+
+**All six predictions held; the worst is 1.73 % from the model's value.** Both doubled-window
+crossings were recounted from the raw runs with a few lines that share no code with the scorer:
+39.18 and 139.61.
+
+What the doubled window decided, for the per-record cell (35.26 at the standard window):
+
+| reading | said | ns-3 |
+|---|---|---|
+| the fitted line with its slope scaled by 1/W | 53.4 | |
+| the closed form | 42.6 | |
+| **the event model** | **39.1** | **39.2** |
+
+Doubling the contention window buys **11 %** more capacity (35.3 → 39.2; the design, 124.6 →
+139.6, 12 %), not a doubling: a station that counts down for twice as long stays waiting for
+longer, so more stations wait together, and the detection window is untouched. The fitted line
+cannot say this at all — its slope is a number, not a function of W.
+
+**What this licenses.** In this scenario the V ≥ 0.95 capacities, and their movement with the
+loss level and with the contention window, follow from the 802.11 access rule and a 4 µs
+detection time, with nothing fitted. The paper may say so. The tables still quote simulated
+values.
+
+**What it does not.** It is two implementations of one standard agreeing — within one collision
+domain, at one PHY rate, with static nodes and no capture. Whether radios behave so is the
+contention experiment (`OPEN_ITEMS` G4), which is now the only thing between these capacities
+and a measurement.
+
+This is the fifth registered prediction of the capacity study to be scored and the fourth to
+hold. The one that failed (F50) is the reason the others were asked.

@@ -32,6 +32,7 @@ REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "src"))
 sys.path.insert(0, str(REPO / "analysis"))      # nmax_airtime_line, when loaded by a test
 
+import dcf_model_check as modelcheck  # noqa: E402
 import nmax_airtime_line as airtime  # noqa: E402
 import source_difference as sources  # noqa: E402
 
@@ -789,12 +790,42 @@ def capacity_model() -> dict[str, str]:
         raise ValueError("the text says the fitted slope is the tie term at the mean occupancy "
                          f"of the crossings; {slope:.4f} against {fitted:.4f}")
     ties = [float(r["model_tie_share"]) for r in points]
-    return {"modelCells": str(len(crossings)), "modelPoints": str(len(points)),
+    return _model_predictions() | {
+            "modelCells": str(len(crossings)), "modelPoints": str(len(points)),
             "modelWorst": f(max(errors), 1), "modelMean": f(st.mean(errors), 1),
             "modelMaxDiff": f(max(abs(float(r["difference"])) for r in points), 3),
             "modelTieLo": f(100 * min(ties), 0), "modelTieHi": f(100 * max(ties), 0),
             "modelRho": f(rho, 2), "modelRhoLo": f(min(occupancy), 2),
             "modelRhoHi": f(max(occupancy), 2), "modelSlope": f(slope, 3)}
+
+
+def _model_predictions() -> dict[str, str]:
+    """Follow-up F5: the model's crossings for conditions ns-3 had not been run at.
+
+    The text says every one of the registered predictions fell inside its band. A case whose
+    runs are not complete is recorded as missing, so the sentence cannot be printed early.
+    """
+    scored = {r["case"]: r for r in modelcheck.score()}
+    names = ["modelPredCases", "modelPredWorst", "modelPredWindowC", "modelNsWindowC",
+             "modelPredWindowD", "modelNsWindowD", "modelBaseC", "modelGainC", "modelGainD"]
+    if set(scored) != {c.name for c in modelcheck.CASES}:
+        MISSING.append("ns-3 runs for every registered prediction of the access-rule model")
+        return dict.fromkeys(names, "??")
+    outside = [name for name, r in scored.items() if not r["within_band"]]
+    if outside:
+        raise ValueError(f"the text says every registered prediction held; outside: {outside}")
+    c, d = scored["C, window doubled"], scored["D, window doubled"]
+    # the same two configurations at the standard window, read the same way (interpolated)
+    base = {r["cell"]: float(r["ns3_crossing"]) for r in rows(RAW / "dcf_model_vs_ns3.csv")
+            if r["n_nodes"] == "CROSSING"}
+    gain = {cell: 100.0 * (r["ns3"] / base[cell] - 1.0) for cell, r in (("C", c), ("D", d))}
+    if not all(5.0 < g < 20.0 for g in gain.values()):
+        raise ValueError("the text says doubling the window buys about an eighth more capacity")
+    return {"modelBaseC": f(base["C"], 1), "modelGainC": f(gain["C"], 0),
+            "modelGainD": f(gain["D"], 0), "modelPredCases": WORDS[len(scored)],
+            "modelPredWorst": f(max(abs(r["error_pct"]) for r in scored.values()), 1),
+            "modelPredWindowC": f(c["predicted"], 1), "modelNsWindowC": f(c["ns3"], 1),
+            "modelPredWindowD": f(d["predicted"], 1), "modelNsWindowD": f(d["ns3"], 1)}
 
 
 def sitl() -> dict[str, str]:

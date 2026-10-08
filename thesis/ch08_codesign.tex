@@ -494,8 +494,19 @@ What the model was then asked for were crossings in conditions no run had been m
 contention window doubled, and the $2\%$ and $10\%$ loss levels. There the candidate
 explanations part --- for the per-record frame with the window doubled, the fitted line with its
 slope scaled by $1/W$ gives $53$ neighbours, \Cref{eq:why} gives $43$ and the event model $39$.
-Those predictions were committed before their runs; the outcome is reported with the data.
+Those predictions were committed before their runs.
 \end{remark}
+
+\paragraph{The predictions held.} All \modelPredCases{} simulated crossings fell inside the
+$\pm 3\%$ registered for them, the worst \modelPredWorst\% from the model's value. With the
+contention window doubled the per-record configuration reaches \modelNsWindowC{} neighbours
+where the model said \modelPredWindowC{} and the design \modelNsWindowD{} where it said
+\modelPredWindowD. Doubling the window therefore buys \modelGainC--\modelGainD\% more
+capacity, not twice: a station that counts down for twice as long stays waiting longer, so more stations wait
+together and tie, and the detection window is untouched. A reading of the fitted line as
+``slope $= 1/W$'' would have promised $53$ neighbours. The capacities of this chapter are thus
+explained by two named mechanisms and constants of the standard --- within the simulator, and
+within one collision domain.
 
 \begin{remark}[What this does not show]
 The model and ns-3 implement one standard. Their agreement says the capacities of this chapter

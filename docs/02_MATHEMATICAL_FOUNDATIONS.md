@@ -687,7 +687,10 @@ eighteen cells, and an omission in it — half of the window, the case of an arr
 *before* a counter runs out — was found from that cell's numbers. Its predictions are for
 conditions no run had been made at: the window doubled, and the 2 % and 10 % loss levels
 (`results/raw/dcf_model_predictions.csv`), committed before their runs. The registration and
-its outcome are follow-up F5 of `docs/NMAX_DIRECT_EXPECTATIONS.md`.
+its outcome are follow-up F5 of `docs/NMAX_DIRECT_EXPECTATIONS.md`: **all six ns-3 crossings
+fell within 1.73 % of the model's** (band ±3 %). With the window doubled the per-record cell
+goes from 35.3 to **39.2** neighbours (model 39.1) — an eighth more, not twice, because a
+longer countdown keeps more stations waiting together.
 
 ⚠️ **What it does not show.** The model and ns-3 implement one standard. Their agreement says
 the capacities of §6e follow from that rule and a 4 µs detection time; it does not say a radio

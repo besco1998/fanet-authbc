@@ -199,3 +199,49 @@ class TestWhatDocs02SaysOfTheDerivation:
         assert "| worst error | **1.2 %** | 4.0 % | 15.3 % |" in self.DOC
         assert "| mean absolute error | **0.5 %** | 2.6 % | — |" in self.DOC
         assert "worst of 153 points | **0.0023** |" in self.DOC
+
+
+class TestThePredictionsAsScored:
+    """F5's outcome: six crossings predicted, committed, then simulated in ns-3."""
+
+    SCORED = {r["case"]: r for r in check.score()}
+    RECORDED = {"C, 2 % loss": 22.40, "D, 2 % loss": 78.27, "C, 10 % loss": 47.36,
+                "D, 10 % loss": 166.79, "C, window doubled": 39.18, "D, window doubled": 139.61}
+
+    def test_every_registered_case_was_run_and_scored(self) -> None:
+        assert set(self.SCORED) == {c.name for c in check.CASES}
+
+    def test_every_crossing_is_inside_its_registered_band(self) -> None:
+        for name, r in self.SCORED.items():
+            assert r["within_band"], name
+            lo = float(PREDICTED[name]["band_lo"])
+            hi = float(PREDICTED[name]["band_hi"])
+            assert lo <= r["ns3"] <= hi, name
+
+    def test_the_crossings_are_the_ones_recorded(self) -> None:
+        assert {k: self.SCORED[k]["ns3"] for k in self.RECORDED} == self.RECORDED
+        assert max(abs(r["error_pct"]) for r in self.SCORED.values()) == 1.73
+
+    def test_doubling_the_window_buys_an_eighth_not_a_doubling(self) -> None:
+        """35.26 -> 39.18 and 124.55 -> 139.61: the reading "slope = 1/W" promised 53."""
+        for cell, name in (("C", "C, window doubled"), ("D", "D, window doubled")):
+            gain = self.SCORED[name]["ns3"] / float(CROSSINGS[cell]["ns3_crossing"])
+            assert 1.10 < gain < 1.13, cell
+
+    @pytest.mark.parametrize("stem, seeds", [("ns3_rule_levels", 30), ("ns3_rule_cw31", 30)])
+    def test_the_runs_are_the_registered_ones_and_possible_simulator_outputs(
+            self, stem: str, seeds: int) -> None:
+        import run_nmax_direct as drv
+
+        runs = drv.read_runs(RAW / f"{stem}_runs.csv")
+        per: dict[tuple[str, int], set[int]] = {}
+        for r in runs:
+            n, tx, rx = int(r["n_nodes"]), int(r["tx_frames"]), int(r["rx_frames"])
+            assert 0 < rx <= tx * (n - 1)
+            assert float(r["delivered_frac"]) == pytest.approx(rx / (tx * (n - 1)), abs=1e-6)
+            # the redrawn source, as every reported capacity uses
+            assert float(r["jitter_ms"]) == 1000.0 / float(r["frames_per_s"])
+            per.setdefault((r["cell"], n), set()).add(int(r["seed"]))
+        registered = {(c.cell, n) for c in check.CASES if c.stem == stem for n in c.ns3_grid}
+        assert set(per) == registered
+        assert all(s == set(range(1, seeds + 1)) for s in per.values())

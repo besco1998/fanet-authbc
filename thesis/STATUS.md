@@ -1,7 +1,7 @@
 # Thesis status — what is drafted, what is not
 
 *Created 2026-08-30; **updated 2026-10-08** after the revision that followed the supervisor's
-review and the work Mohamed chose after it. **This file is the honest inventory.** `main.pdf` builds to about 99 pages with 0 errors
+review and the work Mohamed chose after it. **This file is the honest inventory.** `main.pdf` builds to about 100 pages with 0 errors
 and 0 undefined references, and that number will tempt you to think the thesis is further along
 than it is. It is not. Read this before showing the PDF to anyone.*
 

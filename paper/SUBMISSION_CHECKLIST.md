@@ -79,7 +79,7 @@ it was and are kept only so the change is visible.*
 | | Ad Hoc Networks (Elsevier) | IEEE IoT-J | MDPI Drones |
 |---|---|---|---|
 | template | `elsarticle`, single column, line numbers | `IEEEtran` **`journal`** (currently `conference` — must change) | MDPI LaTeX template |
-| page cost | **none** (subscription) | overlength charge per page over 8 — ⚠️ the paper is now 8–9 pp in the conference class and will be longer in the journal class; re-check the venue's current fee | APC — re-check the current fee |
+| page cost | **none** (subscription) | overlength charge per page over 8 — ⚠️ the paper is now 10 pp in the conference class and will be longer in the journal class; re-check the venue's current fee | APC — re-check the current fee |
 | first decision | ~8 weeks | 6.9 weeks | ~2–3 weeks |
 | extras | **Highlights** (3–5 bullets, ≤85 chars each) + graphical abstract optional | none | graphical abstract |
 | CRediT | required | not required | required |

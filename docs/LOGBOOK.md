@@ -49,6 +49,27 @@ nothing with ns-3, then reproduced all eighteen within 1.2 %.
   equals the fitted 0.071 at the *mean* occupancy of the crossings and varies by ±25 % cell by
   cell. Corrected, with a dated note in the registration, before any F5 run.
 
+**Then it was asked for something it had not seen (F5 → F62).** Six crossings were registered
+before any of their runs, with a ±3 % band: the contention window doubled, and loss levels of
+2 % and 10 %, each for the baseline and the design. The doubled window needed a new option in
+the ns-3 scenario; the rebuilt binary first reproduced nine stored runs bit for bit, and the
+option at its default value gave the default's output. 1,080 runs later:
+
+| case | registered | ns-3 | error |
+|---|---|---|---|
+| baseline, window doubled | 39.09 | 39.18 | +0.23 % |
+| design, window doubled | 139.03 | 139.61 | +0.42 % |
+| baseline, 10 % loss | 46.77 | 47.36 | +1.26 % |
+| design, 10 % loss | 165.30 | 166.79 | +0.90 % |
+| baseline, 2 % loss | 22.49 | 22.40 | −0.39 % |
+| design, 2 % loss | 79.65 | 78.27 | −1.73 % |
+
+All six inside the band, recounted from the run files by a second route. Two simpler readings
+were written down beside the first case before its runs and both missed: scaling the fitted
+line by 1/W gives 53.4, the closed form 42.6; ns-3 gave 39.2. Doubling the window buys 11–12 %
+more neighbours, not twice as many — stations that count down for longer wait together more
+often, so the tie probability does not halve.
+
 ## The simulated flight (decision 13-a) — F60
 
 PX4 v1.17.0 needed no system packages, but its recursive download stalled for twenty minutes on
@@ -100,7 +121,7 @@ thesis now say so; the bench session will put a number on it.
 * **Implicit certificates** (decision 16-a): one sentence; the certificate column is an upper
   bound.
 
-**Durable records:** F58–F61 in `audits/model_provenance.md`; follow-ups F4 and F5 in
+**Durable records:** F58–F62 in `audits/model_provenance.md`; follow-ups F4 and F5 in
 `NMAX_DIRECT_EXPECTATIONS.md`; the flight in `PX4_LOGS_EXPECTATIONS.md`; `docs/02` §6g.
 
 ---

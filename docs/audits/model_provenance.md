@@ -3235,3 +3235,44 @@ be scored and the third to hold — but the lesson is in the one that did not. A
 that sounds right, written into a registration, was false; it was caught because the
 registration said how it would be checked. In October the same kind of sentence went into a
 commit *without* a check and stood for a day.
+
+## F62 — the derivation's six predictions held: capacities, and how they move, follow from the access rule (2026-10-08)
+
+**The test** (follow-up F5, registered in `9e9c096`). F58's event model had been completed
+beside one of the configurations it was compared with, so its agreement with the eighteen was
+not evidence. It was asked for six crossings where no run had ever been made — the contention
+window doubled, and the 2 % and 10 % loss levels, each for a per-record and a batched
+configuration — and those were committed with a ±3 % band. Then 1,080 ns-3 runs.
+
+**Outcome.** All six inside; the worst 1.73 %.
+
+| case | model | ns-3 | |
+|---|---|---|---|
+| per-record frame, window doubled | 39.09 | 39.18 | +0.23 % |
+| design frame, window doubled | 139.03 | 139.61 | +0.42 % |
+| per-record frame, 10 % loss | 46.77 | 47.36 | +1.26 % |
+| design frame, 10 % loss | 165.30 | 166.79 | +0.90 % |
+| per-record frame, 2 % loss | 22.49 | 22.40 | −0.39 % |
+| design frame, 2 % loss | 79.65 | 78.27 | −1.73 % |
+
+**Why these conditions.** They are where the three readings of the same data disagree. With the
+window doubled the fitted line (read as slope = 1/W) says 53 neighbours, the closed form 43,
+the event model 39; ns-3 says 39.2. At 10 % loss the line says 68, at 2 % it says 14; ns-3 says
+47 and 22.
+
+**What follows.**
+* The reported capacities are not an artefact of one simulator's internals, and not a fit: a
+  second implementation that knows only the standard's constants and one detection time lands
+  on them *and on how they move*.
+* **Doubling the contention window buys 11–12 %, not a doubling.** A longer countdown keeps
+  more stations waiting together. That is a design statement the fitted line could not make.
+* The airtime line stays in the paper as what it is — the tangent at the 5 % level — and the
+  paper now says why it has the slope it has.
+
+⚠️ **The scenario was rebuilt for this** (`--cwMin`, absent by default). Before any new run,
+nine stored runs of every kind were repeated with the new binary and reproduced bit for bit,
+and `--cwMin=15` returned what no option returns. A rebuilt simulator is a different
+instrument until that has been shown.
+
+⚠️ **Scope.** One collision domain, one PHY rate, static nodes, no capture, and two
+implementations of the same standard. The remaining gap is to radios (G4), not to theory.

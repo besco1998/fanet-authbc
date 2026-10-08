@@ -31,7 +31,7 @@ sit at three different values in three files. Start here.*
 |---|---|
 | [`LOGBOOK.md`](LOGBOOK.md) | **Method and trial**, newest first — including the paths that failed and the claims that were retracted. If you are about to try something, check here first |
 | [`TECHNICAL_NARRATIVE.md`](TECHNICAL_NARRATIVE.md) | The results told as a story, phase by phase |
-| [`audits/model_provenance.md`](audits/model_provenance.md) | **The findings register: F1–F54**, each with evidence. **Retractions are kept visible** — T7, F15, F18, the Direction C literature claim (2026-08-08), and **F44** (withdrawn 2026-10-06 by F47) |
+| [`audits/model_provenance.md`](audits/model_provenance.md) | **The findings register: F1–F62**, each with evidence. **Retractions are kept visible** — T7, F15, F18, the Direction C literature claim (2026-08-08), and **F44** (withdrawn 2026-10-06 by F47) |
 | [`audits/p0.md` … `p7.md`](audits/) | Per-phase audits, contemporaneous |
 | **[`CLAIM_AUDIT.md`](CLAIM_AUDIT.md)** | **Every headline number re-derived from first principles and checked against simulation** (F43/F44, 2026-08-28). ⚠️ Nothing was a wrong number; five constants were conventions nobody wrote down, and one of them moved the headline from four excluded EU868 rates to three |
 | [`audits/scientific_implementation_audit.md`](audits/scientific_implementation_audit.md) | The 2026-08 scientific-implementation, idea/framing and full-paper audits (S1–S10, I1–I4, P1–P2) |
@@ -44,9 +44,10 @@ sit at three different values in three files. Start here.*
 | [`LICENSE`](../LICENSE) | **All rights reserved.** Vendored NS-3 and the LoRaWAN module remain GPLv2 and are not redistributed |
 | [`../ns3/README.md`](../ns3/README.md) | NS-3 build (⚠️ **`-j 3` under `nohup`** — the default OOMs this host), the LoRaWAN module and its required patch |
 | [`../hw/SETUP.md`](../hw/SETUP.md) | Hardware inventory and the tiered measurement campaign |
+| [`../hw/BENCH_SESSION.md`](../hw/BENCH_SESSION.md) | **The one bench session still owed** (decided 2026-10-08): five steps, about three hours, what is expected written first |
 | **[`literature/`](literature/)** | **Primary sources, with a register stating what role each plays** — `USED` / `VALIDATES` / `PRIOR ART` / `POSITIONING`. 52 PDFs in the repository; 11 more are held but not redistributed (`literature/HELD_LOCALLY.csv`). Read [`literature/README.md`](literature/README.md) before citing anything |
 | [`prompts/`](prompts/) | Phase prompts and templates |
-| **[`../thesis/`](../thesis/)** | The thesis. ⚠️ **A DRAFT SKELETON** — build with `make thesis`, and read [`../thesis/STATUS.md`](../thesis/STATUS.md) first, which grades every chapter honestly. It builds to about 92 pages with 0 errors, and that number will mislead you: ch. 2 is only partly drafted, and every `\needswork` marker is a real outstanding item (`make thesis` prints the count) |
+| **[`../thesis/`](../thesis/)** | The thesis. ⚠️ **A DRAFT SKELETON** — build with `make thesis`, and read [`../thesis/STATUS.md`](../thesis/STATUS.md) first, which grades every chapter honestly. It builds to about 100 pages with 0 errors, and that number will mislead you: ch. 2 is drafted but not yet read against every source it cites, and every `\needswork` marker is a real outstanding item (`make thesis` prints the count) |
 | **Pre-registrations** | [`DR6_EXPECTATIONS.md`](DR6_EXPECTATIONS.md), [`M4_EXPECTATIONS.md`](M4_EXPECTATIONS.md), [`DIRECTION_C_SURVEY_PROTOCOL.md`](DIRECTION_C_SURVEY_PROTOCOL.md), **[`NMAX_DIRECT_EXPECTATIONS.md`](NMAX_DIRECT_EXPECTATIONS.md)** (the 802.11 capacity search and its three follow-ups — ⚠️ **the first prediction failed; read it before quoting a capacity**), **[`PX4_LOGS_EXPECTATIONS.md`](PX4_LOGS_EXPECTATIONS.md)** (record sizes on real flight logs) — each **committed data-free** so the ordering is checkable in git. ⚠️ F40 forced a pre-registration claim to be withdrawn once because the file had never been committed |
 
 ## Historical — kept for provenance, **not** current
@@ -82,8 +83,12 @@ sit at three different values in three files. Start here.*
 | whether one U ceiling gives the V ≥ 0.95 capacity | ⚠️ **no** — **F50**. It is invariant to frame size at N = 50 (`M4_EXPECTATIONS.md`) and **not** to N: a direct search misses it by up to 23 %. Capacities are simulated per configuration (`02` §6e, `NMAX_DIRECT_EXPECTATIONS.md`) |
 | what the design is, byte by byte | `01` §4b (the lean wire format, field table) and `results/raw/frame_components.csv` — the lean design and baseline are emitted frames; rows marked `byte model` or `measured components` are sums of parts |
 | why every frame starts with a keyframe | `02` T3′ and **F46** — a frame coded against its predecessor is not self-verifiable |
-| where the classical stream-signing schemes stand | `02` §6f, `results/raw/stream_baselines.csv` (**a model, not an implementation**) |
-| what the 2026-10 revision decided | `DECISIONS.md`, R1–R18; what it left open, `OPEN_ITEMS.md` §G |
+| where the classical stream-signing schemes stand | `02` §6f, `results/raw/stream_baselines.csv` (sizes **modelled**, capacities **simulated as frames**, none implemented) |
+| **why** the capacities are what they are | `02` §6g and **F58** — two loss mechanisms, nothing fitted; `src/authbc/sim/dcf_unsaturated.py` reproduces every simulated crossing within 1.2 % (`results/raw/dcf_model_vs_ns3.csv`). Its predictions and their outcome: `NMAX_DIRECT_EXPECTATIONS.md`, follow-up F5 |
+| whether the receiver's CPU binds | ⚠️ **F59** — the ceiling in `02` §6c charges cryptography only; the prototype's decoder costs several times more. The Pi figure is step 1 of [`../hw/BENCH_SESSION.md`](../hw/BENCH_SESSION.md) |
+| what telemetry costs at 50 Hz, and how regular a real stream is | **F60** — PX4 in software-in-the-loop, `PX4_LOGS_EXPECTATIONS.md` (the follow-up and its outcome), `results/raw/px4_sitl_*.csv` |
+| whether the two simulated traffic sources differ | **F61** — no: `NMAX_DIRECT_EXPECTATIONS.md` follow-up F4 |
+| what the 2026-10 revision decided | `DECISIONS.md`, R1–R18, and **"Decided by Mohamed, 2026-10-08"** for every point it had left to him; what is still open, `OPEN_ITEMS.md` §G |
 | where a number in the paper comes from | `paper/numbers.tex`, written by `analysis/paper_numbers.py` from `results/` — the paper has **no typed results** |
 | what a given source file does | `05_REPRODUCTION_GUIDE.md` §5 |
 | why the build keeps killing WSL | `05_REPRODUCTION_GUIDE.md` §8 (it is the OOM killer) |

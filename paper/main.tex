@@ -647,7 +647,12 @@ $a = \rho/(W(1-\rho))$, which is \modelSlope{} at $\rho = \modelRho$, the mean o
 which loss reaches 5\%. Or a station decides to send within the 4\us{} in which it cannot yet
 sense another: that is $c$. An event simulation of the access rule alone, with nothing fitted
 and none of the simulator's code, reproduces all \modelCells{} simulated crossings within
-\modelWorst\%. The capacities therefore follow from the access rule and one detection time.
+\modelWorst\%. Asked for crossings where nothing had been simulated --- the contention
+window doubled, and loss levels of 2\% and 10\% --- it predicted all \modelPredCases{} within
+\modelPredWorst\%. Doubling the window moves the baseline's crossing only from \modelBaseC{}
+to \modelNsWindowC{} neighbours (predicted \modelPredWindowC): stations that count down for
+longer wait together more often. The capacities therefore follow from the access
+rule and one detection time.
 
 
 \textbf{Receiver CPU.} By Eq.~\eqref{eq:cpu} one core of the Raspberry~Pi~4 verifies the frames

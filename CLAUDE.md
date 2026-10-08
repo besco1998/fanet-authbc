@@ -60,7 +60,7 @@ type hints; no dead code; comments explain WHY, not what.
 - ⚠️ **Repo is PUBLIC and history was REWRITTEN** to purge the 84 MB vendored NS-3 tree. **The remote is authoritative — never force-push an older local branch over it.** Copyrighted PDFs in `docs/literature/` stay by Mohamed's decision (risk accepted, `DECISIONS.md`).
 - **Phase: P9 — revision after the supervisor's review (2026-10).** Branch `p9-supervisor-revision`, cut from `p8-audit-and-corrections`. Work from any machine: `git clone`, `git checkout p9-supervisor-revision`, `make setup && make all`.
 - ⚠️ **TWO COPIES OF THIS FILE EXIST.** Sessions that start in `~/authbc_package` auto-load `~/authbc_package/CLAUDE.md`, which is an OLD copy. **This file, in the repository, is the status board.** A stale count read from the other one was "corrected" into the thesis on 2026-10-06 and had to be reverted.
-- **Green:** 1872 fast + **35** frozen-gate tests (**1907**), `ruff` clean, **`mypy` clean (0 / 56 files)**, paper builds (**9 pp**, **35 refs**, 0 undefined, abstract **174 w** by the board's counter, about 180 as printed), methods paper 4 pp, thesis 92 pp (45 refs). `make all` exit 0.
+- **Green:** 1951 fast + **38** frozen-gate tests (**1989**), `ruff` clean, **`mypy` clean (0 / 57 files)**, paper builds (**10 pp**, **35 refs**, 0 undefined, abstract **179 w** by the board's counter, about 190 as printed), methods paper 4 pp, thesis 100 pp (50 refs). `make all` exit 0.
 - **METHODOLOGY (Mohamed):** this is an optimization problem — *state everything, choose what to stick with, state the trade-offs for every decision*. **`docs/TRADEOFFS.md` is required reading before quoting any number.**
 - **LICENSE = all rights reserved** (© 2026 Mohamed A. Farouk). Vendored NS-3 + `signetlabdei/lorawan` stay GPLv2, **not** redistributed.
 
@@ -69,7 +69,7 @@ type hints; no dead code; comments explain WHY, not what.
 **Mohamed's supervisor reviewed the paper. Every statement of the review held; behind several of
 them was one cause it did not name: the headline design was a SUM OF SIZES and had never existed
 as a frame** (a record size from one module, a header measured on frames of another encoding, a
-signature length). Findings **F45–F57**; method and wrong turns in the top entry of
+signature length). Findings **F45–F62**; method and wrong turns in the top entry of
 `docs/LOGBOOK.md`; decisions **R1–R18** in `docs/DECISIONS.md`; what is open in
 `docs/OPEN_ITEMS.md` §G.
 
@@ -101,8 +101,11 @@ not merge it.** What a later session must know:
   no fitted constant, no ns-3 code — and reproduces **all 18 simulated crossings within 1.2 %**
   (`results/raw/dcf_model_vs_ns3.csv`). The airtime line's slope 0.071 is ρ/(W(1−ρ)) at the
   *mean* occupancy of the crossings. ⚠️ **That agreement is a comparison, not a prediction** —
-  the model was completed beside one of those cells. Its predictions are follow-up **F5**
-  (`docs/NMAX_DIRECT_EXPECTATIONS.md`): window doubled, 2 % and 10 % loss.
+  the model was completed beside one of those cells. **The predictions came after, and held
+  (F62, follow-up F5):** six crossings registered before any run — window doubled, 2 % and
+  10 % loss, baseline and design — all inside the ±3 % band, **worst 1.73 %** (1,080
+  ns-3 runs). Doubling the contention window buys **11–12 %** capacity (35.3→39.2, 124.6→139.6),
+  not a doubling: stations that count down for longer wait together more often.
 - ⚠️ **The receiver-CPU figures (296 / 77 / 10) charge CRYPTOGRAPHY ONLY (F59).** The Python
   prototype's decoder costs several times the verification. "The channel binds first" is true
   of a compiled receiver, not of the prototype. The Pi number is step 1 of the bench session.
@@ -309,7 +312,7 @@ decides a headline and was never written down — defect class **C2**, the one c
 > ⚠️ **F18 came back.** On 2026-08-07 it was found still printed in `tab:lora-external` ("we are more optimistic" at N=5) — 100 lines below a bold sentence saying the opposite. **Retracting a finding in the register does not remove it from the paper.** When you retract, grep the paper. Guarded now by `test_no_row_revives_the_retracted_optimism_claim`, which checks the *artifact* rather than the wording.
 
 ### Where things live
-`docs/README.md` is the index. Findings **F1–F57** in `docs/audits/model_provenance.md`. Open items **only** in `docs/OPEN_ITEMS.md`. Trade-offs in `docs/TRADEOFFS.md`. Method and failed attempts in `docs/LOGBOOK.md`. **51 PDFs** in `docs/literature/` with each source's ROLE stated, and **11 more held on Mohamed's machine but NOT redistributed** (`docs/literature/HELD_LOCALLY.csv`, git-ignored files — ⚠️ never `git add -f` them); every bibliography entry is checked against its registry record by `make verify-citations` (`A3_CITATION_VERIFICATION.md` is the August record of a check that turned out not to compare authors — F49).
+`docs/README.md` is the index. Findings **F1–F62** in `docs/audits/model_provenance.md`. Open items **only** in `docs/OPEN_ITEMS.md`. Trade-offs in `docs/TRADEOFFS.md`. Method and failed attempts in `docs/LOGBOOK.md`. **51 PDFs** in `docs/literature/` with each source's ROLE stated, and **11 more held on Mohamed's machine but NOT redistributed** (`docs/literature/HELD_LOCALLY.csv`, git-ignored files — ⚠️ never `git add -f` them); every bibliography entry is checked against its registry record by `make verify-citations` (`A3_CITATION_VERIFICATION.md` is the August record of a check that turned out not to compare authors — F49).
 
 ### Deferred by Mohamed — plans written, DO NOT START unprompted
 - **Mobility (E20)** — `docs/MOBILITY_PLAN.md`. **Separate NEW scenario files**, literature survey first. Not for the 802.11 arm (Bianchi/Ma&Chen have no position term).
