@@ -38,7 +38,7 @@ receiver CPU. Two boundaries follow. Where the frame does not fit: when every fr
 alone, \exclCount{} of the twelve EU863-870 LoRaWAN data rates cannot carry one. Where it does: at
 50~records/s and a 100\,ms deadline the design sends \bprLeanDesign\,B per record against
 \bprLeanBase\,B for per-record signing, and in ns-3 one 802.11a collision domain delivers 95\% of
-frames from \nmaxLeanDesign{} neighbours instead of \nmaxLeanBase. Batching and header design decide what can run; among 64\,B elliptic-curve
+frames among \nmaxLeanDesign{} nodes instead of \nmaxLeanBase. Batching and header design decide what can run; among 64\,B elliptic-curve
 signatures the scheme does not. Sender energy is measured on a Raspberry~Pi~4; contention is
 simulated; record sizes are synthetic, checked against twelve public flight logs and an
 autopilot in simulation.
@@ -66,7 +66,7 @@ share one frame, one signature and one chain link. Batching is not new, and its 
 kind: records wait for the frame to fill, and a lost frame loses all of them. What a designer
 lacks is the accounting. What must a frame carry so that a receiver can verify it without any
 other frame? On which links does such a frame not fit, whatever the batch? Where it fits, which
-constraint caps the batch, and what do the saved bytes buy on a contended channel, in neighbours
+constraint caps the batch, and what do the saved bytes buy on a contended channel, in nodes
 and not in percent?
 
 We answer these for one concrete system. AUTHBC --- authenticated telemetry for a
@@ -88,7 +88,8 @@ and rate, with \seeds{} seeds and a bootstrap interval, not by applying one load
 \item \textbf{Constraints that bind in an unexpected order.} Freshness, not the MTU, caps the
 batch at four records. A delta-coded frame that depends on its predecessor misses the
 verifiability target at its own loss budget, so every frame carries one self-contained record.
-One CPU core verifies \ncpuBatch{} neighbours' frames with Ed25519 and \ncpuBls{} with BLS.
+One CPU core keeps up with a neighbourhood of \ncpuBatch{} nodes with Ed25519 and of \ncpuBls{}
+with BLS.
 \end{itemize}
 
 The message is short: batching and header design decide what can run, and among standard 64\,B
@@ -139,7 +140,9 @@ it costs on air.
 \textbf{Small payloads.} That a signature leaves little room in a small frame is known:
 G{\"u}ndo{\u{g}}an \emph{et al.} find 9\,B of application data left beside an Ed25519 signature in
 an 802.15.4 frame~\cite{gundogan2021firmware}, and post-quantum signatures do not fit one 5G
-broadcast block~\cite{arxiv2510pqsib1}. Section~\ref{sec:lowrate} applies the same arithmetic to
+broadcast block~\cite{arxiv2510pqsib1}. For Remote~ID, a 64-octet signature is paged over
+25-octet Bluetooth frames with a parity page~\cite{rfc9575}: the spreading and recovery that
+our scope excludes. Section~\ref{sec:lowrate} applies the same arithmetic to
 LoRaWAN with the chain link included. Compact encodings~\cite{rfc8949} and delta coding of time
 series~\cite{pelkonen2015gorilla} are established; a lossy link limits how far a delta chain may
 run (Sec.~\ref{sec:loss}).
@@ -155,7 +158,7 @@ Haxhibeqiri \emph{et al.} model single-gateway scalability~\cite{haxhibeqiri2017
 \input{fig_system}
 
 \textbf{Network and traffic.} $N$ UAVs share one channel and hear each other: one collision
-domain. Each produces $\Lambda$ telemetry records per second and broadcasts them; there are no
+domain, which we call a neighbourhood of $N$ nodes; each node hears the other $N-1$. Each produces $\Lambda$ telemetry records per second and broadcasts them; there are no
 acknowledgements and no retransmissions. A record holds a millisecond timestamp, latitude,
 longitude and altitude, three velocity components, battery level and flight mode, all integers.
 Our primary operating point is $\Lambda = 50$~records/s with a freshness bound
@@ -196,7 +199,7 @@ $\epsilon = 0.05$.
 
 \begin{table}[t]\centering\footnotesize
 \caption{Byte budget of a frame by field: five-digit sender identifier, one hour into a
-50\,Hz flight (earlier in a flight in parentheses).}
+50\,Hz flight (sender 0, first frame of a flight, in parentheses).}
 \label{tab:fields}
 \setlength{\tabcolsep}{4pt}
 \begin{tabular}{l l r r}
@@ -336,7 +339,8 @@ paper is generated from result files that the code writes; a gate re-derives the
 on each commit.
 
 \textbf{Telemetry.} Records come from a seeded random-walk generator: \seeds{} seeds of 1000
-records at 50\,ms spacing. Header fields are sized for a five-digit sender identifier one hour into
+records at 50\,ms spacing, that of the relaxed point. At the 20\,ms of the primary point its
+delta record is the same size, the floor of the format. Header fields are sized for a five-digit sender identifier one hour into
 a 50\,Hz flight. Section~\ref{sec:px4} checks the generator against flight logs.
 
 \textbf{Timing and energy.} Signing, verification, hashing and encoding are timed on a
@@ -434,7 +438,7 @@ links a ledger is a slow record of provenance, not a smaller version of the same
 \section{Results on 802.11}\label{sec:results}
 
 On a link that carries the frame, the questions are what each design choice buys and how many
-neighbours one channel then serves.
+nodes one channel then serves.
 
 \subsection{The design ladder}
 
@@ -538,8 +542,8 @@ records when it is lost.
 These figures give every frame the same loss probability. At a fixed bit error rate a longer
 frame is lost more often, and a batch is a longer frame: on a channel that loses 5\% of the
 baseline's one-record frames, the design's frame is lost with probability \lossBerP, so
-\lossBerTh{} of its records are expected to verify (measured: \lossBerV~\lossBerCi) --- below
-the target it meets at equal frame loss. It reaches 0.95 only while one-record frames are lost
+\lossBerTh{} of its records are expected to verify, below the target it meets at equal frame
+loss; the measurement, \lossBerV~\lossBerCi, agrees with that expectation. It reaches 0.95 only while one-record frames are lost
 at most \lossBerPmax{} of the time. The comparisons in Table~\ref{tab:ladder} are at equal frame loss
 and carry that qualification.
 
@@ -600,8 +604,8 @@ lean format & \nmaxRelLeanBase\ \ciRelLeanBase & \nmaxRelLeanDesign\ \ciRelLeanD
 \end{table}
 
 Bytes matter because they are airtime. Figure~\ref{fig:nmax} shows delivery falling as
-neighbours are added, and Table~\ref{tab:ladder} gives the resulting $N_{\max}$ for every row.
-The lean baseline holds \nmaxLeanBase{} neighbours at 95\% delivery and the design
+nodes are added, and Table~\ref{tab:ladder} gives the resulting $N_{\max}$ for every row.
+The lean baseline holds \nmaxLeanBase{} nodes at 95\% delivery and the design
 \nmaxLeanDesign{} (\ratioLean$\times$); in the first format the figures are \nmaxFirstBase{} and
 \nmaxFirstDesign{} (\ratioFirst$\times$). The larger step is sending a quarter as many
 frames: row~6, which shares the frame but not the signature, already reaches \nmaxLeanInline{}
@@ -640,8 +644,9 @@ directions. Equation~\eqref{eq:line} is a fit at one loss level and one PHY rate
 nodes; the tables quote simulated values, not the rule.
 
 \textbf{Why the crossing is there.} The slope is not a free constant. A frame is lost in this
-scenario in two ways. Two stations that found the medium busy may draw the same backoff slot:
-with occupancy $\rho = N f T$ and a contention window of $W = 16$ slots, counting the stations
+scenario in two ways. The first is known from the analysis of periodic vehicular
+broadcast~\cite{cao2021dsrc}; the second is absent from that analysis. Two stations that found the medium busy may draw the same backoff slot:
+with occupancy $\rho \approx N f T$ and a contention window of $W = 16$ slots, counting the stations
 that wait together gives a loss of about $\rho^2/(W(1-\rho))$, hence
 $a = \rho/(W(1-\rho))$, which is \modelSlope{} at $\rho = \modelRho$, the mean occupancy at
 which loss reaches 5\%. Or a station decides to send within the 4\us{} in which it cannot yet
@@ -650,17 +655,17 @@ and none of the simulator's code, reproduces all \modelCells{} simulated crossin
 \modelWorst\%. Asked for crossings where nothing had been simulated --- the contention
 window doubled, and loss levels of 2\% and 10\% --- it predicted all \modelPredCases{} within
 \modelPredWorst\%. Doubling the window moves the baseline's crossing only from \modelBaseC{}
-to \modelNsWindowC{} neighbours (predicted \modelPredWindowC): stations that count down for
+to \modelNsWindowC{} nodes (predicted \modelPredWindowC): stations that count down for
 longer wait together more often. The capacities therefore follow from the access
 rule and one detection time.
 
 
-\textbf{Receiver CPU.} By Eq.~\eqref{eq:cpu} one core of the Raspberry~Pi~4 verifies the frames
-of \ncpuBatch{} neighbours when each frame carries one Ed25519 signature and of \ncpuInline{} when
+\textbf{Receiver CPU.} By Eq.~\eqref{eq:cpu} one core of the Raspberry~Pi~4 serves a neighbourhood
+of \ncpuBatch{} nodes when each frame carries one Ed25519 signature and of \ncpuInline{} when
 every record is signed. At its $N_{\max}$ the design uses \cpuLeanDesign\% of a core, so the
 channel binds first. Row~6 shows the constraint is not idle: with a signature on every record it
 reaches the channel's limit at \cpuLeanInline\% of a core. With BLS a verification takes \tVerBls\,ms and one core serves
-\ncpuBls{} neighbours: on this hardware BLS is excluded by CPU long before the channel is
+\ncpuBls{} nodes: on this hardware BLS is excluded by CPU long before the channel is
 reached, in addition to its larger signature. These figures verify one signature at a time.
 Ed25519 was designed for batch verification --- its authors report under 134\,000 cycles per
 signature in a batch of 64, against 273\,364 for one~\cite{ed25519} --- which would roughly
@@ -792,7 +797,7 @@ $N_{\max}$ is simulated for a frame of that size. All of them
 send a frame per record --- \strFpsSig~frames/s per node (\strFpsEmss{} for EMSS, with its
 signature packets) where the design sends \strFpsDesign{} --- so the fixed channel time of a
 frame is paid for every record whatever the authenticator weighs. A 13\,B tag in place of a 64\,B signature raises $N_{\max}$
-from \strNmaxSig{} to \strNmaxMav{} neighbours and gives up non-repudiation; four records in a
+from \strNmaxSig{} to \strNmaxMav{} nodes and gives up non-repudiation; four records in a
 frame raise it to \strNmaxDesign. Where a packet does not verify alone the simulated figure
 counts frames delivered, not records verified, and is an upper bound. Tree chaining is the one scheme that keeps what a ledger needs
 --- every packet verifies alone and its origin can be shown to a third party --- and it pays \strAuthWl\,B per packet for
@@ -848,10 +853,10 @@ different design, built around fragmentation~\cite{ndss2024pqv2v,sobati2025fragm
 \section{Conclusion}
 For small telemetry records the frame, not the record, is the right unit of authentication, and
 what a frame must carry decides where it can be sent. A frame that verifies alone needs a header,
-a chain link, a signature and one self-contained record: \exclCount{} of twelve LoRaWAN data
-rates cannot carry that, at any batch size. Where the frame fits, one signature and one chain
+a chain link, a signature and one self-contained record: \exclCount{} of the twelve EU863-870 LoRaWAN
+data rates cannot carry that, at any batch size. Where the frame fits, one signature and one chain
 link per four records cut the bytes per record by \saveLean\% and let one 802.11a collision
-domain carry \nmaxLeanDesign{} neighbours where per-record signing carries \nmaxLeanBase. Two
+domain carry \nmaxLeanDesign{} nodes where per-record signing carries \nmaxLeanBase. Two
 constraints shape the design and are easy to get wrong: the batch is capped by freshness, not by
 the MTU, and a frame that depends on its predecessor does not meet a verifiability target equal
 to the loss rate. Batching and header design decide what can run; among 64\,B signatures the

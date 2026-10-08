@@ -1,12 +1,13 @@
 \chapter{System Model and Threat Model}\label{ch:sysmodel}
 
-\needswork{STATUS: DRAFTED from \texttt{docs/01}; revised October 2026 (two frame formats, a full
-threat model, capacities from direct simulation). Still needs one worked example of a frame on
-the wire, byte by byte.}
+This chapter fixes what the rest of the thesis reasons about: the network, the ledger, the
+traffic and its two operating points, the adversary, the design choices, and the two frame
+formats. A frame as it is sent, byte by byte, is in \Cref{sec:worked}.
 
 \section{Network}
 
-$N$ UAVs share an IEEE 802.11 broadcast channel (OFDM, base rate $R = \SI{6}{\mega\bit\per\second}$
+$N$ UAVs share an IEEE 802.11 broadcast channel and all hear one another: one collision domain,
+called here a \emph{neighbourhood} of $N$ nodes, in which each node has $N-1$ neighbours. (OFDM, base rate $R = \SI{6}{\mega\bit\per\second}$
 for robustness; application MTU budget $M = 1500$\,B). Frames are lost independently with
 probability $p$, an abstraction of fading, collisions and mobility, with $p \in \{0.02, 0.05,
 0.10\}$ as a declared sensitivity range. Contention is modelled by the DCF (\Cref{ch:theory}) and
@@ -28,10 +29,10 @@ the acknowledgement removed under-predicts simulation by $16\times$.
 
 Each UAV maintains an append-only hash chain of its own telemetry records and stores verified
 records overheard from others. A record is
-\[
-\texttt{rec} = \{\texttt{src}, \texttt{seq}, \texttt{ts}, \texttt{prev\_hash}, \texttt{payload}\},
-\qquad \texttt{prev\_hash} = \mathrm{SHA\text{-}256}(\text{previous record bytes}).
-\]
+\begin{gather*}
+\texttt{rec} = \{\texttt{src}, \texttt{seq}, \texttt{ts}, \texttt{prev\_hash}, \texttt{payload}\}, \\
+\texttt{prev\_hash} = \mathrm{SHA\text{-}256}(\text{previous record bytes}).
+\end{gather*}
 Only the owner appends to its own chain --- an owned-object model --- so tampering or equivocation
 on a $(\texttt{src}, \texttt{seq})$ pair is detectable by chain verification. Finality and
 witnessing semantics are out of scope; the deliverable is \emph{authenticated dissemination}, not
@@ -39,8 +40,8 @@ consensus.
 
 \section{Traffic and the two arrival rates}
 
-Records are generated at rate $\Lambda_i$ per UAV. The aggregate neighbourhood arrival rate is
-$\Lambda = \Lambda_i \cdot N_{\text{local}}$ --- the rate a \emph{receiver} must verify.
+Records are generated at rate $\Lambda_i$ per UAV. The aggregate arrival rate in a neighbourhood
+of $N$ nodes is $\Lambda = \Lambda_i\,(N-1)$ --- the rate a \emph{receiver} must verify.
 
 \begin{remark}
 These are different quantities and conflating them is a real defect, recorded as such. A node
@@ -54,13 +55,16 @@ receiver cannot keep up.
 
 $\Lambda_i = 50$\,rec/s at $\Dmax = \SI{100}{\milli\second}$ is adopted. It is PX4's
 \texttt{MAVLINK\_MODE\_ONBOARD} companion-computer rate, read from autopilot source rather than
-from a secondary summary, and it is fully compliant with 3GPP TS~22.125 S5.2.2, which specifies at
+from a secondary summary, and it is fully compliant with 3GPP TS~22.125, clause~5.2.2, which specifies at
 least $10$ messages per second and at most $\SI{100}{\milli\second}$ end-to-end latency for direct
 UAV-to-UAV local broadcast.
 
 The alternative $(20\,\text{rec/s}, \SI{250}{\milli\second})$ point is retained and reported
-because it gives \emph{identical bytes} --- batching obeys $b \leq \Lambda_i \Dmax$, so only the
-product matters, and both give $\Lambda_i \Dmax = 5$, hence $b = 4$ and the same frame.
+because it gives \emph{identical bytes}. The batch is bounded by the fill time, $b/\Lambda_i \leq
+\Dmax$, so only the product $\Lambda_i \Dmax$ matters, and it is $5$ at both points. Five records
+would fill in exactly $\Dmax$ and leave no time for the channel or for verification, so the
+largest batch that meets the deadline is $b = 4$ at both (\Cref{sec:freshness-convention}), and
+the frame is the same.
 
 \begin{table}[t]
 \centering
@@ -68,6 +72,7 @@ product matters, and both give $\Lambda_i \Dmax = 5$, hence $b = 4$ and the same
 $\Nmax$ is the largest neighbourhood with mean delivery $\geq 0.95$, found by direct simulation
 (\Cref{ch:codesign}).}
 \label{tab:operating}
+\begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{lrrrrrrc}
 \toprule
 & $\Lambda_i$ & $\Dmax$ & $b$ & B/rec & $\Nmax$, per-record signing & $\Nmax$, design & TS 22.125 \\
@@ -76,6 +81,7 @@ $\Nmax$ is the largest neighbourhood with mean delivery $\geq 0.95$, found by di
 alternative      & 20 & 250\,ms & 4 & \bprLeanDesign & \nmaxRelLeanBase & \nmaxRelLeanDesign & no \\
 \bottomrule
 \end{tabular}
+\end{adjustbox}
 \end{table}
 
 \subsection{The floor of the region, which is a real constraint on the application}
@@ -85,8 +91,8 @@ $20$ or $10$\,Hz the same deadline forces $b = 1$ and nothing is left of the sav
 choice of encoding. \textbf{The batching benefit is not available at every compliant operating
 point}: it
 requires a telemetry rate fast enough to fill a batch inside the deadline. More structurally, any
-batching at all needs $\Lambda_i \geq 1/\Dmax$ --- at the standard's $\SI{100}{\milli\second}$
-bound, exactly the standard's own minimum message rate. At an ArduPilot Copter default of $0$\,Hz,
+batching at all ($b \geq 2$) needs $\Lambda_i > 2/\Dmax$ --- at the standard's
+$\SI{100}{\milli\second}$ bound, twice the standard's own minimum message rate. At an ArduPilot Copter default of $0$\,Hz,
 where streams are requested by a ground station rather than pushed, this thesis's mechanism does
 not apply at all.
 
@@ -182,9 +188,10 @@ The BLS object is $96$\,B, not the $48$\,B minimum-signature variant originally 
 available library ships only the minimum-pubkey scheme. That deviation is recorded and applied
 consistently, and it makes BLS lose the byte comparison outside multi-signer aggregation.
 
-Encodings are JSON (baseline), canonical CBOR, MessagePack, and delta-CBOR with keyframes every
-$K = 16$ records. $K$ is fixed and not optimised --- a real design variable left on the table, and
-declared as such.
+Encodings are JSON (baseline), canonical CBOR, MessagePack, and delta-CBOR. In the first format
+the delta encoder emits a keyframe every $K = 16$ records, a value that was fixed and never
+optimised. The lean format makes the interval a parameter --- one self-contained frame in every
+$r$ --- and \Cref{sec:e7} evaluates it; the design uses $r = 1$.
 
 \section{Two frame formats}\label{sec:formats}
 
@@ -195,8 +202,10 @@ chapters~\ref{ch:bytes}--\ref{ch:validation} that predates October 2026 was prod
 \emph{lean} format was built after an external review pointed out that the design the results
 headlined --- delta records under one signature in a short header --- had never existed as one
 object: it was a sum of sizes measured in three places (\Cref{ch:reproducibility}). The lean
-format is that design as code, with a sender and a receiver, and every size reported for it is
-the length of a frame that was emitted, decoded and verified.
+format is that design as code, with a sender and a receiver. The sizes reported for its design
+and its baselines are lengths of frames that were emitted, decoded and verified; the one lean
+size that is a sum of measured parts (the design without delta coding) is marked in
+\Cref{tab:ladder}.
 
 \begin{table}[t]
 \centering

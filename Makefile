@@ -155,7 +155,7 @@ thesis:  ## build thesis/main.pdf  (see thesis/STATUS.md — this is a DRAFT ske
 	  && pdflatex -interaction=nonstopmode main.tex >/dev/null \
 	  && pdflatex -interaction=nonstopmode main.tex >/dev/null
 	@echo "built thesis/main.pdf (DRAFT)"
-	@echo "DRAFT: $$(grep -ho 'needswork' thesis/*.tex | wc -l) outstanding items; read thesis/STATUS.md before showing this to anyone"
+	@echo "DRAFT: $$(grep -ho '\\needswork{' thesis/*.tex | wc -l) places only the candidate can complete; read thesis/STATUS.md before showing this to anyone"
 
 figures:  ## regenerate ALL figures from frozen results/raw -> results/figures/
 	$(BIN)/python analysis/figures_e123.py

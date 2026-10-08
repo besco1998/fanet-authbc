@@ -5,6 +5,7 @@
 # checks the hash whenever the file is present.
 file,sha256,bytes,bib_key,document,obtain_from
 bernstein2011_ed25519.pdf,820dcf8ad51f90849fd60f16971fdcfedaeb5e7aaed0f300154fe39c0d3da0e2,481903,ed25519,"Bernstein, Duif, Lange, Schwabe, Yang — High-Speed High-Security Signatures, CHES 2011",doi:10.1007/978-3-642-23951-9_9
+cao2021_dsrc_periodic_broadcast_arxiv2102.07023.pdf,277354502b97ae886036672f18d3a2d2463b91a27bc7ad2939ace7429f6177a4,548929,cao2021dsrc,"Cao, Yin, Hu, Zhang — Performance Analysis and Improvement on DSRC Application for V2V Communication, arXiv:2102.07023, 2021",arXiv:2102.07023
 cavalcanti2018_vanet_research_credibility_ccr.pdf,d647422cc12056bcf50b5a19086c828edea7cc564a7ed3d00d8e83dc196ad244,674054,cavalcanti2018vanet,"Cavalcanti et al. — VANETs' Research over the Past Decade, ACM SIGCOMM CCR 48(2), 2018",doi:10.1145/3213232.3213237
 gennaro1997_sign_digital_streams.pdf,dcbaced6751a8518a9a9c69e806f0eefef3cf85a6030f6c236cc3fc6533bccf9,1083257,gennaro1997streams,"Gennaro, Rohatgi — How to Sign Digital Streams, CRYPTO '97",doi:10.1007/BFb0052235
 gundogan2021_firmware_updates_icn_arxiv.pdf,0862d4b73c438281e7ba505ce3fd92e8dd82491338b2e354a2ea816835a515df,1496097,gundogan2021firmware,"Gundogan, Amsuss, Schmidt, Wahlisch — Reliable Firmware Updates for the Information-Centric IoT, ACM ICN 2021 (authors' arXiv version)",doi:10.1145/3460417.3482974

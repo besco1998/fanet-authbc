@@ -12,6 +12,60 @@ where the durable record lives. If you want the conclusion only, follow the poin
 
 ---
 
+# 2026-10-08, later — the paper and the thesis read whole, as built
+
+*Mohamed: "audit the paper and the thesis and make sure they are strong and complete and will
+not have any future comments from any supervisor". Nobody can promise the last part. What could
+be done was to read both documents as an examiner would and remove everything that reading
+found. Durable records: F63–F67; open items G22–G25.*
+
+## Method
+
+1. **The deliverable, not its source.** Both PDFs were converted to text and read end to end —
+   10 pages and 100 — beside a list of the *kinds* of comment the supervisor's review had made
+   (a headline that does not match its table; a count that moves; a claim wider than its
+   evidence; a missing comparison; a name never defined).
+2. **Mechanical checks first**: LaTeX and BibTeX logs, placeholders, references that print
+   without an identifier, phrases the review had objected to.
+3. **Every suspicion checked at the source before a word was changed** — a number against its
+   CSV, a formula against the code, a sentence against the chapter it summarises.
+4. **Everything typed in the fix is pinned by a test.**
+
+## What it found
+
+The paper: no result moved; twelve defects of presentation (F63). The thesis: six statements
+that were wrong and seven that had gone stale, a test cited in the conclusions and reported
+nowhere, seventeen places where a table ran off the page (F64, F67). And one thing that matters
+more than the rest:
+
+**The derivation written this morning had prior work, and no search had been made (F65).** One
+query found a 2021 analysis of periodic 802.11p broadcast with the same first mechanism. It is
+now credited, and what this work adds to it is stated. That is F9 a second time: in July the
+project rediscovered a published broadcast model and lost a novelty claim, and wrote down
+"search before deriving". The rule did not survive one busy day.
+
+## Tried and wrong
+
+* **A false alarm of my own.** Checking that the generator's default stream was unchanged, I
+  compared lists of records from two copies of the module and got "different" — the two copies
+  define two classes, and a dataclass is equal only to its own class. Compared field by field
+  they are identical. A check has to be checked.
+* **A guard I nearly widened.** The registry lists RFC 9575's editor apart from its authors, so
+  my entry failed the citation check. The quick fix was the override that exists for registry
+  abbreviations; a test allows that override for exactly one entry and requires a held file.
+  The entry now cites the RFC as the registry does, with the editor in a note.
+* **Three sources I could not get.** The open-access paper by the authors of the broadcast model
+  is behind a cookie redirect that refuses scripts. I did not work around it; it is G23.
+* **The module figure** first drew an arrow through two boxes, and the byte table wrapped its
+  hex column. Both were seen only by rendering the page and looking.
+
+## What was not done, on purpose
+
+Superseded figures stay where they are (a choice of style, for Mohamed). No new experiment was
+run. Nothing was added to the reference list that was not read.
+
+---
+
 # 2026-10-08 — eighteen decisions taken, and the work they asked for
 
 *Mohamed answered every open point with an option, and: "handle all in parallel but in the

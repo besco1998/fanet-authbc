@@ -1,10 +1,5 @@
 \chapter{The Low-Rate Regime and the Exclusion Bound}\label{ch:lowrate}
 
-\needswork{STATUS: DRAFTED, and rewritten in October 2026 after an external review. This chapter
-carries the thesis's most durable result and two successive corrections of it. Both corrections
-are recorded in \Cref{sec:excl-history}, not folded into the text as if the result had always
-been stated this way.}
-
 \section{Why the low-rate arm is a different regime, not a slower one}
 
 The 802.11 numbers do not transfer. They differ by two to four orders of magnitude, and the
@@ -61,15 +56,17 @@ DR8--DR11 are LR-FHSS. (Earlier versions of this chapter considered seven.)
 \caption{EU863-870 data rates against one self-contained, signed, chained frame ($\ga = 64$\,B).
 The verdict is the same in both frame formats and under both of the standard's payload tables.}
 \label{tab:t6}
+\begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{lrll}
 \toprule
-data rates & payload $N$ & verdict & what stops it \\
+data rates & payload $M$ & verdict & what stops it \\
 \midrule
 DR0, DR1, DR2, DR8, DR10 & 50 or 51\,B  & \textbf{excluded} & the signature alone: $64 > 51$ \\
 DR3, DR9, DR11           & 115\,B       & \textbf{excluded} & header, link and signature fill the payload \\
 DR4, DR5, DR6, DR7       & 222 or 242\,B & feasible & --- \\
 \bottomrule
 \end{tabular}
+\end{adjustbox}
 \end{table}
 
 \begin{figure}[h]
@@ -115,7 +112,10 @@ and each is necessary.
       private LoRa network that ignores the regional payload table is outside this result.
 \item \textbf{Every frame carries a public-key signature.} A symmetric tag is far smaller, and
       authenticates a link instead of an originator.
-\item \textbf{There is no loss recovery.} Retransmission or coding across frames changes what it
+\item \textbf{There is no loss recovery.} The Remote ID authentication standard takes the
+      other road --- it pages a signature over several small frames and adds a parity page
+      (\Cref{sec:bg-drip}) --- and so lies outside this result by construction.
+      Retransmission or coding across frames changes what it
       means for a frame to arrive.
 \item \textbf{$\varepsilon \leq p$.} This is what forbids spreading a signature over several
       frames: a unit spanning $n$ frames verifies with probability $(1-p)^n$, so
@@ -203,7 +203,7 @@ frame it emitted, and the question ``does it fit'' is answered by trying.
 
 The half that was right throughout: DR0--DR2 are excluded by the signature alone.
 
-\section{Per-frame chaining, and what it is actually worth}\label{sec:perframe}
+\section{Per-frame chaining, and what it is worth}\label{sec:perframe}
 
 On 802.11 freshness binds, so the batch is fixed by $\Lambda_i \Dmax$ and saving payload bytes
 buys no extra records. Here the regional payload limit binds, so bytes convert directly into
@@ -329,7 +329,7 @@ $N{=}2$--$10$ and returns $\Nmax=3$, matching the simulation. DR6 therefore doub
 at the same three nodes, and pays for it in link budget: $-120$ against $-123$\,dBm is $3$\,dB,
 or $1.41\times$ less range under free-space spreading.
 
-\textbf{We derive this rather than simulate it, and the reason is a limitation worth recording.}
+\textbf{This is derived and not simulated, and the reason is a limitation worth recording.}
 The module's sensitivity vectors are indexed by \emph{spreading factor alone} --- there is no
 bandwidth dimension in \texttt{EndDeviceLoraPhy::SENSITIVITY} or its gateway counterpart, and
 none in the interference helper. Forcing SF7 onto a $250$\,kHz channel would have returned DR6's
@@ -383,6 +383,44 @@ and to $0.85$ restores $5$. The curve is reported instead of a point because the
 threshold, not the physics, decides whether this regime is usable, and that choice belongs to the
 deployment. \textbf{$\Nmax=3$ is therefore a worst-case bound at short range --- one channel, one
 demodulator, one spreading factor, $d \leq 500$\,m --- and not a LoRaWAN network capacity.}
+
+\subsection{Mobility}\label{sec:lora-mobility}
+
+The capacity runs keep the nodes still. Whether that matters was tested: twenty nodes sending
+the $218$\,B frame every $36.6$\,s within $1000$\,m, static and under three mobility models,
+thirty seeds each. The runs use the interference matrix that allows capture, because without
+capture position cannot enter a collision's outcome at all, and the senders' random streams are
+pinned so that installing a mobility model does not change what the senders draw.
+
+\begin{center}
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{lrrrr}
+\toprule
+ & mean delivery & s.d.\ across runs & against static & mean displacement \\
+\midrule
+static                      & 0.7454 & 0.063 & ---        & $0$\,m \\
+Gauss--Markov, $5$\,m/s      & 0.7429 & 0.066 & $-0.24$\,pp & $965$\,m \\
+Gauss--Markov, $20$\,m/s     & 0.7451 & 0.066 & $-0.03$\,pp & $967$\,m \\
+Random Waypoint, $20$\,m/s   & 0.7490 & 0.065 & $+0.36$\,pp & $816$\,m \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{center}
+
+No arm differs from the static one by more than $0.06$ of the standard deviation between runs
+($|t| \leq 0.22$), although nodes move most of a kilometre. Without capture the four arms are
+identical run for run, as they must be. The reason is the link margin of the previous
+subsection: motion inside the simulated area never brings a link near the sensitivity threshold,
+so the only route left is the power ratio of two colliding frames, and over thirty seeds that
+averages out. The two mobility models are indistinguishable here, so the choice between them
+carries no weight in this result.
+
+This says that mobility does not change \emph{collision-limited} delivery in this
+configuration. It does not say mobility is harmless to a link: Doppler, antenna pattern and a
+node that leaves range are outside the model. And the comparison is only as good as its
+control: before the random streams were pinned it showed a five-point penalty for motion that
+was produced entirely by the simulator handing the senders different streams once a mobility
+model had been installed (class C4 of \Cref{ch:reproducibility}).
 
 \subsection{What infrastructure collection would buy}
 

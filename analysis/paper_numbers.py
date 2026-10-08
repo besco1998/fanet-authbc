@@ -398,6 +398,14 @@ def freshness() -> dict[str, str]:
     bls = row("bls", "delay_max_ms")
     if not all(r["meets_d_max"] == "1" for r in (mean, pnn, worst, bls)):
         raise ValueError("the freshness table reports every row inside D_max")
+
+    def margin(r: dict[str, str]) -> str:
+        """What is left of the budget after the total AS PRINTED, so the two columns add up.
+
+        The artifact stores both to three decimals; rounding each to one printed 83.8 and 16.3
+        for a budget of 100 (83.750 and 16.250, each rounded up)."""
+        return f(Decimal(r["d_max_ms"]) - Decimal(f(r["total_ms"], 1)), 1)
+
     return {
         "frFill": f(mean["fill_ms"], 0),
         "frChMean": f(mean["channel_ms"], 2), "frChPnn": f(pnn["channel_ms"], 2),
@@ -405,8 +413,8 @@ def freshness() -> dict[str, str]:
         "frVerEd": f(mean["verify_ms"], 2), "frVerBls": f(bls["verify_ms"], 2),
         "frTotMean": f(mean["total_ms"], 1), "frTotPnn": f(pnn["total_ms"], 1),
         "frTotMax": f(worst["total_ms"], 1), "frTotBls": f(bls["total_ms"], 1),
-        "frMarMean": f(mean["margin_ms"], 1), "frMarPnn": f(pnn["margin_ms"], 1),
-        "frMarMax": f(worst["margin_ms"], 1), "frMarBls": f(bls["margin_ms"], 1),
+        "frMarMean": margin(mean), "frMarPnn": margin(pnn),
+        "frMarMax": margin(worst), "frMarBls": margin(bls),
     }
 
 
@@ -583,7 +591,8 @@ def low_rate() -> dict[str, str]:
     if abs(float(fits_module["toa_ms"]) / (float(at_limit["app_period_s"]) * 10) - 1) > 0.02:
         raise ValueError("the simulated LoRa frame's airtime is not the lean frame's within 2%")
     return {"loraSimRecs": WORDS[int(at_limit["batch"])], "loraSimBytes": at_limit["payload_bytes"],
-            "loraSimPeriod": f(at_limit["app_period_s"], 0),
+            # one decimal: at "36 s" a reader divides six records by 36 and gets 0.167, not 0.165
+            "loraSimPeriod": f(at_limit["app_period_s"], 1),
             "loraSimRate": f(at_limit["lambda_rec_per_s"], 3),
             "loraRecsLean": lean["batch"], "loraRateLean": f(lean["lambda_rec_per_s"], 2),
             "loraRecsFirst": first["batch"], "loraRateFirst": f(first["lambda_rec_per_s"], 2),

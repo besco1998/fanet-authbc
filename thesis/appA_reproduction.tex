@@ -1,0 +1,87 @@
+\chapter{Reproducing the Results}\label{app:repro}
+
+Everything this thesis reports can be regenerated from the repository
+\url{https://github.com/besco1998/fanet-authbc}. This appendix says what is needed for each
+part and what each command produces. The design rule behind it is stated in
+\Cref{ch:implementation}: work that depends on a machine --- timings, simulations, radio and
+energy measurements --- is run once and its raw output committed; everything derived from that
+output is recomputed and compared on every run.
+
+\section{Four paths, by cost}
+
+{\small
+\noindent\begin{tabularx}{\textwidth}{@{}l Y Y l@{}}
+\toprule
+path & reproduces & needs & time \\
+\midrule
+A, analytical & every byte, loss, exclusion, energy-model and optimiser result; every table and
+figure, from the committed raw data & Python 3.12 or later, about 1\,GB of disk & minutes \\
+B, 802.11 simulation & the channel-model validation and the capacity search &
+ns-3.48 built from source, about 8\,GB of disk & hours \\
+C, low-rate simulation & the LoRaWAN capacity and mobility runs & the ns-3 LoRaWAN module &
+tens of minutes \\
+D, hardware & primitive timings, powers, sender energy, two-radio airtime and loss &
+two Raspberry~Pi~4, an INA219 current sensor, a host to read it & half a day \\
+\bottomrule
+\end{tabularx}
+}
+
+\noindent Path A alone reproduces every number in the results chapters, because the outputs
+of paths B to D are committed and the analytical layer reads them.
+
+\section{Path A}
+
+\begin{verbatim}
+git clone https://github.com/besco1998/fanet-authbc.git
+cd fanet-authbc
+make setup     # a virtual environment with the pinned dependencies
+make all       # lint, type check, the test suite, the reproduction gate
+make paper thesis
+\end{verbatim}
+
+\texttt{make all} ends with the reproduction gate: every derived result file is recomputed from
+the current code and the committed raw data, and a single differing row fails the run.
+\texttt{make paper} and \texttt{make thesis} first run \texttt{analysis/paper\_numbers.py},
+which writes every number the two documents print into \texttt{numbers.tex} and stops if a
+result file no longer supports a sentence that states a verdict. A number is changed by
+re-running its experiment, never by editing the text.
+
+\section{What is where}
+
+{\small
+\noindent\begin{tabularx}{\textwidth}{@{}l Y@{}}
+\toprule
+\texttt{src/authbc/} & the library: encodings, signature schemes, ledger, the two frame formats
+with sender and receiver, the analytical models, the two simulators written for this work \\
+\texttt{analysis/} & one script per group of results; \texttt{paper\_numbers.py}; figure scripts \\
+\texttt{ns3/} & simulation scenarios (C++) and the drivers that run them over seeds \\
+\texttt{hw/} & what runs on the boards: timing, the energy harness, the capture and reduction
+of current samples, the two-radio link test \\
+\texttt{experiments/} & configurations and run plans, including the lists of seeds \\
+\texttt{results/raw/}, \texttt{results/hw/} & raw output, one file per experiment, each with a
+header that records the environment and a hash of the configuration \\
+\texttt{results/figures/} & figures, regenerated from the raw output \\
+\texttt{tests/} & unit tests, published test vectors, the reproduction gate, and tests that hold
+the text of the paper and of this thesis to the result files \\
+\texttt{docs/} & specifications, the findings register, the expectation files of
+\Cref{app:prereg}, the logbook \\
+\bottomrule
+\end{tabularx}
+}
+
+\section{Paths B to D}
+
+The simulation scenarios are single source files copied into the simulator's \texttt{scratch}
+directory; each driver names the scenario it runs, the seeds, and the file it writes. A run is
+identified by its configuration and seed, and a stored run can be repeated bit for bit, which
+is how a rebuilt simulator is checked before new runs are trusted. The hardware procedures ---
+wiring, sampling, the order of a metered run and what makes a repetition unusable --- are in
+\texttt{hw/}, written to be followed without the author.
+
+\section{Software}
+
+Python 3.12; \texttt{cbor2} pinned at 5.8.0, because a later release changed canonical output;
+\texttt{cryptography} for Ed25519 and ECDSA and \texttt{blspy} for BLS12-381, each checked
+against published test vectors before any timing; ns-3.48 with the \texttt{signetlabdei/lorawan}
+module; PX4 v1.17.0 for the simulated flight of \Cref{ch:bytes}. The measured platform is a
+Raspberry~Pi~4 (Cortex-A72) under a 64-bit Linux with the \texttt{performance} governor.

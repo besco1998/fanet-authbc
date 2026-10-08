@@ -1,6 +1,8 @@
 \chapter{Implementation}\label{ch:implementation}
 
-\needswork{STATUS: DRAFTED from \texttt{docs/05}. Needs a module-dependency figure.}
+The system is a Python library of nearly eight thousand lines, the scripts that run it, two
+simulation scenarios and a hardware harness. This chapter describes what was built and the
+rules it was built to; \Cref{app:repro} says how to run it.
 
 \section{Design rule: one home per fact}
 
@@ -21,8 +23,44 @@ evaluated a slightly different thing and none could be checked against the other
 
 \section{The library}
 
+\Cref{fig:modules} shows the packages and which of them use which. Four of them use none of the others --- the signature schemes, the ledger, the analytical models
+and the simulators --- and that is deliberate: a model that imported the encoder it describes could not be used to check it.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[
+  node distance=7mm and 5mm, font=\small,
+  pkg/.style={draw, rounded corners=2pt, minimum width=22mm, minimum height=8mm, align=center},
+  ext/.style={draw, dashed, rounded corners=2pt, minimum width=22mm, minimum height=8mm, align=center},
+  use/.style={-{Stealth[length=2mm]}, thin}]
+\node[pkg] (enc) {encodings};
+\node[pkg, right=of enc] (cry) {crypto};
+\node[pkg, right=of cry] (led) {ledger};
+\node[pkg, right=of led] (mod) {models};
+\node[pkg, right=of mod] (sim) {sim};
+\node[pkg, above=of cry] (pla) {placement};
+\node[pkg, above=of mod] (cha) {channel};
+\node[pkg, above=14mm of pla, xshift=17mm] (ben) {bench};
+\node[ext, above=of ben, xshift=-36mm] (ana) {analysis scripts};
+\node[ext, above=of ben] (ns3) {simulation drivers};
+\node[ext, above=of ben, xshift=36mm] (hw) {hardware harness};
+\draw[use] (pla) -- (enc); \draw[use] (pla) -- (cry); \draw[use] (pla) -- (led);
+\draw[use] (cha) -- (mod); \draw[use] (cha) -- (pla);
+\draw[use] (ben) -- (pla); \draw[use] (ben) -- (cha);
+\draw[use] (ben.south east) -- (mod.north);
+\draw[use] (ana) -- (ben); \draw[use] (ns3) -- (ben); \draw[use] (hw) -- (ben);
+\draw[use] (ana.north) -- ++(0,4mm) -| ([xshift=3mm]sim.north);
+\draw[use, dotted] (enc.north) |- (ben.west);
+\end{tikzpicture}
+\caption[The packages of the library]{The packages of the library (solid) and what runs them
+(dashed). An arrow points from a package to one it uses; arrows that follow from others are
+omitted. The dotted arrow is the one upward reference: the encoders take the record type from
+the telemetry generator.}
+\label{fig:modules}
+\end{figure}
+
 \begin{description}
-\item[\texttt{encodings/}] The $e$ axis: JSON, canonical CBOR (RFC 8949 S4.2), MessagePack, and
+\item[\texttt{encodings/}] The $e$ axis: JSON, canonical CBOR (RFC 8949, Section~4.2), MessagePack, and
 delta-CBOR with keyframes every $K = 16$. Delta encoders are \emph{stateful}; a fresh instance per
 record emits all keyframes and silently inflates sizes --- a trap that cost real time.
 
@@ -49,9 +87,20 @@ crossover, and the low-rate PHY with every constant transcribed from primary spe
 and exclusion results are all computed, and whose arithmetic is held equal to emitted frames by
 test. \texttt{phy.py} makes the OFDM timing a parameter.
 
-\item[\texttt{sim/}] A slot-exact backoff simulator written \emph{before} the published broadcast
-model was located, retained as a cross-check that shares none of that model's assumptions. It earns
-its place in \Cref{ch:validation}.
+\item[\texttt{sim/}] Two simulators written for this work, neither of which shares code with
+ns-3. A slot-exact backoff simulator of the saturated channel, written \emph{before} the
+published broadcast model was located and retained as a cross-check that shares none of that
+model's assumptions (\Cref{ch:validation}). And an event simulator of the access rule for a
+lightly loaded channel --- arrivals, carrier sense, backoff counters and nothing else --- which
+is the model of \Cref{sec:why}.
+
+\item[\texttt{channel/}] Airtime of a frame from its length, and the loss processes of the
+verifiability experiments: independent, bursty, and growing with frame length.
+
+\item[\texttt{bench/}] The experiments. Each reads a configuration file, runs the library and
+writes one result file with a header that records the environment and a hash of the
+configuration. The telemetry generator of \Cref{sec:telemetry} and the timing rules of
+\Cref{sec:rules} live here.
 \end{description}
 
 \section{Wire format}
@@ -63,9 +112,98 @@ in canonical CBOR, with the authentication block shaped by placement. The signat
 canonical bytes of the covered region, and test vectors are frozen. The lean format keeps that
 signature input and changes only how the records travel; its field table is \Cref{tab:fields}.
 
-\needswork{TO ADD: a byte-level worked example of one lean frame, hex beside fields.}
+\subsection{One frame, byte by byte}\label{sec:worked}
 
-\section{The two-layer data pipeline}
+\Cref{tab:worked} is a frame as the sender emitted it: the second and third records of one
+generated flight, an hour in, from a sender whose identifier needs two bytes. It was encoded,
+decoded and verified by the library, and the table is cut from those bytes by a script, not
+typed.
+
+\begingroup
+\renewcommand{\arraystretch}{0.92}
+\input{tab_worked_frame}
+\captionof{table}[A lean frame of two records, byte by byte]{A lean frame of two records, byte
+by byte. The link and the signature are abbreviated to their first six and last two bytes.}
+\label{tab:worked}
+\endgroup
+
+Reading it against \Cref{tab:fields}: the map header, the five scalar fields and the two
+three-byte prefixes of the record stream and the signature are the $23$\,B header; the link and
+its prefix are $35$\,B; the signature is $64$\,B. The first record carries absolute values and
+takes $25$\,B here --- five bytes each for latitude and longitude, which is where a keyframe's
+size goes --- and the second carries nine differences in nine bytes. A third and a fourth record
+would add nine bytes each, which is the whole of the design's saving: $23 + 35 + 64 = 122$\,B
+of the frame are paid once however many records follow.
+
+The values are variable-length integers, seven bits to a byte, signed ones folded so that small
+magnitudes of either sign stay short. Nothing in the stream says where a record ends: a record
+is nine integers, and the count $n$ says how many records there are.
+
+\section{Sender and receiver}\label{sec:protocol}
+
+The sender takes its own records in order, $b$ at a time, and emits one frame per batch. One
+frame in every $r$ starts with a keyframe and decodes alone; with $r > 1$ the others start with
+a delta against the last record of the frame before. The design uses $r = 1$.
+
+The receiver does five things to a frame, in an order that matters. It reads the sender
+identifier and decodes the record stream --- against the last record it \emph{accepted} from that
+sender, if the frame is a dependent one. It rebuilds the canonical ledger records, taking the
+first record's link from the frame and computing each later one as the hash of the record just
+rebuilt. It verifies the signature over those records. It offers each record to the store, which
+accepts only a sequence number newer than the last one stored for that sender. And only if every
+record was stored does it advance the state against which a later dependent frame would be
+decoded. A frame is signed as a unit, so it is accepted or refused as a unit.
+
+{\small
+\noindent\begin{tabularx}{\textwidth}{@{}l Y@{}}
+\toprule
+outcome & when \\
+\midrule
+accepted & decoded, verified, every record stored \\
+desynchronised & well formed, but coded against a record this receiver does not hold \\
+malformed & not a frame of this format \\
+unknown sender & no public key held for the sender identifier \\
+bad signature & the rebuilt records do not verify under the sender's key \\
+replay & a sequence number not newer than the last one stored; nothing is stored \\
+equivocation & a validly signed record for a sequence number already stored with different
+content; both are kept, as evidence \\
+tampered & verified, but its chain link contradicts a record the store holds \\
+\bottomrule
+\end{tabularx}
+}
+
+\vspace{0.5em}
+\noindent Two properties follow from the order and are held by tests. Nothing unverified is
+ever stored, because storing comes after verifying. And a replayed or forged frame cannot move
+the decoding state, because that state advances only on acceptance; were it to advance on a
+frame that merely decoded, replaying an old self-contained frame would rewind it and
+desynchronise an honest sender's stream.
+
+\section{Tests}\label{sec:tests}
+
+The tests are in layers, and the layers catch different things.
+
+\begin{description}
+\item[Published vectors.] Each signature scheme must reproduce the test vectors of its
+specification before it is timed or used; the frame formats have vectors of their own, frozen
+when each format was fixed.
+\item[Properties.] Round trips for every encoding over generated records; every single-bit
+change to a frame must make verification fail, tried at every bit position of a design frame;
+a frame that cannot be decoded must not be stored.
+\item[The reproduction gate.] Every derived result file is recomputed from the committed raw
+data and compared row by row (\Cref{sec:pipeline}).
+\item[Text against data.] The numbers in the paper and in this thesis are macros written by a
+script from the result files. What is typed --- a figure quoted from a frozen artifact, a
+sentence that states a verdict --- is held to its artifact by a test, and a sentence the data no
+longer support stops the build.
+\item[The environment.] A test reads every import in the code and requires the package to be
+declared, added after the gate passed on the author's machine and failed on a clean one.
+\end{description}
+
+\noindent What the layers do not catch is the subject of \Cref{ch:reproducibility}: a green
+suite is a statement about the questions the tests ask.
+
+\section{The two-layer data pipeline}\label{sec:pipeline}
 
 The pipeline splits deliberately. \textbf{Measured} artifacts --- hardware timings, simulation
 outputs --- are non-deterministic, so they are measured once under controlled conditions, committed

@@ -412,7 +412,7 @@ class TestTheFrontPageMatchesTheArtifacts:
                   if (r["loss_model"], r["p"], r["ref_interval"]) == ("iid", "0.05", "4")]
         assert f"**{float(row['V_theory']):.3f}**" in self.README
         design = self._ladder("lean", "batch-delta")
-        assert f"verifies {design['n_cpu_one_core']} neighbours" in self.README
+        assert f"neighbourhood of {design['n_cpu_one_core']} nodes" in self.README
 
     def test_no_superseded_headline_is_stated_as_current(self):
         live = _live_prose(self.README)

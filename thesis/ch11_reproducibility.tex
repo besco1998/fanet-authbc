@@ -1,9 +1,5 @@
 \chapter{Reproducibility, Defects and Research Integrity}\label{ch:reproducibility}
 
-\needswork{STATUS: DRAFTED. This chapter is unusual for a thesis and deliberate. It reports the
-errors found in this project's own results. Examiners should read it as the methodological
-contribution it is intended to be, not as an admission appended to a limitations section.}
-
 \section{Why this chapter exists}
 
 Most theses report what was found. This one also reports \emph{what was found to be wrong, and how}.
@@ -105,7 +101,7 @@ for a whole run, so a run is one phase configuration, and in an unlucky one a fe
 every frame while the rest lose none. Three follow-up experiments were registered before they
 were run. Two of their predictions failed and are reported as failures; the third, that the
 choice of source moves the mean by less than a tolerance set in advance, held; with all six
-cells run, the difference is small, consistently of one sign, and not yet explained
+cells run, the difference was small and of one sign, and it did not replicate on fresh seeds
 (\Cref{sec:capacity}).
 
 \section{A simulator artifact large enough to change what a reader should believe}
@@ -133,7 +129,7 @@ periodic sources and \phaseSdRedrawn{} when phases are redrawn every period. The
 same: a difference of \srcMeanDiff{} seen in the first thirty seeds did not replicate on fresh
 ones (\srcFreshD{} $\pm$ \srcFreshSe).
 
-\subsection{A claim that was withdrawn}
+\subsection{A claim that was withdrawn}\label{sec:survey-null}
 
 It had been intended to report that this dispersion is undetectable in the ns-3 LoRa literature
 because that literature does not state replication information, and a survey was pre-registered
@@ -229,6 +225,62 @@ every time, because each part was right. \textbf{What composes facts is building
 describe and making it run.} A design that exists only as a sum has no receiver to refuse a frame
 it cannot decode, and no encoder to refuse a frame that does not fit.
 
-\needswork{TO ADD: a comparison with the reproducibility literature --- the simulation-credibility
-lineage in particular --- so this chapter reads as a contribution to that conversation rather than
-as a project post-mortem. The companion methods paper does this; the material needs porting.}
+\section{How citations are checked}\label{sec:citations}
+
+No figure or number is quoted from a source that has not been read in full, and where a source
+establishes prior art for something this thesis might otherwise have claimed as novel, that is
+said explicitly. Every bibliography entry is compared by a script with its Crossref, DataCite or
+arXiv record --- family names in order, initials, title and year --- and an entry with no
+registry record must name the held document it was checked against.
+
+Those rules exist because each was broken once. An early finding claimed this work was the
+\emph{more optimistic} of two LoRa capacity models; it was drawn from the wrong figure of a paper
+that reported pure-ALOHA results beside LoRa results, and was retracted: \textbf{quoting the
+paper is not enough --- quote the figure}. And until October 2026 the background chapter said that every
+reference had been confirmed against its Crossref record, while four entries carried wrong
+metadata and one paper was cited under the authors of a different one. The confirmation had
+checked that each DOI resolved; it had not compared the author list. \textbf{A claim that
+citations were checked belongs in a check that runs}, which is why the sentence is gone and the
+script exists.
+
+\section{Where this sits}\label{sec:credibility}
+
+Credibility in network simulation has been studied mainly as a problem of \emph{reporting}.
+Cavalcanti \emph{et al.}, reviewing a decade of vehicular-network research, recall an earlier
+survey of 151 simulation papers on mobile ad hoc networks in which fewer than $15\%$ were
+repeatable and $87.5\%$ showed no confidence intervals, and find the later literature little
+better~\cite{cavalcanti2018vanet}. (That earlier survey is known here through their account; it
+was not obtained.) The prescription drawn from such findings is familiar: publish the code,
+state the seeds, report intervals.
+
+This project followed that prescription from its first commit --- code and raw data public,
+seeds in every result file, an interval on every simulated quantity --- and the record of this
+chapter is what the prescription did not prevent. Of the first ten results that moved, four
+were of the kind that more seeds catch. The rest, and all five found in October, were invisible
+to any rule about what to report, because everything reported was right: a constant nobody had
+checked, a threshold applied to the wrong statistic, a correction that stopped at its source,
+a design that existed only as a sum. One of the classes had been seen before by others:
+Durand and Booysen describe in their own results the frozen collisions of class
+C8~\cite{durand2025loramesh}.
+
+What this chapter adds to that conversation is three practices that act on something other than
+the report.
+
+\begin{description}
+\item[Test the text.] The unit that went wrong most often was not a result file but the
+boundary between a result file and a sentence. Numbers in the documents are therefore written
+by a script, and a sentence that states a verdict is held to the data by a test
+(\Cref{sec:tests}).
+\item[Write the prediction first, and keep the failures.] An interval says how well a quantity
+is known. A prediction committed before the data says something an interval cannot: it can be
+wrong. Of the thirteen registrations in \Cref{app:prereg}, four failed in whole or in part, and
+each failure changed what this thesis reports.
+\item[Build the composite.] A result that is a sum of parts measured separately should be
+doubted until the object it describes has been built and run. No audit of the parts finds this
+class, because the parts are correct.
+\end{description}
+
+\noindent Two cautions bound the claim. This is a self-audit of one project: the classes are
+observed, their frequencies in the literature are not, and the one attempt made here to measure
+a frequency could not answer its question (\Cref{sec:survey-null}). And a taxonomy of the
+errors that were found says nothing about those that were not.

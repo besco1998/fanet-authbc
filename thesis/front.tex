@@ -17,7 +17,7 @@
 \vspace{2cm}
 {\large \today\par}
 \vfill
-{\small\itshape Draft. Chapter completeness is declared in \texttt{thesis/STATUS.md}.\par}
+{\small\itshape Draft.\par}
 \end{titlepage}
 
 \chapter*{Abstract}
@@ -52,8 +52,8 @@ self-contained record: a frame that depends on its predecessor does not meet the
 target at its own loss rate.
 
 \textbf{Capacity.} Simulated directly, with a bootstrap interval, one 802.11a collision domain
-delivers 95\% of frames from \nmaxLeanDesign{} neighbours with the design and from
-\nmaxLeanBase{} with per-record signing.
+of \nmaxLeanDesign{} nodes still delivers 95\% of frames with the design, against
+\nmaxLeanBase{} nodes with per-record signing.
 
 In the byte model the axes were first searched with, only placement and batching interact, by
 exactly $\ga(1-1/b)$; in the frame as built, delta coding is conditional on batching too, since a
@@ -86,38 +86,73 @@ experiment execution and drafting. Institutional policy governs the required wor
 \addcontentsline{toc}{chapter}{Nomenclature}
 \markboth{Nomenclature}{Nomenclature}
 
-Symbols follow \texttt{docs/01\_SYSTEM\_MODEL\_ARCHITECTURE.md}~\S2, which is the single source of
-truth for notation across the repository, the papers and this thesis.
+\section*{Symbols}
 
-\begin{center}
-\begin{tabular}{ll l}
+{\small
+\noindent\begin{tabularx}{\textwidth}{@{}l Y l@{}}
 \toprule
-Symbol & Meaning & Default \\
+Symbol & Meaning & Value \\
 \midrule
-$s$        & encoded record payload bytes & measured (E1) \\
-$\ga$      & authentication object bytes (scheme $\sigma$) & 64 / 64 / 96 \\
-$\Hf$      & ledger frame header bytes & \textbf{44 first format, 23 lean; measured} \\
-$L$        & chain link carried once per frame (lean format) & 35 \\
-$s_k$, $s_\delta$ & self-contained record; record coded against its predecessor & measured \\
-$r$        & frames per self-contained frame (reference interval) & 1 \\
-$M$        & application MTU budget & 1500 (802.11) \\
+$N$        & nodes in one collision domain (a \emph{neighbourhood} of $N$; each node hears $N-1$) & varied \\
+$\Lambda_i$ & record rate of one UAV, records per second & 50 (adopted), 20 \\
+$\Lambda$   & rate at which a receiver must verify, $\Lambda_i (N-1)$ & derived \\
+$\Dmax$    & freshness bound on the oldest record of a frame & 100\,ms, 250\,ms \\
+$D(b)$     & delay of the oldest record in a batch of $b$ & $\leq \Dmax$ \\
 $b$        & records per frame (batch) & decision variable \\
-$p$        & frame loss probability & $\{0.02, 0.05, 0.10\}$ \\
-$\varepsilon$ & verifiability slack; require $V \geq 1-\varepsilon$ & $=p$ \\
-$\Lambda_i$ & per-UAV record rate (rec/s) & 50 (adopted) \\
-$\Lambda$   & aggregate rate a receiver verifies & $\Lambda_i \cdot N_{\text{local}}$ \\
-$N_{\text{local}}$ & neighbours in the collision domain & reported as a curve \\
-$U$        & channel utilisation, offered / deliverable & admission metric \\
-$V$        & $P(\text{record verifiable at receiver})$ & constraint $\geq 1-\varepsilon$ \\
-$R$        & PHY data rate & \SI{6}{\mega\bit\per\second} \\
-$D(b)$     & freshness of the oldest record in a batch & $\leq \Dmax$ \\
-$\smax$    & largest record a single frame admits & $M - \Hf - L - \ga$ \\
-$\Nmax$    & largest sustainable neighbourhood & derived \\
+$r$        & reference interval: one frame in $r$ decodes alone & 1 in the design \\
+$s$        & bytes of one encoded record (first format: with its chain link) & measured \\
+$s_k$, $s_\delta$ & record that decodes alone (keyframe); record coded against its predecessor & measured \\
+$\ga$      & bytes of the authentication object & 64, 64, 96 \\
+$\Hf$      & bytes of the frame header & 44 first format, 23 lean \\
+$L$        & bytes of the chain link carried once per frame (lean format) & 35 \\
+$M$        & largest payload the link carries in one frame & 1500 (802.11) \\
+$\smax$    & largest record a single frame admits, $M - \Hf - L - \ga$ & derived \\
+$p$        & probability that a frame is lost & 0.02, 0.05, 0.10 \\
+$\varepsilon$ & verifiability slack: $V \geq 1-\varepsilon$ is required & $= p$ \\
+$V$        & probability that a generated record is verified at a given receiver & $\geq 1-\varepsilon$ \\
+$R$        & PHY data rate & 6\,Mb/s \\
+$f$        & frames per second sent by one node, $\Lambda_i/b$ & derived \\
+$T$        & time one frame holds the medium (airtime plus DIFS) & derived \\
+$W$        & contention window in slots & 16 \\
+$\rho$     & share of time the other nodes hold the medium & derived \\
+$U$        & offered load over saturation throughput & derived \\
+$N_{\mathrm{sat}}$ & largest $N$ whose offered load is within saturation throughput & derived \\
+$\Nmax$    & largest $N$ with mean delivery at least $1-\varepsilon$ & simulated \\
+$N_{\mathrm{cpu}}$ & largest $N$ whose frames one receiver core can verify & derived \\
+$t_v$, $t_h$ & time to verify one signature; to hash one record & measured \\
+$P_c$, $P_r$ & power drawn by the processor; by the radio & measured \\
 \bottomrule
-\end{tabular}
-\end{center}
+\end{tabularx}
+}
 
-\vspace{1em}
-\noindent\textbf{A note on $\Hf$.} It is reported as a \emph{range}, not a constant. Canonical CBOR
+\vspace{0.6em}
+\noindent\textbf{A note on $\Hf$.} It is a \emph{range}, not a constant. Canonical CBOR
 encodes small integers in one byte and large ones in five, so the measured frame header moves by
 six bytes with the magnitudes of the sender identifier and sequence number (\Cref{tab:hf}).
+
+\section*{Abbreviations}
+
+{\small
+\noindent\begin{tabularx}{\textwidth}{@{}l Y@{}}
+\toprule
+ARQ & automatic repeat request (retransmission on loss) \\
+BLS & Boneh--Lynn--Shacham pairing-based signature \\
+CBOR & Concise Binary Object Representation (RFC 8949) \\
+CLAS & certificateless aggregate signature \\
+DCF & distributed coordination function, the 802.11 contention access rule \\
+DIFS & DCF inter-frame space \\
+DR & LoRaWAN data rate (DR0--DR11 in EU863-870) \\
+ECDSA & elliptic-curve digital signature algorithm \\
+ECQV & elliptic-curve Qu--Vanstone implicit certificate \\
+FANET & flying ad-hoc network \\
+LR-FHSS & long-range frequency-hopping spread spectrum \\
+MAC & medium access control; in a cryptographic context, message authentication code \\
+MTU & maximum transmission unit \\
+PHY & physical layer \\
+SF & LoRa spreading factor \\
+SITL & software in the loop \\
+TESLA & timed efficient stream loss-tolerant authentication \\
+UAV, UAS & unmanned aerial vehicle; unmanned aircraft system \\
+\bottomrule
+\end{tabularx}
+}

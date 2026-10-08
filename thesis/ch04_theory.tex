@@ -1,8 +1,5 @@
 \chapter{Theoretical Framework}\label{ch:theory}
 
-\needswork{STATUS: DRAFTED from \texttt{docs/02}. Proofs are complete for T1--T3 and T6; T5 is
-stated honestly as an empirical separability result rather than a theorem, which is what it is.}
-
 This chapter develops the closed-form results. Each carries its empirical validation hook, and
 where a result is \emph{applied} rather than novel, that is stated at the point of statement rather
 than buried in related work.
@@ -66,14 +63,23 @@ Differentiate $C$ in each regime; in the second, $b$ is constant in $s$.
 \end{proof}
 
 The consequence is sharp and negative for the 802.11 arm. At $M = 1500$, $\Hf = 44$, $\ga = 64$,
-$\Lambda_i \Dmax = 5$, the boundary is $s < 232.7$\,B. Every encoding studied lies below it ---
-delta $45$, MessagePack $65$, CBOR $66$, JSON $191$ --- so \textbf{freshness binds for all of them
-and $A$ is never operative on 802.11}. Compression pays exactly $1\times$, and the residual
-authentication cost is a floor $(\ga + \Hf)/(\Lambda_i \Dmax)$ that compression cannot touch.
+$\Lambda_i \Dmax = 5$, the boundary is $s < 1392/6 = 232.0$\,B. Every encoding studied lies below
+it --- delta $45$, MessagePack $65$, CBOR $66$, JSON $191$ --- so \textbf{freshness binds for all
+of them and $A$ is never operative on 802.11}. Compression pays exactly $1\times$, and the
+residual authentication cost is a floor $(\ga + \Hf)/b^\star$ that compression cannot touch.
 
-On a low-rate link ($M = 242$) the boundary falls to $s < 29.7$\,B, so the MTU binds and $A$ is
-operative. \textbf{The leverage that motivates compression is exclusive to the low-rate arm}, which
-strengthens rather than weakens that chapter's motivation.
+One refinement matters for every number that follows. $\lfloor \Lambda_i \Dmax \rfloor$ bounds
+the batch by its fill time alone. When $\Lambda_i \Dmax$ is an integer, a batch of that size fills
+in exactly $\Dmax$ and leaves nothing for channel access, airtime and verification, so the largest
+batch that meets the deadline is one less. Both operating points of this thesis are of that kind,
+with $\Lambda_i \Dmax = 5$: the design uses $b = 4$ (\Cref{sec:freshness-convention} gives the
+convention behind the fill time). With $b_{\mathrm{fresh}} = 4$ the boundary rises to
+$1392/5 = 278.4$\,B and the conclusion is unchanged.
+
+On a low-rate link ($M = 242$) the same boundary falls to $s < 134/6 = 22.3$\,B, below every
+encoding studied, so there the frame size binds and $A = 242/134 = 1.81$ is operative.
+\textbf{The leverage that motivates compression is exclusive to the low-rate arm}, which
+strengthens that chapter's motivation.
 
 \section{T3 --- the loss-robustness frontier}
 
@@ -97,7 +103,8 @@ For \emph{any} stationary loss process of mean rate $p$, whatever its correlatio
 \[
 V_D(n) = P(\text{all } n \text{ frames arrive}) \leq P(\text{one given frame arrives}) = 1-p = V_B,
 \]
-with equality only at $n = 1$.
+with equality at $n = 1$ and, for $n > 1$, only in the degenerate case in which the $n$ frames
+are lost together or not at all.
 \end{theorem}
 
 \begin{proof}
@@ -107,8 +114,9 @@ A joint probability cannot exceed a marginal.
 This matters more than it first appears. The $(1-p)^n$ form assumes independent loss, which the
 emulator also implements --- so agreement between measured and theoretical $V$ is a
 \emph{consistency check, not a validation}. \Cref{thm:t3c} rescues the ordering without the
-assumption: independence is the \emph{worst case} for D, and correlation narrows the gap but cannot
-invert it. Gilbert--Elliott simulation at matched mean $p = 0.05$ confirms it: $V_D(n{=}2)$ rises
+assumption: whatever the correlation, D cannot overtake B. Among bursty processes, in which a
+lost frame makes the next loss more likely, independence is the worst case for D, and
+correlation narrows the gap without inverting it. Gilbert--Elliott simulation at matched mean $p = 0.05$ confirms it: $V_D(n{=}2)$ rises
 from $0.9025$ (independent) to $0.9498$ at a mean burst of 160 frames --- asymptotically $1-p$,
 never past it, and never reaching the feasibility threshold.
 
@@ -154,7 +162,7 @@ equality only at $r = 1$, so bursts soften the penalty of a dependent design and
 The corrected design uses $r = 1$. What a longer interval would buy is small --- \lossPrize\,B
 per record between $r = 1$ and $r = 16$ --- and a cleaner link would be needed to afford it.
 
-\section{T4 --- scheme selection}
+\section{T4 --- scheme selection}\label{sec:t4}
 
 For a UAV's \emph{own} records under self-batching, one ordinary signature covers $b$ records, so
 Ed25519 and BLS are near-equivalent in bytes while Ed25519's verification is far cheaper than a
@@ -172,7 +180,7 @@ against a CPU side of $P_c \cdot (1\text{--}3)\,\si{\milli\second}$, so \textbf{
 802.11 and BLS's regime is low-rate links and attestation compression} --- a falsifiable,
 regime-dependent rule.
 
-\section{T5 --- the co-design result, stated as what it is}
+\section{T5 --- an empirical separability result}
 
 \begin{remark}[Not a theorem]
 T5 is often written as a co-design theorem. It is not one. The joint optimum is \emph{empirically
@@ -183,7 +191,8 @@ been found had one existed; none was. That is evidence, not proof, and the disti
 
 The recipe: pick the smallest deterministic encoding $e^\star$, placement B for own traffic or C
 for relay, batch $b^\star = \min(\bmaxx(s), \lfloor \Lambda_i \Dmax \rfloor)$ --- on 802.11 the
-second term binds --- and scheme per T4.
+second term binds, less one when $\Lambda_i \Dmax$ is an integer (\Cref{thm:t2a}) --- and scheme
+per T4.
 
 A factorial ablation (\Cref{ch:codesign}) narrows this further, and against the project's own
 earlier claim: only placement and batching genuinely interact, by exactly $\ga(1 - 1/b)$, hence not
@@ -230,6 +239,7 @@ withdraw twice, are in \Cref{sec:excl-history}.
 \subsection{Four tiers, because each names a different escape route}
 
 \begin{center}
+\begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{lll}
 \toprule
 tier & condition & what could fix it \\
@@ -240,6 +250,7 @@ tier & condition & what could fix it \\
 \textbf{record}     & $\ga + \Hf + L \leq M < \ga + \Hf + L + s_k$ & a smaller self-contained record \\
 \bottomrule
 \end{tabular}
+\end{adjustbox}
 \end{center}
 
 The tier structure is what makes the bound \emph{constructive}: \Cref{ch:lowrate} evaluates it
@@ -251,7 +262,7 @@ The theorem is conditional, and \Cref{ch:lowrate} states the four conditions in 
 limit is that of the link layer in use; every frame carries a public-key signature; there is no
 loss recovery; and $\varepsilon \leq p$.
 
-\section{A withdrawn theorem, kept visible}
+\section{A withdrawn theorem}
 
 An earlier version of this framework contained a seventh result, T7, claiming that channel capacity
 excludes configurations at $U \geq 1$, where $U$ is offered load over \emph{saturation} throughput.
@@ -270,7 +281,7 @@ argument here must be made in $V$, not in $D$.}
 
 What survives is a cost rather than an exclusion: because $b \leq \lfloor \Lambda_i \Dmax \rfloor$,
 tightening the freshness deadline shrinks the batch and raises the frame rate the medium must
-carry. Meeting the standard's deadline costs swarm size --- \nmaxLeanDesign{} neighbours where the
+carry. Meeting the standard's deadline costs swarm size --- \nmaxLeanDesign{} nodes where the
 relaxed point carries \nmaxRelLeanDesign{} --- and \emph{nothing} in bytes. That is the measured
 statement, and it is a better result than the theorem it replaces.
 
@@ -280,7 +291,7 @@ documentation before the experiment that tested it existed --- an experiment alr
 Running it first would have prevented the claim.
 \end{remark}
 
-\section{Freshness, and a convention that had to be derived}
+\section{Freshness, and a convention that had to be derived}\label{sec:freshness-convention}
 
 The freshness of the oldest record in a batch is modelled as
 $D(b) = b/\Lambda_i + T_{\mathrm{air}} + W_q$ and enforced as a hard constraint.

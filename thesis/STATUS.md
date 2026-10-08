@@ -1,90 +1,60 @@
-# Thesis status — what is drafted, what is not
+# Thesis status — what is written, what was checked, what is still missing
 
-*Created 2026-08-30; **updated 2026-10-08** after the revision that followed the supervisor's
-review and the work Mohamed chose after it. **This file is the honest inventory.** `main.pdf` builds to about 100 pages with 0 errors
-and 0 undefined references, and that number will tempt you to think the thesis is further along
-than it is. It is not. Read this before showing the PDF to anyone.*
+*Created 2026-08-30; rewritten 2026-10-08 after the whole built PDF was audited (findings
+F63–F67 in `docs/audits/model_provenance.md`). `main.pdf` builds to 117 pages with no errors, no
+undefined references and no layout warnings. **Read this before showing the PDF to anyone.***
 
-## What changed in October 2026
+## In one paragraph
 
-An external review of the paper showed that the headline design had never been built as a frame.
-It was built, and the chapters that reported it were corrected — not appended to:
+Every chapter is written and was read end to end in the built PDF on 2026-10-08. The red
+"STATUS" boxes are gone because what they listed is done. **Three red markers remain, and all
+three are yours:** the declaration, the statement on generative AI, and the acknowledgements —
+with the degree and the department on the title page. Two gaps of *reading* remain in chapter 2
+and are stated there in plain prose.
 
-| ch | what changed |
-|---|---|
-| front | abstract rewritten on the built design; title is the August one less "Hardware Validation" |
-| 2 | **new section** on per-message practice, stream signing and hash-linked records; the CLAS comparison written; the false "every citation was checked against Crossref" claim removed |
-| 3 | the full threat model; the two frame formats, field by field; the frame drawn to scale |
-| 4 | **Theorem T3′** (a frame coded against its predecessor is not self-verifiable); the exclusion theorem restated with four graded verdicts |
-| 6 | experiments E9–E17 in the matrix |
-| 7 | loss with the decoder in the loop, including loss that grows with frame length; record sizes on real flight logs |
-| 8 | **rewritten**: the design ladder, receiver CPU, the classical stream-signing schemes, capacity by direct search, the airtime rule and its held-out test, how the traffic source was chosen |
-| 9 | the invariance assumption tested and failed |
-| 10 | **rewritten**: the exclusion with its history (stated wrongly twice), scope and relaxations; the low-rate batch at its own record spacing |
-| 11 | five errors that survived two audits; defect classes C7–C9 |
-| 12 | conclusions and limitations brought into line |
-
-⚠️ **The corrected results are not typed.** They are macros from `numbers.tex`, which
-`make thesis` copies from `paper/numbers.tex`, which `analysis/paper_numbers.py` writes from
-`results/`. `tests/test_thesis_matches_artifacts.py` holds what is still typed (frozen LoRa
-figures, the stage-1 table) against its artifacts.
-
-## The one-line summary
-
-**A complete, building skeleton with the technical core drafted from existing material.** The
-chapters that could be written from what the project already knows are written. The chapters that
-need new *reading* are outlined with their sources named. No chapter is submission-ready.
-
-## Per-chapter state
+## Per chapter
 
 | ch | title | state | what remains |
 |---|---|---|---|
-| — | front matter, abstract | **drafted** | ⚠️ degree, department, declaration, generative-AI statement, acknowledgements are placeholders **only Mohamed can fill** |
-| 1 | Introduction | **drafted** | fine as a draft; revisit after ch.2 |
-| 2 | Background and Related Work | **DRAFTED 2026-10-08** from sources that are held and read | FANETs and the telemetry workload read at source (PX4, ArduPilot, 3GPP); how such networks are evaluated; what a hash chain gives and what a signature gives; certificates, explicit and implicit; the rules that bound the LoRa arm. **Two gaps of reading remain and are marked in the chapter**: no general FANET survey is held, and four of the five aggregate-signature schemes are known only through one paper's table |
-| 3 | System Model and Threat Model | **drafted** | the frame-layout figure is in (2026-10); still wants one worked byte-level example |
-| 4 | Theoretical Framework | **drafted** | proofs complete for T1–T3, T6; T5 stated honestly as empirical separability |
-| 5 | Implementation | **drafted** | add a module-dependency figure |
-| 6 | Experimental Methodology | **drafted** | add the pre-registration table (material exists in `docs/`); energy uncertainty budget |
-| 7 | Results I — bytes, placement, loss | **drafted** | — |
-| 8 | Results II — co-design, envelope | **drafted** | — |
-| 9 | Model validation and hardware | **drafted** | — |
-| 10 | Low-rate regime, exclusion bound | **drafted** | — |
-| 11 | Reproducibility and defects | **drafted** | port the credibility-literature comparison from `paper/methods.tex`. ⚠️ One source that comparison needs, Kurkowski et al. 2005, is **not held** (`docs/OPEN_ITEMS.md` G8) — obtain and read it before citing it in the thesis |
-| 12 | Conclusions, limitations, future work | **drafted** | — |
+| — | front matter | written | ⚠️ **degree, department, declaration, AI statement, acknowledgements — only Mohamed** |
+| 1 | Introduction | audited | — |
+| 2 | Background and Related Work | audited | ⚠️ two gaps of reading (`OPEN_ITEMS` G23, G24): the earlier analyses of non-saturated broadcast; the four aggregate-signature schemes at source and a general FANET survey |
+| 3 | System Model and Threat Model | audited | — |
+| 4 | Theoretical Framework | audited; two figures and one theorem statement corrected (F64) | worked numerical examples for T2 and T4 would help a reader; none is wrong for lacking them |
+| 5 | Implementation | **expanded**: package figure, one frame byte by byte, receiver outcomes, test layers | — |
+| 6 | Experimental Methodology | **expanded**: generator, how a capacity is read, timings, energy rig, uncertainty | the energy sensor's calibration (G22) — a bench step |
+| 7 | Results I | audited | — |
+| 8 | Results II | audited; RQ3 now has its numbers; prior work for the derivation credited (F65) | lean codec timing and receiver CPU on the board (bench session) |
+| 9 | Model validation and hardware | audited | contention on radios (G4) |
+| 10 | Low-rate regime | audited; **mobility subsection added** | — |
+| 11 | Reproducibility | **expanded**: how citations are checked, where the chapter sits | Kurkowski et al. 2005 is not held and is not cited |
+| 12 | Conclusions | audited; **research questions answered one by one**; four stale items corrected | — |
+| A | Reproducing the results | new | — |
+| B | Predictions registered before their data | new: thirteen, by commit | ⚠️ **merge pull requests with a merge commit** — squashing would erase the commits this table cites |
 
-## What a 99-page draft is not
+## What a supervisor may still say, and why it is not fixed
 
-A thesis in this field typically runs 80–150 pages. The gap is not padding — it is:
+* **"The contention result is simulated."** True, and stated first among the limitations. It
+  needs radios (G4).
+* **"Fifty-two references is few."** Every one was read. Raising the number means reading more,
+  not listing more (G23, G24).
+* **"Superseded figures are in the results chapters."** Three figures and one table show results
+  that were later corrected, each captioned as such. Moving them to an appendix is a choice of
+  style for you and your supervisor; the history itself stays (retractions are kept visible).
+* **"Chapter 11 is unusual."** It is deliberate. It now says where it sits in the literature.
 
-* **Chapter 2**, drafted in October 2026 but from the sources held: it still wants a general FANET
-  survey and the aggregate-signature schemes read at source.
-* **Figures.** Nine exist and are reused from the paper. A thesis wants more, and wants some drawn
-  for explanation rather than for results — a frame layout, the placement taxonomy, the regime map.
-* **Worked examples.** The paper compresses; a thesis should expand. Every theorem in ch.4 deserves
-  a concrete instantiation the reader can follow arithmetically.
-* **Depth in ch.5–6.** The implementation and methodology chapters are currently summaries of
-  `docs/05` and `docs/04` rather than thesis-depth treatments.
+## Rules that keep it true
 
-## What is genuinely done and should not be redone
-
-Every **number, table and claim** in chapters 7–10 is drawn from a committed artifact and is
-guarded by a test that fails if it drifts. The self-corrections in ch.9–11 (the pre-registration
-power flaw, the header finding, the criterion identity) are written and are, in this author's view,
-the chapters most likely to distinguish the thesis from an ordinary one. Do not soften them.
-
-## Reference count
-
-45 rendered in the thesis (the shared bibliography has 59 entries; the thesis cites the ones it
-uses), and it stops there **deliberately**: every one is a source held and *read*. A thesis of
-this scope would normally carry more. Reaching a higher count requires find → download → **read** →
-cite. ⚠️ Padding the list would be the same defect the project's audit spent its time removing.
+* **No typed results.** Numbers are macros from `numbers.tex`, which `make thesis` copies from
+  `paper/numbers.tex`, which `analysis/paper_numbers.py` writes from `results/`. What *is*
+  typed is held to its artifact by `tests/test_thesis_matches_artifacts.py`.
+* **After changing a results chapter, re-read chapters 1, 11 and 12.** Four statements there had
+  gone stale because a correction stopped at the chapter it was made in (F64).
+* **`thesis/tab_worked_frame.tex` is generated** (`analysis/worked_frame.py`); a test compares.
+* **Before any submission, `grep -c '\\needswork{' thesis/*.tex` must total 0.**
 
 ## Build
 
 ```bash
 make thesis        # → thesis/main.pdf
 ```
-
-⚠️ The `\needswork{...}` macro renders its argument in red. Every one of them is a real outstanding
-item. **Before any submission, `grep -c needswork thesis/*.tex` must return 0.**

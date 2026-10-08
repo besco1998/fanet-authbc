@@ -129,7 +129,7 @@ class TestDR6Derivation:
                    if math.exp(-2 * (n - 1) * self.DUTY) >= 0.95) == 3
 
     def test_the_chapter_labels_dr6_as_derived_and_says_why(self) -> None:
-        assert "We derive this rather than simulate it" in LOWRATE
+        assert "This is derived and not simulated" in LOWRATE
         assert r"indexed by \emph{spreading factor alone}" in LOWRATE
 
 
@@ -265,3 +265,235 @@ class TestCopiesAreCurrent:
         for name in sorted(set(re.findall(r"\\includegraphics\[[^]]*\]\{([^}]+\.png)\}", tex))):
             assert (THESIS / name).read_bytes() == \
                 (REPO / "results" / "figures" / name).read_bytes(), f"thesis/{name} is stale"
+
+
+# --------------------------------------------------------------------------- audit of 2026-10-08
+# Added with the passages they hold. That audit read the built thesis whole and found typed
+# statements that had gone stale or had never been right (a boundary computed with a header of
+# 40 B and printed beside "H_f = 44"; "any batching needs Λ ≥ 1/D_max"; a mobility test cited
+# in the conclusions and reported nowhere). Everything it then typed is pinned here.
+def _hw(name: str) -> list[dict[str, str]]:
+    path = REPO / "results" / "hw" / "energy" / "e2e" / name
+    return list(csv.DictReader(ln for ln in path.read_text().splitlines()
+                               if not ln.startswith("#")))
+
+
+class TestTheBindingConstraintFigures:
+    """thesis ch. 4, T2a: the boundary s < (M − H_f − g_a)/(b_fresh + 1)."""
+
+    THEORY = _text("ch04_theory.tex")
+    M, HF, GA = 1500, 44, 64
+
+    def test_the_802_11_boundary_is_computed_with_the_measured_header(self) -> None:
+        assert f"{(self.M - self.HF - self.GA) / 6:.1f}" == "232.0"
+        assert "$s < 1392/6 = 232.0$" in self.THEORY and "232.7" not in self.THEORY
+
+    def test_the_boundary_with_the_batch_the_design_uses(self) -> None:
+        assert f"{(self.M - self.HF - self.GA) / 5:.1f}" == "278.4"
+        assert "$1392/5 = 278.4$" in self.THEORY
+
+    def test_the_low_rate_boundary_and_amplification(self) -> None:
+        assert f"{(242 - self.HF - self.GA) / 6:.1f}" == "22.3"
+        assert f"{242 / (242 - self.HF - self.GA):.2f}" == "1.81"
+        assert "$s < 134/6 = 22.3$" in self.THEORY and "$A = 242/134 = 1.81$" in self.THEORY
+
+    def test_five_records_do_not_meet_the_deadline_and_four_do(self) -> None:
+        from authbc.models import optimizer
+
+        assert optimizer.freshness_batch_bound(50, 0.100) == 5      # the fill-time ceiling
+        region = {(r["lambda_rec_per_s"], r["d_max_ms"]): int(r["b"])
+                  for r in _rows("operating_region.csv")}
+        assert region[("50", "100")] == 4                           # what the search admits
+
+    def test_batching_needs_more_than_two_records_per_deadline(self) -> None:
+        """ch. 3 said "any batching needs Λ ≥ 1/D_max". At 100 ms it needs more than 20 Hz."""
+        region = {float(r["lambda_rec_per_s"]): int(r["b"])
+                  for r in _rows("operating_region.csv") if r["d_max_ms"] == "100"}
+        assert region[10.0] == region[20.0] == 1 and region[21.0] == 2
+        assert r"needs $\Lambda_i > 2/\Dmax$" in _text("ch03_system_model.tex")
+
+
+class TestWhichCeilingBindsPerEncoding:
+    def test_json_is_frame_limited_at_576_and_the_text_says_so(self) -> None:
+        binds = {(r["mtu"], r["encoding"]): r["binds"] for r in _rows("e2_batching.csv")
+                 if r["binds"]}
+        assert binds[("576", "json")] == "mtu"
+        assert {binds[("576", e)] for e in ("cbor", "msgpack", "delta")} == {"freshness"}
+        assert {binds[("1500", e)] for e in ("json", "cbor", "msgpack", "delta")} == {"freshness"}
+        assert "JSON at $191$\\,B is still limited by the frame there" in _text("ch07_bytes.tex")
+
+
+class TestTheSchemeCrossoverParagraph:
+    """thesis ch. 8, E4: eighty cells, Ed25519 in every one."""
+
+    CODESIGN = _text("ch08_codesign.tex")
+    CELLS = _rows("e4_crossover.csv")
+
+    def test_eighty_cells_and_one_winner(self) -> None:
+        assert len(self.CELLS) == 80 and "eighty cells" in self.CODESIGN
+        assert {r["winner_plausible"] for r in self.CELLS} == {"ed25519"}
+
+    def test_own_records_never_break_even(self) -> None:
+        assert {r["kappa_star_med"] for r in self.CELLS if float(r["rho"]) == 0.0} == {"inf"}
+
+    def test_the_most_favourable_cell(self) -> None:
+        (best,) = [r for r in self.CELLS
+                   if (r["rho"], r["b"], r["lambda"]) == ("1.0", "32", "50")]
+        assert float(best["delta_bytes"]) == 61.0 and "$61$\\,B per record" in self.CODESIGN
+        assert round(float(best["radio_saving_us"])) == 81
+        assert round(float(best["extra_cpu_us_med"]) / 1000, 1) == 2.6
+        finite = [float(r["kappa_star_med"]) for r in self.CELLS if r["kappa_star_med"] != "inf"]
+        assert round(min(finite), 1) == round(float(best["kappa_star_med"]), 1) == 31.6
+        assert "$31.6$ times" in self.CODESIGN
+
+    def test_the_measured_power_ratio(self) -> None:
+        import yaml
+
+        cfg = yaml.safe_load((REPO / "experiments" / "design-ladder" / "config.yaml").read_text())
+        assert (cfg["p_radio_w"], cfg["p_cpu_w"]) == (0.218, 0.749)
+        assert round(cfg["p_radio_w"] / cfg["p_cpu_w"], 2) == 0.29
+        assert "$0.29$ ($0.218$\\,W against $0.749$\\,W)" in self.CODESIGN
+
+    def test_bls_cannot_keep_up_from_200_records_per_second(self) -> None:
+        slow = {r["lambda"] for r in self.CELLS if r["bls_verify_ok"] == "False"}
+        assert slow == {"200", "800", "2000"}
+
+
+class TestTheMobilitySubsection:
+    """thesis ch. 10: the test the conclusions had cited without its being reported anywhere."""
+
+    ARMS = {(r["matrix"], r["mobility_model"], r["speed_mps"]): r
+            for r in _rows("lora_mobility.csv")}
+
+    def _capture(self, model: str, speed: str) -> dict[str, str]:
+        return self.ARMS[("goursaud", model, speed)]
+
+    def test_every_row_of_the_table(self) -> None:
+        static = float(self._capture("static", "0.0")["delivered_mean"])
+        for model, speed, label, shift, moved in (
+                ("gaussmarkov", "5.0", "Gauss--Markov, $5$\\,m/s", "$-0.24$", "965"),
+                ("gaussmarkov", "20.0", "Gauss--Markov, $20$\\,m/s", "$-0.03$", "967"),
+                ("rwp", "20.0", "Random Waypoint, $20$\\,m/s", "$+0.36$", "816")):
+            r = self._capture(model, speed)
+            mean, sd = float(r["delivered_mean"]), float(r["delivered_stdev"])
+            row = (f"{label} & {mean:.4f} & {sd:.3f} & {shift}\\,pp & ${moved}$\\,m")
+            assert re.sub(r"\s+", " ", row) in re.sub(r"\s+", " ", LOWRATE), row
+            assert f"{100 * (mean - static):+.2f}" == shift.strip("$")
+            assert round(float(r["mean_displacement_m"])) == int(moved)
+        assert f"static & {static:.4f} & 0.063" in re.sub(r"\s+", " ", LOWRATE)
+
+    def test_no_arm_is_distinguishable_from_the_static_one(self) -> None:
+        static = self._capture("static", "0.0")
+        for key in (("gaussmarkov", "5.0"), ("gaussmarkov", "20.0"), ("rwp", "20.0")):
+            arm = self._capture(*key)
+            diff = float(arm["delivered_mean"]) - float(static["delivered_mean"])
+            se = math.sqrt((float(arm["delivered_stdev"]) ** 2
+                            + float(static["delivered_stdev"]) ** 2) / 30)
+            assert abs(diff) / float(static["delivered_stdev"]) <= 0.06
+            assert abs(diff / se) <= 0.22
+
+    def test_without_capture_the_arms_are_identical(self) -> None:
+        rows = [r for key, r in self.ARMS.items() if key[0] == "aloha"]
+        assert len(rows) == 4 and len({r["delivered_mean"] for r in rows}) == 1
+
+    def test_the_conclusions_point_at_it(self) -> None:
+        assert r"\Cref{sec:lora-mobility}" in _text("ch12_conclusions.tex")
+
+
+class TestTheEnergyUncertaintyBudget:
+    """thesis ch. 6: every size in the table, from the repetitions on file."""
+
+    METHOD = _text("ch06_methodology.tex")
+
+    @staticmethod
+    def _stats(name: str) -> tuple[float, float]:
+        rows = _hw(name)
+        idle = [float(r["p_idle_w"]) for r in rows]
+        energy = sorted(float(r["energy_per_op_uj"]) for r in rows)
+        median = energy[len(energy) // 2]
+        return 1000 * (max(idle) - min(idle)), 50 * (energy[-1] - energy[0]) / median
+
+    def test_idle_drift_and_repeatability_of_the_two_reported_rows(self) -> None:
+        drift_d, half_d = self._stats("energy_d1.csv")
+        drift_b, half_b = self._stats("energy_d1_baseline.csv")
+        assert (round(drift_d), round(drift_b)) == (5, 9)
+        assert "$5$--$9$\\,mW" in self.METHOD
+        assert (round(half_b, 1), round(half_d, 1)) == (0.6, 1.1)
+        assert "half-range $0.6\\%$ and $1.1\\%$" in self.METHOD
+
+    def test_the_row_that_is_not_reported_was_contaminated(self) -> None:
+        idle = [float(r["p_idle_w"]) for r in _hw("energy_ajson.csv")]
+        assert 0.45 < max(idle) - min(idle) < 0.55
+        assert sum(x > min(idle) + 0.2 for x in idle) == 3
+        assert "three of its five repetitions" in self.METHOD
+
+    def test_no_calibration_against_a_reference_is_on_file_and_the_text_says_so(self) -> None:
+        """If a calibration record appears, the sentence must change with it."""
+        headers = "".join(p.read_text() for p in
+                          (REPO / "results" / "hw" / "energy" / "e2e").glob("*.csv"))
+        assert "calib" not in headers.lower()
+        assert "was not recorded for these runs" in self.METHOD
+
+
+class TestTheWorkedFrame:
+    """thesis ch. 5: a frame cut into fields by a script, from bytes the library emitted."""
+
+    def _module(self):  # noqa: ANN202
+        import importlib.util
+
+        spec = importlib.util.spec_from_file_location(
+            "worked_frame", REPO / "analysis" / "worked_frame.py")
+        assert spec and spec.loader
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        return mod
+
+    def test_the_committed_table_is_what_the_script_writes(self) -> None:
+        assert (THESIS / "tab_worked_frame.tex").read_text() == self._module().render(), (
+            "thesis/tab_worked_frame.tex is stale — run analysis/worked_frame.py")
+
+    def test_the_rows_add_up_to_the_frame_and_to_the_byte_budget(self) -> None:
+        table, total = self._module().rows()
+        assert sum(n for *_rest, n in table) == total == 156
+        by_field: dict[str, int] = {}
+        for _hex, field, _what, n in table:
+            by_field[field.split(":")[0]] = by_field.get(field.split(":")[0], 0) + n
+        header = sum(by_field[k] for k in ("(map)", "v", "t", "src", "base\\_seq", "n",
+                                            "recs", "auth"))
+        assert (header, by_field["link"] + 32, by_field["delta"]) == (23, 35, 9)
+        text = _text("ch05_implementation.tex")
+        assert "$23 + 35 + 64 = 122$" in text and "takes $25$\\,B here" in text
+        assert by_field["keyframe"] == 25
+
+
+class TestTheRegistrationsOfAppendixB:
+    """Every commit the table names exists and precedes the commit this test runs on."""
+
+    APPENDIX = (THESIS / "appB_preregistrations.tex").read_text()
+
+    def test_each_named_commit_is_in_the_history(self) -> None:
+        import subprocess
+
+        named = sorted(set(re.findall(r"\\texttt\{([0-9a-f]{7})\}", self.APPENDIX)))
+        assert len(named) == 13
+        shallow = subprocess.run(["git", "rev-parse", "--is-shallow-repository"], cwd=REPO,
+                                 capture_output=True, text=True).stdout.strip()
+        assert shallow == "false", (
+            "this test needs the full history: fetch with depth 0 (CI does)")
+        for commit in named:
+            done = subprocess.run(["git", "merge-base", "--is-ancestor", commit, "HEAD"],
+                                  cwd=REPO, capture_output=True)
+            assert done.returncode == 0, f"{commit} is not an ancestor of HEAD"
+
+    def test_the_chapter_counts_what_the_table_holds(self) -> None:
+        assert self.APPENDIX.count(r"\textbf{failed}") == 3
+        assert self.APPENDIX.count(r"\textbf{refuted}") == 1
+        assert self.APPENDIX.count(r"\textbf{not scored}") == 1
+        assert "thirteen" in _text("ch06_methodology.tex")
+
+
+class TestTheLibraryIsTheSizeTheChapterSays:
+    def test_nearly_eight_thousand_lines(self) -> None:
+        lines = sum(len(p.read_text().splitlines())
+                    for p in (REPO / "src" / "authbc").rglob("*.py"))
+        assert 7500 <= lines < 8000, f"ch. 5 says 'nearly eight thousand lines'; it is {lines}"

@@ -1,4 +1,4 @@
-# One bench session — four measurements, about three hours
+# One bench session — five measurements, about three hours
 
 *For Mohamed. Decided 2026-10-08: the four small measurements the revision left open are done in
 one sitting. Everything here reuses the rig and the boards as they were set up for P7b
@@ -9,6 +9,7 @@ new has to be wired. Each step says what to run, where, how long it takes and wh
 
 | step | closes | question it answers |
 |---|---|---|
+| 0 | G22 | Is the current sensor's reading right in absolute terms? |
 | 1 | G9 | What do the lean format's sender and receiver cost on the Pi 4, per frame? |
 | 2 | G9 | Does the meter agree with that timing, for the design that is actually reported? |
 | 3 | G11 | The one energy row that was not usable (three of its five repetitions were contaminated) |
@@ -45,6 +46,19 @@ number.
 * Pi 4 and Pi 3B+: `./hw/provision.sh` (sets the `performance` governor). Fit the heatsink and
   fan as for P7b. The scripts flag a throttled run; a flagged file is not used.
 * On this PC (WSL2): the Arduino must be visible (`RIG.md` §6) for steps 2 and 3 only.
+
+## Step 0 — calibrate the meter (on the rig, 5 min) — closes G22
+
+No calibration of the INA219 against a known load is on record, so every energy figure so far
+is accurate to the sensor's factory tolerance and no better (finding F66). Before steps 2 and 3:
+
+1. Put a **known resistor** in place of the Pi: 10 Ω, 5 W or more, across the 5 V supply
+   (0.5 A, 2.5 W). Measure its resistance with a multimeter first and write the value down.
+2. Run the capture for 60 s and note the mean voltage, current and power it reports.
+3. Expected power is V²/R with the *measured* R. Send the agent the three numbers and R.
+
+**Expected:** within 2 % of V²/R. More than that: re-seat the wiring and repeat before going on.
+The ratios in the paper do not depend on this step; the microjoule values do.
 
 ## Step 1 — time the lean sender and receiver (Pi 4, 5 min)
 

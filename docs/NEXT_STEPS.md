@@ -10,7 +10,7 @@ superseded wherever the two disagree — in particular the framing section's "fo
 **What happened.** The supervisor reviewed the paper. Checking the review exposed that the
 headline design had never been built as a frame. It was built (`wire_v2`, sender, receiver), every
 result was recomputed from it, the paper was rewritten around it, and the thesis chapters were
-brought into line. Findings F45–F62; the method and the wrong turns are in `LOGBOOK.md`.
+brought into line. Findings F45–F67; the method and the wrong turns are in `LOGBOOK.md`.
 
 **Then it was audited again (2026-10-07).** Mohamed asked for the revised paper and thesis to be
 checked against the review once more. Looking each request up in the built PDF found eleven
@@ -94,7 +94,7 @@ cd fanet-authbc && git checkout p8-audit-and-corrections
 make setup && make all          # green == you have reproduced the deterministic layer
 ```
 
-`make all` = lint + mypy + 1956 fast tests + the 38-test frozen gate. NS-3 and the Pi rig are
+`make all` = lint + mypy + 1990 fast tests + the 38-test frozen gate. NS-3 and the Pi rig are
 optional (`docs/05_REPRODUCTION_GUIDE.md`). ⚠️ A fresh clone has **no NS-3 tree** — it is gitignored
 by design. Fetch it from the **GitLab** archive; `nsnam.org/releases/...` returns an HTML error page.
 
@@ -211,7 +211,7 @@ audit spent its time removing.
 | # | work | why | effort |
 |---|---|---|---|
 | ~~6~~ | ~~PQC extension section~~ | **DONE** — Limitations §, backed by `results/raw/pqc_projection.csv` | — |
-| 7 | References **35** rendered in the revised paper (59 in the shared bibliography; **46** before the October rewrite) → 45–60 | 29→39 done from held+read sources; the rest needs sourcing **and reading** | 1 wk |
+| 7 | References **37** rendered in the revised paper (59 in the shared bibliography; **46** before the October rewrite) → 45–60 | 29→39 done from held+read sources; the rest needs sourcing **and reading** | 1 wk |
 | ~~S9~~ | ~~Re-state or drop the pre-registration claim~~ | **DONE (F40)** — withdrawn, not reconstructed | — |
 
 ### Optional

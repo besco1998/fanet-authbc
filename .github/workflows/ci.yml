@@ -18,6 +18,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # the whole history: a test checks that every pre-registration commit the thesis
+          # names precedes the commit under test (tests/test_thesis_matches_artifacts.py)
+          fetch-depth: 0
 
       - name: Set up Python 3.12
         uses: actions/setup-python@v5

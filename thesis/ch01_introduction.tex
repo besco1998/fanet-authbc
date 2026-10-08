@@ -12,6 +12,12 @@ implementation. A telemetry record, once compressed, is $45$\,B --- and $32$ of 
 telemetry either: they are the hash that links the record to its predecessor. The data are
 $13$\,B.
 
+Those are the sizes of the first frame format this work built, in which every record carries its
+own chain link, and they are where the argument starts. The lean format of \Cref{ch:sysmodel}
+carries the link once per frame and codes the same record in \keyLean\,B standing alone and
+\deltaLean\,B as a difference from its predecessor; the results of this thesis are stated for
+both formats, and the inequality holds in each.
+
 That inequality is the whole thesis. \textbf{The signature is larger than the thing it signs.}
 
 \section{Why this is not simply a compression problem}
@@ -24,7 +30,9 @@ the record, signature and link are $96$ of $109$\,B. Every further byte saved
 on the payload increases the fraction spent on cryptography. Compression does not solve the
 problem; \emph{compression is what creates it}.
 
-The design space that remains has four axes, and this thesis searches them jointly:
+This thesis calls the system it builds AUTHBC --- authenticated telemetry for a
+blockchain-style, hash-chained ledger: a frame format, a sender and a receiver, with the four
+design choices below made together. The design space has four axes, and they are searched jointly:
 
 \begin{itemize}
 \item \textbf{Encoding} $e$ --- how a record is serialised (JSON, CBOR, MessagePack, delta-CBOR).
@@ -37,7 +45,7 @@ The design space that remains has four axes, and this thesis searches them joint
       frame size on one side and by a freshness deadline on the other.
 \end{itemize}
 
-\section{The question this thesis actually asks}
+\section{The question this thesis asks}
 
 The literature on efficient authentication asks \emph{how many bytes does my scheme save}. That is
 a useful question and it has been answered many times. This thesis asks a different one, because
@@ -96,10 +104,11 @@ stated it wrongly.
       holds, and what each relaxation buys, are stated with it (\Cref{ch:lowrate}).
 
 \item \textbf{The design built as one object, and its capacity measured directly.} A frame
-      format with a sender and a receiver, in which every reported size is the length of an
-      emitted frame; and the largest neighbourhood each configuration sustains, found by
+      format with a sender and a receiver, in which the sizes of the design and of its
+      baselines are lengths of emitted frames, and a size that is a sum of measured parts is
+      marked as one; and the largest neighbourhood each configuration sustains, found by
       simulating each at its own frame size and rate with a bootstrap interval:
-      \nmaxLeanDesign{} neighbours for the design against \nmaxLeanBase{} for per-record signing
+      \nmaxLeanDesign{} nodes for the design against \nmaxLeanBase{} for per-record signing
       (\Cref{ch:sysmodel}, \Cref{ch:codesign}).
 
 \item \textbf{Validated models with their gaps stated}, including a broadcast channel model

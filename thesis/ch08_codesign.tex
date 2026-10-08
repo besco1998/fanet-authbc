@@ -1,9 +1,5 @@
 \chapter{Results II --- Co-design and Capacity}\label{ch:codesign}
 
-\needswork{STATUS: DRAFTED; rewritten October 2026. The capacity results are now direct
-simulations with intervals. The envelope this chapter used to present, computed from one load
-ceiling, is kept in \Cref{sec:envelope-history} as the approximation it turned out to be.}
-
 \section{E5 --- the end-to-end configuration, and a correction to it}
 
 Exhaustive search over encoding, scheme, placement and batch returns delta coding, Ed25519, one
@@ -27,6 +23,7 @@ receiver core spent verifying at $\Nmax$. $^\dagger$~size is a sum of measured p
 6 and 8 are emitted frames.}
 \label{tab:ladder}
 \small
+\begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{llrrrrrl}
 \toprule
  & configuration & $b$ & B/record & with cert. & $N_{\mathrm{sat}}$ & $\Nmax$ & CPU \\
@@ -44,6 +41,7 @@ receiver core spent verifying at $\Nmax$. $^\dagger$~size is a sum of measured p
 8 & one signature per frame, delta \textbf{(design)} & 4 & \textbf{\bprLeanDesign} & \certLeanDesign & \nsatLeanDesign & \textbf{\nmaxLeanDesign}\ \ciLeanDesign & \cpuLeanDesign\% \\
 \bottomrule
 \end{tabular}
+\end{adjustbox}
 \end{table}
 
 \Cref{tab:ladder} takes the design apart. A baseline that signs every record and sends it alone
@@ -98,6 +96,18 @@ pairing, which keeps Ed25519 optimal for self-batching at any plausible radio/CP
 ordering between Ed25519 and ECDSA-P256 \emph{flips} between x86 and ARM, so the choice is
 platform-specific; the byte result is identical either way, since both are $64$\,B.
 
+The crossover rule of \Cref{sec:t4} was evaluated over relay fractions of $0$, $0.25$, $0.5$
+and $1$, batches of $2$ to $32$ and neighbourhood arrival rates of $50$ to $2000$ records per
+second: eighty cells. Ed25519 wins every one. For a node's own records BLS never breaks even,
+because its $96$\,B object costs bytes where it was meant to save them. When every record is
+relayed and thirty-two share a frame --- the case most favourable to aggregation --- BLS saves
+$61$\,B per record, worth $\SI{81}{\micro\second}$ of airtime at $6$\,Mb/s, and costs $2.6$\,ms of extra
+verification; it would pay only if the radio drew $31.6$ times the power of the CPU. On the
+board measured here the ratio is $0.29$ ($0.218$\,W against $0.749$\,W). And at $200$ records
+per second and above one core cannot verify BLS fast enough at all. An aggregatable scheme
+beats a fast conventional one only where airtime is two orders of magnitude dearer than
+computation, which is the low-rate regime of \Cref{ch:lowrate} and not this one.
+
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.7\textwidth]{e4_crossover.png}
@@ -112,18 +122,17 @@ serves
 \[
 N_{\mathrm{cpu}} = 1 + \left\lfloor \frac{1}{(\Lambda_i/b)\,k\,t_v + \Lambda_i\,t_h} \right\rfloor
 \]
-nodes. On the Raspberry~Pi~4 that is \ncpuBatch{} neighbours when each frame carries one Ed25519
-signature and \ncpuInline{} when every record is signed. At its $\Nmax$ the design uses
+nodes. On the Raspberry~Pi~4 that is a neighbourhood of \ncpuBatch{} nodes when each frame
+carries one Ed25519 signature and of \ncpuInline{} when every record is signed. At its $\Nmax$ the design uses
 \cpuLeanDesign\% of a core, so the channel binds first. Row~6 of \Cref{tab:ladder} shows the
 constraint is not idle: with a signature on every record it reaches the channel's limit at
 \cpuLeanInline\% of a core. With BLS a verification takes
-\tVerBls\,ms and one core serves \ncpuBls{} neighbours: BLS is excluded by the CPU long before
+\tVerBls\,ms and one core serves \ncpuBls{} nodes: BLS is excluded by the CPU long before
 the channel is reached, in addition to its larger signature.
 
 These figures verify one signature at a time. Ed25519 was designed for batch verification: its
 authors report under $134\,000$ cycles per signature in a batch of $64$, against $273\,364$ for
-one~\cite{ed25519}, which would roughly halve the receiver's cost. An external review named it
-among the stronger alternatives this work had not considered. It is not used here --- the
+one~\cite{ed25519}, which would roughly halve the receiver's cost. It is not used here --- the
 cryptographic library this implementation is built on exposes no batch interface --- so
 $N_{\mathrm{cpu}}$ is conservative for Ed25519 by about that factor, and measuring it on the
 board is open. ECDSA does not admit it.
@@ -135,8 +144,8 @@ prototype is interpreted Python. A first timing of the lean receiver as it runs 
 desktop, under load, so indicative only --- put a four-record frame at about nine times the cost
 of its one verification. On that evidence a Python receiver on one Raspberry~Pi core would fall
 behind long before the channel does, and the sentence ``the channel binds first'' holds for a
-compiled receiver, not for the prototype. The lean sender and receiver are to be timed on the
-board itself (\texttt{hw/BENCH\_SESSION.md}); until then $N_{\mathrm{cpu}}$ and the CPU column
+compiled receiver, not for the prototype. Timing the lean sender and receiver on the board itself is the
+first item of future work (\Cref{ch:conclusions}); until then $N_{\mathrm{cpu}}$ and the CPU column
 of \Cref{tab:ladder} are ceilings set by cryptography alone.
 \end{remark}
 
@@ -159,6 +168,7 @@ $^\dagger$ no non-repudiation: a third party cannot be shown who sent a record;
 $^\ddagger$ a packet does not verify alone, so $\Nmax$ --- frames delivered --- is an upper
 bound on records verified.}
 \label{tab:stream}
+\begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{lrrrrl}
 \toprule
 scheme & auth.\ B/record & frames/s & total B/record & $N_{\mathrm{sat}}$ & $\Nmax$ \\
@@ -172,6 +182,7 @@ a signature on every record & \strAuthSig & \strFpsSig & \strBprSig & \strNsatSi
 this design, $b = 4$ & \strAuthDesign & \strFpsDesign & \strBprDesign & \strNsatDesign & \strNmaxDesign\ \strCiDesign \\
 \bottomrule
 \end{tabular}
+\end{adjustbox}
 \end{table}
 
 Every one of these schemes spreads an authenticator across packets and still sends a frame per
@@ -244,7 +255,7 @@ the single load ceiling, ran from $1.9$ to $3.2$, and are superseded with it.
 \end{remark}
 
 The larger step is sending a quarter as many frames. Row~6 of \Cref{tab:ladder}, which shares
-the frame and keeps a signature per record, already reaches \nmaxLeanInline{} neighbours
+the frame and keeps a signature per record, already reaches \nmaxLeanInline{} nodes
 (\stepShareLean$\times$ the baseline); sharing the signature as well adds
 \stepSignLean$\times$.
 Every frame pays a preamble, an inter-frame space, a backoff and MAC framing whatever its length
@@ -281,6 +292,7 @@ six within \lineFitWorst\%.
 simulated (interpolated, thirty seeds per node count), and the deviation of the simulation from
 the line and from the single load ceiling.}
 \label{tab:line}
+\begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{llrrrr}
 \toprule
 configuration & frame, rate & line & simulated & vs line & vs ceiling \\
@@ -294,6 +306,7 @@ relaxed: lean, per-record signing & 146\,B, 20/s & \linePRC & \lineMRC & \lineDR
 relaxed: lean, design & 173\,B, 5/s & \linePRD & \lineMRD & \lineDRD\% & \lineCRD\% \\
 \bottomrule
 \end{tabular}
+\end{adjustbox}
 \end{table}
 
 \textbf{The prediction held.} All seven crossings lie within \lineWorst\% of the line, and in
@@ -390,7 +403,7 @@ was sampling. Two sources with uniform phases have the same mean delivery, as th
 above said they should.
 
 A second claim went with that registration and did not survive it. To explain why all six
-crossings had read lower under strictly periodic senders, I wrote that the crossing rule ---
+crossings had read lower under strictly periodic senders, the registration said that the crossing rule ---
 the largest $N$ that passes with every smaller $N$ passing --- reads low on a noisier curve.
 Resampling the periodic source's own run-to-run scatter around a common mean shows that it does
 not: the rule's median sits on the true crossing. What the scatter does is widen it, to between
@@ -436,6 +449,21 @@ All of this is one autopilot, in simulation, with no radio and no serial link.
 
 The line of \Cref{eq:line} describes the crossings; it does not explain them, and its one
 constant was fitted. An explanation needs no more than the access rule.
+
+\paragraph{What is known, and what is added.} The first of the two mechanisms below is not
+new. Cao \emph{et al.} analyse periodic IEEE 802.11p broadcast in a fully connected network
+with a perfect physical layer: a packet that finds the medium idle is sent at once, one that
+finds it busy backs off within a fixed window, and collisions arise only among packets that
+backed off; a fixed point gives the delivery ratio, which they check against a simulation of
+their own~\cite{cao2021dsrc}. That is the tie of this section, in the setting of this chapter,
+and it was found only when this thesis was audited: the derivation below had been written
+without a search for prior work. Their analysis has no counterpart of the second mechanism,
+the window in which a transmission cannot yet be sensed, which is between a sixth and a half
+of the loss at the crossings found here. What this section adds is that term, a comparison
+with a packet-level simulator at eighteen configurations instead of with a simulation that
+shares the model's assumptions, and predictions written down before their runs. Their fixed
+point was not evaluated at these configurations: it uses the mean number of packets in a
+collision, for which the paper gives no expression.
 
 In this scenario --- broadcast, so no acknowledgement, no retransmission and a contention window
 that never grows --- a frame is lost in exactly two ways.
@@ -493,18 +521,18 @@ found from that configuration's numbers. Agreement with data one has looked at p
 What the model was then asked for were crossings in conditions no run had been made at: the
 contention window doubled, and the $2\%$ and $10\%$ loss levels. There the candidate
 explanations part --- for the per-record frame with the window doubled, the fitted line with its
-slope scaled by $1/W$ gives $53$ neighbours, \Cref{eq:why} gives $43$ and the event model $39$.
+slope scaled by $1/W$ gives $53$ nodes, \Cref{eq:why} gives $43$ and the event model $39$.
 Those predictions were committed before their runs.
 \end{remark}
 
 \paragraph{The predictions held.} All \modelPredCases{} simulated crossings fell inside the
 $\pm 3\%$ registered for them, the worst \modelPredWorst\% from the model's value. With the
-contention window doubled the per-record configuration reaches \modelNsWindowC{} neighbours
+contention window doubled the per-record configuration reaches \modelNsWindowC{} nodes
 where the model said \modelPredWindowC{} and the design \modelNsWindowD{} where it said
 \modelPredWindowD. Doubling the window therefore buys \modelGainC--\modelGainD\% more
 capacity, not twice: a station that counts down for twice as long stays waiting longer, so more stations wait
 together and tie, and the detection window is untouched. A reading of the fitted line as
-``slope $= 1/W$'' would have promised $53$ neighbours. The capacities of this chapter are thus
+``slope $= 1/W$'' would have promised $53$ nodes. The capacities of this chapter are thus
 explained by two named mechanisms and constants of the standard --- within the simulator, and
 within one collision domain.
 
@@ -527,6 +555,7 @@ applied to every configuration.
 \caption{The envelope as previously reported, from the single load ceiling. \textbf{Superseded}
 by \Cref{tab:ladder,tab:capacity}; kept because the comparison is the finding.}
 \label{tab:envelope}
+\begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{lrrrrrr}
 \toprule
 configuration & $\Lambda_i$ & $\Dmax$ & $b$ & $\Nmax$ ($U{<}1$) & $\Nmax$ ($V$ mean) & ($V$ per run) \\
@@ -538,6 +567,7 @@ optimized delta/B & 20 & 250\,ms & 4 & 103 & 213 & 163--201 \\
 A+CBOR            & 20 & 250\,ms & 1 & 32  & 88  & 54--80 \\
 \bottomrule
 \end{tabular}
+\end{adjustbox}
 \end{table}
 
 \begin{figure}[h]
@@ -552,7 +582,7 @@ An earlier experiment had tested half of the assumption behind that ceiling --- 
 depend on frame size --- at $N = 50$ (\Cref{ch:validation}). The other half, that it does not
 depend on $N$, was predicted to hold within $\pm 10\%$ in six configurations, and the prediction
 was committed before the runs. \textbf{It failed.} The lean design crosses near $118$--$124$
-neighbours where the ceiling says $142$; the first format's shared-frame configuration crosses
+nodes where the ceiling says $142$; the first format's shared-frame configuration crosses
 \emph{above} the ceiling's value. The signs differ between configurations, so the ceiling cannot
 be re-tuned. The reason is not subtle in hindsight: $U$ divides the offered load by the
 saturation throughput of $N$ stations, which falls as $N$ grows, while the loss of a lightly

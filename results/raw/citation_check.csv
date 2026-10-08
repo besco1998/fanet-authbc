@@ -1,5 +1,5 @@
 # run=citation_check
-# checked=2026-10-07
+# checked=2026-10-08
 # bib=paper/refs.bib
 key,kind,identifier,registry,authors_bib,authors_registry,authors_match,title_match,year_bib,years_registry,year_match,status,fingerprint
 bianchi2000,doi,10.1109/49.840210,crossref,bianchi,G. Bianchi,1,1.00,2000,2000,1,ok,c1cc699a34bca9c9
@@ -26,16 +26,18 @@ ndss2024pqv2v,doi,10.14722/ndss.2024.24267,crossref,twardokus; bindel; rahbari; 
 etsi_ts103097,document,docs/literature/etsi_ts103097_its_security_header.pdf,,etsi,,,,2015,,,document,6427327c0c8f48ff
 arxiv2510pqsib1,arxiv,2510.23457,arxiv,darzi; rahman; karim; behnia; yavuz; bertino,Saleh Darzi; Mirza Masfiqur Rahman; Imtiaz Karim; Rouzbeh Behnia; Attila A Yavuz; Elisa Bertino,1,1.00,2025,2025/2026,1,ok,4a07c46f252ee571
 almajmaie2026pqfanet,arxiv,2604.18819,arxiv,al majmaie; ghajari; bhatta; amsaad,Sufian Al majmaie; Ghazal Ghajari; Niraj Prasad Bhatta; Fathi Amsaad,1,1.00,2026,2026,1,ok,151b3fef06e1b7dd
+cao2021dsrc,arxiv,2102.07023,arxiv,cao; yin; hu; zhang,Liu Cao; Hao Yin; Jie Hu; Lyutianyang Zhang,1,1.00,2021,2021,1,ok,638886972f372934
 sobati2025fragmentsec,arxiv,2506.01767,arxiv,sobati moghadam,Somayeh Sobati-M,1,1.00,2025,2025,1,ok,b598062fa2a88078
 gundogan2021firmware,doi,10.1145/3460417.3482974,crossref,gundogan; amsuss; schmidt; wahlisch,Cenk Gündoğan; Christian Amsüss; Thomas C. Schmidt; Matthias Wählisch,1,1.00,2021,2021,1,ok,f938fd29f86efec3
 haber1991timestamp,doi,10.1007/BF00196791,crossref,haber; stornetta,Stuart Haber; W. Scott Stornetta,1,1.00,1991,1991,1,ok,ec3644cd968df7e6
 nakamoto2008,document,web: bitcoin.org/bitcoin.pdf,,nakamoto,,,,2008,,,document,a9e5272750a201eb
 mehta2020blockchainuav,doi,10.1016/j.comcom.2020.01.023,crossref,mehta; gupta; tanwar,Parimal Mehta; Rajesh Gupta; Sudeep Tanwar,1,1.00,2020,2020,1,ok,a45a51890092dd71
+rfc9575,doi,10.17487/RFC9575,crossref,card; moskowitz,S. Card; R. Moskowitz,1,1.00,2024,2024,1,ok,66e3fededb3f390a
 rfc8949,doi,10.17487/RFC8949,crossref,bormann; hoffman,C. Bormann; P. Hoffman,1,1.00,2020,2020,1,ok,5fad382a27a7ee3c
 msgpack,document,web: msgpack.org,,furuhashi,,,,2008,,,document,37ad38d154de96a5
 pelkonen2015gorilla,doi,10.14778/2824032.2824078,crossref,pelkonen; franklin; teller; cavallaro; huang; meza; veeraraghavan,Tuomas Pelkonen; Scott Franklin; Justin Teller; Paul Cavallaro; Qi Huang; Justin Meza; Kaushik Veeraraghavan,1,1.00,2015,2015,1,ok,782ef52abf9e1a62
 3gpp_ts22125,document,docs/literature/3gpp_ts22125_v17.6.0_uav_requirements.pdf,,3gpp,,,,2022,,,document,61c2b035dac0bf6b
-px4_mavlink_streams,document,"web: source code, read 2026-07-29",,px4 development team,,,,2026,,,document,63bb8ee146f3f15f
+px4_mavlink_streams,document,"web: source code, read 2026-07-29; read again in release v1.17.0, 2026-10-08",,px4 development team,,,,2026,,,document,63bb8ee146f3f15f
 ardupilot_stream_rates,document,"web: source code, read 2026-07-29",,ardupilot development team,,,,2026,,,document,f7e9bbc021ac98e8
 nsnam,document,"software: ns3/ns-3.48, release notes dated 2026-06-02",,ns 3 consortium,,,,2026,,,document,00d21e4859229200
 semtech_sx1276,document,docs/literature/semtech_sx1276_datasheet_rev4.pdf,,semtech corporation,,,,2015,,,document,1771a87f6a186d79

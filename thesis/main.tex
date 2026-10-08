@@ -1,9 +1,9 @@
 %==============================================================================
 % AUTHBC — PhD/MSc thesis, Mohamed A. Farouk
 %
-% STATUS (2026-08-30). This is a DRAFT SKELETON with the technical core written.
-% Chapter completeness is declared honestly in thesis/STATUS.md — do not present
-% this as a finished thesis. Build:  make thesis
+% STATUS: see thesis/STATUS.md, which says what is drafted, what was audited and what only
+% the candidate can fill in (degree, department, declaration, acknowledgements).
+% Build:  make thesis
 %==============================================================================
 \documentclass[11pt,a4paper,oneside]{report}
 
@@ -11,12 +11,19 @@
 \usepackage[utf8]{inputenc}
 \usepackage{lmodern}
 \usepackage[english]{babel}
-\usepackage[margin=3cm]{geometry}
+\usepackage[margin=3cm,headheight=14.5pt]{geometry}
 \usepackage{amsmath,amssymb,amsthm}
 \usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{longtable}
 \usepackage{array}
+\usepackage{tabularx}
+\usepackage{caption}
+\usepackage{adjustbox}
+\usepackage{enumitem}
+\setlist[description]{style=unboxed}  % a long label may break across lines
+% a ragged-right X column: justified text in a narrow cell overflows it
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
 \usepackage{siunitx}
 \usepackage{xcolor}
 \usepackage[hidelinks]{hyperref}
@@ -28,6 +35,7 @@
 
 \graphicspath{{.}}
 \onehalfspacing
+\emergencystretch=1.5em  % let a tight paragraph stretch before it overflows the margin
 \setlength{\parskip}{0.4em}
 
 \pagestyle{fancy}
@@ -59,7 +67,7 @@
 % `make thesis` copies paper/numbers.tex here; analysis/paper_numbers.py writes it from results/.
 \input{numbers}
 
-% --- an honest-status flag used in draft chapters ----------------------------
+% --- marks what only the candidate can complete (rendered in red) ------------
 \newcommand{\needswork}[1]{\par\noindent\textcolor{red!70!black}{\small$\blacktriangleright$ \textit{#1}}\par}
 
 \title{AUTHBC: Feasibility Boundaries for Authenticated UAV Telemetry}
@@ -86,6 +94,10 @@
 \input{ch10_lowrate}
 \input{ch11_reproducibility}
 \input{ch12_conclusions}
+
+\appendix
+\input{appA_reproduction}
+\input{appB_preregistrations}
 
 \bibliographystyle{IEEEtran}
 \bibliography{refs}

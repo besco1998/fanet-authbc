@@ -3276,3 +3276,153 @@ instrument until that has been shown.
 
 ⚠️ **Scope.** One collision domain, one PHY rate, static nodes, no capture, and two
 implementations of the same standard. The remaining gap is to radios (G4), not to theory.
+
+---
+
+## F63 — the built paper, read whole as an examiner would: twelve defects of presentation (2026-10-08)
+
+*Mohamed: "audit the paper and the thesis and make sure they are strong and complete". Both were
+read from the built PDFs, start to finish, against the kinds of comment the supervisor's review
+had made. This entry is the paper; F64–F67 are the thesis.*
+
+No result of the paper moved. What was found:
+
+| # | defect | fix |
+|---|---|---|
+| 1 | **Four references printed with no identifier** — arXiv preprints rendered as "title, year" (IEEEtran ignores `eprint`) | `howpublished = {arXiv:…}` on every arXiv entry; seven entries in the shared bibliography |
+| 2 | **Table V did not add up:** worst row, total 83.8 ms and margin 16.3 ms of a 100 ms budget. The artifact stores 83.750 and 16.250; each was rounded up | the margin is printed as the budget less the *printed* total (16.2) |
+| 3 | **The generator's records are 50 ms apart and the operating point is 20 ms**, said in two places and explained in none | one sentence in Method; a `step_ms` parameter on the generator (default stream bit-identical, digest pinned) and a test that every lean delta is 9 B at 20 ms as at 50 ms |
+| 4 | **"N neighbours" for N nodes.** The simulation's N is the number of nodes in the collision domain, each hearing N−1; the abstract said "from 124 neighbours" and the CPU ceiling "296 neighbours" (it is 295) | a neighbourhood of N nodes is defined once; counts say "nodes" |
+| 5 | "a 218 B payload every 36 s (0.165 records/s)" — six records in 36 s is 0.167 | the period is printed as 36.4 s |
+| 6 | Table I caption: "(earlier in a flight in parentheses)", but the sender identifier shrinks in the parentheses too | "(sender 0, first frame of a flight, in parentheses)" |
+| 7 | The conclusion said "eight of twelve LoRaWAN data rates" without the band | "of the twelve EU863-870" |
+| 8 | "0.943 … (measured: 0.947 [0.941, 0.952]) — below the target": the interval contains 0.95 | the *expectation* is below the target; the measurement agrees with the expectation |
+| 9 | "occupancy ρ = N f T" where the derivation uses the other N−1 stations | "≈" |
+| 10 | **No prior work was cited for the loss mechanism** of "Why the crossing is there" | F65 |
+| 11 | **The nearest standard was absent** from related work | RFC 9575 (DRIP), one sentence: it pages a 64-octet signature over 25-octet frames with a parity page — the spreading and recovery the scope excludes |
+| 12 | PX4 source cited without a release | "release v1.17.0" |
+
+⚠️ **Left to Mohamed:** the affiliation and the supervisor's name are placeholders; a journal of
+the Elsevier kind will want the AI tool *named* in the declaration; the data-availability
+statement should give a tag (and, at submission, a DOI).
+
+## F64 — the built thesis: statements that were wrong, and statements that had gone stale (2026-10-08)
+
+**Wrong.**
+
+* **T2a's boundary was computed with a 40 B header and printed beside "H_f = 44".** 232.7 B is
+  (1500 − 40 − 64)/6; with the measured header it is 232.0. The low-rate figure, "29.7 B at
+  M = 242", corresponds to no parameters of the thesis: it is 22.3 B. Neither changes a
+  conclusion — every encoding is on the same side of both — but both were typed, and no test
+  held them. They are held now (`TestTheBindingConstraintFigures`).
+* **"Λ_i D_max = 5, hence b = 4"** was never explained. The fill-time ceiling is 5; five records
+  fill in exactly D_max and leave nothing for the channel, so the search admits 4. One paragraph
+  in ch. 4, and ch. 3 now says so where it first uses the number.
+* **"Any batching at all needs Λ_i ≥ 1/D_max"** — it needs more than 2/D_max. At 100 ms that is
+  more than 20 Hz, not 10 (`operating_region.csv`: b = 1 at 10 and 20 Hz, b = 2 at 21).
+* **Theorem "robustness to correlated loss": "with equality only at n = 1".** False for a
+  process that loses the n frames together or not at all. Restated; and "independence is the
+  worst case for D" is now said of bursty processes, of which it is true.
+* **"At M = 576 and M = 1500 freshness binds"** — at 576 B JSON is limited by the frame
+  (`e2_batching.csv`).
+* **"Every reported size is the length of an emitted frame"** (contribution 4, and §3.6): false
+  for the first-format rows and for lean row 7, which the tables themselves mark.
+
+**Stale** — true when written, contradicted by a later chapter of the same thesis.
+
+* ch. 12 limitations: "the keyframe interval is fixed and unoptimised" (ch. 7 varies it);
+  "checked against nothing at the 50 Hz of the operating point" (ch. 7 reports the simulated
+  flight). Future work: "the delta record at 20 ms rests on the generator alone"; "the freshness
+  constraint omits the dominant delay term at high load" (Table 8.6 measures it at under a
+  millisecond on average).
+* ch. 11: the difference between the two traffic sources "is not yet explained" (ch. 8 and the
+  same chapter, two pages on: it did not replicate).
+* ch. 3: "K is fixed and not optimised", of a format that makes it a parameter.
+* ch. 9: the broadcast model as "the load-bearing input to the capacity envelope".
+
+**Cited and nowhere reported.** The conclusions said mobility "was tested and found null". No
+chapter contained the test. It is now §10.4.6, from `lora_mobility.csv` (F37), with every figure
+of its table held by a test.
+
+**Why the paper's gates did not catch these.** The thesis's corrected results are macros; what
+it types was held only where someone had thought to write a guard. A chapter that is corrected
+does not correct the chapters that summarise it — the same class as C6, inside one document.
+
+## F65 — the derivation of F58 had prior work, and nobody had looked (2026-10-08)
+
+The paper and the thesis presented the two loss mechanisms of `docs/02` §6g with no citation.
+A search made for the audit found Cao, Yin, Hu and Zhang (arXiv:2102.07023, 2021): a
+fixed-point model of *periodic* IEEE 802.11p broadcast in a fully connected network with a
+perfect physical layer, in which a packet that finds the medium idle is sent at once, one that
+finds it busy backs off in a fixed window, and collisions arise only among packets that backed
+off. **That is the first mechanism, in this setting.** Read in full; held locally.
+
+What it does not have: the detection window, which is 15–49 % of the loss at our crossings; a
+comparison with a packet-level simulator (theirs is a Monte Carlo simulation of the same
+assumptions); predictions registered in advance. What we do not have: an evaluation of their
+fixed point at our configurations — it uses the mean number of packets in a collision, for which
+the paper gives no expression, so it could not be implemented without a guess.
+
+Both documents now say whose analysis the first mechanism is and what is added.
+
+⚠️ **This is F9 again.** F9 cost the project a novelty claim in July because the broadcast
+model had been rediscovered without a search, and the rule written then was to search before
+deriving. On 2026-10-08 the derivation was written, registered, tested and put into the paper
+in one day, and the search was not made. **A rule that depends on remembering it is not a
+rule.** ⚠️ Not obtained: the earlier analyses that paper cites, and Ma, Chen and Refai (2009) by
+the authors of the broadcast model, who name non-saturated traffic as future work in the 2008
+paper we hold. The publisher's site refuses scripted access. Open item G23.
+
+## F66 — the energy figures: ratios are sound, absolute values were never calibrated (2026-10-08)
+
+Writing the uncertainty budget the thesis had listed as "to add" meant looking for the
+calibration that `hw/RIG.md` and `hw/SETUP.md` prescribe before any measurement. **No
+calibration against a reference load is on file** — not in a result header, not in the logbook.
+
+| source | effect |
+|---|---|
+| sensor gain (shunt, converter) | unquantified; **cancels in every ratio**, including meter-against-model, because the model's power constant was measured with the same sensor |
+| sensor offset | cancels in P_load − P_idle |
+| idle drift between the paired windows | 5–9 mW across a session, about 1 % of the difference |
+| repeatability, five repetitions | half-range 0.6 % and 1.1 % |
+
+So the 51 % saving and the 7.5–12.3 % gap between meter and model stand, the gap being several
+times its uncertainty. The values in microjoules are accurate to the sensor's factory tolerance
+and no better, and the thesis now says that. Open item G22; step 0 of the bench session.
+
+## F67 — the thesis as a document: what was missing, what was added, what still is (2026-10-08)
+
+The thesis built to 100 pages with 21 red markers. Eleven were "STATUS: DRAFTED" boxes at the
+head of chapters; seven were things to add; three are the candidate's.
+
+**Added** (117 pages, 52 references, no layout warning — there had been 17 tables or lines
+running past the margin, two of them clipped):
+
+* ch. 5: a figure of the packages, drawn from the imports; **one lean frame, byte by byte**,
+  cut from an emitted frame by `analysis/worked_frame.py`; what the receiver does to a frame and
+  its eight outcomes; the layers of tests.
+* ch. 6: the telemetry generator; how a capacity is read; primitive timings; the energy rig,
+  the model it is compared with, and the uncertainty of F66.
+* ch. 8: the scheme crossover with its numbers — the answer to RQ3, which had none.
+* ch. 10: mobility (F64).
+* ch. 11: how citations are checked (moved out of the background chapter, where it led);
+  where the chapter sits in the literature on simulation credibility.
+* ch. 12: the five research questions, answered one by one.
+* Appendix A, reproducing the results; **Appendix B, every prediction registered before its
+  data**: thirteen, with commit, prediction and outcome — three failed, one refuted, one not
+  scored, one met by a criterion that could not fail.
+* Front matter: a nomenclature that no longer points at a repository file; abbreviations.
+* The name AUTHBC is defined (it was not — the review's point 6.1, again, in the thesis).
+
+**Still missing, and not something an agent can supply.**
+
+* Degree, department, declaration, the statement on generative AI, acknowledgements.
+* ⚠️ **Two gaps of reading remain in ch. 2**, now stated in ordinary prose and not in red: the
+  four aggregate-signature schemes are known through one paper's table, and no general FANET
+  survey is held beyond the swarm-communication review. Fifty-two references is still few for a
+  thesis; every one was read.
+* Kurkowski et al. 2005 is cited in the methods paper through another paper and is not cited in
+  the thesis.
+* Superseded figures (the first-reported configuration, the old envelope, the first per-frame
+  chaining figure) are in the results chapters with captions that say so. Whether they belong
+  in an appendix is a choice of style for Mohamed and his supervisor.

@@ -1,9 +1,10 @@
 \chapter{Experimental Methodology}\label{ch:methodology}
 
-\needswork{STATUS: DRAFTED from \texttt{docs/04}. The statistical rules below are binding on every
-result in \Cref{ch:bytes}--\Cref{ch:lowrate}.}
+This chapter states how every result of \Cref{ch:bytes}--\Cref{ch:lowrate} was obtained: the
+statistical rules, the telemetry the measurements run on, the two simulation scenarios, and the
+hardware with its uncertainty.
 
-\section{Binding statistical rules}
+\section{Binding statistical rules}\label{sec:rules}
 
 Every experiment obeys the following, and where a result predates a rule that is recorded rather
 than retrofitted:
@@ -50,16 +51,17 @@ data exist}, as its own commit, so the ordering is third-party checkable in the 
 This practice is enforced rather than aspirational, and it has cost the project a claim: one
 pre-registration assertion was \emph{withdrawn} rather than reconstructed, because writing an
 expectations file after results are known manufactures evidence. It has also exposed a subtler
-defect in this author's own practice, recorded in \Cref{ch:validation}: a pre-registered
+defect in this work's own practice, recorded in \Cref{ch:validation}: a pre-registered
 \emph{directional} prediction that the experiment had no statistical power to resolve.
 
-\needswork{TO ADD: a table of every pre-registration in the project with its commit hash, the
-prediction, and the outcome. The material exists in \texttt{docs/}; the table does not.}
+\Cref{app:prereg} lists every registration with its commit, what it predicted and what
+happened. Of its thirteen entries, four failed in whole or in part, one could not be scored and
+one was met by a criterion that could not have failed; they are in the table with the rest.
 
 \section{Experiment matrix}
 
-\begin{center}
-\begin{tabular}{lll}
+{\small
+\noindent\begin{tabularx}{\textwidth}{@{}l Y Y@{}}
 \toprule
 Exp & Question & Primary output \\
 \midrule
@@ -84,12 +86,34 @@ E17 & classical stream-signing schemes (model only) & authenticator bytes, frame
 --- & direct search for $\Nmax$ (simulation) & delivery against $N$, bootstrap interval \\
 --- & record sizes on public flight logs & keyframe and delta sizes against the generator \\
 \bottomrule
-\end{tabular}
-\end{center}
+\end{tabularx}
+}
 
 Baselines in E1--E8 are A+JSON (naive), A+CBOR (compression-only) and D over-aggregated. From E11
 on the comparison is a ladder in which each rung changes one thing, because A+CBOR signs every
 record \emph{and} sends one record per frame and so confounds two effects.
+
+\section{Telemetry}\label{sec:telemetry}
+
+A record holds nine integers: a millisecond timestamp; latitude and longitude in units of
+$10^{-7}$ degree; altitude in centimetres; three velocity components in centimetres per second;
+battery level in percent; and a flight mode. Integers and not floating point, because a
+canonical encoding must give the same bytes on every platform.
+
+Records come from a seeded generator. A vehicle starts at a random position with a horizontal
+speed of up to $5$\,m/s in each axis; at every step its velocity changes by at most
+$0.1$\,m/s per axis, its position integrates that velocity with a jitter of two units, its
+battery falls by one percent with probability $0.02$ and its mode changes with probability
+$0.01$; the timestamp advances by $50 \pm 3$\,ms. Every size in this thesis that is not
+marked otherwise is measured over thirty seeds of one thousand such records.
+
+Two properties of the generator limit what its sizes mean, and both are checked.
+\emph{Its records are $50$\,ms apart}, the spacing of the $20$~records/s operating point it
+was written for, while the adopted point is $50$~records/s. For the lean format that changes
+nothing: the delta record is already at the floor of the format at $50$\,ms, nine bytes for
+nine fields, and it is the same nine bytes when the generator is run at $20$\,ms
+(\Cref{sec:e6}). \emph{It is synthetic.} \Cref{sec:e6} sets it against twelve public flight
+logs at the spacing those logs allow, and against an autopilot run in simulation at $20$\,ms.
 
 \section{Simulation campaign}
 
@@ -102,20 +126,124 @@ read at the receivers. The capacities of \Cref{ch:codesign} come from the second
 instant redrawn in every period for the reasons given in \Cref{sec:capacity}. Transport is a packet socket rather than a flow monitor, because MAC-level
 goodput with no addressing artifacts is what the models predict.
 
+\paragraph{How a capacity is read.} A configuration is a frame size and a frame rate per node.
+It is simulated over a grid of neighbourhood sizes $N$, thirty seeds per point, twenty seconds
+per run, and the delivered fraction of a run is the number of frames received over the number
+sent times $N-1$. $\Nmax$ is the largest simulated $N$ whose mean delivered fraction is at
+least $0.95$ with every smaller simulated $N$ also passing. Its interval is the $2.5$--$97.5$
+percentile of that quantity over ten thousand bootstrap resamples of the seeds. A second reading
+is given beside it wherever the two differ: the largest $N$ at which at least $95\%$ of the
+individual runs reach $0.95$.
+
 \begin{remark}[The comparison rule]
 Each mode is compared \emph{only} to its matching analytic variant: unicast to the acknowledged DCF
 model, broadcast to the published broadcast model. Mixing them is the single most effective way to
 fabricate a model gap, and this project did exactly that for several phases before catching it.
 \end{remark}
 
-\section{Hardware campaign}
+\section{Hardware campaign}\label{sec:hardware-method}
 
-Two Raspberry Pi 4 units, headless with the performance governor pinned. Timings are re-run from
-the microbenchmark suite; energy uses external current sensors on a separate measurement host with
-a GPIO synchronisation line, so the benchmarked device is not instrumented by itself.
+\subsection{Boards and timing}
 
-The energy harness prints its \emph{predicted} value before reading the meter, deliberately, so a
+The measured platform is the Raspberry~Pi~4 (Cortex-A72), run headless with its frequency
+governor pinned to \texttt{performance}. Each primitive is timed by the rules of
+\Cref{sec:rules}; \Cref{tab:timings} gives the medians used throughout. The ordering of the two
+$64$\,B schemes differs between this board and a desktop processor, which is why the timings
+of the deployment platform are the ones used.
+
+\begin{table}[h]
+\centering
+\caption{Primitive timings on the Raspberry~Pi~4, medians.}
+\label{tab:timings}
+\begin{tabular}{lrr}
+\toprule
+ & sign & verify \\
+\midrule
+Ed25519 & \tSignEd\,\si{\micro\second} & \tVerEd\,\si{\micro\second} \\
+ECDSA P-256 & \tSignEc\,\si{\micro\second} & \tVerEc\,\si{\micro\second} \\
+BLS12-381 & \tSignBls\,ms & \tVerBls\,ms \\
+\midrule
+SHA-256 of one record & \multicolumn{2}{r}{\tHash\,\si{\micro\second}} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{The energy rig}
+
+Energy is measured outside the board. An INA219 current and voltage sensor with a
+$0.1\,\Omega$ shunt sits in the board's $5$\,V supply and is read fifty times a second by a
+microcontroller, which has no operating system to perturb the schedule and adds no load to the
+device under test. The board marks the start and end of each measurement window on a GPIO line
+that the microcontroller records with every sample, so the samples that belong to a window are
+known without aligning two clocks.
+
+A measurement is a pair of sixty-second windows: one idle, one in which the board runs the
+operation in a tight loop and counts its completions $n$. With $\bar P$ the mean power of a
+window,
+\[
+E_{\mathrm{op}} = \frac{(\bar P_{\mathrm{load}} - \bar P_{\mathrm{idle}})\; t_{\mathrm{load}}}{n} .
+\]
+Each configuration is measured five times and the median is reported with the range. The board
+is checked for thermal throttling before and after every window and a flagged window is not
+used. The harness prints the value it \emph{expects} before it reads the meter, so that a
 measurement cannot be quietly fitted to expectation.
 
-\needswork{TO ADD: the measurement uncertainty budget for the energy rig. The residual model gap is
-stated in \Cref{ch:validation} but its error bars are not derived.}
+\subsection{The model the meter is compared with}
+
+The model composes separately measured times with two measured powers: $P_c = 0.749$\,W, the
+incremental power of the processor while it computes, and $P_r = 0.218$\,W, that of the radio
+while it receives. Per record, for one signature over a frame of $b$ records,
+\[
+E = \underbrace{P_c\Bigl(t_{\mathrm{enc}} + t_h + \frac{t_{\mathrm{sg}}}{b}\Bigr)}_{\text{sender}}
+  + \underbrace{P_c\Bigl(\frac{t_v}{b} + t_h\Bigr) + P_r\,\frac{T_{\mathrm{air}}}{b}}_{\text{receiver}} ,
+\]
+with $t_{\mathrm{enc}}$ the time to encode a record, $t_h$ to hash it, $t_{\mathrm{sg}}$ and
+$t_v$ to sign and verify, and $T_{\mathrm{air}}$ the airtime of the frame. Only the sender's
+term is metered (\Cref{tab:energy}). The model reached this form through two corrections that
+the meter forced. It had no hashing term, although every record is hashed once by the sender to
+extend the chain and once by the receiver to check it. And its processor power had been taken
+as the median over isolated primitives, $0.634$\,W; metered on four composed pipelines the
+power is $0.749$\,W, the four agreeing within $3.8\%$, so one constant is adequate; the
+composed value is $18\%$ above the earlier one.
+
+\subsection{Uncertainty of the energy figures}\label{sec:energy-uncertainty}
+
+{\small
+\noindent\begin{tabularx}{\textwidth}{@{}p{3.4cm} Y >{\raggedright\arraybackslash}p{4.6cm}@{}}
+\toprule
+source & how it enters & size \\
+\midrule
+sensor gain (shunt, converter) & multiplies every power reading & not calibrated against a
+reference load; cancels in every ratio \\
+sensor offset & adds to every power reading & cancels in
+$\bar P_{\mathrm{load}} - \bar P_{\mathrm{idle}}$ \\
+idle drift & the idle window is not simultaneous with the load window & idle power moved by
+$5$--$9$\,mW across a session, about $1\%$ of the difference \\
+repeatability & five repetitions per configuration & half-range $0.6\%$ and $1.1\%$ \\
+sampling & three thousand samples per window & small against the two above \\
+time and count & a monotonic clock and an exact count & negligible \\
+\bottomrule
+\end{tabularx}
+}
+
+\vspace{0.5em}
+\noindent Three consequences follow. The \emph{ratios} this thesis reports --- the batched
+sender against the per-record one, and the meter against the model --- do not depend on the
+sensor's gain, because the model's power constant was measured with the same sensor: they carry
+about one percent, from drift and repeatability. The gap between meter and model, $7.5$ to
+$12.3\%$, is therefore several times the uncertainty of its measurement and is a property of the
+prototype (\Cref{ch:codesign}). The \emph{absolute} values in microjoules carry the sensor's
+gain error in addition, and that was not measured: the calibration against a known load that
+the procedure prescribes was not recorded for these runs. They should be read as accurate to
+the sensor's factory tolerance and no better.
+
+One configuration is not reported. In three of its five repetitions the idle window read up to
+$0.5$\,W above the others --- a background process on the board --- which makes the difference
+meaningless. It is listed as unusable and is to be measured again.
+
+\subsection{Two radios}
+
+Two boards in ad hoc mode on a $5$\,GHz channel, one sending broadcast frames and one counting
+them, measure two things the models take as given: the time a frame occupies the channel, and
+the loss of a link with no contention. With a single transmitter there is no contention to
+measure; \Cref{ch:validation} reports what the experiment does and does not support.

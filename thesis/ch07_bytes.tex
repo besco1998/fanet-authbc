@@ -1,8 +1,5 @@
 \chapter{Results I --- Bytes, Placement and Loss}\label{ch:bytes}
 
-\needswork{STATUS: DRAFTED. Every number here is reproduced from a committed artifact by an
-automated gate; figures are regenerated from frozen data.}
-
 \section{E1 --- authentication dominates after compression}
 
 Thirty seeds of one thousand seeded telemetry records per encoding, inline placement, $\ga = 64$\,B.
@@ -18,7 +15,7 @@ encoding & mean bytes & $\varphi$ at $\ga{=}64$ & role \\
 JSON        & 191.09 & 25.1\% & naive baseline \\
 CBOR        & 66.25  & 49.1\% & compression-only baseline \\
 MessagePack & 65.16  & 49.6\% & --- \\
-\textbf{delta-CBOR} & \textbf{45.00} & \textbf{58.7\%} & the co-design optimum \\
+\textbf{delta-CBOR} & \textbf{45.00} & \textbf{58.7\%} & smallest; the encoding the design uses \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -58,8 +55,9 @@ the baseline and leaves the optimum alone, so the reported saving is the pessimi
 
 Sweeping placement A against B across encodings and MTU budgets confirms \Cref{prop:t2}
 qualitatively and \Cref{thm:t2a} quantitatively. At $M = 256$ the MTU binds and amplification is
-operative; at $M = 576$ and $M = 1500$ freshness binds and the marginal value of compression is
-$1.0000$ to twelve decimal places.
+operative. At $M = 1500$ freshness binds for every encoding, and at $M = 576$ for the three
+binary ones (JSON at $191$\,B is still limited by the frame there); where freshness binds the
+marginal value of compression is $1.0000$ to twelve decimal places.
 
 \textbf{The practical consequence.} On 802.11 the amplification law that motivates aggressive
 compression is never operative. Compression still pays --- it pays exactly $1\times$.
@@ -148,9 +146,9 @@ frame of the lean format is lost with probability $p$, and each frame is then lo
 length.
 
 On a channel that loses $5\%$ of one-record frames, the design's frame is lost with probability
-\lossBerP, and \lossBerTh{} of its records are expected to verify (measured:
-\lossBerV~\lossBerCi). \textbf{That is below the target the design meets at equal frame
-loss.} It reaches $0.95$ only while one-record frames are lost at most \lossBerPmax{} of the
+\lossBerP, and \lossBerTh{} of its records are expected to verify. \textbf{That is below the target the
+design meets at equal frame loss}; the measurement, \lossBerV~\lossBerCi, agrees with the
+expectation and does not by itself separate it from the target. It reaches $0.95$ only while one-record frames are lost at most \lossBerPmax{} of the
 time. The loss budget $p = \varepsilon$ had no margin (\Cref{ch:theory}); under this reading
 the batch spends margin it does not have. The byte and capacity comparisons of
 \Cref{ch:codesign} are at equal frame loss and carry this qualification.
@@ -173,7 +171,11 @@ lean delta record (B) & \deltaLean & \deltaLeanTenth & \deltaLeanOne & \deltaLea
 \end{tabular}
 \end{center}
 
-At the 50\,Hz of the 802.11 arm the smallest value applies. On the low-rate arm records are
+The generator's records are 50\,ms apart, the spacing of the 20~records/s point it was written
+for. At the 20\,ms of the adopted 50~records/s point the delta record is the same \deltaLean\,B
+--- it is already at the floor of the format, one byte per field, and a test in the repository
+runs the generator at 20\,ms to confirm it --- so the smallest value applies on the 802.11 arm.
+On the low-rate arm records are
 seconds apart, and using the 50\,ms figure there overstated what a frame could carry
 (\Cref{sec:perframe}).
 
@@ -197,8 +199,8 @@ batch that freshness allows at the adopted operating point.}
 \end{figure}
 
 \paragraph{The generator's delta is the floor of the format.} Every one of 29\,970 delta records
-at 50\,ms spacing is exactly \deltaLean\,B: nine fields, one byte each. A reviewer called that out
-as looking synthetic, and it is. To find out whether it matters, the same encoder was run over
+at 50\,ms spacing is exactly \deltaLean\,B: nine fields, one byte each. That looks synthetic,
+and it is. To find out whether it matters, the same encoder was run over
 twelve public PX4 flight logs --- four quadrotors, two hexa- or octorotors, three fixed wings and
 three VTOLs, \pxRecords{} in-flight records --- chosen by a rule committed before any log was
 opened.

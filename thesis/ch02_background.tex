@@ -1,27 +1,11 @@
 \chapter{Background and Related Work}\label{ch:background}
 
-\needswork{STATUS: DRAFTED (October 2026) from the sources that are held and have been read.
-Two gaps are marked where they occur and are gaps of \emph{reading}, not of writing: the
-aggregate-signature schemes compared in \Cref{sec:bg-batch} are known here through one paper's
-table, and no general FANET survey is held beyond the swarm-communication review cited below.}
-
-\section{How citations are checked in this thesis}
-
-No figure or number is quoted from a source that has not been read in full, and where a source
-establishes prior art for something this thesis might otherwise have claimed as novel, that is
-said explicitly. Every bibliography entry is compared by a script with its Crossref, DataCite or
-arXiv record --- family names in order, initials, title and year --- and an entry with no
-registry record must name the held document it was checked against.
-
-Those rules exist because each was broken once. An early finding claimed this work was the
-\emph{more optimistic} of two LoRa capacity models; it was drawn from the wrong figure of a paper
-that reported pure-ALOHA results beside LoRa results, and was retracted: \textbf{quoting the
-paper is not enough --- quote the figure}. And until October 2026 this section said that every
-reference had been confirmed against its Crossref record, while four entries carried wrong
-metadata and one paper was cited under the authors of a different one. The confirmation had
-checked that each DOI resolved; it had not compared the author list. \textbf{A claim that
-citations were checked belongs in a check that runs}, which is why the sentence is gone and the
-script exists (\Cref{ch:reproducibility}).
+This chapter places the work: the networks and the telemetry it concerns, what a hash chain
+and a signature each provide, how messages are authenticated in practice and in the
+stream-signing literature, how batching and aggregation differ, and the channel models the
+evaluation rests on. Every source cited was read in full; where a figure reaches this thesis
+through another paper, that is said at the point of use, and \Cref{sec:citations} describes how
+the bibliography is checked.
 
 \section{Flying ad-hoc networks and UAV telemetry}
 
@@ -138,9 +122,8 @@ self-batching and BLS worthwhile only for cross-signer relay traffic.
 
 Independent work on UAV swarms adopts precisely the design this thesis treats as its naive
 baseline: Rotta and Mykytyn attach a HMAC-256 signature with a timestamp to \emph{each} broadcast
-telemetry message, and observe that MAVLink telemetry messages are much smaller than
-$256$\,bytes~\cite{rotta2024telemetrybroadcast} --- corroborating both the premise and the baseline
-from outside this work. Their construction is a symmetric MAC under a group key, so it provides
+telemetry message~\cite{rotta2024telemetrybroadcast} --- corroborating the baseline from outside
+this work. Their construction is a symmetric MAC under a group key, so it provides
 integrity and group authenticity but \emph{not} non-repudiation, and therefore cannot underwrite a
 ledger attributable to a specific UAV. That is a different trust model, not a cheaper solution to
 this one.
@@ -178,12 +161,26 @@ learned late: a unit that depends on its predecessor inherits its predecessor's 
 (\Cref{thm:t3prime}). \Cref{sec:stream} places each of these schemes at this thesis's operating
 point, by authenticator bytes and by frames per second.
 
-\subsection{Hash-linked records}
+\subsection{A standard that faces the same disproportion}\label{sec:bg-drip}
 
-Linking each record to the hash of its predecessor to make a sequence tamper-evident is due to
-Haber and Stornetta~\cite{haber1991timestamp} and is the chain in every blockchain. The LoRaWAN
-link layer whose payload limits bound \Cref{ch:lowrate} is specified
-in~\cite{lorawan_ts001,lora_rp002}.
+Broadcast Remote ID is the nearest standardised case of a signature that does not fit its
+frame. Over Bluetooth~4 a Remote ID frame carries 25 octets, and the IETF's authentication
+formats for it use a 64-octet signature~\cite{rfc9575}. The standard resolves the mismatch in
+the two ways this thesis sets aside. It \emph{pages} an authentication message over several
+frames, 23 octets of it to a page and at most nine pages of signed content, and adds one parity
+page from which a single lost page can be rebuilt. And it \emph{defers}: a signed manifest
+carries short hashes of up to eleven messages already sent, with the hash of the previous
+manifest among them, so that a stream is authenticated after the fact for less than its own
+size again in overhead, and the manifests form a chain.
+
+Both choices suit their setting. Remote ID messages are sent about once a second to observers
+on the ground, a signed unit a few seconds late is still useful, and one parity page is cheap
+insurance. They are also exactly the relaxations under which the exclusion of
+\Cref{ch:lowrate} does not hold: a signed unit spread over frames, and recovery from loss.
+The difference in regime is the point. At fifty records a second under a deadline of a tenth of
+a second there is no time in which to collect nine pages, and a record that is verified only
+when a later manifest arrives is, for that deadline, a record not yet verified.
+
 
 \subsection{Certificates}
 
@@ -232,10 +229,6 @@ and to a malicious key-generation centre, and repair it~\cite{li2025clas}. That 
 literature's centre of gravity: constructions, attacks on them and proofs, with communication
 cost reported as a per-message size and never as what a channel can then carry.
 
-\needswork{A gap of reading, stated: the four schemes compared in~\cite{li2025clas} are known
-here only through that paper's table and were not read at source. A fuller treatment of their
-security models needs those papers.}
-
 \section{Compact serialisation and delta coding}
 
 CBOR~\cite{rfc8949} and MessagePack~\cite{msgpack} give compact binary encodings. Delta coding of
@@ -259,6 +252,16 @@ model~\cite{machen2007,machen2008} accounts for the backoff-counter Consecutive 
 which dominates when the contention window is small relative to the station count. Tinnirello,
 Bianchi and Xiao~\cite{tinnirello2010} supply the anomalous-slot refinement that explains a
 residual small-frame bias observed in \Cref{ch:validation}.
+
+Both are models of a saturated channel, in which every station always has a frame to send, and
+Ma and Chen name non-saturated traffic as future work~\cite{machen2008}. The capacities of this
+thesis lie well below saturation: each node offers one frame per period and the question is
+how many of them are lost. For that regime the nearest analysis found is of periodic vehicular
+safety broadcast: Cao \emph{et al.} model IEEE 802.11p in a fully connected network, with a
+packet sent at once if it finds the medium idle and after a backoff in a fixed window if it
+does not, and obtain the delivery ratio from a fixed point~\cite{cao2021dsrc}.
+\Cref{sec:why} builds on the same mechanism and adds a second. The earlier analyses that
+paper cites were not obtained, so no account of that literature beyond it is offered here.
 
 \section{LoRa and LoRaWAN capacity}
 
@@ -293,9 +296,3 @@ than empirical, so unlike a performance figure it does not move as models or har
 does move with the authenticator --- a $48$\,B signature or a $13$\,B tag fits where a $64$\,B
 signature does not --- and \Cref{ch:lowrate} gives the matrix. It is invisible to the byte
 models the literature optimises against.
-
-\needswork{The bibliography holds every source that is held and has been \emph{read}, and stops
-there deliberately. Reaching a higher count requires a genuine sourcing pass --- find, download,
-read, then cite. Padding the list would be the same defect this project spent its audit
-removing. The reading most worth doing next: a general FANET survey; the four aggregate-signature
-schemes named above; and the stream-signing schemes' successors.}

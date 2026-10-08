@@ -1,0 +1,66 @@
+\chapter{Predictions Registered Before Their Data}\label{app:prereg}
+
+Where a run tests a prediction, the prediction was committed to the repository before the data
+existed, as a commit of its own. The table lists every such registration: the commit that holds
+it, what it said, and what happened. Commits are those of the public repository history; each
+registration is an ancestor of the commit that holds its data, which a reader can check with
+\texttt{git log}.
+
+{\small
+\begin{longtable}{@{}p{2.0cm} >{\raggedright\arraybackslash}p{5.8cm} >{\raggedright\arraybackslash}p{6.0cm}@{}}
+\toprule
+commit, date & what was registered & outcome \\
+\midrule
+\endfirsthead
+\toprule
+commit, date & what was registered & outcome \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{3354ec1} 3~Jul & success criterion: at least $40\%$ fewer authentication bytes than
+the compression-only baseline at $V \geq 0.95$ & met ($75\%$) --- and it could not have failed:
+the quantity is $1 - 1/b$ (\Cref{ch:reproducibility}) \\
+\texttt{eb3eda5} 7~Aug & survey protocol: fewer than $25\%$ of ns-3 LoRa papers report
+replication information & $21.7\%$, interval $[7.5, 43.7]\%$ at $n = 23$: contains the
+threshold; no claim made \\
+\texttt{ca8fd1c} 7~Aug & at DR6: six records per frame, half the airtime, $\Nmax$ unchanged at
+three & batch and airtime confirmed; $\Nmax$ derived, not simulated --- the simulator has no
+bandwidth dimension --- and not claimed as confirmed \\
+\texttt{84adb92} 28~Aug & the utilisation crossing at a $174$\,B frame lies in $2.1$--$2.8$; it
+drifts higher than at $288$\,B & $2.367$: held. Direction: lower, at $0.45\sigma$ --- the run had
+no power to resolve a sign (\Cref{ch:validation}) \\
+\texttt{6f82599} 6~Oct & directly simulated $\Nmax$ within $\pm 10\%$ of the single ceiling, six
+configurations & \textbf{failed}: $-16.7\%$ and $+11.7\%$ in two of six \\
+\texttt{47ebbbb} 6~Oct & freezing the senders' phases moves the mean by less than $0.005$;
+a jitter of $1$\,ms halves the spread between runs & mean: held. Spread: halved at two test
+points of four --- \textbf{failed} \\
+\texttt{47ebbbb} 6~Oct & seven configurations not yet simulated lie within $\pm 6\%$ of the
+airtime line (slope fixed in \texttt{fad28e0}, before any of the seven was run) & held: all
+within $\lineWorst\%$ \\
+\texttt{fbcb646} 6~Oct & sweeping every pair of nodes through all phases gives the same mean and
+a spread under $0.004$ & mean: held. Spread $0.003$--$0.006$ --- \textbf{failed} \\
+\texttt{e4e3cdf} 6~Oct & on public flight logs chosen by a fixed rule: mean delta record at most
+$13$\,B and saving at least $68\%$ at $0.1$\,s; keyframe $22$--$25$\,B & the logs carry $5$\,Hz:
+applied at $0.2$\,s, held ($\pxDelta$\,B, $\pxSave\%$); untested at $0.1$\,s; keyframe
+$21.98$\,B, under by $0.02$\,B \\
+\texttt{f72db7f} 7~Oct & five one-record frames of the stream-signing schemes within $\pm 6\%$ of
+the line & held: $\lineStreamLeast$--$\lineStreamWorst\%$ above it \\
+\texttt{a65ad6c} 8~Oct & on unused seeds the difference between the two traffic sources does not
+replicate ($z < 2$) & held: $\srcFreshD \pm \srcFreshSe$. A second claim registered with it ---
+that the crossing rule reads low on a noisy curve --- was \textbf{refuted} \\
+\texttt{dbe4ee9} 8~Oct & one simulated PX4 flight: five ranges for record sizes; mean and standard
+deviation of the 50\,Hz stream's period & four ranges held; the $0.2$\,s range missed by
+$0.04$\,B; mean period held; standard deviation \textbf{not scored} (the host's clock was
+stepped) \\
+\texttt{9e9c096} 8~Oct & six crossings in conditions never simulated --- contention window
+doubled; $2\%$ and $10\%$ loss --- within $\pm 3\%$ of the access-rule model & held: all
+\modelPredCases, worst $\modelPredWorst\%$ \\
+\end{longtable}
+}
+
+\noindent All dates are 2026. Two entries of the project's history are absent on purpose. A
+prediction for the first hardware loss measurement was stated before the measurement and is
+what exposed the basic-rate artifact of \Cref{ch:validation}, but it was not a commit of its
+own. And one early assertion that a result had been pre-registered was withdrawn, not
+reconstructed, because its expectation had been written after the data.
