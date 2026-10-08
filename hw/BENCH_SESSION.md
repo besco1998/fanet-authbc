@@ -38,6 +38,14 @@ Python receiver on one core falls behind long before 124 neighbours. The paper s
 2026-10-08, that decoding in the prototype is not charged; step 1 turns that sentence into a
 number.
 
+## What the agent can run without you (2026-10-09)
+
+The radio measurements of August were driven from the PC over the network. If the boards are
+**switched on and reachable** (`ssh pi@<address>` works from WSL), the agent can run steps 1,
+4 and 5 below, and the **contention experiment** (`docs/CONTENTION_HW_EXPECTATIONS.md`, open
+item G4) — two Pi 4 are enough for its sharpest case, the Pi 3B+ makes three. Tell it the
+addresses. Steps 0, 2 and 3 need the meter wired to the PC, and that needs your hands.
+
 ## Before you start
 
 * Boards: **Pi 4 (`authbc-pi4a`)** on the energy rig; the **Pi 3B+**; one **BeagleBone Black**

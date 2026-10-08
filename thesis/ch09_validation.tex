@@ -84,6 +84,19 @@ not protect against it --- the standard deviation across windows was small. \emp
 reproducible measurement of the wrong thing looks exactly like a good measurement.}
 \end{remark}
 
+\paragraph{The contention experiment, registered and not yet run.} What two or three boards
+\emph{can} test is the mechanism the capacities are made of: the loss among stations that all
+send, at a known offered load. The experiment is prepared --- every board sends one frame per
+period at a redrawn instant and counts what it receives from each of the others --- and the
+model of \Cref{sec:why} has been asked for its predictions in advance: with two boards filling
+half, seven tenths and $85\%$ of the medium, losses of $0.29$, $0.64$ and $1.40\%$; with three,
+$0.66$, $1.52$ and $3.00\%$ (\Cref{app:prereg}). The two-board case is the sharp one, since
+the only receiver of a frame is the other transmitter and no third radio can capture one of
+two colliding frames. ns-3 was run at the same points first: it agrees with the model within
+$5\%$ at three to five nodes and is $9$--$18\%$ below it at two, a small bias of the model at
+the smallest network that nothing so small had exposed. Until the boards are run, every
+capacity in this thesis remains a simulated one.
+
 \section{The utilisation ceiling, and a flaw in the author's own pre-registration}
 
 The capacity envelope applies one measured utilisation ceiling to configurations whose frames span

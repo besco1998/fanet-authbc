@@ -3426,3 +3426,88 @@ running past the margin, two of them clipped):
 * Superseded figures (the first-reported configuration, the old envelope, the first per-frame
   chaining figure) are in the results chapters with captions that say so. Whether they belong
   in an appendix is a choice of style for Mohamed and his supervisor.
+
+---
+
+## F68 — "the cost of n messages is n times the cost of one" was true of one link only (2026-10-09)
+
+*Mohamed: "solve all the issues and contradictions". One of the open items was that four
+aggregate-signature schemes were known only through another paper's table. One of the four was
+obtainable (Wang et al., IEEE Access 2022) and was read; reading it corrected a claim.*
+
+Both documents said of the certificateless aggregate schemes that the cost of n messages is n
+times the cost of one, and that aggregation "compresses the verifier's work, not the wire".
+In Wang et al. a vehicle signs, a roadside unit aggregates and a traffic management centre
+verifies; a single signature is three 128 B group elements and a 4 B timestamp, **388 B**, and
+the aggregate of n is 3 × 128 + 4n, **784 B for a hundred**. So:
+
+| link | what it carries for n messages |
+|---|---|
+| each signer to the aggregator | n full messages, each with its own identity, key and signature components — the 583–859 B per message of Li et al.'s table |
+| the aggregator onward | one compact aggregate |
+
+The claim holds on the first link and not on the second. It was written from a table that
+counts the first, and stated as if it covered both. The paper and the thesis now say which
+link each mechanism acts on — which is the thesis's own distinction between placements B
+(a sender batches its own records) and C (an intermediary aggregates across senders). A FANET
+in which each node broadcasts its own state has the first link and no aggregator on it, so the
+comparison the paper draws is unchanged; the sentence that stated it was too wide.
+
+⚠️ Li et al.'s 859 B for this scheme is *their* accounting of a whole message with a 67 B
+payload. Wang et al. do not state that number. The paper's table footnote now says "total per
+message as reported in" and no longer says the schemes were not read at source without saying
+which.
+
+## F69 — one period of jitter, as the driver passed it, could exceed one period (2026-10-09)
+
+The ns-3 scenario refuses a send jitter above one period, comparing `txJitterMs * 1e-3` with
+`1.0 / framesPerSec`. The driver passed 1000/fps. At 116 frames per second the two sides round
+differently and the jitter exceeds the period by one unit in the last place: ns-3 aborted with
+SIGABRT on the first run of a cross-check. No stored result is affected — the guard stops a
+run, it does not alter one, and every rate used before passes it unchanged (a test holds that
+for each registered cell). `run_nmax_direct.one_period_ms` now steps the value down until the
+guard accepts it.
+
+*Why it had never happened:* 5, 12.5, 20, 50 and 50.5 frames per second all pass by chance of
+representation. The first rate chosen for another reason found it.
+
+## F70 — contention on radios: registered, cross-checked, and not runnable from here (2026-10-09)
+
+Every capacity is simulated (G4). No board and no meter was reachable on 2026-10-09, so the
+measurement could not be made. What could be done was to leave nothing but the measurement:
+
+* **The experiment is registered** in its own commit, `456a4e7`, with no data:
+  `docs/CONTENTION_HW_EXPECTATIONS.md`. N boards in one ad-hoc cell, every one sending and
+  receiving, one 1400 B frame per period at a redrawn instant, three loads. Twelve predictions
+  from the access-rule model for two to five boards.
+* **The two-board case is the sharp one.** The only receiver is the other transmitter, so no
+  third radio can capture one of two colliding frames: it tests the access rule and nothing
+  else. Band 0.6–1.4 times the model's loss; 0.3–1.4 with more boards.
+* **The model was cross-checked where it had never been run.** It had been compared with ns-3
+  at 28 nodes and above. At three to five nodes the two agree within 5 %. ⚠️ **At two nodes the
+  model is 9–18 % above ns-3** — a small bias of the event model at the smallest network. It is
+  inside the registered band and is stated in the registration.
+* **The kit:** `bcast_tx.py --redraw`, `bcast_rx.py` counting per sender,
+  `run_adhoc_contention.sh` (the proven sweep script with every node doing both jobs; ⚠️ not
+  run on hardware, it has a probe mode), `analysis/contention_hw.py` to predict, print the
+  commands, reduce and score.
+
+Why redrawn send instants on hardware too: two boards' clocks differ by parts per million, so
+strictly periodic senders would hold nearly one relative phase for a whole 25 s window — F51,
+on a bench.
+
+## F71 — what "solve all the issues" closed, and what it could not (2026-10-09)
+
+| item from the audit of 2026-10-08 | state |
+|---|---|
+| superseded figures among the current results | **closed** — thesis Appendix C holds the three figures and the old envelope table, with what was wrong with each; the chapters point to it |
+| no general FANET survey held (G24) | **closed** — Gupta, Jain & Vaszkun (IEEE COMST 2016) read in the parts that bear on this work and cited in ch. 2; the register says which parts |
+| four aggregate-signature schemes known through one table (G24) | **one of four read at source** (F68). Two more are open access and their publishers refuse scripted download; one is closed access |
+| older analyses of non-saturated broadcast (G23) | **not obtained.** Ma, Chen & Refai 2009 is CC BY but served only behind a script challenge by its publisher and by the public aggregator; two others are closed access. Not worked around |
+| Kurkowski et al. 2005 (G8) | **not obtained** — closed access, no open copy indexed |
+| worked examples for the theory chapter | **closed** — T2 and T4, each a row of an artifact, held by tests |
+| contention on radios (G4) | **prepared, not measured** (F70) |
+| sensor calibration (G22); lean codec and receiver timing on the board (G9) | **not done** — need the boards and the meter |
+| 52 references | 54, every one read at source |
+
+⚠️ What is left needs either a browser (four papers) or the boards switched on and reachable.

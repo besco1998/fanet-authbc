@@ -1,7 +1,7 @@
 \chapter{Predictions Registered Before Their Data}\label{app:prereg}
 
 Where a run tests a prediction, the prediction was committed to the repository before the data
-existed, as a commit of its own. The table lists every such registration: the commit that holds
+existed, as a commit of its own. The table lists every such registration, including one whose experiment has not yet been run: the commit that holds
 it, what it said, and what happened. Commits are those of the public repository history; each
 registration is an ancestor of the commit that holds its data, which a reader can check with
 \texttt{git log}.
@@ -56,6 +56,9 @@ stepped) \\
 \texttt{9e9c096} 8~Oct & six crossings in conditions never simulated --- contention window
 doubled; $2\%$ and $10\%$ loss --- within $\pm 3\%$ of the access-rule model & held: all
 \modelPredCases, worst $\modelPredWorst\%$ \\
+\texttt{456a4e7} 9~Oct & contention on real radios: loss among two to five boards at three
+loads; with two boards, within $0.6$--$1.4$ times the access-rule model's & \emph{registered,
+not yet run}: no board was reachable when it was written (\Cref{ch:validation}) \\
 \end{longtable}
 }
 

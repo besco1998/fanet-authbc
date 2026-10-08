@@ -61,7 +61,7 @@ type hints; no dead code; comments explain WHY, not what.
 - **Phase: P9 — revision after the supervisor's review (2026-10).** Branch `p9-supervisor-revision`, cut from `p8-audit-and-corrections`. Work from any machine: `git clone`, `git checkout p9-supervisor-revision`, `make setup && make all`.
 - ⚠️ **`make all` green on this machine is NOT the claim — CI green is** (2026-10-08: the gate passed here and failed on a clean install over an undeclared package). **Before every push run the WHOLE of `make all VENV=<a venv built from pip install -e '.[dev]' alone>`** — never a hand-picked subset of tests (the fix for that failure broke the build again exactly that way: a figure was regenerated and its copy in `thesis/` was not) — and do not say green until CI on the pushed commit has finished. Guards: `tests/test_declared_dependencies.py`, and no figure may embed a library version.
 - ⚠️ **TWO COPIES OF THIS FILE EXIST.** Sessions that start in `~/authbc_package` auto-load `~/authbc_package/CLAUDE.md`, which is an OLD copy. **This file, in the repository, is the status board.** A stale count read from the other one was "corrected" into the thesis on 2026-10-06 and had to be reverted.
-- **Green:** 2011 fast + **39** frozen-gate tests (**2050**), `ruff` clean, **`mypy` clean (0 / 57 files)**, paper builds (**10 pp**, **37 refs**, 0 undefined, 0 overfull, abstract **179 w** by the board's counter, about 190 as printed), methods paper 4 pp, thesis **117 pp** (52 refs, 0 overfull, 3 markers left — all Mohamed's). `make all` exit 0.
+- **Green:** 2025 fast + **39** frozen-gate tests (**2064**), `ruff` clean, **`mypy` clean (0 / 57 files)**, paper builds (**10 pp**, **38 refs**, 0 undefined, 0 overfull, abstract **179 w** by the board's counter, about 190 as printed), methods paper 4 pp, thesis **119 pp** (54 refs, 0 overfull, 3 markers left — all Mohamed's). `make all` exit 0.
 - **METHODOLOGY (Mohamed):** this is an optimization problem — *state everything, choose what to stick with, state the trade-offs for every decision*. **`docs/TRADEOFFS.md` is required reading before quoting any number.**
 - **LICENSE = all rights reserved** (© 2026 Mohamed A. Farouk). Vendored NS-3 + `signetlabdei/lorawan` stay GPLv2, **not** redistributed.
 
@@ -70,7 +70,7 @@ type hints; no dead code; comments explain WHY, not what.
 **Mohamed's supervisor reviewed the paper. Every statement of the review held; behind several of
 them was one cause it did not name: the headline design was a SUM OF SIZES and had never existed
 as a frame** (a record size from one module, a header measured on frames of another encoding, a
-signature length). Findings **F45–F67**; method and wrong turns in the top entry of
+signature length). Findings **F45–F71**; method and wrong turns in the top entry of
 `docs/LOGBOOK.md`; decisions **R1–R18** in `docs/DECISIONS.md`; what is open in
 `docs/OPEN_ITEMS.md` §G.
 
@@ -91,6 +91,30 @@ and bit-identical (D6).
 | capacities 31→100, 88→213, ratios "1.9–3.2×" from the ceiling **U = 2.435** | **the ceiling is not N-invariant (F50; a pre-registered ±10 % prediction FAILED).** Capacities are simulated per configuration, 30 seeds, bootstrap interval — quote them from `results/raw/design_ladder.csv`, never from the ceiling |
 | "ratios are protected by construction" | **withdrawn** — the ceiling's error depends on the frame and does not cancel |
 | "Bor et al." | **Haxhibeqiri, Van den Abeele, Moerman & Hoebeke** (F49). Renamed everywhere |
+
+### ⚠️ 2026-10-09 — "solve all the issues": what closed, and what needs a browser or the boards (F68–F71)
+
+- **Contention on radios is REGISTERED, not measured (F70).** Registration `456a4e7`,
+  `docs/CONTENTION_HW_EXPECTATIONS.md`; kit in `hw/channel/` (`run_adhoc_contention.sh` — ⚠️ never
+  run on hardware, use `probe` first); `analysis/contention_hw.py --predict|--ns3-check|--commands|--reduce`.
+  **If the boards answer `ssh pi@<addr>`, the agent can run it** — two Pi 4 suffice for the sharp
+  case (no third radio, so no capture). Predicted loss with two boards: 0.29 / 0.64 / 1.40 %.
+  ⚠️ The event model is **9–18 % above ns-3 at N = 2** (agrees within 5 % at 3–5): a bias at the
+  smallest network, inside the registered band.
+- ⚠️ **"n messages cost n times one" was true of one link only (F68).** Aggregate-signature
+  schemes: each signer still sends its own full message (583–859 B), but the *aggregator*
+  forwards a compact aggregate (Wang et al.: 388 B single, 784 B for a hundred). Say which link.
+  Batching = placement B (own records); aggregation = placement C (an intermediary).
+- **Superseded figures and the old envelope table are in thesis Appendix C**, not in the results
+  chapters. `sec:envelope-history`, `tab:envelope`, `fig:e5`, `fig:lorachain` live there.
+- **`one_period_ms(fps)`** in the ns-3 driver: 1000/fps can exceed the scenario's one-period
+  guard by one ulp (116 frames/s aborted, F69). Never pass 1000/fps directly.
+- **Sources:** 54 in the thesis, 38 in the paper; 14 held locally. ⚠️ Publishers (Springer,
+  Hindawi/Wiley, SAGE) and CORE refuse scripted download even of CC BY papers — **do not work
+  round it**; list the DOI for Mohamed (G23, G24). A long source read in part is recorded as
+  such in `docs/literature/README.md`.
+- ⚠️ **To split a working tree into two commits, do not edit a file after `git stash
+  --keep-index`** — it conflicted on pop (three count lines; resolved, verified identical).
 
 ### ⚠️ 2026-10-08, later — the built paper and thesis audited whole (F63–F67). READ BEFORE EDITING EITHER
 
@@ -339,7 +363,7 @@ decides a headline and was never written down — defect class **C2**, the one c
 > ⚠️ **F18 came back.** On 2026-08-07 it was found still printed in `tab:lora-external` ("we are more optimistic" at N=5) — 100 lines below a bold sentence saying the opposite. **Retracting a finding in the register does not remove it from the paper.** When you retract, grep the paper. Guarded now by `test_no_row_revives_the_retracted_optimism_claim`, which checks the *artifact* rather than the wording.
 
 ### Where things live
-`docs/README.md` is the index. Findings **F1–F67** in `docs/audits/model_provenance.md`. Open items **only** in `docs/OPEN_ITEMS.md`. Trade-offs in `docs/TRADEOFFS.md`. Method and failed attempts in `docs/LOGBOOK.md`. **51 PDFs** in `docs/literature/` with each source's ROLE stated, and **14 more held on Mohamed's machine but NOT redistributed** (`docs/literature/HELD_LOCALLY.csv`, git-ignored files — ⚠️ never `git add -f` them); every bibliography entry is checked against its registry record by `make verify-citations` (`A3_CITATION_VERIFICATION.md` is the August record of a check that turned out not to compare authors — F49).
+`docs/README.md` is the index. Findings **F1–F71** in `docs/audits/model_provenance.md`. Open items **only** in `docs/OPEN_ITEMS.md`. Trade-offs in `docs/TRADEOFFS.md`. Method and failed attempts in `docs/LOGBOOK.md`. **51 PDFs** in `docs/literature/` with each source's ROLE stated, and **14 more held on Mohamed's machine but NOT redistributed** (`docs/literature/HELD_LOCALLY.csv`, git-ignored files — ⚠️ never `git add -f` them); every bibliography entry is checked against its registry record by `make verify-citations` (`A3_CITATION_VERIFICATION.md` is the August record of a check that turned out not to compare authors — F49).
 
 ### Deferred by Mohamed — plans written, DO NOT START unprompted
 - **Mobility (E20)** — `docs/MOBILITY_PLAN.md`. **Separate NEW scenario files**, literature survey first. Not for the 802.11 arm (Bianchi/Ma&Chen have no position term).

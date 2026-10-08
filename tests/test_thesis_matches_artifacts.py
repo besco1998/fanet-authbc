@@ -475,7 +475,7 @@ class TestTheRegistrationsOfAppendixB:
         import subprocess
 
         named = sorted(set(re.findall(r"\\texttt\{([0-9a-f]{7})\}", self.APPENDIX)))
-        assert len(named) == 13
+        assert len(named) == 14
         shallow = subprocess.run(["git", "rev-parse", "--is-shallow-repository"], cwd=REPO,
                                  capture_output=True, text=True).stdout.strip()
         assert shallow == "false", (
@@ -489,7 +489,9 @@ class TestTheRegistrationsOfAppendixB:
         assert self.APPENDIX.count(r"\textbf{failed}") == 3
         assert self.APPENDIX.count(r"\textbf{refuted}") == 1
         assert self.APPENDIX.count(r"\textbf{not scored}") == 1
-        assert "thirteen" in _text("ch06_methodology.tex")
+        assert self.APPENDIX.count(r"\emph{registered,") == 1      # the one not yet run
+        assert "fourteen" in _text("ch06_methodology.tex")
+        assert "thirteen registrations" in _text("ch11_reproducibility.tex")
 
 
 class TestTheLibraryIsTheSizeTheChapterSays:
@@ -497,3 +499,104 @@ class TestTheLibraryIsTheSizeTheChapterSays:
         lines = sum(len(p.read_text().splitlines())
                     for p in (REPO / "src" / "authbc").rglob("*.py"))
         assert 7500 <= lines < 8000, f"ch. 5 says 'nearly eight thousand lines'; it is {lines}"
+
+
+# --------------------------------------------------------------------------- 2026-10-09
+class TestTheWorkedExamplesOfChapter4:
+    THEORY = _text("ch04_theory.tex")
+
+    def test_the_batching_example(self) -> None:
+        m, hf, ga, s = 1500, 44, 64, 45
+        b = (m - hf - ga) // s
+        assert b == 30 and f"{(hf + ga) / b:.1f}" == "3.6" and f"{s + (hf + ga) / b:.1f}" == "48.6"
+        assert f"{m / (m - hf - ga):.3f}" == "1.078" and f"{s + (hf + ga) / 4:.1f}" == "72.0"
+        for needle in ("$\\bmaxx = \\lfloor 1392/45 \\rfloor = 30$", "$108/30 = 3.6$\\,B",
+                       "$48.6$\\,B", "$A = 1500/1392 = 1.078$", "$108/4 = 27$\\,B", "$72.0$\\,B"):
+            assert needle in self.THEORY, needle
+
+    def test_the_scheme_example_is_a_row_of_the_crossover_artifact(self) -> None:
+        (row,) = [r for r in _rows("e4_crossover.csv")
+                  if (r["rho"], r["b"], r["lambda"]) == ("1.0", "4", "50")]
+        assert float(row["delta_bytes"]) == 40.0 == 64 - 96 / 4
+        assert round(float(row["radio_saving_us"])) == 53
+        assert round(float(row["extra_cpu_us_med"]) / 1000, 1) == 3.7
+        assert round(float(row["kappa_star_med"])) == 69
+        for needle in ("$\\Delta = 64 - 96/4 = 40$\\,B", "$\\SI{53}{\\micro\\second}$ of",
+                       "$3.7$\\,ms more processor time", "more than $69$ times",
+                       "the ratio is $0.29$"):
+            assert needle in self.THEORY, needle
+
+
+class TestTheRegisteredContentionExperimentAsTheThesisQuotesIt:
+    """thesis ch. 9 quotes six of the twelve registered predictions and the ns-3 cross-check."""
+
+    VALIDATION = _text("ch09_validation.tex")
+    PREDICTED = {(r["nodes"], r["occupancy_target"]): r
+                 for r in _rows("contention_hw_predictions.csv")}
+
+    def test_the_six_predictions_quoted(self) -> None:
+        def losses(n: str) -> list[str]:
+            return [f"{100 * float(self.PREDICTED[(n, u)]['predicted_loss']):.2f}"
+                    for u in ("0.5", "0.7", "0.85")]
+
+        assert losses("2") == ["0.29", "0.64", "1.40"] and losses("3") == ["0.66", "1.52", "3.00"]
+        assert "losses of $0.29$, $0.64$ and $1.40\\%$; with three, $0.66$, $1.52$ and $3.00\\%$" \
+            in self.VALIDATION
+
+    def test_the_cross_check_as_quoted(self) -> None:
+        check = _rows("contention_hw_ns3_check.csv")
+        two = [1 - float(r["ns3_over_model"]) for r in check if r["nodes"] == "2"]
+        assert (round(100 * min(two)), round(100 * max(two))) == (9, 18)
+        assert all(abs(float(r["ns3_over_model"]) - 1) <= 0.055
+                   for r in check if r["nodes"] != "2")
+        assert "within $5\\%$ at three to five nodes and is $9$--$18\\%$ below it at two" \
+            in self.VALIDATION
+
+    def test_it_is_in_the_appendix_as_not_yet_run(self) -> None:
+        appendix = (THESIS / "appB_preregistrations.tex").read_text()
+        assert "\\texttt{456a4e7}" in appendix and "not yet run" in appendix
+        assert not list((REPO / "results" / "hw" / "channel").glob("contention_*")), (
+            "the contention experiment has data: Appendix B and ch. 9 must now report it")
+
+
+class TestAnAggregateSignatureSchemeReadAtItsSource:
+    """Finding F68. Reading Wang et al. showed that "n messages cost n times one" is true of what
+    the signers send and not of what an aggregator forwards."""
+
+    # The two figures are that paper's own (its §VII); the file is held locally, with its hash in
+    # docs/literature/HELD_LOCALLY.csv, and the register records which parts of it were read.
+
+    def test_both_documents_state_the_scope_of_the_claim(self) -> None:
+        background = _text("ch02_background.tex")
+        assert "$388$\\,B, and the aggregate of a hundred is $784$\\,B" in background
+        assert "it does not touch the link on which each signer first sends" in background
+        paper = re.sub(r"\s+", " ", (REPO / "paper" / "main.tex").read_text())
+        assert "388\\,B for a single signature and 784\\,B for the aggregate of a hundred" in paper
+        for text in (background, paper):
+            assert "the cost of $n$ messages is $n$ times the cost of one" not in text
+            assert "none reduces what is sent" not in text
+
+
+class TestSupersededResultsLiveInTheirAppendix:
+    """Three results were corrected. What was first reported is kept — in Appendix C, not among
+    the current results (audit of 2026-10-08; moved 2026-10-09)."""
+
+    APPENDIX = _text("appC_superseded.tex")
+
+    def test_the_results_chapters_show_no_superseded_figure(self) -> None:
+        for chapter in ("ch08_codesign.tex", "ch10_lowrate.tex"):
+            text = _text(chapter)
+            for figure in ("fig_e5_codesign.png", "fig_envelope.png", "fig_lora_chain.png"):
+                assert figure not in text, (chapter, figure)
+            assert "\\label{tab:envelope}" not in text
+
+    def test_the_appendix_keeps_all_of_them(self) -> None:
+        for needle in ("fig_e5_codesign.png", "fig_envelope.png", "fig_lora_chain.png",
+                       "\\label{tab:envelope}", "\\label{sec:envelope-history}",
+                       "163--201", "\\textbf{It failed.}"):
+            assert needle in self.APPENDIX, needle
+
+    def test_the_chapters_point_at_it(self) -> None:
+        assert "\\Cref{sec:envelope-history}" in _text("ch08_codesign.tex")
+        assert "\\Cref{app:superseded}" in _text("ch10_lowrate.tex")
+        assert "\\input{appC_superseded}" in (THESIS / "main.tex").read_text()

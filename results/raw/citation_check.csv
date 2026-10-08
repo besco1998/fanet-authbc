@@ -1,5 +1,5 @@
 # run=citation_check
-# checked=2026-10-08
+# checked=2026-10-09
 # bib=paper/refs.bib
 key,kind,identifier,registry,authors_bib,authors_registry,authors_match,title_match,year_bib,years_registry,year_match,status,fingerprint
 bianchi2000,doi,10.1109/49.840210,crossref,bianchi,G. Bianchi,1,1.00,2000,2000,1,ok,c1cc699a34bca9c9
@@ -26,6 +26,8 @@ ndss2024pqv2v,doi,10.14722/ndss.2024.24267,crossref,twardokus; bindel; rahbari; 
 etsi_ts103097,document,docs/literature/etsi_ts103097_its_security_header.pdf,,etsi,,,,2015,,,document,6427327c0c8f48ff
 arxiv2510pqsib1,arxiv,2510.23457,arxiv,darzi; rahman; karim; behnia; yavuz; bertino,Saleh Darzi; Mirza Masfiqur Rahman; Imtiaz Karim; Rouzbeh Behnia; Attila A Yavuz; Elisa Bertino,1,1.00,2025,2025/2026,1,ok,4a07c46f252ee571
 almajmaie2026pqfanet,arxiv,2604.18819,arxiv,al majmaie; ghajari; bhatta; amsaad,Sufian Al majmaie; Ghazal Ghajari; Niraj Prasad Bhatta; Fathi Amsaad,1,1.00,2026,2026,1,ok,151b3fef06e1b7dd
+gupta2016uavsurvey,doi,10.1109/COMST.2015.2495297,crossref,gupta; jain; vaszkun,Lav Gupta; Raj Jain; Gabor Vaszkun,1,1.00,2016,2016,1,ok,20e8fdc463fe2b06
+wang2022clas,doi,10.1109/ACCESS.2022.3147595,crossref,wang; wang; zhang; li; luo,Huiwen Wang; Liangliang Wang; Kai Zhang; Jinguo Li; Yiyuan Luo,1,1.00,2022,2022,1,ok,aaaca458f417ebf8
 cao2021dsrc,arxiv,2102.07023,arxiv,cao; yin; hu; zhang,Liu Cao; Hao Yin; Jie Hu; Lyutianyang Zhang,1,1.00,2021,2021,1,ok,638886972f372934
 sobati2025fragmentsec,arxiv,2506.01767,arxiv,sobati moghadam,Somayeh Sobati-M,1,1.00,2025,2025,1,ok,b598062fa2a88078
 gundogan2021firmware,doi,10.1145/3460417.3482974,crossref,gundogan; amsuss; schmidt; wahlisch,Cenk Gündoğan; Christian Amsüss; Thomas C. Schmidt; Matthias Wählisch,1,1.00,2021,2021,1,ok,f938fd29f86efec3

@@ -210,16 +210,9 @@ buys no extra records. Here the regional payload limit binds, so bytes convert d
 records per frame, and the duty cycle converts records per frame into sustainable rate. Carrying
 the chain link once per frame instead of once per record is therefore worth far more on this arm.
 
-\begin{figure}[h]
-\centering
-\includegraphics[width=0.7\textwidth]{fig_lora_chain.png}
-\caption{Per-frame versus per-record chaining across data rates, as first computed (see the
-correction below).}
-\label{fig:lorachain}
-\end{figure}
-
 \begin{remark}[Correction, October 2026]
-\Cref{fig:lorachain} and the factor of $3.0$ first reported with it size every record from a
+The factor of $3.0$ first reported for this change (\Cref{fig:lorachain}, kept in
+\Cref{app:superseded}) sized every record from a
 $13$\,B body --- the delta record measured with records $50$\,ms apart. At the rates this arm
 sustains, records are seconds apart, and a difference grows with the time it spans:
 

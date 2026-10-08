@@ -3,9 +3,11 @@
 This chapter places the work: the networks and the telemetry it concerns, what a hash chain
 and a signature each provide, how messages are authenticated in practice and in the
 stream-signing literature, how batching and aggregation differ, and the channel models the
-evaluation rests on. Every source cited was read in full; where a figure reaches this thesis
-through another paper, that is said at the point of use, and \Cref{sec:citations} describes how
-the bibliography is checked.
+evaluation rests on. Every source cited was read at the source and not through a summary of it.
+Where a figure reaches this thesis through another paper, that is said at the point of use;
+where only part of a long document bears on this work, the register of sources kept with the
+repository records which part was read. \Cref{sec:citations} describes how the bibliography
+is checked.
 
 \section{Flying ad-hoc networks and UAV telemetry}
 
@@ -18,6 +20,17 @@ decentralised architectures share, and the one all the others rest on: every air
 periodically \emph{broadcasts its own state} to whichever neighbours can hear it. There is no
 route, no acknowledgement and no retransmission; a neighbourhood is a set of receivers within
 range of one another, and \Cref{ch:sysmodel} models it as one collision domain.
+
+Surveys of the field treat such networks as a class of their own. Gupta, Jain and Vaszkun set
+UAV networks beside mobile and vehicular ad hoc networks and find that results for those two do
+not carry over unchanged: the nodes may be anything from stationary to fast, the topology
+changes and links come and go, a node that fails or leaves can partition the network, and a
+small aircraft has little energy to spend~\cite{gupta2016uavsurvey}. They organise the open
+problems around architecture, routing, handover between nodes and energy. Authentication of
+what the nodes broadcast is not among them, and the word does not occur in the survey. The
+literature on these networks concentrates on the layers above the single-hop broadcast; this
+thesis is about the cost of making that broadcast attributable, which every one of those layers
+takes as given.
 
 \subsection{The workload, read at source}
 
@@ -213,11 +226,21 @@ Certificateless aggregate signature (CLAS) schemes for vehicular broadcast are t
 external comparator. Li \emph{et al.}~\cite{li2025clas} tabulate the per-message size of their
 own scheme and four others, for a $67$\,B traffic message: $583$\,B (theirs, and Cahyadi
 \emph{et al.}), $596$\,B (Xu \emph{et al.}), $735$\,B (Liang \emph{et al.}) and $859$\,B (Wang
-\emph{et al.}) --- the last four as reported there, not read at source. In every one the cost of
-$n$ messages is $n$ times the cost of one. \textbf{The finding is the axis, not a ratio}:
-aggregation compresses the verifier's work, while each message still carries its own identity,
-key and signature components; batching compresses what is sent. No claim is made to beat those
-schemes. They provide conditional privacy, which this work does not, their group elements are
+\emph{et al.}). Those totals are Li \emph{et al.}'s accounting of what one signer sends with
+each message. Of the four other schemes, one was read at source and three were not obtained.
+
+What a signer sends for $n$ messages is $n$ times what it sends for one, since each message
+carries its own identity, key and signature components. Aggregation acts after that. In the
+scheme of Wang \emph{et al.} a vehicle signs, a roadside unit aggregates the signatures it
+has received into one, and a traffic management centre verifies the aggregate; a single
+signature is three group elements and a timestamp, $388$\,B, and the aggregate of a hundred
+is $784$\,B~\cite{wang2022clas}. So aggregation compresses the verifier's work and the link
+\emph{from} the aggregator; it does not touch the link on which each signer first sends.
+\textbf{The finding is the axis, not a ratio}: batching compresses what one sender puts on the
+air for its own records, and aggregation compresses what an intermediary passes on for many
+senders --- placements B and C of \Cref{ch:sysmodel}. A FANET in which every node broadcasts
+its own state to its neighbours has the first link and no aggregator on it. No claim is made
+to beat those schemes. They provide conditional privacy, which this work does not, their group elements are
 $128$\,B against a $64$\,B signature here, and their figures are for a different message.
 
 What these schemes are for is worth stating, since it is not what this thesis is for. In a

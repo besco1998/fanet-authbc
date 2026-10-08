@@ -12,6 +12,74 @@ where the durable record lives. If you want the conclusion only, follow the poin
 
 ---
 
+# 2026-10-09 — "solve all the issues": what could be closed from here, and what could not
+
+*Mohamed, after the audit: "solve all the issues and contradictions except the front matter".
+The audit had left five: contention never measured; three older papers not obtained; few
+references and two gaps of reading; superseded figures among the results; the sensor never
+calibrated. Durable records: F68–F71; registration `456a4e7`.*
+
+## What was reachable
+
+Nothing physical. No board answered and no meter was attached, so every hardware item was
+reduced to its last step and left there, said plainly. Papers were sought through open indexes
+(OpenAlex, Crossref, Semantic Scholar, CORE, arXiv) with no identifier of the user in any
+request.
+
+## Reading
+
+Two sources were obtained and read: a general survey of UAV networks (Gupta et al.) and one of
+the four aggregate-signature schemes the thesis knew only through another paper's table (Wang
+et al.). **The second corrected a claim (F68).** Both documents said the cost of n messages is n
+times the cost of one. That is what each signer sends; what the *aggregator* forwards is one
+compact aggregate. The claim had been written from a table that counts the first link. It is
+the supervisor's kind of comment — an assertion one size too wide — found by doing the reading
+the thesis had said it lacked.
+
+**Tried and not obtained.** Three CC BY papers are served only behind a script challenge, by
+their publishers and by the public aggregator alike. I did not work round it. Three more are
+closed access. They are listed by DOI for a browser (G23, G24, G8).
+
+**A source read in part is now recorded as read in part.** The thesis said every source was
+read in full. For a 32-page survey and a 60-page standard that was not true of every section.
+The sentence now says what is true, and the register says which parts.
+
+## Contention
+
+A real experiment was designed for the boards on hand, and registered before any board was
+switched on. The useful idea came from asking what two radios can show that three cannot:
+with two, the only receiver is the other transmitter, so capture — the thing that would blur
+a comparison with a model that has none — cannot happen.
+
+**Checked before registering, and it found something.** The model had only ever been compared
+with ns-3 at 28 nodes and more. Run at two to five, ns-3 agrees within 5 % from three nodes up
+and is 9–18 % below the model at two. A prediction registered without that check would have
+carried an unknown bias into the one case meant to be sharp.
+
+**The check itself first crashed.** ns-3 aborted at 116 frames per second: the driver's "one
+period" of jitter exceeded the scenario's guard by one unit in the last place (F69). Diagnosed
+by running the binary by hand; fixed in the driver with a test over a sweep of rates.
+
+## Tried and wrong
+
+* **Splitting the work into two commits.** The registration had to be a commit of its own. I
+  staged it, stashed the rest, found that the test counts differ in that tree (two fewer
+  bibliography entries mean fewer parametrised tests), corrected three count lines — and the
+  stash then conflicted on those lines when restored. Resolved by hand and verified identical
+  to what had been set aside, file by file, before the stash was dropped. Do the count before
+  the stash.
+* **A test that needed a PDF library nobody had declared.** Written, then caught by the guard
+  added yesterday before it was ever committed. The guard earned its place in a day.
+* **Two locally held PDFs appeared as "in the repository"** while their manifest lines were
+  stashed. An artifact of the split, not of the repository; they were moved aside for the check.
+
+## Layout
+
+The three superseded figures and the old envelope table moved to an appendix of their own.
+The history is as visible as before; the results chapters now show only what is current.
+
+---
+
 # 2026-10-08, later — the paper and the thesis read whole, as built
 
 *Mohamed: "audit the paper and the thesis and make sure they are strong and complete and will

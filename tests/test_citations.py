@@ -84,13 +84,13 @@ class TestWhatCannotBeCheckedSaysSo:
 
 
 class TestWhatIsHeldButNotRedistributed:
-    """Eleven PDFs were kept out of the public repository on 2026-10-07, and a twelfth, read on
-    2026-10-08, joined them. "Held and read" must
+    """Eleven PDFs were kept out of the public repository on 2026-10-07, and three more, read on
+    2026-10-08 and 2026-10-09, joined them. "Held and read" must
     still be checkable: the manifest gives each file's SHA-256, and wherever the file is present
     it has to be that file."""
 
     def test_the_manifest_is_well_formed(self) -> None:
-        assert len(HELD_LOCALLY) == 12
+        assert len(HELD_LOCALLY) == 14
         for name, row in HELD_LOCALLY.items():
             assert name.endswith(".pdf") and re.fullmatch(r"[0-9a-f]{64}", row["sha256"]), name
             assert int(row["bytes"]) > 0 and row["obtain_from"] and row["document"], name

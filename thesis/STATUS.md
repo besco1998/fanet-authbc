@@ -1,16 +1,16 @@
 # Thesis status — what is written, what was checked, what is still missing
 
-*Created 2026-08-30; rewritten 2026-10-08 after the whole built PDF was audited (findings
-F63–F67 in `docs/audits/model_provenance.md`). `main.pdf` builds to 117 pages with no errors, no
-undefined references and no layout warnings. **Read this before showing the PDF to anyone.***
+*Created 2026-08-30; rewritten 2026-10-08 after the whole built PDF was audited, and updated
+2026-10-09 (findings F63–F71 in `docs/audits/model_provenance.md`). `main.pdf` builds to 119
+pages with no errors, no undefined references and no layout warnings. **Read this before showing the PDF to anyone.***
 
 ## In one paragraph
 
 Every chapter is written and was read end to end in the built PDF on 2026-10-08. The red
 "STATUS" boxes are gone because what they listed is done. **Three red markers remain, and all
 three are yours:** the declaration, the statement on generative AI, and the acknowledgements —
-with the degree and the department on the title page. Two gaps of *reading* remain in chapter 2
-and are stated there in plain prose.
+with the degree and the department on the title page. What else is open needs a browser (four
+papers the publishers will not serve to a script) or the boards switched on.
 
 ## Per chapter
 
@@ -18,29 +18,29 @@ and are stated there in plain prose.
 |---|---|---|---|
 | — | front matter | written | ⚠️ **degree, department, declaration, AI statement, acknowledgements — only Mohamed** |
 | 1 | Introduction | audited | — |
-| 2 | Background and Related Work | audited | ⚠️ two gaps of reading (`OPEN_ITEMS` G23, G24): the earlier analyses of non-saturated broadcast; the four aggregate-signature schemes at source and a general FANET survey |
+| 2 | Background and Related Work | audited; a general survey and the Remote ID standard added; one aggregate-signature scheme read at source, which corrected a claim (F68) | three older analyses of non-saturated broadcast and three of the four aggregate-signature schemes are not obtained (`OPEN_ITEMS` G23, G24) |
 | 3 | System Model and Threat Model | audited | — |
-| 4 | Theoretical Framework | audited; two figures and one theorem statement corrected (F64) | worked numerical examples for T2 and T4 would help a reader; none is wrong for lacking them |
+| 4 | Theoretical Framework | audited; two figures and one theorem statement corrected (F64); worked examples for T2 and T4 | — |
 | 5 | Implementation | **expanded**: package figure, one frame byte by byte, receiver outcomes, test layers | — |
 | 6 | Experimental Methodology | **expanded**: generator, how a capacity is read, timings, energy rig, uncertainty | the energy sensor's calibration (G22) — a bench step |
 | 7 | Results I | audited | — |
 | 8 | Results II | audited; RQ3 now has its numbers; prior work for the derivation credited (F65) | lean codec timing and receiver CPU on the board (bench session) |
-| 9 | Model validation and hardware | audited | contention on radios (G4) |
+| 9 | Model validation and hardware | audited; the contention experiment is registered with its predictions | **running it** (G4): the boards must be on and reachable |
 | 10 | Low-rate regime | audited; **mobility subsection added** | — |
 | 11 | Reproducibility | **expanded**: how citations are checked, where the chapter sits | Kurkowski et al. 2005 is not held and is not cited |
 | 12 | Conclusions | audited; **research questions answered one by one**; four stale items corrected | — |
 | A | Reproducing the results | new | — |
-| B | Predictions registered before their data | new: thirteen, by commit | ⚠️ **merge pull requests with a merge commit** — squashing would erase the commits this table cites |
+| B | Predictions registered before their data | fourteen, by commit; one not yet run | ⚠️ **merge pull requests with a merge commit** — squashing would erase the commits this table cites |
+| C | Results that were corrected | new 2026-10-09: the three superseded figures and the old envelope table, moved out of the results chapters | — |
 
 ## What a supervisor may still say, and why it is not fixed
 
 * **"The contention result is simulated."** True, and stated first among the limitations. It
   needs radios (G4).
-* **"Fifty-two references is few."** Every one was read. Raising the number means reading more,
-  not listing more (G23, G24).
-* **"Superseded figures are in the results chapters."** Three figures and one table show results
-  that were later corrected, each captioned as such. Moving them to an appendix is a choice of
-  style for you and your supervisor; the history itself stays (retractions are kept visible).
+* **"Fifty-four references is few."** Every one was read at source. Raising the number means
+  reading more, not listing more (G23, G24).
+* **"Has the capacity mechanism been seen on a radio?"** Not yet. The experiment that would
+  show it is registered and ready (ch. 9, Appendix B); it needs the boards.
 * **"Chapter 11 is unusual."** It is deliberate. It now says where it sits in the literature.
 
 ## Rules that keep it true

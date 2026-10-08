@@ -38,6 +38,15 @@ $\omega'(b) < 0$ gives the first claim. For the second, substitute $b = (M - \Hf
 $s + \omega(b)$ and factor.
 \end{proof}
 
+\paragraph{Worked example.} Take the delta encoding of the first format, $s = 45$\,B, with
+$\Hf = 44$\,B, $\ga = 64$\,B and $M = 1500$\,B. A frame holds
+$\bmaxx = \lfloor 1392/45 \rfloor = 30$ records, the overhead is $108/30 = 3.6$\,B per record,
+and a record costs $48.6$\,B on air. The amplification is $A = 1500/1392 = 1.078$: a byte
+saved by the encoder saves $1.078$\,B on air, because a smaller record also lets more records
+share the fixed $108$\,B. Under the deadline of the next section the batch is $4$ and not
+$30$; the overhead is then $108/4 = 27$\,B per record, the cost $72.0$\,B, and a byte saved by
+the encoder saves exactly one.
+
 So every payload byte saved by compression saves $A$ on-air bytes --- \emph{in the MTU-limited
 regime}. This is MTU-efficiency algebra, not a new law, and \Cref{thm:t2a} shows the regime is
 never reached on 802.11.
@@ -179,6 +188,15 @@ $R = \SI{6}{\mega\bit\per\second}$ the radio side is $\approx P_r \cdot \SI{75}{
 against a CPU side of $P_c \cdot (1\text{--}3)\,\si{\milli\second}$, so \textbf{Ed25519 wins on
 802.11 and BLS's regime is low-rate links and attestation compression} --- a falsifiable,
 regime-dependent rule.
+
+\paragraph{Worked example.} Four relayed records share a frame, each from a different signer.
+Ed25519 carries their four signatures, $256$\,B; BLS carries one aggregate of $96$\,B, so
+$\Delta = 64 - 96/4 = 40$\,B per record, which at $6$\,Mb/s is $\SI{53}{\micro\second}$ of
+airtime. On the measured board, verifying the aggregate costs $3.7$\,ms more processor time
+per record than verifying an Ed25519 signature. BLS is the cheaper in energy only if
+$\SI{53}{\micro\second} \cdot P_r > 3.7\,\mathrm{ms} \cdot P_c$, that is if the radio draws
+more than $69$ times the power of the processor. Measured, the ratio is $0.29$
+(\Cref{ch:codesign}).
 
 \section{T5 --- an empirical separability result}
 
