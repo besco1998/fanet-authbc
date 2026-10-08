@@ -1,7 +1,7 @@
 # Thesis status — what is drafted, what is not
 
-*Created 2026-08-30; **updated 2026-10-07** after the revision that followed the supervisor's
-review. **This file is the honest inventory.** `main.pdf` builds to about 92 pages with 0 errors
+*Created 2026-08-30; **updated 2026-10-08** after the revision that followed the supervisor's
+review and the work Mohamed chose after it. **This file is the honest inventory.** `main.pdf` builds to about 99 pages with 0 errors
 and 0 undefined references, and that number will tempt you to think the thesis is further along
 than it is. It is not. Read this before showing the PDF to anyone.*
 
@@ -41,7 +41,7 @@ need new *reading* are outlined with their sources named. No chapter is submissi
 |---|---|---|---|
 | — | front matter, abstract | **drafted** | ⚠️ degree, department, declaration, generative-AI statement, acknowledgements are placeholders **only Mohamed can fill** |
 | 1 | Introduction | **drafted** | fine as a draft; revisit after ch.2 |
-| 2 | Background and Related Work | ⚠️ **PARTLY DRAFTED** (stream signing, per-message practice and CLAS written 2026-10) | **still the largest gap.** FANET vs MANET/VANET; the telemetry workload; CLAS as external comparator; ECQV; LoRaWAN regional parameters as regulation. Sources named in-chapter |
+| 2 | Background and Related Work | **DRAFTED 2026-10-08** from sources that are held and read | FANETs and the telemetry workload read at source (PX4, ArduPilot, 3GPP); how such networks are evaluated; what a hash chain gives and what a signature gives; certificates, explicit and implicit; the rules that bound the LoRa arm. **Two gaps of reading remain and are marked in the chapter**: no general FANET survey is held, and four of the five aggregate-signature schemes are known only through one paper's table |
 | 3 | System Model and Threat Model | **drafted** | the frame-layout figure is in (2026-10); still wants one worked byte-level example |
 | 4 | Theoretical Framework | **drafted** | proofs complete for T1–T3, T6; T5 stated honestly as empirical separability |
 | 5 | Implementation | **drafted** | add a module-dependency figure |
@@ -53,11 +53,12 @@ need new *reading* are outlined with their sources named. No chapter is submissi
 | 11 | Reproducibility and defects | **drafted** | port the credibility-literature comparison from `paper/methods.tex`. ⚠️ One source that comparison needs, Kurkowski et al. 2005, is **not held** (`docs/OPEN_ITEMS.md` G8) — obtain and read it before citing it in the thesis |
 | 12 | Conclusions, limitations, future work | **drafted** | — |
 
-## What an 89-page draft is not
+## What a 99-page draft is not
 
 A thesis in this field typically runs 80–150 pages. The gap is not padding — it is:
 
-* **Chapter 2**, which is genuinely short and must roughly triple.
+* **Chapter 2**, drafted in October 2026 but from the sources held: it still wants a general FANET
+  survey and the aggregate-signature schemes read at source.
 * **Figures.** Nine exist and are reused from the paper. A thesis wants more, and wants some drawn
   for explanation rather than for results — a frame layout, the placement taxonomy, the regime map.
 * **Worked examples.** The paper compresses; a thesis should expand. Every theorem in ch.4 deserves

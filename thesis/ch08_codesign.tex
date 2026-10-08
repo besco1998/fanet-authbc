@@ -128,6 +128,18 @@ cryptographic library this implementation is built on exposes no batch interface
 $N_{\mathrm{cpu}}$ is conservative for Ed25519 by about that factor, and measuring it on the
 board is open. ECDSA does not admit it.
 
+\begin{remark}[What $N_{\mathrm{cpu}}$ does not charge]
+The expression above counts signature verification and hashing: the work of the cryptographic
+library. It does not count decoding a frame and rebuilding its records, which in this thesis's
+prototype is interpreted Python. A first timing of the lean receiver as it runs --- on a
+desktop, under load, so indicative only --- put a four-record frame at about nine times the cost
+of its one verification. On that evidence a Python receiver on one Raspberry~Pi core would fall
+behind long before the channel does, and the sentence ``the channel binds first'' holds for a
+compiled receiver, not for the prototype. The lean sender and receiver are to be timed on the
+board itself (\texttt{hw/BENCH\_SESSION.md}); until then $N_{\mathrm{cpu}}$ and the CPU column
+of \Cref{tab:ladder} are ceilings set by cryptography alone.
+\end{remark}
+
 \section{E17 --- the classical stream-signing schemes, placed}\label{sec:stream}
 
 \Cref{ch:background} describes the schemes that amortise one signature over many packets. None
@@ -367,6 +379,108 @@ phases are uniform and a period's losses depend only on that period's phases, th
 difference is zero, so a real one would need a mechanism not yet identified. No reported capacity
 depends on the answer, since all of them use the redrawn source; what depends on it is how the
 strictly periodic figures of earlier work should be read.
+\end{remark}
+
+\paragraph{How regular a real autopilot's stream is.} The two simulated sources are extremes,
+and which one a flight controller resembles had not been measured. PX4's companion-computer
+link streams the global position at 50\,Hz. Run in software-in-the-loop and received with a
+timestamp per message, that stream holds a period of \sitlPeriod\,ms on the autopilot's own
+clock, and the central 68\% of its intervals lie within $\pm\sitlJitterTwo$\,ms of the median
+--- the same in a six-minute flight and in a second three-minute capture. About one message in
+a hundred arrives more than 4\,ms late, on a desktop under load; the standard deviation,
+dominated by those, is \sitlSd\,ms.
+
+So a PX4 stream is nearer to the strictly periodic source than to the redrawn one: a node keeps
+its place in the period to within about one frame's airtime. That matters for the spread
+between runs and not for the mean. A jitter of \sitlJitter\,ms is a hundred times the
+4\,\si{\micro\second} within which two frozen senders collide in every period, so the
+pathological runs --- nodes that deliver nothing --- do not arise; but the same neighbours
+contend with one another period after period, which redrawn phases would mix. The capacities of
+this chapter are read from the mean over runs and are the same under both sources; their
+intervals are those of the redrawn source and are the tightest case.
+
+\begin{remark}[A timing measurement spoiled by its clock]
+The statistic committed before the flight was the standard deviation of the intervals between
+receive timestamps. It came out at 54\,ms and says nothing about PX4: the measuring host's wall
+clock was stepped back eight times during the flight, by about 2.3\,s each, and ran some 6\%
+fast in between. The figures above come from the interquantile spread, which a handful of
+clock steps cannot move, and from a second capture stamped with a monotonic clock. The
+prediction is recorded as not scored, not as held. A wall clock should never have been the only
+clock of a timing measurement; the recorder now reads both.
+
+All of this is one autopilot, in simulation, with no radio and no serial link.
+\end{remark}
+
+\subsection{Why the crossing is where it is}\label{sec:why}
+
+The line of \Cref{eq:line} describes the crossings; it does not explain them, and its one
+constant was fitted. An explanation needs no more than the access rule.
+
+In this scenario --- broadcast, so no acknowledgement, no retransmission and a contention window
+that never grows --- a frame is lost in exactly two ways.
+
+\begin{enumerate}
+\item \textbf{A tie.} A frame that arrives while the medium is held, by another frame or by the
+DIFS after it, draws a counter uniformly from $\{0,\dots,W-1\}$, counts idle slots and is sent
+at zero. Two stations whose counters reach zero in the same slot send together. Any two stations
+that wait at the same moment tie with probability $1/W$, whether both have just drawn or one
+holds a counter frozen from an earlier round.
+\item \textbf{The detection window.} A station cannot sense a transmission during its first
+$\delta = 4$\,\si{\micro\second}, the simulator's preamble-detection time. Whoever decides to
+send inside that window --- a frame arriving on an apparently idle medium, or a counter running
+out --- sends as well.
+\end{enumerate}
+
+\paragraph{A closed form with nothing fitted.} Let $\rho = (N-1)\,f\,T$ be the share of time
+the other stations hold the medium. A frame defers with probability $\rho$. Treating the
+deferring frames as a queue with deterministic service, a deferring frame finds
+$\rho/(2(1-\rho))$ others waiting and as many again arrive while it waits, so it shares its
+wait with $K = \rho/(1-\rho)$ others; and another station starts within $\pm\delta$ of any
+frame at rate $(N-1)f$. Hence
+\begin{equation}
+\text{loss}(N) \;\approx\; \rho\left[1 - \left(1 - \tfrac{1}{W}\right)^{\rho/(1-\rho)}\right]
+\;+\; (N-1)\,f\,2\delta .
+\label{eq:why}
+\end{equation}
+With $W = 16$ and no free constant this puts the \modelCells{} simulated crossings within
+$5.5\%$, its error ordered by frame length: the time counters take to run down, which the queue
+ignores, is a larger share of a short frame.
+
+\paragraph{What the fitted slope was.} To first order the tie term of \Cref{eq:why} is
+$\rho^2/(W(1-\rho))$, so the line's slope is $a = \rho/(W(1-\rho))$. The configurations reach
+$5\%$ loss at occupancies of \modelRhoLo--\modelRhoHi, \modelRho{} on average, and at that
+average the expression is \modelSlope{} --- the value the fit found. One constant served
+because the occupancy at the crossing varies little; it served only to a few percent because it
+does vary. The slope sat near $1/W$ because $\rho/(1-\rho)$ is near one there, not because it
+\emph{is} $1/W$; and the line's constant $c$ is $2\delta$ exactly. So the line is a tangent to
+\Cref{eq:why} at one loss level, which is the reason the remark above confines it to that
+level.
+
+\paragraph{The exact version of the same two mechanisms} is an event simulation of the access
+rule and nothing else: arrival times, carrier sense, counters and the backoff a station performs
+after sending. It has no physical layer, no channel and no packets, shares no code with ns-3,
+and its constants are the standard's --- a $9$\,\si{\micro\second} slot, a
+$34$\,\si{\micro\second} DIFS, $W = 16$ --- and $\delta$. Run at every point ns-3 has been run
+at, thirty seeds each, it reproduces all \modelCells{} crossings within \modelWorst\% (mean
+\modelMean\%) and every one of the \modelPoints{} delivered fractions within \modelMaxDiff.
+Ties are \modelTieLo--\modelTieHi\% of the loss, more for long frames; the window is the rest.
+
+\begin{remark}[A comparison is not a prediction]
+The model was written beside one of those configurations, and an omission in it --- half of the
+detection window, the case of a frame arriving just \emph{before} a counter runs out --- was
+found from that configuration's numbers. Agreement with data one has looked at proves little.
+What the model was then asked for were crossings in conditions no run had been made at: the
+contention window doubled, and the $2\%$ and $10\%$ loss levels. There the candidate
+explanations part --- for the per-record frame with the window doubled, the fitted line with its
+slope scaled by $1/W$ gives $53$ neighbours, \Cref{eq:why} gives $43$ and the event model $39$.
+Those predictions were committed before their runs; the outcome is reported with the data.
+\end{remark}
+
+\begin{remark}[What this does not show]
+The model and ns-3 implement one standard. Their agreement says the capacities of this chapter
+follow from that standard's access rule and a detection time of $4$\,\si{\micro\second}. It
+does not say a radio behaves so: capture, hidden terminals and a real preamble detector are
+outside both, and that question is the contention experiment this thesis has not run.
 \end{remark}
 
 \section{What the earlier envelope was}\label{sec:envelope-history}

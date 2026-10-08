@@ -737,13 +737,85 @@ def _stream_cells_against_the_line() -> dict[str, str]:
                   "lineStreamLeast": f(min(deviations), 1)}
 
 
+def capacity_model() -> dict[str, str]:
+    """The access-rule model against ns-3 (docs/02 §6g; `results/raw/dcf_model_vs_ns3.csv`).
+
+    The text says an event simulation of the access rule, with nothing fitted, reproduces every
+    simulated crossing, and that the slope the airtime line fitted is the tie term at the
+    occupancy where loss reaches 5 %. Both are checked here.
+    """
+    import run_nmax_direct as drv
+    table = rows(RAW / "dcf_model_vs_ns3.csv")
+    crossings = [r for r in table if r["n_nodes"] == "CROSSING"]
+    points = [r for r in table if r["n_nodes"] != "CROSSING"]
+    errors = [abs(float(r["crossing_error_pct"])) for r in crossings]
+    if {r["cell"] for r in crossings} != set(airtime.crossings("period")):
+        raise ValueError("the model comparison does not cover every simulated configuration")
+    if max(errors) > 2.0:
+        raise ValueError("the text says the access-rule model reproduces every crossing closely")
+    occupancy = [(float(r["ns3_crossing"]) - 1) * drv.CELLS[r["cell"]].fps
+                 * bianchi.t_broadcast(drv.CELLS[r["cell"]].frame_bytes) for r in crossings]
+    rho = st.mean(occupancy)
+    slope = rho / (16 * (1 - rho))
+    fitted, _ = airtime.calibrate(airtime.crossings("period"))
+    if abs(slope - fitted) > 0.002:
+        raise ValueError("the text says the fitted slope is the tie term at the mean occupancy "
+                         f"of the crossings; {slope:.4f} against {fitted:.4f}")
+    ties = [float(r["model_tie_share"]) for r in points]
+    return {"modelCells": str(len(crossings)), "modelPoints": str(len(points)),
+            "modelWorst": f(max(errors), 1), "modelMean": f(st.mean(errors), 1),
+            "modelMaxDiff": f(max(abs(float(r["difference"])) for r in points), 3),
+            "modelTieLo": f(100 * min(ties), 0), "modelTieHi": f(100 * max(ties), 0),
+            "modelRho": f(rho, 2), "modelRhoLo": f(min(occupancy), 2),
+            "modelRhoHi": f(max(occupancy), 2), "modelSlope": f(slope, 3)}
+
+
+def sitl() -> dict[str, str]:
+    """Records at the operating rate and the stream's timing, from PX4 run in simulation.
+
+    The text says every delta record at 20 ms is at the format's floor, that the design costs
+    less with these records than with the generator's, and that the stream holds its period far
+    more tightly than a send time redrawn each period. Each is checked.
+    """
+    sizes = {(r["part"], r["spacing_ms"]): r for r in rows(RAW / "px4_sitl_sizes.csv")}
+    timing = {r["quantity"]: r for r in rows(RAW / "px4_sitl_stream_timing.csv")}
+    whole, compare = sizes[("whole flight", "20")], sizes[("whole flight", "200")]
+    floor = one(rows(RAW / "frame_components.csv"), kind="record", format="lean", item="delta",
+                stride="1")
+    if any((r["lean_delta_min"], r["lean_delta_max"]) != (floor["min_bytes"], floor["max_bytes"])
+           for (_, spacing), r in sizes.items() if spacing == "20"):
+        raise ValueError("the text says every delta record at 20 ms is at the format's floor")
+    design = one(rows(RAW / "design_ladder.csv"), op="adopted", format="lean",
+                 rung="batch-delta", scheme="ed25519")
+    if not float(whole["bytes_per_rec"]) < float(design["bytes_per_rec"]):
+        raise ValueError("the text says the design costs less with the simulated flight's records")
+    flight = timing["flight: received, wall clock, clock steps removed"]
+    ground = timing["ground: received, monotonic clock"]
+    spread = [float(flight["half_p16_p84_ms"]), float(ground["half_p16_p84_ms"])]
+    if max(spread) - min(spread) > 0.05 or max(spread) > 1.0:
+        raise ValueError("the text gives one spread for the stream's timing, well under 1 ms")
+    period = float(timing["flight: stamped (time_boot_ms)"]["mean_ms"])
+    if abs(period - 20.0) > 0.05:
+        raise ValueError("the text says the stream's period is 20.0 ms on the autopilot's clock")
+    fast = sizes[("square_12mps", "20")]
+    return {"sitlRecords": thousands(int(whole["records"])),
+            "sitlKey": f(whole["lean_key_mean"], 1), "sitlBpr": f(whole["bytes_per_rec"], 2),
+            "sitlSpeedMax": f(fast["max_speed_mps"], 0),
+            "sitlSpeedFast": f(fast["mean_speed_mps"], 1),
+            "sitlCompare": f(compare["lean_delta_mean"], 2),
+            "sitlJitter": f(st.mean(spread), 1), "sitlJitterTwo": f(st.mean(spread), 2),
+            "sitlSd": f(ground["sd_ms"], 1), "sitlPeriod": f(period, 1),
+            "sitlGenPct": f(100 * (1 - float(whole["bytes_per_rec"])
+                                   / float(design["bytes_per_rec"])), 1)}
+
+
 def signed(percent: float) -> str:
     """A deviation with its sign, one decimal, for a table cell."""
     return ("+" if percent >= 0 else "$-$") + f(abs(percent), 1)
 
 
 SECTIONS = (frames, ladder, loss, stream, freshness, phy, energy, timings, flight_logs,
-            validation, exclusion, low_rate, source_study, capacity_rule)
+            validation, exclusion, low_rate, source_study, capacity_rule, capacity_model, sitl)
 
 
 def macros() -> dict[str, str]:

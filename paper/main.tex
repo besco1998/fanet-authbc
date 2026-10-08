@@ -40,7 +40,8 @@ alone, \exclCount{} of the twelve EU863-870 LoRaWAN data rates cannot carry one.
 \bprLeanBase\,B for per-record signing, and in ns-3 one 802.11a collision domain delivers 95\% of
 frames from \nmaxLeanDesign{} neighbours instead of \nmaxLeanBase. Batching and header design decide what can run; among 64\,B elliptic-curve
 signatures the scheme does not. Sender energy is measured on a Raspberry~Pi~4; contention is
-simulated; record sizes are synthetic, checked against twelve public flight logs.
+simulated; record sizes are synthetic, checked against twelve public flight logs and an
+autopilot in simulation.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -440,7 +441,7 @@ neighbours one channel then serves.
 \begin{table*}[t]\centering\footnotesize
 \caption{The design ladder at 50~records/s and $D_{\max}=100$\,ms. $N_{\mathrm{sat}}$:
 saturation bound. $N_{\max}$: largest neighbourhood with mean delivery $\geq 0.95$ in ns-3
-[95\% interval]. CPU: share of one receiver core at $N_{\max}$.}
+[95\% interval]. CPU: share of one receiver core spent verifying and hashing at $N_{\max}$.}
 \label{tab:ladder}
 \setlength{\tabcolsep}{5pt}
 \begin{tabular}{l l r r r r r r r}
@@ -628,9 +629,8 @@ N_{\max} \approx \frac{0.05}{f\,(a\,T + c)}, \qquad a = \lineA,\quad c = 8\,\mu\
 \label{eq:line}
 \end{equation}
 where $c$ is twice the simulator's preamble-detection time and $a$ was fitted to six rows of
-Table~\ref{tab:ladder} (1, 2, 4, 5, 6 and 8), which it reproduces within \lineFitWorst\%. We
-wrote down what the rule gives for seven other configurations --- rows 3 and 7, the design with
-one keyframe in four frames, and both formats at the relaxed point --- before simulating them.
+Table~\ref{tab:ladder} (1, 2, 4, 5, 6 and 8), which it reproduces within \lineFitWorst\%. For
+seven other configurations we wrote down what the rule gives before simulating them.
 All seven fell within \lineWorst\% of it, and the five one-record frames of
 Table~\ref{tab:stream}, predicted the same way, within \lineStreamWorst\%, all above it. The
 shortcut we had used before, one utilisation
@@ -638,6 +638,16 @@ ceiling measured at a single point, misses the thirteen by up to \lineCeilWorst\
 directions. Equation~\eqref{eq:line} is a fit at one loss level and one PHY rate, checked for frames of
 \lineFrameLo--\lineFrameHi\,B, \lineFpsLo--\lineFpsHi~frames/s and \lineNlo--\lineNhi{}
 nodes; the tables quote simulated values, not the rule.
+
+\textbf{Why the crossing is there.} The slope is not a free constant. A frame is lost in this
+scenario in two ways. Two stations that found the medium busy may draw the same backoff slot:
+with occupancy $\rho = N f T$ and a contention window of $W = 16$ slots, counting the stations
+that wait together gives a loss of about $\rho^2/(W(1-\rho))$, hence
+$a = \rho/(W(1-\rho))$, which is \modelSlope{} at $\rho = \modelRho$, the mean occupancy at
+which loss reaches 5\%. Or a station decides to send within the 4\us{} in which it cannot yet
+sense another: that is $c$. An event simulation of the access rule alone, with nothing fitted
+and none of the simulator's code, reproduces all \modelCells{} simulated crossings within
+\modelWorst\%. The capacities therefore follow from the access rule and one detection time.
 
 
 \textbf{Receiver CPU.} By Eq.~\eqref{eq:cpu} one core of the Raspberry~Pi~4 verifies the frames
@@ -649,7 +659,10 @@ reaches the channel's limit at \cpuLeanInline\% of a core. With BLS a verificati
 reached, in addition to its larger signature. These figures verify one signature at a time.
 Ed25519 was designed for batch verification --- its authors report under 134\,000 cycles per
 signature in a batch of 64, against 273\,364 for one~\cite{ed25519} --- which would roughly
-halve the receiver's cost; we did not use it, and ECDSA does not admit it.
+halve the receiver's cost; we did not use it, and ECDSA does not admit it. Equation~\eqref{eq:cpu}
+charges cryptography only. Decoding a frame and rebuilding its records is not charged, and in
+our interpreted prototype it costs several times the verification: these are ceilings for a
+compiled receiver, not what the prototype sustains.
 
 \textbf{Other PHY rates.} We simulated one rate. Evaluating the saturation bound with the same
 model at 12 and 24\,Mb/s, and on the 10\,MHz channel of 802.11p at 3--12\,Mb/s, gives design-to-baseline
@@ -663,10 +676,8 @@ others~\cite{ndss2024pqv2v}. Charging that to every frame --- a \certBytes\,B ce
 \certPerFrame\,B per frame on average --- gives the ``with cert.'' column of
 Table~\ref{tab:ladder}: \certLeanDesign\,B per record for the design against \certLeanBase{} for
 the baseline. Certificates are a per-frame cost, so batching amortises them too. These are
-explicit certificates. The same standard defines implicit ones, which carry a reconstruction
-value in place of the key and the issuer's signature --- a signed message is then at most 226\,B
-against 330\,B~\cite{ndss2024pqv2v} --- and we have not priced them: the column is an upper
-bound.
+explicit certificates; implicit ones are shorter (a signed message of at most 226\,B against
+330\,B~\cite{ndss2024pqv2v}) and are not priced, so the column is an upper bound.
 
 \subsection{Energy}
 
@@ -705,6 +716,14 @@ hovering, average \pxDeltaSlow\,B and the three fixed wings up to \pxDeltaFast\,
 sizes at 0.2\,s the design saves \pxSave\% (\pxSaveWorst\% in the least favourable log) where
 the generator gives \pxSaveGen\%. The generator is representative to within about one
 percentage point, and optimistic for fast vehicles.
+
+For the operating rate itself we flew PX4 in software-in-the-loop --- its own estimator, logger
+and MAVLink module on a simulated quadrotor --- with position logged every 20\,ms. Over
+\sitlRecords{} in-flight records, at up to \sitlSpeedMax\,m/s, every delta record is
+\deltaLean\,B, the floor of the format; the keyframe averages \sitlKey\,B and the design costs
+\sitlBpr\,B per record, \sitlGenPct\% less than with the generator's records. The same
+autopilot's 50\,Hz position stream holds a \sitlPeriod\,ms period to within
+$\pm\sitlJitter$\,ms (central 68\%).
 
 \subsection{Validation of the models}\label{sec:validation}
 The unicast DCF model~\cite{bianchi2000} matches saturated ns-3 runs within
@@ -791,14 +810,15 @@ that.
 \textbf{Contention is simulated.} The hardware experiment has one transmitter. The capacities in
 Table~\ref{tab:ladder} come from ns-3 with one collision domain, equal received power and static
 nodes; capture, hidden terminals, spatial reuse and mobility are absent. Send instants are
-redrawn within each period; how regular a real autopilot's stream is was not measured, and a
-strictly periodic source gives capacities up to \srcShiftHi\% lower with a much wider spread
+redrawn within each period. PX4's own stream, in simulation, holds its period to about
+$\pm\sitlJitter$\,ms, which is nearer to a strictly periodic source; that source gives the
+same mean delivery, capacities read up to \srcShiftHi\% lower, and a much wider spread
 between runs. A contention
 experiment on three or four radios is the next measurement.
 
 \textbf{Telemetry is synthetic.} Record sizes come from a generator. The check against flight
-logs covers twelve logs of one autopilot at 5\,Hz position resolution; nothing was measured at
-50\,Hz.
+logs covers twelve logs of one autopilot at 5\,Hz position resolution; at 50\,Hz it rests on
+one simulated flight of the same autopilot.
 
 \textbf{One PHY, generated loss.} Capacity was simulated at 6\,Mb/s only. The loss experiment
 uses independent, Gilbert and length-dependent loss, all generated at the frame level, not a
@@ -806,8 +826,9 @@ channel trace; under the last, the design is below its target where the baseline
 5\% (Sec.~\ref{sec:loss}). The stream-signing schemes of Table~\ref{tab:stream} are sized
 from their definitions and simulated as frames; none is implemented.
 
-\textbf{Energy.} Only the sender is metered, and only the first format; receiver and radio energy
-are modelled.
+\textbf{Energy and CPU.} Only the sender is metered, and only the first format; receiver and
+radio energy are modelled. The receiver's CPU share counts verification and hashing, not
+decoding.
 
 \textbf{Security scope.} Confidentiality, availability, key management and protection against a
 delaying attacker are outside the design (Sec.~\ref{sec:model}). With one link per frame,
@@ -834,10 +855,9 @@ scheme does not. The capacity figures are simulated and await a contention exper
 hardware.
 
 \section*{Data and Code Availability}
-Source code, result files with their environment and configuration headers, figure generators,
-simulation scenarios, hardware traces and the test suite are at
-\url{https://github.com/besco1998/fanet-authbc}. Every number in this paper is generated from
-those result files.
+Code, result files, simulation scenarios, hardware traces and tests are at
+\url{https://github.com/besco1998/fanet-authbc}; every number in this paper is generated from
+the result files.
 
 % !! SUBMISSION BLOCKER: the supervisor's name is a placeholder (paper/SUBMISSION_CHECKLIST.md).
 \section*{Acknowledgment}

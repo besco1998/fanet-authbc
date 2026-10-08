@@ -224,6 +224,44 @@ fixed wings up to \pxDeltaFast\,B, for which the saving is \pxSaveWorst\%. So th
 fast swarm by about a percentage point, and the 50\,Hz spacing of the adopted operating point is
 not covered by any public log found.
 
+\paragraph{At the operating rate: the autopilot in simulation.} Because no public log reaches
+50\,Hz, PX4 v1.17.0 was run in software-in-the-loop --- its own estimator, controllers, logger
+and MAVLink module, flying a simulated quadrotor --- with the logger writing position every
+20\,ms, and the log was put through the same code as the public ones. The flight was fixed
+before it was flown: a climb, a 150\,m square at a commanded 5\,m/s, the same square at
+12\,m/s, a minute of position hold, a landing.
+
+\begin{center}
+\begin{tabular}{lrrrr}
+\toprule
+ & records & keyframe (B) & delta (B) & B/record at $b{=}4$ \\
+\midrule
+PX4 in simulation, 20\,ms grid & \sitlRecords & \sitlKey & \deltaLean & \sitlBpr \\
+generator, as used throughout & & \keyLean & \deltaLean & \bprLeanDesign \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Every one of the delta records is at the format's floor: over 20\,ms nothing in a record changes
+by more than one byte's worth, at \sitlSpeedFast\,m/s as at rest. The keyframe is three bytes
+smaller than the generator's, so with real autopilot records the design costs \sitlBpr\,B per
+record, \sitlGenPct\% \emph{less} than the figure this thesis reports. At the operating point
+the generator is slightly pessimistic, where at 0.2\,s it was slightly optimistic.
+
+\begin{remark}[Two predictions of this measurement that did not hold as written]
+Five ranges were committed before the flight. Four held. The fifth was a consistency check:
+resampled at 0.2\,s, the simulated flight was predicted to fall among the six real multicopter
+logs, \pxDeltaSlow\,B per delta; it gives \sitlCompare\,B. By phase it is $10.0$\,B in the
+climb, the hold and the descent and $11.0$--$11.2$\,B on the two squares: the real logs are
+mostly hover, and this flight spends two thirds of its time translating. That reading was made
+after the number was seen. It is the harder case for the 20\,ms result and not the easier one,
+but the prediction as written was missed, by $0.04$\,B.
+
+The commanded 12\,m/s was not reached either: the fast square averaged \sitlSpeedFast\,m/s.
+And the registered statistic for the stream's timing could not be scored at all, for a reason
+that has nothing to do with the autopilot (\Cref{sec:capacity}).
+\end{remark}
+
 \begin{remark}[What was predicted, and what was not testable]
 The prediction committed in advance was a mean delta of at most $13$\,B and a saving of at least
 $68\%$, \emph{at 0.1\,s spacing}. The logs turned out to carry position at 5\,Hz, so the
