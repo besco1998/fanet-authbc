@@ -679,3 +679,62 @@ Every period so far had been 20, 50, 80 or 200 ms. EMSS's is 1000/50.5 = 19.8019
 19.802, and its cell was dropped by the scorer, by the artifact that fills the stream table, and
 by the plan writer (which would also have made a resumed campaign run it all again). Fixed at the
 root (`provenance.as_written`), with regression tests; F56.
+
+---
+
+# Follow-up F4 — do the two traffic sources deliver the same on average? Fresh seeds. Written before the runs (2026-10-08)
+
+**The open question** (`OPEN_ITEMS` G6b). Fourteen (configuration, N) points were simulated with
+strictly periodic senders and with a send time redrawn in every period. F1 registered that the
+two means agree within 0.005, and they do. But over seeds 1–30 the redrawn source delivers
+**D = +0.00312** more on average, with a standard error of **0.00142** propagated from the
+spread between runs: **z = +2.20**. Ten of the fourteen differences are positive. That is weak
+evidence of a real difference and no more, and it was noticed in the data, not predicted.
+
+**Why it should be zero.** A period's losses depend on that period's phases and backoffs only: a
+station's post-transmission backoff is over long before its next frame. With phases uniform in
+both sources, the expected loss per period is the same whether the phases are redrawn or kept.
+A real difference would need a mechanism that carries state across periods, and none is known.
+
+**What is run.** The same fourteen points, on seeds that have never been used, into their own
+file (`results/raw/ns3_source_fresh_runs.csv`) so that every reported point keeps exactly thirty
+runs numbered from 1:
+
+| source | seeds | runs |
+|---|---|---|
+| strictly periodic (jitter 0) | **31–90** (sixty) | 14 × 60 = 840 |
+| redrawn every period | **31–60** (thirty) | 14 × 30 = 420 |
+
+Sixty for the periodic source because it carries nearly all the noise: its spread between runs
+is 0.014–0.044 where the redrawn source's is 0.002–0.003. Plans:
+`experiments/nmax-direct/plan_source_fresh_periodic.txt`, `…_redrawn.txt`.
+
+**The statistic**, fixed now (`analysis/source_difference.py`, held by
+`tests/test_source_difference.py`): d_i = mean(redrawn) − mean(periodic) at point i;
+D = mean of the d_i; SE = √(Σ_i (s²_redrawn,i / n + s²_periodic,i / n)) / 14;
+z = D / SE. Expected SE of the fresh sample: about 0.0010.
+
+**Prediction.** **The difference does not replicate: z_fresh < 2**, one-sided, the direction
+(redrawn higher) being fixed by the first sample. Expected D_fresh: 0 ± 0.001.
+
+**How it will be read**, decided now:
+
+| fresh sample | reading |
+|---|---|
+| z_fresh < 1 | the first result was sampling; item closed. The combined estimate is reported with its error |
+| 1 ≤ z_fresh < 2 | not replicated, not excluded; the combined estimate is reported and the item stays open as it is |
+| z_fresh ≥ 2 | **the prediction failed**: the difference is real at about +0.003, the argument above is wrong somewhere, and the mechanism is the next thing to find |
+
+The combined estimate is the inverse-variance weighted mean of the two samples. It is reported
+in every case and decides nothing: the first sample is the one in which the effect was noticed.
+
+**A second claim this makes it possible to check.** All six crossings are 1–9 % *lower* under the
+strictly periodic source. If the means are equal that cannot come from the means. The
+registered `N_max` is the largest N whose mean passes *with every smaller N also passing*; on a
+noisier curve an early chance failure is likelier, so the rule reads low. **Expectation, to be
+checked on the runs already on file and not on these:** resampling the periodic source's runs
+around the redrawn source's means reproduces a downward shift of that size with no difference
+in means at all.
+
+**What this cannot show.** Nothing about a reported number: every capacity uses the redrawn
+source. It bears only on how the strictly periodic figures of earlier work should be read.

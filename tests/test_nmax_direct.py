@@ -186,6 +186,29 @@ class TestThePlanIsWhatWasRun:
         assert drv.read_plan(out) == plan
 
 
+class TestWhichRunsAPlanStillNeeds:
+    def test_seeds_run_from_one_by_default(self) -> None:
+        todo = drv.pending([("A", "0", [29])], set(), seeds=3)
+        assert [t[-1] for t in todo] == [1, 2, 3]
+
+    def test_a_fresh_sample_starts_where_it_is_told_to(self) -> None:
+        todo = drv.pending([("A", "0", [29, 31])], set(), seeds=2, first_seed=31)
+        assert [(t[3], t[4]) for t in todo] == [(29, 31), (29, 32), (31, 31), (31, 32)]
+
+    def test_runs_on_file_are_not_run_again(self) -> None:
+        done = {drv._run_key(r) for r in _runs("A", {29: [0.9, 0.9]})}        # seeds 1 and 2
+        assert [t[-1] for t in drv.pending([("A", "0", [29])], done, seeds=4)] == [3, 4]
+
+    def test_a_run_whose_period_six_figures_cannot_hold_is_recognised_on_file(self) -> None:
+        """Before F56 a resumed campaign would have run every EMSS point again."""
+        done = {drv._run_key(r) for r in _runs("SE", {34: [0.9]}, jitter="19.802")}
+        assert drv.pending([("SE", "period", [34])], done, seeds=1) == []
+
+    def test_the_exact_jitter_is_what_the_simulator_is_given(self) -> None:
+        ((_, jitter, _, _, _),) = drv.pending([("SE", "period", [34])], set(), seeds=1)
+        assert jitter == 1000.0 / drv.CELLS["SE"].fps
+
+
 class TestCellsAreTheLaddersFrames:
     """A cell that simulated a frame the ladder does not list would validate nothing."""
 

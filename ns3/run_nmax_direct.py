@@ -227,6 +227,26 @@ def _run_key(r: dict[str, str]) -> tuple[str, float, float, int, int]:
             int(r["seed"]))
 
 
+def pending(plan: list[tuple[str, str, list[int]]], done: set[tuple], seeds: int,
+            first_seed: int = 1) -> list[tuple[str, float, float, int, int]]:
+    """The runs a plan still needs, as (cell, jitter, rate offset, N, seed); `done` is updated.
+
+    Seeds run from `first_seed`; a range that starts above the reported sample's is a fresh
+    sample. Runs on file are keyed by the jitter as it was written, not as computed (F56).
+    """
+    todo = []
+    for cell, spec, ns in plan:
+        jitter, skew = source_of(spec, CELLS[cell].fps)
+        for n in ns:
+            for seed in range(first_seed, first_seed + seeds):
+                filed = (cell, provenance.as_written(jitter), provenance.as_written(skew),
+                         n, seed)
+                if filed not in done:
+                    todo.append((cell, jitter, skew, n, seed))
+                    done.add(filed)                   # a plan may name a point twice
+    return todo
+
+
 def _write(path: Path, rows: list[dict], run: str, config: dict) -> None:
     buf = io.StringIO()
     for k, v in {**provenance.env_block(), "run": run,
@@ -315,6 +335,14 @@ def main() -> None:
                          "optional rate offset S in ppm; 0 = the published strictly periodic "
                          "source (default)")
     ap.add_argument("--seeds", type=int, default=30)
+    ap.add_argument("--first-seed", type=int, default=1,
+                    help="number of the first seed (default 1); a later range is a fresh sample")
+    ap.add_argument("--out-stem", default="ns3_nmax_direct",
+                    help="results/raw/<stem>_runs.csv and <stem>.csv. A fresh-seed campaign "
+                         "takes its own stem, so that every reported point keeps exactly "
+                         "--seeds runs, numbered from 1")
+    ap.add_argument("--no-summary", action="store_true",
+                    help="write the runs only (for a campaign whose analysis is its own script)")
     ap.add_argument("--sim-time", type=float, default=20.0)
     ap.add_argument("--workers", type=int, default=8)
     ap.add_argument("--verify", action="store_true", help="check binary == ./ns3 run, then exit")
@@ -326,7 +354,7 @@ def main() -> None:
         verify(args.sim_time)
         return
     if args.write_plan:
-        runs_on_file = read_runs(RAW / "ns3_nmax_direct_runs.csv")
+        runs_on_file = read_runs(RAW / f"{args.out_stem}_runs.csv")
         args.write_plan.write_text(render_plan(plan_of(runs_on_file)))
         return
     if args.n and len(args.cells) != 1:
@@ -334,23 +362,11 @@ def main() -> None:
     plan = read_plan(args.plan) if args.plan else [
         (cell, args.source, args.n or default_grid(CELLS[cell].model_n)) for cell in args.cells]
 
-    runs_path = RAW / "ns3_nmax_direct_runs.csv"
+    runs_path = RAW / f"{args.out_stem}_runs.csv"
     runs = read_runs(runs_path)
     done = {_run_key(r) for r in runs}
     on_file = len(done)
-    todo = []
-    if not args.summarise_only:
-        for cell, spec, ns in plan:
-            jitter, skew = source_of(spec, CELLS[cell].fps)
-            for n in ns:
-                for seed in range(1, args.seeds + 1):
-                    key = (cell, jitter, skew, n, seed)
-                    # runs on file are keyed by the jitter as it was written, not as computed
-                    filed = (cell, provenance.as_written(jitter), provenance.as_written(skew),
-                             n, seed)
-                    if filed not in done:
-                        todo.append(key)
-                        done.add(filed)               # a plan may name a point twice
+    todo = [] if args.summarise_only else pending(plan, done, args.seeds, args.first_seed)
     print(f"{on_file} runs on file, {len(todo)} to do, {args.workers} at a time", flush=True)
 
     def job(t: tuple[str, float, float, int, int]) -> dict:
@@ -367,16 +383,20 @@ def main() -> None:
 
     config = {"seeds": args.seeds, "t": args.sim_time,
               "cells": {k: vars(c) for k, c in CELLS.items()}}
+    if args.first_seed != 1:                    # absent by default: the reported sample's hash
+        config["first_seed"] = args.first_seed
     with ThreadPoolExecutor(max_workers=args.workers) as pool:
         for i, row in enumerate(pool.map(job, todo), 1):
             runs.append({k: str(v) for k, v in row.items()})
             if i % 30 == 0 or i == len(todo):       # checkpoint: a long sweep must survive a kill
                 runs.sort(key=lambda r: (list(CELLS).index(r["cell"]), *_run_key(r)[1:]))
-                _write(runs_path, runs, "ns3_nmax_direct_runs", config)
+                _write(runs_path, runs, f"{args.out_stem}_runs", config)
                 print(f"  {i}/{len(todo)} done", flush=True)
 
+    if args.no_summary:
+        return
     summary = summarise(runs, args.seeds)
-    _write(RAW / "ns3_nmax_direct.csv", summary, "ns3_nmax_direct", config)
+    _write(RAW / f"{args.out_stem}.csv", summary, args.out_stem, config)
     for r in summary:
         if r["n_nodes"] == "CROSSING":
             interp = (f"  interp {r['n_cross_interp']} [{r['n_cross_interp_lo']}, "
