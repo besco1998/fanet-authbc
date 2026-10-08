@@ -212,3 +212,77 @@ simulator's model of it. There is no wind unless configured, no radio and no ser
 timing figure contains the host's scheduling noise and none of a real telemetry link's. One
 airframe type. A fixed-wing or VTOL flight is attempted only if the quadrotor result leaves the
 question open.
+
+## Outcome (2026-10-08)
+
+One flight, PX4 v1.17.0, `sihsim_quadx`, the mission as registered: 14,317 in-flight records on
+the 20 ms grid. Raw files in `results/raw/px4_sitl/quadx/` (the autopilot's log, every received
+position message with its timestamps, the phase boundaries); artifacts
+`results/raw/px4_sitl_sizes.csv` and `px4_sitl_stream_timing.csv`
+(`python analysis/px4_sitl_sizes.py`).
+
+| quantity | predicted | measured | |
+|---|---|---|---|
+| mean lean delta record, 20 ms grid, whole flight | 9.0–9.5 B | **9.000 B** — every one of the deltas is 9 B | held |
+| … on the fast legs alone | 9.0–10.0 B | **9.000 B** | held |
+| mean lean delta record, 200 ms grid | 10.0–10.6 B | **10.64 B** | ⚠️ **missed, by 0.04 B** |
+| mean lean keyframe | 20–24 B | **20.9 B** | held |
+| bytes per record of the design, these records at 20 ms | 42.3–43.8 B | **42.47 B** (generator: 43.25) | held |
+| mean interval between 50 Hz position messages | 20.0 ± 0.2 ms | **20.03 ms** on the wall clock over the flight; 20.00 ms on the autopilot's own | held |
+| standard deviation of that interval | 0.05–2 ms | **54 ms as registered — not a measurement of PX4** (below) | ⚠️ **not scored as registered** |
+
+**What the sizes say.** At the operating rate the generator's delta record is exactly what the
+autopilot's telemetry costs: over 20 ms nothing in the record changes by more than one byte's
+worth, at 9 m/s as at rest. The keyframe is three bytes smaller than the generator's, so the
+design costs **42.47 B per record against the generator's 43.25** — the generator is 1.8 %
+*pessimistic* at the operating point, where at 0.2 s it was a point optimistic. No reported
+number moves; the limitation "nothing was measured at 50 Hz" becomes "measured on PX4 in
+simulation, one airframe".
+
+**The missed prediction, read after the fact.** The 200 ms figure was predicted to fall among
+the six real multicopter logs (10.00–10.52 B) and came out at 10.64. By phase: 10.00 in the
+climb and the descent, 10.06 in the hold, **10.99 and 11.22 on the two squares**. The real logs
+are mostly hover; this flight spends two thirds of its time translating at 4.6 and 9.1 m/s. So
+the simulated vehicle matches the real ones where it does what they do and exceeds them where it
+flies faster. That reading was made after seeing the number and is labelled as such. As
+registered, the 20 ms result carries the warning: *the comparison flight is more dynamic than
+the logs it was meant to resemble* — which is the harder case for the 20 ms claim, not the
+easier one.
+
+⚠️ The commanded 12 m/s was not reached: the fast square averaged 9.1 m/s (peak 10.4). The
+registration said "commanded", and that is all it can claim.
+
+**The timing, and why its spread is not scored.** The registered statistic was the standard
+deviation of the intervals between kernel receive timestamps. During the flight **the host's
+wall clock was stepped back eight times by about 2.3 s** (a WSL2 guest being re-synchronised),
+and between steps it ran about 6 % fast. Fourteen of 14,584 intervals are those eight steps and
+six gaps of 62–112 ms; they make the registered figure 54 ms, which describes the host.
+
+What can be said, each with what it rests on:
+
+| | value | rests on |
+|---|---|---|
+| period | 20.00 ms | the autopilot's own clock over 14,584 messages |
+| spread, central 68 % | **±0.37 ms** | the same in the flight and in a second three-minute capture on a monotonic clock |
+| standard deviation, clock steps removed | 1.2 ms | removal decided after seeing the data |
+| standard deviation, monotonic clock | 1.3 ms | the second capture; not the registered one |
+| later than +4 ms | 1 % of messages | host under load (load average 12–14) |
+| timestamps *inside* consecutive messages | alternate 16 and 24 ms | the estimator publishes every 8 ms and a 20 ms stream takes the latest sample — the age of the sample, not the send time |
+
+So a PX4 stream is **nearer to strictly periodic senders than to senders whose phase is redrawn
+every period**: a node keeps its place in the 20 ms period to within about a frame's airtime.
+What that does to the capacity results:
+
+* The *mean* delivered fraction, which every reported capacity is read from, is the same under
+  the two simulated sources to within 0.005 (F51; follow-up F4 tests the remaining 0.003).
+* The spread *between runs* is not. The reported intervals are those of the redrawn source and
+  are the tightest case. A swarm of PX4 streams lies between the two sources: 0.4 ms is a
+  hundred times the 4 µs within which two frozen senders collide in every period, so the
+  pathological runs of F51 (nodes that deliver nothing) do not arise; but the same neighbours
+  contend with each other period after period.
+* ⚠️ It is one autopilot, in simulation, on a loaded desktop, with no radio and no serial link.
+  The 0.37 ms contains this host's scheduling; hardware may be tighter or looser.
+
+**What changed in the tooling.** The recorder now also reads a monotonic clock for every
+datagram, and can record without flying (`--ground-seconds`). A wall clock should never have
+been the only clock of a timing measurement.
