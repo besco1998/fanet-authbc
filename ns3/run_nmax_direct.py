@@ -25,6 +25,7 @@ from __future__ import annotations
 import argparse
 import csv
 import io
+import math
 import os
 import subprocess
 import sys
@@ -109,6 +110,21 @@ def default_grid(model_n: int) -> list[int]:
     return [model_n + k * step for k in (-3, -2, -1, 0, 1, 2)]
 
 
+def one_period_ms(fps: float) -> float:
+    """One sending period in ms, as the scenario's own guard will accept it.
+
+    The scenario aborts if ``txJitterMs * 1e-3 > 1.0 / framesPerSec``. For some rates the two
+    sides of that comparison round differently and 1000/fps fails it by one unit in the last
+    place (116 frames/s was the first found, on 2026-10-09: the run stopped with SIGABRT). The
+    jitter is stepped down until the guard holds, which for every rate used before that date
+    changes nothing.
+    """
+    period = 1000.0 / fps
+    while period * 1e-3 > 1.0 / fps:
+        period = math.nextafter(period, 0.0)
+    return period
+
+
 def source_of(spec: str, fps: float) -> tuple[float, float]:
     """A traffic-source spec as (jitter in ms, rate offset in ppm).
 
@@ -117,7 +133,7 @@ def source_of(spec: str, fps: float) -> tuple[float, float]:
     each node's rate by up to ±S ppm so that relative phases sweep during the run.
     """
     jitter, _, skew = spec.partition("/")
-    return (1000.0 / fps if jitter == "period" else float(jitter)), float(skew or 0.0)
+    return (one_period_ms(fps) if jitter == "period" else float(jitter)), float(skew or 0.0)
 
 
 def read_plan(path: Path) -> list[tuple[str, str, list[int]]]:

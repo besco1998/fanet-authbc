@@ -292,3 +292,27 @@ class TestTheCommittedSummaryIsTheCommittedRuns:
             expected = n * cell.fps * float(r["sim_time_s"])
             skew = float(r["skew_ppm"]) * 1e-6
             assert expected * (1 - skew) - 2 * n <= tx <= expected * (1 + skew)
+
+
+class TestOnePeriodOfJitterIsAcceptedByTheScenario:
+    """⚠️ Added 2026-10-09. The scenario refuses a jitter above one period, comparing
+    `txJitterMs * 1e-3 > 1.0 / framesPerSec`. At 116 frames/s, 1000/116 fails that by one unit in
+    the last place and ns-3 aborted. It had never happened because every earlier rate passes."""
+
+    @staticmethod
+    def _guard_accepts(jitter_ms: float, fps: float) -> bool:
+        return not (jitter_ms < 0.0 or jitter_ms * 1e-3 > 1.0 / fps)
+
+    def test_the_rate_that_aborted(self) -> None:
+        assert not self._guard_accepts(1000.0 / 116, 116)          # the defect, as found
+        assert self._guard_accepts(drv.one_period_ms(116), 116)
+        assert drv.one_period_ms(116) == pytest.approx(1000.0 / 116, rel=1e-12)
+
+    def test_every_rate_used_before_is_unchanged(self) -> None:
+        for fps in sorted({c.fps for c in drv.CELLS.values()}):
+            assert drv.one_period_ms(fps) == 1000.0 / fps, fps
+            assert drv.source_of("period", fps) == (1000.0 / fps, 0.0)
+
+    def test_a_sweep_of_rates_never_trips_the_guard(self) -> None:
+        for fps in [x / 2 for x in range(2, 1000)]:
+            assert self._guard_accepts(drv.one_period_ms(fps), fps), fps
