@@ -19,6 +19,7 @@ produces every figure the paper cites --- which is what would have caught the H_
 from __future__ import annotations
 
 import re
+import struct
 import subprocess
 import sys
 from pathlib import Path
@@ -131,3 +132,26 @@ def test_the_naive_factor_is_derived_not_hardcoded():
     assert not re.search(r"fails, \d+(\.\d+)?x at N=\d+", src), (
         "figures_ns3.py hardcodes the naive-reduction factor again; derive it from the CSV"
     )
+
+
+def _png_text_keys(path: Path) -> set[str]:
+    """Keywords of the text chunks in a PNG file, read from its chunk list."""
+    data = path.read_bytes()
+    assert data[:8] == b"\x89PNG\r\n\x1a\n", f"{path.name} is not a PNG file"
+    keys, i = set(), 8
+    while i < len(data):
+        length, kind = struct.unpack(">I4s", data[i:i + 8])
+        if kind in (b"tEXt", b"iTXt", b"zTXt"):
+            keys.add(data[i + 8:i + 8 + length].split(b"\0", 1)[0].decode("latin-1"))
+        i += 12 + length
+    return keys
+
+
+def test_no_figure_embeds_the_plotting_library_version():
+    """⚠️ Added 2026-10-08. `figures_e4.py` alone saved without `metadata={"Software": None}`, so
+    its file carried "Matplotlib version x.y.z". The first time the gate ran in a second
+    environment, with a matplotlib one patch release newer, it rewrote a committed figure whose
+    pixels had not changed. The reproduction guide says the figures are byte-stable; a file that
+    names the library version cannot be."""
+    tagged = sorted(p.name for p in FIGDIR.glob("*.png") if "Software" in _png_text_keys(p))
+    assert not tagged, f"figures that embed the plotting library's version: {tagged}"

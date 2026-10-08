@@ -144,6 +144,17 @@ Worked through in the structure of `docs/06` §7.
   (`make all VENV=<that environment>`): `ruff` clean, `mypy` 0 / 57 files, **1955 fast tests
   and all 38 gate tests passed**. Then CI on the fixed commit.
 
+**Found by the verification itself.** Running the gate in that second environment left one
+committed figure modified, `results/figures/e4_crossover.png` — same size, **zero pixels
+different**. `figures_e4.py` was the only one of seven generators that saved without
+`metadata={"Software": None}`, so its file named the matplotlib release that drew it (3.11.0
+here, 3.11.2 there), against the reproduction guide's statement that the figures are
+byte-stable. Fixed in the generator; the regenerated file is byte-identical under both
+releases and pixel-identical to the one it replaces. Guard:
+`test_no_figure_embeds_the_plotting_library_version` reads the text chunks of every figure.
+The same lesson twice in one hour: an environment-dependent output is invisible until a second
+environment runs it.
+
 **What it teaches.** "Green on my machine" was the claim I had just made about a gate whose
 purpose is that anyone can re-derive the results. A check run inside the author's environment
 tests the author's environment. The guard reads declarations because that is the only place
