@@ -155,6 +155,16 @@ releases and pixel-identical to the one it replaces. Guard:
 The same lesson twice in one hour: an environment-dependent output is invisible until a second
 environment runs it.
 
+**And then I broke the build with the fix.** CI on `445731f` failed in the fast suite:
+`thesis/e4_crossover.png is stale`. The thesis keeps byte copies of the figures (`make thesis`
+makes them, a test compares them); I regenerated the figure and did not refresh its copy.
+*Root cause:* before that push I ran the tests I judged to be affected — four files — and not
+the suite. The one that failed was not among them, and no amount of care in choosing would
+have been as good as running everything. *Fix:* `make thesis`; the copy matches, 100 pages.
+*Guard:* the test that caught it already exists; what was missing was running it. The status
+board now says: **the whole of `make all`, in the clean environment, before every push** — a
+subset is for iterating, never for deciding to push.
+
 **What it teaches.** "Green on my machine" was the claim I had just made about a gate whose
 purpose is that anyone can re-derive the results. A check run inside the author's environment
 tests the author's environment. The guard reads declarations because that is the only place
