@@ -148,3 +148,67 @@ stand-alone varint routine sharing no code with `wire_v2`; all three agree to th
 **What this does not license.** Twelve logs chosen from the default-logging-profile end of one
 autopilot's public archive. No statement about telemetry at 50 Hz, and none about any loss,
 capacity or energy result.
+
+---
+
+# Follow-up — records at the operating rate, from PX4 software-in-the-loop. Written before any flight (2026-10-08)
+
+## Why
+
+The twelve public logs carry position at 5 Hz, so the outcome above says nothing at the 50 Hz of
+the adopted operating point (`OPEN_ITEMS` G12). And the capacity results assume a send time
+redrawn in every period, with strictly periodic senders as the other extreme; how regular a real
+autopilot's 50 Hz stream is has not been measured (G7). Mohamed chose (2026-10-08) to close both
+with PX4 run in software-in-the-loop on the development machine.
+
+## What is run
+
+PX4 **v1.17.0**, built for `px4_sitl` with its built-in simulator (`sihsim_quadx`: the
+autopilot's own estimator, controllers, logger and MAVLink module, flying a simulated
+quadrotor). No hardware, no radio, no Gazebo.
+
+* **Records.** The logger is told to write `vehicle_global_position`, `vehicle_local_position`,
+  `battery_status` and `vehicle_status` every 20 ms. The resulting log goes through **the same
+  code as the public logs** (`analysis/px4_log_sizes.py`: `flight_runs`, `sizes`) on a 20 ms grid
+  and, for comparison with the real multicopters, on a 200 ms grid.
+* **The flight.** One mission, fixed now: take off to 30 m; four legs of 150 m round a square at
+  a commanded 5 m/s; the same square at 12 m/s; 60 s of position hold; land. About six minutes.
+* **Stream timing.** The companion-computer MAVLink instance (`-m onboard`, the mode the paper's
+  50 Hz comes from) is received on UDP with kernel receive timestamps. The statistic is the
+  interval between consecutive `GLOBAL_POSITION_INT` messages.
+
+## The prediction
+
+| quantity | predicted | why |
+|---|---|---|
+| mean lean delta record, **20 ms** grid, whole flight | **9.0–9.5 B** | every field's change over 20 ms fits one byte at these speeds: 12 m/s is 0.24 m, about 22 units of 10⁻⁷ degree; the generator's floor is 9.0 |
+| … on the 12 m/s legs alone | 9.0–10.0 B | the least favourable part |
+| mean lean delta record, **200 ms** grid | **10.0–10.6 B** | the six real multicopter logs span 10.00–10.52 B; if the simulated vehicle is representative it lands among them |
+| mean lean keyframe | 20–24 B | the real logs give 20.0–23.8; the generator 24.0 |
+| bytes per record of the design (b = 4) with these records at 20 ms | **42.3–43.8 B** | 43.25 with the generator's records |
+| mean interval between 50 Hz position messages | **20.0 ± 0.2 ms** | the stream is rate-limited to 50 Hz |
+| standard deviation of that interval | **0.05–2 ms** | the MAVLink module sends from a loop a few milliseconds long, so intervals are quantised by it |
+
+## What each outcome means
+
+* **Sizes inside the ranges:** the generator's record sizes hold at the operating rate, the
+  limitation "nothing was measured at 50 Hz" is replaced by "measured on PX4 in simulation", and
+  no reported number moves.
+* **Mean delta at 20 ms above 9.5 B:** the generator flatters the design at its own operating
+  point. The ladder's bytes are then recomputed with the measured record sizes and reported
+  beside the generator's.
+* **The 200 ms figure outside 10.0–10.6 B:** the simulated vehicle does not resemble the real
+  multicopters on the one axis where they can be compared, and the 20 ms figure is reported with
+  that warning attached.
+* **Interval spread:** this is a measurement, not a test. Its use is to say which of the two
+  simulated traffic sources a PX4 stream is nearer to: a spread well under the frame's airtime
+  (0.2–0.9 ms) means nearly frozen phases; a spread of a millisecond or more means the phases of
+  neighbours are reshuffled from one period to the next.
+
+## What this cannot show
+
+It is the autopilot's software on a simulated vehicle and a simulated clock. Sensor noise is the
+simulator's model of it. There is no wind unless configured, no radio and no serial link, so the
+timing figure contains the host's scheduling noise and none of a real telemetry link's. One
+airframe type. A fixed-wing or VTOL flight is attempted only if the quadrotor result leaves the
+question open.
