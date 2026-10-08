@@ -1,6 +1,6 @@
 """Record sizes on real flight logs: the artifact, its manifest, and the rule (review 3; D8).
 
-The measurement needs the network and `pyulog`, and is not repeated here. What is held:
+The measurement needs the network, and is not repeated here. What is held:
 
 * the selection rule and the handling of invalid samples, on inputs small enough to read;
 * that the artifact is internally consistent and covers exactly the logs the manifest pins;

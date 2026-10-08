@@ -110,6 +110,45 @@ on decoding than on verifying. The paper's receiver-CPU ceiling charges cryptogr
 "the channel binds first" is true of a compiled receiver and not of the prototype. The paper and
 thesis now say so; the bench session will put a number on it.
 
+## A failure: the frozen gate was green here and red on a clean install
+
+Worked through in the structure of `docs/06` §7.
+
+* **WHAT.** After the push of `1a5baf7`, CI's `make verify-frozen` failed, 1 of 38:
+  `tests/test_px4_sitl.py::TestTheFlightThatWasRegistered::test_the_artifacts_are_the_analysis_of_the_raw_files`
+  — `ModuleNotFoundError: No module named 'pyulog'` at `analysis/px4_log_sizes.py:160`.
+  Lint, types and the 1951 fast tests had passed there. `make all` had exited 0 on this machine
+  minutes before.
+* **CONTEXT.** Branch `p10-followups`. The test was added with the simulated flight (`989fac9`);
+  it re-derives `px4_sitl_sizes.csv` and `px4_sitl_stream_timing.csv` from the committed
+  `flight.ulg`. No earlier CI run had seen it: the branch was pushed for the first time today.
+* **REPRO.** `sys.modules["pyulog"] = None`, then that one test: the same error, here.
+* **HYPOTHESES.** H1, the package is missing from CI's environment — supported at once by the
+  message, and by `pyproject.toml`, which does not name it. H2, a platform difference in the
+  log parser — killed: the import fails before any parsing.
+* **ROOT CAUSE.** `pyulog` was installed by hand in August for the public-log measurement,
+  which is outside the gate because it needs the network, and was deliberately left out of the
+  dependencies. I then wrote a **gate** test on top of it without declaring it. From inside an
+  environment that has the package, nothing can show this: the local check answers "does it
+  pass here", and the question was "does it pass from the declarations".
+* **FIX.** `pyulog==1.2.4` is a pinned development dependency (`pyproject.toml`, `docs/03` §2).
+  The test was not skipped, guarded or moved out of the gate: the raw log is in the repository,
+  so the gate should be able to read it everywhere. Six places that said the package was not a
+  dependency now say what is true.
+* **REGRESSION GUARD.** `tests/test_declared_dependencies.py` reads every import statement in
+  `src/`, `analysis/`, `tests/` and the `ns3/` drivers and requires each third-party package to
+  be declared. Before the fix it failed naming exactly `pyulog`. Two packages stay outside on
+  purpose (`pymavlink`, `pypdf`), each tied to the one file that may import it, and only inside
+  a function.
+* **VERIFICATION.** A new virtual environment built from `pip install -e '.[dev]'` alone
+  (`make all VENV=<that environment>`): `ruff` clean, `mypy` 0 / 57 files, **1955 fast tests
+  and all 38 gate tests passed**. Then CI on the fixed commit.
+
+**What it teaches.** "Green on my machine" was the claim I had just made about a gate whose
+purpose is that anyone can re-derive the results. A check run inside the author's environment
+tests the author's environment. The guard reads declarations because that is the only place
+this defect is visible.
+
 ## Also
 
 * **Bench session** (decision 11-a): `hw/BENCH_SESSION.md`, five steps, with the expected ranges

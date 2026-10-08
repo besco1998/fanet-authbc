@@ -12,7 +12,7 @@ opened: `docs/PX4_LOGS_EXPECTATIONS.md`.
     python analysis/px4_log_sizes.py --select    # needs network: apply the rule, write the manifest
     python analysis/px4_log_sizes.py             # download what is missing, parse, write the CSV
 
-Needs `pyulog` (`pip install pyulog`); it is not a dependency of the package. Logs are cached in
+Needs `pyulog`, which `make setup` installs (a pinned development dependency). Logs are cached in
 `.cache/px4/`, which is git-ignored: they are public uploads and are not redistributed here.
 Writes `results/raw/px4_log_sizes.csv`.
 """

@@ -113,7 +113,7 @@ sim-ns3-nmax:  ## [R7] direct N_max search with a bootstrap interval -> results/
 	$(BIN)/python ns3/run_nmax_direct.py --plan experiments/nmax-direct/plan.txt
 verify-citations:  ## [F49] compare every bib entry with its registry record (needs network)
 	$(BIN)/python analysis/verify_citations.py
-px4-logs:  ## [R8] record sizes on the pinned public PX4 flight logs (needs network + pyulog) -> results/raw/px4_log_sizes.csv
+px4-logs:  ## [R8] record sizes on the pinned public PX4 flight logs (needs network) -> results/raw/px4_log_sizes.csv
 	$(BIN)/python analysis/px4_log_sizes.py
 survey-direction-c:  ## [DirC] replication-reporting sweep -> results/raw/direction_c_survey.csv
 	$(BIN)/python analysis/direction_c_survey.py

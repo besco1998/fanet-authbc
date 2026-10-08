@@ -34,7 +34,7 @@ data; everything derived from that data is re-computed and checked on every run.
 git clone https://github.com/besco1998/fanet-authbc.git
 cd fanet-authbc
 make setup            # creates .venv with Python >=3.12 and pinned deps
-make all              # lint + mypy + 1951 fast tests + the 38-test frozen gate
+make all              # lint + mypy + 1955 fast tests + the 38-test frozen gate
 ```
 
 `make all` green means **you have reproduced the thesis's deterministic layer.** The frozen gate
@@ -267,7 +267,7 @@ share the model's assumptions.
 backend, no timestamp metadata) so figures can be diffed. Four scripts are not figure scripts:
 `paper_numbers.py` (**every number the paper prints**, → `paper/numbers.tex`),
 `verify_citations.py` (each bibliography entry against its registry record — needs network),
-`px4_log_sizes.py` (record sizes on pinned public flight logs — needs network and `pyulog`), and
+`px4_log_sizes.py` (record sizes on pinned public flight logs — needs network), and
 `nmax_airtime_line.py` (the arithmetic of follow-up F2 in `NMAX_DIRECT_EXPECTATIONS.md`).
 
 `experiments/<name>/config.yaml` — **one config per experiment, and the only place parameters live.**

@@ -32,6 +32,10 @@ dev = [
   "ruff",
   "mypy",
   "pre-commit",
+  # Reads PX4 ULog files. Pinned because the frozen gate re-derives results/raw/px4_sitl_*.csv
+  # from the committed flight log with it (tests/test_px4_sitl.py); undeclared until 2026-10-08,
+  # when the gate failed on a clean install for exactly that reason.
+  "pyulog==1.2.4",
 ]
 
 [tool.setuptools.packages.find]

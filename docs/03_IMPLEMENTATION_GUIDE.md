@@ -16,6 +16,7 @@ blspy = ">=2.0"               # BLS12-381 (Chia, C++); fallback: py_ecc (slow, f
 cbor2 = "==5.8.0"             # pinned (5.8.1 regression noted in project history)
 msgpack = ">=1.0"
 numpy, scipy, pandas, matplotlib, pyyaml, pytest, pytest-cov, hypothesis, ruff
+pyulog = "==1.2.4"            # dev only, added 2026-10-08: reads the committed PX4 flight log in the frozen gate
 ```
 NS-3: **3.41**, built from source (doc 06 §2). No Python bindings — C++ scenario + CSV.
 

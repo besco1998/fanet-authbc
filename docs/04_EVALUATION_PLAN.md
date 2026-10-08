@@ -106,8 +106,10 @@ mechanism (`ns3_phase_lock_diagnostic.csv`).
 Every record size above comes from a synthetic telemetry generator. `analysis/px4_log_sizes.py`
 encodes the same record from **twelve public PX4 flight logs**, chosen by a rule fixed before any
 size was computed (`docs/PX4_LOGS_EXPECTATIONS.md`; logs pinned by id and SHA-256 in
-`experiments/px4-logs/manifest.yaml`, downloaded to a git-ignored cache). Needs network and
-`pyulog`, so it is **not** in the frozen gate; `px4_log_sizes.csv` is committed.
+`experiments/px4-logs/manifest.yaml`, downloaded to a git-ignored cache). Needs the network,
+so it is **not** in the frozen gate; `px4_log_sizes.csv` is committed. (The one simulated flight
+of 2026-10-08 is different: its log is committed, and the gate re-derives `px4_sitl_*.csv` from
+it with `pyulog`, a pinned development dependency since that day.)
 ⚠️ The logs carry position at 5 Hz. The check therefore covers record spacings of 0.2 s and
 above; the delta record at the 20 ms spacing of the adopted point rests on the generator alone.
 
