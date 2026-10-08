@@ -453,6 +453,15 @@ others~\cite{ndss2024pqv2v}. Charging that to every frame --- a \certBytes\,B ce
 Certificates are a per-frame cost, so batching amortises them too, and both the baseline and the
 design are charged.
 
+These are \emph{explicit} certificates: a verification key and the issuer's signature over it.
+IEEE~1609.2 also defines \emph{implicit} certificates (ECQV), which carry only a reconstruction
+value from which the key is derived with the issuer's root certificate; the source this
+accounting follows gives a signed message of at most $226$\,B with an implicit certificate
+against $330$\,B with an explicit one~\cite{ndss2024pqv2v}. Implicit certificates are not priced
+here, so the column is an upper bound on what certificates cost either design. Pricing them is
+future work; it would lower both rows and leave the comparison between them where it is, since
+whichever certificate is used is paid once per frame.
+
 \begin{remark}[Why the order of this work matters]
 The certificate term was added to the byte model \emph{before} the published figures it is
 compared with in \Cref{ch:background} were retrieved. Adding it afterwards would have been

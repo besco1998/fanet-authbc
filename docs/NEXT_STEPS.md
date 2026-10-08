@@ -21,15 +21,15 @@ of `LOGBOOK.md` is that pass.
 
 **What is waiting, in the order it should be done:**
 
-1. **Mohamed's decisions** — nothing below can be submitted without them. The list is in
-   `CLAUDE.md` ("Decisions PENDING") and `OPEN_ITEMS.md` G1–G5: the wording of the name, the
-   paper's title, venue and page target, whether the analysis of the review may be committed here,
-   and one chain link per frame on 802.11. **Each now has its options and a recommendation** in
-   §7.6 of the private audit (`~/authbc_package/docs/SUPERVISOR_REVIEW_AUDIT_2026-10.md`), with
-   the bench work, the merge into `main` and the things the agent can do unattended.
-2. **Send the response to the supervisor.** It is written, point by point, at
-   `~/authbc_package/docs/SUPERVISOR_RESPONSE_2026-10.md` — outside this repository on purpose
-   (R18). The audit it is built from is beside it.
+1. **Mohamed's decisions — ALL TAKEN on 2026-10-08** (`DECISIONS.md`, "Decided by Mohamed,
+   2026-10-08"). What they leave for him: read and merge the pull request from
+   `p9-supervisor-revision`; supply the supervisor's name, an affiliation, an ORCID and a
+   funding statement; find one or two more 5 GHz radios (G4); sit one bench session (item 4);
+   obtain one paper (G8). Submission — to a networking journal without page charges — waits on
+   the contention experiment.
+2. **The response to the supervisor goes out after the bench session** (decided 2026-10-08). It
+   is written, point by point, at `~/authbc_package/docs/SUPERVISOR_RESPONSE_2026-10.md` —
+   outside this repository, and it stays there (R18). The audit it is built from is beside it.
 3. **The one experiment that would change what the paper can claim: contention on real radios**
    (`OPEN_ITEMS` G4). Two Pi 4 and a Pi 3B+ make three stations on 5 GHz. Plan it, write the
    prediction, commit it data-free, then run. Every capacity in the paper is simulated.

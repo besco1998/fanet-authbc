@@ -14,7 +14,7 @@ it was and are kept only so the change is visible.*
 | 1 | **Affiliation** | `main.tex` carries `[AFFILIATION -- TO BE COMPLETED]`. Needs department, institution, city, country. |
 | 2 | **ORCID** | Required by Elsevier and MDPI, optional for IEEE. Register at orcid.org if you do not have one. |
 | 3 | **Funding statement** | If the work was funded, every venue requires the grant number. If unfunded, say so explicitly — silence is not accepted. |
-| 4 | **Supervisor / co-authors** | The paper is currently single-author. If your supervisor is to be a co-author, that must be settled before submission, not after. |
+| 4 | **Supervisor / co-authors** | **Decided 2026-10-08: single author; the supervisor is thanked.** ⚠️ `main.tex` carries `[SUPERVISOR -- TO BE COMPLETED]` in the acknowledgement: the name is needed. |
 | 5 | **One citation** | See below — the other of the two was obtained, read and cited on 2026-10-07. |
 
 ### The one citation still open
@@ -32,11 +32,11 @@ it was and are kept only so the change is visible.*
 
 | # | item | what is needed |
 |---|---|---|
-| 6 | **Title** | *"AUTHBC: Feasibility Boundaries for Authenticated UAV Telemetry — An Exclusion Bound and a Capacity Envelope"*: the August title less "Hardware Validation". A design-first alternative is recorded in `docs/DECISIONS.md` if Mohamed prefers it. |
-| 7 | **What "AUTHBC" stands for** | The paper defines it once as "authenticated telemetry for a blockchain-style, hash-chained ledger". The wording is the agent's. |
-| 8 | **Venue and page target** | The paper builds to 8–9 pages in the conference class. |
-| 9 | **One chain link per frame on 802.11** | The lean format extends to 802.11 what was decided for LoRa only (`docs/OPEN_ITEMS.md` G5). |
-| 10 | **The supervisor's sign-off on the revision** | The point-by-point response is kept outside this repository until Mohamed decides where it lives. |
+| 6 | **Title** | **Decided 2026-10-08: kept.** |
+| 7 | **What "AUTHBC" stands for** | **Decided 2026-10-08: kept** — "authenticated telemetry for a blockchain-style, hash-chained ledger". |
+| 8 | **Venue and page target** | **Decided 2026-10-08: a networking journal without page charges, after contention has been measured on radios** (`docs/OPEN_ITEMS.md` G4). The class changes from `conference` then; the journal is chosen then. |
+| 9 | **One chain link per frame on 802.11** | **Decided 2026-10-08: confirmed.** |
+| 10 | **The supervisor's sign-off on the revision** | The point-by-point response stays outside this repository (decided 2026-10-08) and is sent after the bench session. |
 
 ## DONE in the 2026-10 revision
 

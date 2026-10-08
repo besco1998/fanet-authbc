@@ -115,7 +115,7 @@ silent-staleness risk.
 
 *Mohamed's instruction: "do the recommended decision". Each row is the option recommended in the
 revision plan and adopted on that instruction. Labelled **R** so that they cannot be confused
-with D0–D9 above. R17 and R18 were Mohamed's to choose and are still open.*
+with D0–D9 above. R17 and R18 were Mohamed's to choose; he chose on 2026-10-08 (the section after this one).*
 
 | decision | rationale | shortage | how to solve |
 |---|---|---|---|
@@ -135,10 +135,10 @@ with D0–D9 above. R17 and R18 were Mohamed's to choose and are still open.*
 | **R14 — AUTHBC is defined once; "hash-chained ledger" replaces "blockchain-grade"** | the paper builds a signed hash chain, not a consensus protocol | ⚠️ the expansion written is *"authenticated telemetry for a blockchain-style, hash-chained ledger"* — **Mohamed to confirm the wording** | G1 |
 | **R15 — an energy table from the existing INA219 runs** (E16) | the paper said energy was measured and showed none | first format only; one configuration is not reportable (contaminated idle windows) and is shown as such | re-meter with ≥ 10 repetitions; time the lean codec on the Pi |
 | **R16 — relay placement gets its equation and a pointer to E4; multi-hop is declared out of scope** | it was named as a design axis and never evaluated | no multi-hop result | future work |
-| **R17 — venue and page target** | ⚠️ **OPEN — Mohamed** | the paper is written to 8–9 two-column pages | — |
-| **R18 — whether the analysis of the review is committed to this public repository** | ⚠️ **OPEN — Mohamed**; until decided it stays outside it, and nothing here quotes the review | — | — |
+| **R17 — venue and page target** | **DECIDED 2026-10-08 — a networking journal without page charges, after the contention experiment** | the paper is written to 9 two-column pages in the conference class and changes class at submission | the next section |
+| **R18 — whether the analysis of the review is committed to this public repository** | **DECIDED 2026-10-08 — no.** It stays outside; nothing here quotes the review | — | — |
 
-**Taken during execution under the same instruction — ⚠️ each needs Mohamed's confirmation:**
+**Taken during execution under the same instruction.** ⚠️ Each needed Mohamed's confirmation; **on 2026-10-08 he confirmed** the chain link per frame on both arms, the title and the methods paper's title (next section):
 
 | decision | rationale | shortage | how to solve |
 |---|---|---|---|
@@ -154,6 +154,35 @@ with D0–D9 above. R17 and R18 were Mohamed's to choose and are still open.*
 | **Every ladder size that is not an emitted frame is marked** (†): all first-format rows and the lean row without delta coding (F55) | the caption claimed more than the artifact's `sized_from` column says | one lean row stays a sum of parts | a keyframes-only switch in the lean codec (`OPEN_ITEMS` G20) |
 | **The paper cites Haber and Stornetta alone for the hash chain; the body uses the title's two nouns** ("exclusion bound", "capacity envelope") | the review asked for the first; the second keeps the approved title honest | none | — |
 | **One new source is redistributed: Rajasekaran et al. 2022, CC BY 4.0** | the 2026-10-07 rule withholds *copyrighted* PDFs; an open-licence one may be shared with attribution, as the one that stayed in October | — | — |
+
+## Decided by Mohamed, 2026-10-08 — every point the revision had left to him
+
+*Asked with options and a recommendation for each (the private audit of the review, §7.6). He
+chose; the cost of each choice is stated beside it, as for every decision in this file.*
+
+| decision | chosen | what it costs, or leaves open |
+|---|---|---|
+| **One chain link per frame on 802.11 as well as LoRa** (was `OPEN_ITEMS` G5) | **Yes.** The lean format carries one link per frame on both arms | Inside a frame, order rests on the frame signature alone. The stored ledger is unchanged: the receiver rebuilds every record's link and the signature covers it. The 2026-07-28 decision still governs the first format |
+| **What "AUTHBC" stands for** (G1) | *"authenticated telemetry for a blockchain-style, hash-chained ledger"* stays | "blockchain-style" appears once; there is no consensus layer and the text says so |
+| **Paper title** (G1b) | *"AUTHBC: Feasibility Boundaries for Authenticated UAV Telemetry — An Exclusion Bound and a Capacity Envelope"* stays | The design-first alternative is dropped |
+| **Authors** | Mohamed alone; the supervisor is thanked | ⚠️ The acknowledgement carries a placeholder for the name. Affiliation, ORCID and a funding statement are still his to supply |
+| **Venue (R17)** | A networking journal without page charges, **after** contention has been measured on radios | Submission now waits on hardware he has yet to find. The class changes from `conference` at that point; the exact journal is chosen then |
+| **The analysis of the review (R18)** | **Stays private.** This repository refers to the review and never quotes it | — |
+| **Sending the response to the supervisor** | After the bench session | The response will then report the bench results as well |
+| **Publishing the revision** | A pull request from `p9-supervisor-revision` to `main`, merged after he has read it | Until then `main` still carries the superseded results |
+| **The methods paper** | Keeps its new title ("Nine Ways …") and is held until the main paper is submitted | — |
+| **Contention on real radios** (G4) | **Find one or two more 5 GHz radios first**, then run it | Not three stations now. The paper keeps "contention is simulated" until then |
+| **One bench session** | All four measurements in one sitting: the lean codec timed and metered (G9), the unusable energy row re-metered (G11), crypto timing on the Pi 3B+ and the BeagleBone (G15), Ed25519 batch verification (G19) | Needs his hands; the scripts and the expected values are prepared first |
+| **A real LoRa link** | **No** | The exclusion stays arithmetic on the standard's payload table, with emitted frames |
+| **Telemetry at 50 Hz and the real stream's timing** (G7, G12) | PX4 software-in-the-loop on the development machine | Real autopilot software, simulated vehicle and clock: not a flight, and not a radio |
+| **Two questions about the simulator** (G6, G18) | Both: fresh seeds for the traffic-source difference, **and** a derivation of the airtime rule's slope | Simulation time; the derivation is tested on predictions committed before its runs |
+| **Stream-signing baselines** (G14) | Left as they are: sized from their definitions, simulated as frames | None is implemented |
+| **Implicit certificates** (S10) | One sentence; they are not priced | The certificate column is an upper bound, and says so |
+| **Two sources** (G8, G21) | He obtains Kurkowski et al. 2005; SSDBFAN is read by the agent | Until the first arrives it stays quoted through a held paper |
+| **The thesis, next** | Chapter 2 | — |
+
+*Deferred by him and unchanged: mobility (E20) and the LoRaWAN frozen-phase artifact as a second
+short paper.*
 
 > **Open items live in [`OPEN_ITEMS.md`](OPEN_ITEMS.md)** — the single tracked list of
 > everything assumed, deferred, unvalidated or accepted-as-a-limitation. Decisions live here.

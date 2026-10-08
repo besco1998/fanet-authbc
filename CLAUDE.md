@@ -144,8 +144,18 @@ session must know:
 - ⚠️ **A `pgrep -f pattern` WAITER MUST NOT MATCH ITSELF** — use `'[p]attern'`. One sat four hours after the campaign it was watching had finished (docs/06 §10).
 - ⚠️ **CHECK THE PLAN AGAINST THE DELIVERABLE, ROW BY ROW.** The first rewrite of the paper silently departed from the approved plan (a new title; the exclusion after the 802.11 results) and left two approved items undone. No test could see that.
 
-### Decisions PENDING from Mohamed (do not settle these yourself)
-**The options for each, with a recommendation, are in the private file `~/authbc_package/docs/SUPERVISOR_REVIEW_AUDIT_2026-10.md` §7.6 (D17–D34).** G1 the wording of the name ("authenticated telemetry for a blockchain-style, hash-chained ledger") · G1b the paper's title (the August one, less "Hardware Validation"; a design-first alternative is recorded) · **R17** venue and page target · **R18** whether the analysis of the review goes in this public repo (**it stays in `~/authbc_package/docs/` until decided, with the point-by-point response**) · G5 one chain link per frame on 802.11 as well as LoRa · the methods paper's new title ("Nine Ways…").
+### Decisions of the revision — ALL TAKEN by Mohamed on 2026-10-08 (do not re-open without new evidence)
+The table is in `docs/DECISIONS.md` ("Decided by Mohamed, 2026-10-08"). In one line each: **one
+chain link per frame on both arms — confirmed** · the name's wording and the paper's title —
+**kept** · **single author**, the supervisor thanked (⚠️ name, affiliation, ORCID and funding
+statement still to come from him) · **venue: a networking journal without page charges, after
+the contention experiment** · the analysis of the review **stays private** (`~/authbc_package/docs/`)
+· the response goes to the supervisor **after the bench session** · the revision reaches `main`
+by **pull request, merged only after he has read it** · the methods paper keeps "Nine Ways…" and
+waits · contention on radios: **find one or two more radios first** (G4) · **one bench session**
+for G9, G11, G15, G19 · **no** real LoRa link · **PX4 software-in-the-loop** for 50 Hz records
+and stream timing · **fresh seeds and a derivation** for the two simulator questions · stream
+baselines and implicit certificates left as stated · thesis next: **chapter 2**.
 
 **DECIDED by Mohamed 2026-10-07 — new PDFs are not published.** Eleven of the twelve sources added in October were stripped from the branch before its first push; the unpublished commits from `e9d9e44` on were rewritten for that (dates preserved; the four pre-registration commits before it kept their hashes). ⚠️ **A new source goes in `HELD_LOCALLY.csv` and `.gitignore`, not in a commit, unless its licence allows redistribution.** A local branch `p9-backup-before-strip` still holds the old commits — **never push it.**
 

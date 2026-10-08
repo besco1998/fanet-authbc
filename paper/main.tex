@@ -662,7 +662,11 @@ sends a full certificate in every fifth message and an eight-octet digest in the
 others~\cite{ndss2024pqv2v}. Charging that to every frame --- a \certBytes\,B certificate, so
 \certPerFrame\,B per frame on average --- gives the ``with cert.'' column of
 Table~\ref{tab:ladder}: \certLeanDesign\,B per record for the design against \certLeanBase{} for
-the baseline. Certificates are a per-frame cost, so batching amortises them too.
+the baseline. Certificates are a per-frame cost, so batching amortises them too. These are
+explicit certificates. The same standard defines implicit ones, which carry a reconstruction
+value in place of the key and the issuer's signature --- a signed message is then at most 226\,B
+against 330\,B~\cite{ndss2024pqv2v} --- and we have not priced them: the column is an upper
+bound.
 
 \subsection{Energy}
 
@@ -834,6 +838,11 @@ Source code, result files with their environment and configuration headers, figu
 simulation scenarios, hardware traces and the test suite are at
 \url{https://github.com/besco1998/fanet-authbc}. Every number in this paper is generated from
 those result files.
+
+% !! SUBMISSION BLOCKER: the supervisor's name is a placeholder (paper/SUBMISSION_CHECKLIST.md).
+\section*{Acknowledgment}
+The author thanks [SUPERVISOR -- TO BE COMPLETED] for a review of an earlier version of this
+paper that changed three of its results.
 
 \section*{Declaration of Competing Interests}
 The author declares no competing interests.
