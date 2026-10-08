@@ -56,12 +56,14 @@ cp /etc/os-release "$METADIR/os-release.txt" 2>/dev/null || true
 # --- back up any existing x86 p1_*.csv so we never clobber the frozen dev-box data -------------
 BK="$(mktemp -d)"
 trap 'rm -rf "$BK"' EXIT
-for f in p1_sizes.csv p1_crypto.csv; do
+for f in p1_sizes.csv p1_crypto.csv p1_lean.csv; do
   [ -f "$RAW/$f" ] && cp "$RAW/$f" "$BK/$f"
 done
 
 echo "== running P1 micro suite on $MODEL (seed=$SEED n=$N) =="
 "$PY" -m authbc.bench.micro --seed "$SEED" --n "$N"
+# the lean format's sender and receiver, per frame (OPEN_ITEMS G9)
+"$PY" -m authbc.bench.micro --seed "$SEED" --lean
 
 T_AFTER="$(temp)"; THR_AFTER="$(throt)"
 # THERMAL GUARD. get_throttled is a bitmask with TWO halves (raspberrypi.com docs):
@@ -106,10 +108,11 @@ prepend_meta() {  # $1=src csv  $2=dest csv
 }
 prepend_meta "$RAW/p1_sizes.csv"  "$HWDIR/p1_sizes.$HOST$FLAG.csv"
 prepend_meta "$RAW/p1_crypto.csv" "$HWDIR/p1_crypto.$HOST$FLAG.csv"
+prepend_meta "$RAW/p1_lean.csv"   "$HWDIR/p1_lean.$HOST$FLAG.csv"
 
-for f in p1_sizes.csv p1_crypto.csv; do
+for f in p1_sizes.csv p1_crypto.csv p1_lean.csv; do
   if [ -f "$BK/$f" ]; then cp "$BK/$f" "$RAW/$f"; else rm -f "$RAW/$f"; fi
 done
 
-echo "== wrote results/hw/p1_{sizes,crypto}.$HOST$FLAG.csv ; meta -> $METADIR =="
+echo "== wrote results/hw/p1_{sizes,crypto,lean}.$HOST$FLAG.csv ; meta -> $METADIR =="
 echo "   x86 results/raw/p1_*.csv restored untouched."

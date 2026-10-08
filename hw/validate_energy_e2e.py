@@ -94,6 +94,37 @@ def build_pipeline():
     return one_frame
 
 
+def build_lean_pipeline():
+    """One zero-arg callable that produces ONE lean frame of `BATCH` records (OPEN_ITEMS G9).
+
+    The sender as it runs: `LeanSender.frame` on chained ledger records — the SHA-256 link of
+    each record, delta coding, one Ed25519 signature, CBOR framing. The records are a real
+    stream, built before any window so that only the sender's own work is metered.
+    """
+    from authbc.bench import leanframes
+    from authbc.placement.session_v2 import LeanSender
+
+    scheme = get_scheme(SCHEME)
+    sk, _pk = scheme.keygen(seed=hashlib.sha256(b"g9:lean").digest())
+    recs = leanframes.chained_records(1, 4000)
+    groups = [recs[i:i + BATCH] for i in range(0, len(recs) - BATCH + 1, BATCH)]
+    sender = LeanSender(sk)
+    state = {"i": 0}
+
+    def one_frame() -> object:
+        state["i"] = (state["i"] + 1) % len(groups)
+        return len(sender.frame(groups[state["i"]]))
+
+    return one_frame
+
+
+def predicted_lean_uj_per_record(p_cpu_w: float, t_frame_s: float, batch: int) -> float:
+    """Sender CPU energy per record of the lean format: one timed frame, shared by `batch`."""
+    if min(p_cpu_w, t_frame_s) <= 0 or batch < 1:
+        raise ValueError("need p_cpu_w > 0, t_frame_s > 0, batch ≥ 1")
+    return p_cpu_w * t_frame_s / batch * 1e6
+
+
 def predicted_cpu_uj_per_record(p_cpu_w: float, t_enc_s: float, t_sign_s: float,
                                 t_verify_s: float) -> float:
     """What the model says the CPU costs per record, in µJ, for this configuration."""
@@ -136,6 +167,11 @@ def main() -> None:
     ap.add_argument("--batch", type=int, help="override b (use 1 for the A+CBOR baseline)")
     ap.add_argument("--encoding", help="override the encoding (cbor for the baseline)")
     ap.add_argument("--record-bytes", type=float, help="override s for the model prediction")
+    ap.add_argument("--format", choices=("first", "lean"), default="first",
+                    help="lean: meter LeanSender.frame; needs --t-frame-ns from this board's "
+                         "p1_lean file (frame_send at the same --batch)")
+    ap.add_argument("--t-frame-ns", type=float,
+                    help="measured LeanSender.frame time on THIS board, for the prediction")
     ap.add_argument("--no-verify", action="store_true", default=True,
                     help="the pipeline signs but does not verify; predict the sender side only")
     args = ap.parse_args()
@@ -152,8 +188,15 @@ def main() -> None:
     # sender-side measurement against a sender+receiver model and inflated the prediction ~1.9x.
     # Found 2026-07-29 on the first real run; predict the sender side only.
     t_verify_for_prediction = 0.0 if args.no_verify else args.t_verify_ns * 1e-9
-    predicted = predicted_cpu_uj_per_record(args.p_cpu_w, args.t_enc_ns * 1e-9,
-                                            args.t_sign_ns * 1e-9, t_verify_for_prediction)
+    if args.format == "lean":
+        if not args.t_frame_ns:
+            ap.error("--format lean needs --t-frame-ns: time the sender on this board first "
+                     "(hw/run_micro.sh), so that the expectation exists before the meter is read")
+        ENCODING = "lean"
+        predicted = predicted_lean_uj_per_record(args.p_cpu_w, args.t_frame_ns * 1e-9, BATCH)
+    else:
+        predicted = predicted_cpu_uj_per_record(args.p_cpu_w, args.t_enc_ns * 1e-9,
+                                                args.t_sign_ns * 1e-9, t_verify_for_prediction)
     # Law 6: state the expectation BEFORE reading the meter.
     print("=" * 72)
     print("D1 end-to-end energy validation — EXPECTED VALUE, stated before measurement")
@@ -168,7 +211,7 @@ def main() -> None:
     print("                      a larger gap is a FINDING to explain in writing (Law 7),")
     print("                      never a tolerance to widen (Law 3).\n")
 
-    pipeline = build_pipeline()
+    pipeline = build_lean_pipeline() if args.format == "lean" else build_pipeline()
     for _ in range(WARMUP):                       # outside every window, per energy_loop.warmup
         pipeline()
 
@@ -214,7 +257,8 @@ def main() -> None:
         "configuration": {"encoding": ENCODING, "scheme": SCHEME, "placement": "B",
                           "batch": BATCH, "h_f": H_F, "g_a": G_A},
         "model_inputs": {"p_cpu_w": args.p_cpu_w, "t_enc_ns": args.t_enc_ns,
-                         "t_sign_ns": args.t_sign_ns, "t_verify_ns": args.t_verify_ns},
+                         "t_sign_ns": args.t_sign_ns, "t_verify_ns": args.t_verify_ns,
+                         "format": args.format, "t_frame_ns": args.t_frame_ns},
         "predicted_cpu_uj_per_record": predicted,
         "windows": windows,
         "note": ("Reduce with hw/ina219_capture.py --reduce <this> <samples.csv> --channel 1. "

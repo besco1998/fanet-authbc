@@ -98,3 +98,29 @@ def test_measure_sizes_row_shape() -> None:
         else:
             assert r["metric"] in {"max_bytes", "phi_pct_g64"}, (
                 f"{r['metric']} has no CI — only point statistics may omit one")
+
+
+class TestTheLeanOperations:
+    """`--lean` (OPEN_ITEMS G9): each call handles one real frame, and says how large it was."""
+
+    OPS = micro.lean_ops(seed=1, records=240)
+
+    def test_sender_and_receiver_at_one_and_four_records_per_frame(self) -> None:
+        assert set(self.OPS) == {("frame_send", 1), ("frame_receive", 1),
+                                 ("frame_send", 4), ("frame_receive", 4)}
+
+    def test_sending_returns_the_frame_length_the_row_reports(self) -> None:
+        for b in (1, 4):
+            send, size = self.OPS[("frame_send", b)]
+            lengths = [send() for _ in range(20)]
+            assert abs(sum(lengths) / len(lengths) - size) < 3
+
+    def test_receiving_accepts_every_frame_and_survives_the_end_of_the_stream(self) -> None:
+        """240 records are 60 frames at b = 4: 150 calls wrap twice, and a receiver that had
+        seen the stream once would refuse it as a replay."""
+        receive, _ = self.OPS[("frame_receive", 4)]
+        assert [receive() for _ in range(150)] == [4] * 150
+
+    def test_the_four_record_frame_is_the_designs(self) -> None:
+        assert abs(self.OPS[("frame_send", 4)][1] - 173) <= 2
+        assert abs(self.OPS[("frame_send", 1)][1] - 146) <= 2
