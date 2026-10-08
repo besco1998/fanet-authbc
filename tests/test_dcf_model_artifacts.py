@@ -18,6 +18,7 @@ import pytest
 REPO = Path(__file__).resolve().parents[1]
 RAW = REPO / "results" / "raw"
 sys.path.insert(0, str(REPO / "ns3"))
+sys.path.insert(0, str(REPO / "analysis"))
 _spec = importlib.util.spec_from_file_location("dcf_model_check",
                                                REPO / "analysis" / "dcf_model_check.py")
 assert _spec and _spec.loader
@@ -132,3 +133,69 @@ class TestScoringRefusesAnUnfinishedCampaign:
         (tmp_path / f"{case.stem}_runs.csv").write_text("\n".join(lines) + "\n")
         crossing, means = check.ns3_crossing(case)
         assert crossing is None and list(means) == [38]
+
+
+class TestWhatDocs02SaysOfTheDerivation:
+    """docs/02 §6g prints a comparison table and the closed form's accuracy; both are computed."""
+
+    DOC = (REPO / "docs" / "02_MATHEMATICAL_FOUNDATIONS.md").read_text()
+
+    @staticmethod
+    def _closed_form_crossing(fps: float, t_s: float, w: int = 16, level: float = 0.05) -> float:
+        def loss(n: float) -> float:
+            rho = (n - 1) * fps * t_s
+            return rho * (1 - (1 - 1 / w) ** (rho / (1 - rho))) + (n - 1) * fps * 8e-6
+
+        lo, hi = 2.0, 1.0 + 0.999 / (fps * t_s)          # loss is increasing in n below rho = 1
+        for _ in range(80):
+            mid = (lo + hi) / 2
+            lo, hi = (mid, hi) if loss(mid) < level else (lo, mid)
+        return lo
+
+    def test_the_closed_form_is_within_5_5_percent_of_every_crossing(self) -> None:
+        import run_nmax_direct as drv
+
+        from authbc.models import bianchi
+        errors = []
+        for cell, r in CROSSINGS.items():
+            c = drv.CELLS[cell]
+            x = self._closed_form_crossing(c.fps, bianchi.t_broadcast(c.frame_bytes))
+            errors.append(100 * (x / float(r["ns3_crossing"]) - 1))
+        assert max(abs(e) for e in errors) == pytest.approx(5.5, abs=0.05)
+        assert sum(abs(e) for e in errors) / len(errors) == pytest.approx(2.3, abs=0.06)
+        assert "within **5.5 %** (mean 2.3 %)" in self.DOC
+
+    def test_the_slope_the_line_fitted_is_the_tie_term_at_the_crossings_occupancy(self) -> None:
+        import run_nmax_direct as drv
+
+        from authbc.models import bianchi
+
+        def slope(rho: float, w: int = 16) -> float:
+            return rho / (w * (1 - rho))
+
+        rho = []
+        for cell, r in CROSSINGS.items():
+            c = drv.CELLS[cell]
+            rho.append((float(r["ns3_crossing"]) - 1) * c.fps * bianchi.t_broadcast(c.frame_bytes))
+        assert (round(min(rho), 2), round(max(rho), 2)) == (0.48, 0.60)
+        assert round(sum(rho) / len(rho), 2) == 0.53
+        assert (round(slope(min(rho)), 3), round(slope(max(rho)), 3)) == (0.058, 0.092)
+        assert round(slope(sum(rho) / len(rho)), 3) == 0.071
+        assert "occupancies of 0.48–0.60, 0.53 on average" in self.DOC
+
+    def test_the_comparison_table(self) -> None:
+        import nmax_airtime_line as line
+        import run_nmax_direct as drv
+
+        from authbc.models import bianchi
+        a, _ = line.calibrate(line.crossings("period"))
+        fitted = []
+        for cell, r in CROSSINGS.items():
+            c = drv.CELLS[cell]
+            fitted.append(100 * (line.n_line(a, c.fps, bianchi.t_broadcast(c.frame_bytes))
+                                 / float(r["ns3_crossing"]) - 1))
+        assert max(abs(e) for e in fitted) == pytest.approx(4.0, abs=0.05)
+        assert sum(abs(e) for e in fitted) / len(fitted) == pytest.approx(2.6, abs=0.06)
+        assert "| worst error | **1.2 %** | 4.0 % | 15.3 % |" in self.DOC
+        assert "| mean absolute error | **0.5 %** | 2.6 % | — |" in self.DOC
+        assert "worst of 153 points | **0.0023** |" in self.DOC

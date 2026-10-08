@@ -623,6 +623,77 @@ this design delays *transmission* at the sender. (iii) A scheme with a much smal
 also lost less often at a given bit error rate (T3′, length note) — an advantage this table
 does not credit.
 
+### 6g. Why the crossing is where it is — two mechanisms, nothing fitted (2026-10-08, F58)
+
+§6e simulates each capacity and the airtime line of F54 fits them with one constant. Neither
+says *why* loss reaches 5 % where it does. This section does, from the access rule alone.
+
+**The scenario, as the rule sees it.** N stations, one collision domain, broadcast: no
+acknowledgement, no retransmission, a contention window that never grows (W = 16 slots). Each
+station sends one frame per period 1/f at an instant drawn uniformly in the period. A frame
+holds the medium for T = airtime + DIFS (`bianchi.t_broadcast`). A frame that arrives while the
+medium is held **defers**: it draws a counter from {0 … W−1}, counts idle slots after DIFS and
+sends at zero. A frame that arrives with the medium idle for DIFS is sent at once.
+
+**A frame is lost in exactly two ways.**
+
+1. **A tie.** Two deferring stations whose counters reach zero in the same slot send together.
+   Any two stations that are waiting at the same moment tie with probability **1/W** — whether
+   both drew fresh, or one holds a counter frozen from an earlier round (a frozen counter is
+   ≥ 1, the other's fresh draw is uniform, and they are equal with probability 1/W either way).
+2. **The detection window.** A station cannot sense a transmission in its first δ = 4 µs
+   (the simulator's preamble-detection time). Whoever decides to send inside that window —
+   an arrival that finds the medium apparently idle, or a counter that runs out — sends too.
+
+**A closed form, with nothing fitted.** Let ρ = (N−1)·f·T, the share of time the others hold
+the medium. A frame defers with probability ρ. In a queue of such frames a deferring frame
+meets ρ/(2(1−ρ)) others already waiting and as many again arrive while it waits (M/D/1), so it
+shares its wait with K = ρ/(1−ρ) others and ties with probability 1 − (1−1/W)^K. The window
+adds a collision whenever another station starts within ±δ:
+
+    loss(N) ≈ ρ · [ 1 − (1 − 1/W)^(ρ/(1−ρ)) ]  +  (N−1) · f · 2δ
+
+Solved for loss = 0.05 this puts the eighteen simulated crossings within **5.5 %** (mean 2.3 %),
+its error ordered by frame length — short frames are flattered, because the time counters take
+to run down, which the queue ignores, is a larger share of a short frame.
+
+**What the fitted slope was.** To first order the tie term is ρ²/(W(1−ρ)), so the line's
+a·T·N·f is a·ρ with **a = ρ / (W·(1−ρ))**. The eighteen configurations reach 5 % loss at
+occupancies of 0.48–0.60, 0.53 on average, where that expression runs from 0.058 to 0.092 and
+is **0.071** at the average — the value the fit found. One constant served because the
+occupancy at the crossing varies little; it served only to a few percent because it does vary. It sat
+near 1/W = 0.0625 because ρ/(1−ρ) happens to be near 1 there, not because the slope *is* 1/W.
+Its constant c = 8 µs is 2δ exactly, as it was registered. ⚠️ So the line is the tangent of a curve at one loss level:
+at 2 % or 10 % loss, or with another window, it has no reason to hold, and §F5 shows the three
+readings part there.
+
+**The exact version** is `src/authbc/sim/dcf_unsaturated.py`: an event simulator of the rule
+above — arrival times, carrier sense, counters, post-transmission backoff — with no PHY, no
+channel, no packets, and no code of ns-3's. Its constants are the standard's (slot 9 µs,
+DIFS 34 µs, W = 16) and the simulator's δ. Against every point ns-3 has run at the designated
+source (`results/raw/dcf_model_vs_ns3.csv`, `python analysis/dcf_model_check.py --compare`):
+
+| | this model | the fitted line | the single ceiling |
+|---|---|---|---|
+| crossings compared | 18 | 18 | 13 |
+| worst error | **1.2 %** | 4.0 % | 15.3 % |
+| mean absolute error | **0.5 %** | 2.6 % | — |
+| delivered fraction, worst of 153 points | **0.0023** | — | — |
+
+Ties are 51–85 % of the loss, more for long frames; the window is the rest.
+
+⚠️ **This is a comparison, not a prediction.** The model was written beside one of those
+eighteen cells, and an omission in it — half of the window, the case of an arrival just
+*before* a counter runs out — was found from that cell's numbers. Its predictions are for
+conditions no run had been made at: the window doubled, and the 2 % and 10 % loss levels
+(`results/raw/dcf_model_predictions.csv`), committed before their runs. The registration and
+its outcome are follow-up F5 of `docs/NMAX_DIRECT_EXPECTATIONS.md`.
+
+⚠️ **What it does not show.** The model and ns-3 implement one standard. Their agreement says
+the capacities of §6e follow from that rule and a 4 µs detection time; it does not say a radio
+behaves so. Capture, hidden terminals and a real preamble detector are outside both
+(`OPEN_ITEMS` G4).
+
 ## 9. LoRa arm — EU868, its OWN parameter set (2026-07-28) ⚠️
 **The 802.11 arm's numbers do not transfer.** They differ by two to three orders of magnitude and
 the binding constraint is different *in kind*: a regulatory airtime quota, not a frame size or a

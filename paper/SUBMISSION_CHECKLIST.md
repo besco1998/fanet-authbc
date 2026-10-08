@@ -15,14 +15,14 @@ it was and are kept only so the change is visible.*
 | 2 | **ORCID** | Required by Elsevier and MDPI, optional for IEEE. Register at orcid.org if you do not have one. |
 | 3 | **Funding statement** | If the work was funded, every venue requires the grant number. If unfunded, say so explicitly — silence is not accepted. |
 | 4 | **Supervisor / co-authors** | **Decided 2026-10-08: single author; the supervisor is thanked.** ⚠️ `main.tex` carries `[SUPERVISOR -- TO BE COMPLETED]` in the acknowledgement: the name is needed. |
-| 5 | **One citation** | See below — the other of the two was obtained, read and cited on 2026-10-07. |
+| 5 | **Two citations** | **Both settled** (2026-10-07 and 2026-10-08): one read and cited, one read and not needed. See below. |
 
-### The one citation still open
+### The two citations that had been open
 
 | paper | status |
 |---|---|
 | Rajasekaran, Maria, Al-Turjman, Altrjman & Mostarda, *Anonymous Mutual and Batch Authentication with Location Privacy of UAV in FANET*, Drones 6(1):14, 2022 · `10.3390/drones6010014` | **DONE 2026-10-07.** Held (CC BY, in `docs/literature/`), read in full, checked against Crossref (five authors, not the four listed here before), cited in the related work of the paper and the thesis (`docs/audits/model_provenance.md` F57). |
-| Al Majmaie, Ghajari, Bhatta & Ibrahem, *SSDBFAN: Scalable and Secure Cluster-Based Data Aggregation with Blockchain for FANETs*, Sensors 26(9):2585, 2026 · `10.3390/s26092585` | **Obtainable, not read, not cited.** Defensive only: same group as `almajmaie2026pqfanet`, which is cited. The publisher's static server serves it (`mdpi-res.com/d_attachment/sensors/sensors-26-02585/article_deploy/sensors-26-02585.pdf`); a copy is on the author's machine outside the repository. It is cited only if someone reads it and it says something the paper needs. |
+| Al Majmaie, Ghajari, Bhatta, Ibrahem & Amsaad, *SSDBFAN: Scalable and Secure Cluster-Based Data Aggregation with Blockchain for FANETs*, Sensors 26(9):2585, 2026 · `10.3390/s26092585` | **DONE 2026-10-08: read, and not cited.** It aggregates *data* at cluster heads and gives no per-message byte budget; nothing in it bears on this paper (`docs/literature/README.md`). |
 
 ⚠️ Per the project's own rule, a source is not cited unless it is held and read.
 

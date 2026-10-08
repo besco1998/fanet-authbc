@@ -764,6 +764,12 @@ which puts all eighteen simulated crossings within 5.5 % (mean 2.3 %), and says 
 slope *is*: a = ρ/(W·(1−ρ)), which equals 0.071 at ρ = 0.53 — the occupancy at which loss reaches
 5 %. It was near 1/W by that coincidence and no other.
 
+> *Clarification added 2026-10-08, before any run of F5.* 0.53 is the **average** occupancy at
+> the eighteen crossings; they span 0.48–0.60, over which ρ/(W(1−ρ)) runs from 0.058 to 0.092.
+> The fitted slope is that quantity averaged, not matched cell by cell — which is the reason
+> one constant fitted only to a few percent. Nothing registered below depends on this
+> sentence.
+
 **The model that is tested** is the exact version of the same two mechanisms:
 `src/authbc/sim/dcf_unsaturated.py`, an event simulator of the access rule alone — arrival
 times, the carrier-sense rule, counters. No PHY, no channel, no packets, no line of ns-3, and no

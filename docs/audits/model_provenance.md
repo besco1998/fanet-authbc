@@ -3078,3 +3078,126 @@ authentications is **n times the cost of one** (1184·n bits). Batch authenticat
 verifier's work; the bytes stay linear. One sentence in the paper's related work and one in the
 thesis say that and no more: the scheme authenticates drones to a user, it is not broadcast
 telemetry, and no size of ours is compared with it.
+
+---
+
+## F58 — the crossing derived: two loss mechanisms and no fitted constant reproduce every simulated capacity (2026-10-08)
+
+**The question** (`OPEN_ITEMS` G18). F54's airtime line has one fitted constant and a residual
+ordered by frame rate; its slope was "close to 1/W₀" and nobody had said why. Mohamed chose to
+derive it.
+
+**The derivation** (docs/02 §6g). In this scenario a frame is lost in two ways and no others:
+two deferring stations' backoff counters reach zero in the same slot (probability 1/W for any
+two that wait together), or a station decides to send inside the 4 µs in which it cannot yet
+sense another's transmission. Counting the first with an M/D/1 queue and the second directly:
+
+    loss ≈ ρ·[1 − (1 − 1/W)^(ρ/(1−ρ))] + (N−1)·f·8 µs,      ρ = (N−1)·f·T
+
+Nothing is fitted. It puts the eighteen simulated crossings within 5.5 % (mean 2.3 %).
+
+**What the fitted slope was.** a = ρ/(W(1−ρ)). The crossings sit at occupancies of 0.48–0.60,
+mean 0.53, where that is 0.058–0.092 and **0.071 at the mean** — the fitted value. The line is
+the tangent of a curve at one loss level. It sat near 1/W because ρ/(1−ρ) ≈ 1 there.
+
+**The exact version, and the comparison.** `src/authbc/sim/dcf_unsaturated.py` simulates the
+access rule and nothing else. Against every point ns-3 has run at the designated source
+(`results/raw/dcf_model_vs_ns3.csv`):
+
+| | worst crossing error | mean | worst delivered-fraction difference |
+|---|---|---|---|
+| **event model, nothing fitted** | **1.2 %** | 0.5 % | 0.0023 over 153 points |
+| closed form, nothing fitted | 5.5 % | 2.3 % | — |
+| airtime line, one fitted constant | 4.0 % | 2.6 % | — |
+| single load ceiling | 15.3 % (13 cells) | — | — |
+
+Ties are 51–85 % of the loss; the detection window is the rest. So the capacities of §6e are
+not a property of ns-3's internals: a second implementation that shares no code with it and
+knows only the standard's constants and one detection time lands on them.
+
+⚠️ **How this must be read.**
+1. **It is a comparison.** The model was completed beside one of those cells: the first version
+   was 0.005 high in delivered fraction everywhere, and the cause — a frame arriving within 4 µs
+   *before* a counter runs out collides too, not only one arriving after — was found from that
+   cell. A model adjusted while looking at data has not predicted that data.
+2. **The predictions are F5**: six crossings where no run had been made (window doubled;
+   2 % and 10 % loss), committed in `9e9c096` before their runs. There the three readings part
+   widely (for cell C with the window doubled: 53, 43 and 39 neighbours).
+3. **An earlier sentence of mine claimed too much** and was corrected before any F5 run: that
+   the fit had found the slope "to three figures". The match is at the *mean* occupancy; cell by
+   cell the tie term's slope varies by ±25 %. The registration carries a dated clarification.
+4. ⚠️ **Two implementations of one standard agreeing says nothing about radios** (G4).
+
+**Why the residual of F54 was ordered by frame rate.** It was not the frame rate. The closed
+form's error is ordered by frame *length*: the time counters take to run down is a larger share
+of a short frame, and the short frames were the ones sent 50 times a second.
+
+## F59 — the receiver-CPU ceiling charges cryptography only; the prototype's decoder costs several times more (2026-10-08)
+
+**How it was found.** Preparing the bench session, `micro --lean` timed the lean receiver as it
+runs. On the development machine, under load (so indicative only): about 0.9 ms to receive one
+four-record frame, of which the Ed25519 verification is about 0.1 ms.
+
+**What it changes.** `N_cpu = 1 + ⌊1/((Λ/b)·k·t_v + Λ·t_h)⌋` (docs/02 §6c) counts verification
+and hashing. It never counted decoding the frame and rebuilding its records, which in the
+prototype is interpreted Python and is the larger part. The paper said the design "uses 42 % of
+a core at N_max, so the channel binds first". For a compiled receiver that may be true; for the
+prototype on one Pi core it is not: at the desktop's ratio, a receiver would fall behind at a
+few tens of neighbours, not 124.
+
+**What was done.** The paper's CPU column is now labelled as verification and hashing; the
+receiver-CPU paragraph and the limitations say that decoding is not charged and that these are
+ceilings for a compiled receiver; thesis ch. 8 has a remark with the indicative ratio. The Pi
+figure is step 1 of `hw/BENCH_SESSION.md` (G9), with its expected range written beforehand.
+
+**Why three audits missed it.** Each checked that the formula was evaluated correctly with the
+measured timings. None asked what the formula left out, because the quantity it computes —
+signatures per second — was the one the review had asked about. Same class as C7: every part
+was right, and the composite (a receiver that runs) had never been timed.
+
+## F60 — records at the operating rate, and the regularity of a real autopilot's stream, from PX4 in simulation (2026-10-08)
+
+**Why.** Two limitations the paper stated: nothing was measured at 50 Hz (the public logs stop
+at 5 Hz, F52), and how regular a real autopilot's stream is was unknown (the capacities assume
+a send time redrawn each period, F51). Mohamed chose PX4 software-in-the-loop for both.
+
+**What was done.** PX4 v1.17.0, built for `px4_sitl`, flown in its built-in simulator
+(`sihsim_quadx`) on a mission fixed beforehand; the logger writing position every 20 ms; the log
+through the same code as the public logs; the companion-computer MAVLink stream received with a
+timestamp per message. Ranges for seven quantities were committed before the flight
+(`dbe4ee9`). Verified at source while building: `MAVLINK_MODE_ONBOARD` streams
+`GLOBAL_POSITION_INT` at 50 Hz in that release (`mavlink_main.cpp`).
+
+**Sizes — held.** 14,317 in-flight records at 20 ms. **Every delta record is 9 B**, the floor,
+at up to 10 m/s. Keyframe 20.9 B (generator 24.0). The design costs **42.47 B per record
+against the generator's 43.25**: the generator is 1.8 % pessimistic at the operating rate. No
+reported number moves.
+
+**Two predictions did not hold as written.**
+1. Resampled at 0.2 s the flight gives 10.64 B per delta against a predicted 10.0–10.6 (the
+   range of the six real multicopter logs). By phase: 10.0 hovering, 11.0–11.2 on the squares.
+   The real logs are mostly hover; this flight is two-thirds translation. Read after the fact;
+   recorded as a miss of 0.04 B.
+2. The registered timing statistic — the standard deviation of receive intervals — came out at
+   54 ms **because the measuring host's wall clock was stepped back eight times by about 2.3 s
+   during the flight** and ran about 6 % fast in between. It is recorded as *not scored*.
+
+**Timing — what can be said.** Period 20.00 ms on the autopilot's clock. Central 68 % of
+intervals within **±0.37 ms**, the same in the flight and in a second capture on a monotonic
+clock; standard deviation 1.2–1.3 ms, dominated by the 1 % of messages more than 4 ms late on a
+loaded desktop. (The timestamps *inside* consecutive messages alternate 16 and 24 ms: the
+estimator publishes every 8 ms and a 20 ms stream takes the latest sample. That is sample age,
+not send time.)
+
+**What it means for the capacity results.** A PX4 stream is nearer to strictly periodic senders
+than to the redrawn source. The mean delivery — what every capacity is read from — is the same
+under both (F51, F61). The spread between runs is not: the reported intervals are the redrawn
+source's and are the tightest case. A jitter of 0.4 ms is a hundred times the 4 µs within which
+frozen senders collide every period, so the pathological runs of F51 do not arise.
+
+⚠️ One autopilot, one airframe, in simulation, on a loaded desktop; no radio, no serial link.
+The commanded 12 m/s was not reached (9.1 m/s mean on the fast square).
+
+**Lesson.** A timing measurement was given one clock, and it was the clock an operating system
+is allowed to step. The recorder now reads a monotonic clock as well; the analysis reports an
+interquantile spread beside the standard deviation.
