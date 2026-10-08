@@ -3201,3 +3201,37 @@ The commanded 12 m/s was not reached (9.1 m/s mean on the fast square).
 **Lesson.** A timing measurement was given one clock, and it was the clock an operating system
 is allowed to step. The recorder now reads a monotonic clock as well; the analysis reports an
 interquantile spread beside the standard deviation.
+
+## F61 — the difference between the two traffic sources did not replicate; and an explanation I registered with it was wrong (2026-10-08)
+
+**The open item** (G6b). Over seeds 1–30 the redrawn source delivered 0.0031 more on average
+than the strictly periodic one (z = 2.2), and all six crossings read 1–9 % lower under the
+periodic source. Noticed in the data, not predicted; no mechanism known.
+
+**The test** (follow-up F4, registered in `a65ad6c`). The same fourteen points on seeds never
+used — sixty for the periodic source, which carries the noise, thirty for the redrawn — with
+the statistic and the reading of each outcome fixed first. 1,260 runs.
+
+**Outcome.** D = **+0.00043 ± 0.00086, z = 0.50**. Five of fourteen differences positive,
+against ten before. By the registered reading, the first result was sampling and the item is
+closed. Two sources with uniform phases have the same mean delivery.
+
+**The second claim was refuted.** I had registered an explanation for the lower crossings: that
+the first-failure rule reads low on a noisier curve. Checked by resampling the periodic source's
+scatter around a common mean (`analysis/crossing_rule_check.py`,
+`results/raw/crossing_rule_check.csv`): the rule's **median sits on the true crossing** in all
+six cells. Noise widens a crossing read from thirty periodic runs to 4–13 %; it does not shift
+it. The six low crossings were one fluctuation counted six times — the same thirty seeds.
+
+**What changed.**
+* The paper no longer says capacities read from strictly periodic senders "are 1–9 % lower". It
+  says what the data support: the same mean delivery, and a spread between runs 6–23 times
+  wider.
+* Thesis ch. 8 keeps the first observation, adds the test, and withdraws the statement.
+* `OPEN_ITEMS` G6b closed. G6a (the rate-offset source's spread) is unchanged.
+
+**Why this is worth a finding.** It is the fourth registered prediction of the capacity study to
+be scored and the third to hold — but the lesson is in the one that did not. An explanation
+that sounds right, written into a registration, was false; it was caught because the
+registration said how it would be checked. In October the same kind of sentence went into a
+commit *without* a check and stood for a day.

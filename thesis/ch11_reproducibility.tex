@@ -129,8 +129,9 @@ On 802.11 carrier sense softens the effect and does not remove it. The simulator
 medium busy only at the end of a $4$\,\si{\micro\second} preamble-detection period; two
 strictly periodic nodes whose phases fall inside that window collide in every period. At
 $N = \phaseNodes$ the per-run standard deviation of delivery is \phaseSdFrozen{} with strictly
-periodic sources and \phaseSdRedrawn{} when phases are redrawn every period, with a mean that
-differs by \srcMeanDiff{} over the points run under both.
+periodic sources and \phaseSdRedrawn{} when phases are redrawn every period. The means are the
+same: a difference of \srcMeanDiff{} seen in the first thirty seeds did not replicate on fresh
+ones (\srcFreshD{} $\pm$ \srcFreshSe).
 
 \subsection{A claim that was withdrawn}
 

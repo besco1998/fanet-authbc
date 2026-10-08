@@ -33,6 +33,7 @@ sys.path.insert(0, str(REPO / "src"))
 sys.path.insert(0, str(REPO / "analysis"))      # nmax_airtime_line, when loaded by a test
 
 import nmax_airtime_line as airtime  # noqa: E402
+import source_difference as sources  # noqa: E402
 
 from authbc.models import bianchi, broadcast_dcf, lora  # noqa: E402
 from authbc.models import frame as frame_model  # noqa: E402
@@ -656,7 +657,33 @@ def _source_difference(direct: list[dict[str, str]]) -> dict[str, str]:
     if min(shifts) <= 0.0:
         raise ValueError("the text says every crossing is higher under the redrawn source")
     return {"srcPoints": str(len(diffs)), "srcMeanDiff": f(st.mean(diffs), 3),
-            "srcShiftLo": f(min(shifts), 0), "srcShiftHi": f(max(shifts), 0)}
+            "srcShiftLo": f(min(shifts), 0), "srcShiftHi": f(max(shifts), 0)} | _fresh_seeds()
+
+
+def _fresh_seeds() -> dict[str, str]:
+    """Follow-up F4: the same comparison on seeds never used (docs/NMAX_DIRECT_EXPECTATIONS.md).
+
+    The text says the difference seen in the first sample did not replicate, and that strictly
+    periodic senders vary far more from run to run. Both are checked.
+    """
+    samples = sources.by_source(sources.read(sources.FRESH))
+    fresh = sources.difference(samples, sources.FRESH_SEEDS)
+    first = sources.difference(sources.by_source(sources.read(sources.FIRST)),
+                               sources.FIRST_SEEDS)
+    if fresh.points != first.points:
+        raise ValueError("the fresh-seed sample does not cover the points of the first one")
+    if fresh.z >= 1.0:
+        raise ValueError("the text says the traffic-source difference did not replicate; "
+                         f"z = {fresh.z:.2f} on the fresh seeds")
+    ratios = [st.stdev(s["periodic"].values()) / st.stdev(s["redrawn"].values())
+              for s in samples.values()]
+    if min(ratios) < 3.0:
+        raise ValueError("the text says strictly periodic senders vary several times more "
+                         "between runs at every point")
+    runs = sum(len(v) for s in samples.values() for v in s.values())
+    return {"srcFreshD": f(fresh.d, 4), "srcFreshSe": f(fresh.se, 4), "srcFreshZ": f(fresh.z, 1),
+            "srcFirstZ": f(first.z, 1), "srcFreshRuns": thousands(runs),
+            "srcSpreadLo": f(min(ratios), 0), "srcSpreadHi": f(max(ratios), 0)}
 
 
 # ============================================================================== capacity rule

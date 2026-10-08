@@ -12,6 +12,99 @@ where the durable record lives. If you want the conclusion only, follow the poin
 
 ---
 
+# 2026-10-08 — eighteen decisions taken, and the work they asked for
+
+*Mohamed answered every open point with an option, and: "handle all in parallel but in the
+correct logical order to save time and credit". The decisions are in `DECISIONS.md`. This entry
+is what was done under them, in the order it was done, and why that order.*
+
+## The order, and why
+
+Long unattended jobs first, each after its prediction was committed; writing while they ran.
+
+1. The decisions recorded, the pull request to `main` opened (not merged — his to merge), and a
+   new branch cut so the request he reads stays fixed.
+2. PX4 download and build started; the fresh-seed campaign (F4) registered, committed, launched.
+3. While both ran: the derivation, the bench-session kit, one paper read, thesis chapter 2.
+4. The simulated flight, registered before it was flown.
+5. The derivation's predictions (F5), registered before their runs; queued behind F4 because the
+   doubled contention window needs a rebuilt binary, and a campaign's binary is not replaced
+   while it runs.
+
+## The derivation (decision 14-c) — F58
+
+The airtime line had a fitted slope "near 1/W₀" that nobody had explained. Writing down how a
+frame can be lost here gave two mechanisms — a tie between backoff counters, and the 4 µs in
+which a transmission cannot yet be sensed — and a closed form with no free constant that put
+the eighteen crossings within 5.5 %. An event simulator of the access rule, 150 lines sharing
+nothing with ns-3, then reproduced all eighteen within 1.2 %.
+
+**Tried and wrong the first time.**
+* The simulator's first version delivered 0.005 too much everywhere. It handled a frame arriving
+  within 4 µs *after* a counter runs out and not one arriving just *before*: half the window.
+  Found by comparing with one ns-3 cell — which is why the agreement with the eighteen is
+  recorded as a comparison and not as a prediction.
+* Its first loop never ended when the detection window was set to zero (a unit test found it).
+* I wrote that the fit "had found the slope to three figures". It had not: the tie term's slope
+  equals the fitted 0.071 at the *mean* occupancy of the crossings and varies by ±25 % cell by
+  cell. Corrected, with a dated note in the registration, before any F5 run.
+
+## The simulated flight (decision 13-a) — F60
+
+PX4 v1.17.0 needed no system packages, but its recursive download stalled for twenty minutes on
+simulator models the build does not use; killing it left four small libraries cloned and empty,
+and the build failed twice until each was checked out by hand.
+
+The sizes came out as predicted and slightly better than the generator's. Two predictions did
+not hold as written: the 0.2 s comparison missed its range by 0.04 B (the flight is more dynamic
+than the real logs), and the timing statistic could not be scored because **the measuring host's
+wall clock was stepped back eight times during the flight**. The stream's regularity was
+recovered from an interquantile spread and a second capture on a monotonic clock: 20.0 ms,
+±0.37 ms.
+
+**Tried and wrong the first time.**
+* The first flight hung at 28 m waiting to reach 29: the vehicle settles under the commanded
+  height. The climb is now over when the altitude stops changing.
+* ⚠️ `pkill -f` killed its own shell **twice more** today. The bracket trick protects against the
+  pattern matching *itself*; it does nothing when the same string appears elsewhere in the
+  command line (here, a file name passed to the next command). Kill in a command of its own.
+
+## The traffic-source question (decision 14-b) — F61
+
+Fresh seeds, registered first: the +0.0031 between the two sources **did not replicate**
+(+0.0004 ± 0.0009 on 1,260 runs). Closed.
+
+**And an explanation of mine did not survive its own check.** I had written into the same
+registration that the crossing rule reads low on noisy means, to account for all six crossings
+being lower under periodic senders. Resampling showed the rule is unbiased; the six were one
+fluctuation of one set of thirty seeds. The paper's sentence quoting "1–9 % lower" is withdrawn.
+Designing the test also changed it for the better: the periodic source carries nearly all the
+noise, so it got sixty fresh seeds and the redrawn source thirty — the same machine time bought
+a standard error of 0.0009 instead of 0.0014.
+
+## A caveat found by preparing a measurement — F59
+
+Timing the lean receiver for the bench kit showed that the prototype spends several times more
+on decoding than on verifying. The paper's receiver-CPU ceiling charges cryptography only, so
+"the channel binds first" is true of a compiled receiver and not of the prototype. The paper and
+thesis now say so; the bench session will put a number on it.
+
+## Also
+
+* **Bench session** (decision 11-a): `hw/BENCH_SESSION.md`, five steps, with the expected ranges
+  written first. Ed25519 batch verification, dry-run on x86: 0.49× per signature at a batch of 64.
+* **SSDBFAN** (decision 17-a): read, not cited — it aggregates *data* at cluster heads and gives
+  no per-message byte budget.
+* **Thesis chapter 2** (decision 18-a): drafted from the sources held; two gaps of reading are
+  marked in the chapter instead of being written round.
+* **Implicit certificates** (decision 16-a): one sentence; the certificate column is an upper
+  bound.
+
+**Durable records:** F58–F61 in `audits/model_provenance.md`; follow-ups F4 and F5 in
+`NMAX_DIRECT_EXPECTATIONS.md`; the flight in `PX4_LOGS_EXPECTATIONS.md`; `docs/02` §6g.
+
+---
+
 # 2026-10-07 — the second pass: auditing the revision, not the description of it
 
 *Mohamed: "think deeply of the current state and the remaining open and decision points and give

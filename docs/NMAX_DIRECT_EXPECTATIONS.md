@@ -824,3 +824,60 @@ extension reported.
 **What this cannot show.** That ns-3's access rule is a radio's. The model and ns-3 implement
 the same standard; their agreement says the capacities follow from that rule and the 4 µs, not
 that either describes hardware. That is `OPEN_ITEMS` G4.
+
+## F4 — outcome (2026-10-08, 1,260 runs)
+
+**The prediction held: the difference does not replicate.**
+
+| sample | points | D = redrawn − periodic | SE | z | differences > 0 |
+|---|---|---|---|---|---|
+| seeds 1–30 (where it was noticed) | 14 | +0.00312 | 0.00142 | +2.20 | 10 of 14 |
+| **fresh: periodic 31–90, redrawn 31–60** | 14 | **+0.00043** | 0.00086 | **+0.50** | 5 of 14 |
+| combined, inverse-variance | — | +0.00116 | 0.00074 | +1.57 | — |
+
+(`python analysis/source_difference.py`; `results/raw/ns3_source_fresh_runs.csv`. Recounted from
+the runs with code that shares nothing with that script: the same D, SE and z, and every point
+holds exactly the registered seeds.)
+
+z_fresh < 1, so by the reading fixed beforehand **the first result was sampling and the item is
+closed** (`OPEN_ITEMS` G6b). The expected D_fresh was 0 ± 0.001; it is 0.0004. The combined
+estimate is given because the registration said it would be; it decides nothing, being
+dominated by the sample in which the effect was first seen.
+
+The spread between runs, on the fresh seeds: 0.011–0.033 for strictly periodic senders against
+0.0014–0.0026 for the redrawn source — six to twenty-three times wider at the same point.
+
+### The second claim — ⚠️ refuted
+
+The registration added an expectation: that the lower crossings read under the strictly periodic
+source (all six, by 1–9 %) are what the first-failure rule gives on a noisier curve, with no
+difference in means. **Checked on the runs already on file, it is false as stated.** Taking the
+common mean from the access-rule model (which matches the redrawn source within 0.002), adding
+the periodic source's own run-to-run residuals and reading the crossing as the summary does,
+2,000 times per cell:
+
+| cell | crossing under equal means, median [95 %] | the model's own crossing | observed, periodic, seeds 1–30 | P(≤ observed) |
+|---|---|---|---|---|
+| A | 32.10 [28.72, 34.11] | 32.24 | 30.97 | 0.26 |
+| B | 88.88 [84.81, 92.18] | 88.72 | 87.76 | 0.34 |
+| C | 34.99 [30.58, 37.22] | 35.09 | 32.41 | 0.08 |
+| D | 123.96 [117.05, 130.82] | 123.80 | 118.30 | 0.08 |
+| E | 55.33 [52.44, 56.82] | 55.62 | 54.74 | 0.27 |
+| F | 76.47 [72.63, 79.45] | 76.42 | 74.75 | 0.19 |
+
+The rule's median sits on the true crossing: **it does not read low.** What noise does is widen
+it — a capacity read from thirty strictly periodic runs is uncertain by about ±5 to ±12 % —
+and each observed crossing lies inside its range. All six being on the low side is not six
+pieces of evidence: they come from the same thirty seeds whose means were low, the same
+fluctuation as the +0.0031. The fresh seeds, where their coarser points bracket the threshold,
+put the periodic crossing above the redrawn one in two cells and below it in two
+(A +1.5 %, E +0.1 %, D −2.3 %, C −4.9 %).
+
+**So the statement "capacities read from the strictly periodic source are 1–9 % lower" is
+withdrawn.** It described one sample. What is true: the two sources have the same mean
+delivery, and thirty periodic runs locate a capacity about ten times less precisely.
+
+**Lesson.** The same one as on 2026-10-06, taken again: *an explanation is a claim.* I wrote a
+mechanism ("an early chance failure is likelier, so the rule reads low") into a registration
+because it sounded right. This time it was written as something to be checked, it was checked,
+and it was wrong — which is the difference a registration makes.

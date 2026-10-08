@@ -92,3 +92,77 @@ class TestTheSampleAlreadyReported:
 
     def test_the_difference_and_its_standard_error(self) -> None:
         assert round(self.FIRST.d, 4) == 0.0031 and round(self.FIRST.se, 4) == 0.0014
+
+
+class TestTheFreshSeedsAsScored:
+    """F4's outcome (docs/NMAX_DIRECT_EXPECTATIONS.md): the registered sample and what it gave."""
+
+    SAMPLES = sd.by_source(sd.read(sd.FRESH))
+    FRESH = sd.difference(SAMPLES, sd.FRESH_SEEDS)
+
+    def test_the_fourteen_points_hold_exactly_the_registered_seeds(self) -> None:
+        first = sd.difference(sd.by_source(sd.read(sd.FIRST)), sd.FIRST_SEEDS)
+        assert set(self.SAMPLES) == set(first.per_point) and len(self.SAMPLES) == 14
+        for sources in self.SAMPLES.values():
+            assert set(sources["periodic"]) == set(range(31, 91))
+            assert set(sources["redrawn"]) == set(range(31, 61))
+
+    def test_no_seed_is_shared_with_the_reported_sample(self) -> None:
+        assert min(min(s) for src in self.SAMPLES.values() for s in src.values()) == 31
+
+    def test_the_difference_did_not_replicate(self) -> None:
+        assert round(self.FRESH.d, 5) == 0.00043 and round(self.FRESH.se, 5) == 0.00086
+        assert round(self.FRESH.z, 2) == 0.50 < 1.0
+        assert sum(d > 0 for d in self.FRESH.per_point.values()) == 5
+
+    def test_the_combined_estimate_as_recorded(self) -> None:
+        first = sd.difference(sd.by_source(sd.read(sd.FIRST)), sd.FIRST_SEEDS)
+        d, se = sd.combine(first, self.FRESH)
+        assert (round(d, 5), round(se, 5), round(d / se, 2)) == (0.00116, 0.00074, 1.57)
+
+    def test_every_fresh_run_is_a_possible_simulator_output(self) -> None:
+        for r in sd.read(sd.FRESH):
+            n, tx, rx = int(r["n_nodes"]), int(r["tx_frames"]), int(r["rx_frames"])
+            assert 0 < rx <= tx * (n - 1)
+            assert float(r["delivered_frac"]) == pytest.approx(rx / (tx * (n - 1)), abs=1e-6)
+            assert r["sim_time_s"] == "20.0" and r["skew_ppm"] == "0"
+
+
+class TestTheCrossingRuleDoesNotReadLow:
+    """The second claim of F4's registration, refuted (`results/raw/crossing_rule_check.csv`).
+
+    Resampling takes twenty minutes and is not repeated here; what is held is that the artifact
+    says what the documents say it says.
+    """
+
+    import csv as _csv
+    ROWS = {r["cell"]: r for r in _csv.DictReader(
+        ln for ln in (REPO / "results" / "raw" / "crossing_rule_check.csv").read_text().splitlines()
+        if not ln.startswith("#"))}
+
+    def test_six_cells(self) -> None:
+        assert list(self.ROWS) == list("ABCDEF")
+
+    def test_the_rules_median_sits_on_the_crossing_of_the_common_mean(self) -> None:
+        for cell, r in self.ROWS.items():
+            true, median = float(r["crossing_of_common_mean"]), float(r["resampled_median"])
+            assert abs(median / true - 1) < 0.006, cell
+
+    def test_every_observed_crossing_lies_inside_its_resampled_range(self) -> None:
+        for cell, r in self.ROWS.items():
+            assert float(r["resampled_p2_5"]) <= float(r["observed_periodic"]) <= \
+                float(r["resampled_p97_5"]), cell
+            assert 0.05 < float(r["p_at_or_below_observed"]) < 0.5, cell
+
+    def test_what_noise_does_is_widen_the_crossing(self) -> None:
+        """"uncertain by 4 to 13 %": the half-ranges, relative to the true crossing."""
+        widths = []
+        for r in self.ROWS.values():
+            true = float(r["crossing_of_common_mean"])
+            lo, hi = float(r["resampled_p2_5"]), float(r["resampled_p97_5"])
+            widths += [1 - lo / true, hi / true - 1]
+        assert round(100 * max(widths)) == 13 and min(widths) > 0.02
+
+    def test_the_observed_shifts_are_the_ones_the_withdrawn_sentence_quoted(self) -> None:
+        shifts = sorted(float(r["observed_shift_pct"]) for r in self.ROWS.values())
+        assert (shifts[0], shifts[-1]) == (-8.1, -1.2)

@@ -348,9 +348,9 @@ INA219 on the supply rail, five repetitions per configuration, idle power subtra
 broadcast frames, all nodes in range at equal received power, so there is no capture and no
 hidden terminal. Each node sends one frame every $b/\Lambda$ seconds. Its send instant is drawn uniformly within each period, so the relative phases of the nodes change from frame to frame. A strictly periodic source freezes each node's phase for a whole run. A run then samples a
 single phase configuration, in which a few nodes may collide in every period while the others
-lose nothing; over \srcPoints{} points run under both sources the mean delivered fraction
-differs by \srcMeanDiff, and the capacities read from the strictly periodic source are
-\srcShiftLo--\srcShiftHi\% lower and far less precise. A run
+lose nothing. The two sources deliver the same on average --- over \srcPoints{} points and
+\srcFreshRuns{} runs the means differ by \srcFreshD{} $\pm$ \srcFreshSe{} --- but the
+strictly periodic one varies \srcSpreadLo--\srcSpreadHi{} times more from run to run. A run
 lasts 20\,s; each point is \seeds{} runs. $N_{\max}$ is the largest simulated $N$ whose mean
 delivered fraction is at least 0.95 with every smaller simulated $N$ also passing; its interval
 is the 2.5--97.5 percentile of that quantity over 10\,000 bootstrap resamples of the seeds. The
@@ -812,8 +812,7 @@ Table~\ref{tab:ladder} come from ns-3 with one collision domain, equal received 
 nodes; capture, hidden terminals, spatial reuse and mobility are absent. Send instants are
 redrawn within each period. PX4's own stream, in simulation, holds its period to about
 $\pm\sitlJitter$\,ms, which is nearer to a strictly periodic source; that source gives the
-same mean delivery, capacities read up to \srcShiftHi\% lower, and a much wider spread
-between runs. A contention
+same mean delivery and a spread between runs \srcSpreadLo--\srcSpreadHi{} times wider. A contention
 experiment on three or four radios is the next measurement.
 
 \textbf{Telemetry is synthetic.} Record sizes come from a generator. The check against flight

@@ -91,6 +91,37 @@ and bit-identical (D6).
 | "ratios are protected by construction" | **withdrawn** — the ceiling's error depends on the frame and does not cancel |
 | "Bor et al." | **Haxhibeqiri, Van den Abeele, Moerman & Hoebeke** (F49). Renamed everywhere |
 
+### ⚠️ 2026-10-08 — every open point decided; what was done under those decisions (F58–F61)
+Branch **`p10-followups`** (cut from `p9-supervisor-revision`). ⚠️ **Pull request #1
+(`p9-supervisor-revision` → `main`) is open and is MOHAMED'S to merge after he has read it. Do
+not merge it.** What a later session must know:
+- **Why the capacities are what they are (F58).** A frame is lost in two ways: two backoff
+  counters reach zero in the same slot, or a station sends inside the 4 µs in which it cannot
+  yet sense another. `src/authbc/sim/dcf_unsaturated.py` simulates that rule and nothing else —
+  no fitted constant, no ns-3 code — and reproduces **all 18 simulated crossings within 1.2 %**
+  (`results/raw/dcf_model_vs_ns3.csv`). The airtime line's slope 0.071 is ρ/(W(1−ρ)) at the
+  *mean* occupancy of the crossings. ⚠️ **That agreement is a comparison, not a prediction** —
+  the model was completed beside one of those cells. Its predictions are follow-up **F5**
+  (`docs/NMAX_DIRECT_EXPECTATIONS.md`): window doubled, 2 % and 10 % loss.
+- ⚠️ **The receiver-CPU figures (296 / 77 / 10) charge CRYPTOGRAPHY ONLY (F59).** The Python
+  prototype's decoder costs several times the verification. "The channel binds first" is true
+  of a compiled receiver, not of the prototype. The Pi number is step 1 of the bench session.
+- **Records at 50 Hz (F60):** PX4 v1.17.0 in software-in-the-loop — every delta record 9 B; the
+  design costs **42.47 B/record** (generator 43.25). Its 50 Hz stream holds **20.0 ms ± 0.37 ms**:
+  nearer to strictly periodic senders than to the redrawn source. Two of that measurement's
+  predictions did not hold as written and are recorded so.
+- **The two traffic sources have the same mean delivery (F61):** the +0.003 of seeds 1–30 did
+  not replicate on 1,260 fresh runs. ⚠️ **"Capacities read from the periodic source are 1–9 %
+  lower" is WITHDRAWN** — the crossing rule is unbiased; that was one fluctuation.
+- **The bench session is Mohamed's** (`hw/BENCH_SESSION.md`, five steps, expectations written
+  first). **Contention on radios waits for one or two more 5 GHz stations** (`OPEN_ITEMS` G4).
+- ⚠️ **On this machine the wall clock is stepped back under load** — a timing statistic was
+  lost to it. Stamp with a monotonic clock. ⚠️ **`pkill -f X` kills its own shell if X appears
+  anywhere in the command line**, bracket trick or not.
+- PX4 lives OUTSIDE the repository at `~/projects/px4/` (source tree, build, its own Python
+  environment). Nothing of it is committed; the flight's raw files are, in
+  `results/raw/px4_sitl/quadx/`.
+
 ### ⚠️ SECOND PASS 2026-10-07 — the revision was audited again, against the built PDF (F55–F57)
 Mohamed asked for a re-audit against the review. **Eleven places in the paper said less than the
 response claimed, and the thesis still carried the review's own example of an over-claim in four
