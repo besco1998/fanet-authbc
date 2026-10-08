@@ -1,0 +1,15 @@
+# python=3.12.3
+# platform=Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=energy_table
+# config_hash=58449fc7b539011c
+configuration,encoding,batch,reps_metered,reps_clean,reportable,sender_uj_per_rec_median,sender_uj_per_rec_min,sender_uj_per_rec_max,sender_model_uj_per_rec,sender_residual_pct,end_to_end_model_uj_per_rec,idle_power_median_w
+design: delta with one signature per 4 records,delta,4,5,5,1,58.383,58.102,59.339,54.328,7.46,131.6809,1.907
+baseline: CBOR with every record signed,cbor,1,5,5,1,118.825,118.484,119.854,105.813,12.3,376.7902,1.907
+naive: JSON with every record signed,json,1,5,2,0,120.512,119.256,121.768,106.535,13.12,413.2634,1.907
+over-aggregated: CBOR with 40 records in 2 frames,cbor,40,5,5,1,47.019,46.1,47.385,41.461,13.41,69.8934,1.907

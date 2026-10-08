@@ -1,25 +1,68 @@
-\chapter{Results II --- Co-design and the Capacity Envelope}\label{ch:codesign}
+\chapter{Results II --- Co-design and Capacity}\label{ch:codesign}
 
-\needswork{STATUS: DRAFTED. The ablation section deliberately narrows the thesis's own claim.}
+\needswork{STATUS: DRAFTED; rewritten October 2026. The capacity results are now direct
+simulations with intervals. The envelope this chapter used to present, computed from one load
+ceiling, is kept in \Cref{sec:envelope-history} as the approximation it turned out to be.}
 
-\section{E5 --- the end-to-end configuration}
+\section{E5 --- the end-to-end configuration, and a correction to it}
 
-Exhaustive search over the full grid returns delta-CBOR, Ed25519, placement B, $b = 4$: $72.0$\,B
-per record against $174.3$\,B for the compression-only baseline and $299.1$\,B for the naive one ---
-a \textbf{$58.7\%$ total-byte reduction}.
+Exhaustive search over encoding, scheme, placement and batch returns delta coding, Ed25519, one
+signature per frame, $b = 4$. As first reported, that configuration cost $72.0$\,B per record
+against $174.3$\,B for the compression-only baseline: a $58.7\%$ reduction.
+
+\begin{remark}[That figure belonged to a design that did not meet its own constraint]
+The $72.0$\,B frame amortised one keyframe over four frames. By \Cref{thm:t3prime} such a design
+verifies $\lossThFour$ of its records at $p = 0.05$, not $0.95$; measured with the decoder in the
+loop, \lossVFour{} (\Cref{sec:e7}). The search had admitted it because the verifiability model it
+consulted assumed every frame decodes alone. With that assumption replaced by the theorem, the
+search returns the same placement and batch with a keyframe in every frame.
+\end{remark}
+
+\begin{table}[h]
+\centering
+\caption{The design ladder at 50 records/s and $\Dmax = 100$\,ms. $N_{\mathrm{sat}}$: offered
+load within the saturation throughput of the broadcast model. $\Nmax$: largest neighbourhood with
+mean delivery $\geq 0.95$ in simulation, with its 95\% bootstrap interval. CPU: share of one
+receiver core spent verifying at $\Nmax$. $^\dagger$~size is a sum of measured parts; rows 5,
+6 and 8 are emitted frames.}
+\label{tab:ladder}
+\small
+\begin{tabular}{llrrrrrl}
+\toprule
+ & configuration & $b$ & B/record & with cert. & $N_{\mathrm{sat}}$ & $\Nmax$ & CPU \\
+\midrule
+\multicolumn{8}{l}{\emph{First format: text keys, a chain link in every record}$^\dagger$} \\
+1 & sign every record, one per frame & 1 & \bprFirstBase & \certFirstBase & \nsatFirstBase & \nmaxFirstBase\ \ciFirstBase & \cpuFirstBase\% \\
+2 & sign every record, share the frame & 4 & \bprFirstInline & \certFirstInline & \nsatFirstInline & \nmaxFirstInline\ \ciFirstInline & \cpuFirstInline\% \\
+3 & one signature per frame & 4 & \bprFirstCbor & \certFirstCbor & \nsatFirstCbor & \nmaxFirstCbor\ \ciFirstCbor & \cpuFirstCbor\% \\
+4 & \ldots{} and delta records & 4 & \bprFirstDesign & \certFirstDesign & \nsatFirstDesign & \nmaxFirstDesign\ \ciFirstDesign & \cpuFirstDesign\% \\
+\midrule
+\multicolumn{8}{l}{\emph{Lean format: integer keys, one chain link per frame}} \\
+5 & sign every record, one per frame & 1 & \bprLeanBase & \certLeanBase & \nsatLeanBase & \nmaxLeanBase\ \ciLeanBase & \cpuLeanBase\% \\
+6 & sign every record, share the frame & 4 & \bprLeanInline & \certLeanInline & \nsatLeanInline & \nmaxLeanInline\ \ciLeanInline & \cpuLeanInline\% \\
+7 & one signature per frame, no delta$^\dagger$ & 4 & \bprLeanKeys & \certLeanKeys & \nsatLeanKeys & \nmaxLeanKeys\ \ciLeanKeys & \cpuLeanKeys\% \\
+8 & one signature per frame, delta \textbf{(design)} & 4 & \textbf{\bprLeanDesign} & \certLeanDesign & \nsatLeanDesign & \textbf{\nmaxLeanDesign}\ \ciLeanDesign & \cpuLeanDesign\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\Cref{tab:ladder} takes the design apart. A baseline that signs every record and sends it alone
+confounds two things --- sharing a frame, and sharing a signature --- so rows~2 and~6 separate
+them. The corrected figures are \bprFirstDesign\,B per record in the first format,
+\saveFirst\% below its baseline, and \bprLeanDesign\,B in the lean format, \saveLean\% below its
+own.
 
 \begin{remark}[Report the decomposition, never the bare authentication ratio]
-The authentication-byte cut is $75.0\%$, and it is tempting to lead with it. It must not be led with,
-because it reduces algebraically to $1 - 1/b$: invariant to the header, the signature size, the
-encoding and the scheme. It is the definition of batching, not a result. The honest headline is the
-\emph{total} byte reduction reported as a decomposition --- placement$\times$batching $79.2\%$,
-encoding $20.8\%$, scheme byte-neutral.
+The cut in authentication bytes alone is $75.0\%$, and it is tempting to lead with it. It must not
+be led with, because it reduces algebraically to $1 - 1/b$: invariant to the header, the signature
+size, the encoding and the scheme. It is the definition of batching, not a result.
 \end{remark}
 
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.7\textwidth]{fig_e5_codesign.png}
-\caption{End-to-end per-record cost against the two baselines.}
+\caption{Per-record cost of the configuration as first reported, against the two baselines
+(first format; see the correction above).}
 \label{fig:e5}
 \end{figure}
 
@@ -31,27 +74,29 @@ single-axis optimisation would not.
 \begin{itemize}
 \item \textbf{Placement and batching couple exactly}, by $\ga(1 - 1/b)$ --- hence \emph{exactly
       zero} at $b = 1$, where placements A and B are byte-identical on a single-record frame.
-\item \textbf{Encoding is perfectly separable.} Every interaction term is exactly zero, because $s$
-      enters additively and therefore \emph{cannot} interact.
-\item \textbf{The scheme axis is byte-degenerate} in this regime: the two $64$\,B schemes differ
-      only in CPU cost.
+\item \textbf{Encoding is separable in the first format.} Every interaction term is exactly zero,
+      because $s$ enters additively and therefore \emph{cannot} interact.
+\item \textbf{The scheme axis is byte-degenerate} among the $64$\,B schemes: they differ only in
+      CPU cost.
 \end{itemize}
 
 An earlier claim that a smaller payload increases the value of batching was a \textbf{ratio-scale
 artifact}: the absolute saving is $81.0$\,B for every encoding. The four-axis co-design claim was
-overstated and is now precise. \textbf{No number moved --- only its interpretation.}
+overstated and is now precise.
 
-\begin{remark}
-Note that $1 - 1/b$ is the same term as the warning above. The genuine coupling and the flattering
-headline are the same algebra, seen from two directions.
+\begin{remark}[One coupling the first-format ablation could not see]
+In the lean format encoding and batching \emph{do} interact, in one specific way: a record can be
+coded as a delta only if the record before it is in the same frame or is known to have arrived.
+Row~6 of \Cref{tab:ladder} is smaller than four copies of row~5 partly for that reason. The
+separability result above is a property of the first format, where each record is encoded alone.
 \end{remark}
 
-\section{E4 --- scheme selection on real hardware}
+\section{E4 --- scheme selection, and the receiver's CPU}
 
 On ARM --- the deployment platform --- Ed25519 verification is $33.2\times$ cheaper than a BLS
 pairing, which keeps Ed25519 optimal for self-batching at any plausible radio/CPU power ratio. The
 ordering between Ed25519 and ECDSA-P256 \emph{flips} between x86 and ARM, so the choice is
-platform-specific; the authentication-byte result is identical either way, since both are $64$\,B.
+platform-specific; the byte result is identical either way, since both are $64$\,B.
 
 \begin{figure}[h]
 \centering
@@ -60,51 +105,387 @@ platform-specific; the authentication-byte result is identical either way, since
 \label{fig:e4}
 \end{figure}
 
-\section{E8 --- the capacity envelope}
+A receiver verifies every neighbour's frames, and that is a second ceiling on the neighbourhood.
+With $k$ signatures per frame, verification time $t_v$ and one hash per record $t_h$, one
+neighbour costs $(\Lambda_i/b)\,k\,t_v + \Lambda_i\,t_h$ seconds of CPU per second, and one core
+serves
+\[
+N_{\mathrm{cpu}} = 1 + \left\lfloor \frac{1}{(\Lambda_i/b)\,k\,t_v + \Lambda_i\,t_h} \right\rfloor
+\]
+nodes. On the Raspberry~Pi~4 that is \ncpuBatch{} neighbours when each frame carries one Ed25519
+signature and \ncpuInline{} when every record is signed. At its $\Nmax$ the design uses
+\cpuLeanDesign\% of a core, so the channel binds first. Row~6 of \Cref{tab:ladder} shows the
+constraint is not idle: with a signature on every record it reaches the channel's limit at
+\cpuLeanInline\% of a core. With BLS a verification takes
+\tVerBls\,ms and one core serves \ncpuBls{} neighbours: BLS is excluded by the CPU long before
+the channel is reached, in addition to its larger signature.
 
-Joining the byte model to the validated broadcast channel model turns ``how many bytes?'' into the
-question an operator actually asks: \emph{how many UAVs, at what telemetry rate?}
+These figures verify one signature at a time. Ed25519 was designed for batch verification: its
+authors report under $134\,000$ cycles per signature in a batch of $64$, against $273\,364$ for
+one~\cite{ed25519}, which would roughly halve the receiver's cost. An external review named it
+among the stronger alternatives this work had not considered. It is not used here --- the
+cryptographic library this implementation is built on exposes no batch interface --- so
+$N_{\mathrm{cpu}}$ is conservative for Ed25519 by about that factor, and measuring it on the
+board is open. ECDSA does not admit it.
+
+\section{E17 --- the classical stream-signing schemes, placed}\label{sec:stream}
+
+\Cref{ch:background} describes the schemes that amortise one signature over many packets. None
+is implemented in this thesis. \Cref{tab:stream} places each at the adopted operating point as
+\emph{the lean one-record frame with that scheme's authenticator in place of the signature} ---
+the same header, chain link and record --- with the authenticator sized from the scheme's own
+definition and this thesis's primitives ($32$\,B digests, $64$\,B signatures). Two capacities
+are given: the saturation bound $N_{\mathrm{sat}}$, and $\Nmax$ from the direct search of
+\Cref{sec:capacity} on a frame of that size at that rate --- five more cells, whose crossings
+were predicted and committed before they were run (\Cref{sec:line}).
 
 \begin{table}[h]
 \centering
-\caption{Largest sustainable neighbourhood, reported at two thresholds because they answer
-different questions. The per-run column is the reliability reading of the same criterion.}
+\caption{Stream-signing schemes at $50$ records/s. Sizes are modelled; $\Nmax$ is simulated
+for a frame of that size, with its 95\% bootstrap interval.
+$^\dagger$ no non-repudiation: a third party cannot be shown who sent a record;
+$^\ddagger$ a packet does not verify alone, so $\Nmax$ --- frames delivered --- is an upper
+bound on records verified.}
+\label{tab:stream}
+\begin{tabular}{lrrrrl}
+\toprule
+scheme & auth.\ B/record & frames/s & total B/record & $N_{\mathrm{sat}}$ & $\Nmax$ \\
+\midrule
+MAVLink~2 tag$^{\dagger}$ & \strAuthMav & \strFpsMav & \strBprMav & \strNsatMav & \strNmaxMav\ \strCiMav \\
+TESLA$^{\dagger\ddagger}$ & \strAuthTesla & \strFpsTesla & \strBprTesla & \strNsatTesla & \strNmaxTesla\ \strCiTesla \\
+Gennaro--Rohatgi$^{\ddagger}$ & \strAuthGr & \strFpsGr & \strBprGr & \strNsatGr & \strNmaxGr\ \strCiGr \\
+EMSS$^{\ddagger}$ & \strAuthEmss & \strFpsEmss & \strBprEmss & \strNsatEmss & \strNmaxEmss\ \strCiEmss \\
+Wong--Lam tree, block of 4 & \strAuthWl & \strFpsWl & \strBprWl & \strNsatWl & \strNmaxWl\ \strCiWl \\
+a signature on every record & \strAuthSig & \strFpsSig & \strBprSig & \strNsatSig & \strNmaxSig\ \strCiSig \\
+this design, $b = 4$ & \strAuthDesign & \strFpsDesign & \strBprDesign & \strNsatDesign & \strNmaxDesign\ \strCiDesign \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Every one of these schemes spreads an authenticator across packets and still sends a frame per
+record. A frame costs \fixedCost\,\si{\micro\second} of channel time before its first payload byte, so the
+weight of the authenticator hardly matters: replacing a $64$\,B signature by a $13$\,B tag ---
+and giving up non-repudiation --- moves $N_{\mathrm{sat}}$ from \strNsatSig{} to \strNsatMav{}
+and the simulated $\Nmax$ from \strNmaxSig{} to \strNmaxMav. Four records in a frame move them to
+\strNsatDesign{} and \strNmaxDesign. The stream-signing literature amortises the
+\emph{cost of signing}; the cost that binds on a contended channel is the \emph{frame}.
+
+Three things the table does not show. Tree chaining is the one classical scheme that keeps both
+properties a ledger needs --- every packet verifies alone and its origin can be shown to a
+third party --- and it pays
+\strAuthWl\,B per packet for them. Batching has a cost no per-packet scheme has: a lost frame
+takes $b$ records with it, and records wait for the batch to fill. And a scheme with a shorter
+frame is lost less often at a given bit error rate (\Cref{sec:e7}), which this table does not
+credit.
+
+\section{Capacity, by direct search}\label{sec:capacity}
+
+Bytes matter because they are airtime, and airtime decides how many neighbours can be heard. The
+$\Nmax$ column of \Cref{tab:ladder} is the answer to the question an operator asks --- \emph{how
+many UAVs, at what telemetry rate?} --- and it is found by simulating each configuration at its
+own frame size and frame rate over a grid of neighbourhood sizes, thirty seeds per point, and
+reading off where mean delivery leaves $0.95$. The interval is the 2.5--97.5 percentile of that
+crossing over ten thousand bootstrap resamples of the seeds.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.85\textwidth]{fig_nmax_direct.png}
+\caption{Delivered fraction of frames against neighbourhood size, lean format: per-record signing
+and the design. Mean of thirty runs; bars span the runs.}
+\label{fig:nmax}
+\end{figure}
+
+\begin{table}[h]
+\centering
+\caption{$\Nmax$ of baseline and design at both operating points, with 95\% bootstrap
+intervals.}
+\label{tab:capacity}
+\begin{tabular}{lrrr}
+\toprule
+ & per-record signing & design & ratio \\
+\midrule
+\multicolumn{4}{l}{\emph{50 records/s, 100\,ms (compliant with TS 22.125)}} \\
+first format & \nmaxFirstBase\ \ciFirstBase & \nmaxFirstDesign\ \ciFirstDesign & \ratioFirst$\times$ \\
+lean format & \nmaxLeanBase\ \ciLeanBase & \nmaxLeanDesign\ \ciLeanDesign & \ratioLean$\times$ \\
+\midrule
+\multicolumn{4}{l}{\emph{20 records/s, 250\,ms (relaxed)}} \\
+first format & \nmaxRelFirstBase\ \ciRelFirstBase & \nmaxRelFirstDesign\ \ciRelFirstDesign & \ratioRelFirst$\times$ \\
+lean format & \nmaxRelLeanBase\ \ciRelLeanBase & \nmaxRelLeanDesign\ \ciRelLeanDesign & \ratioRelLean$\times$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+These figures hold the \emph{mean} over runs to the $0.95$ target, which is the headline
+criterion throughout this thesis. The stricter reading --- that $95\%$ of individual runs reach it
+--- gives \nrunLeanBase{} and \nrunLeanDesign{} in the lean format and \nrunFirstBase{} and
+\nrunFirstDesign{} in the first: at most \nrunGap{} nodes fewer, now that a run samples the
+channel and not one phase configuration. On the low-rate arm the two readings are far apart
+(\Cref{ch:lowrate}).
+
+\begin{remark}[Do not round this to one number]
+The advantage of the design is not one number. It hardly moves with the operating point ---
+\ratioLean$\times$ and \ratioRelLean$\times$ in the lean format, \ratioFirst$\times$ and
+\ratioRelFirst$\times$ in the first --- and it depends on the format, because the first format's
+records each carry a chain link that no batch amortises. Quote it with its format. An earlier
+draft said ``$\approx 3\times$ holds across readings''; the four ratios it rested on came from
+the single load ceiling, ran from $1.9$ to $3.2$, and are superseded with it.
+\end{remark}
+
+The larger step is sending a quarter as many frames. Row~6 of \Cref{tab:ladder}, which shares
+the frame and keeps a signature per record, already reaches \nmaxLeanInline{} neighbours
+(\stepShareLean$\times$ the baseline); sharing the signature as well adds
+\stepSignLean$\times$.
+Every frame pays a preamble, an inter-frame space, a backoff and MAC framing whatever its length
+--- about \fixedCost\,\si{\micro\second}, \fixedSharePct\% of what a baseline frame costs the
+channel --- so removing three frames in four is worth more than their bytes.
+
+\subsection{A rule for the crossing, and the test it was put to}\label{sec:line}
+
+The envelope this chapter used to report applied one utilisation ceiling to every configuration
+(\Cref{sec:envelope-history}), and \Cref{ch:validation} records how that failed. Looking at the
+six crossings it failed on suggested something simpler: at the $5\%$ level, loss is a line in
+airtime. With $f = \Lambda_i/b$ the frames per second a node sends and $T$ the time one frame
+holds the medium (its airtime plus DIFS),
+\begin{equation}
+0.05 = N f\,(a\,T + c)
+\qquad\Longrightarrow\qquad
+\Nmax \approx \frac{0.05}{f\,(a\,T + c)} .
+\label{eq:line}
+\end{equation}
+$N f T$ is the fraction of time the neighbourhood's frames occupy the medium, so the first term
+says loss grows in proportion to occupancy; the second, with $c = 8$\,\si{\micro\second}
+fixed at twice the simulator's preamble-detection time, is the chance that another frame starts
+inside the window in which a station cannot yet hear it. Only $a$ is fitted.
+
+A line found by looking at six points is a hypothesis. It was treated as one: the seven
+configurations that had not been simulated were named, the line's value for each was written
+down with a tolerance of $\pm 6\%$, and both were committed before any of the seven was run.
+The slope is $a = \lineA$, the mean of the six per-configuration values, which reproduces those
+six within \lineFitWorst\%.
+
+\begin{table}[h]
+\centering
+\caption{The seven held-out configurations: the crossing the line predicted, the crossing
+simulated (interpolated, thirty seeds per node count), and the deviation of the simulation from
+the line and from the single load ceiling.}
+\label{tab:line}
+\begin{tabular}{llrrrr}
+\toprule
+configuration & frame, rate & line & simulated & vs line & vs ceiling \\
+\midrule
+first, one signature per frame & 373\,B, 12.5/s & \linePG & \lineMG & \lineDG\% & \lineCG\% \\
+lean, one signature, no delta & 218\,B, 12.5/s & \linePH & \lineMH & \lineDH\% & \lineCH\% \\
+first, design as first specified & 288\,B, 12.5/s & \linePI & \lineMI & \lineDI\% & \lineCI\% \\
+relaxed: first, per-record signing & 174\,B, 20/s & \linePRA & \lineMRA & \lineDRA\% & \lineCRA\% \\
+relaxed: first, design & 300\,B, 5/s & \linePRB & \lineMRB & \lineDRB\% & \lineCRB\% \\
+relaxed: lean, per-record signing & 146\,B, 20/s & \linePRC & \lineMRC & \lineDRC\% & \lineCRC\% \\
+relaxed: lean, design & 173\,B, 5/s & \linePRD & \lineMRD & \lineDRD\% & \lineCRD\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{The prediction held.} All seven crossings lie within \lineWorst\% of the line, and in
+each of the five configurations where the two rules disagree by more than a tenth the simulation
+is closer to the line than to the ceiling, which misses the thirteen simulated configurations by
+up to \lineCeilWorst\%.
+
+\paragraph{A second test, on frames of another kind.} The stream-signing baselines of
+\Cref{tab:stream} are five more frames, all shorter or longer than any the line had seen and all
+at one frame per record. The same procedure was followed: the line's crossing for each, with
+the slope unchanged, was committed before the runs.
+
+\begin{center}
+\begin{tabular}{llrrr}
+\toprule
+scheme & frame, rate & line & simulated & vs line \\
+\midrule
+MAVLink~2 tag & 94\,B, 50/s & \linePSM & \lineMSM & \lineDSM\% \\
+TESLA & 106\,B, 50/s & \linePST & \lineMST & \lineDST\% \\
+Gennaro--Rohatgi & 114\,B, 50/s & \linePSG & \lineMSG & \lineDSG\% \\
+EMSS & 146\,B, 50.5/s & \linePSE & \lineMSE & \lineDSE\% \\
+Wong--Lam tree & 211\,B, 50/s & \linePSW & \lineMSW & \lineDSW\% \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+All five are inside the $\pm 6\%$ band, and all five are \emph{above} the line, by
+\lineStreamLeast--\lineStreamWorst\%. That offset was written down beforehand as an
+expectation, not a prediction: the two calibration configurations at $50$ frames per second sat
+$3.4$ and $3.8\%$ above the line, so if the residual belongs to the frame rate these five would
+too. They do. The line's error is therefore not noise at this rate; it is a small, repeatable
+bias, and it is the reason the remark below forbids quoting the line as a capacity. These cells
+do not separate the line from the ceiling --- at this frame rate the two differ by a few
+percent --- which the registration said in advance.
+
+\begin{remark}[What this licenses, and what it does not]
+\Cref{eq:line} is an empirical fit, not a model. It holds at one loss level --- loss is convex in
+load, so the line says nothing about a $1\%$ or a $10\%$ target --- at one PHY rate, in one
+collision domain, for frames of \lineFrameLo--\lineFrameHi\,B, \lineFpsLo--\lineFpsHi{}
+frames per second and \lineNlo--\lineNhi{} nodes, and in a simulator. Its residual is ordered by
+frame rate, from $+3.6\%$ at $50$ frames per second to $-2.4\%$ at $5$. Every capacity quoted in this thesis is a
+simulated value; the line is what one would use to interpolate between them, and to see why a
+ceiling on \emph{utilisation} could not work: it divides the offered load by the saturation
+throughput of $N$ stations, and loss in a lightly loaded network has no reason to follow that
+yardstick.
+\end{remark}
+
+
+\subsection{How the traffic source was chosen}
+
+Each simulated node sends one frame per period at an instant drawn uniformly within the period.
+That choice was not the first one, and how it was reached is part of the result.
+
+The scenario this project had used throughout sends frames \emph{strictly} periodically: each
+node gets one random start offset and keeps it. In such a run the relative phase of any two
+nodes is frozen. Per-node output shows what that does: in the worst of thirty runs at
+$N = \phaseNodes$, \phaseSilentNodes{} nodes delivered \emph{none} of their frames while
+\phaseCleanNodes{} lost none at all. The simulator raises
+carrier sense only at the end of a $4$\,\si{\micro\second} preamble-detection period, so two nodes
+whose phases fall within that window collide in every period of the run; and nodes whose phases
+put them in the same busy period contend with each other, and only each other, for all of it. A
+strictly periodic run is one draw from a lottery of phase configurations, and the spread across
+runs describes the lottery.
+
+Three tests, each with its prediction committed before its runs, established what follows from
+that. Jittering each frame's send time, or letting every pair of nodes drift through all relative
+phases, changes the thirty-run \emph{mean} by less than the $0.005$ set in advance --- none of
+sixteen comparisons exceeds $2.5$ standard errors --- while the spread between runs falls by a
+factor of ten to twenty when phases are redrawn every period. The runs reported here redraw the
+phase every period. Two of the predictions made along the way failed, and both failures are
+recorded with the data: a jitter of $1$\,ms was predicted to halve the spread and did so at two
+test points of four, and a phase sweep was predicted to bring it under $0.004$ and reached
+$0.003$--$0.006$.
+
+\begin{remark}[``Within tolerance'' is not ``zero'']
+When all six cells had been run under both sources, the mean delivered fraction was higher with
+redrawn phases by \srcMeanDiff{} on average over \srcPoints{} points, and every one of the six
+crossings was higher, by \srcShiftLo--\srcShiftHi\%. The points are close to independent ---
+the simulator hands out random streams in creation order, so runs at different node counts draw
+different start offsets, and their per-seed results are uncorrelated --- which puts the average
+at about two standard errors: weak evidence of a real difference of that size, and no more. If
+phases are uniform and a period's losses depend only on that period's phases, the expected
+difference is zero, so a real one would need a mechanism not yet identified. No reported capacity
+depends on the answer, since all of them use the redrawn source; what depends on it is how the
+strictly periodic figures of earlier work should be read.
+\end{remark}
+
+\section{What the earlier envelope was}\label{sec:envelope-history}
+
+Until October 2026 this chapter presented a ``capacity envelope'' computed, not simulated: the
+$V \geq 0.95$ crossing had been measured once, at $N = 50$ with a $288$\,B frame, as a
+utilisation $U = 2.435$ (offered load over saturation throughput), and that one ceiling was
+applied to every configuration.
+
+\begin{table}[h]
+\centering
+\caption{The envelope as previously reported, from the single load ceiling. \textbf{Superseded}
+by \Cref{tab:ladder,tab:capacity}; kept because the comparison is the finding.}
 \label{tab:envelope}
 \begin{tabular}{lrrrrrr}
 \toprule
 configuration & $\Lambda_i$ & $\Dmax$ & $b$ & $\Nmax$ ($U{<}1$) & $\Nmax$ ($V$ mean) & ($V$ per run) \\
 \midrule
-\multicolumn{7}{l}{\emph{Primary: compliant with 3GPP TS 22.125}}\\
-\textbf{optimized} delta/B & 50 & 100\,ms & 4 & \textbf{35} & \textbf{100} & 64--91 \\
+optimized delta/B & 50 & 100\,ms & 4 & 35 & 100 & 64--91 \\
 A+CBOR (compression-only)  & 50 & 100\,ms & 1 & 18 & 31 & 24--29 \\
 \midrule
-\multicolumn{7}{l}{\emph{Relaxed freshness: same bytes, larger swarm, exceeds the standard}}\\
 optimized delta/B & 20 & 250\,ms & 4 & 103 & 213 & 163--201 \\
 A+CBOR            & 20 & 250\,ms & 1 & 32  & 88  & 54--80 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The four ratios are $1.94\times$, $3.23\times$, $3.22\times$ and $2.42\times$.
-
-\begin{remark}[Do not round this to ``about three times'']
-The spread is $1.9$--$3.2\times$ and must be quoted as a range. An earlier draft of this work said
-``$\approx 3\times$ holds across readings'', which is both false and precisely the kind of claim the
-rest of this thesis exists to avoid. The co-design advantage is \emph{insensitive to the choice of
-threshold} --- that is the defensible statement --- but it is not a single number.
-\end{remark}
-
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.75\textwidth]{fig_envelope.png}
-\caption{The feasibility envelope. The compression-only baseline runs out of channel where the
-co-designed configuration does not.}
+\caption{The envelope as previously reported (saturation threshold). Superseded for the
+$V \geq 0.95$ threshold by direct simulation.}
 \label{fig:envelope}
 \end{figure}
 
-\section{What the envelope rests on}
+An earlier experiment had tested half of the assumption behind that ceiling --- that it does not
+depend on frame size --- at $N = 50$ (\Cref{ch:validation}). The other half, that it does not
+depend on $N$, was predicted to hold within $\pm 10\%$ in six configurations, and the prediction
+was committed before the runs. \textbf{It failed.} The lean design crosses near $118$--$124$
+neighbours where the ceiling says $142$; the first format's shared-frame configuration crosses
+\emph{above} the ceiling's value. The signs differ between configurations, so the ceiling cannot
+be re-tuned. The reason is not subtle in hindsight: $U$ divides the offered load by the
+saturation throughput of $N$ stations, which falls as $N$ grows, while the loss of a lightly
+loaded network depends on how much airtime the traffic occupies and not on how many stations
+produce it.
 
-The absolute capacities depend on a utilisation ceiling measured at one operating point and applied
-across the envelope. \Cref{ch:validation} reports the experiment that tested that assumption, and
-what it still leaves untested. The \emph{ratios} are protected by construction, because numerator
-and denominator use the same ceiling; the absolute figures are not, which is why both are given.
+The ratios of the old envelope had been called ``protected by construction'', because numerator
+and denominator used the same ceiling. They were protected against an error in the ceiling's
+\emph{value}. They were not protected against the ceiling being the wrong \emph{kind} of
+quantity, and they moved.
+
+\section{Freshness, with every term}
+
+\begin{table}[h]
+\centering
+\caption{Delay of the oldest record in a frame, $b = 4$, 50 records/s. Channel delay is simulated
+at the heaviest load that still delivers 95\% of frames.}
+\label{tab:fresh}
+\begin{tabular}{lrrrrr}
+\toprule
+ & fill & channel & verify & total & margin \\
+ & (ms) & (ms) & (ms) & (ms) & (ms) \\
+\midrule
+Ed25519, mean channel delay & \frFill & \frChMean & \frVerEd & \frTotMean & \frMarMean \\
+Ed25519, 99th percentile & \frFill & \frChPnn & \frVerEd & \frTotPnn & \frMarPnn \\
+Ed25519, worst observed & \frFill & \frChMax & \frVerEd & \frTotMax & \frMarMax \\
+BLS, worst observed & \frFill & \frChMax & \frVerBls & \frTotBls & \frMarBls \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The freshness model of \Cref{ch:theory} was fill time plus airtime. \Cref{tab:fresh} adds the two
+terms it left out: channel-access delay, which had been measured and never added, and
+verification time. Fill time dominates; the oldest record is verified within \frTotMax\,ms of
+being generated. A fifth record would need a fill time of $100$\,ms by itself, which is why the
+batch stops at four.
+
+\section{Certificates}
+
+The rows so far assume that receivers already hold the senders' public keys. Vehicular practice
+sends a full certificate in every fifth message and an eight-octet digest in the
+others~\cite{ndss2024pqv2v}. Charging that to every frame --- a \certBytes\,B certificate, hence
+\certPerFrame\,B per frame on average --- gives the ``with cert.'' column of \Cref{tab:ladder}.
+Certificates are a per-frame cost, so batching amortises them too, and both the baseline and the
+design are charged.
+
+These are \emph{explicit} certificates: a verification key and the issuer's signature over it.
+IEEE~1609.2 also defines \emph{implicit} certificates (ECQV), which carry only a reconstruction
+value from which the key is derived with the issuer's root certificate; the source this
+accounting follows gives a signed message of at most $226$\,B with an implicit certificate
+against $330$\,B with an explicit one~\cite{ndss2024pqv2v}. Implicit certificates are not priced
+here, so the column is an upper bound on what certificates cost either design. Pricing them is
+future work; it would lower both rows and leave the comparison between them where it is, since
+whichever certificate is used is paid once per frame.
+
+\begin{remark}[Why the order of this work matters]
+The certificate term was added to the byte model \emph{before} the published figures it is
+compared with in \Cref{ch:background} were retrieved. Adding it afterwards would have been
+fitting the correction to the answer.
+\end{remark}
+
+\section{Energy}
+
+\begin{table}[h]
+\centering
+\caption{Sender energy per record on a Raspberry~Pi~4, first format: metered (median and range of
+five repetitions) against the composed model.}
+\label{tab:energy}
+\begin{tabular}{lrrr}
+\toprule
+ & metered (\si{\micro\joule}) & model (\si{\micro\joule}) & gap \\
+\midrule
+every record signed & \enBaseMeas\ \enBaseRange & \enBaseModel & \enBaseGap\% \\
+one signature per four records & \enDesignMeas\ \enDesignRange & \enDesignModel & \enDesignGap\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The batched sender spends \enSavePct\% less energy per record. The model composed from separately
+measured times and powers is \enDesignGap--\enBaseGap\% low, the gap being frame assembly in an
+interpreted prototype. Only the sender is metered, and only the first format's encoders: the lean
+codec has not been timed on the board, and receiver and radio energy are modelled.

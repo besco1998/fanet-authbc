@@ -1,5 +1,64 @@
 # What to do next — pick-up guide
 
+## ⚠️⚠️ STATE CHANGED 2026-10-07: the paper was revised after the supervisor's review
+
+**Read the October section at the top of `CLAUDE.md`'s status board before anything below.**
+Everything under the later headings of this file describes the project as of August 2026 and is
+superseded wherever the two disagree — in particular the framing section's "four of seven", the
+58.7 % and the 1.9–3.2×.
+
+**What happened.** The supervisor reviewed the paper. Checking the review exposed that the
+headline design had never been built as a frame. It was built (`wire_v2`, sender, receiver), every
+result was recomputed from it, the paper was rewritten around it, and the thesis chapters were
+brought into line. Findings F45–F54; the method and the wrong turns are in `LOGBOOK.md`.
+
+**Then it was audited again (2026-10-07).** Mohamed asked for the revised paper and thesis to be
+checked against the review once more. Looking each request up in the built PDF found eleven
+places where the paper did less than the response claimed, and four places in the thesis that
+still carried an over-claim the paper had lost. All fixed (F55); a figure, a simulation of the
+stream-signing baselines (follow-up F3) and one more source were added (F56, F57). The top entry
+of `LOGBOOK.md` is that pass.
+
+**What is waiting, in the order it should be done:**
+
+1. **Mohamed's decisions — ALL TAKEN on 2026-10-08** (`DECISIONS.md`, "Decided by Mohamed,
+   2026-10-08"). What they leave for him: read and merge the pull request from
+   `p9-supervisor-revision`; supply the supervisor's name, an affiliation, an ORCID and a
+   funding statement; find one or two more 5 GHz radios (G4); sit one bench session (item 4);
+   obtain one paper (G8). Submission — to a networking journal without page charges — waits on
+   the contention experiment.
+2. **The response to the supervisor goes out after the bench session** (decided 2026-10-08). It
+   is written, point by point, at `~/authbc_package/docs/SUPERVISOR_RESPONSE_2026-10.md` —
+   outside this repository, and it stays there (R18). The audit it is built from is beside it.
+3. **The one experiment that would change what the paper can claim: contention on real radios**
+   (`OPEN_ITEMS` G4). Two Pi 4 and a Pi 3B+ make three stations on 5 GHz. Plan it, write the
+   prediction, commit it data-free, then run. Every capacity in the paper is simulated.
+4. **Cheap and worth doing, in one bench session:** time the lean codec on the Pi (G9) so the
+   energy table covers the design that is reported; re-meter the one energy row that is not
+   reportable (G11); crypto timing on the Pi 3B+ (G15); Ed25519 batch verification (G19).
+   **Needs no hardware:** PX4 software-in-the-loop for records at 50 Hz and the real stream's
+   timing (G7, G12).
+5. **Open questions about the simulator** (G6): why two traffic sources differ by 0.003 in mean
+   delivery, and why a rate offset leaves more spread than predicted. Neither touches a reported
+   number.
+6. **The thesis.** It builds (`make thesis`), ch. 3, 4, 7, 8, 10, 11 carry the October corrections,
+   and `thesis/STATUS.md` is still right that ch. 2 is the largest gap.
+
+**Decided in October — do not re-litigate without new evidence:** the lean format lives beside
+the frozen first format (D6 holds); every frame starts with a full record (r = 1); capacities are
+simulated per configuration with the send time redrawn each period; N_max is the grid crossing of
+the mean, with the interpolated crossing beside it; every number in the paper is generated.
+
+```bash
+git clone https://github.com/besco1998/fanet-authbc.git
+cd fanet-authbc && git checkout p9-supervisor-revision
+make setup && make all          # green == you have reproduced the deterministic layer
+make paper thesis               # numbers.tex from results/, then both PDFs
+```
+
+---
+
+
 ## ⚠️ STATE CHANGED 2026-08-08: the research is done; the calendar is the constraint
 
 Charter phases **P0–P8 are all delivered**. Six audit passes on the paper; the last three found a
@@ -35,7 +94,7 @@ cd fanet-authbc && git checkout p8-audit-and-corrections
 make setup && make all          # green == you have reproduced the deterministic layer
 ```
 
-`make all` = lint + mypy + 1296 fast tests + the 24-test frozen gate. NS-3 and the Pi rig are
+`make all` = lint + mypy + 1872 fast tests + the 35-test frozen gate. NS-3 and the Pi rig are
 optional (`docs/05_REPRODUCTION_GUIDE.md`). ⚠️ A fresh clone has **no NS-3 tree** — it is gitignored
 by design. Fetch it from the **GitLab** archive; `nsnam.org/releases/...` returns an HTML error page.
 
@@ -152,7 +211,7 @@ audit spent its time removing.
 | # | work | why | effort |
 |---|---|---|---|
 | ~~6~~ | ~~PQC extension section~~ | **DONE** — Limitations §, backed by `results/raw/pqc_projection.csv` | — |
-| 7 | References **46** → 45–60 | 29→39 done from held+read sources; the rest needs sourcing **and reading** | 1 wk |
+| 7 | References **35** rendered in the revised paper (59 in the shared bibliography; **46** before the October rewrite) → 45–60 | 29→39 done from held+read sources; the rest needs sourcing **and reading** | 1 wk |
 | ~~S9~~ | ~~Re-state or drop the pre-registration claim~~ | **DONE (F40)** — withdrawn, not reconstructed | — |
 
 ### Optional

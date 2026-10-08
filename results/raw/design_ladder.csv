@@ -1,0 +1,41 @@
+# python=3.12.3
+# platform=Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=design_ladder
+# config_hash=1075056f2ccab530
+op,lambda_rec_per_s,d_max_ms,format,rung,scheme,label,placement,batch,ref_interval,sized_from,frame_bytes,bytes_per_rec,bytes_per_rec_with_cert,V,meets_v,latency_ms,meets_d_max,n_max_u_lt_1,n_max_v95,n_max_v95_ci_lo,n_max_v95_ci_hi,n_max_v95_per_run,n_max_v95_interp,n_max_load_ceiling,load_ceiling_error_pct,cpu_pct_at_n_v95,n_cpu_one_core,n_feasible_v95,binds_at_v95,energy_radio_uj,energy_uj,encoding
+adopted,50,100.0,first,inline-1,ed25519,sign every record; one record per frame,A,1,1,byte model,174.252,174.252,213.052,0.95,1,20.348,1,18,32,32,32,31,32.32,31,-3.1,40.65,77,32,channel,74.556,376.79,
+adopted,50,100.0,first,inline-b,ed25519,sign every record; share the frame,A,4,1,byte model,565.009,141.252,150.952,0.95,1,80.871,1,24,56,56,56,54,56.28,49,-12.5,72.12,77,56,channel,46.979,349.213,
+adopted,50,100.0,first,batch-cbor,ed25519,one signature per frame,B,4,1,byte model,373.009,93.252,102.952,0.95,1,80.611,1,30,76,75,76,73,76.26,79,3.9,25.36,296,76,channel,33.027,139.986,
+adopted,50,100.0,first,batch-delta-published,ed25519,delta records; keyframe every 16 records (as published),B,4,4,byte model,287.963,71.991,81.691,0.8811,0,80.493,1,35,91,90,91,89,91.34,100,9.9,30.43,296,91,channel,26.705,131.681,
+adopted,50,100.0,first,batch-delta,ed25519,delta records; every frame decodes alone,B,4,1,byte model,299.85,74.963,84.663,0.95,1,80.509,1,34,88,88,89,86,88.85,97,10.2,29.41,296,88,channel,27.577,132.553,
+adopted,50,100.0,lean,inline-1,ed25519,sign every record; one record per frame,B,1,1,emitted frames,145.765,145.765,184.565,0.95,1,20.307,1,20,35,35,35,34,35.26,34,-2.9,44.58,77,35,channel,65.836,,
+adopted,50,100.0,lean,inline-b,ed25519,sign every record; share the frame,A,4,1,emitted frames,371.999,93.0,102.7,0.95,1,80.607,1,30,76,76,77,73,76.83,80,5.3,98.34,77,76,channel,32.809,,
+adopted,50,100.0,lean,batch-keys,ed25519,one signature per frame; no delta coding,B,4,1,measured components,217.984,54.496,64.196,0.95,1,80.4,1,42,108,107,109,106,108.91,123,13.9,36.18,296,108,channel,21.691,,
+adopted,50,100.0,lean,batch-delta,ed25519,delta records; every frame decodes alone,B,4,1,emitted frames,172.999,43.25,52.95,0.95,1,80.339,1,52,124,124,125,120,124.55,142,14.5,41.59,296,124,channel,18.421,,
+adopted,50,100.0,first,batch-delta,ecdsa_p256,the design with a 64 B ecdsa_p256 signature,B,4,1,byte model,299.85,74.963,84.663,0.95,1,80.509,1,34,,,,,,97,,,237,,,,,
+adopted,50,100.0,lean,batch-delta,ecdsa_p256,the design with a 64 B ecdsa_p256 signature,B,4,1,emitted frames,172.999,43.25,52.95,0.95,1,80.339,1,52,,,,,,142,,,237,,,,,
+adopted,50,100.0,first,batch-delta,bls,the design with a 96 B bls signature,B,4,1,byte model,331.85,82.963,92.663,0.95,1,80.554,1,32,,,,,,89,,,10,,cpu (against N_sat),,,
+adopted,50,100.0,lean,batch-delta,bls,the design with a 96 B bls signature,B,4,1,emitted frames,204.999,51.25,60.95,0.95,1,80.384,1,44,,,,,,128,,,10,,cpu (against N_sat),,,
+adopted,50,100.0,first,SEARCH_OPTIMUM,,byte-minimal admissible configuration (exhaustive search),B,4,1,measured components,299.85,74.963,,0.95,1,80.509,1,,,,,,,,,,,,,,,delta
+adopted,50,100.0,lean,SEARCH_OPTIMUM,,byte-minimal admissible configuration (exhaustive search),B,4,1,measured components,172.996,43.249,,0.95,1,80.339,1,,,,,,,,,,,,,,,delta
+relaxed,20,250.0,first,inline-1,ed25519,sign every record; one record per frame,A,1,1,byte model,174.252,174.252,213.052,0.95,1,50.344,1,32,78,77,78,76,78.35,88,12.8,40.39,191,78,channel,74.556,376.79,
+relaxed,20,250.0,first,inline-b,ed25519,sign every record; share the frame,A,4,1,byte model,565.009,141.252,150.952,0.95,1,200.866,1,51,,,,,,140,,,191,,,46.979,349.213,
+relaxed,20,250.0,first,batch-cbor,ed25519,one signature per frame,B,4,1,byte model,373.009,93.252,102.952,0.95,1,200.608,1,82,,,,,,184,,,740,,,33.027,139.986,
+relaxed,20,250.0,first,batch-delta-published,ed25519,delta records; keyframe every 16 records (as published),B,4,4,byte model,287.963,71.991,81.691,0.8811,0,200.491,1,103,,,,,,213,,,740,,,26.705,131.681,
+relaxed,20,250.0,first,batch-delta,ed25519,delta records; every frame decodes alone,B,4,1,byte model,299.85,74.963,84.663,0.95,1,200.507,1,100,219,215,221,205,219.19,208,-5.0,29.48,740,219,channel,27.577,132.553,
+relaxed,20,250.0,lean,inline-1,ed25519,sign every record; one record per frame,B,1,1,emitted frames,145.765,145.765,184.565,0.95,1,50.304,1,35,85,85,86,84,85.58,101,18.8,44.06,191,85,channel,65.836,,
+relaxed,20,250.0,lean,inline-b,ed25519,sign every record; share the frame,A,4,1,emitted frames,371.999,93.0,102.7,0.95,1,200.604,1,82,,,,,,185,,,191,,,32.809,,
+relaxed,20,250.0,lean,batch-keys,ed25519,one signature per frame; no delta coding,B,4,1,measured components,217.984,54.496,64.196,0.95,1,200.399,1,126,,,,,,243,,,740,,,21.691,,
+relaxed,20,250.0,lean,batch-delta,ed25519,delta records; every frame decodes alone,B,4,1,emitted frames,172.999,43.25,52.95,0.95,1,200.339,1,145,306,306,308,300,307.95,269,-12.1,41.25,740,306,channel,18.421,,
+relaxed,20,250.0,first,batch-delta,ecdsa_p256,the design with a 64 B ecdsa_p256 signature,B,4,1,byte model,299.85,74.963,84.663,0.95,1,200.507,1,100,,,,,,208,,,592,,,,,
+relaxed,20,250.0,lean,batch-delta,ecdsa_p256,the design with a 64 B ecdsa_p256 signature,B,4,1,emitted frames,172.999,43.25,52.95,0.95,1,200.339,1,145,,,,,,269,,,592,,,,,
+relaxed,20,250.0,first,batch-delta,bls,the design with a 96 B bls signature,B,4,1,byte model,331.85,82.963,92.663,0.95,1,200.552,1,91,,,,,,197,,,24,,cpu (against N_sat),,,
+relaxed,20,250.0,lean,batch-delta,bls,the design with a 96 B bls signature,B,4,1,emitted frames,204.999,51.25,60.95,0.95,1,200.383,1,131,,,,,,249,,,24,,cpu (against N_sat),,,
+relaxed,20,250.0,first,SEARCH_OPTIMUM,,byte-minimal admissible configuration (exhaustive search),B,4,1,measured components,299.85,74.963,,0.95,1,200.507,1,,,,,,,,,,,,,,,delta
+relaxed,20,250.0,lean,SEARCH_OPTIMUM,,byte-minimal admissible configuration (exhaustive search),B,4,1,measured components,172.996,43.249,,0.95,1,200.339,1,,,,,,,,,,,,,,,delta

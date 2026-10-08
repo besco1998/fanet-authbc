@@ -33,6 +33,8 @@ GENERATORS = [
     "figures_e5.py",
     "figures_envelope_lora.py",
     "figures_ns3.py",
+    "figures_nmax.py",
+    "figures_frames.py",
 ]
 
 
@@ -46,16 +48,16 @@ def test_every_figure_the_paper_cites_exists():
     assert not missing, f"paper cites figures that are not in results/figures/: {missing}"
 
 
-def test_the_paper_cites_the_boundary_figures():
-    """The framing promises three boundaries; two of them had no figure until 2026-08-07.
+def test_the_paper_cites_its_data_figures():
+    """The exclusion, the capacity search and the bytes-against-batch curve each have a figure
+    drawn from their artifact.
 
-    `fig_envelope` and `fig_t6_exclusion` were generated but unused, while the paper carried the
-    auth-byte figure instead --- the exact inversion the boundary framing corrects. The generator's
-    own docstring had already said the envelope "deserves a figure more than the auth-byte ratio
-    does".
+    (Until 2026-10 this test required `fig_envelope.png`, the capacity envelope computed from one
+    load ceiling. The direct search replaced that envelope — docs/NMAX_DIRECT_EXPECTATIONS.md —
+    and the figure went with it; the thesis keeps it, labelled as the approximation it is.)
     """
     cited = _figures_cited_by_the_paper()
-    for required in ("fig_t6_exclusion.png", "fig_envelope.png"):
+    for required in ("fig_t6_exclusion.png", "fig_nmax_direct.png", "fig_bytes_vs_batch.png"):
         assert required in cited, f"{required} is generated but no longer cited by the paper"
 
 
@@ -96,8 +98,10 @@ def test_no_generator_hardcodes_a_stale_ns3_version():
     data with the version it was NOT produced under.
     """
     tex = (REPO / "paper" / "main.tex").read_text()
-    paper_versions = set(re.findall(r"NS-3[~ ]?(\d+\.\d+)", tex))
-    # the migration sentence legitimately names the old version; the current one is the max
+    # "ns-3.48" is the release's own name; "NS-3 3.48" is how the generators label it
+    paper_versions = {a or b for a, b in
+                      re.findall(r"(?i)\bns-(3\.\d+)|\bns-3[~ ]v?(3\.\d+)", tex)}
+    assert paper_versions, "the paper no longer states which ns-3 release produced its results"
     current = max(paper_versions, key=lambda v: tuple(int(x) for x in v.split(".")))
     bad = []
     for name, src in _generator_sources().items():

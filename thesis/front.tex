@@ -5,7 +5,7 @@
 \vspace{0.6cm}
 {\LARGE Feasibility Boundaries for Authenticated UAV Telemetry\par}
 \vspace{0.3cm}
-{\large An Exclusion Bound, a Capacity Envelope, and Hardware Validation\par}
+{\large An Exclusion Bound and a Capacity Envelope\par}
 \vspace{2.5cm}
 {\Large Mohamed A. Farouk\par}
 \vspace{1.5cm}
@@ -25,7 +25,8 @@
 \markboth{Abstract}{Abstract}
 
 Flying ad-hoc networks (FANETs) stream telemetry records so small that a cryptographic signature
-($64$--$96$\,B) rivals or exceeds the payload itself ($45$--$190$\,B). Once the payload has been
+($64$--$96$\,B) exceeds the record it signs: compactly encoded, a record is \keyLean\,B, and
+\deltaLean\,B as a difference from its predecessor. Once the payload has been
 compressed, authentication --- not data --- becomes the dominant on-air cost, and the operational
 question stops being \emph{how many bytes does a scheme save} and becomes \emph{which
 configurations can run at all}.
@@ -35,31 +36,34 @@ This thesis answers the second question. It searches four design axes jointly --
 against a byte model, an NS-3-validated IEEE 802.11 broadcast channel model, and energy measured
 on Raspberry~Pi~4 hardware. Three results follow, ordered by how durable they are.
 
-\textbf{An exclusion.} A link whose payload cannot hold one frame header, one signature and one
-record admits no per-frame-verifiable telemetry at any encoding or batch size, and packet loss
-forecloses fragmentation as an escape, because a unit spanning $n$ frames verifies with probability
-$(1-p)^n$. On the EU868 LoRa band this removes \emph{three} of seven data rates unconditionally: at
-DR0--DR2 a $64$\,B signature alone overflows a $51$\,B payload, so the exclusion survives a
-zero-byte header and a one-byte record. A fourth rate, DR3, misses by six bytes against a measured
-frame header of $44$\,B --- and is recovered by an integer-keyed header profile, so the boundary is
-reported \emph{constructively}: it names not only where authentication cannot fit, but what would
-have to change.
+\textbf{An exclusion.} A frame that verifies alone must carry a header, a chain link, a
+signature and one record that decodes without its predecessor. A link whose payload cannot hold
+those admits no such telemetry at any batch size, and packet loss forecloses fragmentation as an
+escape whenever the verifiability target is no looser than the loss rate. On LoRaWAN this removes
+\exclCount{} of the twelve EU863-870 data rates: five because a $64$\,B signature alone overflows
+a $51$\,B payload, and three because header, link and signature fill a $115$\,B payload before
+any record. The conditions under which that holds, and what each relaxation buys, are stated with
+it.
 
-\textbf{A capacity envelope.} Joining the byte model to the channel model yields the largest
-neighbourhood each configuration can sustain. The co-designed configuration carries
-$1.9\times$--$3.2\times$ the neighbourhood of an inline-signing baseline, reported across both the
-saturation and the verifiability threshold rather than at whichever flatters the result.
+\textbf{Bytes.} Built as one frame format with a sender and a receiver, the design puts
+\bprLeanDesign\,B per record on air where per-record signing puts \bprLeanBase\,B
+(\saveLean\% fewer), at an operating point compliant with 3GPP TS~22.125. Every frame carries one
+self-contained record: a frame that depends on its predecessor does not meet the verifiability
+target at its own loss rate.
 
-\textbf{Bytes, and what they cost.} The adopted configuration puts $58.7\%$ fewer bytes on air
-($72.0$\,B per record) at an operating point compliant with 3GPP TS~22.125, against a success
-criterion committed to version control two days before the result existed.
+\textbf{Capacity.} Simulated directly, with a bootstrap interval, one 802.11a collision domain
+delivers 95\% of frames from \nmaxLeanDesign{} neighbours with the design and from
+\nmaxLeanBase{} with per-record signing.
 
-A factorial ablation narrows rather than inflates the co-design claim: only placement and batching
-interact, by exactly $\ga(1-1/b)$; encoding contributes additively and the signature-scheme axis is
-byte-neutral in this regime. AUTHBC introduces no new cryptographic primitive. Its contribution is
-a reproducible co-design, its quantified trade-offs, an honest account of the boundary beyond which
-no choice of existing cryptography helps --- and a methodological record of the defects found while
-establishing it.
+In the byte model the axes were first searched with, only placement and batching interact, by
+exactly $\ga(1-1/b)$; in the frame as built, delta coding is conditional on batching too, since a
+frame that must decode alone starts with a full record. The signature-scheme axis is byte-neutral
+among $64$\,B schemes. AUTHBC
+introduces no new cryptographic primitive. Its contribution is a reproducible co-design, its
+quantified trade-offs, the boundary beyond which no batch size helps, with the conditions under
+which it holds and what each relaxation buys --- and a
+methodological record of the defects found while establishing it, including three results this
+thesis had to correct after an external review.
 
 \chapter*{Declaration}
 \addcontentsline{toc}{chapter}{Declaration}
@@ -92,7 +96,10 @@ Symbol & Meaning & Default \\
 \midrule
 $s$        & encoded record payload bytes & measured (E1) \\
 $\ga$      & authentication object bytes (scheme $\sigma$) & 64 / 64 / 96 \\
-$\Hf$      & ledger frame header bytes & \textbf{38--44, measured} \\
+$\Hf$      & ledger frame header bytes & \textbf{44 first format, 23 lean; measured} \\
+$L$        & chain link carried once per frame (lean format) & 35 \\
+$s_k$, $s_\delta$ & self-contained record; record coded against its predecessor & measured \\
+$r$        & frames per self-contained frame (reference interval) & 1 \\
 $M$        & application MTU budget & 1500 (802.11) \\
 $b$        & records per frame (batch) & decision variable \\
 $p$        & frame loss probability & $\{0.02, 0.05, 0.10\}$ \\
@@ -104,7 +111,7 @@ $U$        & channel utilisation, offered / deliverable & admission metric \\
 $V$        & $P(\text{record verifiable at receiver})$ & constraint $\geq 1-\varepsilon$ \\
 $R$        & PHY data rate & \SI{6}{\mega\bit\per\second} \\
 $D(b)$     & freshness of the oldest record in a batch & $\leq \Dmax$ \\
-$\smax$    & largest record a single frame admits & $M - \Hf - \ga$ \\
+$\smax$    & largest record a single frame admits & $M - \Hf - L - \ga$ \\
 $\Nmax$    & largest sustainable neighbourhood & derived \\
 \bottomrule
 \end{tabular}
@@ -112,6 +119,5 @@ $\Nmax$    & largest sustainable neighbourhood & derived \\
 
 \vspace{1em}
 \noindent\textbf{A note on $\Hf$.} It is reported as a \emph{range}, not a constant. Canonical CBOR
-encodes small integers in one byte and large ones in five, so the measured frame header moves
-between $38$ and $44$\,B with the magnitudes of the sender identifier and sequence number. This
-matters because one of the thesis's own results depends on it; \Cref{ch:lowrate} states where.
+encodes small integers in one byte and large ones in five, so the measured frame header moves by
+six bytes with the magnitudes of the sender identifier and sequence number (\Cref{tab:hf}).

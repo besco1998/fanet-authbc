@@ -1,56 +1,53 @@
 # fanet-authbc
 
-Reproducible testbed for the **AUTHBC** thesis: co-optimizing **record encoding × authentication
-placement × signature scheme × batching** for blockchain-grade UAV telemetry ledgers over 802.11
-FANET links, with a low-rate (LoRa) generalisation. Owner: Mohamed A. Farouk.
+Reproducible testbed for the **AUTHBC** thesis: authenticated telemetry for a hash-chained UAV
+ledger, over IEEE 802.11 with a low-rate (LoRaWAN) boundary. Owner: Mohamed A. Farouk.
 
-Everything here is derived from frozen, seeded data. An automated gate re-derives every
-deterministic artifact on each run and fails if a committed number has gone stale.
+Every number here is generated from seeded, committed data. A gate re-derives each deterministic
+artifact on every run and fails if a committed value has gone stale; the paper's numbers are
+written by a script from those artifacts and are never typed.
 
 ## What the study found
 
-**A telemetry record is smaller than the signature that authenticates it.** A 64-byte Ed25519
-signature against a 45-byte delta-encoded record means authentication, not payload, dominates the
-air. The question is what to do about it, and the answer is a co-design.
+**A telemetry record is smaller than what authenticates it.** A 64-byte signature and a 32-byte
+chain link accompany a record of about 24 bytes.
 
-| result | value |
-|---|---|
-| **total on-air bytes** vs the inline-CBOR baseline | **−58.68 %** (174.25 → 72.00 B/record) |
-| — of which placement × batching | 79.2 % (auth 108 → 27.0 B) |
-| — of which encoding | 20.8 % (payload 66.25 → 45.0 B) |
-| **supportable neighbourhood** (the load-bearing claim) | **≈3× larger** — 32 → 103 nodes at saturation, 104 → 233 at the measured verifiability boundary |
-| verifiability / freshness / channel load | V = 0.95, D = 200 ms ≤ 250 ms, U = 0.56 |
+AUTHBC makes the **frame**, not the record, the unit of authentication: one signature and one
+chain link cover several records, and every frame still decodes and verifies on its own. It is
+built — a frame format, a sender and a receiver — and every size below is the length of a frame
+that was emitted, decoded and verified.
 
-⚠️ **Do not quote the auth-byte cut (75 %) on its own.** It is algebraically **1 − 1/b** — invariant
-to header size, signature size, encoding and scheme — so as a headline it credits four axes for what
-two produce. See finding F13 in [`docs/audits/model_provenance.md`](docs/audits/model_provenance.md).
-The claim that genuinely needs the whole co-design is **feasibility**.
+| result | value | artifact |
+|---|---|---|
+| **Bytes per record on air** | **43.25 B** against 145.77 B for a signature on every record: **70.3 % fewer** | `results/raw/design_ladder.csv` |
+| **Neighbours one 802.11a collision domain serves** at 95 % delivery, 50 records/s, 100 ms deadline | **124** [124, 125] against **35** [35, 35] — simulated per configuration in ns-3, 30 seeds, bootstrap interval | `ns3_nmax_direct.csv` |
+| **A rule for that capacity** | N_max ≈ 0.05 / (f·(a·T + c)) with a = 0.071, c = 8 µs — fitted to six configurations, then it predicted seven others **within 3.4 %**, with the predictions committed first. A fit at one loss level and one PHY rate, not a model | `docs/NMAX_DIRECT_EXPECTATIONS.md` |
+| **Where no frame fits** | **eight of the twelve** EU863-870 LoRaWAN data rates cannot carry one signed, hash-chained frame that verifies alone: five because a 64 B signature exceeds a 50/51 B payload, three because header, link and signature fill 115 B | `exclusion_matrix.csv` |
+| **A frame must not depend on its predecessor** | a delta-coded frame that does verifies **0.881** of its records at 5 % frame loss, not 0.95 — so every frame starts with a full record | `e3_codec_loss.csv` |
+| **Receiver CPU** | one Raspberry Pi 4 core verifies 296 neighbours' frames with Ed25519 and 10 with BLS | `design_ladder.csv` |
 
-**Two exclusion results bound where any of this applies.** **T6**: a link whose payload cannot hold
-one header, one signature and one record carries no per-frame-verifiable telemetry at *any* encoding
-or batch size — which removes the four longest-range LoRa modes outright, and loss makes
-fragmentation no escape. **Capacity**: LoRa's ALOHA uplink supports **N ≤ 5** at DR5, which with the
-121× per-node rate gap compounds to **≈2500× less aggregate capacity** than the 802.11 arm. LoRa is
-not a slow 802.11; it is a different regime.
+**What is not measured.** Contention is simulated, not measured on radios. Record sizes come from
+a synthetic generator, checked against twelve public flight logs at 5 Hz and against nothing at
+50 Hz. At equal bit error rate a four-record frame is lost more often than a one-record frame, and
+the design is then 0.7 points below its verifiability target at the 5 % point. Energy is metered
+for the sender only. All of it is stated in the paper's limitations and in
+[`docs/OPEN_ITEMS.md`](docs/OPEN_ITEMS.md).
 
-That `N ≤ 5` looks wrong against the node counts usually quoted for LoRaWAN, so it is checked — and
-the check goes against us. We simulate the LoRa PHY on the module's harshest MAC preset: **one
-channel, one gateway demodulation path, one forced spreading factor.** Mapped through a published
-measurement-based model's own curve fit, their ~32 % loss lands at 56 nodes in that configuration
-where we measure ~75 % at 50. **We are ≈2.3× more pessimistic, not more optimistic.** `N ≤ 5` is a
-**worst-case bound**, not a LoRaWAN network capacity — see [`docs/literature/`](docs/literature/) §5
-and finding F19. It is conservative in the direction that matters least here: the claim is that the
-low-rate regime is *qualitatively* different, and a conservative bound understates the margin rather
-than manufacturing it.
+⚠️ **This page said something else until October 2026.** It reported a 58.7 % byte saving and a
+"≈3×" neighbourhood for a design that turned out never to have been built: it was a sum of sizes
+measured separately. An external review exposed that; building the design changed three headline
+results. What was wrong, how it was found and what it cost is in
+[`docs/LOGBOOK.md`](docs/LOGBOOK.md) and findings F45–F53 of
+[`docs/audits/model_provenance.md`](docs/audits/model_provenance.md).
 
 ## Status
 
-**P8 — consolidation and paper.** 1077 tests green (1063 fast + 14 frozen-reproduction), `ruff` and
-`mypy` clean, `paper/main.pdf` builds at 8 pages. Simulation runs on **NS-3 3.48**; hardware
-measurements on **2× Raspberry Pi 4B** with INA219 metering.
+Revision after external review, on branch `p9-supervisor-revision`. Simulation runs on
+**NS-3 3.48**; hardware measurements on **2× Raspberry Pi 4B** with INA219 metering.
 
-Current state is always in **[`CLAUDE.md`](CLAUDE.md)**'s status board. What is still unresolved is
-in **[`docs/OPEN_ITEMS.md`](docs/OPEN_ITEMS.md)** and nowhere else.
+Current state, test counts and decisions pending are in **[`CLAUDE.md`](CLAUDE.md)**'s status
+board. What is still unresolved is in **[`docs/OPEN_ITEMS.md`](docs/OPEN_ITEMS.md)** and nowhere
+else.
 
 ## Quickstart
 
@@ -71,8 +68,10 @@ Reproducing the results:
 make exp-e1 exp-e2 exp-e3 exp-e4 exp-e5      # byte / loss / energy / co-design experiments
 make exp-lora exp-lora-codesign              # the low-rate arm
 make exp-capacity exp-operating-region       # feasibility envelope, (Λ × D_max) region
+make exp-frames                              # everything computed on the frame as built (E9–E17)
 make figures                                 # figures, from the frozen CSVs
 make verify-frozen                           # re-derive everything; fail on staleness
+make paper                                   # numbers.tex from results/, then the PDF
 ```
 
 Simulation and hardware are machine-dependent, run locally, and commit their CSVs; CI runs setup,
@@ -80,6 +79,7 @@ lint, tests and the frozen gate only.
 
 ```bash
 make sim-ns3-matrix sim-ns3-dcf sim-ns3-delay   # 802.11 validation (needs NS-3, see ns3/README.md)
+make sim-ns3-nmax                               # capacity by direct search — hours; resumable
 make sim-lora-capacity                          # LoRa capacity (needs the LoRaWAN contrib module)
 make hw-capture hw-reduce                       # RPi4 + INA219 energy campaign
 ```
@@ -98,7 +98,8 @@ See [`ns3/README.md`](ns3/README.md).
 | `results/raw/` | **Frozen** CSVs with provenance headers; `results/figures/` derives from them |
 | `ns3/` | Simulation scenarios and drivers (the NS-3 tree itself is git-ignored) |
 | `hw/` | Hardware harnesses, INA219 rig, measurement protocol |
-| `paper/` | IEEEtran manuscript and bibliography |
+| `paper/` | The results paper, the methods paper, the bibliography, and `numbers.tex` — generated, never edited |
+| `thesis/` | The thesis — a draft; read `thesis/STATUS.md` first |
 | [`docs/literature/`](docs/literature/) | Primary sources, each with its **role** stated: `USED` / `VALIDATES` / `PRIOR ART` / `POSITIONING` |
 | `tests/` | Unit, property and integration tests, including the frozen-reproduction gate |
 
@@ -107,8 +108,15 @@ See [`ns3/README.md`](ns3/README.md).
 - **Frozen artifacts + a staleness gate.** Every deterministic CSV is re-derived and compared
   byte-for-byte. This exists because a decision once landed while a frozen artifact kept the old
   value.
-- **Retractions stay visible.** Three claims were withdrawn during the work (one theorem, two audit
-  findings); each is struck through with the evidence that refuted it, rather than deleted.
+- **Retractions stay visible.** Claims withdrawn during the work — a theorem, several audit
+  findings, a headline count — are struck through with the evidence that refuted them, not
+  deleted.
+- **Predictions are committed before the data,** in data-free commits whose order anyone can
+  check in the history (see the pre-registrations listed in [`docs/README.md`](docs/README.md)).
+  Several failed — among them the prediction that one load ceiling gives every configuration's
+  capacity — and are reported as failures.
+- **No typed results.** Every number in the paper is a macro that a script writes from
+  `results/`; a sentence that states a verdict is checked against the artifact by the same script.
 - **Every reported configuration carries its alternatives.** This is an optimization problem, so a
   result without its trade-offs is a selection — see [`docs/TRADEOFFS.md`](docs/TRADEOFFS.md).
 - **Failed attempts are recorded** in [`docs/LOGBOOK.md`](docs/LOGBOOK.md), so a wrong turn is not
@@ -118,6 +126,9 @@ See [`ns3/README.md`](ns3/README.md).
 - **Types and tests both gate `main`.** They fail differently: adding `mypy` to a suite of 1077
   passing tests still surfaced a Liskov violation, because tests only exercise paths that get
   called and that defect lived in the one nobody calls.
+- **Building the thing.** The errors of October 2026 had survived two audits and thirteen hundred
+  tests because each part was right. What exposed them was assembling the parts into one frame
+  with a receiver that could refuse it.
 
 ## Requirements
 

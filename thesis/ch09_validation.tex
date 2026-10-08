@@ -70,8 +70,9 @@ now verified exhaustively rather than assumed.
 \section{Hardware}
 
 Two Raspberry Pi 4 units in ad-hoc mode at $5$\,GHz measured broadcast link loss at
-$p = 2.3 \times 10^{-4}$ and airtime at $1.995$\,ms per frame against $1.99$\,ms predicted --- an
-independent check on the timing constants underlying every airtime figure in this thesis.
+$p = \hwLoss$ (\hwLossFrames{} frames lost of \hwSentFrames) and airtime at \hwAirtime\,ms per
+frame against \hwAirtimeModel\,ms predicted, a gap of \hwAirtimeGap\% --- an independent check on
+the timing constants underlying every airtime figure in this thesis.
 
 \begin{remark}[Two warnings, both earned]
 This validates \emph{airtime}, not contention: one transmitter means zero contention, so the
@@ -103,8 +104,9 @@ significance of the shift & \multicolumn{2}{c}{$0.45\sigma$} \\
 \end{tabular}
 \end{center}
 
-\textbf{Statistically indistinguishable across a $1.66\times$ change in frame size.} The universal
-ceiling is justified and no published number moves.
+\textbf{Statistically indistinguishable across a $1.66\times$ change in frame size.} At the time
+this was read as justifying the universal ceiling. It justified half of it, at one $N$; the other
+half is below.
 
 \begin{remark}[The prediction that should not have been made]
 The pre-registration also predicted a \emph{direction} --- that the crossing would drift higher ---
@@ -118,6 +120,46 @@ needs a power estimate, or must be stated as a band. The load-bearing prediction
 which is why the run answers its question at all.
 \end{remark}
 
-\textbf{Still untested:} invariance in $N$. Both arms are at $N = 50$ while the envelope applies the
-ceiling from $N = 2$ to $N = 213$. Frame-size invariance was the cheaper half of the assumption and
-the half that varies across the envelope's rows; the other half is stated, not measured.
+\section{The other half: invariance in $N$, tested, and it does not hold}
+
+Both sweeps above are at $N = 50$, while the envelope applied the ceiling from $N = 2$ to
+$N = 213$. For two months that half of the assumption was listed as stated and not measured. An
+external review asked for confidence intervals on the 802.11 capacities, ``as for LoRa'', and the
+LoRa figure is a direct search in $N$; so the 802.11 figure was made one.
+
+\paragraph{The prediction,} committed before any run: in each of six configurations, the directly
+simulated $\Nmax$ lies within $\pm 10\%$ of the ceiling's value. No direction was predicted, and a
+power estimate was given.
+
+\paragraph{The outcome.} It fails. With the scenario exactly as published (1080 runs):
+
+\begin{center}
+\begin{tabular}{llrrr}
+\toprule
+configuration & frame, rate & ceiling & direct (interpolated) & deviation \\
+\midrule
+first, sign every record & 174\,B, 50/s & 31 & 31.0 & $-0.1\%$ \\
+first, batched design & 300\,B, 12.5/s & 97 & 87.8 & $-9.5\%$ \\
+lean, sign every record & 146\,B, 50/s & 34 & 32.4 & $-4.7\%$ \\
+lean, batched design & 173\,B, 12.5/s & 142 & 118.3 & $\mathbf{-16.7\%}$ \\
+first, shared frame & 565\,B, 12.5/s & 49 & 54.7 & $+11.7\%$ \\
+lean, shared frame & 372\,B, 12.5/s & 80 & 74.8 & $-6.6\%$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The ceiling overstates the capacity of short frames sent by many nodes and understates that of
+long frames sent by few. At the crossings $U$ runs from $1.98$ to $2.61$ where the ceiling says
+$2.435$. It is not a constant, and \Cref{ch:codesign} no longer uses it.
+
+\begin{remark}[Three defects in the measurement itself, each of which could have hidden the result]
+The driver first reported the \emph{median of the bootstrap replicates} as $\Nmax$ where the
+registered estimate is the sample's own crossing; they differed in one configuration ($31$ against
+$29$). The grid was coarse --- eleven nodes between points in the configuration that decided the
+outcome --- so an interpolated crossing was added afterwards and is labelled as an addition. And
+the power estimate promised $\pm 2$ nodes where the interval is $\pm 5$. None changes the verdict;
+all three are in the record.
+\end{remark}
+
+What follows from the failure --- the traffic-source experiments, and the capacities now
+reported --- is in \Cref{sec:capacity}.

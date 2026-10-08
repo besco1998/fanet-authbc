@@ -55,3 +55,20 @@ thesis/*.lof
 thesis/*.lot
 thesis/*.bbl
 thesis/*.blg
+
+# Downloaded third-party inputs (public flight logs): pinned by hash in a manifest, never committed
+.cache/
+
+# Literature that is held and read but NOT redistributed (docs/literature/HELD_LOCALLY.csv,
+# decision of 2026-10-07). The files stay on the author's machine; never `git add -f` them.
+docs/literature/bernstein2011_ed25519.pdf
+docs/literature/cavalcanti2018_vanet_research_credibility_ccr.pdf
+docs/literature/gennaro1997_sign_digital_streams.pdf
+docs/literature/gundogan2021_firmware_updates_icn_arxiv.pdf
+docs/literature/haber1991_timestamp_digital_document.pdf
+docs/literature/lora_alliance_rp002-1.0.3_regional_parameters.pdf
+docs/literature/lora_alliance_ts001-1.0.4_l2_specification.pdf
+docs/literature/perrig2000_emss_tesla_sp.pdf
+docs/literature/perrig2002_tesla_cryptobytes.pdf
+docs/literature/semtech_sx1276_datasheet_rev4.pdf
+docs/literature/wong1999_flow_signatures_ton.pdf

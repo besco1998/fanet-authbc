@@ -85,16 +85,18 @@ class Framer(ABC):
 # CBOR encodes an integer 0..23 in one byte and one ≥ 65536 in five. Measured:
 #
 #     src=0     base_seq=0        ->  H_f = 38 B     (first records of a flight, low node id)
-#     src=24    base_seq=24       ->  H_f = 39 B
-#     src=256   base_seq=256      ->  H_f = 40 B
+#     src=24    base_seq=24       ->  H_f = 40 B     (this row read 39 and the next 40 until
+#     src=256   base_seq=256      ->  H_f = 42 B      2026-10-06: each is one field's step, not two)
 #     src=40000 base_seq=180000   ->  H_f = 44 B     (1 h into flight at 50 Hz — the documented
 #                                                     value, and the top of the range)
 #
-# WHY THIS MATTERS, and it is not the byte model. T6's exclusion bound is s_max = M − H_f − g_a,
-# so a LARGER H_f makes exclusion MORE likely. DR3 (M=115, g_a=64, s_min=13) is excluded for
-# H_f ≥ 39 and FEASIBLE at H_f ≤ 38 — at which point the paper's headline goes from "four of
-# seven EU868 rates excluded" to three. docs/01 §2a analyses the direction of bias for the byte
-# comparison (where 44 B is conservative) and never for T6, where the sign is opposite.
+# WHAT THE RANGE DOES AND DOES NOT CHANGE. For the byte comparison 44 B is the conservative end
+# (docs/01 §2a). ⚠️ Until 2026-10 this comment also said the range decides T6 — that DR3
+# (M = 115) "is excluded for H_f ≥ 39 and FEASIBLE at H_f ≤ 38". That is WITHDRAWN (audit F47).
+# It came from s_max = M − H_f − g_a against a 13 B record, which charged neither the chain link
+# nor a record that decodes alone; the signature plus the smallest self-contained record this
+# format emits is already 120 B, so DR3 is excluded at every header size, including zero
+# (`models/frame.py`, `tests/unit/models/test_exclusion_t6.py`).
 #
 # The constant is left at 44 deliberately: it is the steady-state value for any realistic flight,
 # every frozen artifact depends on it, and it is the conservative choice for the byte results.

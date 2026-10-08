@@ -34,7 +34,7 @@ data; everything derived from that data is re-computed and checked on every run.
 git clone https://github.com/besco1998/fanet-authbc.git
 cd fanet-authbc
 make setup            # creates .venv with Python >=3.12 and pinned deps
-make all              # lint + mypy + 1296 fast tests + the 24-test frozen gate
+make all              # lint + mypy + 1872 fast tests + the 35-test frozen gate
 ```
 
 `make all` green means **you have reproduced the thesis's deterministic layer.** The frozen gate
@@ -47,9 +47,16 @@ make bench-micro                              # p1_sizes.csv, p1_crypto.csv   (x
 make exp-e1 exp-e2 exp-e3 exp-e4 exp-e5       # the five core experiments
 make exp-capacity exp-operating-region        # feasibility envelope; (Λ × D_max) region
 make exp-lora exp-lora-codesign               # the low-rate arm
+make exp-frames                               # E9–E17: everything computed on the frame as built
 make export-framesizes figures                # frame-size table; all figures
 make verify-frozen                            # ← the check that matters
+make paper thesis                             # numbers.tex from results/, then both PDFs
 ```
+
+⚠️ **The paper and the corrected thesis chapters contain no typed results.** `make paper` first
+runs `analysis/paper_numbers.py`, which writes `paper/numbers.tex` from `results/` and stops if an
+artifact no longer supports a sentence the paper makes. To change a number, re-run its
+experiment; never edit `numbers.tex`.
 
 ⚠️ **`make bench-micro` overwrites `p1_crypto.csv` with *your* machine's timings.** The thesis uses
 ARM figures from `results/hw/p1_crypto.authbc-pi4a.csv` (decision D8 — the Pi is the platform).
@@ -98,7 +105,16 @@ make sim-ns3-matrix       # N × mode × 10 seeds saturation matrix  (the Bianch
 make sim-ns3-dcf          # PHY-trace slot statistics
 make sim-ns3-delay        # non-saturated delivery delay  (the C1/D3 result)
 make sim-ns3-sensitivity  # deployment-geometry sweep
+make sim-ns3-nmax         # the V ≥ 0.95 capacity of each configuration, by direct search
 ```
+
+⚠️ **`make sim-ns3-nmax` is hours, not minutes.** It runs every node count listed in
+`experiments/nmax-direct/plan.txt` at 30 seeds × 20 s. It is resumable: runs already in
+`results/raw/ns3_nmax_direct_runs.csv` are skipped, so on a clone it only re-writes the summary.
+To re-simulate from nothing, move that file aside first. Each run is seeded by (cell, N, seed) and
+is reproducible on its own; `ns3/run_nmax_direct.py --verify` first checks that the cached binary
+is the one `./ns3 run` would build. Read `docs/NMAX_DIRECT_EXPECTATIONS.md` before quoting any
+value from it.
 
 ### 2.3 Using a different NS-3 tree
 
@@ -185,11 +201,16 @@ decides *what bytes a signature covers* — the audit boundary. `inline.py` (A),
 `relay_agg.py` (C), `block_agg.py` (D). `framer.py` holds `H_F` (44 B, **measured** from `wire.py`)
 and the batch bounds, plus `measure_frame_header_bytes` / `frame_header_bytes_range` — ⚠️ H_f is a
 **range, 38–44 B**, not a constant (F43b: canonical CBOR integers are variable-length, so it moves
-with `src` and `base_seq`). `wire_profile.py` measures an **integer-keyed alternative** to the
-frozen format (F44): it takes H_f to 22 B and thereby makes EU868 DR3 feasible, turning the
-exclusion from four data rates into three. ⚠️ It is a *measurement*, never the shipped format — D6
-freezes `wire.py`, and `tests/test_wire_profile.py::TestTheFrozenFormatIsUntouched` fails if the
-lean profile ever leaks into it.
+with `src` and `base_seq`).
+
+**`placement/wire_v2.py` and `session_v2.py` — the lean format (2026-10).** `wire_v2.py` is a
+second frame format: integer keys, one chain link per frame, a keyframe followed by delta records
+in one varint stream. `session_v2.py` is the protocol around it — `LeanSender`, `LeanReceiver` —
+and is where "what happens when a frame is lost, replayed or forged" is running code. The first
+format (`wire.py`) is **frozen and untouched** (D6); the two share the ledger record and the
+signature. ⚠️ `wire_profile.py`, which measured an integer-keyed header in isolation and produced
+the withdrawn "three of seven" exclusion (F44), is **deleted**: it charged neither the chain link
+nor a record that decodes alone (F47).
 
 **`models/`** — the analytical layer, and where the theorems live.
 
@@ -198,7 +219,10 @@ lean profile ever leaks into it.
 | `bianchi.py` | 802.11a DCF fixed point + **exact OFDM-symbol airtime**. Deliberately has no `T_fx` constant — airtime is a step function (D9), and a test asserts its absence |
 | `broadcast_dcf.py` | Ma & Chen's *published* broadcast model. Also carries our discarded reduction as a labelled failure curve |
 | `energy.py` | per-record energy, freshness `D(b)`, queueing. Includes the chain-hash term (D7) |
-| `optimizer.py` | the Pareto search, plus T2a's binding-ceiling helpers and **T6**'s exclusion tiers |
+| `optimizer.py` | the Pareto search, plus T2a's binding-ceiling helpers and the certificate-byte term. ⚠️ T6's exclusion tiers moved to `frame.py` in 2026-10 |
+| `frame.py` | **the single definition of a frame** (2026-10): what a header, a link, a signature and the records of both formats add up to — held equal to emitted frames by a test — plus verifiability with a keyframe interval (T3′), under bursts and under loss that grows with frame length, and the exclusion test (T6′) |
+| `phy.py` | OFDM timing as a parameter, for the model-only sweep over other rates (E15) |
+| `stream_auth.py` | per-packet authenticator sizes of the classical stream-signing schemes (E17) |
 | `crossover.py` | T4's power-independent scheme crossover |
 | `lora.py` | EU868 PHY — every constant transcribed from SX1276 Rev.7 and RP002-1.0.3 |
 | `lora_codesign.py` | the LoRa Pareto search, with data rate as a fifth design variable |
@@ -207,7 +231,9 @@ lean profile ever leaks into it.
 depends on), `stats.py` (bootstrap CIs), `micro.py` (P1 size/crypto/hash benchmarks),
 `telemgen.py` (the seeded telemetry generator), `provenance.py` (the `# key=value` headers on every
 CSV), `experiments.py` (**the runner registry — every `make exp-*` target lands here**),
-`framesizes.py`, `macro.py`.
+`framesizes.py`, `macro.py`. Since 2026-10: `leanframes.py` (sizes of **emitted** lean frames and
+record streams, and the single-bit-flip census) and `frame_experiments.py` (the runners of
+E9–E17 — every `make exp-frames` artifact lands here).
 
 **`channel/`** — `airtime.py` (frame airtime) and `emulator.py` (in-process broadcast emulator).
 
@@ -221,12 +247,14 @@ share the model's assumptions.
 |---|---|
 | `authbc-sat.cc` | saturated 802.11a, both modes — the Bianchi/Ma&Chen validation scenario |
 | `authbc-dcf-trace.cc` | instrumented twin of the above; emits slot statistics. Its control is that goodput must reproduce `authbc-sat` exactly |
-| `authbc-delay.cc` | **non-saturated** delivery delay. Separate scenario because a saturated queue makes delay diverge by construction |
+| `authbc-delay.cc` | **non-saturated** delivery delay. Separate scenario because a saturated queue makes delay diverge by construction. Since 2026-10 it takes `--txJitterMs`, `--txSkewPpm` and `--perNode`; with all three absent the published path is bit-identical |
 | `authbc-lora-capacity.cc` | LoRa N-node capacity. **Derived from the module's own working example** after a from-scratch version configured correctly and transmitted nothing |
 | `ns3_paths.py` | the one NS-3 root, with `AUTHBC_NS3` override |
 | `patch_lorawan.py` | the required `ns3/log.h` patch, idempotent |
 | `compare_versions.py` | the migration gate — states tolerance before comparing |
 | `run_matrix.py`, `dcf_residual.py`, `run_delay.py`, `run_lora_capacity.py`, `sensitivity.py` | drivers: build, sweep, aggregate seeds, write the CSV |
+| `run_nmax_direct.py` | the direct capacity search (2026-10): one row per run in `ns3_nmax_direct_runs.csv`, crossing and bootstrap interval in `ns3_nmax_direct.csv`. Resumable; driven by a plan file |
+| `run_phase_lock_diagnostic.py` | per-node delivery under five traffic sources — the evidence for the frozen-phase mechanism (F51) |
 | `parse_ns3.py` | scenario output → rows |
 
 ### `hw/`, `analysis/`, `experiments/`, `tests/`
@@ -236,7 +264,11 @@ share the model's assumptions.
 `run_micro.sh`, `provision.sh`, `compare_platforms.py`.
 
 `analysis/` — one figure script per result group; all read frozen CSVs and are byte-stable (Agg
-backend, no timestamp metadata) so figures can be diffed.
+backend, no timestamp metadata) so figures can be diffed. Four scripts are not figure scripts:
+`paper_numbers.py` (**every number the paper prints**, → `paper/numbers.tex`),
+`verify_citations.py` (each bibliography entry against its registry record — needs network),
+`px4_log_sizes.py` (record sizes on pinned public flight logs — needs network and `pyulog`), and
+`nmax_airtime_line.py` (the arithmetic of follow-up F2 in `NMAX_DIRECT_EXPECTATIONS.md`).
 
 `experiments/<name>/config.yaml` — **one config per experiment, and the only place parameters live.**
 `experiments/e4/run_e4.py` is the exception: a standalone script, for the reason its `__init__.py`
@@ -263,7 +295,15 @@ gate**; `integration/test_broadcast_residual.py` guards the channel-model valida
    ├── e1, e5 ◄── configs + measured timings + measured powers
    ├── capacity_envelope, operating_region ◄── bianchi + broadcast_dcf
    ├── lora_eu868, lora_codesign ◄── lora.py + measured timings
-   └── ns3_contention ◄── ns3_matrix
+   ├── ns3_contention ◄── ns3_matrix
+   ├── frame_components, e3_codec_loss, exclusion_matrix, lora_budget,
+   │   phy_sweep, stream_baselines ◄── the lean frame as emitted (wire_v2, models/frame.py)
+   ├── ns3_nmax_direct ◄── ns3_nmax_direct_runs      (the summary of the simulated runs)
+   ├── design_ladder ◄── the frame + measured timings + ns3_nmax_direct
+   └── freshness_budget, energy_table ◄── ns3_delay, results/hw/energy
+                    │
+                    ▼
+   paper/numbers.tex ◄── every artifact the paper quotes  (analysis/paper_numbers.py)
                     │
                     ▼
    FIGURES (results/figures/*.png) ── all from frozen CSVs, never from a live run
@@ -286,10 +326,13 @@ Spot-checks that a reproduction is genuine:
 
 | check | expected |
 |---|---|
-| E5 optimized row | delta / ed25519 / placement B / b=4, 71.998 B/record, V=0.95 |
+| E5 optimized row | delta / ed25519 / placement B / b=4, 71.998 B/record, V=0.95. ⚠️ **As frozen.** That row's V is the model's; with the codec in the loop the same design verifies 0.881 (F46). The corrected first-format design is 74.963 B/record (`design_ladder.csv`, `first/batch-delta`) |
 | auth-byte cut | exactly **75.00 %** — and it must stay 75.00 % if you change `H_f` or `g_a`, because it is `1 − 1/b` |
-| total-byte cut | 58.68 % |
-| T6 on EU868 | DR0–2 "signature", DR3 "encoding", DR4–6 feasible. ⚠️ DR3's tier holds only for H_f ≥ 39 B; at the integer-keyed H_f = 22 B it is *feasible* (F44) |
+| total-byte cut | 58.68 % in `e5_codesign.csv` (frozen); **56.98 %** for the first format once every frame carries a keyframe, **70.33 %** for the lean format (`design_ladder.csv`) |
+| exclusion on EU863-870 | `exclusion_matrix.csv`: of **twelve** data rates, five excluded by the signature alone (50/51 B), three by header + link + signature + one record (115 B), four feasible. ⚠️ The older reading in `lora_eu868.csv` (seven rates, DR3 by "encoding") is the frozen first-format artifact and is superseded (F47) |
+| the design as one frame | `design_ladder.csv`, lean `batch-delta`, adopted: 172.999 B frame, **43.25 B/record**, V = 0.95, `sized_from` = "emitted frames" |
+| a dependent frame misses V | `e3_codec_loss.csv`, `iid`, p = 0.05, r = 4: V_theory **0.8811**, `meets_target` 0 |
+| the paper's numbers | `python analysis/paper_numbers.py --check` → "is current" |
 | H_f range | `frame_header_bytes_range(4)` → `(38, 44)` |
 | U crossing, both frames | 2.435 at 288 B, 2.367 at 174 B — 0.45 σ apart (M4) |
 | unicast ↔ Bianchi | +1.29 / −0.40 % (ns-3.48, 30 seeds) |

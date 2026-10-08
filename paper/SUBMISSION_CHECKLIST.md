@@ -1,7 +1,9 @@
 # Submission checklist — `main.tex`
 
 *Venue-agnostic. Everything that does not depend on the venue is done; the rest is listed with
-what changes per venue. Written 2026-08-08.*
+what changes per venue. Written 2026-08-08; **rewritten in part 2026-10-06** after the paper was
+revised in answer to an external review — the sections marked ⚠️ SUPERSEDED describe the paper as
+it was and are kept only so the change is visible.*
 
 ---
 
@@ -12,24 +14,46 @@ what changes per venue. Written 2026-08-08.*
 | 1 | **Affiliation** | `main.tex` carries `[AFFILIATION -- TO BE COMPLETED]`. Needs department, institution, city, country. |
 | 2 | **ORCID** | Required by Elsevier and MDPI, optional for IEEE. Register at orcid.org if you do not have one. |
 | 3 | **Funding statement** | If the work was funded, every venue requires the grant number. If unfunded, say so explicitly — silence is not accepted. |
-| 4 | **Supervisor / co-authors** | The paper is currently single-author. If your supervisor is to be a co-author, that must be settled before submission, not after. |
-| 5 | **Two citations** | See below — both are behind MDPI's script block. |
+| 4 | **Supervisor / co-authors** | **Decided 2026-10-08: single author; the supervisor is thanked.** ⚠️ `main.tex` carries `[SUPERVISOR -- TO BE COMPLETED]` in the acknowledgement: the name is needed. |
+| 5 | **One citation** | See below — the other of the two was obtained, read and cited on 2026-10-07. |
 
-### The two citations still needed
+### The one citation still open
 
-Both are one browser click. Save into `docs/literature/` with these names:
+| paper | status |
+|---|---|
+| Rajasekaran, Maria, Al-Turjman, Altrjman & Mostarda, *Anonymous Mutual and Batch Authentication with Location Privacy of UAV in FANET*, Drones 6(1):14, 2022 · `10.3390/drones6010014` | **DONE 2026-10-07.** Held (CC BY, in `docs/literature/`), read in full, checked against Crossref (five authors, not the four listed here before), cited in the related work of the paper and the thesis (`docs/audits/model_provenance.md` F57). |
+| Al Majmaie, Ghajari, Bhatta & Ibrahem, *SSDBFAN: Scalable and Secure Cluster-Based Data Aggregation with Blockchain for FANETs*, Sensors 26(9):2585, 2026 · `10.3390/s26092585` | **Obtainable, not read, not cited.** Defensive only: same group as `almajmaie2026pqfanet`, which is cited. The publisher's static server serves it (`mdpi-res.com/d_attachment/sensors/sensors-26-02585/article_deploy/sensors-26-02585.pdf`); a copy is on the author's machine outside the repository. It is cited only if someone reads it and it says something the paper needs. |
 
-| paper | why it matters | save as |
-|---|---|---|
-| Rajasekaran, Maria, Al-turjman & Altrjman, *Anonymous Mutual and Batch Authentication with Location Privacy of UAV in FANET*, Drones 6(1):14, 2022 · `10.3390/drones6010014` | ⚠️ **A real gap.** We cite Zhang 2008 (*vehicular* batch verification) as our batch-verification comparator. This is the **UAV-specific** equivalent, 20 citations, in the exact community that will review us. Its absence is the kind of thing a reviewer notices first. | `rajasekaran2022_uav_batch_auth_fanet.pdf` |
-| Al Majmaie, Ghajari, Bhatta & Ibrahem, *SSDBFAN: Scalable and Secure Cluster-Based Data Aggregation with Blockchain for FANETs*, Sensors 26(9):2585, 2026 · `10.3390/s26092585` | Defensive. Same group as `almajmaie2026pqfanet`, which we already cite; FANET + blockchain + aggregation, ns-3, 2026. Adjacent enough that omitting it looks like we stopped reading in 2025. | `almajmaie2026_ssdbfan_fanet_ns3.pdf` |
-
-⚠️ Per the project's own rule, a source is not cited unless it is held and read. I will not add
-either citation until the PDFs are in the repository.
+⚠️ Per the project's own rule, a source is not cited unless it is held and read.
 
 ---
 
-## DONE — venue-independent
+## ⚠️ NEW BLOCKERS since the 2026-10 revision — Mohamed's decisions
+
+| # | item | what is needed |
+|---|---|---|
+| 6 | **Title** | **Decided 2026-10-08: kept.** |
+| 7 | **What "AUTHBC" stands for** | **Decided 2026-10-08: kept** — "authenticated telemetry for a blockchain-style, hash-chained ledger". |
+| 8 | **Venue and page target** | **Decided 2026-10-08: a networking journal without page charges, after contention has been measured on radios** (`docs/OPEN_ITEMS.md` G4). The class changes from `conference` then; the journal is chosen then. |
+| 9 | **One chain link per frame on 802.11** | **Decided 2026-10-08: confirmed.** |
+| 10 | **The supervisor's sign-off on the revision** | The point-by-point response stays outside this repository (decided 2026-10-08) and is sent after the bench session. |
+
+## DONE in the 2026-10 revision
+
+- [x] **The design is built**: a frame format with a sender and a receiver; the design and its
+      baseline are emitted frames, and every size that is a sum of measured parts is marked
+- [x] **No typed results**: every number is a macro generated from `results/`; a test fails if
+      one is typed, stale or unused
+- [x] **Every bibliography entry compared with its registry record** by a script
+      (`make verify-citations`); two wrong author lists corrected
+- [x] **Threat model, protocol description, field-by-field byte table, tamper census**
+- [x] **Related work** on per-message authentication, stream signing, aggregate signatures and
+      hash-linked records, with the stream-signing schemes placed in a table
+- [x] **Confidence intervals on every simulated capacity**, from a direct search per configuration
+- [x] **Limitations section** naming what is simulated, modelled or synthetic
+- [x] Declarations: data and code availability, competing interests, use of generative AI
+
+## DONE — venue-independent (as of 2026-08; ⚠️ SUPERSEDED where it quotes results)
 
 - [x] **Data and Code Availability** statement, naming what the gate does re-derive (16 artifacts,
       byte-identically) and what it cannot (NS-3, hardware rig) rather than claiming "all results"
@@ -55,15 +79,23 @@ either citation until the PDFs are in the repository.
 | | Ad Hoc Networks (Elsevier) | IEEE IoT-J | MDPI Drones |
 |---|---|---|---|
 | template | `elsarticle`, single column, line numbers | `IEEEtran` **`journal`** (currently `conference` — must change) | MDPI LaTeX template |
-| page cost at 15 pp | **none** (subscription) | **$1,225** mandatory overlength ($175 × 7 pp over 8) | ~2,600 CHF APC |
+| page cost | **none** (subscription) | overlength charge per page over 8 — ⚠️ the paper is now 8–9 pp in the conference class and will be longer in the journal class; re-check the venue's current fee | APC — re-check the current fee |
 | first decision | ~8 weeks | 6.9 weeks | ~2–3 weeks |
 | extras | **Highlights** (3–5 bullets, ≤85 chars each) + graphical abstract optional | none | graphical abstract |
 | CRediT | required | not required | required |
 
 ⚠️ **`\documentclass[conference]{IEEEtran}` is wrong for any journal submission.** It is fine for
-the current draft, but a 15-page paper must not go to a journal in the conference class.
+the current draft; switch the class before a journal submission and re-check the page count.
 
-### Draft Highlights (for Elsevier, if chosen)
+### Draft Highlights (for Elsevier, if chosen) — rewritten 2026-10-06
+
+* One signature and one chain link cover four records; every frame verifies alone
+* Built as a frame format with sender and receiver; sizes are emitted frames
+* A frame that depends on its predecessor misses its verifiability target
+* Capacity found by direct simulation per configuration, with bootstrap intervals
+* Eight of twelve EU863-870 LoRaWAN data rates cannot carry one signed, chained frame
+
+### ⚠️ SUPERSEDED highlights (the paper as it was in 2026-08)
 
 * Signature bytes exclude three of seven EU868 rates outright, at any encoding, batch or header
 * That exclusion is arithmetic, so it cannot move as models or hardware improve
@@ -74,7 +106,27 @@ the current draft, but a 15-page paper must not go to a journal in the conferenc
 
 ---
 
-## Suggested cover-letter argument
+## Suggested cover-letter argument — rewritten 2026-10-06
+
+The reviewer question is still *"where is your new scheme?"*. The answer is two boundaries, and
+the object they are boundaries of:
+
+> We introduce no new primitive. We change the unit that is authenticated — from the record to
+> the frame — and build it: a frame format, a sender and a receiver in which one signature and one
+> chain link cover several records and every frame still decodes and verifies alone. What such a
+> frame must carry decides where it can be sent at all, and we give that boundary on a real band
+> with its conditions. Where it can be sent, we show what it buys in neighbours. The classical
+> stream-signing schemes amortise the cost of *signing*; on a contended channel the cost that
+> binds is the *frame*.
+
+Worth saying plainly, because it is unusual and checkable from the public history: an earlier
+version of this work reported the design as a sum of separately measured sizes. Building it
+changed three results — the design as first specified missed its own verifiability target, the
+low-rate exclusion was restated over the full set of data rates, and every capacity was
+re-measured by direct simulation after a pre-registered prediction failed. Those corrections are
+recorded in the repository and in a companion methods paper, not removed.
+
+## ⚠️ SUPERSEDED cover-letter argument (the paper as it was in 2026-08)
 
 The reviewer question this paper must survive is *"where is your new scheme?"* — because every
 adjacent recent paper proposes one. The answer, and it should be the cover letter's first

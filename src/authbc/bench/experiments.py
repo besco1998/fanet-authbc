@@ -435,8 +435,9 @@ def run_e3(cfg: dict) -> list[dict]:
 def run_lora_external(cfg: dict) -> list[dict]:
     """Cross-check the LoRa capacity result against a published external model (items A7, F20).
 
-    Every other LoRa number in this thesis comes from one simulator. This runner evaluates Bor et
-    al. 2017's measurement-fitted capacity model at *our* operating point and puts the two side by
+    Every other LoRa number in this thesis comes from one simulator. This runner evaluates
+    Haxhibeqiri et al. 2017's measurement-fitted capacity model at *our* operating point and puts
+    the two side by
     side, so the low-rate arm gets the same treatment the 802.11 arm gets from Bianchi and
     Ma & Chen: an independent yardstick rather than an internal baseline.
 
@@ -453,16 +454,16 @@ def run_lora_external(cfg: dict) -> list[dict]:
     for r in _read_raw(cfg["measured_csv"]):
         n = int(r["n_devices"])
         ours_pct = 100.0 * (1.0 - float(r["delivered_frac"]))
-        theirs_pct = lora.bor2017_loss_pct(n, logical_channels=lc)
+        theirs_pct = lora.haxhibeqiri2017_loss_pct(n, logical_channels=lc)
         rows.append({
             "n_devices": n,
             "authbc_ns3_loss_pct": round(ours_pct, 3),
-            "bor2017_loss_pct": round(theirs_pct, 3),
+            "haxhibeqiri2017_loss_pct": round(theirs_pct, 3),
             "delta_points": round(ours_pct - theirs_pct, 3),
             "ratio_ours_over_theirs": round(ours_pct / theirs_pct, 3) if theirs_pct else "",
-            "who_is_optimistic": "AUTHBC" if ours_pct < theirs_pct else "Bor2017",
+            "who_is_optimistic": "AUTHBC" if ours_pct < theirs_pct else "Haxhibeqiri2017",
             "meets_v_target_authbc": int(ours_pct <= 100.0 * (1.0 - v_target)),
-            "meets_v_target_bor": int(theirs_pct <= 100.0 * (1.0 - v_target)),
+            "meets_v_target_haxhibeqiri": int(theirs_pct <= 100.0 * (1.0 - v_target)),
         })
     # F23: the collision-only capacity above assumes a perfect link. Zirak et al. 2021 measured
     # air-to-air LoRa PDR on real drones; delivery is P_link(range) x P_no_collision(N), so a
@@ -479,10 +480,10 @@ def run_lora_external(cfg: dict) -> list[dict]:
                 break
         rows.append({
             "n_devices": f"RANGE_{range_m}m", "authbc_ns3_loss_pct": "",
-            "bor2017_loss_pct": round(100 * (1 - p_link), 3),
+            "haxhibeqiri2017_loss_pct": round(100 * (1 - p_link), 3),
             "delta_points": "", "ratio_ours_over_theirs": "",
             "who_is_optimistic": "measured link (Zirak2021)",
-            "meets_v_target_authbc": n_rng, "meets_v_target_bor": "",
+            "meets_v_target_authbc": n_rng, "meets_v_target_haxhibeqiri": "",
         })
     r_max = lora.max_range_for_verifiability(v_target)
     print(f"  measured air-to-air link (Zirak et al. 2021): V>={v_target} needs range <= {r_max} m;"
@@ -491,15 +492,15 @@ def run_lora_external(cfg: dict) -> list[dict]:
 
     n_max_ours = max((r["n_devices"] for r in rows
                       if isinstance(r["n_devices"], int) and r["meets_v_target_authbc"]), default=0)
-    n_max_theirs = lora.bor2017_n_max(v_target, logical_channels=lc)
+    n_max_theirs = lora.haxhibeqiri2017_n_max(v_target, logical_channels=lc)
     rows.append({
-        "n_devices": "N_MAX", "authbc_ns3_loss_pct": "", "bor2017_loss_pct": "",
+        "n_devices": "N_MAX", "authbc_ns3_loss_pct": "", "haxhibeqiri2017_loss_pct": "",
         "delta_points": n_max_ours - n_max_theirs, "ratio_ours_over_theirs": "",
         "who_is_optimistic": "", "meets_v_target_authbc": n_max_ours,
-        "meets_v_target_bor": n_max_theirs,
+        "meets_v_target_haxhibeqiri": n_max_theirs,
     })
     print(f"  LoRa external check (V>={v_target}, {lc} logical channel(s)): "
-          f"AUTHBC ns-3 N_max={n_max_ours}, Bor et al. 2017 N_max={n_max_theirs}")
+          f"AUTHBC ns-3 N_max={n_max_ours}, Haxhibeqiri et al. 2017 N_max={n_max_theirs}")
     return rows
 
 # --------------------------------------------------------------------------- E5 (T5 co-design)
@@ -644,11 +645,20 @@ _RUNNERS: dict[str, _Runner] = {
 }
 
 
+def all_runners() -> dict[str, _Runner]:
+    """Every experiment, including the frame-level ones added in 2026-10.
+
+    Imported here, not at the top: `frame_experiments` builds on this module's helpers.
+    """
+    from authbc.bench import frame_experiments
+    return {**_RUNNERS, **frame_experiments.RUNNERS}
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description="run an AUTHBC experiment → results/raw/")
-    ap.add_argument("--exp", required=True, choices=sorted(_RUNNERS))
+    ap.add_argument("--exp", required=True, choices=sorted(all_runners()))
     args = ap.parse_args()
-    entry = _RUNNERS[args.exp]
+    entry = all_runners()[args.exp]
     cfg = load_config(entry.config or args.exp)
     rows = entry.fn(cfg)
     path = write_csv(entry.out, rows, cfg)

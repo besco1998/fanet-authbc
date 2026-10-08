@@ -23,7 +23,7 @@ from types import ModuleType
 
 import pytest
 
-from authbc.bench import framesizes, micro
+from authbc.bench import frame_experiments, framesizes, micro
 from authbc.bench.experiments import (
     load_config,
     run_capacity,
@@ -118,6 +118,11 @@ _CASES = {
     "factorial_ablation.csv": lambda: _factorial_ablation.build_rows(),
     "pqc_projection.csv": lambda: _pqc_projection.build_rows(),
     "sensitivity_p.csv": lambda: _sensitivity_p.build_rows(),
+    # Added 2026-10-06 with the frame-level experiments (docs/04 §2 E6–E13). Each is a pure
+    # function of committed code, its config and frozen measured inputs, so each is gated from the
+    # day it exists — the paper's revised tables are built from these eight files.
+    **{f"{runner.out}.csv": (lambda name=name, runner=runner: runner.fn(load_config(name)))
+       for name, runner in frame_experiments.RUNNERS.items()},
 }
 
 

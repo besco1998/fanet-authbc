@@ -104,6 +104,29 @@ wrong answer to "how many UAVs can hear each other". We are asking the second. S
 | **Frozen artifacts + staleness gate** | staleness cannot be committed unnoticed | every deliberate change costs a re-freeze | **DECLARED** |
 | **Contiguous batch grids** | no quantized optima | larger sweeps. *Sparse grids caused F3 **and** understated F5 as 2.75× when the true value is 3.03×* | **FORCED** by F3/F5 |
 
+## 6. The 2026-10-06 revision — the design as one frame
+
+*Numbers here are read from `results/raw/design_ladder.csv`, `e3_codec_loss.csv`,
+`exclusion_matrix.csv` and `stream_baselines.csv`; capacities are deliberately not repeated —
+quote them from the ladder, with their intervals.*
+
+| # | Decision | Bought | Gave up | Status |
+|---|---|---|---|---|
+| **A keyframe in every frame (r = 1)** | every frame decodes alone, so V = 1 − p as T3 assumed | **3.0 B/record** in the first format (71.99 → 74.96), 3.5 B/record against r = 16 in the lean one. The saving quoted since July (−58.68 %) becomes −56.98 % for the first format | **FORCED** at ε ≤ p (T3′, F46) |
+| **A second, lean frame format beside the frozen first** | the design exists as an object with a sender and a receiver; 43.25 B/record against 74.96 | two formats to explain; the first format's delta rows remain a byte model and say so (`sized_from`) | **DECLARED** (R2) |
+| **One chain link per frame in the lean format** | 32 B per record becomes 35 B per frame | inside a frame, continuity rests on the frame signature, not on an independent hash per record — on 802.11 as well as LoRa | ⚠️ **OPEN — Mohamed** (`OPEN_ITEMS` G5) |
+| **Batching four records** | fewer bytes and a quarter of the frames | a lost frame takes four records; a record waits up to 80 ms; and **a longer frame is lost more often at one bit error rate** — V = 0.943 where the one-record frame loses 5 % | **DECLARED** — the last cost was not stated before E10's `ber` rows |
+| **Capacity simulated per configuration** | a V ≥ 0.95 capacity with a bootstrap interval, instead of one load ceiling that was off by up to 23 % | hours of simulation per change; a rung that was not simulated has **no** such capacity | **MEASURED** (R7, F50) |
+| **The airtime line stated as a closed form** | a rule that predicted seven unseen configurations within 3.4 %, and says why a utilisation ceiling could not work | it is a fit: one loss level, one PHY rate, 5–50 frames/s, a simulator; its residuals are ordered by frame rate. It is never quoted as a capacity | **MEASURED** — held-out, pre-registered (F54) |
+| **Send time redrawn within every period** | a run samples the channel, not one frozen phase configuration; per-run sd 0.034 → 0.0016 | not the published scenario's default; a real autopilot's jitter is unmeasured (G7). Mean delivery differs by 0.003 between the sources, and the strictly periodic crossings are 1–9 % lower — within the tolerance registered, not zero, and not yet explained | **DECLARED** — by the rule registered before the runs (F51) |
+| **N_max on the mean, at the grid** | the estimator registered in advance, and the LoRa arm's | coarse where the grid is; a per-run reading is stricter | **DECLARED** |
+| **A graded exclusion verdict** | "excluded" means a content-independent floor exceeds the limit — arithmetic, not telemetry | the count *eight of twelve* joins five rates excluded by the signature alone with three excluded by header + link + signature + one record (124 B > 115 B); the second kind is conditional on carrying the link on air | **DECLARED** (R4, F47) |
+| **Certificates as a second column** | both accountings visible | explicit certificates only; not in any simulated frame | **DECLARED** (R13) |
+| **Stream-signing schemes modelled, not implemented** | five classical schemes in one table at this operating point | a saturation bound only, with our primitives in place of the papers' | **DECLARED** (R5) |
+| **No typed results** | prose cannot drift from the artifacts, and a sentence that states a verdict is checked against them | LaTeX source is harder to read | **DECLARED** |
+| **A shorter paper** | a results paper: the frame, the ladder, the exclusion | the LoRa capacity work and the audit history — the most distinctive material — are in the thesis and the methods paper, not the paper | **DECLARED** (R11, R12) |
+| **Real telemetry from public logs** | a check chosen by a rule fixed in advance | nothing below 0.2 s spacing; the mean flatters a fast swarm (fixed wings need up to 13.2 B per delta) | **MEASURED**, limited (F52) |
+
 ---
 
 ## The rows an examiner will press hardest
@@ -120,3 +143,12 @@ wrong answer to "how many UAVs can hear each other". We are asking the second. S
    prototype framing overhead, measured and stated. Absolute values are lower bounds.
 5. **A withdrawn theorem** (docs/02, ~~T7~~) — capacity was claimed to exclude at U ≥ 1; the
    validation experiment refuted it the same day. Kept visible, with the lesson recorded.
+6. **"Was this design ever built?"** (§6) — until October 2026, no: it was a sum of sizes, and as
+   published it missed its own verifiability target. Answer with the lean format, its receiver,
+   and E10, which measures V with the codec in the loop.
+7. **A batch is a longer frame** (§6) — at one bit error rate the design verifies 0.943 where a
+   one-record frame loses 5 %. Stated in the paper; the comparisons are at equal *frame* loss.
+8. **Contention is simulated, and the simulated source matters** (§6) — the capacities come from
+   ns-3, and strictly periodic senders freeze their phases in it. Answered by the registered
+   source study (the mean moves by 0.003, inside the tolerance set in advance) and by saying
+   plainly that no radio has measured it.

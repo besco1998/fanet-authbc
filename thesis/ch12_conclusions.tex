@@ -20,16 +20,23 @@ law that motivates aggressive compression is never operative: compression pays e
 On low-rate links the frame size binds and the leverage is real. \textbf{The regimes are different
 in kind.}
 
-\item Three of seven EU868 data rates admit no per-frame-verifiable telemetry at any encoding,
-batch, header or chain design, because a $64$\,B signature does not fit a $51$\,B payload. This is
-arithmetic and cannot move.
+\item A delta-coded frame that depends on its predecessor does not meet a verifiability target
+equal to the loss rate. Every frame of the design therefore carries a self-contained record, and
+the cost of that is small.
 
-\item Joined to a validated channel model, the co-designed configuration sustains
-$1.9$--$3.2\times$ the neighbourhood of an inline baseline, at $58.7\%$ fewer on-air bytes, at an
-operating point compliant with 3GPP TS~22.125.
+\item \exclCountCap{} of the twelve EU863-870 data rates cannot carry one signed, hash-chained
+frame: five because a $64$\,B signature does not fit a $51$\,B payload, three because header,
+chain link and signature fill a $115$\,B payload. The result holds under four stated conditions.
 
-\item Of the four design axes, only placement and batching genuinely interact. The four-axis
-co-design claim, as originally stated, was overstated.
+\item Built as one frame format and simulated directly, the design carries \bprLeanDesign\,B per
+record where per-record signing carries \bprLeanBase\,B (\saveLean\% fewer), and sustains
+\nmaxLeanDesign{} neighbours at 95\% delivery where per-record signing sustains \nmaxLeanBase, at
+an operating point compliant with 3GPP TS~22.125.
+
+\item Of the four design axes, placement and batching interact exactly, by $\ga(1-1/b)$, and in
+the frame as built delta coding is conditional on batching as well: both gains are zero at
+$b = 1$. The scheme axis is byte-neutral. The four-axis co-design claim, as originally stated,
+was overstated; what is true is that batching is the axis the other gains depend on.
 \end{enumerate}
 
 \section{Limitations, stated as such}
@@ -46,11 +53,13 @@ implementations.
 
 \subsection{Validation scope}
 
-Simulation validates \emph{throughput}. Latency, energy and loss behaviour are not validated by it,
-and ``simulation-validated'' must not be read as more. Hardware validates \emph{airtime} on a
-two-node link; contention remains simulation-only. The utilisation ceiling is measured at one node
-count. Composed energy is a lower bound by roughly $10$--$14\%$, and the residual is uncharged
-prototype framing overhead --- measured, stated, not corrected away.
+Hardware validates \emph{airtime} on a two-node link; contention is simulated only, and the
+capacities of \Cref{ch:codesign} rest on that simulation. Record sizes come from a synthetic
+generator, checked against twelve public flight logs at $0.2$\,s spacing and above and against
+nothing at the $50$\,Hz of the operating point. Only the sender's energy is metered, and only for
+the first format; composed energy is a lower bound by roughly $7$--$14\%$, the residual being
+uncharged prototype framing overhead --- measured, stated, not corrected away. Capacity was
+simulated at one PHY rate.
 
 \subsection{The low-rate arm}
 
@@ -60,28 +69,34 @@ confidence interval is a knife edge.
 
 \subsection{The boundary itself}
 
-Three of the four excluded data rates are arithmetic. The fourth was excluded by this design's own
-frame header, and this thesis says so and quantifies the recovery. A reader should treat the
-three-rate claim as durable and the fourth as an engineering statement about \emph{this} wire
-format.
+The exclusion is conditional: on LoRaWAN's regional payload limits, on a public-key signature in
+every frame, on no loss recovery, and on a verifiability target no looser than the loss rate. It
+was also stated wrongly twice before reaching its present form (\Cref{sec:excl-history}), and a
+reader is entitled to weigh that. What has not moved in any version is the part that rests on one
+inequality: $64 > 51$.
+
+\subsection{Security scope}
+
+Confidentiality, availability, key management and protection against an attacker who delays
+frames are outside the design (\Cref{sec:threat}). With one chain link per frame, continuity
+inside a frame rests on the frame signature alone.
 
 \section{Future work}
 
 \subsection{Immediately available, and cheap}
 
 \begin{description}
-\item[Invariance of the utilisation ceiling in $N$.] Frame-size invariance was measured; node-count
-invariance was not. One additional sweep closes it, and the scenario already exists.
-
 \item[Pricing implicit certificates.] The certificate accounting charges an explicit certificate
 periodically. Implicit (ECQV) certificates are the standard smaller alternative and were never
 modelled. The current charge is an upper bound, which cuts against this work's own comparison ---
 so the gap is safe but should be closed.
 
-\item[An integer-keyed wire profile, adopted rather than measured.] \Cref{ch:lowrate} measures it
-and declines to adopt it, because the format is frozen for reproducibility. A successor should
-adopt it, re-freeze, and report the boundary that results --- which will be a \emph{smaller}
-exclusion and a better-engineered system.
+\item[Timing the lean codec on the target board.] Its sizes are measured; its encode and decode
+times on the Raspberry~Pi are not, so the energy table covers the first format only.
+
+\item[Telemetry at the operating rate.] Public flight logs carry position at 5\,Hz. A log
+recorded at 50\,Hz would settle the one size --- the delta record at 20\,ms spacing --- that
+currently rests on the generator alone.
 \end{description}
 
 \subsection{Substantial, and worth doing}
@@ -97,9 +112,11 @@ forfeiting the quasi-orthogonality that supplies much of a real deployment's cap
 a different question --- deployment capacity rather than per-configuration feasibility --- and it
 is the question an operator would ask next.
 
-\item[Contention on real hardware.] Two radios validate airtime; the contention model, which
-carries the capacity envelope, remains simulation-only. A rig with enough nodes to reach the
-interesting region of the curve is the single most valuable missing measurement in this thesis.
+\item[Contention on real hardware.] Two radios validate airtime; the capacities are simulated.
+Three or four radios in one collision domain would not reach the crossing, but would test the
+one thing the simulation's capacities depend on that no measurement here touches: loss under
+contention at a known offered load. It is the single most valuable missing measurement in this
+thesis.
 
 \item[A post-quantum arm that is implemented rather than projected.] The projections show that
 batching cannot rescue post-quantum signature sizes, because freshness caps the batch and one
@@ -118,10 +135,11 @@ generalisation, and it is the one this author would pursue.
 
 This thesis introduces no new cryptographic primitive and makes no claim to one. Its contribution
 is a reproducible co-design of existing, standardised components; the quantified trade-offs that
-co-design entails; the boundary beyond which no choice of those components helps at all; and an
+co-design entails; the boundary beyond which no batch size helps, with its conditions; and an
 account --- unusually explicit for a thesis --- of the errors made in establishing that boundary and
 the classes of defect that survived the safeguards intended to prevent them.
 
-The most durable result here is also the smallest one that survived scrutiny: on the longest-range
-EU868 data rates, a $64$-byte signature does not fit a $51$-byte payload, and nothing in the design
-space changes that.
+The most durable result here is also the smallest one that survived scrutiny: on five EU863-870
+data rates, a $64$-byte signature does not fit a $51$-byte payload, and no batch size, encoding
+or placement changes that. A shorter authenticator does, and \Cref{ch:lowrate} says what it
+buys.

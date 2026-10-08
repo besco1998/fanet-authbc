@@ -12,7 +12,8 @@ BIN    := $(VENV)/bin
 .DEFAULT_GOAL := help
 .PHONY: help setup lint test verify-frozen all hw-capture hw-reduce \
         bench-micro bench-macro exp-e1 exp-e2 exp-e3 exp-e4 exp-e5 exp-capacity exp-operating-region exp-lora exp-lora-external exp-lora-codesign \
-        sim-ns3 sim-ns3-matrix sim-ns3-dcf sim-ns3-delay sim-lora-capacity sim-ns3-sensitivity export-framesizes figures thesis
+        sim-ns3 sim-ns3-matrix sim-ns3-dcf sim-ns3-delay sim-lora-capacity sim-ns3-sensitivity export-framesizes figures thesis \
+        paper paper-methods verify-citations px4-logs exp-frames sim-ns3-nmax
 
 help:  ## list the supported targets
 	@echo "fanet-authbc — supported targets:"
@@ -75,7 +76,7 @@ exp-operating-region:  ## [B3] (Lambda x D_max) operating region -> results/raw/
 	$(BIN)/python -m authbc.bench.experiments --exp operating-region
 exp-lora:  ## LoRa arm feasibility + duty budget (docs/02 §9) -> results/raw/lora_eu868.csv
 	$(BIN)/python -m authbc.bench.experiments --exp lora
-exp-lora-external:  ## LoRa capacity vs the published Bor et al. 2017 model (A7/F20)
+exp-lora-external:  ## LoRa capacity vs the published Haxhibeqiri et al. 2017 model (A7/F20)
 	$(BIN)/python -m authbc.bench.experiments --exp lora-external
 
 exp-lora-codesign:  ## LoRa arm as a joint optimization -> results/raw/lora_codesign.csv
@@ -88,7 +89,32 @@ sim-lora-phase-artifact:  ## [S8/DirC] regenerate the frozen-phase artifact swee
 	$(BIN)/python ns3/run_lora_phase_artifact.py --preset aloha
 	$(BIN)/python ns3/run_lora_phase_artifact.py --preset eu
 paper-methods:  ## build the methodological companion paper -> paper/methods.pdf
-	cd paper && pdflatex -interaction=nonstopmode methods.tex >/dev/null && pdflatex -interaction=nonstopmode methods.tex >/dev/null && echo 'methods.pdf built'
+	cd paper && pdflatex -interaction=nonstopmode methods.tex >/dev/null \
+	  && bibtex methods >/dev/null \
+	  && pdflatex -interaction=nonstopmode methods.tex >/dev/null \
+	  && pdflatex -interaction=nonstopmode methods.tex >/dev/null && echo 'methods.pdf built'
+paper:  ## build the paper -> paper/main.pdf (numbers.tex and its figures are generated first)
+	$(BIN)/python analysis/paper_numbers.py
+	$(BIN)/python analysis/figures_envelope_lora.py >/dev/null
+	$(BIN)/python analysis/figures_nmax.py >/dev/null
+	$(BIN)/python analysis/figures_frames.py >/dev/null
+	cd paper && pdflatex -interaction=nonstopmode main.tex >/dev/null \
+	  && bibtex main >/dev/null \
+	  && pdflatex -interaction=nonstopmode main.tex >/dev/null \
+	  && pdflatex -interaction=nonstopmode main.tex >/dev/null
+	@grep -a 'Output written' paper/main.log
+	@! grep -a -E "(Citation|Reference) .* undefined" paper/main.log || { echo 'ERROR: undefined citations or references'; exit 1; }
+	@! grep -a "Undefined control sequence" paper/main.log || { echo 'ERROR: a macro the paper uses is not in numbers.tex'; exit 1; }
+exp-frames:  ## [E9-E17] the frame-level experiments -> results/raw/{frame_components,e3_codec_loss,design_ladder,exclusion_matrix,freshness_budget,lora_budget,phy_sweep,energy_table,stream_baselines}.csv
+	for e in frame-components e3-codec design-ladder exclusion-matrix freshness-budget lora-budget phy-sweep energy-table stream-baselines; do \
+	  $(BIN)/python -m authbc.bench.experiments --exp $$e || exit 1; done
+sim-ns3-nmax:  ## [R7] direct N_max search with a bootstrap interval -> results/raw/ns3_nmax_direct.csv
+	$(BIN)/python ns3/run_nmax_direct.py --verify
+	$(BIN)/python ns3/run_nmax_direct.py --plan experiments/nmax-direct/plan.txt
+verify-citations:  ## [F49] compare every bib entry with its registry record (needs network)
+	$(BIN)/python analysis/verify_citations.py
+px4-logs:  ## [R8] record sizes on the pinned public PX4 flight logs (needs network + pyulog) -> results/raw/px4_log_sizes.csv
+	$(BIN)/python analysis/px4_log_sizes.py
 survey-direction-c:  ## [DirC] replication-reporting sweep -> results/raw/direction_c_survey.csv
 	$(BIN)/python analysis/direction_c_survey.py
 exp-pqc:  ## [Tier2-6] PQ signature sizes through our byte model -> results/raw/pqc_projection.csv
@@ -118,8 +144,12 @@ hw-reduce:  ## P7b (this host): reduce MANIFEST=… SAMPLES=… -> energy/op + C
 	$(BIN)/python hw/ina219_capture.py --reduce "$(MANIFEST)" "$(SAMPLES)"
 
 thesis:  ## build thesis/main.pdf  (see thesis/STATUS.md — this is a DRAFT skeleton)
+	$(BIN)/python analysis/paper_numbers.py
 	@cp -f results/figures/*.png thesis/ 2>/dev/null || true
 	@cp -f paper/refs.bib thesis/refs.bib
+	@cp -f paper/numbers.tex thesis/numbers.tex
+	@sed -e 's/\\begin{figure}\[t\]/\\begin{figure}[h]/' -e 's/\\label{fig:system}/\\label{fig:frame}/' \
+	  paper/fig_system.tex > thesis/fig_frame.tex
 	cd thesis && pdflatex -interaction=nonstopmode main.tex >/dev/null \
 	  && bibtex main >/dev/null \
 	  && pdflatex -interaction=nonstopmode main.tex >/dev/null \
@@ -133,3 +163,5 @@ figures:  ## regenerate ALL figures from frozen results/raw -> results/figures/
 	$(BIN)/python analysis/figures_e5.py
 	$(BIN)/python analysis/figures_envelope_lora.py
 	$(BIN)/python analysis/figures_ns3.py
+	$(BIN)/python analysis/figures_nmax.py
+	$(BIN)/python analysis/figures_frames.py

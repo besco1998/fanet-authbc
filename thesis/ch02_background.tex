@@ -1,23 +1,27 @@
 \chapter{Background and Related Work}\label{ch:background}
 
 \needswork{STATUS: OUTLINED, PARTLY DRAFTED. The positioning below is adapted from the paper's
-Related Work, where every reference was verified against the Crossref record for its DOI. A thesis
-requires materially broader coverage than a 15-page paper: each section below names the reading
-that must still be done. Do not submit this chapter as it stands. See \texttt{thesis/STATUS.md}.}
+related work. A thesis requires materially broader coverage than a paper: each section below
+names the reading that must still be done. Do not submit this chapter as it stands. See
+\texttt{thesis/STATUS.md}.}
 
-\section{Citation integrity in this thesis}
+\section{How citations are checked in this thesis}
 
-One methodological commitment applies to the whole chapter and is stated before any claim is made.
-Every reference was confirmed against the Crossref record for its DOI rather than from a search
-summary, and no figure or number is quoted from a source that has not been read in full. Where a
-source establishes prior art for something this thesis might otherwise have claimed as novel, that
-is said explicitly.
+No figure or number is quoted from a source that has not been read in full, and where a source
+establishes prior art for something this thesis might otherwise have claimed as novel, that is
+said explicitly. Every bibliography entry is compared by a script with its Crossref, DataCite or
+arXiv record --- family names in order, initials, title and year --- and an entry with no
+registry record must name the held document it was checked against.
 
-That rule exists because it was broken once. An early finding claimed this work was the
-\emph{more optimistic} of two LoRa capacity models; the claim was drawn from a figure in a paper
-that reported pure-ALOHA results alongside LoRa results, and the wrong figure was read. The finding
-was retracted and the lesson recorded as a rule: \textbf{quoting the paper is not enough --- quote
-the figure}. \Cref{ch:reproducibility} returns to this.
+Those rules exist because each was broken once. An early finding claimed this work was the
+\emph{more optimistic} of two LoRa capacity models; it was drawn from the wrong figure of a paper
+that reported pure-ALOHA results beside LoRa results, and was retracted: \textbf{quoting the
+paper is not enough --- quote the figure}. And until October 2026 this section said that every
+reference had been confirmed against its Crossref record, while four entries carried wrong
+metadata and one paper was cited under the authors of a different one. The confirmation had
+checked that each DOI resolved; it had not compared the author list. \textbf{A claim that
+citations were checked belongs in a check that runs}, which is why the sentence is gone and the
+script exists (\Cref{ch:reproducibility}).
 
 \section{Flying ad-hoc networks and UAV telemetry}
 
@@ -29,8 +33,10 @@ anchor for direct UAV-to-UAV broadcast. Sources are held; the synthesis is not w
 
 \section{Tamper-evident telemetry and hash-chained ledgers}
 
-Nakamoto's hash chain~\cite{nakamoto2008} makes an append-only log tamper-evident: altering a
-record invalidates every subsequent link. UAV-blockchain systems, surveyed
+Linking each record to the hash of its predecessor makes an append-only log tamper-evident:
+altering a record invalidates every subsequent link. The construction is Haber and
+Stornetta's~\cite{haber1991timestamp}; Bitcoin made it the spine of a
+blockchain~\cite{nakamoto2008}. UAV-blockchain systems, surveyed
 in~\cite{mehta2020blockchainuav}, place telemetry or attestations on such a chain, gaining
 integrity at a per-record overhead cost. This thesis targets exactly that substrate cost and is
 agnostic to the consensus layer above it; finality and witnessing semantics are out of scope.
@@ -60,22 +66,76 @@ integrity and group authenticity but \emph{not} non-repudiation, and therefore c
 ledger attributable to a specific UAV. That is a different trust model, not a cheaper solution to
 this one.
 
+\section{Authenticating messages one at a time, and signing streams}
+
+\subsection{Per-message practice}
+
+MAVLink~2 signing appends a link identifier, a 48-bit timestamp and a 48-bit truncated SHA-256
+tag computed with a shared secret~\cite{mavlink2signing}: thirteen bytes per message. It is cheap
+and it authenticates a \emph{link} --- any holder of the key can produce any message --- so a
+record cannot be attributed to one vehicle afterwards. Vehicular broadcast uses public-key
+signatures: an ECDSA signature on each message, with the signer's certificate in some messages
+and an eight-octet digest of it in the others~\cite{etsi_ts103097,ndss2024pqv2v}. That is the
+trust model adopted here, and the per-message cost this thesis starts from.
+
+\subsection{Amortising one signature over many packets}
+
+This is a classical problem and the closest prior art to batching. Gennaro and Rohatgi sign the
+first packet of a stream and chain the rest by hashes~\cite{gennaro1997streams}; one lost packet
+breaks the chain. Wong and Lam sign a hash tree over a block and send in every packet the hashes
+needed to reach the root~\cite{wong1999flows}, so each packet verifies alone --- the \emph{signing
+cost} is amortised, the bytes are not. EMSS tolerates loss by carrying several hashes per packet
+with a periodic signature packet, and TESLA replaces the signature by a MAC whose key is disclosed
+later~\cite{perrig2000emss,perrig2002tesla}; TBRD applies TESLA to UAS Remote ID and reports
+about half the overhead of signatures~\cite{veara2025tbrd}.
+
+All of these spread \emph{one authenticator across packets}, and so make packets depend on each
+other or on a later one. This thesis does the opposite: it puts \emph{several records in one
+packet}, which is possible only because a telemetry record is a small fraction of a frame. Each
+frame then stays self-verifying and the cost moves to latency, at the sender. TESLA instead delays
+verification at the receiver, and a disclosed MAC key gives no non-repudiation, which a ledger
+needs. The lesson of the stream-signing literature that does transfer is the one this thesis
+learned late: a unit that depends on its predecessor inherits its predecessor's loss
+(\Cref{thm:t3prime}). \Cref{sec:stream} places each of these schemes at this thesis's operating
+point, by authenticator bytes and by frames per second.
+
+\subsection{Hash-linked records}
+
+Linking each record to the hash of its predecessor to make a sequence tamper-evident is due to
+Haber and Stornetta~\cite{haber1991timestamp} and is the chain in every blockchain. The LoRaWAN
+link layer whose payload limits bound \Cref{ch:lowrate} is specified
+in~\cite{lorawan_ts001,lora_rp002}.
+
+\needswork{TO EXPAND: implicit (ECQV) certificates from IEEE 1609.2, never priced here; and the
+simulation-credibility lineage~\cite{cavalcanti2018vanet}, which
+\Cref{ch:reproducibility} should be read against.}
+
 \section{Batch and aggregate verification}
 
 Zhang \emph{et al.}~\cite{zhang2008batch} let a roadside unit verify multiple received signatures
 simultaneously, motivated by the same pressure from the opposite side: a hard deadline --- DSRC's
 $300$\,ms --- within which sequential verification does not scale. Their batching is
 \emph{receiver-side} and buys verification time; the batching in this thesis is \emph{sender-side}
-and buys airtime. The two are complementary rather than competing. This work generalises from
+and buys airtime. The two are complementary rather than competing. The nearest FANET work is
+of the same kind: Rajasekaran \emph{et al.}~\cite{rajasekaran2022batchfanet} authenticate a
+group of drones to a user in one batch check of a pairing-based scheme, and report the communication cost of
+$n$ authentications as $n$ times that of one ($1184\,n$ bits) --- the verifier's work is
+shared, the bytes are not. This work generalises from
 receiver batching to authentication \emph{placement}, co-designs it with encoding and scheme, and
 adds a loss-robustness frontier that pure aggregation does not address.
 
-\needswork{TO WRITE: certificateless aggregate signature (CLAS) schemes as the closest external
-comparator. The finding to develop is the \emph{axis}, not a ratio: published CLAS overheads are
-linear in message count (583--859\,B/record) because aggregation compresses the verifier's work,
-not the wire. Do not claim to beat CLAS --- those schemes buy conditional privacy this work does
-not offer, and their group element is $128$\,B against our $64$\,B. Also outstanding: implicit
-(ECQV) certificates from IEEE 1609.2, which were never priced here.}
+Certificateless aggregate signature (CLAS) schemes for vehicular broadcast are the closest
+external comparator. Li \emph{et al.}~\cite{li2025clas} tabulate the per-message size of their
+own scheme and four others, for a $67$\,B traffic message: $583$\,B (theirs, and Cahyadi
+\emph{et al.}), $596$\,B (Xu \emph{et al.}), $735$\,B (Liang \emph{et al.}) and $859$\,B (Wang
+\emph{et al.}) --- the last four as reported there, not read at source. In every one the cost of
+$n$ messages is $n$ times the cost of one. \textbf{The finding is the axis, not a ratio}:
+aggregation compresses the verifier's work, while each message still carries its own identity,
+key and signature components; batching compresses what is sent. No claim is made to beat those
+schemes. They provide conditional privacy, which this work does not, their group elements are
+$128$\,B against a $64$\,B signature here, and their figures are for a different message.
+
+\needswork{TO WRITE: a fuller treatment of CLAS constructions and their security models.}
 
 \section{Compact serialisation and delta coding}
 
@@ -99,7 +159,7 @@ residual small-frame bias observed in \Cref{ch:validation}.
 
 \section{LoRa and LoRaWAN capacity}
 
-Bor \emph{et al.}~\cite{bor2017lora} provide the only published LoRa capacity model found that is
+Haxhibeqiri \emph{et al.}~\cite{haxhibeqiri2017lora} provide the only published LoRa capacity model found that is
 grounded in hardware interference measurements rather than an analytical collision assumption, and
 state it in closed form so it can be evaluated at this work's operating point rather than merely
 quoted at theirs. Zirak \emph{et al.}~\cite{zirak2021swarm} supply the only air-to-air LoRa PDR-versus-range
@@ -113,13 +173,14 @@ channels buys no extra airtime. This is developed in \Cref{ch:lowrate} but belon
 
 The adjacent literature almost uniformly proposes a \emph{new construction} and evaluates it
 against its predecessors. This thesis deliberately proposes none. Its contribution is a boundary:
-the set of configurations in which no choice of existing, standardised cryptography is feasible at
-all. That result is arithmetic rather than empirical for the part that matters most, so unlike a
-performance figure it does not move as models, hardware or schemes improve --- and it is invisible
-to the byte models the literature optimises against.
+the links on which a frame that verifies alone cannot be sent at any batch size, stated with the
+conditions under which that holds. For a given authenticator the result is arithmetic rather
+than empirical, so unlike a performance figure it does not move as models or hardware improve. It
+does move with the authenticator --- a $48$\,B signature or a $13$\,B tag fits where a $64$\,B
+signature does not --- and \Cref{ch:lowrate} gives the matrix. It is invisible to the byte
+models the literature optimises against.
 
-\needswork{HONESTY REQUIREMENT for this section. The reference count currently stands at 46,
-short of the 45--60 a thesis of this scope would normally carry, and it stops there deliberately:
-46 is every source held and \emph{read}. Reaching a higher count requires a genuine sourcing pass
---- find, download, read, then cite. Padding the list would be the same defect this project spent
-its audit removing.}
+\needswork{The bibliography holds every source that is held and has been \emph{read}, and stops
+there deliberately. A thesis of this scope would normally carry more; reaching a higher count
+requires a genuine sourcing pass --- find, download, read, then cite. Padding the list would be
+the same defect this project spent its audit removing.}
