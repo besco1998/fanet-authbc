@@ -1,16 +1,21 @@
 # Thesis status — what is written, what was checked, what is still missing
 
 *Created 2026-08-30; rewritten 2026-10-08 after the whole built PDF was audited, and updated
-2026-10-09 (findings F63–F71 in `docs/audits/model_provenance.md`). `main.pdf` builds to 119
-pages with no errors, no undefined references and no layout warnings. **Read this before showing the PDF to anyone.***
+twice on 2026-10-09 (findings F63–F77 in `docs/audits/model_provenance.md`). `main.pdf` builds
+to 123 pages with no errors, no undefined references and no layout warnings. **Read this before showing the PDF to anyone.***
 
 ## In one paragraph
 
 Every chapter is written and was read end to end in the built PDF on 2026-10-08. The red
 "STATUS" boxes are gone because what they listed is done. **Three red markers remain, and all
 three are yours:** the declaration, the statement on generative AI, and the acknowledgements —
-with the degree and the department on the title page. What else is open needs a browser (four
-papers the publishers will not serve to a script) or the boards switched on.
+with the degree and the department on the title page.
+
+⚠️ **Chapter 9's hardware section was rewritten on the night of 2026-10-09 and has not been read
+by you.** It now reports contention measured between two radios — one registered prediction
+that held, one that failed at one load of three, a follow-up in which all four failed —
+and withdraws a figure ("airtime within 0.36 %") that earlier versions and the paper carried.
+Read the section *Hardware* of chapter 9 before the supervisor does.
 
 ## Per chapter
 
@@ -18,29 +23,36 @@ papers the publishers will not serve to a script) or the boards switched on.
 |---|---|---|---|
 | — | front matter | written | ⚠️ **degree, department, declaration, AI statement, acknowledgements — only Mohamed** |
 | 1 | Introduction | audited | — |
-| 2 | Background and Related Work | audited; a general survey and the Remote ID standard added; one aggregate-signature scheme read at source, which corrected a claim (F68) | three older analyses of non-saturated broadcast and three of the four aggregate-signature schemes are not obtained (`OPEN_ITEMS` G23, G24) |
+| 2 | Background and Related Work | audited; a general survey and the Remote ID standard added; all four aggregate-signature schemes and the 2009 analysis of non-saturated broadcast obtained and read (F68, F72) | two older analyses of non-saturated broadcast are closed access and not held (`OPEN_ITEMS` G23) |
 | 3 | System Model and Threat Model | audited | — |
 | 4 | Theoretical Framework | audited; two figures and one theorem statement corrected (F64); worked examples for T2 and T4 | — |
 | 5 | Implementation | **expanded**: package figure, one frame byte by byte, receiver outcomes, test layers | — |
 | 6 | Experimental Methodology | **expanded**: generator, how a capacity is read, timings, energy rig, uncertainty | the energy sensor's calibration (G22) — a bench step |
 | 7 | Results I | audited | — |
-| 8 | Results II | audited; RQ3 now has its numbers; prior work for the derivation credited (F65) | lean codec timing and receiver CPU on the board (bench session) |
-| 9 | Model validation and hardware | audited; the contention experiment is registered with its predictions | **running it** (G4): the boards must be on and reachable |
+| 8 | Results II | audited; RQ3 now has its numbers; prior work for the derivation credited (F65); **the lean codec timed on the board and Ed25519 batch verification measured (F77)** — the prototype's receiver serves 57 nodes per core | the lean sender's energy is not metered (G9, G26) |
+| 9 | Model validation and hardware | **hardware section rewritten 2026-10-09**: link loss; a withdrawn airtime figure (F74); one radio's frame spacing; two radios at a set load (F73, F75); two saturated radios (F76) | three to five radios (G4); the cause of the shortfall below saturation (G27) |
 | 10 | Low-rate regime | audited; **mobility subsection added** | — |
-| 11 | Reproducibility | **expanded**: how citations are checked, where the chapter sits | Kurkowski et al. 2005 is not held and is not cited |
+| 11 | Reproducibility | **expanded**: how citations are checked, where the chapter sits; Kurkowski et al. 2005 now held and cited directly | — |
 | 12 | Conclusions | audited; **research questions answered one by one**; four stale items corrected | — |
 | A | Reproducing the results | new | — |
-| B | Predictions registered before their data | fourteen, by commit; one not yet run | ⚠️ **merge pull requests with a merge commit** — squashing would erase the commits this table cites |
+| B | Predictions registered before their data | sixteen, by commit; six failed in whole or in part; one run with two boards of the five it covers | ⚠️ **merge pull requests with a merge commit** — squashing would erase the commits this table cites |
 | C | Results that were corrected | new 2026-10-09: the three superseded figures and the old envelope table, moved out of the results chapters | — |
 
 ## What a supervisor may still say, and why it is not fixed
 
-* **"The contention result is simulated."** True, and stated first among the limitations. It
-  needs radios (G4).
-* **"Fifty-four references is few."** Every one was read at source. Raising the number means
-  reading more, not listing more (G23, G24).
-* **"Has the capacity mechanism been seen on a radio?"** Not yet. The experiment that would
-  show it is registered and ready (ch. 9, Appendix B); it needs the boards.
+* **"The capacities are simulated."** True, and stated first among the limitations. No capacity
+  was measured: two radios cannot reach one.
+* **"Has the capacity mechanism been seen on a radio?"** Between two saturated radios, yes,
+  within 6 % of the standard's rule, from a prediction registered first. Below saturation the
+  registered prediction failed at the highest load, and the thesis says so and says what is
+  not explained (ch. 9).
+* **"Your own hardware check of August was wrong."** Yes. It is withdrawn in a remark in ch. 9
+  that says how two errors cancelled; `results/hw/channel/RESULTS.md` keeps the old text under
+  a correction.
+* **"Your prototype cannot keep up with 124 nodes on one core."** True: 57. Ch. 8 gives the
+  number and says the ceilings are for a compiled receiver.
+* **"Sixty-one references is few."** Every one was read at source. Raising the number means
+  reading more, not listing more (G23).
 * **"Chapter 11 is unusual."** It is deliberate. It now says where it sits in the literature.
 
 ## Rules that keep it true

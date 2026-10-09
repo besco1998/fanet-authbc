@@ -151,4 +151,24 @@ quote them from the ladder, with their intervals.*
 8. **Contention is simulated, and the simulated source matters** (§6) — the capacities come from
    ns-3, and strictly periodic senders freeze their phases in it. Answered by the registered
    source study (the mean moves by 0.003, inside the tolerance set in advance) and by saying
-   plainly that no radio has measured it.
+   plainly that no radio has measured a capacity. ⚠️ Since 2026-10-09 two radios *have* been
+   measured (item 9).
+9. **Two radios, and which of their numbers to quote** (F73–F76, 2026-10-09). Three choices
+   were made and each costs something.
+   * *Quote the pooled 36 windows (1.13 / 0.79 / 0.56 of the model), not the registered session
+     alone (1.00 / 0.80 / 0.46).* The registered session is the one that was predicted, and its
+     verdict — held, held, failed — is reported as registered. But its top-load figure is the
+     lowest of three sessions that should be the same, and quoting it alone overstates the miss.
+     Cost: the pooled figure mixes frame burst on and off, on the evidence that it makes no
+     difference there — which is an absence of evidence at this sample size, not a proof.
+   * *Lead with the saturated result (12.4 % against 11.8 %).* It is the one place where the
+     contention is isolated and the one prediction that held cleanly. Cost: it is the regime
+     furthest from the operating point, and a reader may take "the rule holds" for more than
+     two saturated stations show. The paper says "no capacity was measured" in the same
+     paragraph for that reason.
+   * *Say the cause of the shortfall has not been shown.* The radio's handling of its own
+     queued frames is measurably non-standard and is the candidate the saturated test leaves
+     standing. Naming it as the cause would read better and is not established.
+10. **The prototype's receiver does not keep up with 124 nodes on one core** (F77) — 57. The
+    capacity is the channel's; the ceiling in the table is cryptography's. Answered by giving
+    the number beside the ceiling, not by quoting only the ceiling.

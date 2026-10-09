@@ -66,36 +66,182 @@ only if utilisation is monotone. It is --- because the explicit factor $N$ in th
 the recovery --- but \textbf{that is an arithmetic accident, not a structural guarantee}, and it is
 now verified exhaustively rather than assumed.
 
-\section{Hardware}
+\section{Hardware}\label{sec:hardware}
 
-Two Raspberry Pi 4 units in ad-hoc mode at $5$\,GHz measured broadcast link loss at
-$p = \hwLoss$ (\hwLossFrames{} frames lost of \hwSentFrames) and airtime at \hwAirtime\,ms per
-frame against \hwAirtimeModel\,ms predicted, a gap of \hwAirtimeGap\% --- an independent check on
-the timing constants underlying every airtime figure in this thesis.
+Two Raspberry Pi 4 boards in ad hoc mode on a $5$\,GHz channel, broadcasting $1400$\,B frames at
+$6$\,Mb/s. Four things were measured on them: the loss of the link, how one radio spaces its
+own frames, the loss when both send at a set load, and the loss when both always have a frame
+to send. The second and the fourth were not planned. They are what the third made necessary.
 
-\begin{remark}[Two warnings, both earned]
-This validates \emph{airtime}, not contention: one transmitter means zero contention, so the
-broadcast contention model remains simulation-only.
+\subsection{The link}
 
-And an initial $2.4$\,GHz sweep produced a tidy $97.45\%$ delivery figure that was \textbf{saturation
+With one transmitter at $100$ frames/s, \hwLossFrames{} frames of \hwSentFrames{} were lost in
+August 2026 ($p = \hwLoss$), and none of \hwSentFrames{} when the same session was repeated in
+October. This is the loss of a link with no contention.
+
+\begin{remark}[A figure withdrawn]
+Earlier versions of this chapter and of the paper reported ``airtime $1.995$\,ms per frame
+against $1.988$\,ms predicted, a gap of $0.36\%$'', and called it an independent check on the
+timing constants. Both figures were wrong, in opposite senses. The measured one was the rate at
+which the sender's operating system accepted frames, which counts those still queued when the
+sender stops; on air the frames were \hwCycleOn\,ms apart. The predicted one left out the
+$64$\,B of headers every frame carries and assumed the standard's backoff; the standard's
+figure is \hwCycleStd\,ms. An agreement of $0.36\%$ did not invite a second look, and for two
+months it did not get one.
+\end{remark}
+
+\begin{remark}[A warning earned earlier]
+An initial $2.4$\,GHz sweep produced a tidy $97.45\%$ delivery figure that was \textbf{saturation
 at the 802.11b $1$\,Mb/s broadcast basic rate}, not channel loss. It was caught by a pre-stated
 prediction plus a load sweep, and is kept in the record labelled as what it was. Repeatability did
 not protect against it --- the standard deviation across windows was small. \emph{A precisely
 reproducible measurement of the wrong thing looks exactly like a good measurement.}
 \end{remark}
 
-\paragraph{The contention experiment, registered and not yet run.} What two or three boards
-\emph{can} test is the mechanism the capacities are made of: the loss among stations that all
-send, at a known offered load. The experiment is prepared --- every board sends one frame per
-period at a redrawn instant and counts what it receives from each of the others --- and the
-model of \Cref{sec:why} has been asked for its predictions in advance: with two boards filling
-half, seven tenths and $85\%$ of the medium, losses of $0.29$, $0.64$ and $1.40\%$; with three,
-$0.66$, $1.52$ and $3.00\%$ (\Cref{app:prereg}). The two-board case is the sharp one, since
-the only receiver of a frame is the other transmitter and no third radio can capture one of
-two colliding frames. ns-3 was run at the same points first: it agrees with the model within
-$5\%$ at three to five nodes and is $9$--$18\%$ below it at two, a small bias of the model at
-the smallest network that nothing so small had exposed. Until the boards are run, every
-capacity in this thesis remains a simulated one.
+\subsection{How one radio spaces its own frames}\label{sec:spacing}
+
+A saturated station that keeps to the standard sends a frame, waits DIFS, counts a number of
+slots drawn from $0$ to $15$, and sends the next: for this frame \hwCycleStd\,ms from one frame
+to the next, of which \hwGapStd\,\si{\micro\second} is the gap. A receiver can measure that time
+without any help from the sender: the sequence numbers it spans, over the time from the first
+frame it hears to the last (\Cref{tab:spacing}).
+
+\begin{table}[ht]
+\centering
+\caption{Time from one frame of a saturated sender to its next, read at the receiver. The frame
+itself is $1976$\,\si{\micro\second} on air.}\label{tab:spacing}
+\begin{tabular}{lrr}
+\toprule
+ & per frame (ms) & gap (\si{\micro\second}) \\
+\midrule
+the standard's rule                                   & \hwCycleStd & \hwGapStd \\
+this radio, the driver's settings (August and October) & \hwCycleOn  & \hwGapOn \\
+this radio, the vendor's frame-burst mode off          & \hwCycleOff & \hwGapOff \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{The radio does not keep the standard's rule between its own consecutive frames.} The
+Linux driver switches the chip's \emph{frame-burst} mode on whenever it configures
+it~\cite{linuxframeburst}; with that mode off the spacing moves toward the standard's and stops
+short of it. This is not peculiar to one chip: Bianchi \emph{et al.} measured the same quantity
+on six commercial cards, with an instrument built for the purpose, and found that none of them
+kept to the standard~\cite{bianchi2007cards}. The firmware is closed. What it does is inferred
+here from a mean spacing; no single frame was timed.
+
+\subsection{Two radios at a set load: the registered experiment}\label{sec:contention-hw}
+
+What two boards can test is the mechanism the capacities are made of: the loss among stations
+that all send, at a known offered load. Every board sends one frame per period at a redrawn
+instant and counts what it receives from the other. The model of \Cref{sec:why} was asked for
+its predictions in advance: with two boards filling half, seven tenths and $85\%$ of the medium,
+losses of $0.29$, $0.64$ and $1.40\%$; with three, $0.66$, $1.52$ and $3.00\%$
+(\Cref{app:prereg}). The band registered for two boards was $0.6$ to $1.4$ times the model's
+loss. The two-board case is sharp in one respect: the only receiver of a frame is the other
+transmitter, so no third radio can capture one of two colliding frames. ns-3 was run at the
+same points first: it agrees with the model within $5\%$ at three to five nodes and is
+$9$--$18\%$ below it at two, a small bias of the model at the smallest network that nothing so
+small had exposed.
+
+The session was run with two boards on the day it was registered: twelve windows, all of them
+usable. \textbf{The prediction held at the first two loads and failed at the third}, where the
+radios lost \hwContHighRatio{} of what the model predicts (\Cref{tab:contention-hw}). Loss rises
+with load, as predicted, and the two directions lose nearly the same number of frames in every
+window, which is what collisions between two half-duplex radios do and what a lossy link does
+not.
+
+\begin{table}[ht]
+\centering
+\caption{Frames lost between two radios, in percent. Three sessions of twelve windows on one
+night; the last column is all \hwPoolWindows{} windows over the model's prediction.}
+\label{tab:contention-hw}
+\begin{adjustbox}{max width=\linewidth}
+\begin{tabular}{rrrrrrrr}
+\toprule
+medium & predicted & registered band & registered & frame burst & repeat & all & over the \\
+filled &           &                 & session    & off         &        & windows & model \\
+\midrule
+$0.50$ & $0.29$ & $0.19$--$0.40$ & \hwContLow  & \hwOffLow  & \hwRepLow  & \hwPoolLow  & \hwPoolLowRatio \\
+$0.70$ & $0.64$ & $0.39$--$0.89$ & \hwContMid  & \hwOffMid  & \hwRepMid  & \hwPoolMid  & \hwPoolMidRatio \\
+$0.85$ & $1.40$ & $0.85$--$1.95$ & \textbf{\hwContHigh} & \textbf{\hwOffHigh} & \hwRepHigh & \hwPoolHigh & \textbf{\hwPoolHighRatio} \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table}
+
+\paragraph{A follow-up in which all four predictions failed.} The spacing of
+\Cref{sec:spacing} suggested a cause: a radio that sends its queued frames one behind another,
+without contending again, would be described well at low load and lose less than the model at
+high load. Four predictions were registered before any run with frame burst off
+(\Cref{app:prereg}). One saturated sender would then take $2.070$--$2.095$\,ms per frame: it took
+\hwCycleOff. Two boards would then fall inside the original bands: at the highest load they lost
+\hwOffHigh\%, under a band that begins at $0.848\%$. A repeat of the first session, frame burst
+on, would agree with it: at the highest load it gave \hwRepHigh\% where the first had given
+\hwContHigh. And the loss with frame burst off would be at least $1.5$ times the loss with it
+on: against the repeat it is no larger at all.
+
+The repeat is what this follow-up was worth. After the run with frame burst off the author was
+ready to write that the vendor mode explained a third of the shortfall. \textbf{Frame burst
+changes one sender's spacing and has no demonstrated effect on the loss between two boards};
+the difference that would have been reported was the scatter between sessions. That scatter is
+itself larger than was assumed: \hwPoolSdHigh{} percentage points between windows at the highest
+load, where frames lost in independent pairs would give $0.13$.
+
+\paragraph{What the design could not separate.} Two boards can fill the medium only if each
+sends often. At $85\%$ each board sends a frame every $4.7$\,ms and its frame lasts $2$\,ms, so
+a board frequently holds two frames of its own, and how a radio sends its own queued frames
+matters as much as how two radios contend. At the operating point of this thesis ---
+\nmaxLeanDesign{} stations, each sending $12.5$ frames a second --- a station almost never holds
+two. Below saturation, then, a two-board experiment mixes two things, and the capacities depend
+on one of them.
+
+\subsection{Two saturated radios}\label{sec:saturated-hw}
+
+The case that isolates the contention is the one every treatment of the access rule begins
+with: both stations always have a frame to send. It needs nothing from a traffic generator. It
+was registered before its runs, together with the author's own expectation, which was that the
+shortfall belonged to the contention and that about $7\%$ of frames would be lost.
+
+\begin{table}[ht]
+\centering
+\caption{Two radios, each offered $400$ frames/s where the medium carries about $490$. Frames
+on air are read at the receiver. Eight values per column.}\label{tab:saturated-hw}
+\begin{adjustbox}{max width=\linewidth}
+\begin{tabular}{lrrr}
+\toprule
+ & the standard's rule & frame burst off & frame burst on \\
+\midrule
+frames on air that are lost (\%) & \hwSatStd & \hwSatOff & \hwSatOn \\
+frames on air per sender (1/s)   & \hwSatRateStd & \hwSatRateOff & \hwSatRateOn \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table}
+
+The standard's figure follows from two lines of arithmetic: with a contention window of $16$
+that never doubles, each of two stations attempts in a slot with probability $2/17$, and a
+collision costs both frames. \textbf{The radios lose \hwSatOff\% where the rule gives
+\hwSatStd\%}, inside the registered band of $7.1$--$16.5\%$ and about a twentieth above the figure
+itself; the expectation of $7\%$ was wrong. Frame burst makes no difference here either.
+
+\subsection{What the hardware supports, and what it does not}
+
+\begin{itemize}
+\item \textbf{Where contention can be isolated, the rule the simulated capacities use was
+      observed on two radios, within $6\%$.} This is the first measurement of that mechanism
+      in this work that did not run inside a simulator.
+\item \textbf{Below saturation the same radios depart from the model}, from \hwPoolLowRatio{}
+      times its loss with the medium half full to \hwPoolHighRatio{} times at $85\%$. The
+      registered prediction failed there. The cause that the saturated case leaves standing is
+      the radio's handling of its own queued frames, which is measurably not the standard's;
+      that it is the cause has not been shown. Why the loss is \emph{above} the model at the
+      lowest load is not explained.
+\item \textbf{No capacity was measured.} Two saturated stations are the opposite corner from
+      \nmaxLeanDesign{} stations at $12.5$ frames/s. Every capacity in this thesis remains a
+      simulated one, for radios that keep the standard's rule.
+\item One chip family, one room, two boards. The predictions for three to five boards are
+      registered and have not been run.
+\end{itemize}
 
 \section{The utilisation ceiling, and a flaw in the author's own pre-registration}
 

@@ -21,21 +21,33 @@ of `LOGBOOK.md` is that pass.
 
 **What is waiting, in the order it should be done:**
 
+0. ⚠️ **2026-10-09, night — read this before the items below.** The boards were on. **Contention
+   was measured between two radios** (findings F73–F76): the standard's rule holds within 6 %
+   for two saturated senders; a registered prediction below saturation held at two loads and
+   failed at the third; an August "airtime" figure is withdrawn. **The lean codec is timed on
+   the Pi** (F77): the prototype's receiver serves 57 nodes per core, not 296. What that leaves:
+   * **Mohamed — one decision:** does submission still wait for three to five radios, or go
+     with what two showed (`OPEN_ITEMS` G2)?
+   * **Mohamed — the rig (G26):** pi-A was found re-installed; the sync wire is on neither
+     board; pi-B's supply sags at boot. Decide which board is the device under test, wire it,
+     bring a 10 Ω resistor. Then bench steps 0, 2 and 3 are an hour.
+   * **No hardware needed (G27):** find which rule for a radio's own queued frames reproduces
+     the 36 windows on disk, in the event model. Register before fitting.
 1. **Mohamed's decisions — ALL TAKEN on 2026-10-08** (`DECISIONS.md`, "Decided by Mohamed,
    2026-10-08"). What they leave for him: read and merge the pull request from
    `p9-supervisor-revision`; supply the supervisor's name, an affiliation, an ORCID and a
-   funding statement; find one or two more 5 GHz radios (G4); sit one bench session (item 4);
-   obtain one paper (G8). Submission — to a networking journal without page charges — waits on
-   the contention experiment.
+   funding statement; find one or two more 5 GHz radios (G4).
 2. **The response to the supervisor goes out after the bench session** (decided 2026-10-08). It
    is written, point by point, at `~/authbc_package/docs/SUPERVISOR_RESPONSE_2026-10.md` —
    outside this repository, and it stays there (R18). The audit it is built from is beside it.
-3. **The one experiment that would change what the paper can claim: contention on real radios**
-   (`OPEN_ITEMS` G4). Two Pi 4 and a Pi 3B+ make three stations on 5 GHz. Plan it, write the
-   prediction, commit it data-free, then run. Every capacity in the paper is simulated.
-4. **Cheap and worth doing, in one bench session:** time the lean codec on the Pi (G9) so the
-   energy table covers the design that is reported; re-meter the one energy row that is not
-   reportable (G11); crypto timing on the Pi 3B+ (G15); Ed25519 batch verification (G19).
+   ⚠️ The bench session is half done (steps 1 and 5); whether the response waits for the rest
+   is Mohamed's call.
+3. **Contention among three to five radios** (`OPEN_ITEMS` G4) — each station sending rarely
+   enough to hold one frame, which two boards cannot do and the capacities assume. The
+   predictions are registered (`456a4e7`). Two Pi 4 and a Pi 3B+ make three.
+4. **Still open from the bench session:** meter the lean sender (G9); re-meter the one energy
+   row that is not reportable (G11); crypto timing on the Pi 3B+ (G15); calibrate the meter
+   (G22).
    **Needs no hardware:** PX4 software-in-the-loop for records at 50 Hz and the real stream's
    timing (G7, G12).
 5. **Open questions about the simulator** (G6): why two traffic sources differ by 0.003 in mean
@@ -94,7 +106,7 @@ cd fanet-authbc && git checkout p8-audit-and-corrections
 make setup && make all          # green == you have reproduced the deterministic layer
 ```
 
-`make all` = lint + mypy + 2025 fast tests + the 39-test frozen gate. NS-3 and the Pi rig are
+`make all` = lint + mypy + 2074 fast tests + the 39-test frozen gate. NS-3 and the Pi rig are
 optional (`docs/05_REPRODUCTION_GUIDE.md`). ⚠️ A fresh clone has **no NS-3 tree** — it is gitignored
 by design. Fetch it from the **GitLab** archive; `nsnam.org/releases/...` returns an HTML error page.
 
@@ -211,7 +223,7 @@ audit spent its time removing.
 | # | work | why | effort |
 |---|---|---|---|
 | ~~6~~ | ~~PQC extension section~~ | **DONE** — Limitations §, backed by `results/raw/pqc_projection.csv` | — |
-| 7 | References **38** rendered in the revised paper (59 in the shared bibliography; **46** before the October rewrite) → 45–60 | 29→39 done from held+read sources; the rest needs sourcing **and reading** | 1 wk |
+| 7 | References **40** rendered in the revised paper (69 in the shared bibliography; **46** before the October rewrite) → 45–60 | 29→39 done from held+read sources; the rest needs sourcing **and reading** | 1 wk |
 | ~~S9~~ | ~~Re-state or drop the pre-registration claim~~ | **DONE (F40)** — withdrawn, not reconstructed | — |
 
 ### Optional

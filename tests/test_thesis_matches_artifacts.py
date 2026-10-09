@@ -36,6 +36,10 @@ def _rows(name: str) -> list[dict[str, str]]:
                                if not ln.startswith("#")))
 
 
+# every generated macro, as the documents print it
+NUMBERS = dict(re.findall(r"\\newcommand\{\\(\w+)\}\{(.*)\}",
+                          (REPO / "paper" / "numbers.tex").read_text(encoding="utf-8")))
+
 LOWRATE = _text("ch10_lowrate.tex")
 LORA = {"aloha": "lora_capacity_ci.csv", "eu": "lora_capacity_eu.csv",
         "goursaud": "lora_capacity_goursaud.csv"}
@@ -475,7 +479,7 @@ class TestTheRegistrationsOfAppendixB:
         import subprocess
 
         named = sorted(set(re.findall(r"\\texttt\{([0-9a-f]{7})\}", self.APPENDIX)))
-        assert len(named) == 14
+        assert len(named) == 16
         shallow = subprocess.run(["git", "rev-parse", "--is-shallow-repository"], cwd=REPO,
                                  capture_output=True, text=True).stdout.strip()
         assert shallow == "false", (
@@ -486,12 +490,14 @@ class TestTheRegistrationsOfAppendixB:
             assert done.returncode == 0, f"{commit} is not an ancestor of HEAD"
 
     def test_the_chapter_counts_what_the_table_holds(self) -> None:
-        assert self.APPENDIX.count(r"\textbf{failed}") == 3
+        assert self.APPENDIX.count(r"\textbf{failed}") == 5
         assert self.APPENDIX.count(r"\textbf{refuted}") == 1
         assert self.APPENDIX.count(r"\textbf{not scored}") == 1
-        assert self.APPENDIX.count(r"\emph{registered,") == 1      # the one not yet run
-        assert "fourteen" in _text("ch06_methodology.tex")
-        assert "thirteen registrations" in _text("ch11_reproducibility.tex")
+        assert self.APPENDIX.count(r"\emph{registered,") == 0      # every one has been run
+        assert "Three to five boards: not run" in self.APPENDIX    # … one of them in part
+        assert "Of its sixteen entries, six failed" in _text("ch06_methodology.tex")
+        assert "Of the sixteen registrations" in _text("ch11_reproducibility.tex")
+        assert "six failed in whole or in part" in _text("ch11_reproducibility.tex")
 
 
 class TestTheLibraryIsTheSizeTheChapterSays:
@@ -552,11 +558,139 @@ class TestTheRegisteredContentionExperimentAsTheThesisQuotesIt:
         assert "within $5\\%$ at three to five nodes and is $9$--$18\\%$ below it at two" \
             in self.VALIDATION
 
-    def test_it_is_in_the_appendix_as_not_yet_run(self) -> None:
-        appendix = (THESIS / "appB_preregistrations.tex").read_text()
-        assert "\\texttt{456a4e7}" in appendix and "not yet run" in appendix
-        assert not list((REPO / "results" / "hw" / "channel").glob("contention_*")), (
-            "the contention experiment has data: Appendix B and ch. 9 must now report it")
+    def test_the_bands_tabulated_are_the_registered_ones(self) -> None:
+        bands = [(f"{100 * float(self.PREDICTED[('2', u)]['band_lo']):.2f}",
+                  f"{100 * float(self.PREDICTED[('2', u)]['band_hi']):.2f}")
+                 for u in ("0.5", "0.7", "0.85")]
+        assert bands == [("0.18", "0.40"), ("0.39", "0.89"), ("0.85", "1.95")]
+        # 0.185 % is printed as 0.19: the table rounds half up, the format above to even
+        for lo, hi in (("0.19", "0.40"), ("0.39", "0.89"), ("0.85", "1.95")):
+            assert f"${lo}$--${hi}$" in self.VALIDATION
+
+
+class TestTheContentionExperimentAsItCameOut:
+    """thesis ch. 9, Appendix B and the paper against the boards' files of 2026-10-09.
+
+    Three registrations (456a4e7, 06f1bfa, 9a85afa). Until that day a test here asserted that
+    no such file existed while the appendix said "not yet run"."""
+
+    VALIDATION = _text("ch09_validation.tex")
+    APPENDIX = (THESIS / "appB_preregistrations.tex").read_text()
+    HW = REPO / "results" / "hw" / "channel"
+
+    @classmethod
+    def _scored(cls, tag: str = "") -> dict[int, dict[str, str]]:
+        name = "contention_2nodes" + (f"_{tag}" if tag else "") + ".csv"
+        return {int(r["rate_fps_per_node"]): r for r in csv.DictReader(
+            ln for ln in (cls.HW / name).read_text().splitlines() if not ln.startswith("#"))}
+
+    @classmethod
+    def _saturated(cls, tag: str) -> list[float]:
+        return [float(r["loss"]) for r in csv.DictReader(
+            ln for ln in (cls.HW / f"saturated_2nodes_{tag}.csv").read_text().splitlines()
+            if not ln.startswith("#"))]
+
+    def test_the_reduced_files_are_what_the_reducer_gives_from_the_boards_files(self) -> None:
+        import importlib.util
+        import sys
+
+        spec = importlib.util.spec_from_file_location(
+            "contention_hw_for_thesis", REPO / "analysis" / "contention_hw.py")
+        assert spec and spec.loader
+        hw = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = hw
+        spec.loader.exec_module(hw)
+
+        def stored(name: str) -> list[dict[str, str]]:
+            return list(csv.DictReader(ln for ln in (self.HW / name).read_text().splitlines()
+                                       if not ln.startswith("#")))
+
+        def as_text(rows: list[dict]) -> list[dict[str, str]]:
+            return [{k: str(v) for k, v in r.items()} for r in rows]
+
+        for folder, tag in (("contention_2", ""), ("contention_2_fb_off", "_fb_off"),
+                            ("contention_2_fb_on_repeat", "_fb_on_repeat")):
+            windows = hw.windows([self.HW / folder / "node1", self.HW / folder / "node2"], 2)
+            assert as_text(windows) == stored(f"contention_2nodes{tag}_windows.csv")
+            assert as_text(hw.score(windows)) == stored(f"contention_2nodes{tag}.csv")
+        for folder, tag in (("saturated_2_fb_off", "fb_off"), ("saturated_2_fb_on", "fb_on")):
+            rows = hw.saturated([self.HW / folder / "node1", self.HW / folder / "node2"], 2)
+            assert as_text(rows) == stored(f"saturated_2nodes_{tag}.csv")
+
+    def test_every_window_of_the_three_sessions_was_usable(self) -> None:
+        for tag in ("", "fb_off", "fb_on_repeat"):
+            rows = self._scored(tag)
+            assert sorted(rows) == [124, 174, 211]
+            assert all(r["windows"] == "4" and r["usable_windows"] == "4" for r in rows.values())
+        assert "twelve windows, all of them usable" in self.VALIDATION
+
+    def test_the_registered_run_held_at_two_loads_and_failed_at_the_third(self) -> None:
+        first = self._scored()
+        assert [first[k]["inside_band"] for k in (124, 174, 211)] == ["True", "True", "False"]
+        ratio = float(first[211]["measured_loss"]) / float(first[211]["predicted_loss"])
+        assert f"{ratio:.2f}" == NUMBERS["hwContHighRatio"] == "0.46"
+        assert "held at the first two loads and failed at the third" in self.VALIDATION
+        assert "held at two loads, \\textbf{failed} at the third" in self.APPENDIX
+
+    def test_the_follow_up_failed_as_the_thesis_says(self) -> None:
+        off, repeat, first = self._scored("fb_off"), self._scored("fb_on_repeat"), self._scored()
+        # P2: off, the highest load is under a band that begins at 0.848 %
+        assert first[211]["band_lo"] == "0.00848" and "begins at $0.848\\%$" in self.VALIDATION
+        assert off[211]["inside_band"] == "False"
+        assert float(off[211]["measured_loss"]) < float(off[211]["band_lo"])
+        # P3: the repeat was to land in 0.47–0.81 % at the highest load, and did not
+        assert float(repeat[211]["measured_loss"]) > 0.0081
+        # P4: off at least 1.5 times on — not against the first run, and not against the repeat
+        assert float(off[211]["measured_loss"]) / float(first[211]["measured_loss"]) < 1.5
+        assert float(off[211]["measured_loss"]) < float(repeat[211]["measured_loss"])
+        assert "against the repeat it is no larger at all" in self.VALIDATION
+        assert "all four \\textbf{failed}, two of them at the highest load only" in self.APPENDIX
+        # P1 is held by tests/test_frame_spacing_hw.py; the band is quoted here
+        assert "$2.070$--$2.095$\\,ms per frame" in self.VALIDATION
+
+    def test_windows_scatter_more_than_independent_pairs_would(self) -> None:
+        import statistics as st
+
+        loss = []
+        for name in ("contention_2nodes_windows.csv", "contention_2nodes_fb_off_windows.csv",
+                     "contention_2nodes_fb_on_repeat_windows.csv"):
+            loss += [(1 - float(r["delivered_frac"]), int(r["sent"])) for r in csv.DictReader(
+                ln for ln in (self.HW / name).read_text().splitlines() if not ln.startswith("#"))
+                if r["rate_fps_per_node"] == "211"]
+        assert len(loss) == 12
+        observed = 100 * st.stdev(x for x, _ in loss)
+        # frames lost two at a time, the pairs Poisson: sd of the loss = 2·sqrt(pairs)/sent
+        mean, sent = st.mean(x for x, _ in loss), st.mean(n for _, n in loss)
+        poisson = 100 * 2 * (mean * sent / 2) ** 0.5 / sent
+        assert f"{observed:.2f}" == NUMBERS["hwPoolSdHigh"] == "0.20"
+        assert f"{poisson:.2f}" == "0.13" and "would give $0.13$" in self.VALIDATION
+
+    def test_two_saturated_radios_lose_what_the_rule_says_within_six_percent(self) -> None:
+        import statistics as st
+
+        standard = 2 * (1 / 16) / (1 + 1 / 16)        # tau = 2/17: one event in 16 is a collision
+        assert f"{100 * standard:.1f}" == NUMBERS["hwSatStd"] == "11.8"
+        assert (f"{100 * 0.6 * standard:.1f}", f"{100 * 1.4 * standard:.1f}") == ("7.1", "16.5")
+        for tag, macro in (("fb_off", "hwSatOff"), ("fb_on", "hwSatOn")):
+            values = self._saturated(tag)
+            assert len(values) == 8
+            mean = st.mean(values)
+            assert f"{100 * mean:.1f}" == NUMBERS[macro]
+            assert 0.6 * standard <= mean <= 1.4 * standard
+            assert abs(mean / standard - 1) < 0.06
+        assert "within $6\\%$" in self.VALIDATION and "$7.1$--$16.5\\%$" in self.VALIDATION
+        assert "the expectation of $7\\%$ was wrong" in self.VALIDATION
+
+    def test_the_thesis_does_not_claim_a_capacity_or_a_cause(self) -> None:
+        assert "\\textbf{No capacity was measured.}" in self.VALIDATION
+        assert "that it is the cause has not been shown" in self.VALIDATION
+        assert "has no demonstrated effect on the loss between two boards" in self.VALIDATION
+
+    def test_the_withdrawn_airtime_figure_is_withdrawn_in_view(self) -> None:
+        assert "A figure withdrawn" in self.VALIDATION and "$0.36\\%$" in self.VALIDATION
+        for name in ("ch09_validation.tex", "ch12_conclusions.tex", "ch01_introduction.tex"):
+            assert "hwAirtime" not in _text(name)
+        assert "hwAirtime" not in (REPO / "paper" / "main.tex").read_text()
 
 
 class TestAnAggregateSignatureSchemeReadAtItsSource:

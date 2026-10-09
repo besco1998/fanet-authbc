@@ -1,0 +1,21 @@
+[2026-10-09T04:34:01+03:00] deadmen armed: revert 800 s, reboot 1100 s | node=1/2 freq=5180 mode=full rates=400
+[2026-10-09T04:34:18+03:00] frameburst before the windows: 1 (asked: keep)
+[2026-10-09T04:34:18+03:00] type:  	type IBSS 	channel 36 (5180 MHz), width: 20 MHz, center1: 5180 MHz 
+[2026-10-09T04:34:18+03:00] addr:  inet 10.0.0.1 
+[2026-10-09T04:34:20+03:00] peer 10.0.0.2 reachable
+{"sent": 5776, "achieved_fps": 260.6, "late": 5398}
+{"received_unique": 5392, "senders": 1, "duplicates": 0}
+[2026-10-09T04:35:26+03:00] window 00_C_400fps done
+{"sent": 5898, "achieved_fps": 267.1, "late": 5437}
+{"received_unique": 5214, "senders": 1, "duplicates": 0}
+[2026-10-09T04:35:55+03:00] window 01_C_400fps done
+{"sent": 5835, "achieved_fps": 264.6, "late": 5509}
+{"received_unique": 5261, "senders": 1, "duplicates": 0}
+[2026-10-09T04:36:26+03:00] window 02_C_400fps done
+{"sent": 5887, "achieved_fps": 267.5, "late": 5441}
+{"received_unique": 5223, "senders": 1, "duplicates": 0}
+[2026-10-09T04:36:55+03:00] window 03_C_400fps done
+[2026-10-09T04:36:55+03:00] frameburst after the windows: 1
+[2026-10-09T04:36:55+03:00] revert: starting
+[2026-10-09T04:37:07+03:00] revert: finished, wlan0 = inet 192.168.1.21
+[2026-10-09T04:37:12+03:00] reverted OK, both deadmen disarmed

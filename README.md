@@ -24,9 +24,9 @@ that was emitted, decoded and verified.
 | **A rule for that capacity** | N_max ≈ 0.05 / (f·(a·T + c)) with a = 0.071, c = 8 µs — fitted to six configurations, then it predicted seven others **within 3.4 %**, with the predictions committed first. A fit at one loss level and one PHY rate, not a model | `docs/NMAX_DIRECT_EXPECTATIONS.md` |
 | **Where no frame fits** | **eight of the twelve** EU863-870 LoRaWAN data rates cannot carry one signed, hash-chained frame that verifies alone: five because a 64 B signature exceeds a 50/51 B payload, three because header, link and signature fill 115 B | `exclusion_matrix.csv` |
 | **A frame must not depend on its predecessor** | a delta-coded frame that does verifies **0.881** of its records at 5 % frame loss, not 0.95 — so every frame starts with a full record | `e3_codec_loss.csv` |
-| **Receiver CPU** | one Raspberry Pi 4 core serves a neighbourhood of 296 nodes with Ed25519 and of 10 with BLS (cryptography only) | `design_ladder.csv` |
+| **Receiver CPU** | one Raspberry Pi 4 core serves a neighbourhood of 296 nodes with Ed25519 and of 10 with BLS (cryptography only); the interpreted prototype, decoding included, serves 57 | `design_ladder.csv`, `results/hw/p1_lean.authbc-pi4b.csv` |
 
-**What is not measured.** Contention is simulated, not measured on radios. Record sizes come from
+**What is not measured.** No capacity is measured on radios: the capacities are simulated. Between two radios the access rule was observed within 6 % where both are saturated, and a registered prediction of their loss below saturation held at two loads and failed at the third (`results/hw/channel/CONTENTION_RESULTS.md`). Record sizes come from
 a synthetic generator, checked against twelve public flight logs at 5 Hz and against nothing at
 50 Hz. At equal bit error rate a four-record frame is lost more often than a one-record frame, and
 the design is then 0.7 points below its verifiability target at the 5 % point. Energy is metered

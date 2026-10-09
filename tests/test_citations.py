@@ -90,7 +90,7 @@ class TestWhatIsHeldButNotRedistributed:
     it has to be that file."""
 
     def test_the_manifest_is_well_formed(self) -> None:
-        assert len(HELD_LOCALLY) == 14
+        assert len(HELD_LOCALLY) == 20
         for name, row in HELD_LOCALLY.items():
             assert name.endswith(".pdf") and re.fullmatch(r"[0-9a-f]{64}", row["sha256"]), name
             assert int(row["bytes"]) > 0 and row["obtain_from"] and row["document"], name

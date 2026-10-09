@@ -55,9 +55,9 @@ defect in this work's own practice, recorded in \Cref{ch:validation}: a pre-regi
 \emph{directional} prediction that the experiment had no statistical power to resolve.
 
 \Cref{app:prereg} lists every registration with its commit, what it predicted and what
-happened. Of its fourteen entries, four failed in whole or in part, one could not be scored, one has not
-yet been run and
-one was met by a criterion that could not have failed; they are in the table with the rest.
+happened. Of its sixteen entries, six failed in whole or in part, one could not be scored and
+one was met by a criterion that could not have failed; one has been run with two boards of the
+two to five it covers. They are in the table with the rest.
 
 \section{Experiment matrix}
 
@@ -244,7 +244,11 @@ meaningless. It is listed as unusable and is to be measured again.
 
 \subsection{Two radios}
 
-Two boards in ad hoc mode on a $5$\,GHz channel, one sending broadcast frames and one counting
-them, measure two things the models take as given: the time a frame occupies the channel, and
-the loss of a link with no contention. With a single transmitter there is no contention to
-measure; \Cref{ch:validation} reports what the experiment does and does not support.
+Two boards in ad hoc mode on a $5$\,GHz channel. With one sending broadcast frames and one
+counting them, they measure the loss of a link with no contention, and the time from one frame
+of a saturated sender to its next, which the receiver reads from the sequence numbers it spans
+and its own clock. With both sending and both counting they measure the loss among stations
+that contend, at a set load or saturated; each sender then draws its send instant within every
+period, as the simulations do. The chip's frame-burst mode is read from the firmware and logged
+before and after every session. \Cref{sec:hardware} reports what these experiments do and do
+not support.

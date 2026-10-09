@@ -134,3 +134,28 @@ the launch line no longer keeps the terminal waiting; both session scripts take 
 setting as an optional last argument and log the firmware's value. On the re-installed board
 the session is started as root through `systemd-run`, because `sudo` there asks for a
 password; the script is the same file.
+
+---
+
+## Outcome — added 2026-10-09, after the runs; nothing above this line was changed
+
+Finding F75. Frame burst was reported by the firmware as off before and after R1 and R2, and
+on before and after R3.
+
+| | predicted | measured | |
+|---|---|---|---|
+| P1 | 2.070–2.095 ms per frame, one sender, off | **2.050 ms** (2049.5, 2050.1 µs) | **failed** |
+| P2 | off: 0.185–0.401 / 0.394–0.888 / 0.848–1.947 % | 0.321 / 0.516 / **0.837 %** | held, held, **failed** by 0.011 |
+| P3 | repeat, on: 0.15–0.44 / 0.35–0.68 / 0.47–0.81 % | 0.376 / 0.483 / **0.856 %** | held, held, **failed** |
+| P4 | at 211 frames/s, off ≥ 1.5 × on | 1.31 × the first run; 0.98 × the repeat | **failed** |
+
+**Reading, by the table above:** P1 failed — the switch does act on broadcast frames (2.019 →
+2.050 ms) and the spacing stays short of the standard's, so "the spacing has another cause" as
+well. And P3 failed: the repeat of the first run landed where the frame-burst-off run did.
+Taken literally the registered reading of that is "something changed between sessions". What
+the windows show is plainer: at this load they scatter by 0.20 percentage points, where frames
+lost in independent pairs would give 0.13, and P3's band was built on the smaller figure. The
+three sessions are compatible with one loss of about 0.78 %, frame burst on or off.
+
+**No effect of frame burst on the loss between two boards is shown.** The sentence written
+above after R1 — that the first run's miss "is the vendor mode" — is not supported.

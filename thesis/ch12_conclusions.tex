@@ -63,9 +63,10 @@ every frame: \bprLeanDesign\,B per record against \bprLeanBase\,B, and \nmaxLean
 against \nmaxLeanBase. The saturation model of the broadcast channel survives simulation, within
 \valBcast\%. The single utilisation ceiling built on it did not, and was replaced by direct
 simulation; a model of the access rule alone then reproduced the simulated capacities within
-\modelWorst\% and predicted \modelPredCases{} unseen ones within \modelPredWorst\%. Hardware
-confirms the airtime constants within \hwAirtimeGap\% on two radios and does not test
-contention (\Cref{ch:codesign,ch:validation}).
+\modelWorst\% and predicted \modelPredCases{} unseen ones within \modelPredWorst\%. On two
+radios the access rule was observed within $6\%$ where contention can be isolated; a registered
+prediction of their loss below saturation held at two loads and failed at the third; no
+capacity was measured (\Cref{ch:codesign,ch:validation}).
 
 \item[RQ5 --- where can the frame not be sent at all?] On \exclCount{} of the twelve
 EU863-870 LoRaWAN data rates, under four conditions; a $48$\,B signature, a $13$\,B tag or a
@@ -88,8 +89,10 @@ do not. Post-quantum sizes are projections, not implementations.
 
 \subsection{Validation scope}
 
-Hardware validates \emph{airtime} on a two-node link; contention is simulated only, and the
-capacities of \Cref{ch:codesign} rest on that simulation. Record sizes come from a synthetic
+On hardware, two radios gave the loss of a link, the access rule between two saturated
+stations, and a failed prediction of the loss between two busy ones (\Cref{sec:hardware}); a
+figure for airtime that earlier versions carried is withdrawn there. No capacity was measured,
+and the capacities of \Cref{ch:codesign} rest on simulation. Record sizes come from a synthetic
 generator, checked against twelve public flight logs at $0.2$\,s spacing and above and, at the
 $20$\,ms of the operating point, against one flight of an autopilot in simulation; no flight log
 recorded at $50$\,Hz was found. Only the sender's energy is metered, and only for the first
@@ -128,12 +131,14 @@ periodically. Implicit (ECQV) certificates are the standard smaller alternative 
 modelled. The current charge is an upper bound, which cuts against this work's own comparison ---
 so the gap is safe but should be closed.
 
-\item[Timing the lean codec on the target board.] Its sizes are measured; its encode and decode
-times on the Raspberry~Pi are not. That one measurement completes the energy table, which covers
-the first format only, and decides whether the channel or the receiver's processor binds first
-for the prototype, since the ceilings of \Cref{ch:codesign} charge cryptography only. Ed25519
-batch verification, which its authors report at about half the cost per signature, belongs to
-the same session.
+\item[Metering the lean sender.] The lean codec is now timed on the board
+(\Cref{ch:codesign}); its energy is not metered, and the energy table still covers the first
+format only. The meter itself has never been checked against a known load
+(\Cref{sec:energy-uncertainty}). One session with a reference resistor closes both.
+
+\item[A compiled receiver.] The prototype's receiver is interpreted and serves \ncpuProto{}
+nodes per core where cryptography alone would allow \ncpuBatch. A receiver in a compiled
+language, verifying signatures in batches, is what the capacity figures assume.
 
 \item[Telemetry at the operating rate.] Public flight logs carry position at 5\,Hz, and the
 delta record at 20\,ms spacing rests on the generator and on one simulated flight of one
@@ -159,11 +164,12 @@ forfeiting the quasi-orthogonality that supplies much of a real deployment's cap
 a different question --- deployment capacity rather than per-configuration feasibility --- and it
 is the question an operator would ask next.
 
-\item[Contention on real hardware.] Two radios validate airtime; the capacities are simulated.
-Three or four radios in one collision domain would not reach the crossing, but would test the
-one thing the simulation's capacities depend on that no measurement here touches: loss under
-contention at a known offered load. It is the single most valuable missing measurement in this
-thesis.
+\item[Contention among more than two radios.] Two radios keep the access rule where contention
+can be isolated, and do not space their own queued frames as the standard does
+(\Cref{sec:hardware}). Three to five radios in one collision domain would not reach the
+crossing, but each could send rarely enough to hold one frame at a time, which is the regime the
+capacities are in. The predictions for them are registered. It remains the single most valuable
+missing measurement in this thesis.
 
 \item[A post-quantum arm that is implemented rather than projected.] The projections show that
 batching cannot rescue post-quantum signature sizes, because freshness caps the batch and one

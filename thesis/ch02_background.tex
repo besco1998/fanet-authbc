@@ -69,10 +69,13 @@ Simulation in ns-3 is the common instrument, and a recent swarm protocol stack s
 typical scenario states: $20$--$100$ nodes in a $400 \times 400 \times 1000$\,m volume, Random
 Waypoint mobility, Nakagami fading and an 802.11ah MAC~\cite{bhatt2025uavswarmmac}. It does not
 state the speed range or the pause time of its mobility model, the two parameters that define
-what that model did. The observation is not a criticism of one paper. Cavalcanti \emph{et al.},
-in an editorial note on a decade of vehicular-network research, report of an earlier survey of $151$
-simulation papers that fewer than $15\%$ were repeatable and $87.5\%$ gave no confidence
-intervals~\cite{cavalcanti2018vanet}. \Cref{ch:reproducibility} is this thesis's answer to that
+what that model did. The observation is not a criticism of one paper. Kurkowski, Camp and
+Colagrosso surveyed the $151$ papers of one ad hoc networking conference over six years: $114$
+used simulation, none of those said its code was available, and $87.5\%$ of those with plots
+showed no confidence intervals; of the papers with mobility, half stated the pause time. They
+concluded that fewer than $15\%$ were repeatable~\cite{kurkowski2005incredibles}. A decade
+later Cavalcanti \emph{et al.} found vehicular-network research little
+better~\cite{cavalcanti2018vanet}. \Cref{ch:reproducibility} is this thesis's answer to that
 record: every result is regenerated from stored runs, every simulated capacity carries an
 interval, and the parameters that define each scenario are in the result files' headers.
 
@@ -227,7 +230,11 @@ external comparator. Li \emph{et al.}~\cite{li2025clas} tabulate the per-message
 own scheme and four others, for a $67$\,B traffic message: $583$\,B (theirs, and Cahyadi
 \emph{et al.}), $596$\,B (Xu \emph{et al.}), $735$\,B (Liang \emph{et al.}) and $859$\,B (Wang
 \emph{et al.}). Those totals are Li \emph{et al.}'s accounting of what one signer sends with
-each message. Of the four other schemes, one was read at source and three were not obtained.
+each message. The four other papers were then read for what they say of size themselves.
+Cahyadi \emph{et al.} give the same figure as the table, $583$\,B for one message and $583\,n$
+for $n$~\cite{cahyadi2022clas}. Liang and Liu, like Wang \emph{et al.}, work with group
+elements of $128$\,B~\cite{liang2023clas}. Xu \emph{et al.} state no size in bytes, so their
+$596$\,B is Li \emph{et al.}'s count~\cite{xu2020clas}.
 
 What a signer sends for $n$ messages is $n$ times what it sends for one, since each message
 carries its own identity, key and signature components. Aggregation acts after that. In the
@@ -279,12 +286,18 @@ residual small-frame bias observed in \Cref{ch:validation}.
 Both are models of a saturated channel, in which every station always has a frame to send, and
 Ma and Chen name non-saturated traffic as future work~\cite{machen2008}. The capacities of this
 thesis lie well below saturation: each node offers one frame per period and the question is
-how many of them are lost. For that regime the nearest analysis found is of periodic vehicular
-safety broadcast: Cao \emph{et al.} model IEEE 802.11p in a fully connected network, with a
-packet sent at once if it finds the medium idle and after a backoff in a fixed window if it
-does not, and obtain the delivery ratio from a fixed point~\cite{cao2021dsrc}.
-\Cref{sec:why} builds on the same mechanism and adds a second. The earlier analyses that
-paper cites were not obtained, so no account of that literature beyond it is offered here.
+how many of them are lost. That regime has been analysed for vehicular safety messages. Ma,
+Chen and Refai extend the broadcast model to non-saturated traffic on a highway --- messages
+arriving at random at each vehicle, a queue per vehicle, hidden terminals, fading and vehicles
+that move out of range --- and obtain the share of the receivers in range that get a packet;
+one of its loss terms is the simultaneous transmission of stations within
+range~\cite{ma2009dsrc}. Cao \emph{et al.} treat the periodic case in a fully connected
+network: a packet is sent at once if it finds the medium idle and after a backoff in a fixed
+window if it does not, and a fixed point gives the delivery ratio~\cite{cao2021dsrc}. Both
+check the analysis against a simulation the authors wrote. \Cref{sec:why} builds on the same
+mechanism and adds a second, which neither has: the few microseconds in which a transmission
+that has begun cannot yet be sensed. Two further analyses that Cao \emph{et al.} cite were not
+obtained.
 
 \section{LoRa and LoRaWAN capacity}
 

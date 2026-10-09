@@ -16,6 +16,23 @@ new has to be wired. Each step says what to run, where, how long it takes and wh
 | 4 | G15 | Where does the receiver's CPU become the limit on a smaller board? |
 | 5 | G19 | What does Ed25519 batch verification buy on these boards? |
 
+## Where it stands (2026-10-09, finding F77)
+
+| step | state |
+|---|---|
+| 0 calibrate the meter | **not done** — no reference resistor at the bench |
+| 1 time the lean sender and receiver | **done on `authbc-pi4b`**: 0.87 ms and 1.41 ms per four-record frame — both *under* the ranges below; one core of the prototype serves 57 nodes |
+| 2 meter the lean sender | **not done** — the sync wire GPIO17 → D2 is on neither board (`docs/OPEN_ITEMS.md` G26) |
+| 3 re-meter the contaminated row | **not done** — same |
+| 4 smaller boards | **not done** — they were not switched on |
+| 5 Ed25519 batch verification | **done on `authbc-pi4b`**: 0.46 of the cost per signature in a batch of 64 — inside the range below |
+
+⚠️ **The board named below as the device under test, `authbc-pi4a`, was found re-installed**
+(Debian 13, Python 3.13, no project environment). Steps 1 and 5 were run on `authbc-pi4b`, which
+has July's software and times signatures within 0.4 % of what `authbc-pi4a` did. Before steps
+0, 2 and 3: decide which board is the device under test, give it the sync wire and a steady
+5.15–5.2 V, and bring a 10 Ω resistor.
+
 ## What is expected, written before anything is measured (Law 6)
 
 | quantity | expected | from |

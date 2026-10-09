@@ -5,12 +5,40 @@ delivery on an ad-hoc link between the two Pis, so the channel model has a hardw
 
 ## Status: measured. Results in `results/hw/channel/RESULTS.md`.
 
-Headline: **99.977 % delivery** at the operating point (8 windows, σ = 0.024 pp, 0 duplicates,
-loss `p` = 2.3 × 10⁻⁴), and a measured broadcast airtime of **1.995 ms/frame against 1.99 ms
-predicted** — an independent hardware check on the 802.11a timing model.
+Headline of August: **99.977 % delivery** at the operating point (8 windows, σ = 0.024 pp,
+0 duplicates, loss `p` = 2.3 × 10⁻⁴).
 
-⚠️ One transmitter ⇒ **zero contention**. This measures *link* loss and *airtime*. It **cannot**
-validate Ma & Chen, which models N contending stations.
+> ⚠️ **Withdrawn 2026-10-09 (F74):** this file also said "a measured broadcast airtime of
+> 1.995 ms/frame against 1.99 ms predicted — an independent hardware check on the 802.11a timing
+> model". Both figures were wrong and nearly cancelled. On air the frames were 2.019 ms apart;
+> the standard gives 2.078 ms. See `results/hw/channel/RESULTS.md`.
+
+⚠️ One transmitter ⇒ **zero contention**: the one-sender session measures *link* loss and how a
+radio spaces its own frames.
+
+## Two radios contending (2026-10-09)
+
+Results and the record of eight sessions: `results/hw/channel/CONTENTION_RESULTS.md`; findings
+F73–F76. In one line each:
+
+* **Two saturated radios lose 12.4 % of frames on air; the standard's rule gives 11.8 %.**
+* Below saturation a registered prediction held at two loads and failed at the third.
+* The chip's **frame-burst mode** — switched on by the Linux driver — changes how one sender
+  spaces its frames and has no shown effect on the loss between two boards.
+
+```bash
+# every board sends and receives; node 1 first
+python analysis/contention_hw.py --commands 2 --hosts pi@<pi-a> pi@<pi-b> --mode probe   # then full
+python analysis/contention_hw.py --reduce 2 results/hw/channel/contention_2/node1 \
+       results/hw/channel/contention_2/node2            # scores against the registered bands
+python analysis/contention_hw.py --saturated 2 <node1 dir> <node2 dir> --tag fb_off
+python analysis/frame_spacing_hw.py                     # one sender's spacing, from the receiver
+```
+
+A session script's last argument is the frame-burst mode: `keep` (default), `0` or `1`. The
+value the firmware reports is written to the session log before and after the windows. A board
+whose `sudo` asks for a password is started as root:
+`sudo systemd-run --unit=authbc-session-$START --collect /home/pi/authbc_channel/run_adhoc_contention.sh …`.
 
 ---
 
@@ -77,7 +105,9 @@ risk** and is still worth doing.
 ## Files
 | | |
 |---|---|
-| `run_adhoc_sweep.sh` | the session: deadmen, join, N measurement windows on a shared clock, revert |
+| `run_adhoc_sweep.sh` | the one-sender session: deadmen, join, N measurement windows on a shared clock, revert |
+| `run_adhoc_contention.sh` | the same with every board sending and receiving, at redrawn instants |
+| `frameburst.sh` | reads and sets the chip's frame-burst mode through the driver's vendor command |
 | `revert_adhoc.sh` | idempotent teardown; also what the deadman runs |
 | `bcast_tx.py` / `bcast_rx.py` | sequence-numbered UDP broadcast sender / counter, so loss and duplication are distinguishable |
 | `run_adhoc_session.sh` | the older single-window session, kept because `RESULTS.md` §2 cites its 2.4 GHz output |

@@ -644,8 +644,8 @@ directions. Equation~\eqref{eq:line} is a fit at one loss level and one PHY rate
 nodes; the tables quote simulated values, not the rule.
 
 \textbf{Why the crossing is there.} The slope is not a free constant. A frame is lost in this
-scenario in two ways. The first is known from the analysis of periodic vehicular
-broadcast~\cite{cao2021dsrc}; the second is absent from that analysis. Two stations that found the medium busy may draw the same backoff slot:
+scenario in two ways. The first is known from analyses of vehicular safety
+broadcast~\cite{ma2009dsrc,cao2021dsrc}; the second is absent from them. Two stations that found the medium busy may draw the same backoff slot:
 with occupancy $\rho \approx N f T$ and a contention window of $W = 16$ slots, counting the stations
 that wait together gives a loss of about $\rho^2/(W(1-\rho))$, hence
 $a = \rho/(W(1-\rho))$, which is \modelSlope{} at $\rho = \modelRho$, the mean occupancy at
@@ -667,12 +667,14 @@ channel binds first. Row~6 shows the constraint is not idle: with a signature on
 reaches the channel's limit at \cpuLeanInline\% of a core. With BLS a verification takes \tVerBls\,ms and one core serves
 \ncpuBls{} nodes: on this hardware BLS is excluded by CPU long before the channel is
 reached, in addition to its larger signature. These figures verify one signature at a time.
-Ed25519 was designed for batch verification --- its authors report under 134\,000 cycles per
-signature in a batch of 64, against 273\,364 for one~\cite{ed25519} --- which would roughly
-halve the receiver's cost; we did not use it, and ECDSA does not admit it. Equation~\eqref{eq:cpu}
-charges cryptography only. Decoding a frame and rebuilding its records is not charged, and in
-our interpreted prototype it costs several times the verification: these are ceilings for a
-compiled receiver, not what the prototype sustains.
+Ed25519 was designed for batch verification~\cite{ed25519}: on the Pi~4 a batch of 64 takes
+\edBatchRatio{} of the time per signature, which would roughly halve the receiver's cost. The
+prototype does not use it, and ECDSA does not admit it. Equation~\eqref{eq:cpu}
+charges cryptography only. Decoding a frame and rebuilding its records is not charged: our
+interpreted prototype takes \leanRecvMs\,ms to receive a four-record frame on the Pi~4,
+\leanRecvOverVerify{} times its verification, so one core serves \ncpuProto{} nodes and
+\nmaxLeanDesign{} nodes need \cpuProtoCores{} cores. The figures of Eq.~\eqref{eq:cpu} are
+ceilings for a compiled receiver.
 
 \textbf{Other PHY rates.} We simulated one rate. Evaluating the saturation bound with the same
 model at 12 and 24\,Mb/s, and on the 10\,MHz channel of 802.11p at 3--12\,Mb/s, gives design-to-baseline
@@ -738,11 +740,17 @@ $\pm\sitlJitter$\,ms (central 68\%).
 \subsection{Validation of the models}\label{sec:validation}
 The unicast DCF model~\cite{bianchi2000} matches saturated ns-3 runs within
 $+\valUniHi$/$-\valUniLo$\% and the broadcast model~\cite{machen2008} within
-$\pm\valBcast$\% over $N=5$--50 (\seeds{} seeds). On two Raspberry~Pi~4 radios with a single
-transmitter, the airtime of a 1400\,B broadcast frame measures \hwAirtime\,ms against a predicted
-\hwAirtimeModel\,ms (\hwAirtimeGap\%) and \hwLossFrames{} frames in \hwSentFrames{} are lost
-($p = \hwLoss$). That experiment has no contention. The capacities in this paper rest on
-simulation.
+$\pm\valBcast$\% over $N=5$--50 (\seeds{} seeds). On two Raspberry~Pi~4 radios, one
+transmitter loses \hwLossFrames{} frames in \hwSentFrames{} ($p = \hwLoss$). With both radios
+saturated, \hwSatOff\% of the frames put on air are lost where the access rule gives
+\hwSatStd\%, a prediction registered before the run. Below saturation the same radios lose
+\hwPoolLowRatio, \hwPoolMidRatio{} and \hwPoolHighRatio{} times what the model predicts as the
+medium fills from half to 85\%; the registered prediction held at the first two loads and
+failed at the third. The saturated case isolates contention. Below it, a radio of this family
+sends its queued frames closer together than the standard allows --- one per \hwCycleOn\,ms
+against \hwCycleStd\,ms --- as commercial cards are known to~\cite{bianchi2007cards}; that
+state is common with two busy radios and rare at the operating point. No capacity was
+measured: the capacities in this paper rest on simulation.
 
 \section{Comparison with Published Schemes}\label{sec:clas}
 
@@ -819,14 +827,15 @@ that.
 
 \section{Limitations}\label{sec:limits}
 
-\textbf{Contention is simulated.} The hardware experiment has one transmitter. The capacities in
+\textbf{Capacities are simulated.} On hardware, contention was measured between two radios
+only (Sec.~\ref{sec:validation}). The capacities in
 Table~\ref{tab:ladder} come from ns-3 with one collision domain, equal received power and static
 nodes; capture, hidden terminals, spatial reuse and mobility are absent. Send instants are
 redrawn within each period. PX4's own stream, in simulation, holds its period to about
 $\pm\sitlJitter$\,ms, which is nearer to a strictly periodic source; that source gives the
-same mean delivery and a spread between runs \srcSpreadLo--\srcSpreadHi{} times wider. A contention
-experiment on two to five radios is the next measurement; the model's predictions for it are
-registered in the repository.
+same mean delivery and a spread between runs \srcSpreadLo--\srcSpreadHi{} times wider. Three to
+five radios are the next measurement; the model's predictions for them are registered in the
+repository.
 
 \textbf{Telemetry is synthetic.} Record sizes come from a generator. The check against flight
 logs covers twelve logs of one autopilot at 5\,Hz position resolution; at 50\,Hz it rests on
@@ -863,8 +872,8 @@ domain carry \nmaxLeanDesign{} nodes where per-record signing carries \nmaxLeanB
 constraints shape the design and are easy to get wrong: the batch is capped by freshness, not by
 the MTU, and a frame that depends on its predecessor does not meet a verifiability target equal
 to the loss rate. Batching and header design decide what can run; among 64\,B signatures the
-scheme does not. The capacity figures are simulated and await a contention experiment on
-hardware.
+scheme does not. The capacity figures are simulated; on hardware the access rule behind them
+was observed between two radios, and no capacity was measured.
 
 \section*{Data and Code Availability}
 Code, result files, simulation scenarios, hardware traces and tests are at

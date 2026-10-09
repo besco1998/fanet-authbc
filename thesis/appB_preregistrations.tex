@@ -57,8 +57,18 @@ stepped) \\
 doubled; $2\%$ and $10\%$ loss --- within $\pm 3\%$ of the access-rule model & held: all
 \modelPredCases, worst $\modelPredWorst\%$ \\
 \texttt{456a4e7} 9~Oct & contention on real radios: loss among two to five boards at three
-loads; with two boards, within $0.6$--$1.4$ times the access-rule model's & \emph{registered,
-not yet run}: no board was reachable when it was written (\Cref{ch:validation}) \\
+loads; with two boards, within $0.6$--$1.4$ times the access-rule model's & run with two
+boards: held at two loads, \textbf{failed} at the third ($\hwContHighRatio$ times the model's
+loss). Three to five boards: not run (\Cref{sec:contention-hw}) \\
+\texttt{06f1bfa} 9~Oct & a vendor mode of the radio explains that miss: with frame burst off,
+one sender takes $2.070$--$2.095$\,ms per frame, two boards fall inside the bands and lose at
+least $1.5$ times what they lose with it on, and a repeat with it on agrees with the first run &
+all four \textbf{failed}, two of them at the highest load only: \hwCycleOff\,ms per frame; the highest load still under its
+band; the repeat gave \hwRepHigh\% where the first run gave \hwContHigh. No effect of frame
+burst on the loss is shown \\
+\texttt{9a85afa} 9~Oct & two saturated radios lose $11.8\%$ of the frames they put on air, band
+$7.1$--$16.5\%$; the author's expectation, recorded with it, was about $7\%$ & held:
+\hwSatOff\% with frame burst off, \hwSatOn\% with it on. The expectation was wrong \\
 \end{longtable}
 }
 

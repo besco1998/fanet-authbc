@@ -125,21 +125,31 @@ the channel is reached, in addition to its larger signature.
 
 These figures verify one signature at a time. Ed25519 was designed for batch verification: its
 authors report under $134\,000$ cycles per signature in a batch of $64$, against $273\,364$ for
-one~\cite{ed25519}, which would roughly halve the receiver's cost. It is not used here --- the
-cryptographic library this implementation is built on exposes no batch interface --- so
-$N_{\mathrm{cpu}}$ is conservative for Ed25519 by about that factor, and measuring it on the
-board is open. ECDSA does not admit it.
+one~\cite{ed25519}. Measured on the Raspberry~Pi~4 with a public-domain implementation that has
+a batch interface, a signature costs \edBatchOneUs\,\si{\micro\second} alone and
+\edBatchManyUs\,\si{\micro\second} in a batch of $64$: \edBatchRatio{} of the cost, inside
+the $0.45$--$0.60$ written down beforehand. A batch of four saves little (\edBatchFourRatio).
+It is not used here --- the cryptographic library this implementation is built on exposes no
+batch interface --- so $N_{\mathrm{cpu}}$ is conservative for Ed25519 by about a factor of two
+where a receiver can afford to wait for $64$ frames. ECDSA does not admit it.
 
 \begin{remark}[What $N_{\mathrm{cpu}}$ does not charge]
 The expression above counts signature verification and hashing: the work of the cryptographic
 library. It does not count decoding a frame and rebuilding its records, which in this thesis's
-prototype is interpreted Python. A first timing of the lean receiver as it runs --- on a
-desktop, under load, so indicative only --- put a four-record frame at about nine times the cost
-of its one verification. On that evidence a Python receiver on one Raspberry~Pi core would fall
-behind long before the channel does, and the sentence ``the channel binds first'' holds for a
-compiled receiver, not for the prototype. Timing the lean sender and receiver on the board itself is the
-first item of future work (\Cref{ch:conclusions}); until then $N_{\mathrm{cpu}}$ and the CPU column
-of \Cref{tab:ladder} are ceilings set by cryptography alone.
+prototype is interpreted Python. Timed on the Raspberry~Pi~4 as it runs, the lean receiver takes
+\leanRecvMs\,ms for a four-record frame, \leanRecvOverVerify{} times its one verification, and
+the sender \leanSendMs\,ms (for a frame of one record: \leanRecvOneMs\,ms and
+\leanSendOneMs\,ms). One core of the prototype therefore serves \ncpuProto{} nodes,
+not \ncpuBatch, and a neighbourhood of \nmaxLeanDesign{} needs \cpuProtoCores{} of the board's
+four cores. The sentence ``the channel binds first'' holds for a compiled receiver; for the
+prototype on one core the processor binds first. $N_{\mathrm{cpu}}$ and the CPU column of
+\Cref{tab:ladder} are ceilings set by cryptography alone.
+
+Both times came in under what had been written down for them ($1.0$--$2.5$\,ms and
+$2$--$5$\,ms). The ranges had been scaled from a desktop figure taken while that machine was
+busy with simulations, which was three to four times too high; the board is in fact six to
+seven times slower than the desktop on this interpreted code, against three times on a
+signature.
 \end{remark}
 
 \section{E17 --- the classical stream-signing schemes, placed}\label{sec:stream}
@@ -444,13 +454,15 @@ The line of \Cref{eq:line} describes the crossings; it does not explain them, an
 constant was fitted. An explanation needs no more than the access rule.
 
 \paragraph{What is known, and what is added.} The first of the two mechanisms below is not
-new. Cao \emph{et al.} analyse periodic IEEE 802.11p broadcast in a fully connected network
+new. Ma, Chen and Refai count the simultaneous transmission of stations within range among the
+losses of non-saturated vehicular broadcast~\cite{ma2009dsrc}. Cao \emph{et al.} analyse
+periodic IEEE 802.11p broadcast in a fully connected network
 with a perfect physical layer: a packet that finds the medium idle is sent at once, one that
 finds it busy backs off within a fixed window, and collisions arise only among packets that
 backed off; a fixed point gives the delivery ratio, which they check against a simulation of
 their own~\cite{cao2021dsrc}. That is the tie of this section, in the setting of this chapter,
 and it was found only when this thesis was audited: the derivation below had been written
-without a search for prior work. Their analysis has no counterpart of the second mechanism,
+without a search for prior work. Neither analysis has a counterpart of the second mechanism,
 the window in which a transmission cannot yet be sensed, which is between a sixth and a half
 of the loss at the crossings found here. What this section adds is that term, a comparison
 with a packet-level simulator at eighteen configurations instead of with a simulation that
@@ -533,7 +545,8 @@ within one collision domain.
 The model and ns-3 implement one standard. Their agreement says the capacities of this chapter
 follow from that standard's access rule and a detection time of $4$\,\si{\micro\second}. It
 does not say a radio behaves so: capture, hidden terminals and a real preamble detector are
-outside both, and that question is the contention experiment this thesis has not run.
+outside both. The question was put to two radios (\Cref{sec:hardware}): they keep the rule
+where contention can be isolated, and depart from the model below saturation.
 \end{remark}
 
 \section{Freshness, with every term}

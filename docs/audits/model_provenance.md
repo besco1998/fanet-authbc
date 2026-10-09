@@ -3511,3 +3511,240 @@ on a bench.
 | 52 references | 54, every one read at source |
 
 ⚠️ What is left needs either a browser (four papers) or the boards switched on and reachable.
+
+## F72 — five papers that needed a browser: what each said when read (2026-10-09)
+
+F71 ended with four papers that no script could fetch. Mohamed downloaded five; each was read
+before anything was written from it. They are on his machine and are not redistributed
+(`docs/literature/HELD_LOCALLY.csv`, 19 rows).
+
+| paper | what was claimed of it before | what it says | what changed |
+|---|---|---|---|
+| Ma, Chen & Refai, EURASIP JWCN 2009 | not cited — not obtained (F65, G23) | Non-saturated safety broadcast: random arrivals, a queue per vehicle, hidden terminals, fading, mobility; checked against the authors' own event simulation. **It has the loss by simultaneous transmission. It has no term for a transmission that cannot yet be sensed** | credited beside Cao et al. 2021 for the first mechanism, in the paper and in thesis ch. 2 and ch. 8. The second mechanism is still, as far as was found, ours |
+| Kurkowski, Camp & Colagrosso, MC2R 2005 | quoted through Cavalcanti et al. 2018 (G8) | 151 papers, 114 with simulation; 0 of 114 with code available; 98 of 112 with plots show no confidence intervals (87.5 %); "less than 15 %" repeatable | cited directly in the methods paper and in thesis ch. 2 and ch. 11. **The two figures quoted through Cavalcanti et al. were the survey's own** |
+| Cahyadi, Su, Yang & Hwang, IJDSN 2022 | 583 B per message, from Li et al.'s table | states 583 B for one message and **583n for n** itself | the linearity in n is now the authors' statement, not our reading of a table |
+| Xu, He, Kumar & Choo, SCN 2020 | 596 B per message, from Li et al.'s table | evaluates computation; **states no size in bytes** | the thesis says the figure is Li et al.'s count |
+| Liang & Liu, IEEE Systems Journal 2023 | 735 B per message, from Li et al.'s table | 128 B group elements, as Wang et al.; its table of sizes did not survive text extraction | the figure stays Li et al.'s and the thesis says so |
+
+Nothing read here overturned a claim. Two things became firmer: the credit for the tie
+mechanism has two independent sources, and the linear cost of aggregate schemes on the sender's
+link is stated by one of the schemes' own authors.
+
+⚠️ **Read in part, and the register says which part** for the three aggregate-signature papers:
+their comparison of communication cost and the roles of the parties; not their algebra or their
+security proofs. That is what this work quotes them for.
+
+G8 and G24 are closed. G23 is mostly closed: Hassan, Vu & Sakurai (IEEE TVT 2011) and Chen,
+Refai & Ma (GLOBECOM 2007) are closed access and still not held; the thesis says so.
+
+## F73 — contention on two radios: the registered prediction held at two loads and failed at the third (2026-10-09)
+
+The experiment of F70 was run the day it was registered (`456a4e7`): two Raspberry Pi 4, one
+ad-hoc cell on channel 36, each board sending one 1400 B broadcast per period at a redrawn
+instant and counting the other's. A one-window probe first; then twelve windows, all usable
+(nothing dropped before the air, every sender at its rate, none late, no receiver-buffer loss).
+
+| frames/s per board | occupancy | measured | predicted | registered band | |
+|---|---|---|---|---|---|
+| 124 | 0.50 | 0.293 % | 0.293 % | 0.185–0.401 % | inside, 1.00× |
+| 174 | 0.70 | 0.513 % | 0.641 % | 0.394–0.888 % | inside, 0.80× |
+| 211 | 0.85 | 0.641 % | 1.397 % | 0.848–1.947 % | **outside, 0.46×** |
+
+**The load-bearing prediction failed at the highest load, on the side of fewer losses.** Loss
+rises with load, as predicted. The two directions lose nearly the same number of frames in
+every window — 30 and 34, 79 and 78, 112 and 126 over the three loads — which is what a
+collision between two half-duplex radios does, and what a lossy link does not.
+
+The same session was run twice more that night (F75), once with a vendor mode switched off and
+once as a plain repeat. ⚠️ **The three sessions agree with one another better than I had
+assumed they would, and worse than independent losses would:** the standard deviation between
+windows at the highest load is 0.20 percentage points where frames lost in independent pairs
+would give 0.13. Pooled, twelve windows per load (`results/hw/channel/contention_2nodes*.csv`):
+
+| occupancy | measured, 36 windows in all | over the model | over ns-3 |
+|---|---|---|---|
+| 0.50 | 0.330 % (±0.046) | 1.13 | 1.34 |
+| 0.70 | 0.504 % (±0.066) | 0.79 | 0.93 |
+| 0.85 | 0.778 % (±0.130) | **0.56** | **0.61** |
+
+(± is 2.2 standard errors of the mean of twelve windows.) **The radios' loss rises more slowly
+with load than either simulation's:** above them where the medium is half full, 40 % below them
+where it is 85 % full. One board (pi-A) had been re-installed with a newer operating system
+since August; the radio firmware is the same on both (BCM4345/6, 7.45.265).
+
+What the control showed: with one sender at 100 frames/s, 17 600 of 17 600 frames were
+delivered (17 596 in August). Link loss is not the cause.
+
+⚠️ **A weakness of the design, seen only afterwards.** Two boards can fill the medium only if
+each sends often: at occupancy 0.85 each board sends a frame every 4.7 ms and its frame lasts
+2 ms, so a board frequently holds two frames of its own. How a radio sends *its own* queued
+frames then matters as much as how two radios contend. At the paper's operating point —
+124 stations, 12.5 frames/s each — a station almost never holds two. The two-board experiment
+below saturation therefore mixes two things, of which the capacities depend on one. F76
+separates them.
+
+## F74 — August's "airtime within 0.36 %" was two errors that cancelled (2026-10-09)
+
+**Retracted:** "the airtime of a 1400 B broadcast frame measures 1.995 ms against a predicted
+1.988 ms (0.36 %)", in the paper, in thesis ch. 9 and ch. 12, and in
+`results/hw/channel/RESULTS.md` since August.
+
+* **The measured figure was the sender's, not the air's.** 1.995 ms is the reciprocal of the
+  rate at which `sendto` accepted frames. That rate counts the frames still queued in the
+  kernel and the firmware when the sender stops. The receiver's own clock — the sequence
+  numbers it spans, over the time from the first frame heard to the last — gives **2.019 ms**
+  per frame in August's own files (2018.6 and 2019.1 µs) and in today's control (2018.9 µs).
+* **The predicted figure left out the headers and assumed the standard's backoff.** It was
+  20 µs of preamble, 34 µs of DIFS, 67.5 µs of mean backoff and 1400 B at 6 Mb/s. The frame on
+  air is 1464 B with its IP, UDP, LLC and MAC headers and its check sequence: **1976 µs**, as
+  the channel model itself computes. With DIFS and the mean backoff the standard's cycle is
+  **2077.5 µs**.
+
+Two errors of 1.2 % and 4.3 % in opposite senses left 0.36 %. `analysis/frame_spacing_hw.py`
+now computes the spacing from the receiver's side; `tests/test_frame_spacing_hw.py` holds
+both the corrected figure and the size of the old error.
+
+**What is true instead.** One saturated sender on this chip spaces its frames by 2.019 ms with
+the driver's settings and by 2.050 ms with the vendor's frame-burst mode off. The standard
+gives 2.078 ms. The frame's own duration is not measured separately by any of this; what the
+measurement bounds is the gap between frames — about 43 µs and 74 µs, where the standard's
+rule gives 101.5 µs on average. **This radio does not keep the standard's rule between its own
+consecutive frames, in either state.**
+
+How it went unseen for two months: the comparison was made once, against a prediction written
+the same day, and a 0.36 % agreement does not invite a second look. It is the third way a
+plausible wrong number has entered this project — after small samples (F-pattern of the audit)
+and an unverified constant: **two errors of opposite sign.** The check that would have caught
+it is the one Law 6 asks for and I did not do: derive the predicted value a second way. The
+channel model's own function, already in the repository, gives 2.010 ms without backoff.
+
+Prior work, found by searching *after* the anomaly and before writing this: Bianchi, Di
+Stefano, Giaconia, Scalia, Terrazzino & Tinnirello, *Experimental assessment of the backoff
+behavior of commercial IEEE 802.11b network cards*, INFOCOM 2007. They measured this quantity
+on six cards, with an instrument built for it, and found that none of the six kept to the
+standard. It is cited where the thesis reports the spacing.
+
+## F75 — frame burst: a follow-up in which all four predictions failed, and a repeat that prevented a false claim (2026-10-09)
+
+Looking for why F73's highest load fell short: the Linux driver sets the chip's frame-burst
+mode on whenever it configures it (`brcmf_config_dongle`, kernel commit `a3bdc6d` of
+2018-12-13, "enable frameburst mode in default firmware setting"). Read from the firmware of
+both boards: 1. A radio that sends its queued frames one behind another without contending
+again would explain a model that is right at low load and too high at high load.
+
+Registered before any run with it off (`06f1bfa`,
+`docs/CONTENTION_HW_FRAMEBURST_EXPECTATIONS.md`), with a switch for it
+(`hw/channel/frameburst.sh`) whose reported value is logged before and after every session:
+
+| | prediction | measured | |
+|---|---|---|---|
+| P1 | one saturated sender, frame burst off: 2.070–2.095 ms per frame | 2.050 ms | **failed** |
+| P2 | two boards, off: the original bands | 0.321 %, 0.516 %, **0.837 %** (band from 0.848 %) | held, held, **failed** by 0.011 |
+| P3 | the repeat with it on agrees with the first run | 0.376 %, 0.483 %, **0.856 %** (band to 0.81 %) | held, held, **failed** |
+| P4 | at the highest load, off loses at least 1.5 times what on loses | 1.31 times against the first run; 0.98 against the repeat | **failed** |
+
+**Frame burst is real and changes one sender's spacing (2.019 → 2.050 ms). It has no
+demonstrated effect on the loss between two boards.** After the run with it off I was ready to
+write that it explained a third of the gap: 0.64 % had become 0.84 %. The repeat with it on,
+registered for exactly this purpose, gave 0.86 %. The difference I would have reported was the
+scatter between sessions.
+
+⚠️ The lesson is F-pattern again, at one remove: I had sized the repeat's band on losses being
+independent pairs, and they scatter more than that. P3's failure is a failure of my estimate of
+the noise, and it is the reason the pooled table of F73 quotes the scatter it found.
+
+## F76 — two saturated senders: the standard's rule, within 6 % (2026-10-09)
+
+F73 mixes two things: how two radios contend, and how one radio sends its own queued frames.
+The second is not the standard's on this chip (F74). The case that isolates the first is the
+one every textbook starts from: both stations always have a frame. Registered before its runs
+(`9a85afa`, `docs/CONTENTION_HW_SATURATED_EXPECTATIONS.md`): each board offered 400 frames/s,
+800 where the medium carries about 490; four windows with frame burst off, four with it on.
+Frames on air are read at the receiver, from the sequence numbers it spans.
+
+| | the standard's rule | frame burst off | frame burst on |
+|---|---|---|---|
+| frames on air that are lost | **11.8 %** (two stations, window 16: each attempts in a slot with probability 2/17); 11.9 % in the event model | **12.40 %** (8 values, sd 0.70) | **12.14 %** (8 values, sd 0.42) |
+| frames/s on air, per sender | 260 | 262.7 | 264.8 |
+| largest difference between the two senders | none | 2.4 % | 5.4 % |
+
+**S-P1 held: 12.4 % in a band of 7.1–16.5 %, 5.4 % above the figure itself** (3.2 % above with
+frame burst on). S-P3 held.
+S-P2 (on loses less than off) holds in sign and is inside the scatter: no effect of frame burst
+here either.
+
+⚠️ **I had written, in the registration, that I thought about 7 % the likelier outcome** —
+that the shortfall of F73 belonged to the contention. It does not. The registered reading of
+this outcome stands: *in contention this radio follows the standard; the shortfall at occupancy
+0.85 comes from how a radio sends its own queued frames.*
+
+**This is the first measurement in the project of the contention mechanism on hardware, and it
+agrees with the rule the simulated capacities use.** What it does not do:
+
+* It is two stations, saturated — the opposite corner from 124 stations at 12.5 frames/s.
+  It locates the difference of F73; it does not measure a capacity.
+* The 0.5 percentage points above the standard are of the size a single saturated sender
+  already loses with nobody to collide with (0.5–0.9 % of the frames its receiver spans, in the one-sender sessions). That is an
+  observation and nothing was registered about it.
+* Why the unsaturated loss is *above* the simulations at occupancy 0.50 is not explained.
+* One chip family, one room.
+
+What the paper may now say: with two radios the standard's contention rule was observed within
+6 % where it can be isolated; below saturation the same radios depart from the simulations by
++13 % to −44 %, because they do not space their own frames as the standard does; every
+capacity remains simulated.
+
+## F77 — the lean codec timed on the Pi 4, batch verification, and what the boards were found to be (2026-10-09)
+
+**The boards as found.** Two Raspberry Pi 4 were switched on for the night's work.
+
+* **pi-A, the board every July timing came from, had been re-installed**: Debian 13 with a
+  desktop, Python 3.13, no project environment, a new host key, `sudo` with a password. Its
+  radio firmware is the same. It was used for the radio sessions only (the session is started
+  as root through `systemd-run`; nothing was installed on it and its `sudoers` was not
+  touched).
+* **pi-B still holds July's reference software** (Debian 12, Python 3.12.13, `performance`
+  governor) and was used for the timings. Its supply sags when it boots: the kernel logs one
+  under-voltage event between 10 s and 17 s after power-up, and the firmware's flag then reads
+  `0x50000` until the next boot, both of its bits being of the kind that stay set. The bench
+  script's test for throttling *during* a run compares those bits before and after, so on this
+  board it is blind. **Validity therefore rests on two other things, both in the repository:**
+  the kernel's log, which dates the only event to the boot, 250 s before the benchmark began;
+  and the same session's signature timings, which are within 0.4 % of July's on both boards.
+* **The meter** was wired and reads plausibly on one channel. On pi-B's channel the voltage
+  read 5.03–5.08 V early in the night and 4.6–4.96 V three hours later at a similar current,
+  with the board itself reporting no under-voltage. **The sync wire from a board's GPIO17 to
+  the Arduino is not connected to either board**: both pins were pulsed and the meter's window
+  flag did not move. No energy was measured.
+
+**Step 1 of the bench session — the lean sender and receiver as they run** (`authbc-pi4b`,
+`results/hw/p1_lean.authbc-pi4b.csv`, 10 000 operations each):
+
+| | written down on 8 October | measured | |
+|---|---|---|---|
+| sender, one four-record frame | 1.0–2.5 ms | **0.868 ms** | under the range |
+| receiver, one four-record frame | 2–5 ms | **1.411 ms** | under the range |
+| nodes one core decodes and verifies for, design | 15–40 neighbours | **57 nodes** | above the range |
+| batch of 64 against one at a time, per signature | 0.45–0.60 | **0.46** (253 → 116 µs) | inside |
+
+**Two ranges were missed, on the fast side, and the reason is a baseline that was wrong.** The
+ranges were scaled from 0.42 ms and 0.90 ms "on a loaded x86 desktop". Run again on the same
+desktop with nothing else running, the same code takes 0.121 ms and 0.229 ms
+(`results/raw/p1_lean.x86-desktop.20261009.csv`; the checksums of the four operations are those
+of the board's run). The baseline was three to four times too high. The other half of the
+expectation — that interpreted code loses more on the board than a signature does — was right,
+and by more than assumed: the board is six to seven times slower than the desktop on this code
+and three times slower on an Ed25519 verification. ⚠️ Two errors again, of opposite sign; this
+time they did not cancel and the miss showed.
+
+**What it changes.** The receiver takes 5.4 times its one verification. One core of the
+interpreted prototype serves **57 nodes, not the 296** that Eq. (cpu) gives for cryptography
+alone, and the design's 124 nodes need 2.2 of the board's four cores. The paper said the
+prototype's decoding "costs several times the verification"; it now gives the number. *The
+channel binds first* is true of a compiled receiver. For the prototype on one core the
+processor binds first, and the paper and thesis ch. 8 say so.
+
+**Not done, and why:** step 0 (a reference resistor on the meter) and steps 2–3 (metering the
+lean sender; re-metering one row) need the sync wire, a decision on which board is now the
+device under test, and hands at the bench. Step 4 needs the smaller boards, which were not
+switched on.

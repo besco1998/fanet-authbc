@@ -61,7 +61,7 @@ type hints; no dead code; comments explain WHY, not what.
 - **Phase: P9 — revision after the supervisor's review (2026-10).** Branch `p9-supervisor-revision`, cut from `p8-audit-and-corrections`. Work from any machine: `git clone`, `git checkout p9-supervisor-revision`, `make setup && make all`.
 - ⚠️ **`make all` green on this machine is NOT the claim — CI green is** (2026-10-08: the gate passed here and failed on a clean install over an undeclared package). **Before every push run the WHOLE of `make all VENV=<a venv built from pip install -e '.[dev]' alone>`** — never a hand-picked subset of tests (the fix for that failure broke the build again exactly that way: a figure was regenerated and its copy in `thesis/` was not) — and do not say green until CI on the pushed commit has finished. Guards: `tests/test_declared_dependencies.py`, and no figure may embed a library version.
 - ⚠️ **TWO COPIES OF THIS FILE EXIST.** Sessions that start in `~/authbc_package` auto-load `~/authbc_package/CLAUDE.md`, which is an OLD copy. **This file, in the repository, is the status board.** A stale count read from the other one was "corrected" into the thesis on 2026-10-06 and had to be reverted.
-- **Green:** 2025 fast + **39** frozen-gate tests (**2064**), `ruff` clean, **`mypy` clean (0 / 57 files)**, paper builds (**10 pp**, **38 refs**, 0 undefined, 0 overfull, abstract **179 w** by the board's counter, about 190 as printed), methods paper 4 pp, thesis **119 pp** (54 refs, 0 overfull, 3 markers left — all Mohamed's). `make all` exit 0.
+- **Green:** 2074 fast + **39** frozen-gate tests (**2113**), `ruff` clean, **`mypy` clean (0 / 57 files)**, paper builds (**10 pp**, **40 refs**, 0 undefined, 0 overfull, abstract **179 w** by the board's counter, about 190 as printed), methods paper 4 pp, thesis **123 pp** (61 refs, 0 overfull, 3 markers left — all Mohamed's). `make all` exit 0.
 - **METHODOLOGY (Mohamed):** this is an optimization problem — *state everything, choose what to stick with, state the trade-offs for every decision*. **`docs/TRADEOFFS.md` is required reading before quoting any number.**
 - **LICENSE = all rights reserved** (© 2026 Mohamed A. Farouk). Vendored NS-3 + `signetlabdei/lorawan` stay GPLv2, **not** redistributed.
 
@@ -92,11 +92,50 @@ and bit-identical (D6).
 | "ratios are protected by construction" | **withdrawn** — the ceiling's error depends on the frame and does not cancel |
 | "Bor et al." | **Haxhibeqiri, Van den Abeele, Moerman & Hoebeke** (F49). Renamed everywhere |
 
+### ⚠️⚠️ 2026-10-09, night — THE BOARDS WERE ON: contention measured on two radios, and an August figure WITHDRAWN (F72–F77)
+
+- **Two saturated radios lose 12.4 % of frames on air; the standard's rule gives 11.8 %
+  (F76, registered `9a85afa`, HELD).** First hardware measurement of the contention mechanism.
+  ⚠️ Two stations, saturated: it is **not** a capacity. Say "within 6 %", not 5.
+- **Below saturation the registered prediction (`456a4e7`) held at two loads and FAILED at the
+  third (F73):** 0.29 / 0.51 / **0.64 %** against 0.29 / 0.64 / 1.40 %. Pooled over three
+  sessions (36 windows): 0.33 / 0.50 / 0.78 % = **1.13 / 0.79 / 0.56** times the model.
+  ⚠️ **Never quote the registered run alone** — window-to-window scatter is 0.20 pp at the top
+  load, where independent pairs would give 0.13.
+- ⚠️ **WITHDRAWN (F74): "airtime 1.995 ms against 1.99 ms predicted, 0.36 %".** Two errors that
+  cancelled: the sender's own rate (counts queued frames) and a prediction without the frame's
+  headers. On air: **2.019 ms**; the standard: **2.078 ms**. **Fourth mechanism of a plausible
+  wrong number: two errors of opposite sign.** Read a rate at the RECEIVER
+  (`analysis/frame_spacing_hw.py`); derive a predicted value a second way.
+- ⚠️ **Frame burst (F75): do NOT say it explains anything about loss.** The Linux driver turns
+  the chip's frame-burst mode on (kernel `a3bdc6d`); off, one sender's spacing moves 2.019 →
+  2.050 ms. All four registered predictions (`06f1bfa`) failed, two at the top load only, and **the registered
+  repeat is what stopped a false claim** (0.64 % on, 0.84 % off, then 0.86 % on again).
+- ⚠️ **A two-board test below saturation mixes contention with how a radio sends its OWN
+  queue** — each board must send often to fill the medium. The capacities are reached with one
+  frame per station. Three to five boards, each sending rarely, is the test that matters (G4).
+- **Lean codec on the Pi 4 (F77):** sender **0.87 ms**, receiver **1.41 ms** per four-record
+  frame = 5.4 × its verification. **One core of the prototype serves 57 nodes, not 296; 124
+  nodes need 2.2 cores.** "The channel binds first" is true of a compiled receiver only.
+  Ed25519 batch of 64: **0.46** of the cost per signature (G19 closed).
+- ⚠️ **pi-A WAS RE-INSTALLED (Debian 13, Python 3.13, `sudo` with password, hostname `pi-a`).**
+  July's reference software is now only on **pi-B** (`authbc-pi4b`, 192.168.1.20), which logs an
+  under-voltage at every boot — judge a run there by the kernel log and by the signature
+  timings, not by `get_throttled`. **The energy rig is not whole: the sync wire is on neither
+  board** (G26). No energy was measured; do not try another way without Mohamed.
+- **Five papers Mohamed downloaded were read (F72)**; Ma, Chen & Refai 2009 is credited for the
+  tie mechanism; Kurkowski 2005 is cited directly. **Bianchi et al., INFOCOM 2007** (commercial
+  cards do not keep the standard's backoff) is the prior work for F74–F75 — found by searching
+  after the anomaly and before writing.
+- Kit: `hw/channel/frameburst.sh`; a last argument `keep|0|1` on both session scripts;
+  `analysis/contention_hw.py --reduce N … --tag X | --saturated N …`;
+  `results/hw/channel/CONTENTION_RESULTS.md` is the record of the eight sessions.
+
 ### ⚠️ 2026-10-09 — "solve all the issues": what closed, and what needs a browser or the boards (F68–F71)
 
-- **Contention on radios is REGISTERED, not measured (F70).** Registration `456a4e7`,
-  `docs/CONTENTION_HW_EXPECTATIONS.md`; kit in `hw/channel/` (`run_adhoc_contention.sh` — ⚠️ never
-  run on hardware, use `probe` first); `analysis/contention_hw.py --predict|--ns3-check|--commands|--reduce`.
+- **Contention on radios was registered here (F70) and RUN the same night — see the section
+  above (F73–F76).** Registration `456a4e7`,
+  `docs/CONTENTION_HW_EXPECTATIONS.md`; kit in `hw/channel/` (`run_adhoc_contention.sh` — use `probe` first); `analysis/contention_hw.py --predict|--ns3-check|--commands|--reduce`.
   **If the boards answer `ssh pi@<addr>`, the agent can run it** — two Pi 4 suffice for the sharp
   case (no third radio, so no capture). Predicted loss with two boards: 0.29 / 0.64 / 1.40 %.
   ⚠️ The event model is **9–18 % above ns-3 at N = 2** (agrees within 5 % at 3–5): a bias at the
@@ -159,7 +198,8 @@ not merge it.** What a later session must know:
   not a doubling: stations that count down for longer wait together more often.
 - ⚠️ **The receiver-CPU figures (296 / 77 / 10) charge CRYPTOGRAPHY ONLY (F59).** The Python
   prototype's decoder costs several times the verification. "The channel binds first" is true
-  of a compiled receiver, not of the prototype. The Pi number is step 1 of the bench session.
+  of a compiled receiver, not of the prototype. **Measured 2026-10-09 (F77): the prototype
+  serves 57 nodes per core.**
 - **Records at 50 Hz (F60):** PX4 v1.17.0 in software-in-the-loop — every delta record 9 B; the
   design costs **42.47 B/record** (generator 43.25). Its 50 Hz stream holds **20.0 ms ± 0.37 ms**:
   nearer to strictly periodic senders than to the redrawn source. Two of that measurement's
@@ -167,8 +207,9 @@ not merge it.** What a later session must know:
 - **The two traffic sources have the same mean delivery (F61):** the +0.003 of seeds 1–30 did
   not replicate on 1,260 fresh runs. ⚠️ **"Capacities read from the periodic source are 1–9 %
   lower" is WITHDRAWN** — the crossing rule is unbiased; that was one fluctuation.
-- **The bench session is Mohamed's** (`hw/BENCH_SESSION.md`, five steps, expectations written
-  first). **Contention on radios waits for one or two more 5 GHz stations** (`OPEN_ITEMS` G4).
+- **The bench session** (`hw/BENCH_SESSION.md`): steps 1 and 5 were run on 2026-10-09; steps
+  0, 2, 3 wait for the rig (G26), step 4 for the smaller boards. **Contention among three to
+  five radios waits for one or two more 5 GHz stations** (`OPEN_ITEMS` G4).
 - ⚠️ **On this machine the wall clock is stepped back under load** — a timing statistic was
   lost to it. Stamp with a monotonic clock. ⚠️ **`pkill -f X` kills its own shell if X appears
   anywhere in the command line**, bracket trick or not.
@@ -245,8 +286,8 @@ baselines and implicit certificates left as stated · thesis next: **chapter 2**
 **DECIDED by Mohamed 2026-10-07 — new PDFs are not published.** Eleven of the twelve sources added in October were stripped from the branch before its first push; the unpublished commits from `e9d9e44` on were rewritten for that (dates preserved; the four pre-registration commits before it kept their hashes). ⚠️ **A new source goes in `HELD_LOCALLY.csv` and `.gitignore`, not in a commit, unless its licence allows redistribution.** A local branch `p9-backup-before-strip` still holds the old commits — **never push it.**
 
 ### Hardware 802.11 channel validation — DONE 2026-08-05 (F35), the 802.11 arm is no longer simulation-only
-- Two-Pi ad-hoc IBSS, **5 GHz ch 36**: broadcast **link loss p = 2.3 × 10⁻⁴** (99.9773 % pooled, 8 windows, σ = 0.024 pp, 0 duplicates) and **airtime 1.995 ms/frame vs 1.99 ms predicted** — an independent check on the 802.11a timing constants under Bianchi and Ma & Chen.
-- ⚠️ **One transmitter ⇒ zero contention. This does NOT validate Ma & Chen** — that stays simulation-only.
+- Two-Pi ad-hoc IBSS, **5 GHz ch 36**: broadcast **link loss p = 2.3 × 10⁻⁴** (99.9773 % pooled, 8 windows, σ = 0.024 pp, 0 duplicates) and ~~airtime 1.995 ms/frame vs 1.99 ms predicted~~ — ⚠️ **WITHDRAWN 2026-10-09 (F74): two errors that cancelled; on air it is 2.019 ms and the standard gives 2.078 ms.**
+- ⚠️ **One transmitter ⇒ zero contention.** Two radios contending were measured on 2026-10-09 (section near the top).
 - ⚠️ **Use 5 GHz, never 2.4 GHz.** A first 2.4 GHz sweep gave a tidy 97.45 % that was **saturation at the 802.11b 1 Mb/s broadcast basic rate**, not channel loss. Caught by the pre-stated prediction plus a load sweep; kept labelled as `adhoc_sweep_2g4.csv`.
 - ⚠️ `eth0` still has **no carrier** on either Pi — every session severs its own SSH path and relies on the deadman + reboot timer. **Never put a deadman marker in `/tmp`** (systemd `PrivateTmp`). Plugging in ethernet removes the whole risk class.
 
@@ -359,11 +400,11 @@ decides a headline and was never written down — defect class **C2**, the one c
 
 ### Retractions, kept visible
 **WITHDRAWN 2026-08-08 — the Direction C literature claim.** We claimed ns-3 LoRa studies do not report replication. Pre-registered threshold: abandon at ≥25 % reporting. As retrieval improved the estimate walked to **21.7 % (5/23), 95 % CI [7.5, 43.7]** — **the interval contains the threshold**, so the test cannot answer its own question. Claim cut from the paper; corpus and protocol kept in-repo as a null result. ⚠️ Two temptations resisted and recorded: the point estimate sits on the favourable side of 25 %, and the non-arXiv subset reads **28.6 %** (above threshold, p=0.61, *not* reported as a finding). Guarded by `TestDirectionCSurvey`, which fails if the claim returns.
-**T7** (capacity excludes at U≥1) · **F15** (the ≤0.36 % validation) · **F18** (I claimed we were the *more optimistic* model vs Haxhibeqiri et al. — I quoted their **pure-ALOHA** figure as their LoRa result). ⚠️ **Quoting the PDF is not enough: quote the FIGURE.**
+**T7** (capacity excludes at U≥1) · **F15** (the ≤0.36 % validation) · **F74** (the 0.36 % hardware airtime check of August — two errors that cancelled) · **F18** (I claimed we were the *more optimistic* model vs Haxhibeqiri et al. — I quoted their **pure-ALOHA** figure as their LoRa result). ⚠️ **Quoting the PDF is not enough: quote the FIGURE.**
 > ⚠️ **F18 came back.** On 2026-08-07 it was found still printed in `tab:lora-external` ("we are more optimistic" at N=5) — 100 lines below a bold sentence saying the opposite. **Retracting a finding in the register does not remove it from the paper.** When you retract, grep the paper. Guarded now by `test_no_row_revives_the_retracted_optimism_claim`, which checks the *artifact* rather than the wording.
 
 ### Where things live
-`docs/README.md` is the index. Findings **F1–F71** in `docs/audits/model_provenance.md`. Open items **only** in `docs/OPEN_ITEMS.md`. Trade-offs in `docs/TRADEOFFS.md`. Method and failed attempts in `docs/LOGBOOK.md`. **51 PDFs** in `docs/literature/` with each source's ROLE stated, and **14 more held on Mohamed's machine but NOT redistributed** (`docs/literature/HELD_LOCALLY.csv`, git-ignored files — ⚠️ never `git add -f` them); every bibliography entry is checked against its registry record by `make verify-citations` (`A3_CITATION_VERIFICATION.md` is the August record of a check that turned out not to compare authors — F49).
+`docs/README.md` is the index. Findings **F1–F77** in `docs/audits/model_provenance.md`. Open items **only** in `docs/OPEN_ITEMS.md`. Trade-offs in `docs/TRADEOFFS.md`. Method and failed attempts in `docs/LOGBOOK.md`. **51 PDFs** in `docs/literature/` with each source's ROLE stated, and **20 more held on Mohamed's machine but NOT redistributed** (`docs/literature/HELD_LOCALLY.csv`, git-ignored files — ⚠️ never `git add -f` them); every bibliography entry is checked against its registry record by `make verify-citations` (`A3_CITATION_VERIFICATION.md` is the August record of a check that turned out not to compare authors — F49).
 
 ### Deferred by Mohamed — plans written, DO NOT START unprompted
 - **Mobility (E20)** — `docs/MOBILITY_PLAN.md`. **Separate NEW scenario files**, literature survey first. Not for the 802.11 arm (Bianchi/Ma&Chen have no position term).

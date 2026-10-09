@@ -26,6 +26,10 @@ ndss2024pqv2v,doi,10.14722/ndss.2024.24267,crossref,twardokus; bindel; rahbari; 
 etsi_ts103097,document,docs/literature/etsi_ts103097_its_security_header.pdf,,etsi,,,,2015,,,document,6427327c0c8f48ff
 arxiv2510pqsib1,arxiv,2510.23457,arxiv,darzi; rahman; karim; behnia; yavuz; bertino,Saleh Darzi; Mirza Masfiqur Rahman; Imtiaz Karim; Rouzbeh Behnia; Attila A Yavuz; Elisa Bertino,1,1.00,2025,2025/2026,1,ok,4a07c46f252ee571
 almajmaie2026pqfanet,arxiv,2604.18819,arxiv,al majmaie; ghajari; bhatta; amsaad,Sufian Al majmaie; Ghazal Ghajari; Niraj Prasad Bhatta; Fathi Amsaad,1,1.00,2026,2026,1,ok,151b3fef06e1b7dd
+ma2009dsrc,doi,10.1155/2009/969164,crossref,ma; chen; refai,Xiaomin Ma; Xianbo Chen; Hazem H Refai,1,1.00,2009,2009,1,ok,21b66eb654480ed2
+xu2020clas,doi,10.1155/2020/5276813,crossref,xu; he; kumar; choo,Zhiyan Xu; Debiao He; Neeraj Kumar; Kim-Kwang Raymond Choo,1,1.00,2020,2020,1,ok,ad4ff0f8b20595f0
+liang2023clas,doi,10.1109/JSYST.2022.3180221,crossref,liang; liu,Yangfan Liang; Yining Liu,1,1.00,2023,2023,1,ok,30a74a19bc979e4e
+cahyadi2022clas,doi,10.1177/15501329221080658,crossref,cahyadi; su; yang; hwang,Eko Fajar Cahyadi; Tzu-Wei Su; Chou-Chen Yang; Min-Shiang Hwang,1,1.00,2022,2022,1,ok,f41aeafb276febad
 gupta2016uavsurvey,doi,10.1109/COMST.2015.2495297,crossref,gupta; jain; vaszkun,Lav Gupta; Raj Jain; Gabor Vaszkun,1,1.00,2016,2016,1,ok,20e8fdc463fe2b06
 wang2022clas,doi,10.1109/ACCESS.2022.3147595,crossref,wang; wang; zhang; li; luo,Huiwen Wang; Liangliang Wang; Kai Zhang; Jinguo Li; Yiyuan Luo,1,1.00,2022,2022,1,ok,aaaca458f417ebf8
 cao2021dsrc,arxiv,2102.07023,arxiv,cao; yin; hu; zhang,Liu Cao; Hao Yin; Jie Hu; Lyutianyang Zhang,1,1.00,2021,2021,1,ok,638886972f372934
@@ -64,4 +68,6 @@ reliableuplink2019,doi,10.1109/DCOSS.2019.00042,crossref,khan; jurdak; portmann,
 titolara2025interference,doi,10.3390/s25226924,crossref,tito lara; dominguez limaico; maya olalla; cuzme rodriguez,Mateo Tito-Lara; Mauricio Domínguez-Limaico; Edgar Maya-Olalla; Fabián Cuzme-Rodríguez,1,1.00,2025,2025,1,ok,56d0bf248fdedb73
 magrin2020thorough,doi,10.1109/JIOT.2019.2946487,crossref,magrin; capuzzo; zanella,Davide Magrin; Martina Capuzzo; Andrea Zanella,1,1.00,2020,2020,1,ok,a3496e3da0a55de3
 kurkowski2005incredibles,doi,10.1145/1096166.1096174,crossref,kurkowski; camp; colagrosso,Stuart Kurkowski; Tracy Camp; Michael Colagrosso,1,1.00,2005,2005,1,ok,9e3c156a27c16ea3
+bianchi2007cards,doi,10.1109/INFCOM.2007.141,crossref,bianchi; di stefano; giaconia; scalia; terrazzino; tinnirello,G. Bianchi; A. Di Stefano; C. Giaconia; L. Scalia; G. Terrazzino; I. Tinnirello,1,1.00,2007,2007,1,ok,c74b090997ec7b2d
+linuxframeburst,document,"software: torvalds/linux, commit a3bdc6deb60bf6be4405058ca49a686c4db08c39 and drivers/net/wireless/broadcom/brcm80211/brcmfmac/cfg80211.c (brcmf_config_dongle), read 2026-10-09",,feng,,,,2018,,,document,169fffb8f75d506d
 cavalcanti2018vanet,doi,10.1145/3213232.3213237,crossref,cavalcanti; de souza; spohn; gomes; costa,Elmano Ramalho Cavalcanti; Jose Anderson Rodrigues de Souza; Marco Aurelio Spohn; Reinaldo Cezar de Morais Gomes; Anderson Fabiano Batista Ferreira da Costa,1,1.00,2018,2018,1,ok,bca8b8a6c9e179da

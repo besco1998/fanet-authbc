@@ -12,6 +12,65 @@ where the durable record lives. If you want the conclusion only, follow the poin
 
 ---
 
+# 2026-10-09, night — the boards were switched on
+
+**What we were doing.** Mohamed switched on the two Raspberry Pi 4, wired the meter and
+downloaded five papers. The plan: read the papers; run the contention experiment registered
+that morning; then the bench session.
+
+**The papers (F72).** Read before anything was written from them. Nothing overturned; two
+things became firmer (the tie mechanism has two independent sources; the linear cost of
+aggregate signatures on the sender's link is one scheme's own statement).
+
+**The boards as found.** pi-A answered with a new host key: re-installed, Debian 13, Python
+3.13, `sudo` with a password. The meter read 1 V until a common ground was wired. Neither was
+worked around silently: the radio sessions on pi-A were started as root through `systemd-run`,
+nothing was installed on it, and the timings went to pi-B, which still has July's software.
+
+**The contention experiment — what was tried, in order.**
+
+1. *Probe, then the registered session.* The kit worked first time. Two points inside the
+   band, the third at 0.46 of the prediction. Losses paired by direction: collisions.
+2. *Looked for the cause instead of averaging.* First thought: the link (control: 0 lost of
+   17 600 — no). Then the model's make-up at two boards (ties and a 4 µs window — no variant
+   fitted all three points). Then **August's own files**: the receiver's timestamps put one
+   saturated sender's frames 2.019 ms apart, where the standard gives 2.078 ms.
+3. ⚠️ **A wrong turn, caught by arithmetic.** I had dismissed a "burst" explanation ten
+   minutes earlier *because* August's write-up said 1.995 ms, matching a prediction of 1.99.
+   Recomputing the prediction from the frame's real length gave 2.010 ms before any backoff —
+   more than the "measurement". Both August figures were wrong (F74). **A number I trusted
+   because it had been validated was the thing hiding the answer.**
+4. *Searched before explaining* (the rule of F65, kept this time): Bianchi et al., INFOCOM
+   2007 — six commercial cards, none keeps the standard's backoff; and the kernel commit that
+   switches Broadcom's frame burst on.
+5. *Registered a follow-up, then ran it* (`06f1bfa`): frame burst off, one sender, a repeat.
+   All four predictions failed, two of them at the top load only. ⚠️ **After the first of them I believed frame burst
+   explained a third of the gap; the repeat I had registered gave the same number with it on.**
+   Without the repeat that sentence would be in the thesis.
+6. *Registered the textbook case* (`9a85afa`), writing down that I expected about 7 %. Two
+   saturated radios lost 12.4 %; the standard gives 11.8 %. **The prediction held and my
+   expectation was wrong** — the contention is the standard's; what is not is how a radio sends
+   its own queue.
+7. ⚠️ **What I should have seen when designing the experiment:** two boards can fill the
+   medium only if each sends often, so each often holds two frames — a state the capacities
+   never visit. The "sharp" two-board case was sharp about capture and blunt about this.
+
+**The bench.** pi-B logs an under-voltage at every boot, which blinds the script's throttling
+test; validity was taken from the kernel's log and from the signature timings matching July's
+within 0.4 %. Lean sender 0.87 ms, receiver 1.41 ms: both under the ranges written down,
+because the desktop baseline had been taken on a busy machine. Batch verification 0.46,
+inside its range. **The meter's sync wire is on neither board; no energy was measured, and no
+substitute method was improvised.**
+
+**Small things that cost time.** `pkill -f` killed its own shell again (the string was in the
+command line). A backgrounded `cd … && nohup …` over ssh keeps the channel open. The boards'
+`awk` has no hex conversion. The PC slept and dropped the Arduino's USB link.
+
+**Durable record:** findings F72–F77; `results/hw/channel/CONTENTION_RESULTS.md`; the three
+registrations; `docs/OPEN_ITEMS.md` G4, G9, G19, G26, G27.
+
+---
+
 # 2026-10-09 — "solve all the issues": what could be closed from here, and what could not
 
 *Mohamed, after the audit: "solve all the issues and contradictions except the front matter".

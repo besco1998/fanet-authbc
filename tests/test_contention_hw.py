@@ -4,7 +4,8 @@ docs/CONTENTION_HW_EXPECTATIONS.md was committed before any board was switched o
 here: that the prediction file is what the model gives; that the registration quotes it; that
 the ns-3 cross-check says what the registration says it says; and that the reducer turns the
 boards' files into a delivered fraction by the definition the simulations use — on files made
-up for the purpose, since no measurement exists yet.
+up for the purpose, so that the reducer is tested apart from any measurement. The measurements
+of 2026-10-09 are held to the documents in tests/test_thesis_matches_artifacts.py.
 """
 from __future__ import annotations
 

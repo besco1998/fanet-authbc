@@ -84,3 +84,23 @@ Written after R1 and R2 were reduced. The band is the first registration's. The 
 saturated sessions was written today and tested on made-up files. The receiver program gained
 bookkeeping fields that change nothing that is counted: the first sequence number heard (before
 R2), and the time each sender was first and last heard (after R3 was started).
+
+---
+
+## Outcome — added 2026-10-09, after the runs; nothing above this line was changed
+
+Finding F76. `results/hw/channel/saturated_2nodes_fb_{off,on}.csv`, eight values each.
+
+| | predicted | frame burst off (S1) | frame burst on (S2) | |
+|---|---|---|---|---|
+| S-P1: frames on air lost | 11.8 %, band 7.1–16.5 % | **12.40 %** (sd 0.70) | 12.14 % (sd 0.42) | **held** |
+| frames/s on air per sender | 260 | 262.7 | 264.8 | — |
+| S-P2: on loses less than off | — | — | lower by 0.26 points, inside the scatter | held in sign; no effect shown |
+| S-P3: the two senders within 10 % | — | 2.4 % | 5.4 % | **held** |
+
+**My stated expectation — about 7 % — was wrong.** By the table above: in contention this
+radio follows the standard, and the shortfall at occupancy 0.85 comes from how a radio sends
+its own queued frames.
+
+⚠️ One sentence of this file, written before R3 was reduced, did not survive it: "frame burst
+accounts for part of the gap and not all of it". R3 showed no part.

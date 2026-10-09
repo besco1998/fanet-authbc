@@ -195,9 +195,12 @@ class TestWhatTheReviewAskedForIsInTheText:
 
     def test_limitations_say_what_is_simulated_and_what_is_synthetic(self) -> None:
         limits = _section("Limitations")
-        for needle in ("Contention is simulated", "Telemetry is synthetic", "Multi-hop",
+        for needle in ("Capacities are simulated", "Telemetry is synthetic", "Multi-hop",
                        "Only the sender is metered"):
             assert needle in limits, needle
+        # until 2026-10-09 this read "Contention is simulated"; two radios have since been
+        # measured, and the limitation is that no capacity has
+        assert "between two radios\nonly" in limits or "between two radios only" in limits
 
     def test_there_is_a_short_ai_statement(self) -> None:
         start = BODY.index("\\section*{Use of Generative AI}")

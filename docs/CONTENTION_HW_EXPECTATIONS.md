@@ -130,3 +130,30 @@ The session script could not be tested: no board was reachable when it was writt
 from the proven sweep script in the ways listed above, the two Python programs were exercised
 on the loopback interface, and the script has a probe mode — one short window — to be run
 first.
+
+---
+
+## Outcome — added 2026-10-09, after the run; nothing above this line was changed
+
+Run with two boards the same night (finding F73; `results/hw/channel/CONTENTION_RESULTS.md`).
+Twelve windows, all usable.
+
+| frames/s per board | predicted | band | measured | |
+|---|---|---|---|---|
+| 124 | 0.29 % | 0.18–0.40 % | 0.293 % | inside |
+| 174 | 0.64 % | 0.39–0.89 % | 0.513 % | inside |
+| 211 | 1.40 % | 0.85–1.95 % | **0.641 %** | **outside, below** |
+
+**The load-bearing prediction failed at the highest load.** Loss rises with load, as
+predicted. By the table of readings above this is "fewer collisions than the rule allows"; the
+window conditions held, which leaves "their backoff differs from the standard's". Two
+follow-ups were registered to find where: `CONTENTION_HW_FRAMEBURST_EXPECTATIONS.md` (all four
+of its predictions failed, two at the highest load only) and `CONTENTION_HW_SATURATED_EXPECTATIONS.md` (held: the
+contention itself is the standard's).
+
+Three, four and five boards were not run: two boards were switched on.
+
+⚠️ What this registration got wrong in its reasoning, seen afterwards: it called the two-board
+case "the access rule with nothing else in the way". Two boards can fill the medium only if
+each sends often, so each frequently holds two frames of its own, and how a radio sends its
+own queue is then in the way. On this chip that is not the standard's.

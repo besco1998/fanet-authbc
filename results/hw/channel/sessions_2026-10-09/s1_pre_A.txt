@@ -1,0 +1,2 @@
+pi-a 2026-10-09T04:29:18+03:00 governor performance rmem_max 4194304 temp temp=50.6'C throttled throttled=0x0 timers 0 rxsha edf4de1e97f4
+udp_before: Udp: 273938 58 0 222746 0 0 0 84490 0

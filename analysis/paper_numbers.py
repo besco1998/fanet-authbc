@@ -497,19 +497,82 @@ def validation() -> dict[str, str]:
     held = [r for r in hw if r["phase"] == "A"]
     sent = sum(int(r["sent_app"]) for r in held)
     got = sum(int(r["received_unique"]) for r in held)
-    # A single transmitter offered more than the channel carries: its achieved rate is the
-    # reciprocal of one frame's whole cycle. The prediction is the one written down before the run
-    # (results/hw/channel/RESULTS.md): DIFS 34 + preamble 20 + mean backoff 67.5 us + 1400 B at
-    # 6 Mb/s.
-    measured_ms = 1e3 / max(float(r["achieved_fps"]) for r in hw if r["phase"] == "B")
-    predicted_ms = (34 + 20 + 67.5) * 1e-3 + 1400 * 8 / 6e6 * 1e3
     exponent = math.floor(math.log10((sent - got) / sent))
     return {"valUniHi": f(max(dev["unicast"]), 2), "valUniLo": f(-min(dev["unicast"]), 2),
             "valBcast": f(max(abs(d) for d in dev["broadcast"]), 2),
-            "hwAirtime": f(measured_ms, 3), "hwAirtimeModel": f(predicted_ms, 3),
-            "hwAirtimeGap": f(100 * (measured_ms - predicted_ms) / predicted_ms, 2),
             "hwLossFrames": str(sent - got), "hwSentFrames": thousands(sent),
-            "hwLoss": f"{(sent - got) / sent / 10 ** exponent:.1f}\\times10^{{{exponent}}}"}
+            "hwLoss": f"{(sent - got) / sent / 10 ** exponent:.1f}\\times10^{{{exponent}}}",
+            **radios()}
+
+
+def radios() -> dict[str, str]:
+    """The two-radio measurements of 2026-10-09 (docs/audits/model_provenance.md F73–F76).
+
+    ⚠️ Until that day this block printed an "airtime" of 1.995 ms against 1.988 ms predicted.
+    Both figures were wrong and nearly cancelled (F74): the first was the sender's own rate, the
+    second left the frame's headers out. What is printed now is read at the receiver.
+    """
+    channel = HW / "channel"
+    spacing = rows(channel / "frame_spacing.csv")
+    on = [float(r["cycle_us"]) for r in spacing if r["frame_burst"].startswith("on")]
+    off = [float(r["cycle_us"]) for r in spacing if r["frame_burst"].startswith("off")]
+    ppdu, standard = float(spacing[0]["ppdu_us"]), float(spacing[0]["standard_cycle_us"])
+    # the registered session, then the three sessions of that night window by window
+    scored = {int(r["rate_fps_per_node"]): r for r in rows(channel / "contention_2nodes.csv")}
+    pooled: dict[int, list[float]] = defaultdict(list)
+    for name in ("contention_2nodes_windows.csv", "contention_2nodes_fb_off_windows.csv",
+                 "contention_2nodes_fb_on_repeat_windows.csv"):
+        for r in rows(channel / name):
+            pooled[int(r["rate_fps_per_node"])].append(1.0 - float(r["delivered_frac"]))
+    low, mid, high = sorted(scored)
+    if [scored[k]["inside_band"] for k in (low, mid, high)] != ["True", "True", "False"]:
+        raise ValueError("the paper says the registered prediction held at two loads of three")
+
+    def over_model(rate: int) -> float:
+        return st.mean(pooled[rate]) / float(scored[rate]["predicted_loss"])
+
+    # the two later sessions on their own, as the thesis tabulates them
+    later = {tag: {int(r["rate_fps_per_node"]): f(100 * float(r["measured_loss"]), 2)
+                   for r in rows(channel / f"contention_2nodes_{tag}.csv")}
+             for tag in ("fb_off", "fb_on_repeat")}
+    saturated = {tag: rows(channel / f"saturated_2nodes_{tag}.csv") for tag in ("fb_off", "fb_on")}
+    # Two saturated stations, a window that never doubles: each attempts in a slot with
+    # probability 2/(W+1); a collision costs both frames.
+    tau = 2.0 / (bianchi.W + 1)
+    collision = tau * tau / (1.0 - (1.0 - tau) ** 2)
+    standard_loss = 2 * collision / (1 + collision)
+    return {
+        "hwCycleOn": f(st.median(on) / 1e3, 3), "hwCycleOff": f(st.mean(off) / 1e3, 3),
+        "hwCycleStd": f(standard / 1e3, 3),
+        "hwGapOn": f(st.median(on) - ppdu, 0), "hwGapOff": f(st.mean(off) - ppdu, 0),
+        "hwGapStd": f(standard - ppdu, 1),
+        "hwContLow": f(100 * float(scored[low]["measured_loss"]), 2),
+        "hwContMid": f(100 * float(scored[mid]["measured_loss"]), 2),
+        "hwContHigh": f(100 * float(scored[high]["measured_loss"]), 2),
+        "hwContHighRatio": f(float(scored[high]["measured_loss"])
+                             / float(scored[high]["predicted_loss"]), 2),
+        "hwPoolWindows": str(sum(len(v) for v in pooled.values())),
+        "hwPoolLow": f(100 * st.mean(pooled[low]), 2),
+        "hwPoolMid": f(100 * st.mean(pooled[mid]), 2),
+        "hwPoolHigh": f(100 * st.mean(pooled[high]), 2),
+        "hwPoolLowRatio": f(over_model(low), 2), "hwPoolMidRatio": f(over_model(mid), 2),
+        "hwPoolHighRatio": f(over_model(high), 2),
+        "hwOffLow": later["fb_off"][low], "hwOffMid": later["fb_off"][mid],
+        "hwOffHigh": later["fb_off"][high],
+        "hwRepLow": later["fb_on_repeat"][low], "hwRepMid": later["fb_on_repeat"][mid],
+        "hwRepHigh": later["fb_on_repeat"][high],
+        "hwPoolSdHigh": f(100 * st.stdev(pooled[high]), 2),
+        "hwSatStd": f(100 * standard_loss, 1),
+        # frames on air per sender: one transmission event lasts the idle slots before it, the
+        # frame and DIFS, and carries one frame or, in a collision, two
+        "hwSatRateStd": f((1 + collision) / 2
+                          / ((1 - tau) ** 2 / (1 - (1 - tau) ** 2) * bianchi.SLOT
+                             + bianchi.t_broadcast(1428)), 0),
+        "hwSatOff": f(100 * st.mean(float(r["loss"]) for r in saturated["fb_off"]), 1),
+        "hwSatOn": f(100 * st.mean(float(r["loss"]) for r in saturated["fb_on"]), 1),
+        "hwSatRateOff": f(st.mean(float(r["air_fps"]) for r in saturated["fb_off"]), 0),
+        "hwSatRateOn": f(st.mean(float(r["air_fps"]) for r in saturated["fb_on"]), 0),
+    }
 
 
 # ============================================================================== exclusion, LoRa
@@ -881,8 +944,50 @@ def signed(percent: float) -> str:
     return ("+" if percent >= 0 else "$-$") + f(abs(percent), 1)
 
 
+def prototype() -> dict[str, str]:
+    """The lean sender and receiver as they run on the Pi 4, and Ed25519 in batches (F77).
+
+    Measured on `authbc-pi4b` on 2026-10-09: the board that still held the reference software.
+    Its signature timings in the same session are within 0.4 % of the other board's, which
+    `timings()` uses. The receive time is the whole path — decode, rebuild, hash, verify — and
+    the node count it gives is the prototype's, beside Eq. (cpu)'s cryptography-only ceiling.
+    """
+    lean = {(r["op"], int(r["agg_b"])): float(r["median_ns"]) * 1e-9
+            for r in rows(HW / "p1_lean.authbc-pi4b.csv")}
+    same_session = {(r["scheme"], r["op"]): float(r["median_ns"]) * 1e-9
+                    for r in rows(HW / "p1_crypto.authbc-pi4b.20261009.csv") if not r["agg_b"]}
+    reference = {(r["scheme"], r["op"]): float(r["median_ns"]) * 1e-9
+                 for r in rows(HW / "p1_crypto.authbc-pi4a.csv") if not r["agg_b"]}
+    drift = max(abs(same_session[k] / reference[k] - 1) for k in reference if k in same_session)
+    if drift > 0.01:
+        raise ValueError("the two boards' primitive timings differ by more than 1 %: the lean "
+                         "timings may not be quoted beside the reference board's")
+    cfg = yaml.safe_load((REPO / "experiments" / "design-ladder" / "config.yaml").read_text())
+    (rate,) = [float(lam) for label, lam, _d in cfg["operating_points"] if label == "adopted"]
+    batch = 4
+    per_neighbour = rate / batch * lean[("frame_receive", batch)]      # seconds of CPU per second
+    design = one(rows(RAW / "design_ladder.csv"), op="adopted", format="lean",
+                 rung="batch-delta", scheme="ed25519")
+    batches = {int(r["batch"]): float(r["median_ns_per_sig"])
+               for r in rows(HW / "ed25519_batch.authbc-pi4b.csv")}
+    return {
+        "leanSendMs": f(1e3 * lean[("frame_send", batch)], 2),
+        "leanRecvMs": f(1e3 * lean[("frame_receive", batch)], 2),
+        "leanSendOneMs": f(1e3 * lean[("frame_send", 1)], 2),
+        "leanRecvOneMs": f(1e3 * lean[("frame_receive", 1)], 2),
+        "leanRecvOverVerify": f(lean[("frame_receive", batch)]
+                                / same_session[("ed25519", "verify")], 1),
+        "ncpuProto": str(1 + math.floor(1.0 / per_neighbour)),
+        "cpuProtoCores": f((int(design["n_max_v95"]) - 1) * per_neighbour, 1),
+        "edBatchOneUs": f(batches[1] / 1e3, 0), "edBatchManyUs": f(batches[64] / 1e3, 0),
+        "edBatchRatio": f(batches[64] / batches[1], 2),
+        "edBatchFourRatio": f(batches[4] / batches[1], 2),
+    }
+
+
 SECTIONS = (frames, ladder, loss, stream, freshness, phy, energy, timings, flight_logs,
-            validation, exclusion, low_rate, source_study, capacity_rule, capacity_model, sitl)
+            validation, exclusion, low_rate, source_study, capacity_rule, capacity_model, sitl,
+            prototype)
 
 
 def macros() -> dict[str, str]:
