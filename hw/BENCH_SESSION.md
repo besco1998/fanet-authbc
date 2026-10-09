@@ -197,3 +197,32 @@ git push
 Add the files **by name**, as above — never `git add .` in this repository. Then tell the agent
 the session is done. It reduces the files, compares each figure with the table at the top, and
 updates the paper's CPU and energy rows; the response to the supervisor goes out after that.
+
+## Expected of the re-timing of 2026-10-09 — the receiver keeps frames (audit F80, G28)
+
+*Written before either run below. Mohamed's go-ahead of 2026-10-09: the receiver is to keep
+every accepted frame, and the two frames of an equivocation, so that what it holds can be
+checked by a third party. That adds work to the receive path whose time is in the paper
+(1.411 ms for a four-record frame, 0.653 ms for one record; 57 nodes per core).*
+
+Board: `authbc-pi4b`, governor `performance`, nothing else running, `hw/run_micro.sh` as in
+step 1. Two runs in one session, so that the change is compared with the board as it is today
+and not with the morning's session.
+
+| run | code | expected |
+|---|---|---|
+| control | the receiver as timed this morning (`session_v2.py`, `store.py` unchanged; checked by hash on the board) | `frame_receive` within ±2 % of the morning's medians: **1.383–1.439 ms** (four records), **0.640–0.666 ms** (one) |
+| new | the receiver that keeps frames | `frame_receive` between **1.00 and 1.02 times the control**, both batch sizes. The change is four dictionary look-ups and four dictionary entries per four-record frame; I expect +3 to +12 µs |
+| both | — | `frame_send` within ±1 % of each other: the sender's code is not touched |
+
+**Consequence if it holds.** One core serves 1 + ⌊1/(12.5 · t)⌋ nodes: **57** while t ≤ 1.4286 ms,
+56 above it. The morning's 1.4112 ms leaves 1.2 %.
+
+**If the control is outside its range:** the board is not in the state it was timed in. Say so,
+and compare the new code with today's control only; the morning's figure is then not repeated
+as if it still stood. **If the new code is above 1.02:** reported as it is, with the nodes per
+core it gives; the code is not tuned to get under.
+
+**What the paper will use.** The receiver's times from the new run — the code that is in the
+repository. The sender's times stay the morning's: its code is unchanged, and the energy runs
+of this sheet were registered against exactly those figures.
