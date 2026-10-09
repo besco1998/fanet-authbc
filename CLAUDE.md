@@ -61,7 +61,7 @@ type hints; no dead code; comments explain WHY, not what.
 - **Phase: P9 — revision after the supervisor's review (2026-10).** Branch `p9-supervisor-revision`, cut from `p8-audit-and-corrections`. Work from any machine: `git clone`, `git checkout p9-supervisor-revision`, `make setup && make all`.
 - ⚠️ **`make all` green on this machine is NOT the claim — CI green is** (2026-10-08: the gate passed here and failed on a clean install over an undeclared package). **Before every push run the WHOLE of `make all VENV=<a venv built from pip install -e '.[dev]' alone>`** — never a hand-picked subset of tests (the fix for that failure broke the build again exactly that way: a figure was regenerated and its copy in `thesis/` was not) — and do not say green until CI on the pushed commit has finished. Guards: `tests/test_declared_dependencies.py`, and no figure may embed a library version.
 - ⚠️ **TWO COPIES OF THIS FILE EXIST.** Sessions that start in `~/authbc_package` auto-load `~/authbc_package/CLAUDE.md`, which is an OLD copy. **This file, in the repository, is the status board.** A stale count read from the other one was "corrected" into the thesis on 2026-10-06 and had to be reverted.
-- **Green:** 2209 fast + **41** frozen-gate tests (**2250**), `ruff` clean, **`mypy` clean (0 / 57 files)**, paper builds (**10 pp**, **40 refs**, 0 undefined, 0 overfull, abstract **178 w** by the board's counter, 183 by the paper test's, which counts a macro as a word), methods paper 4 pp, thesis **126 pp** (61 refs, 0 overfull, 3 markers left — all Mohamed's). `make all` exit 0.
+- **Green:** 2224 fast + **41** frozen-gate tests (**2265**), `ruff` clean, **`mypy` clean (0 / 57 files)**, paper builds (**11 pp**, **44 refs**, 0 undefined, 0 overfull, abstract **178 w** by the board's counter, 183 by the paper test's, which counts a macro as a word), methods paper 4 pp, thesis **128 pp** (65 refs, 0 overfull, 3 markers left — all Mohamed's). `make all` exit 0.
 - **METHODOLOGY (Mohamed):** this is an optimization problem — *state everything, choose what to stick with, state the trade-offs for every decision*. **`docs/TRADEOFFS.md` is required reading before quoting any number.**
 - **LICENSE = all rights reserved** (© 2026 Mohamed A. Farouk). Vendored NS-3 + `signetlabdei/lorawan` stay GPLv2, **not** redistributed.
 
@@ -121,7 +121,17 @@ and bit-identical (D6).
   line, ≤ 0.8 % from the access-rule model. ⚠️ The deadlines 60 / 80 / 180 ms are NOT operating
   points of this work: only the channel was evaluated at them. Appendix B now lists **twenty**
   registrations (seven failed in whole or in part, unchanged).
-- **Still open from the review:** G33 (optional), G34 (four related-work gaps, none held).
+- **Four sources read and cited (F83, G34 closed):** frame aggregation (Skordoulis 2008 —
+  802.11n aggregates **exclude broadcast**, which is why batching at the application is not
+  redundant; ⚠️ the fixed-cost argument is prior art, do not claim it), erasure-coded stream
+  authentication (Pannetrat & Molva 2003), ADS-B (Strohmeier 2015), age of information (Yates
+  2021). ⚠️ **The freshness bound D(b) IS the peak age of information** when no frame is lost
+  — an observation from the survey's definition, not a result of ours.
+- **The no-fit closed form is quoted in the paper (F83, G33 closed):** 5.5 % (mean 2.3 %),
+  generated. **Nothing from the review of F80 is open.** Not held (closed access): Kaul 2012,
+  Park 2003 (SAIDA).
+- ⚠️ **The paper is 11 pages since F83** (it had been held at 10). No page count is fixed: the
+  venue is a journal and the class changes then.
 
 ### ⚠️⚠️ 2026-10-09, night — THE BOARDS WERE ON: contention measured on two radios, and an August figure WITHDRAWN (F72–F79)
 
@@ -461,7 +471,7 @@ decides a headline and was never written down — defect class **C2**, the one c
 > ⚠️ **F18 came back.** On 2026-08-07 it was found still printed in `tab:lora-external` ("we are more optimistic" at N=5) — 100 lines below a bold sentence saying the opposite. **Retracting a finding in the register does not remove it from the paper.** When you retract, grep the paper. Guarded now by `test_no_row_revives_the_retracted_optimism_claim`, which checks the *artifact* rather than the wording.
 
 ### Where things live
-`docs/README.md` is the index. Findings **F1–F82** in `docs/audits/model_provenance.md`. Open items **only** in `docs/OPEN_ITEMS.md`. Trade-offs in `docs/TRADEOFFS.md`. Method and failed attempts in `docs/LOGBOOK.md`. **51 PDFs** in `docs/literature/` with each source's ROLE stated, and **20 more held on Mohamed's machine but NOT redistributed** (`docs/literature/HELD_LOCALLY.csv`, git-ignored files — ⚠️ never `git add -f` them); every bibliography entry is checked against its registry record by `make verify-citations` (`A3_CITATION_VERIFICATION.md` is the August record of a check that turned out not to compare authors — F49).
+`docs/README.md` is the index. Findings **F1–F83** in `docs/audits/model_provenance.md`. Open items **only** in `docs/OPEN_ITEMS.md`. Trade-offs in `docs/TRADEOFFS.md`. Method and failed attempts in `docs/LOGBOOK.md`. **51 PDFs** in `docs/literature/` with each source's ROLE stated, and **20 more held on Mohamed's machine but NOT redistributed** (`docs/literature/HELD_LOCALLY.csv`, git-ignored files — ⚠️ never `git add -f` them); every bibliography entry is checked against its registry record by `make verify-citations` (`A3_CITATION_VERIFICATION.md` is the August record of a check that turned out not to compare authors — F49).
 
 ### Deferred by Mohamed — plans written, DO NOT START unprompted
 - **Mobility (E20)** — `docs/MOBILITY_PLAN.md`. **Separate NEW scenario files**, literature survey first. Not for the 802.11 arm (Bianchi/Ma&Chen have no position term).

@@ -167,6 +167,16 @@ with a periodic signature packet, and TESLA replaces the signature by a MAC whos
 later~\cite{perrig2000emss,perrig2002tesla}; TBRD applies TESLA to UAS Remote ID and reports
 about half the overhead of signatures~\cite{veara2025tbrd}.
 
+A further family recovers from loss with erasure codes. Pannetrat and Molva hash every packet
+of a block, sign the block, and spread the hashes and the signature over the block's own
+packets with two erasure codes, so that the block verifies whenever no more than a chosen share
+of its packets is lost~\cite{pannetrat2003multicast}. The overhead is small where blocks are
+long: with a $128$\,B signature and $16$\,B hashes, $2$\,B per packet for blocks of $128$
+packets that may lose $5\%$ of them, and $10$\,B for blocks of sixteen. The price is a latency
+of one block at the receiver, or a buffer of one block at the sender, and a packet that cannot
+be verified without others of its block. They compare with an earlier scheme of the same
+family, SAIDA, which was not obtained for this thesis.
+
 All of these spread \emph{one authenticator across packets}, and so make packets depend on each
 other or on a later one. This thesis does the opposite: it puts \emph{several records in one
 packet}, which is possible only because a telemetry record is a small fraction of a frame. Each
@@ -196,6 +206,13 @@ insurance. They are also exactly the relaxations under which the exclusion of
 The difference in regime is the point. At fifty records a second under a deadline of a tenth of
 a second there is no time in which to collect nine pages, and a record that is verified only
 when a later manifest arrives is, for that deadline, a record not yet verified.
+
+Civil aviation has the same disproportion in a harsher form. An ADS-B message on $1090$\,MHz
+is $112$ bits, of which $56$ are free for data and are normally occupied by position.
+Strohmeier, Lenders and Martinovic survey the proposals to secure it: a public-key scheme must
+distribute one signature over several messages, which receivers buffer until the last has
+arrived, or change the message format~\cite{strohmeier2015adsb}. That is once more a signed
+unit spread over frames.
 
 
 \subsection{Certificates}
@@ -298,6 +315,22 @@ check the analysis against a simulation the authors wrote. \Cref{sec:why} builds
 mechanism and adds a second, which neither has: the few microseconds in which a transmission
 that has begun cannot yet be sensed. Two further analyses that Cao \emph{et al.} cite were not
 obtained.
+
+\subsection{Frame aggregation}\label{sec:bg-aggregation}
+
+That every frame pays a fixed cost in preamble, inter-frame space and backoff, and that the
+cost is best paid once for several payloads, is the principle of frame aggregation in
+IEEE~802.11n. Skordoulis \emph{et al.} describe its two forms and simulate a point-to-point
+link on which aggregation raises the saturated throughput about four and a half times for
+packets of $1000$\,B~\cite{skordoulis2008aggregation}. Both forms carry frames for one
+receiver. The subframes of an A-MSDU must share the receiver's address, and the authors say in
+terms that broadcasting or multicasting is not allowed; the frames of an A-MPDU must be
+addressed to the same receiver as well. A broadcast sender cannot use either. Batching records
+at the application is how this thesis obtains the same effect for broadcast frames, and
+\Cref{ch:codesign} shows it to be the larger part of the capacity gain: sharing a frame alone
+takes the capacity from \nmaxLeanBase{} to \nmaxLeanInline{} nodes before any signature is
+shared. One detail of the standard is this thesis's freshness constraint in another setting:
+an A-MSDU is closed when it is full or when the delay of its oldest packet reaches a set value.
 
 \section{LoRa and LoRaWAN capacity}
 

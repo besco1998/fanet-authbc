@@ -269,7 +269,9 @@ the frame and keeps a signature per record, already reaches \nmaxLeanInline{} no
 \stepSignLean$\times$.
 Every frame pays a preamble, an inter-frame space, a backoff and MAC framing whatever its length
 --- about \fixedCost\,\si{\micro\second}, \fixedSharePct\% of what a baseline frame costs the
-channel --- so removing three frames in four is worth more than their bytes.
+channel --- so removing three frames in four is worth more than their bytes. It is the cost
+that frame aggregation amortises in 802.11n for frames addressed to one receiver
+(\Cref{sec:bg-aggregation}); a broadcast sender has only the application to do it with.
 
 \subsection{A rule for the crossing, and the test it was put to}\label{sec:line}
 
@@ -535,7 +537,7 @@ frame at rate $(N-1)f$. Hence
 \label{eq:why}
 \end{equation}
 With $W = 16$ and no free constant this puts the \modelCells{} simulated crossings within
-$5.5\%$, its error ordered by frame length: the time counters take to run down, which the queue
+\closedWorst\% (mean \closedMean\%), its error ordered by frame length: the time counters take to run down, which the queue
 ignores, is a larger share of a short frame.
 
 \paragraph{What the fitted slope was.} To first order the tie term of \Cref{eq:why} is

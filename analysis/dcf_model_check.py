@@ -75,6 +75,27 @@ def _driver():
     return drv
 
 
+def closed_form_crossing(fps: float, t_s: float, w: int = model.W0, level: float = 0.05,
+                         detect_s: float = 2 * model.DETECT_S) -> float:
+    """The neighbourhood at which the closed form of docs/02 §6g reaches ``level`` loss.
+
+    loss(N) = ρ·[1 − (1 − 1/W)^(ρ/(1−ρ))] + (N − 1)·f·c,   ρ = (N − 1)·f·T
+
+    The first term counts ties among stations that wait together, the second the window in
+    which a station cannot yet sense another. Nothing is fitted: W, the window c and T are the
+    standard's and the simulator's. Loss increases in N below ρ = 1, so the root is bracketed.
+    """
+    def loss(n: float) -> float:
+        rho = (n - 1) * fps * t_s
+        return rho * (1 - (1 - 1 / w) ** (rho / (1 - rho))) + (n - 1) * fps * detect_s
+
+    lo, hi = 2.0, 1.0 + 0.999 / (fps * t_s)
+    for _ in range(80):
+        mid = (lo + hi) / 2
+        lo, hi = (mid, hi) if loss(mid) < level else (lo, mid)
+    return lo
+
+
 def _one(job: tuple[str, int, int, int]) -> tuple[str, int, int, float, int, int, int]:
     cell, n, w0, seed = job
     c = _driver().CELLS[cell]

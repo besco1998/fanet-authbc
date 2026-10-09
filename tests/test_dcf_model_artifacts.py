@@ -140,18 +140,6 @@ class TestWhatDocs02SaysOfTheDerivation:
 
     DOC = (REPO / "docs" / "02_MATHEMATICAL_FOUNDATIONS.md").read_text()
 
-    @staticmethod
-    def _closed_form_crossing(fps: float, t_s: float, w: int = 16, level: float = 0.05) -> float:
-        def loss(n: float) -> float:
-            rho = (n - 1) * fps * t_s
-            return rho * (1 - (1 - 1 / w) ** (rho / (1 - rho))) + (n - 1) * fps * 8e-6
-
-        lo, hi = 2.0, 1.0 + 0.999 / (fps * t_s)          # loss is increasing in n below rho = 1
-        for _ in range(80):
-            mid = (lo + hi) / 2
-            lo, hi = (mid, hi) if loss(mid) < level else (lo, mid)
-        return lo
-
     def test_the_closed_form_is_within_5_5_percent_of_every_crossing(self) -> None:
         import run_nmax_direct as drv
 
@@ -159,7 +147,7 @@ class TestWhatDocs02SaysOfTheDerivation:
         errors = []
         for cell, r in CROSSINGS.items():
             c = drv.CELLS[cell]
-            x = self._closed_form_crossing(c.fps, bianchi.t_broadcast(c.frame_bytes))
+            x = check.closed_form_crossing(c.fps, bianchi.t_broadcast(c.frame_bytes))
             errors.append(100 * (x / float(r["ns3_crossing"]) - 1))
         assert max(abs(e) for e in errors) == pytest.approx(5.5, abs=0.05)
         assert sum(abs(e) for e in errors) / len(errors) == pytest.approx(2.3, abs=0.06)

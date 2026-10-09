@@ -21,6 +21,25 @@ of `LOGBOOK.md` is that pass.
 
 **What is waiting, in the order it should be done:**
 
+00. ⚠️ **2026-10-09, afternoon — the paper was reviewed as a supervisor would review it, and
+   Mohamed's five decisions on the review were carried out** (findings F80–F82; branch
+   `p10-followups`). What changed that a new session must know:
+   * **The receiver keeps frames** (F81). Before, nothing it held could be checked by a third
+     party. Receive time on the Pi is **1.43 ms** per four-record frame; **57 nodes per core
+     stands by 0.18 %**. A test holds the hashes of the three source files as timed: change one
+     and the time must be measured again on the board.
+   * **The exclusion is "eight: five in any format, three in ours"**, under five conditions.
+   * **Two certificate columns**: per five frames, and per 500 ms (159.93 / 51.41 B per record).
+   * **Batches of two, three and eight records were simulated** (F82), six predictions
+     registered first, all held. The rule and the model now hold across the batch.
+   * **Nothing from the review is open** (F83): four sources for the related-work gaps were
+     obtained from open copies, read and cited (frame aggregation, erasure-coded stream
+     authentication, ADS-B, age of information), and the no-fit closed form (5.5 %) is quoted.
+     The paper is 11 pages. Two papers are still wanted and closed access: Kaul et al. 2012
+     and Park et al. 2003 (`docs/literature/README.md`).
+   * **What the review said is still weakest, and no decision of that day removes:** every
+     capacity is of one idealised collision domain, and hardware supports the access rule at
+     saturation only (G4, three to five radios).
 0. ⚠️ **2026-10-09, night — read this before the items below.** The boards were on. **Contention
    was measured between two radios** (findings F73–F76): the standard's rule holds within 6 %
    for two saturated senders; a registered prediction below saturation held at two loads and
@@ -108,7 +127,7 @@ cd fanet-authbc && git checkout p8-audit-and-corrections
 make setup && make all          # green == you have reproduced the deterministic layer
 ```
 
-`make all` = lint + mypy + 2209 fast tests + the 41-test frozen gate. NS-3 and the Pi rig are
+`make all` = lint + mypy + 2224 fast tests + the 41-test frozen gate. NS-3 and the Pi rig are
 optional (`docs/05_REPRODUCTION_GUIDE.md`). ⚠️ A fresh clone has **no NS-3 tree** — it is gitignored
 by design. Fetch it from the **GitLab** archive; `nsnam.org/releases/...` returns an HTML error page.
 
@@ -225,7 +244,7 @@ audit spent its time removing.
 | # | work | why | effort |
 |---|---|---|---|
 | ~~6~~ | ~~PQC extension section~~ | **DONE** — Limitations §, backed by `results/raw/pqc_projection.csv` | — |
-| 7 | References **40** rendered in the revised paper (69 in the shared bibliography; **46** before the October rewrite) → 45–60 | 29→39 done from held+read sources; the rest needs sourcing **and reading** | 1 wk |
+| 7 | References **44** rendered in the revised paper (73 in the shared bibliography; **46** before the October rewrite) → 45–60 | 29→39 done from held+read sources; the rest needs sourcing **and reading** | 1 wk |
 | ~~S9~~ | ~~Re-state or drop the pre-registration claim~~ | **DONE (F40)** — withdrawn, not reconstructed | — |
 
 ### Optional

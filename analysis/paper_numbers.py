@@ -882,7 +882,16 @@ def capacity_model() -> dict[str, str]:
         raise ValueError("the text says the fitted slope is the tie term at the mean occupancy "
                          f"of the crossings; {slope:.4f} against {fitted:.4f}")
     ties = [float(r["model_tie_share"]) for r in points]
+    # The closed form of docs/02 §6g, solved for 5 % loss with nothing fitted, against the same
+    # crossings. In the documents since F5; quoted in the paper since the review of F80 (G33).
+    import dcf_model_check as rule
+    closed = [100.0 * abs(rule.closed_form_crossing(
+        drv.CELLS[r["cell"]].fps, bianchi.t_broadcast(drv.CELLS[r["cell"]].frame_bytes))
+        / float(r["ns3_crossing"]) - 1.0) for r in crossings]
+    if max(closed) > 6.0:
+        raise ValueError("the text says the closed form is within a few percent of every crossing")
     return _model_predictions() | {
+            "closedWorst": f(max(closed), 1), "closedMean": f(st.mean(closed), 1),
             "modelCells": str(len(crossings)), "modelPoints": str(len(points)),
             "modelWorst": f(max(errors), 1), "modelMean": f(st.mean(errors), 1),
             "modelMaxDiff": f(max(abs(float(r["difference"])) for r in points), 3),

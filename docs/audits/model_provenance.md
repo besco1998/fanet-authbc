@@ -4137,3 +4137,54 @@ channel was evaluated at them.
 **One thing about method.** The scoring function was tightened after two cells were complete
 and before anything was written, so that an unfinished grid cannot be scored. It was the right
 change and it was made after data had been looked at; both are said in the outcome section.
+
+## F83 — the review's last two items: four sources read and cited, and the closed form quoted (2026-10-09)
+
+*Mohamed: "yes for both" — open items G34 and G33 of the review of F80.*
+
+### The four bodies of work a networking reviewer would look for (G34)
+
+Each was looked up in an open registry, fetched from a legitimately open copy, read, and only
+then cited. All four are held locally and not redistributed (`docs/literature/HELD_LOCALLY.csv`,
+now 24 files); the register says which parts of each were read and quotes the page.
+
+| topic | source obtained | what the paper now says, and on what |
+|---|---|---|
+| frame aggregation | Skordoulis et al., IEEE Wireless Commun. 2008 — read in full | Removing three frames in four "is the principle of frame aggregation in 802.11n, whose aggregates are addressed to one receiver and exclude broadcast; batching at the application gives a broadcast sender the same effect." The source: an A-MSDU's subframes must share the receiver's address, "Thus, broadcasting or multicasting is not allowed" (p. 44) |
+| erasure-coded stream authentication | Pannetrat & Molva, NDSS 2003 — read in full | Added to the stream-signing schemes with a figure from its Table 1: 10 B per packet for blocks of sixteen at 5 % loss, at a latency of one block. It is the loss recovery that condition (iii) of the exclusion sets aside |
+| ADS-B authentication | Strohmeier, Lenders & Martinovic, COMST 2015 — §II-B and the cryptography part of §IV read | "ADS-B is the extreme case: its 112-bit messages leave 56 bits for data, and proposals for public-key authentication distribute one signature over several messages that receivers buffer" |
+| age of information | Yates et al., JSAC 2021 (survey) — §I, §II-A/B, opening of §III, §VII-A read | The freshness bound is named for what it is: a bound on **peak age** at a receiver that loses no frame |
+
+**The one thing reading produced that was not expected.** The survey defines peak age as the
+delay of the previous update plus the interval between deliveries (its Eq. 6). With one frame
+every b/Λ and a frame's newest record delayed by T_ch + t_v, that is b/Λ + T_ch + t_v — the
+paper's D(b), with the b/Λ that F43a kept as a "worst case" and could justify only by sampling
+quantisation. The convention is what a peak-age bound requires. ⚠️ This is an observation from
+the survey's definition, made after the convention was chosen; the age-of-information work on
+batching was **not** surveyed, and nothing is claimed as new. The thesis says it "does not
+change the convention; it says what the convention bounds".
+
+**Where the review's own point lands.** The review said about three fifths of the capacity gain
+is frame aggregation, a known effect. The paper now says so in the sentence that reports the
+gain, cites the source, and says why the standard's mechanism is not available to a broadcast
+sender. That is a narrower claim than before and a more defensible one.
+
+**Not obtained, so not cited:** Kaul, Yates & Gruteser 2012 (the paper the survey calls the
+start of the field) and Park, Chong & Siegel 2003 (SAIDA). Both are closed access. The register
+lists them as wanted; `tests/test_citations.py` holds that neither is in the bibliography.
+
+### The closed form with nothing fitted (G33)
+
+The paper's "Why the crossing is there" paragraph now gives the exact count,
+ρ[1 − (1 − 1/W)^(ρ/(1−ρ))], and the figure: with the detection term and nothing fitted, the
+eighteen crossings within **5.5 %** (mean 2.3 %). The numbers are generated
+(`closedWorst`, `closedMean`); the function has one definition, in `analysis/dcf_model_check.py`,
+which the test that held it since F5 now calls. The three batch-size cells of F82 are not among
+the eighteen: they were compared with the fitted line and the event model, as registered.
+
+### What it cost
+
+The paper is **11 pages** (44 references), where it had been held at 10. Nothing fixes a page
+count: the venue decided on 2026-10-08 is a journal and the class changes then. Getting back to
+10 would mean removing about 250 words of content, which was not done. The thesis is 128 pages
+(65 references).

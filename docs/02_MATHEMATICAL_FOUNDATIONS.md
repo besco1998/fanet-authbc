@@ -220,7 +220,7 @@ only how the space above the floor is used. Each term is evaluated at its smalle
 exclusion is made against the smallest frame the format can emit **at all**, not against the
 frames one telemetry stream happened to produce.
 
-**Scope — four conditions, each necessary.**
+**Scope — five conditions, each necessary** (four until 2026-10-09; the fifth is audit F80).
 1. *The payload limit is the link's.* The limits below are LoRaWAN's regional parameters. The raw
    LoRa PHY carries 255 B at every spreading factor and is not excluded by them.
 2. *One public-key signature in every frame.* A symmetric tag is smaller and authenticates a
@@ -230,6 +230,13 @@ frames one telemetry stream happened to produce.
 4. *ε ≤ p.* This is what closes fragmentation: a unit spanning n frames verifies with probability
    (1 − p)^n, so V ≥ 1 − ε requires n ≤ ⌊ln(1 − ε)/ln(1 − p)⌋, which is 1 exactly when ε ≤ p.
    At p = 0.01 and ε = 0.05 a unit may span five frames and a signature *can* be split.
+5. *The frame is this format.* The signature tier holds in any format: 64 B does not fit 51 B.
+   The 115 B rates are different. A signature and a SHA-256 value are 96 B and leave **19 B**;
+   the lean header at its floor (16 B) and the framing of the link field (3 B) are exactly 19.
+   A hand-packed layout would leave part of those bytes for a record — fewer than the 24.0 B
+   this telemetry's keyframe averages, so the rates stay out of reach *for this telemetry*, but
+   not "whatever the telemetry". Of the eight exclusions, five are the problem's and three are
+   the format's (`paper_numbers.exclusion` holds 19 = 16 + 3 with a guard).
 
 **Four nested tiers, each naming what a redesign would have to change** (`FlatLayout.exclusion`):
 
@@ -255,7 +262,8 @@ header, link and signature alone are a whole 115 B payload. The first format's f
 | *802.11* | 1500 B | feasible | |
 
 **Eight of twelve are excluded, in both formats and under both payload tables**, and none of the
-eight depends on the telemetry: each is against the format's floor.
+eight depends on the telemetry: each is against the format's floor. **Five are excluded in any
+format; three depend on this one** (condition 5). Quote the count with that split.
 
 **What each relaxation buys** (same artifact):
 

@@ -329,4 +329,15 @@ choice is stated: the tight reading admits $b = 5$ at both operating points
 (\bprLeanFive\,B per record, $-\saveLeanFive\%$) where the worst case admits $b = 4$
 (\bprLeanDesign\,B, $-\saveLean\%$). \textbf{This thesis under-reports its own saving by about
 \saveFiveGain{} percentage points.}
+
+The retained quantity has a name in the literature on timeliness. The \emph{age of
+information} at a receiver is the time since the newest update it holds was generated, and its
+\emph{peak}, reached the instant before the next update arrives, is the delay of the previous
+update plus the interval between deliveries~\cite{yates2021aoi}. With one frame every
+$b/\Lambda_i$ and a frame's newest record delayed by $T_{\mathrm{air}} + W_q$, that peak is
+$b/\Lambda_i + T_{\mathrm{air}} + W_q$: the $D(b)$ above, exactly, when no frame is lost. The
+constraint of this thesis is therefore a bound on peak age, where that literature mostly
+minimises an average; the survey lists the probability that the peak age exceeds a threshold as
+a metric of its own. This reading was found on 2026-10-09, after the convention had been
+chosen. It does not change the convention; it says what the convention bounds.
 \end{remark}

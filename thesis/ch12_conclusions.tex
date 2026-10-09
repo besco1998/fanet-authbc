@@ -101,7 +101,8 @@ sensor never checked against a reference load; the lean sender costs \enLeanOver
 first format's energy per record in this prototype; and the first format's composed energy is a
 lower bound by roughly $7$--$14\%$, the residual being uncharged prototype framing overhead. The receiver-CPU ceilings charge cryptography only, and the
 prototype's decoder costs several times more (\Cref{ch:codesign}). Capacity was simulated at
-one PHY rate.
+one PHY rate, and for batches other than one record and four only as a test of the capacity
+rule (\Cref{tab:batchdim}): nothing else was evaluated at them.
 
 \subsection{The low-rate arm}
 
@@ -112,9 +113,11 @@ confidence interval is a knife edge.
 \subsection{The boundary itself}
 
 The exclusion is conditional: on LoRaWAN's regional payload limits, on a public-key signature in
-every frame, on no loss recovery, and on a verifiability target no looser than the loss rate. It
-was also stated wrongly twice before reaching its present form (\Cref{sec:excl-history}), and a
-reader is entitled to weigh that. What has not moved in any version is the part that rests on one
+every frame, on no loss recovery, on a verifiability target no looser than the loss rate, and,
+for \exclFmtCount{} of its \exclCount{} data rates, on the frame format of this thesis. It was
+also stated wrongly twice before reaching its present form (\Cref{sec:excl-history}), and
+narrowed a third time when a review of 2026-10-09 separated what belongs to the problem from
+what belongs to the format; a reader is entitled to weigh that. What has not moved in any version is the part that rests on one
 inequality: $64 > 51$.
 
 \subsection{Security scope}

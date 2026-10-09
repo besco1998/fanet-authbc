@@ -84,13 +84,14 @@ class TestWhatCannotBeCheckedSaysSo:
 
 
 class TestWhatIsHeldButNotRedistributed:
-    """Eleven PDFs were kept out of the public repository on 2026-10-07, and three more, read on
-    2026-10-08 and 2026-10-09, joined them. "Held and read" must
+    """Eleven PDFs were kept out of the public repository on 2026-10-07; more, read on
+    2026-10-08 and 2026-10-09, joined them — the last four for the related-work gaps a review
+    of the paper named (audit F83). "Held and read" must
     still be checkable: the manifest gives each file's SHA-256, and wherever the file is present
     it has to be that file."""
 
     def test_the_manifest_is_well_formed(self) -> None:
-        assert len(HELD_LOCALLY) == 20
+        assert len(HELD_LOCALLY) == 24
         for name, row in HELD_LOCALLY.items():
             assert name.endswith(".pdf") and re.fullmatch(r"[0-9a-f]{64}", row["sha256"]), name
             assert int(row["bytes"]) > 0 and row["obtain_from"] and row["document"], name
@@ -225,3 +226,72 @@ class TestTheComparisonCatchesWhatItWasBuiltFor:
         for field, value in (("author", "Someone, Else"), ("title", "Another title"),
                              ("year", "1999"), ("doi", "10.1/x")):
             assert vc.fingerprint({**base, field: value}) != vc.fingerprint(base)
+
+
+class TestTheFourSourcesAReviewNamedAsMissing:
+    """Audit F83 (open item G34). A review of the paper listed four bodies of work a networking
+    reviewer would look for. Each was obtained from an open copy and read before it was cited.
+    Held here: that each is cited for what its register entry says was read in it, with the
+    figure or the words quoted from it, and that what was NOT obtained is not cited."""
+
+    PAPER = re.sub(r"\s+", " ", (REPO / "paper" / "main.tex").read_text(encoding="utf-8"))
+    BACKGROUND = re.sub(r"\s+", " ", (REPO / "thesis" / "ch02_background.tex").read_text())
+    THEORY = re.sub(r"\s+", " ", (REPO / "thesis" / "ch04_theory.tex").read_text())
+    REGISTER = (LITERATURE / "README.md").read_text(encoding="utf-8")
+    KEYS = ("skordoulis2008aggregation", "pannetrat2003multicast", "strohmeier2015adsb",
+            "yates2021aoi")
+
+    def test_each_is_held_read_and_cited_in_both_documents(self) -> None:
+        thesis = self.BACKGROUND + self.THEORY
+        held = {row["bib_key"] for row in HELD_LOCALLY.values()}
+        for key in self.KEYS:
+            assert key in ENTRIES and key in held, key
+            assert f"{key}}}" in self.PAPER and f"{key}}}" in thesis, key
+        assert self.REGISTER.count("`READ 2026-10-09`") >= 4
+
+    def test_aggregation_is_cited_for_excluding_broadcast_in_its_own_words(self) -> None:
+        assert "whose aggregates are addressed to one receiver and exclude " \
+               "broadcast~\\cite{skordoulis2008aggregation}" in self.PAPER
+        assert '"Thus, broadcasting or multicasting is not allowed" (p. 44)' in self.REGISTER
+        assert "broadcasting or multicasting is not allowed" in self.BACKGROUND
+
+    def test_the_erasure_code_scheme_is_cited_with_a_figure_of_its_table(self) -> None:
+        """Its Table 1: 128 B signature, 16 B hashes, blocks of 16 packets, 5 % loss: 10 B."""
+        assert "for 10\\,B per packet in blocks of sixteen at 5\\% loss and a latency of one " \
+               "block~\\cite{pannetrat2003multicast}" in self.PAPER
+        assert "**10 B per packet for blocks of 16 at p = 0.05**" in self.REGISTER
+
+    def test_ads_b_is_cited_for_its_fifty_six_bits(self) -> None:
+        assert "its 112-bit messages leave 56 bits for data" in self.PAPER
+        assert '"only the 56 bit ME field can be used to transmit arbitrary data" (p. 2)' \
+            in self.REGISTER
+
+    def test_the_freshness_bound_is_named_a_peak_age_only_where_no_frame_is_lost(self) -> None:
+        assert "the bound is on the \\emph{peak age} of information~\\cite{yates2021aoi} at a " \
+               "receiver that loses no frame" in self.PAPER
+        assert "exactly, when no frame is lost" in self.THEORY
+        assert "It does not change the convention; it says what the convention bounds." \
+            in self.THEORY
+        assert "it is not a result of ours" in self.REGISTER
+
+    def test_what_was_not_obtained_is_not_cited(self) -> None:
+        """Kaul et al. 2012 and Park et al. 2003 are closed access; the survey and Pannetrat &
+        Molva stand in their place, and the register says so."""
+        bib = (REPO / "paper" / "refs.bib").read_text(encoding="utf-8")
+        for doi in ("10.1109/INFCOM.2012.6195689", "10.1145/762476.762480"):
+            assert doi not in bib
+            assert doi in self.REGISTER
+        assert "SAIDA, which was not obtained for this thesis" in self.BACKGROUND
+
+
+class TestTheClosedFormIsQuotedFromTheGeneratedNumbers:
+    """Open item G33: in docs/02 and under test since follow-up F5; in the paper since F83."""
+
+    def test_the_paper_gives_the_exact_form_and_both_figures(self) -> None:
+        paper = re.sub(r"\s+", " ", (REPO / "paper" / "main.tex").read_text(encoding="utf-8"))
+        numbers = dict(re.findall(r"\\newcommand\{\\(\w+)\}\{(.*)\}",
+                                  (REPO / "paper" / "numbers.tex").read_text(encoding="utf-8")))
+        assert (numbers["closedWorst"], numbers["closedMean"]) == ("5.5", "2.3")
+        assert "with the detection term and nothing fitted, solving it for 5\\% gives the " \
+               "\\modelCells{} crossings within \\closedWorst\\% (mean \\closedMean\\%)" in paper
+        assert "$\\rho\\,[1-(1-1/W)^{\\rho/(1-\\rho)}]$" in paper

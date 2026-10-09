@@ -120,9 +120,11 @@ packet the hashes needed to reach the root~\cite{wong1999flows}: each packet ver
 the signing cost is amortised but the bytes are not. EMSS tolerates loss by carrying several
 hashes per packet and a periodic signature packet, and TESLA replaces the signature by a MAC
 whose key is disclosed later~\cite{perrig2000emss,perrig2002tesla}; TBRD applies TESLA to UAS
-Remote ID and reports about half the overhead of signatures~\cite{veara2025tbrd}. These schemes
-spread \emph{one authenticator across packets}, so packets depend on each other or on a later
-one. We put \emph{several records in one packet}, which a small telemetry record allows: each
+Remote ID and reports about half the overhead of signatures~\cite{veara2025tbrd}. Erasure codes
+spread a block's hashes and signature over its packets so that the block verifies when enough
+of them arrive, for 10\,B per packet in blocks of sixteen at 5\% loss and a latency of one
+block~\cite{pannetrat2003multicast}. These schemes spread \emph{one authenticator across
+packets}, so packets depend on each other or on a later one. We put \emph{several records in one packet}, which a small telemetry record allows: each
 frame stays self-verifying and the cost moves to latency, at the sender. TESLA delays
 verification at the receiver instead, and a disclosed MAC key gives no non-repudiation, which a
 ledger needs. Section~\ref{sec:clas} places these schemes at our operating point.
@@ -146,7 +148,9 @@ G{\"u}ndo{\u{g}}an \emph{et al.} find 9\,B of application data left beside an Ed
 an 802.15.4 frame~\cite{gundogan2021firmware}, and post-quantum signatures do not fit one 5G
 broadcast block~\cite{arxiv2510pqsib1}. For Remote~ID, a 64-octet signature is paged over
 25-octet Bluetooth frames with a parity page~\cite{rfc9575}: the spreading and recovery that
-our scope excludes. Compact encodings~\cite{rfc8949} and delta coding of time
+our scope excludes. ADS-B is the extreme case: its 112-bit messages leave 56 bits for data, and
+proposals for public-key authentication distribute one signature over several messages that
+receivers buffer~\cite{strohmeier2015adsb}. Compact encodings~\cite{rfc8949} and delta coding of time
 series~\cite{pelkonen2015gorilla} are established; a lossy link limits how far a delta chain may
 run (Sec.~\ref{sec:loss}).
 
@@ -293,8 +297,10 @@ D(b) = \frac{b}{\Lambda} + T_{ch} + t_v \;\leq\; D_{\max}.
 \end{equation}
 Fill time dominates. At both operating points $\Lambda D_{\max} = 5$: five records fill in exactly
 $D_{\max}$ and leave nothing for the channel, so $b \leq 4$ whatever the encoding or the scheme.
-Equation~\eqref{eq:fresh} counts the whole filling period $b/\Lambda$, because a record may
-describe a state up to one sampling interval old; counting only the wait $(b-1)/\Lambda$ would
+Equation~\eqref{eq:fresh} counts the whole filling period $b/\Lambda$. A record may describe a
+state up to one sampling interval old; and with $b/\Lambda$ the bound is on the \emph{peak age}
+of information~\cite{yates2021aoi} at a receiver that loses no frame: the delay of a frame's
+newest record plus the interval to the next frame. Counting only the wait $(b-1)/\Lambda$ would
 admit $b=5$ and \bprLeanFive\,B per record. The 1500\,B MTU would admit \mtuRecsFirst{} records in the first format and \mtuRecsLean{} in
 the lean one.
 
@@ -620,7 +626,10 @@ frames: row~6, which shares the frame but not the signature, already reaches \nm
 \stepSignLean$\times$.
 Each frame pays a preamble, an inter-frame space, a backoff and MAC framing whatever its
 length --- about \fixedCost\us, \fixedSharePct\% of what a baseline frame costs the channel ---
-so removing three frames in four is worth more than their bytes.
+so removing three frames in four is worth more than their bytes. This is the principle of
+frame aggregation in 802.11n, whose aggregates are addressed to one receiver and exclude
+broadcast~\cite{skordoulis2008aggregation}; batching at the application gives a broadcast
+sender the same effect.
 
 These figures hold the mean over runs to the 0.95 target. Requiring that 95\% of individual
 runs reach it gives \nrunLeanBase{} and \nrunLeanDesign{} (\nrunFirstBase{} and
@@ -662,6 +671,9 @@ $a = \rho/(W(1-\rho))$, which is \modelSlope{} at $\rho = \modelRho$, the mean o
 which loss reaches 5\%. This mechanism is known from analyses of vehicular safety
 broadcast~\cite{ma2009dsrc,cao2021dsrc}. In the second, which those analyses do not contain, a
 station decides to send within the 4\us{} in which it cannot yet sense another: that is $c$.
+Without the first-order step, the count is $\rho\,[1-(1-1/W)^{\rho/(1-\rho)}]$; with the
+detection term and nothing fitted, solving it for 5\% gives the \modelCells{} crossings within
+\closedWorst\% (mean \closedMean\%).
 
 An event simulation of the access rule alone, with nothing fitted and none of the simulator's
 code, reproduces all \modelCells{} simulated crossings within \modelWorst\%. For crossings that

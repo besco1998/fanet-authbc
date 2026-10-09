@@ -12,6 +12,44 @@ where the durable record lives. If you want the conclusion only, follow the poin
 
 ---
 
+# 2026-10-09, evening — the review's last two items: four sources read, the closed form quoted (F83)
+
+**What we were doing.** Mohamed: "yes for both" — the four related-work gaps and the no-fit
+closed form.
+
+**How the sources were found and obtained.** Each of the four starting papers was looked up in
+OpenAlex for an open copy (no account, no e-mail in the request). Two had one: a university
+repository copy of the aggregation paper, and an arXiv version of the ADS-B survey. Two were
+closed (Kaul 2012, Park 2003), so I looked for an open source that covers the same ground and
+found the survey by the first paper's own group (arXiv) and Pannetrat & Molva on the NDSS
+site, which also describes Park's scheme. Each file went into its own empty folder, was
+checked to be the paper it claimed to be, and was read as extracted text. Nothing behind a
+login was fetched.
+
+**Read before written.** Two were read whole (8 and 12 pages). For the two surveys (22 and 30
+pages) I read the sections that bear on this paper and recorded which in the register — the
+rule for long sources since Bianchi 2007. Every sentence the paper gained quotes a figure or a
+phrase I can point to a page for.
+
+**What reading changed.** I expected four sentences of positioning. The age-of-information
+survey gave more: its *peak age* is our freshness expression term for term, including the
+b/Λ that the thesis had kept as a "worst case" without a better reason than sampling
+quantisation. I checked the identity against the survey's Eq. 6 before writing it, and wrote
+it as what it is — an observation from someone else's definition, made late.
+*And one sentence I had drafted was wrong until I read the paper:* I had meant to write that
+802.11n aggregation "is not used for broadcast". The source is stronger and more specific:
+the aggregate formats require one receiver address, and it says so in terms. The sentence
+quotes that.
+
+**The page count.** Five sentences and four references took the paper from 10 pages to 11.
+I had trimmed twice that day to hold 10 and looked for a third 250 words; what was left to cut
+was content. No decision fixes a page count, so it stays at 11 and is reported.
+
+**Record:** F83; `docs/literature/README.md` (the 2026-10-09 section); `HELD_LOCALLY.csv` (24);
+`tests/test_citations.py::TestTheFourSourcesAReviewNamedAsMissing`.
+
+---
+
 # 2026-10-09, later — the review's five decisions carried out (F81, F82)
 
 **What we were doing.** Mohamed: "go ahead for decisions 1–5" — the receiver keeps frames; other

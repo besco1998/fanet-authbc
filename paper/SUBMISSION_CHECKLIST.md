@@ -93,7 +93,8 @@ the current draft; switch the class before a journal submission and re-check the
 * Built as a frame format with sender and receiver; sizes are emitted frames
 * A frame that depends on its predecessor misses its verifiability target
 * Capacity found by direct simulation per configuration, with bootstrap intervals
-* Eight of twelve EU863-870 LoRaWAN data rates cannot carry one signed, chained frame
+* Eight of twelve EU863-870 LoRaWAN data rates cannot carry one signed, chained frame: five
+  cannot hold the signature in any format, three more cannot hold this frame (since 2026-10-09)
 
 ### ⚠️ SUPERSEDED highlights (the paper as it was in 2026-08)
 
