@@ -3748,3 +3748,102 @@ processor binds first, and the paper and thesis ch. 8 say so.
 lean sender; re-metering one row) need the sync wire, a decision on which board is now the
 device under test, and hands at the bench. Step 4 needs the smaller boards, which were not
 switched on.
+
+## F78 — the hardware side audited: July's energy figures reproduce from their raw captures; today's rig was faulty twice; six things corrected (2026-10-09)
+
+Asked: *make sure the hardware implementation and validation is correct, uses the correct
+implementation and tools, and is honest.* The sync wire had just been attached to pi-B and the
+sensor confirmed as an INA219 with a 0.1 Ω shunt. What was checked, and what each check found.
+
+**1. The published energy figures are reproducible from their raw captures — verified, and now
+a test.** The paper's energy table is built from `results/hw/energy/e2e/energy_*.csv`. Those
+are reductions of a capture of the meter and a manifest the board wrote. Re-running
+`hw/ina219_capture.py --reduce` on the five stored pairs of July gives the five stored files
+**row for row**; one repetition recomputed without the reducer agrees to nine digits. ⚠️ Until
+today **no test ran any of the three energy scripts**: a change to the reducer, or a stored
+file edited by hand, would have gone unseen. `tests/test_energy_reduction.py` now does.
+
+**2. July's rig was sound, by the quantities that show a bad one.** From the raw captures:
+voltage steady to 1 mV within a run; no dependence on the sync line (−1 to −4 mV); a real sag
+of 67–75 mV for +150 mA, 0.45–0.49 Ω of source resistance; the chip's power register equal to
+voltage × current to 0.2 mW; sixty-second windows the same by the meter's clock and the
+board's to 0.02 %; firmware flag `0x0` and governor `performance` in every window of the two
+reported rows.
+
+**3. The sensor is configured for the shunt it has.** The sketch calls the library's
+`setCalibration_32V_2A`, whose calibration word 4096 is `0.04096 / (100 µA × 0.1 Ω)`: it is
+correct for a 0.1 Ω shunt and for no other. Each reading is one 12-bit conversion of 532 µs —
+a sample, not an average — which is unbiased for a loop that runs back to back, and the thesis
+now says so. ⚠️ None of this is a calibration: the gain has never been checked against a known
+load (G22).
+
+**4. Today's rig was not sound, twice, and neither fault shows in an energy run.**
+
+* *A loose ground.* With the sync wire on pi-B, the voltage reading of pi-B's channel fell by
+  0.29 V whenever the sync line was high, at unchanged current — five cycles of five, ±10 mV —
+  and wandered by 50–110 mV when idle. The meter's ground and the board's were joined through
+  about a kilohm. Power is voltage × current: every energy figure would have been wrong by an
+  amount depending on the load. Re-seated by Mohamed; the shift is now +5 mV.
+* *A weak feed.* With the ground sound, four busy cores draw 1.17 A, the supply falls to 4.73 V
+  at the sensor, and 40 ms later the board has throttled itself to 0.56 A; the kernel logs the
+  under-voltage at that second. With one core busy it holds 4.97 V. Three tries of three.
+  **Not fixed as of this writing.**
+* *Where the weakness is.* The other board, fed through the other sensor, was given the same
+  four busy cores: 5.01 V at 1.07 A, no under-voltage. **The board sees 0.19 Ω through sensor 2
+  and 0.47 Ω through sensor 1.** It is the sensor-1 branch — its leads, its connectors or its
+  supply port — and not the board on it. ⚠️ July's captures were made on that branch and show
+  the same 0.45–0.49 Ω. July's windows loaded one core and none was throttled, so the published
+  figures stand; but the rig that produced them would, on this evidence, also have failed the
+  four-core line of today's check, which nobody ran then.
+
+**No energy was measured.** `hw/rig_check.py` — written today, before the second fault was
+seen — requires no under-voltage in any phase, and the rig failed it. The rule was not relaxed
+for a single-core measurement on the morning it first fired. ⚠️ **That is a choice with a cost,
+and it is Mohamed's to revisit:** every energy window loads one core, each window is guarded on
+its own by the board's log, and by every meter-side number today's rig equals July's. A rule
+that asked only for a clean idle phase and a clean one-core phase would pass it. It would also
+be a rule changed after seeing what it blocked. The clean way out is physical: feed the board
+through the branch that holds.
+
+**5. Six things corrected.**
+
+| what | was | is |
+|---|---|---|
+| the manifest of the design row's run (`manifest_d1_reduced.json`) | the run wrote no host, interpreter or time; they were added by hand in July, and two were wrong: Python **3.11.2**, and a local time labelled UTC | Python 3.12.13 and the time in the original file's name, with a note in the file saying what was entered by hand and why it is now believed. **Evidence:** the same pipeline on pi-B under 3.12.13 runs at 98.9 % of that run's frame rate (and the control row at 99.6 %); pi-B's system Python 3.11.2 cannot import the crypto library. No measured value changed — a test compares every window with the file the run wrote |
+| "the model composed from separately measured times **and powers**" (paper, thesis ch. 8) | read as an independent check of the model | the power in the model is the **median of the same metered runs**; the comparison tests the composition of the times and cannot test the power. Both documents say so |
+| "the lean codec has not been timed on the board" (paper, thesis ch. 8) | stale since this morning (F77) — two sentences the pass of that morning missed | timed, 0.87 ms; not metered |
+| `validate_energy_e2e.py` | described itself as running "at a fixed record rate"; had a `--no-verify` flag that could not be switched off | a tight loop, as it always was; the flag and an unused argument removed |
+| the radio's power, 0.218 W (thesis ch. 6; the paper's modelled end-to-end figures) | "that of the radio while it receives", with nothing about how it was got | what `results/hw/energy/p_radio_w.md` records: the *receiving board's* added power under a saturated **unicast** stream on **2.4 GHz**, **two** repetitions (0.205 and 0.231 W) — so it includes the processor's share of receiving and the acknowledgements sent, and is applied to unacknowledged broadcast on 5 GHz. Stated in both documents; it enters only figures labelled as modelled |
+| the lean sender's energy | absent: the energy table is of the first format and the text did not say what the reported design costs | printed as an estimate — time on one board × power metered on the other: **about 163 µJ per record against the table's 58**, 284 against 119 unbatched. A remark in thesis ch. 8 says no row of the thesis has both the lean format's bytes and a metered energy |
+
+Finding F14 of July says the mismatch between manifest and reducer was "fixed at source rather
+than by hand-editing the artifact". That is true of the script and of the three later runs.
+The first run's manifest *was* completed by hand, and the original is kept beside it.
+
+**6. Two tools added, so that the next session cannot repeat today.**
+
+* `hw/rig_selftest.py` on the board and `hw/rig_check.py` on the host: a 25-second sequence —
+  idle, one core, every core, each with the sync line high — and nine pass/fail limits taken
+  from July's captures. `tests/test_rig_check.py` runs it on captures made up to have exactly
+  one fault each. `hw/RIG.md` makes it a condition of every session.
+* The window validity test now counts the kernel's under-voltage events as well as reading
+  the firmware's flags. On a board whose supply dips at boot the flags are set for good and
+  could not see a later dip; the count can.
+
+**7. Checked and found sound, with nothing to change:** the timing harness (warm-up outside the
+timed region, garbage collection off, a checksum that defeats elision, a monotonic clock); the
+lean receiver's timing, which raises if any frame is not fully accepted, so a rejection path
+cannot be what is timed; the radio kit's counting, which reads loss at the receiver and frames
+on air from the sequence numbers spanned.
+
+**Later the same morning: the rig passes.** Mohamed swapped the two boards' supplies and
+sensors, which puts pi-B on the branch that holds. The check of 05:12 UTC passes every line:
+1 mV of movement with the sync line, full power with every core busy (+3.49 W at 5.07 V), no
+under-voltage since boot, 0.18 Ω, and one busy core adding 0.757 W where July's constant is
+0.749 W. The same capture judged as the other channel fails the line that identifies the board,
+as it should. (On the way: on a board just booted the script's fallback for driving the sync
+pin gave up a fraction of a second before the system made the pin writable. It now waits.)
+The energy runs follow, with what is expected of each written in `hw/BENCH_SESSION.md` and
+committed before the first of them.
+
+**What is still not established:** the sensor's gain (G22).

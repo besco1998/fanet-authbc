@@ -112,6 +112,34 @@ class TestWhatTheDocumentsQuote:
         assert NUMBERS["leanSendOneMs"] == f"{LEAN[('frame_send', 1)]:.2f}" == "0.38"
         assert NUMBERS["leanRecvOneMs"] == f"{LEAN[('frame_receive', 1)]:.2f}" == "0.65"
 
+    def test_the_lean_senders_energy_is_printed_as_an_estimate_and_is_what_it_says(self) -> None:
+        """Time on one board times the power metered on the other: not a meter reading, and
+        2.4 to 2.8 times the first format's metered figure in the same table."""
+        paper = re.sub(r"\s+", " ", (REPO / "paper" / "main.tex").read_text(encoding="utf-8"))
+        for b, macro in ((4, "leanSendUj"), (1, "leanSendOneUj")):
+            assert NUMBERS[macro] == f"{0.749 * LEAN[('frame_send', b)] * 1e3 / b:.0f}"
+        assert (NUMBERS["leanSendUj"], NUMBERS["leanSendOneUj"]) == ("163", "284")
+        assert 2.7 < 163 / float(NUMBERS["enDesignMeas"]) < 2.9
+        assert 2.3 < 284 / float(NUMBERS["enBaseMeas"]) < 2.5
+        assert "an estimate from a time on one board and a power on the other, not a meter " \
+               "reading" in CODESIGN
+        assert "two and a half to three times its counterpart in the table" in CODESIGN
+        assert "is timed on the board (\\leanSendMs\\,ms per four-record frame) and not metered" \
+            in paper
+        assert "in this prototype, the slower to run" in paper
+
+    def test_neither_document_still_says_the_lean_codec_is_untimed(self) -> None:
+        paper = (REPO / "paper" / "main.tex").read_text(encoding="utf-8")
+        assert "has not been timed" not in paper and "has not been timed" not in CODESIGN
+
+    def test_the_energy_comparison_is_described_as_a_test_of_times(self) -> None:
+        """The model's power is the median of the metered runs themselves."""
+        paper = re.sub(r"\s+", " ", (REPO / "paper" / "main.tex").read_text(encoding="utf-8"))
+        assert "the median over these same metered runs, so the comparison tests the times" in paper
+        assert "The comparison therefore tests the times, not the power" in CODESIGN
+        method = re.sub(r"\s+", " ", (REPO / "thesis" / "ch06_methodology.tex").read_text())
+        assert "it cannot test the power" in method
+
     def test_the_receiver_costs_five_times_its_verification(self) -> None:
         verify_ms = _crypto("p1_crypto.authbc-pi4b.20261009.csv")[("ed25519", "verify")] / 1e6
         assert NUMBERS["leanRecvOverVerify"] == f"{LEAN[('frame_receive', 4)] / verify_ms:.1f}"

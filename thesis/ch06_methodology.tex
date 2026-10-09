@@ -174,7 +174,9 @@ SHA-256 of one record & \multicolumn{2}{r}{\tHash\,\si{\micro\second}} \\
 Energy is measured outside the board. An INA219 current and voltage sensor with a
 $0.1\,\Omega$ shunt sits in the board's $5$\,V supply and is read fifty times a second by a
 microcontroller, which has no operating system to perturb the schedule and adds no load to the
-device under test. The board marks the start and end of each measurement window on a GPIO line
+device under test. Each reading is one conversion of about half a millisecond --- a sample, not
+an average --- so the mean over a window is the mean power only if the load does not repeat in
+step with the sampling; a loop that runs back to back does not. The board marks the start and end of each measurement window on a GPIO line
 that the microcontroller records with every sample, so the samples that belong to a window are
 known without aligning two clocks.
 
@@ -185,8 +187,13 @@ window,
 E_{\mathrm{op}} = \frac{(\bar P_{\mathrm{load}} - \bar P_{\mathrm{idle}})\; t_{\mathrm{load}}}{n} .
 \]
 Each configuration is measured five times and the median is reported with the range. The board
-is checked for thermal throttling before and after every window and a flagged window is not
-used. The harness prints the value it \emph{expects} before it reads the meter, so that a
+is checked for throttling before and after every window --- by the firmware's flags and, since
+October 2026, by the kernel's count of under-voltage events, which still moves once the flags
+are set --- and a flagged window is not used. Before a session the rig itself is put through a
+fixed sequence (\texttt{hw/rig\_check.py}): the voltage reading must not move with the state of
+the marking line, the supply must hold with every core busy, and the board must log no
+under-voltage. The captures of July pass the meter's part of that test; a rig that fails is not
+measured on. The harness prints the value it \emph{expects} before it reads the meter, so that a
 measurement cannot be quietly fitted to expectation.
 
 \subsection{The model the meter is compared with}
@@ -205,7 +212,16 @@ the meter forced. It had no hashing term, although every record is hashed once b
 extend the chain and once by the receiver to check it. And its processor power had been taken
 as the median over isolated primitives, $0.634$\,W; metered on four composed pipelines the
 power is $0.749$\,W, the four agreeing within $3.8\%$, so one constant is adequate; the
-composed value is $18\%$ above the earlier one.
+composed value is $18\%$ above the earlier one. Two of those four pipelines are the rows of
+\Cref{tab:energy}. The power in the model is thus the median of the very runs it is set beside:
+what that table tests is the composition of the times, and it cannot test the power.
+
+The radio's power is the weakest of the model's inputs and enters only the figures that are
+labelled as modelled. $P_r$ is the power the \emph{receiving board} added while a saturated
+unicast stream arrived on the $2.4$\,GHz band: two repetitions of thirty seconds, $0.205$ and
+$0.231$\,W. It therefore includes the processor's share of receiving and the acknowledgements
+that radio sent, and it is applied here to broadcast frames on $5$\,GHz, which are not
+acknowledged. It has not been measured in the configuration it is used for.
 
 \subsection{Uncertainty of the energy figures}\label{sec:energy-uncertainty}
 

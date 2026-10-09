@@ -970,7 +970,13 @@ def prototype() -> dict[str, str]:
                  rung="batch-delta", scheme="ed25519")
     batches = {int(r["batch"]): float(r["median_ns_per_sig"])
                for r in rows(HW / "ed25519_batch.authbc-pi4b.csv")}
+    # ⚠️ An ESTIMATE, labelled so wherever it is printed: the lean sender's time on one board
+    # times the processor power metered on the other board of the same model. Not a meter
+    # reading — the lean sender has not been metered (docs/OPEN_ITEMS.md G9).
+    power = yaml.safe_load((REPO / "experiments" / "energy-table" / "config.yaml").read_text())
+    estimate = {b: power["p_cpu_w"] * lean[("frame_send", b)] / b * 1e6 for b in (1, batch)}
     return {
+        "leanSendUj": f(estimate[batch], 0), "leanSendOneUj": f(estimate[1], 0),
         "leanSendMs": f(1e3 * lean[("frame_send", batch)], 2),
         "leanRecvMs": f(1e3 * lean[("frame_receive", batch)], 2),
         "leanSendOneMs": f(1e3 * lean[("frame_send", 1)], 2),

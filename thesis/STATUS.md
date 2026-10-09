@@ -27,7 +27,7 @@ Read the section *Hardware* of chapter 9 before the supervisor does.
 | 3 | System Model and Threat Model | audited | — |
 | 4 | Theoretical Framework | audited; two figures and one theorem statement corrected (F64); worked examples for T2 and T4 | — |
 | 5 | Implementation | **expanded**: package figure, one frame byte by byte, receiver outcomes, test layers | — |
-| 6 | Experimental Methodology | **expanded**: generator, how a capacity is read, timings, energy rig, uncertainty | the energy sensor's calibration (G22) — a bench step |
+| 6 | Experimental Methodology | **expanded**: generator, how a capacity is read, timings, energy rig, uncertainty; says since 2026-10-09 that the energy table tests times and not power, and describes the rig check | the energy sensor's calibration (G22); a rig that passes its check (G26) |
 | 7 | Results I | audited | — |
 | 8 | Results II | audited; RQ3 now has its numbers; prior work for the derivation credited (F65); **the lean codec timed on the board and Ed25519 batch verification measured (F77)** — the prototype's receiver serves 57 nodes per core | the lean sender's energy is not metered (G9, G26) |
 | 9 | Model validation and hardware | **hardware section rewritten 2026-10-09**: link loss; a withdrawn airtime figure (F74); one radio's frame spacing; two radios at a set load (F73, F75); two saturated radios (F76) | three to five radios (G4); the cause of the shortfall below saturation (G27) |
@@ -51,6 +51,11 @@ Read the section *Hardware* of chapter 9 before the supervisor does.
   a correction.
 * **"Your prototype cannot keep up with 124 nodes on one core."** True: 57. Ch. 8 gives the
   number and says the ceilings are for a compiled receiver.
+* **"Your energy table is not of the design you report."** True. It is of the first format; the
+  lean sender is timed, not metered, and by its timing costs about 163 µJ per record against
+  the table's 58. Ch. 8 says so in a remark.
+* **"Is your meter-against-model comparison circular?"** In its power, yes, and ch. 6 says so:
+  the model's power is the median of the metered runs. What the table tests is the times.
 * **"Sixty-one references is few."** Every one was read at source. Raising the number means
   reading more, not listing more (G23).
 * **"Chapter 11 is unusual."** It is deliberate. It now says where it sits in the literature.

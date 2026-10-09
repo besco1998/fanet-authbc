@@ -61,7 +61,7 @@ type hints; no dead code; comments explain WHY, not what.
 - **Phase: P9 — revision after the supervisor's review (2026-10).** Branch `p9-supervisor-revision`, cut from `p8-audit-and-corrections`. Work from any machine: `git clone`, `git checkout p9-supervisor-revision`, `make setup && make all`.
 - ⚠️ **`make all` green on this machine is NOT the claim — CI green is** (2026-10-08: the gate passed here and failed on a clean install over an undeclared package). **Before every push run the WHOLE of `make all VENV=<a venv built from pip install -e '.[dev]' alone>`** — never a hand-picked subset of tests (the fix for that failure broke the build again exactly that way: a figure was regenerated and its copy in `thesis/` was not) — and do not say green until CI on the pushed commit has finished. Guards: `tests/test_declared_dependencies.py`, and no figure may embed a library version.
 - ⚠️ **TWO COPIES OF THIS FILE EXIST.** Sessions that start in `~/authbc_package` auto-load `~/authbc_package/CLAUDE.md`, which is an OLD copy. **This file, in the repository, is the status board.** A stale count read from the other one was "corrected" into the thesis on 2026-10-06 and had to be reverted.
-- **Green:** 2074 fast + **39** frozen-gate tests (**2113**), `ruff` clean, **`mypy` clean (0 / 57 files)**, paper builds (**10 pp**, **40 refs**, 0 undefined, 0 overfull, abstract **179 w** by the board's counter, about 190 as printed), methods paper 4 pp, thesis **123 pp** (61 refs, 0 overfull, 3 markers left — all Mohamed's). `make all` exit 0.
+- **Green:** 2119 fast + **40** frozen-gate tests (**2159**), `ruff` clean, **`mypy` clean (0 / 57 files)**, paper builds (**10 pp**, **40 refs**, 0 undefined, 0 overfull, abstract **179 w** by the board's counter, about 190 as printed), methods paper 4 pp, thesis **123 pp** (61 refs, 0 overfull, 3 markers left — all Mohamed's). `make all` exit 0.
 - **METHODOLOGY (Mohamed):** this is an optimization problem — *state everything, choose what to stick with, state the trade-offs for every decision*. **`docs/TRADEOFFS.md` is required reading before quoting any number.**
 - **LICENSE = all rights reserved** (© 2026 Mohamed A. Farouk). Vendored NS-3 + `signetlabdei/lorawan` stay GPLv2, **not** redistributed.
 
@@ -92,7 +92,7 @@ and bit-identical (D6).
 | "ratios are protected by construction" | **withdrawn** — the ceiling's error depends on the frame and does not cancel |
 | "Bor et al." | **Haxhibeqiri, Van den Abeele, Moerman & Hoebeke** (F49). Renamed everywhere |
 
-### ⚠️⚠️ 2026-10-09, night — THE BOARDS WERE ON: contention measured on two radios, and an August figure WITHDRAWN (F72–F77)
+### ⚠️⚠️ 2026-10-09, night — THE BOARDS WERE ON: contention measured on two radios, and an August figure WITHDRAWN (F72–F78)
 
 - **Two saturated radios lose 12.4 % of frames on air; the standard's rule gives 11.8 %
   (F76, registered `9a85afa`, HELD).** First hardware measurement of the contention mechanism.
@@ -127,6 +127,29 @@ and bit-identical (D6).
   tie mechanism; Kurkowski 2005 is cited directly. **Bianchi et al., INFOCOM 2007** (commercial
   cards do not keep the standard's backoff) is the prior work for F74–F75 — found by searching
   after the anomaly and before writing.
+- ⚠️ **HARDWARE AUDIT, same day (F78) — read before any energy work.**
+  * **July's energy figures reproduce row for row from their raw captures**
+    (`tests/test_energy_reduction.py`; before that day NO test ran the energy scripts).
+  * **`hw/rig_check.py` must print PASSED before any energy figure** (`hw/RIG.md` §8 item 7;
+    board side `hw/rig_selftest.py`). It was written after a loose ground made pi-B's voltage
+    reading move 0.29 V with the sync line — invisible in an energy run. It then refused the
+    rig three more times: **the sensor-1 branch has 0.47 Ω and browns a board out at four
+    cores (1.17 A → 4.73 V → throttled in 40 ms); sensor 2's has 0.18 Ω and holds.** July's
+    captures were made on branch 1 and loaded one core only. Do not measure on a failing rig;
+    relaxing the rule is Mohamed's decision, not the agent's (G26).
+  * **Since the swap of 2026-10-09 the rig PASSES: pi-B = device under test = meter CHANNEL 2**
+    (pi-A is on channel 1; in July pi-A was the device, on channel 1). Channel ↔ board is
+    wiring, not software: the check identifies the board by loading it. Reduce with
+    `--channel 2`.
+  * ⚠️ **The energy table's "model" uses a power that is the median of the same metered runs.**
+    The table tests the composition of TIMES, not power. Never write "separately measured
+    powers".
+  * ⚠️ **The lean sender's energy is NOT metered.** By timing × power it is ≈ **163 µJ/record
+    against the first format's metered 58** (284 vs 119 unbatched). Bytes and capacity are the
+    lean format's; metered energy is the first format's; no row has both.
+  * `manifest_d1_reduced.json` had hand-entered metadata, two values wrong (Python 3.11.2, a
+    local time labelled UTC); corrected with a note in the file; no measured value changed.
+  * Window validity now also counts the kernel's under-voltage events (`energy_loop.py`).
 - Kit: `hw/channel/frameburst.sh`; a last argument `keep|0|1` on both session scripts;
   `analysis/contention_hw.py --reduce N … --tag X | --saturated N …`;
   `results/hw/channel/CONTENTION_RESULTS.md` is the record of the eight sessions.
@@ -404,7 +427,7 @@ decides a headline and was never written down — defect class **C2**, the one c
 > ⚠️ **F18 came back.** On 2026-08-07 it was found still printed in `tab:lora-external` ("we are more optimistic" at N=5) — 100 lines below a bold sentence saying the opposite. **Retracting a finding in the register does not remove it from the paper.** When you retract, grep the paper. Guarded now by `test_no_row_revives_the_retracted_optimism_claim`, which checks the *artifact* rather than the wording.
 
 ### Where things live
-`docs/README.md` is the index. Findings **F1–F77** in `docs/audits/model_provenance.md`. Open items **only** in `docs/OPEN_ITEMS.md`. Trade-offs in `docs/TRADEOFFS.md`. Method and failed attempts in `docs/LOGBOOK.md`. **51 PDFs** in `docs/literature/` with each source's ROLE stated, and **20 more held on Mohamed's machine but NOT redistributed** (`docs/literature/HELD_LOCALLY.csv`, git-ignored files — ⚠️ never `git add -f` them); every bibliography entry is checked against its registry record by `make verify-citations` (`A3_CITATION_VERIFICATION.md` is the August record of a check that turned out not to compare authors — F49).
+`docs/README.md` is the index. Findings **F1–F78** in `docs/audits/model_provenance.md`. Open items **only** in `docs/OPEN_ITEMS.md`. Trade-offs in `docs/TRADEOFFS.md`. Method and failed attempts in `docs/LOGBOOK.md`. **51 PDFs** in `docs/literature/` with each source's ROLE stated, and **20 more held on Mohamed's machine but NOT redistributed** (`docs/literature/HELD_LOCALLY.csv`, git-ignored files — ⚠️ never `git add -f` them); every bibliography entry is checked against its registry record by `make verify-citations` (`A3_CITATION_VERIFICATION.md` is the August record of a check that turned out not to compare authors — F49).
 
 ### Deferred by Mohamed — plans written, DO NOT START unprompted
 - **Mobility (E20)** — `docs/MOBILITY_PLAN.md`. **Separate NEW scenario files**, literature survey first. Not for the 802.11 arm (Bianchi/Ma&Chen have no position term).

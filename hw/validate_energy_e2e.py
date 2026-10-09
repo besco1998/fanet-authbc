@@ -9,8 +9,11 @@ composition is where the assumptions live (per-record attribution, the airtime t
 "incremental" power).
 
 **What this does.** Runs the *actual* optimized configuration end to end — stateful delta encode →
-SHA-256 chain link → Ed25519 sign once per b=4 records → frame assembly — at a fixed record rate
-inside a GPIO-marked window, exactly like `energy_loop.py`'s per-op windows. The INA219 rig then
+SHA-256 chain link → Ed25519 sign once per b=4 records → frame assembly — back to back, as fast
+as one core produces frames, inside a GPIO-marked window, exactly like `energy_loop.py`'s per-op
+windows. ⚠️ Until 2026-10-09 this sentence said "at a fixed record rate". It never was: the
+window is a tight loop, and what is measured is the energy of the work itself, not of a board
+that wakes fifty times a second to do it. The INA219 rig then
 reduces the window to an incremental power, and this script converts that to µJ/record and compares
 it against `models.energy.per_record` under the *same* configuration.
 
@@ -162,8 +165,6 @@ def main() -> None:
                     help="measured incremental CPU power (P7b default)")
     ap.add_argument("--t-enc-ns", type=float, default=47759.0, help="measured delta encode (ARM)")
     ap.add_argument("--t-sign-ns", type=float, default=88120.2, help="measured Ed25519 sign (ARM)")
-    ap.add_argument("--t-verify-ns", type=float, default=259498.7,
-                    help="measured Ed25519 verify (ARM)")
     ap.add_argument("--batch", type=int, help="override b (use 1 for the A+CBOR baseline)")
     ap.add_argument("--encoding", help="override the encoding (cbor for the baseline)")
     ap.add_argument("--record-bytes", type=float, help="override s for the model prediction")
@@ -172,8 +173,6 @@ def main() -> None:
                          "p1_lean file (frame_send at the same --batch)")
     ap.add_argument("--t-frame-ns", type=float,
                     help="measured LeanSender.frame time on THIS board, for the prediction")
-    ap.add_argument("--no-verify", action="store_true", default=True,
-                    help="the pipeline signs but does not verify; predict the sender side only")
     args = ap.parse_args()
     global ENCODING, BATCH, RECORD_BYTES
     if args.batch:
@@ -186,8 +185,9 @@ def main() -> None:
 
     # ⚠️ The pipeline SIGNS but does not VERIFY. Predicting with t_verify included compared a
     # sender-side measurement against a sender+receiver model and inflated the prediction ~1.9x.
-    # Found 2026-07-29 on the first real run; predict the sender side only.
-    t_verify_for_prediction = 0.0 if args.no_verify else args.t_verify_ns * 1e-9
+    # Found 2026-07-29 on the first real run; the prediction is of the sender side only. (A
+    # `--no-verify` flag stood here until 2026-10-09; it could not be switched off.)
+    t_verify_for_prediction = 0.0
     if args.format == "lean":
         if not args.t_frame_ns:
             ap.error("--format lean needs --t-frame-ns: time the sender on this board first "
@@ -234,7 +234,8 @@ def main() -> None:
                     n_ops, checksum = run_window(fn, args.seconds)
             duration = time.perf_counter() - t0
             after = device_state()
-            clean = window_is_clean(before["throttled"], after["throttled"])
+            clean = window_is_clean(before["throttled"], after["throttled"],
+                                    before["undervoltage_events"], after["undervoltage_events"])
             # Schema must match what `ina219_capture.reduce` consumes: idle/load `kind` pairs
             # with an `op` name, not a bare label — otherwise the reducer cannot pair windows.
             windows.append({
@@ -257,7 +258,7 @@ def main() -> None:
         "configuration": {"encoding": ENCODING, "scheme": SCHEME, "placement": "B",
                           "batch": BATCH, "h_f": H_F, "g_a": G_A},
         "model_inputs": {"p_cpu_w": args.p_cpu_w, "t_enc_ns": args.t_enc_ns,
-                         "t_sign_ns": args.t_sign_ns, "t_verify_ns": args.t_verify_ns,
+                         "t_sign_ns": args.t_sign_ns, "verify": "not run, not predicted",
                          "format": args.format, "t_frame_ns": args.t_frame_ns},
         "predicted_cpu_uj_per_record": predicted,
         "windows": windows,

@@ -710,10 +710,15 @@ one signature per 4 & \enDesignMeas\ \enDesignRange & \enDesignModel & \enDesign
 
 Table~\ref{tab:energy} meters the sender: encoding, hashing and signing a record costs
 \enDesignMeas\,$\mu$J in the batched configuration against \enBaseMeas\,$\mu$J when every record
-is signed, \enSavePct\% less. The model composed from separately measured times and powers is
+is signed, \enSavePct\% less. The model composes separately measured times with one power, the
+median over these same metered runs, so the comparison tests the times: it is
 \enDesignGap--\enBaseGap\% low, the gap being frame assembly in an interpreted prototype. These
-measurements are of the first format's encoders; the lean codec has not been timed on the
-board. Receiver and radio energy are modelled, not metered: adding one receiver and the radio,
+measurements are of the first format's encoders; the lean sender is timed on the board
+(\leanSendMs\,ms per four-record frame) and not metered. At the metered power that time is
+about \leanSendUj\,$\mu$J per record against \leanSendOneUj{} unbatched: the lean codec is the
+smaller on air and, in this prototype, the slower to run. Receiver and radio energy are modelled,
+not metered, the radio's power coming from a unicast measurement on another band: adding one
+receiver and the radio,
 the model gives \enDesignEndToEnd{} against \enBaseEndToEnd\,$\mu$J per record.
 
 \subsection{Is the synthetic telemetry representative?}\label{sec:px4}

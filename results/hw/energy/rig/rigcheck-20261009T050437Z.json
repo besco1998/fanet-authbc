@@ -1,0 +1,94 @@
+{
+  "schema": "authbc.rig.check/1",
+  "checked_utc": "20261009T050702Z",
+  "channel": 1,
+  "samples": "rigcheck-samples-20261009T050437Z.csv",
+  "manifest": "selftest-authbc-pi4b-20261009T050437Z.json",
+  "passed": false,
+  "checks": [
+    {
+      "name": "the sync line marks three windows of 5 s",
+      "value": "5.00 s, 5.00 s, 5.02 s",
+      "limit": "three, each 5.0 \u00b1 0.2 s",
+      "ok": true
+    },
+    {
+      "name": "the voltage does not move with the sync line",
+      "value": "+7 mV",
+      "limit": "within 15 mV",
+      "ok": true
+    },
+    {
+      "name": "idle voltage is the same before and after",
+      "value": "+11 mV",
+      "limit": "within 20 mV",
+      "ok": true
+    },
+    {
+      "name": "this channel is the board under test",
+      "value": "+164 mA here, +1 mA on the other channel",
+      "limit": "+80 mA or more here, within 30 mA there",
+      "ok": true
+    },
+    {
+      "name": "supply with one core busy",
+      "value": "4.970 V",
+      "limit": "4.75 V or more",
+      "ok": true
+    },
+    {
+      "name": "supply with every core busy",
+      "value": "4.975 V",
+      "limit": "4.63 V or more",
+      "ok": true
+    },
+    {
+      "name": "the chip's power register agrees with V \u00d7 I",
+      "value": "+0.0 mW",
+      "limit": "within 5 mW",
+      "ok": true
+    },
+    {
+      "name": "sampling",
+      "value": "50.00 per second",
+      "limit": "49\u201351",
+      "ok": true
+    },
+    {
+      "name": "idle power",
+      "value": "2.122 W",
+      "limit": "reported",
+      "ok": null
+    },
+    {
+      "name": "one busy core adds",
+      "value": "0.784 W",
+      "limit": "reported",
+      "ok": null
+    },
+    {
+      "name": "every core busy adds",
+      "value": "0.760 W",
+      "limit": "reported",
+      "ok": null
+    },
+    {
+      "name": "source resistance seen from the board",
+      "value": "0.47 \u03a9",
+      "limit": "reported (July: 0.45\u20130.49 \u03a9)",
+      "ok": null
+    },
+    {
+      "name": "no under-voltage logged by the board during the test",
+      "value": "3 before, 4 after",
+      "limit": "the same count, and readable",
+      "ok": false
+    },
+    {
+      "name": "the board's governor",
+      "value": "performance",
+      "limit": "performance",
+      "ok": true
+    }
+  ]
+}

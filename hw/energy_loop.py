@@ -57,6 +57,26 @@ AGG_BATCHES = (2, 4, 8, 16, 32)
 
 
 # ----------------------------------------------------------------------------- sync line
+def write_when_permitted(path: Path, text: str, patience_s: float = 2.0) -> None:
+    """Write to a sysfs attribute, waiting out the moment before it becomes writable.
+
+    Exporting a GPIO creates its directory at once and owned by root; a udev rule hands it to
+    the `gpio` group a fraction of a second later. Writing in between fails with a permission
+    error — on the first run after every boot, and never on the second, because by then the
+    pin is already exported. Found 2026-10-09 on a freshly booted board, where the sync line
+    was reported unavailable and worked a minute later.
+    """
+    deadline = time.monotonic() + patience_s
+    while True:
+        try:
+            path.write_text(text)
+            return
+        except PermissionError:
+            if time.monotonic() >= deadline:
+                raise
+            time.sleep(0.05)
+
+
 class SyncLine:
     """Drives the Pi->Arduino window line, with guaranteed release.
 
@@ -112,8 +132,8 @@ class SyncLine:
                 with contextlib.suppress(OSError):
                     (base / "export").write_text(str(num))
             if d.exists():
-                (d / "direction").write_text("out")
-                (d / "value").write_text("0")
+                write_when_permitted(d / "direction", "out")
+                write_when_permitted(d / "value", "0")
                 self._sysfs = d
                 self.backend = f"sysfs(+{offset})"
                 return
@@ -169,12 +189,32 @@ def _sh(cmd: list[str]) -> str:
         return "NA"
 
 
+def undervoltage_events() -> str:
+    """How many under-voltage events the kernel has logged this boot, or "NA".
+
+    Why this exists beside `get_throttled`. The firmware's "has occurred" bits stay set until
+    the next boot. A board whose supply dips once while booting (found on one of the two Pi 4
+    on 2026-10-09) therefore reads 0x50000 for good, and comparing those bits before and after a
+    window can no longer see a dip *during* it. The kernel's own monitor polls every two seconds
+    and logs each event with its time, so counting its lines brackets a window properly.
+    """
+    try:
+        run = subprocess.run(["journalctl", "-k", "-b", "-q", "--no-pager", "-g",
+                              "Undervoltage detected"], capture_output=True, text=True, timeout=10)
+    except Exception:                                     # noqa: BLE001 - metadata is best-effort
+        return "NA"
+    if run.returncode not in (0, 1) or run.stderr.strip():   # 1 = no line matched
+        return "NA"
+    return str(len([ln for ln in run.stdout.splitlines() if ln.strip()]))
+
+
 def device_state() -> dict[str, str]:
     gov = Path("/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor")
     return {
         "temp": _sh(["vcgencmd", "measure_temp"]) or "NA",
         "throttled": _sh(["vcgencmd", "get_throttled"]) or "NA",
         "governor": gov.read_text().strip() if gov.exists() else "NA",
+        "undervoltage_events": undervoltage_events(),
     }
 
 
@@ -191,15 +231,20 @@ def throttle_bits(raw: str) -> tuple[int, int]:
     return val & 0xF, (val >> 16) & 0xF
 
 
-def window_is_clean(before: str, after: str) -> bool:
-    """True unless throttling happened DURING this window.
+def window_is_clean(before: str, after: str, events_before: str = "NA",
+                    events_after: str = "NA") -> bool:
+    """True unless throttling or an under-voltage happened DURING this window.
 
     A sticky bit already set before the window is history (the board throttled earlier in this
     boot); it is reported separately. Testing `!= 0x0` would invalidate every run until reboot.
+    The kernel's count of under-voltage events must not have moved either, where it can be read:
+    once a sticky bit is set, that count is the only thing that still can move.
     """
     now_b, stk_b = throttle_bits(before)
     now_a, stk_a = throttle_bits(after)
-    return now_b == 0 and now_a == 0 and stk_a == stk_b
+    counted = events_before != "NA" and events_after != "NA"
+    return (now_b == 0 and now_a == 0 and stk_a == stk_b
+            and (not counted or events_before == events_after))
 
 
 # ----------------------------------------------------------------------------- op set
@@ -303,12 +348,15 @@ def timed_window(sync: SyncLine, label: str, fn, seconds: float, rep: int) -> di
         n_ops, checksum = run_window(fn, seconds)
     t1, t1_utc = time.perf_counter(), datetime.now(UTC).isoformat()
     after = device_state()
-    thr_ok = window_is_clean(before["throttled"], after["throttled"])
+    thr_ok = window_is_clean(before["throttled"], after["throttled"],
+                             before["undervoltage_events"], after["undervoltage_events"])
     row = {"op": label, "rep": rep, "kind": "idle" if fn is None else "load",
            "t_start_utc": t0_utc, "t_end_utc": t1_utc, "duration_s": round(t1 - t0, 6),
            "n_ops": n_ops, "checksum": checksum,
            "temp_before": before["temp"], "temp_after": after["temp"],
            "throttled_before": before["throttled"], "throttled_after": after["throttled"],
+           "undervoltage_events_before": before["undervoltage_events"],
+           "undervoltage_events_after": after["undervoltage_events"],
            "throttle_clean": thr_ok}
     flag = "" if thr_ok else "   !! THROTTLED — run invalid"
     rate = f"{n_ops / (t1 - t0):,.0f}/s" if n_ops else "idle"

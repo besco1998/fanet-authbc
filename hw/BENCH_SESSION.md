@@ -33,6 +33,28 @@ has July's software and times signatures within 0.4 % of what `authbc-pi4a` did.
 0, 2 and 3: decide which board is the device under test, give it the sync wire and a steady
 5.15–5.2 V, and bring a 10 Ω resistor.
 
+## Expected of the energy runs of 2026-10-09 — written and committed before the first of them
+
+The rig is not the one this sheet was written for. The board under test is `authbc-pi4b` (it
+has July's software), on meter channel 2, after the rig check passed. The power constant
+0.749 W below was measured in July on the *other* board through the *other* sensor. So the
+first run is a control, and the rest are read in its light.
+
+| run | what | expected | from |
+|---|---|---|---|
+| C | **control**: July's baseline row again — CBOR, every record signed, first format | added power **0.72–0.79 W**; **113–125 µJ per record** | July: 0.753–0.761 W and 118.5–119.9 µJ; this board runs that pipeline at 99.6 % of July's rate |
+| L4 | lean sender, four records per frame (step 2a) | the script's prediction, 0.749 W × 0.868 ms / 4 = **162.6 µJ per record**; metered within **10 %** of it (146–179) | timing of F77; the script's own acceptance, which is tighter than the 15 % of the table below |
+| L1 | lean sender, one record per frame (step 2b) | 0.749 W × 0.379 ms = **284.1 µJ**; within 10 % (256–313) | the same |
+| J | the JSON row again, ten repetitions (step 3) | **115–127 µJ per record**; every idle window within 0.2 W of the others | July's two usable repetitions: 119.3 and 121.8 |
+
+Also expected: in every run the added power is 0.70–0.80 W; and batching saves 35–50 % of the
+lean sender's energy per record (by timing, 43 %).
+
+**If the control is outside its range, stop:** the two sensors or the two boards differ, and no
+figure of today can be set beside July's. A window is used only if the firmware's flags and the
+kernel's count of under-voltage events are unchanged across it. Step 0 is still not done — no
+reference resistor — so every figure carries the sensor's unmeasured gain, as July's do.
+
 ## What is expected, written before anything is measured (Law 6)
 
 | quantity | expected | from |
@@ -71,6 +93,8 @@ addresses. Steps 0, 2 and 3 need the meter wired to the PC, and that needs your 
 * Pi 4 and Pi 3B+: `./hw/provision.sh` (sets the `performance` governor). Fit the heatsink and
   fan as for P7b. The scripts flag a throttled run; a flagged file is not used.
 * On this PC (WSL2): the Arduino must be visible (`RIG.md` §6) for steps 2 and 3 only.
+* **Before step 0, 2 or 3: the rig check must pass** (`RIG.md` §8, item 7 — 45 seconds). On
+  2026-10-09 it failed twice for two different reasons, neither of which an energy run shows.
 
 ## Step 0 — calibrate the meter (on the rig, 5 min) — closes G22
 

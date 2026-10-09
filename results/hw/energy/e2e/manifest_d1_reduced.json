@@ -229,10 +229,11 @@
   ],
   "note": "Reduce with hw/ina219_capture.py --reduce <this> <samples.csv> --channel 1. Measured \u00b5J/record = (P_active - P_idle) * duration_s / records.",
   "host": "authbc-pi4a",
-  "run_utc": "20260729T0640Z",
-  "platform": "Linux-rpi4",
-  "python": "3.11.2",
+  "run_utc": "20260729T035720Z",
+  "platform": "Linux-6.12.93+rpt-rpi-v8-aarch64-with-glibc2.36",
+  "python": "3.12.13",
   "gpio_backend": "gpiod",
   "duration_s": 60.0,
-  "reps": 5
+  "reps": 5,
+  "metadata_note": "The run that produced these windows wrote manifest_1785297440.json, which records no host, interpreter, platform or time: the script did not yet write them. This file is that one with the two fields the reducer needs (kind, op) and the missing metadata added BY HAND on 2026-07-29. Two of the hand-entered values were wrong and stood until 2026-10-09: 'python' read 3.11.2 and 'run_utc' read 20260729T0640Z (local time, labelled Z, and seventeen minutes early). Corrected 2026-10-09 (finding F78): run_utc is the time in the original file's name; python and platform are those the three other runs of that morning recorded automatically, 18 to 75 minutes later, with the same command. Evidence that the interpreter was 3.12.13: the same pipeline on the sibling board under 3.12.13 runs at 98.9 % of this run's frame rate, and that board's system Python 3.11.2 cannot import the crypto library. No measured value in this file was changed: n_ops, duration_s and checksum of every window are those of manifest_1785297440.json."
 }

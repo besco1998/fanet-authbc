@@ -28,9 +28,10 @@ of `LOGBOOK.md` is that pass.
    the Pi** (F77): the prototype's receiver serves 57 nodes per core, not 296. What that leaves:
    * **Mohamed — one decision:** does submission still wait for three to five radios, or go
      with what two showed (`OPEN_ITEMS` G2)?
-   * **Mohamed — the rig (G26):** pi-A was found re-installed; the sync wire is on neither
-     board; pi-B's supply sags at boot. Decide which board is the device under test, wire it,
-     bring a 10 Ω resistor. Then bench steps 0, 2 and 3 are an hour.
+   * **Mohamed — the rig (G26):** the sync wire is now on pi-B and a loose ground was found
+     and re-seated, but **the rig still fails its check**: pi-B's 5 V feed browns out with four
+     cores busy (F78). Shorten and thicken the leads, 5.15–5.2 V, bring a 10 Ω resistor; then
+     `hw/rig_check.py` must print PASSED before bench steps 0, 2 and 3 (an hour).
    * **No hardware needed (G27):** find which rule for a radio's own queued frames reproduces
      the 36 windows on disk, in the event model. Register before fitting.
 1. **Mohamed's decisions — ALL TAKEN on 2026-10-08** (`DECISIONS.md`, "Decided by Mohamed,
@@ -106,7 +107,7 @@ cd fanet-authbc && git checkout p8-audit-and-corrections
 make setup && make all          # green == you have reproduced the deterministic layer
 ```
 
-`make all` = lint + mypy + 2074 fast tests + the 39-test frozen gate. NS-3 and the Pi rig are
+`make all` = lint + mypy + 2119 fast tests + the 40-test frozen gate. NS-3 and the Pi rig are
 optional (`docs/05_REPRODUCTION_GUIDE.md`). ⚠️ A fresh clone has **no NS-3 tree** — it is gitignored
 by design. Fetch it from the **GitLab** archive; `nsnam.org/releases/...` returns an HTML error page.
 

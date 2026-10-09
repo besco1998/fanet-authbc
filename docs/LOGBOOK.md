@@ -69,6 +69,35 @@ command line). A backgrounded `cd … && nohup …` over ssh keeps the channel o
 **Durable record:** findings F72–F77; `results/hw/channel/CONTENTION_RESULTS.md`; the three
 registrations; `docs/OPEN_ITEMS.md` G4, G9, G19, G26, G27.
 
+**Later the same morning — "make sure the hardware side is correct and honest" (F78).**
+Mohamed attached the sync wire to pi-B. Before using it:
+
+1. *Tested the wire with a known pattern.* The window flag followed an 8.00 s window exactly.
+   The same capture showed the voltage reading 0.28 V lower with the line high. Repeated with
+   the line alone, five cycles, and an unconnected pin as a control: a loose ground.
+2. *Asked whether the published numbers had the same fault,* before anything else. July's raw
+   captures: −1 to −4 mV. Then re-ran the reducer on all five stored pairs: identical, row for
+   row. ⚠️ No test had ever run that reducer.
+3. *Read the three scripts and the sketch against the datasheet.* The calibration is the
+   0.1 Ω one. The validation script described itself wrongly ("a fixed record rate"; it is a
+   tight loop) and carried a flag that could not be switched off.
+4. *A manifest with hand-entered metadata.* The design row's run said Python 3.11.2 where the
+   other three said 3.12.13. Tested rather than assumed: the same pipeline on pi-B under
+   3.12.13 gives 98.9 % of that run's rate; the system 3.11.2 cannot import the crypto library.
+   The entry was wrong, the measurement was not.
+5. *Wrote the check that would have refused this rig* (`hw/rig_check.py`), with limits from
+   July's captures, and ran it. Ground: passed (re-seated meanwhile). ⚠️ **It then failed on
+   something I had not been looking for**: four busy cores brown the board out in 40 ms.
+6. ⚠️ **Did not measure.** The tempting argument — energy windows load one core, and one core
+   holds — would have relaxed a rule on the morning it was written. Twice of two tries failed.
+7. *Found on the way:* the paper said the model was "composed from separately measured times
+   and powers", and the power is the median of the same metered runs; and both documents still
+   said the lean codec had not been timed, four hours after it was. And the lean sender, by
+   its timing, costs nearly three times the energy per record of the first format the table
+   shows — now printed, as an estimate.
+
+**Durable record:** F78; `results/hw/energy/rig/README.md`; `hw/RIG.md` §8 item 7; G26.
+
 ---
 
 # 2026-10-09 — "solve all the issues": what could be closed from here, and what could not

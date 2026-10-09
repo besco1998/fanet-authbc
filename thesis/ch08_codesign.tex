@@ -616,7 +616,20 @@ one signature per four records & \enDesignMeas\ \enDesignRange & \enDesignModel 
 \end{tabular}
 \end{table}
 
-The batched sender spends \enSavePct\% less energy per record. The model composed from separately
-measured times and powers is \enDesignGap--\enBaseGap\% low, the gap being frame assembly in an
+The batched sender spends \enSavePct\% less energy per record. The model composes separately
+measured times with one processor power, and that power is the median over the metered runs
+themselves (\Cref{sec:hardware-method}). The comparison therefore tests the times, not the
+power: the model is \enDesignGap--\enBaseGap\% low, the gap being frame assembly in an
 interpreted prototype. Only the sender is metered, and only the first format's encoders: the lean
-codec has not been timed on the board, and receiver and radio energy are modelled.
+sender is timed on the board (\leanSendMs\,ms for a frame of four records) and its energy is
+not metered; receiver and radio energy are modelled.
+
+\begin{remark}[The lean sender costs more energy per record than the table shows]
+\Cref{tab:energy} is of the first format. Multiplying the lean sender's time by the metered
+processor power gives about \leanSendUj\,\si{\micro\joule} per record with four records to a
+frame and \leanSendOneUj\,\si{\micro\joule} with one --- an estimate from a time on one board
+and a power on the other, not a meter reading. Batching still saves, but each figure is two
+and a half to three times its counterpart in the table: the lean codec was written for the size of the frame
+and is slower to run in this interpreted prototype. The saving in bytes and the capacity are
+the lean format's; the metered energy is the first format's; no row of this thesis has both.
+\end{remark}
