@@ -1,0 +1,7 @@
+# Follow-up F7 (docs/NMAX_DIRECT_EXPECTATIONS.md): the lean baseline and the design with the
+# nodes uniform in a disc of radius 15 m and free-space loss: every pair within
+# energy-detection range, received powers unequal.
+#   python ns3/run_nmax_direct.py --plan <this file> --out-stem ns3_spread_r15 \
+#          --radius-m 15 --path-loss-exp 2 --no-summary
+C period 37 38 39 40 41 42 43
+D period 128 132 136 140 144 148 152

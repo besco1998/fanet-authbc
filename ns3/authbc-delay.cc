@@ -180,6 +180,13 @@ main(int argc, char* argv[])
     // exactly as published. Any other value tests the derivation of docs/02 §6g, which says
     // how the capacity must move when the window is widened.
     uint32_t cwMin = 0;
+    // Geometry. Both at 0 leave the scenario exactly as published: every node at one point,
+    // equal received power, so no frame is ever captured. radiusM > 0 places the nodes
+    // uniformly in a disc of that radius, and pathLossExp > 0 makes received power fall with
+    // distance (2 = free space). A receiver then keeps the strongest of the frames that start
+    // together if it is strong enough: the capture the published scenario excludes.
+    double radiusM = 0.0;
+    double pathLossExp = 0.0;
 
     CommandLine cmd(__FILE__);
     cmd.AddValue("nNodes", "number of nodes in the collision domain", nNodes);
@@ -196,6 +203,10 @@ main(int argc, char* argv[])
                  "per-node period offset drawn from U(-x, +x) ppm (needs txJitterMs > 0)",
                  txSkewPpm);
     cmd.AddValue("cwMin", "minimum contention window; 0 = the standard's (default)", cwMin);
+    cmd.AddValue("radiusM", "disc radius in m for uniform placement; 0 = one point (default)",
+                 radiusM);
+    cmd.AddValue("pathLossExp", "log-distance path-loss exponent; 0 = equal power (default)",
+                 pathLossExp);
     cmd.Parse(argc, argv);
     NS_ABORT_MSG_IF(txJitterMs < 0.0 || txJitterMs * 1e-3 > 1.0 / framesPerSec,
                     "txJitterMs must lie in [0, one period]");
@@ -214,7 +225,8 @@ main(int argc, char* argv[])
     // every node must contend with every other, with no capture and no spatial reuse.
     YansWifiChannelHelper channel;
     channel.SetPropagationDelay("ns3::ConstantSpeedPropagationDelayModel");
-    channel.AddPropagationLoss("ns3::LogDistancePropagationLossModel", "Exponent", DoubleValue(0.0));
+    channel.AddPropagationLoss("ns3::LogDistancePropagationLossModel",
+                               "Exponent", DoubleValue(pathLossExp));
     YansWifiPhyHelper phy;
     phy.SetChannel(channel.Create());
 
@@ -243,7 +255,23 @@ main(int argc, char* argv[])
 
     MobilityHelper mobility;
     Ptr<ListPositionAllocator> posAlloc = CreateObject<ListPositionAllocator>();
-    for (uint32_t i = 0; i < nNodes; ++i) posAlloc->Add(Vector(i * 0.01, 0.0, 0.0));
+    if (radiusM > 0.0)
+    {
+        // Uniform in area. The variable takes a stream of its own, far from the automatic
+        // ones, and is created only here: with radiusM = 0 no stream moves.
+        Ptr<UniformRandomVariable> place = CreateObject<UniformRandomVariable>();
+        place->SetStream(4096);
+        for (uint32_t i = 0; i < nNodes; ++i)
+        {
+            const double r = radiusM * std::sqrt(place->GetValue(0.0, 1.0));
+            const double a = place->GetValue(0.0, 2.0 * M_PI);
+            posAlloc->Add(Vector(r * std::cos(a), r * std::sin(a), 0.0));
+        }
+    }
+    else
+    {
+        for (uint32_t i = 0; i < nNodes; ++i) posAlloc->Add(Vector(i * 0.01, 0.0, 0.0));
+    }
     mobility.SetPositionAllocator(posAlloc);
     mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel");
     mobility.Install(nodes);

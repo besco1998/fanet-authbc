@@ -1,0 +1,6 @@
+# Follow-up F7 (docs/NMAX_DIRECT_EXPECTATIONS.md): the same two configurations in a disc of
+# radius 100 m, a swarm's scale: most pairs are below the energy-detection threshold.
+#   python ns3/run_nmax_direct.py --plan <this file> --out-stem ns3_spread_r100 \
+#          --radius-m 100 --path-loss-exp 2 --no-summary
+C period 33 35 37 39 41 43 45
+D period 116 122 128 134 140 146 152

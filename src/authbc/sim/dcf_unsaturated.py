@@ -27,6 +27,7 @@ two counters reaching zero in the same slot — and the **detection window**.
 from __future__ import annotations
 
 import random
+from collections.abc import Callable
 from dataclasses import dataclass
 
 SLOT_S: float = 9e-6                # IEEE 802.11a
@@ -54,8 +55,14 @@ class Result:
 def run(n_nodes: int, frames_per_s: float, airtime_s: float, *, sim_time_s: float = 20.0,
         seed: int = 1, w0: int = W0, slot_s: float = SLOT_S, difs_s: float = DIFS_S,
         detect_s: float = DETECT_S, redraw_phase: bool = True,
-        warmup_s: float = 1.0) -> Result:
-    """One run. `airtime_s` is the frame's time on air (without DIFS)."""
+        warmup_s: float = 1.0,
+        on_send: Callable[[list[int]], None] | None = None) -> Result:
+    """One run. `airtime_s` is the frame's time on air (without DIFS).
+
+    `on_send`, if given, is called after the warm-up with the stations of every group of frames
+    that start together: one station for a frame sent alone. It observes and changes nothing;
+    `dcf_capture` uses it to ask which receivers a group still reaches.
+    """
     if n_nodes < 2 or frames_per_s <= 0 or airtime_s <= 0 or w0 < 1:
         raise ValueError("need n_nodes ≥ 2, frames_per_s > 0, airtime_s > 0, w0 ≥ 1")
     rng = random.Random(seed)
@@ -129,6 +136,8 @@ def run(n_nodes: int, frames_per_s: float, airtime_s: float, *, sim_time_s: floa
                     senders.append((node, start + to_boundary))
         if start >= warmup_s:
             frames += len(senders)
+            if on_send is not None:
+                on_send([node for node, _ in senders])
             if len(senders) > 1:
                 lost += len(senders)
                 ties += tied if tied > 1 else 0

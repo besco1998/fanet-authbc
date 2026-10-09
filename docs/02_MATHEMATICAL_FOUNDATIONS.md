@@ -705,6 +705,42 @@ the capacities of §6e follow from that rule and a 4 µs detection time; it does
 behaves so. Capture, hidden terminals and a real preamble detector are outside both
 (`OPEN_ITEMS` G4).
 
+### 6h. Unequal received power and capture — the same access rule, one more question (2026-10-09, F84)
+
+§6g and every capacity of this work put all stations at one point: equal received power, so a
+frame that overlaps another is lost at every receiver. A review named that scenario as the
+weakest point of the paper (audit F80). `authbc.sim.dcf_capture` keeps the access rule of §6g
+— it calls the same simulator and changes nothing in it — and places the stations uniformly
+in a disc of radius R with received power falling as d⁻² (free space; distances under the
+simulator's reference metre count as one metre). For each group of frames that start together,
+and each station r that is not itself sending:
+
+    r receives the strongest frame i of the group  iff  P(i→r) ≥ θ · Σ_{j ≠ i} P(j→r),   θ = 4 dB
+
+and receives none of the others. A frame sent alone reaches every other station. The delivered
+fraction is receptions over frames sent times (N − 1).
+
+**Where θ comes from — read in the simulator's source, not chosen.** In ns-3.48 each arriving
+preamble opens a 4 µs detection period; at its end `PhyEntity::EndPreambleDetectionPeriod`
+keeps the strongest of the preambles then present and asks
+`ThresholdPreambleDetectionModel::IsPreambleDetected`, whose defaults are a signal-to-
+interference-and-noise ratio of **4 dB** and a level of −82 dBm. Frames that start together
+are exactly what the access rule produces when it fails: a tie, or a decision inside the
+detection time.
+
+**What the model does not have.** (i) Carrier sensing is perfect, as in §6g. That holds while
+every pair is within energy-detection range (−62 dBm: 37 m at the simulator's 16 dBm
+transmit power and its reference loss of 46.68 dB at one metre; the 15 m disc is 30 m across).
+Beyond it a station senses others by their preamble, and a
+station that can lock onto neither of two colliding frames may take the medium for idle and
+send over them. (ii) Noise: negligible at the radii used (the weakest signal at 200 m is
+17 dB above the floor). (iii) Hidden stations: every pair is within decoding range at both
+radii registered.
+
+**Scale.** With d⁻² the ratios of received powers do not change when the disc is scaled, so the
+model gives the same answer at every radius above a few metres; only the simulator can say
+whether 100 m differs from 15 m, and by (i) it may.
+
 ## 9. LoRa arm — EU868, its OWN parameter set (2026-07-28) ⚠️
 **The 802.11 arm's numbers do not transfer.** They differ by two to three orders of magnitude and
 the binding constraint is different *in kind*: a regulatory airtime quota, not a frame size or a

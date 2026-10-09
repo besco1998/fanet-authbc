@@ -198,7 +198,8 @@ def _binary() -> tuple[Path, Path]:
 
 def scenario_args(frame_bytes: int, fps: float, n_nodes: int, seed: int, sim_time: float,
                   prefix: Path, *, jitter_ms: float = 0.0, skew_ppm: float = 0.0,
-                  cw_min: int = 0) -> list[str]:
+                  cw_min: int = 0, radius_m: float = 0.0,
+                  path_loss_exp: float = 0.0) -> list[str]:
     """Command-line arguments of one run. An option at its default is left out, so the
     published scenario is invoked exactly as it always was."""
     args = [f"--nNodes={n_nodes}", f"--framesPerSec={fps}", f"--frameSize={frame_bytes}",
@@ -209,17 +210,23 @@ def scenario_args(frame_bytes: int, fps: float, n_nodes: int, seed: int, sim_tim
         args.append(f"--txSkewPpm={skew_ppm!r}")
     if cw_min > 0:
         args.append(f"--cwMin={cw_min}")
+    if radius_m > 0.0:
+        args.append(f"--radiusM={radius_m!r}")
+    if path_loss_exp > 0.0:
+        args.append(f"--pathLossExp={path_loss_exp!r}")
     return args
 
 
 def run_one(frame_bytes: int, fps: float, n_nodes: int, seed: int, sim_time: float,
             *, jitter_ms: float = 0.0, skew_ppm: float = 0.0, cw_min: int = 0,
+            radius_m: float = 0.0, path_loss_exp: float = 0.0,
             via_ns3: bool = False) -> dict[str, float]:
     root, binary = _binary()
     with tempfile.TemporaryDirectory() as td:
         prefix = Path(td) / "d"
         args = scenario_args(frame_bytes, fps, n_nodes, seed, sim_time, prefix,
-                             jitter_ms=jitter_ms, skew_ppm=skew_ppm, cw_min=cw_min)
+                             jitter_ms=jitter_ms, skew_ppm=skew_ppm, cw_min=cw_min,
+                             radius_m=radius_m, path_loss_exp=path_loss_exp)
         if via_ns3:
             cmd = ["./ns3", "run", "authbc-delay " + " ".join(args)]
             env = None
@@ -378,6 +385,12 @@ def main() -> None:
     ap.add_argument("--cw-min", type=int, default=0,
                     help="minimum contention window given to the scenario (0 = the standard's, "
                          "the default). Needs its own --out-stem: one file, one window")
+    ap.add_argument("--radius-m", type=float, default=0.0,
+                    help="place the nodes uniformly in a disc of this radius (0 = one point, the "
+                         "default and the published scenario). Needs its own --out-stem")
+    ap.add_argument("--path-loss-exp", type=float, default=0.0,
+                    help="log-distance path-loss exponent (0 = equal received power, the "
+                         "default; 2 = free space). Needs its own --out-stem")
     ap.add_argument("--no-summary", action="store_true",
                     help="write the runs only (for a campaign whose analysis is its own script)")
     ap.add_argument("--sim-time", type=float, default=20.0)
@@ -398,6 +411,8 @@ def main() -> None:
         raise SystemExit("--n applies to exactly one cell")
     if args.cw_min and args.out_stem == "ns3_nmax_direct":
         raise SystemExit("--cw-min changes the scenario: give it an --out-stem of its own")
+    if (args.radius_m or args.path_loss_exp) and args.out_stem == "ns3_nmax_direct":
+        raise SystemExit("a geometry changes the scenario: give it an --out-stem of its own")
     plan = read_plan(args.plan) if args.plan else [
         (cell, args.source, args.n or default_grid(CELLS[cell].model_n)) for cell in args.cells]
 
@@ -412,7 +427,8 @@ def main() -> None:
         cell, jitter, skew, n, seed = t
         c = CELLS[cell]
         r = run_one(c.frame_bytes, c.fps, n, seed, args.sim_time, jitter_ms=jitter,
-                    skew_ppm=skew, cw_min=args.cw_min)
+                    skew_ppm=skew, cw_min=args.cw_min, radius_m=args.radius_m,
+                    path_loss_exp=args.path_loss_exp)
         return {"cell": cell, "frame_bytes": c.frame_bytes, "frames_per_s": c.fps, "n_nodes": n,
                 "seed": seed, "sim_time_s": args.sim_time,
                 "tx_frames": int(r["tx_frames"]), "rx_frames": int(r["rx_frames"]),
@@ -426,6 +442,8 @@ def main() -> None:
         config["first_seed"] = args.first_seed
     if args.cw_min:
         config["cw_min"] = args.cw_min
+    if args.radius_m or args.path_loss_exp:     # one file, one geometry
+        config |= {"radius_m": args.radius_m, "path_loss_exp": args.path_loss_exp}
     with ThreadPoolExecutor(max_workers=args.workers) as pool:
         for i, row in enumerate(pool.map(job, todo), 1):
             runs.append({k: str(v) for k, v in row.items()})

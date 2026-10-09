@@ -1048,3 +1048,90 @@ unfinished grid from being read as the test.
 one loss level and one idealised scenario; and the deadlines of 60, 80 and 180 ms are
 hypothetical — the freshness table, the loss experiment and the energy runs remain those of
 four records.
+
+---
+
+# Follow-up F7 — the nodes spread out, and capture. Written before its runs (2026-10-09)
+
+**Why.** Every capacity of this work is of one scenario: all nodes at one point, equal received
+power, so a frame that overlaps another is lost at every receiver. A review of the paper
+ranked that first among its weak points (audit F80), and Mohamed asked for the recommended
+fix: a less idealised simulation, predictions first. This is the part of "less idealised" that
+can be predicted today — unequal received power, and with it capture. Hidden stations are not
+in it (see the end).
+
+**What changes in the scenario.** Two options, both absent by default so that the published
+scenario is invoked exactly as before: `--radiusM` places the nodes uniformly in a disc, and
+`--pathLossExp 2` makes received power fall as in free space. Nothing else moves. The rebuilt
+binary reproduces stored runs bit for bit (nine checked: both traffic sources, both operating
+points, a stream-signing cell, two batch cells, a widened window).
+
+**The model that predicts** (`docs/02` §6h, `src/authbc/sim/dcf_capture.py`). The access-rule
+model of F5, unchanged, plus the question the simulator's physical layer asks: of the frames
+that start together, a receiver keeps the strongest if it is 4 dB above the sum of the others.
+The 4 dB is the simulator's default, read in its source (`ThresholdPreambleDetectionModel`),
+and the rule is `PhyEntity::EndPreambleDetectionPeriod`. Nothing is fitted.
+
+**What is run.** The lean baseline (cell C: 146 B, 50 frames/s) and the design (cell D: 173 B,
+12.5 frames/s) at two radii, J = one period, 30 seeds, 20 s, seven node counts each, each seed
+with its own placement; one file per radius.
+
+| case | radius | kind of prediction | published crossing (equal power) | **capture model** | **predicted** | node counts | file |
+|---|---|---|---|---|---|---|---|
+| C, 15 m | 15 m | point, ±5 % | 35.26 | **39.52** (+12.1 %) | **37.54–41.50** | 37 38 39 40 41 42 43 | `ns3_spread_r15_runs.csv` |
+| D, 15 m | 15 m | point, ±5 % | 124.55 | **139.66** (+12.1 %) | **132.68–146.64** | 128 132 136 140 144 148 152 | 〃 |
+| C, 100 m | 100 m | bracket | 35.26 | 39.52 | **35.26–41.50** | 33 35 37 39 41 43 45 | `ns3_spread_r100_runs.csv` |
+| D, 100 m | 100 m | bracket | 124.55 | 139.66 | **124.55–146.64** | 116 122 128 134 140 146 152 | 〃 |
+
+(`results/raw/spread_capacity_predictions.csv`, written by `analysis/spread_capacity.py
+--predict` and committed with this text.)
+
+**Why two radii, and two kinds of prediction.**
+
+* *15 m.* The disc is 30 m across and energy detection reaches 37 m, so every station senses
+  every other as in the published scenario. Only the received powers differ. This isolates
+  capture, and the model is expected to hold: **each crossing inside ±5 % of the model's.**
+  3 % was the band of the model with no geometry; the capture layer adds one threshold and
+  the assumption that the frames of a group start together.
+* *100 m.* A swarm's scale. Most pairs are now below the energy-detection threshold and are
+  sensed by their preamble. A station that can lock onto neither of two colliding frames may
+  take the medium for idle and send over them; the model has perfect sensing and cannot show
+  that. So the prediction is a bracket with a mechanism at each end: **no lower than the
+  published equal-power crossing** (capture rescues more than imperfect sensing costs) **and
+  no higher than the capture model's band.**
+
+**What follows if they hold.** The published capacities are conservative for unequal power:
+with the nodes spread out the design serves about an eighth more nodes, not fewer, and the
+ratio of design to baseline does not move (the model gives +12.1 % to both). The paper may
+then say so, with the simulated figures.
+
+**Recorded expectation, weaker than a prediction.** At 100 m ns-3 will sit below the 15 m
+figure by a few percent, for the reason above. If it sits *at* the 15 m figure, imperfect
+sensing costs nothing measurable at this load.
+
+**How it will be read.** Any crossing outside its prediction is reported as a failure with its
+size and sign; neither the threshold nor the model is adjusted afterwards. If a 100 m crossing
+falls below the published equal-power value, the sentence "the published capacities are
+conservative" is not written, and the paper says instead by how much a swarm-scale geometry
+lowers them.
+
+**What this cannot show.** (i) **Hidden stations.** Both discs keep every pair within decoding
+range (369 m). A swarm wider than that has stations that cannot hear each other at all; that
+lowers capacity, needs a model with a sensing graph, and is not attempted here. (ii) Fading,
+mobility, antenna patterns: none. (iii) That the simulator's capture rule is a radio's.
+
+**Disclosure.**
+
+* Three single-seed runs were made to check that the new option works, before this text was
+  finished: cell C at N = 40, seed 1 — delivered 0.9333 with the published geometry, 0.9466
+  at 15 m, 0.9462 at 100 m. They lean the way the model does. No other ns-3 run with either
+  option exists.
+* Before the repository's version of the model existed, a scratch copy was run at a radius of
+  18 m with thresholds of 3, 4 and 6 dB to size the grids: crossings 40.6, 39.5 and 37.9 for C
+  and 143.6, 139.9 and 134.3 for D. The 4 dB registered here was read in the simulator's
+  source before that run and is not a choice among the three.
+* The radius first considered for the small disc was 18 m. It was reduced to 15 m when the
+  energy-detection range was computed as 36.9 m and not, as I had written in a draft of
+  `docs/02` §6h, 30 m: a disc of radius 18 m is 36 m across and leaves 0.2 dB of margin.
+
+A crossing that falls outside its grid is extended and the extension is reported as one.
