@@ -210,7 +210,9 @@ def ladder() -> dict[str, str]:
         bpr[tag] = float(r["bytes_per_rec"])
         what = f"N_max of {fmt}/{rung} at the adopted point"
         m |= {f"frm{tag}": f(r["frame_bytes"], 1), f"bpr{tag}": f(r["bytes_per_rec"], 2),
-              f"cert{tag}": f(r["bytes_per_rec_with_cert"], 2), f"nsat{tag}": r["n_max_u_lt_1"],
+              f"cert{tag}": f(r["bytes_per_rec_with_cert"], 2),
+              f"certT{tag}": f(r["bytes_per_rec_with_cert_timed"], 2),
+              f"nsat{tag}": r["n_max_u_lt_1"],
               f"nmax{tag}": whole(r["n_max_v95"], what),
               f"ci{tag}": interval(r["n_max_v95_ci_lo"], r["n_max_v95_ci_hi"], what),
               f"cpu{tag}": f(r["cpu_pct_at_n_v95"], 0)}
@@ -253,8 +255,15 @@ def ladder() -> dict[str, str]:
     base = one(lad, op="adopted", format="lean", rung="inline-1", scheme="ed25519")
     m |= _capacity_steps(base, inline, design)
     m |= _per_run_reading(lad)
+    # "Charged per frame … favours the design": per time, the unbatched baseline's charge must
+    # fall by more than the design's, and no row at this record rate may rise (audit F80, G30)
+    drop = {k: float(r["bytes_per_rec_with_cert"]) - float(r["bytes_per_rec_with_cert_timed"])
+            for k, r in (("base", base), ("design", design))}
+    if not drop["base"] > drop["design"] >= 0.0:
+        raise ValueError("the text says the per-frame certificate charge favours the design")
     m |= {"ncpuBatch": design["n_cpu_one_core"], "ncpuInline": inline["n_cpu_one_core"],
           "ncpuBls": bls["n_cpu_one_core"],
+          "certIntervalMs": f(1e3 * cfg["cert_interval_s"], 0),
           "certBytes": str(cfg["cert_bytes"]),
           "certPerFrame": f((cfg["cert_bytes"] + (cfg["cert_period"] - 1)
                              * cfg["cert_digest_bytes"]) / cfg["cert_period"], 1),
@@ -604,9 +613,20 @@ def exclusion() -> dict[str, str]:
     link = frame_model.LINK_FIELD_BYTES
     floor_hdr = frame_model.lean_header_bytes(src=0, base_seq=0, n=1, stream_bytes=9)
     floor_rec = floor - floor_hdr - link - 64
+    # What a 115 B payload leaves once the two cryptographic fields are in it: a signature and
+    # a SHA-256 value, in any format. The lean header and the link's own framing are exactly
+    # that, which is why three of the eight exclusions are this format's (audit F80, G29).
+    hash_bytes = 32
+    room = int(sig["payload_not_repeater"]) - int(sig["auth_bytes"]) - hash_bytes
+    if floor_hdr + (link - hash_bytes) != room:
+        raise ValueError("the text says the lean header and framing fill the 115 B payload "
+                         "exactly, after a signature and a hash")
     hdr_hi = frame_model.lean_header_bytes(src=40_000, base_seq=180_000, n=1, stream_bytes=25)
     return {
         "exclCount": WORDS[len(excluded)], "exclCountCap": WORDS[len(excluded)].capitalize(),
+        "exclSigCount": WORDS[len(alone)], "exclSigCountCap": WORDS[len(alone)].capitalize(),
+        "exclFmtCount": WORDS[len(excluded) - len(alone)],
+        "exRoomAfterCrypto": str(room),
         "exFloor": str(floor), "exLo": sig["frame_min_bytes"], "exHi": sig["frame_max_bytes"],
         "exFloorHdr": str(floor_hdr), "exFloorRec": str(floor_rec),
         "exFloorNoRec": str(floor - floor_rec),
@@ -991,13 +1011,32 @@ def prototype() -> dict[str, str]:
 
     Measured on `authbc-pi4b` on 2026-10-09: the board that still held the reference software.
     Its signature timings in the same session are within 0.4 % of the other board's, which
-    `timings()` uses. The receive time is the whole path — decode, rebuild, hash, verify — and
-    the node count it gives is the prototype's, beside Eq. (cpu)'s cryptography-only ceiling.
+    `timings()` uses. The receive time is the whole path — decode, rebuild, hash, verify, and
+    since F81 keeping the frame — and the node count it gives is the prototype's, beside
+    Eq. (cpu)'s cryptography-only ceiling.
+
+    Two sessions of that day enter. The SENDER's times are the morning's: its code has not
+    changed, and the energy runs were registered against exactly those figures (F79). The
+    RECEIVER's times are the afternoon's, of the receiver that keeps frames (F81), set beside a
+    control of the old receiver in the same session (`hw/BENCH_SESSION.md`).
     """
     lean = {(r["op"], int(r["agg_b"])): float(r["median_ns"]) * 1e-9
             for r in rows(HW / "p1_lean.authbc-pi4b.csv")}
+    kept = {(r["op"], int(r["agg_b"])): float(r["median_ns"]) * 1e-9
+            for r in rows(HW / "p1_lean.authbc-pi4b.frames-kept.csv")}
+    lean |= {k: v for k, v in kept.items() if k[0] == "frame_receive"}
+    control = {(r["op"], int(r["agg_b"])): float(r["median_ns"]) * 1e-9
+               for r in rows(HW / "p1_lean.authbc-pi4b.control-20261009.csv")}
+    # what was written down for the re-timing, before it (hw/BENCH_SESSION.md, commit 61a4b4f)
+    for b in (1, 4):
+        ratio = kept[("frame_receive", b)] / control[("frame_receive", b)]
+        if not 1.00 <= ratio <= 1.02:
+            raise ValueError(f"keeping frames was registered to cost at most 2 %; b = {b} "
+                             f"gives {ratio:.4f} of the control")
+    keep_cost = kept[("frame_receive", 4)] - control[("frame_receive", 4)]
     same_session = {(r["scheme"], r["op"]): float(r["median_ns"]) * 1e-9
-                    for r in rows(HW / "p1_crypto.authbc-pi4b.20261009.csv") if not r["agg_b"]}
+                    for r in rows(HW / "p1_crypto.authbc-pi4b.frames-kept.csv")
+                    if not r["agg_b"]}
     reference = {(r["scheme"], r["op"]): float(r["median_ns"]) * 1e-9
                  for r in rows(HW / "p1_crypto.authbc-pi4a.csv") if not r["agg_b"]}
     drift = max(abs(same_session[k] / reference[k] - 1) for k in reference if k in same_session)
@@ -1012,9 +1051,9 @@ def prototype() -> dict[str, str]:
                  rung="batch-delta", scheme="ed25519")
     batches = {int(r["batch"]): float(r["median_ns_per_sig"])
                for r in rows(HW / "ed25519_batch.authbc-pi4b.csv")}
-    # ⚠️ An ESTIMATE, labelled so wherever it is printed: the lean sender's time on one board
-    # times the processor power metered on the other board of the same model. Not a meter
-    # reading — the lean sender has not been metered (docs/OPEN_ITEMS.md G9).
+    # The MODEL column of the lean rows of the energy table: the lean sender's timed frame
+    # times the processor power metered on the other board of the same model. It was printed
+    # as an estimate until the sender was metered (F79); the meter now stands beside it.
     power = yaml.safe_load((REPO / "experiments" / "energy-table" / "config.yaml").read_text())
     estimate = {b: power["p_cpu_w"] * lean[("frame_send", b)] / b * 1e6 for b in (1, batch)}
     return {
@@ -1025,6 +1064,8 @@ def prototype() -> dict[str, str]:
         "leanRecvOneMs": f(1e3 * lean[("frame_receive", 1)], 2),
         "leanRecvOverVerify": f(lean[("frame_receive", batch)]
                                 / same_session[("ed25519", "verify")], 1),
+        "leanRecvKeepUs": f(1e6 * keep_cost, 0),
+        "leanRecvKeepPct": f(100 * keep_cost / control[("frame_receive", 4)], 1),
         "ncpuProto": str(1 + math.floor(1.0 / per_neighbour)),
         "cpuProtoCores": f((int(design["n_max_v95"]) - 1) * per_neighbour, 1),
         "edBatchOneUs": f(batches[1] / 1e3, 0), "edBatchManyUs": f(batches[64] / 1e3, 0),

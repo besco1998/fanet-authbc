@@ -145,10 +145,20 @@ class TestTheExclusionIsStatedWithItsHistory:
             assert rf"\paragraph{{{heading}" in LOWRATE, heading
         assert r"\emph{four of seven}" in LOWRATE and r"\emph{three of seven}" in LOWRATE
 
-    def test_the_four_scope_conditions_are_there(self) -> None:
+    def test_the_five_scope_conditions_are_there(self) -> None:
+        """Four until 2026-10-09. The fifth says which of the count is the format's (F80, G29):
+        after a signature and a hash a 115 B payload has 19 B left, and the lean header with
+        the link's framing is exactly that."""
         scope = LOWRATE[LOWRATE.index(r"\subsection{Scope}"):
                         LOWRATE.index(r"\subsection{What each relaxation buys}")]
-        assert scope.count(r"\item") == 4 and "255" in scope
+        assert scope.count(r"\item") == 5 and "255" in scope
+        fifth = scope[scope.rindex(r"\item"):]
+        for needle in (r"\textbf{The frame is this thesis's format.}", r"\exclSigCountCap{}",
+                       r"\exclFmtCount{}", r"\exRoomAfterCrypto\,B",
+                       "no longer whatever the telemetry"):
+            assert needle in fifth, needle
+        assert (NUMBERS["exclSigCount"], NUMBERS["exclFmtCount"], NUMBERS["exRoomAfterCrypto"]) \
+            == ("five", "three", "19")
 
     def test_the_twelve_rates_are_partitioned_five_three_four(self) -> None:
         matrix = _rows("exclusion_matrix.csv")

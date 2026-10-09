@@ -267,6 +267,19 @@ def cpu_seconds_per_neighbour(lam: float, batch: int, sigs_per_frame: int, t_ver
 
 
 @cache
+def cert_bytes_per_frame_timed(cert_bytes: float, digest_bytes: float, interval_s: float,
+                               frames_per_s: float) -> float:
+    """Mean certificate bytes per frame when one full certificate is sent every ``interval_s``.
+
+    Every other frame carries the digest. A sender with fewer than one frame per interval puts
+    the certificate in every frame. At ten frames a second and 0.5 s this is the per-frame
+    policy exactly (one frame in five); at any other rate the two readings part, and under
+    this one a batch amortises the digest and not the certificate.
+    """
+    share = min(1.0, 1.0 / (interval_s * frames_per_s))
+    return share * cert_bytes + (1.0 - share) * digest_bytes
+
+
 def _lean_measured(batch: int, inline: bool) -> float:
     return leanframes.lean_frame_sizes(batch, inline=inline).mean
 
@@ -421,6 +434,9 @@ def run_design_ladder(cfg: dict) -> list[dict]:
                 "sized_from": r["sized_from"], "frame_bytes": round(frame, 3),
                 "bytes_per_rec": round(frame / b, 3),
                 "bytes_per_rec_with_cert": round((frame + cert) / b, 3),
+                "bytes_per_rec_with_cert_timed": round((frame + cert_bytes_per_frame_timed(
+                    cfg["cert_bytes"], cfg["cert_digest_bytes"], cfg["cert_interval_s"],
+                    lam / b)) / b, 3),
                 "V": round(v, 5), "meets_v": int(v >= 1.0 - cfg["epsilon"]),
                 "latency_ms": round(latency * 1e3, 3), "meets_d_max": int(latency <= d_max),
                 "n_max_u_lt_1": nu,
@@ -459,6 +475,9 @@ def _scheme_rows(cfg: dict, op: str, lam: float, d_max: float, batch: int,
                 "placement": "B", "batch": batch, "ref_interval": 1, "sized_from": sized_from,
                 "frame_bytes": round(frame, 3), "bytes_per_rec": round(frame / batch, 3),
                 "bytes_per_rec_with_cert": round((frame + cert) / batch, 3),
+                "bytes_per_rec_with_cert_timed": round((frame + cert_bytes_per_frame_timed(
+                    cfg["cert_bytes"], cfg["cert_digest_bytes"], cfg["cert_interval_s"],
+                    lam / batch)) / batch, 3),
                 "V": round(frame_model.verifiability(cfg["p_loss"], 1), 5), "meets_v": 1,
                 "latency_ms": round(latency * 1e3, 3), "meets_d_max": int(latency <= d_max),
                 "n_max_u_lt_1": nu,

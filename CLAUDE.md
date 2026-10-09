@@ -61,7 +61,7 @@ type hints; no dead code; comments explain WHY, not what.
 - **Phase: P9 — revision after the supervisor's review (2026-10).** Branch `p9-supervisor-revision`, cut from `p8-audit-and-corrections`. Work from any machine: `git clone`, `git checkout p9-supervisor-revision`, `make setup && make all`.
 - ⚠️ **`make all` green on this machine is NOT the claim — CI green is** (2026-10-08: the gate passed here and failed on a clean install over an undeclared package). **Before every push run the WHOLE of `make all VENV=<a venv built from pip install -e '.[dev]' alone>`** — never a hand-picked subset of tests (the fix for that failure broke the build again exactly that way: a figure was regenerated and its copy in `thesis/` was not) — and do not say green until CI on the pushed commit has finished. Guards: `tests/test_declared_dependencies.py`, and no figure may embed a library version.
 - ⚠️ **TWO COPIES OF THIS FILE EXIST.** Sessions that start in `~/authbc_package` auto-load `~/authbc_package/CLAUDE.md`, which is an OLD copy. **This file, in the repository, is the status board.** A stale count read from the other one was "corrected" into the thesis on 2026-10-06 and had to be reverted.
-- **Green:** 2170 fast + **41** frozen-gate tests (**2211**), `ruff` clean, **`mypy` clean (0 / 57 files)**, paper builds (**10 pp**, **40 refs**, 0 undefined, 0 overfull, abstract **185 w** by the board's counter, at its limit), methods paper 4 pp, thesis **125 pp** (61 refs, 0 overfull, 3 markers left — all Mohamed's). `make all` exit 0.
+- **Green:** 2192 fast + **41** frozen-gate tests (**2233**), `ruff` clean, **`mypy` clean (0 / 57 files)**, paper builds (**10 pp**, **40 refs**, 0 undefined, 0 overfull, abstract **178 w** by the board's counter, 183 by the paper test's, which counts a macro as a word), methods paper 4 pp, thesis **125 pp** (61 refs, 0 overfull, 3 markers left — all Mohamed's). `make all` exit 0.
 - **METHODOLOGY (Mohamed):** this is an optimization problem — *state everything, choose what to stick with, state the trade-offs for every decision*. **`docs/TRADEOFFS.md` is required reading before quoting any number.**
 - **LICENSE = all rights reserved** (© 2026 Mohamed A. Farouk). Vendored NS-3 + `signetlabdei/lorawan` stay GPLv2, **not** redistributed.
 
@@ -92,25 +92,31 @@ and bit-identical (D6).
 | "ratios are protected by construction" | **withdrawn** — the ceiling's error depends on the frame and does not cancel |
 | "Bor et al." | **Haxhibeqiri, Van den Abeele, Moerman & Hoebeke** (F49). Renamed everywhere |
 
-### ⚠️⚠️ 2026-10-09, afternoon — THE PAPER REVIEWED AS A SUPERVISOR WOULD (F80): seven contradictions fixed, one security claim the code does not deliver
+### ⚠️⚠️ 2026-10-09, afternoon — THE PAPER REVIEWED AS A SUPERVISOR WOULD (F80), and four of Mohamed's five decisions on it CARRIED OUT (F81); the fifth, other batch sizes, is REGISTERED (`64322fc`) and running
 
-- **Fixed in the text (all were the paper contradicting its own results):** abstract said
-  "contention is simulated"; Method said "the same board"; the introduction said one core
-  serves 296 nodes where the built receiver serves 57; "the channel binds first" (true of
-  cryptography only); energy "for each" step; a cause implied for the failed radio prediction
-  that the registered follow-up did not support; the lean sender's 2.7× energy was missing.
-- ⚠️ **THE STORE KEEPS NO FRAME AND NO SIGNATURE.** "Transferable evidence" of equivocation was
-  claimed in paper, thesis ch. 3 and docs/01; the store keeps two bare records. The documents
-  now say so (`tests/test_evidence_claim.py`). **The code is NOT changed — G28, Mohamed's
-  go-ahead needed** (it touches the timed receive path).
-- ⚠️ **Do NOT say "eight of twelve, whatever the format".** Five are excluded by the signature
-  alone; three by this format's 19 B of header and framing at 115 B (scope condition v; G29).
-- ⚠️ **The "with cert." column is per FRAME; the standard's cadence is per 500 ms.** Per time it
-  would read ≈160 / 51 B, not 184.57 / 52.95: the column favours the design (G30).
-- **Capacity is simulated for b = 1 and b = 4 only** (both operating points have Λ·D_max = 5; G31).
-- **Open for Mohamed: G28–G34.** Verdict given in session: sound within its stated scope;
-  novelty is the accounting and the capacity rule, not batching; a journal needs G28, G31 and
-  more than two radios or a less idealised channel.
+- **F80, the review:** seven places where the paper contradicted its own results, fixed; ten
+  informal phrases removed; five paragraphs rewritten. Verdict given in session: sound within
+  its stated scope; novelty is the accounting and the capacity rule, not batching.
+- ⚠️ **THE RECEIVER NOW KEEPS FRAMES (F81, G28 closed).** Until that day it kept records and no
+  signature, so "transferable evidence" was not implemented. `LeanReceiver.frame_of`,
+  `.evidence`; a third party runs `session_v2.verified_records` / `proves_equivocation` with
+  the public key only. **Never write that a record alone is evidence: it is, with its frame.**
+  TDD found a second defect: an equivocation behind a duplicate first record was refused as a
+  replay.
+- **Receiver re-timed on pi-B against a control, expectation committed first (`61a4b4f`):**
+  **1.43 ms** per four-record frame (was 1.41), +10 µs = 0.7 %; **57 nodes per core stands, by
+  0.18 %**. ⚠️ `tests/test_bench_session_hw.py` holds the SHA-256 of `session_v2.py`,
+  `store.py`, `wire_v2.py` as timed: **edit one and the receive time must be re-measured on the
+  board.** Sender times stay the morning's (the energy runs were registered against them).
+- ⚠️ **Exclusion: say "eight: five cannot hold the signature in any format, three more cannot
+  hold our frame".** Macros `exclSigCount`, `exclFmtCount`, `exRoomAfterCrypto` (19 B). Scope
+  has FIVE conditions (G29 closed).
+- ⚠️ **Certificates: two columns now.** Per 5 frames 184.57 / 52.95 B per record; **per 500 ms
+  159.93 / 51.41**. The per-frame one favours the design and the text says so (G30 closed).
+- **The scheme sentence is out of the paper's abstract** (G32 closed).
+- ⚠️ **F80's "8.1 % closed form" was already in the repo, better: 5.5 %** (docs/02 §6g, F5,
+  tested). I had read the paper and not the registration (G33 rewritten).
+- **Still open from the review:** G33 (optional), G34 (four related-work gaps, none held).
 
 ### ⚠️⚠️ 2026-10-09, night — THE BOARDS WERE ON: contention measured on two radios, and an August figure WITHDRAWN (F72–F79)
 
@@ -450,7 +456,7 @@ decides a headline and was never written down — defect class **C2**, the one c
 > ⚠️ **F18 came back.** On 2026-08-07 it was found still printed in `tab:lora-external` ("we are more optimistic" at N=5) — 100 lines below a bold sentence saying the opposite. **Retracting a finding in the register does not remove it from the paper.** When you retract, grep the paper. Guarded now by `test_no_row_revives_the_retracted_optimism_claim`, which checks the *artifact* rather than the wording.
 
 ### Where things live
-`docs/README.md` is the index. Findings **F1–F80** in `docs/audits/model_provenance.md`. Open items **only** in `docs/OPEN_ITEMS.md`. Trade-offs in `docs/TRADEOFFS.md`. Method and failed attempts in `docs/LOGBOOK.md`. **51 PDFs** in `docs/literature/` with each source's ROLE stated, and **20 more held on Mohamed's machine but NOT redistributed** (`docs/literature/HELD_LOCALLY.csv`, git-ignored files — ⚠️ never `git add -f` them); every bibliography entry is checked against its registry record by `make verify-citations` (`A3_CITATION_VERIFICATION.md` is the August record of a check that turned out not to compare authors — F49).
+`docs/README.md` is the index. Findings **F1–F81** in `docs/audits/model_provenance.md`. Open items **only** in `docs/OPEN_ITEMS.md`. Trade-offs in `docs/TRADEOFFS.md`. Method and failed attempts in `docs/LOGBOOK.md`. **51 PDFs** in `docs/literature/` with each source's ROLE stated, and **20 more held on Mohamed's machine but NOT redistributed** (`docs/literature/HELD_LOCALLY.csv`, git-ignored files — ⚠️ never `git add -f` them); every bibliography entry is checked against its registry record by `make verify-citations` (`A3_CITATION_VERIFICATION.md` is the August record of a check that turned out not to compare authors — F49).
 
 ### Deferred by Mohamed — plans written, DO NOT START unprompted
 - **Mobility (E20)** — `docs/MOBILITY_PLAN.md`. **Separate NEW scenario files**, literature survey first. Not for the 802.11 arm (Bianchi/Ma&Chen have no position term).

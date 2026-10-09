@@ -67,6 +67,15 @@ class Store:
         self._last_seq[rec.src] = rec.seq
         return self._count(Outcome.STORED)
 
+    def contradicts(self, rec: Record) -> bool:
+        """True iff a DIFFERENT record is already held for this record's ``(src, seq)``.
+
+        A question, not an ingest: nothing is counted or stored. The hash is computed only when
+        the slot is taken, so a record for a new sequence number costs one look-up.
+        """
+        held = self._accepted.get((rec.src, rec.seq))
+        return held is not None and held != rec.record_hash()
+
     def _count(self, outcome: Outcome) -> Outcome:
         self.counters[outcome.value] += 1
         return outcome

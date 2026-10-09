@@ -12,6 +12,54 @@ where the durable record lives. If you want the conclusion only, follow the poin
 
 ---
 
+# 2026-10-09, later — four of the review's five decisions carried out (F81); the fifth registered
+
+**What we were doing.** Mohamed: "go ahead for decisions 1–5" — the receiver keeps frames; other
+batch sizes simulated; the certificate column read in time; the exclusion count split by cause;
+the scheme sentence out of the abstract.
+
+**Order, and why.** The batch-size runs first, because their predictions had to be committed
+before any run and the runs take two hours (`64322fc`, then 630 runs in the background). Then
+the receiver, because its time is in the paper and must be re-measured on the board.
+
+**The receiver, test-first.** The tests were written against the receiver as it was and failed
+on import, as they should. One of them was written from a suspicion formed while reading the
+receive loop: *the first record the store declines decides the frame* — so what if the first
+record is a harmless duplicate and the third is the lie? The test built that frame (records 0
+and 1 repeated, a different record 2, properly signed) and the old receiver called it a replay.
+⚠️ **The fix for "evidence is not kept" would have kept evidence of only some equivocations had
+the tests been written after the code.**
+
+**Re-timing: a control before the change, in the same session.** The morning's figure was from
+another boot of the board. Rather than compare the new receiver with it, the old receiver was
+timed again first (1.4159 ms against the morning's 1.4112, 0.34 % apart), then the new one
+(1.4260). The expectation — 1.00 to 1.02 times the control — was committed before either run
+and before the new receiver existed in the repository (`61a4b4f`).
+*What went less well:* I logged in to the board four times during the second run. This is the
+same mistake as during the morning's energy control, a few hours later. The figure is a median
+and the sender's rows did not move, but the rule I wrote for myself that morning was "nothing
+is asked of the board until a run's expected end" and I did not keep it.
+
+**A name I did not change.** The receiver's new dictionary is `_frames`; the sender in the same
+file already has a counter called `_frames`. I noticed after the board had timed the file.
+Renaming would have made the repository's receiver differ from the timed one by a few bytes
+that change nothing — and then the hash test, added for exactly that purpose, would be holding
+a file that was never timed. The name stays.
+
+**Certificates.** The review's hand arithmetic (159.9 and 51.4 B per record) was written down
+before the code; the regenerated ladder gives 159.925 and 51.41. Every other cell of the file
+was compared with its previous value before the new one was accepted.
+
+**A correction to my own review.** F80 offered an "8.1 % closed form" as something new. While
+registering the batch runs I read the registration of F5 again: the exact closed form, 5.5 %,
+has been in `docs/02` and under test since 2026-10-08. It is the lesson of F9 and F65 a third
+time — search before deriving — and the prior work this time was the project's own.
+
+**Record:** F81 (receiver, certificates, exclusion split); `hw/BENCH_SESSION.md` (re-timing,
+with outcome); `docs/NMAX_DIRECT_EXPECTATIONS.md` F6 (the batch sizes: registered, running).
+
+---
+
 # 2026-10-09, afternoon — the paper read as a supervisor would read it (F80)
 
 **What we were doing.** Mohamed asked for the paper to be audited as a supervisor would:

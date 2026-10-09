@@ -4010,3 +4010,92 @@ Novelty is in the accounting and in the capacity rule with its mechanism, not in
 The weakest points are the realism of the capacity scenario, the single batch size, a receiver
 that does not keep what the paper is about, and a comparison of certificates that leans its
 way. The full review was given to Mohamed in the session of 2026-10-09.
+
+## F81 — the receiver keeps what it verified; an equivocation that hid behind a replay; three statements narrowed with their numbers (2026-10-09)
+
+*Mohamed, on the review of F80: "go ahead for decisions 1–5". Decision 2 (other batch sizes) is
+its own finding, F82. This one is the other four.*
+
+### 1 · The receiver keeps frames (G28)
+
+`LeanReceiver` now keeps the bytes of every accepted frame, keyed by each record it carried
+(`frame_of`), and on an equivocation both frames as they arrived (`evidence`). Two functions in
+`placement/session_v2.py` are what a third party runs, and neither takes a receiver:
+
+* `verified_records(frame, pk)` — the records of a frame that decodes and verifies with the
+  sender's public key and nothing else; `None` otherwise, including for a frame coded against
+  a record it does not carry;
+* `proves_equivocation(held, offered, pk)` — whether two such frames give one sequence number
+  two different records.
+
+The cost is storage: a frame's on-air length for every *b* records held (43.25 B per record in
+the design), beside the record.
+
+**Written test-first, and the tests found a second defect.** The receiver offered a frame's
+records to the store in order and let the first refusal decide the frame. A frame that repeats
+records 0 and 1 and signs a *different* record 2 was therefore refused as a **replay** at
+record 0, and the equivocation at record 2 was never seen. The paper's claim (iii),
+"two validly signed records for one sequence number are detected", was false for that frame.
+`Store.contradicts` is now asked of every record of a verified frame before any is offered.
+The test is `test_an_equivocation_behind_a_duplicate_first_record_is_still_found`; it failed
+against the old receiver for the right reason before the fix.
+
+**Re-timed on the board, against a control, with the expectation committed first**
+(`hw/BENCH_SESSION.md`, commit `61a4b4f`; the receiver that keeps frames did not exist in the
+repository at that commit).
+
+| | control (old receiver, same session) | new receiver | ratio | registered |
+|---|---|---|---|---|
+| four records | 1.4159 ms | **1.4260 ms** | 1.0071 (+10.0 µs) | 1.00–1.02; "+3 to +12 µs" |
+| one record | 0.6536 ms | **0.6582 ms** | 1.0070 (+4.6 µs) | 1.00–1.02 |
+
+The control reproduced the morning's 1.4112 ms within 0.34 % (registered: 2 %). One core still
+serves **57** nodes — by a margin of 0.18 %, which the thesis states; the figure is one
+frame-time step from 56. The paper's receive times are now 1.43 and 0.66 ms (were 1.41 and
+0.65) and the receiver costs 5.5 times its verification (was 5.4). The sender's times are the
+morning's on purpose: its code is unchanged and the energy runs were registered against them.
+`tests/test_bench_session_hw.py` holds the SHA-256 of the three source files of the receive
+path as they were on the board, so that a later edit cannot leave the paper quoting a time of
+code that no longer exists.
+
+⚠️ I logged in to the board four times during the second run, a second each, to read its log.
+One fell at the start of the lean timing. Medians of 10 000 frames; the sender's rows of the
+same minute agree with the control within 0.15 %. Recorded, not excused.
+
+### 2 · The certificate column, read in time as well (G30)
+
+`design_ladder.csv` gains `bytes_per_rec_with_cert_timed`: one full certificate per 500 ms at
+any frame rate, the digest in every other frame (`frame_experiments.cert_bytes_per_frame_timed`,
+`cert_interval_s` in the experiment's config). Nothing else in the file changed; this was
+checked cell by cell.
+
+| lean format | bytes/record | cert. per 5 frames | cert. per 500 ms |
+|---|---|---|---|
+| baseline (row 5) | 145.77 | 184.57 | **159.93** |
+| design (row 8) | 43.25 | 52.95 | **51.41** |
+| ratio | 3.37 | 3.49 | **3.11** |
+
+The figures are the ones the review estimated by hand before the code existed (159.9 and
+51.4). Both columns are in both ladders; the text says the first favours the design and why
+(at ten messages a second the two readings are one, which is why the first is a reading of the
+source and not an error).
+
+### 3 · The exclusion count, split by cause (G29) — and the scheme sentence (G32)
+
+Abstract, contribution 2 and conclusion now read "eight … : five cannot hold the signature in
+any format, three more cannot hold our frame". Generated, not typed: `exclSigCount`,
+`exclFmtCount`, and `exRoomAfterCrypto` (19), with a guard that the lean header at its floor
+plus the link's framing is exactly that number. The thesis has the fifth condition in ch. 10
+and the split wherever the count is stated. The sentence "among 64 B elliptic-curve signatures
+the scheme does not" is out of the paper's abstract; it stays once in the introduction (the
+supervisor's own line) and once in the conclusion.
+
+### 4 · A correction to F80 itself
+
+F80 reported a "reviewer's check": the paper's loss expression, solved with nothing fitted,
+within 8.1 % of the eighteen crossings, and proposed it as something the paper could add
+(G33). **The repository already held the better version.** `docs/02` §6g and the registration
+of F5 give the exact form, ρ·[1 − (1 − 1/W)^(ρ/(1−ρ))] + (N−1)·f·8 µs, within **5.5 %** (mean
+2.3 %), and `tests/test_dcf_model_artifacts.py` holds it. The 8.1 % is the first-order
+simplification the paper prints. I had read the paper and not the registration. G33 is
+rewritten accordingly: if a figure is wanted in the paper, it is the 5.5 %, already tested.

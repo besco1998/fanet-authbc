@@ -9,8 +9,10 @@ kernel's under-voltage record).
 from __future__ import annotations
 
 import csv
+import hashlib
 import math
 import re
+import subprocess
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
@@ -35,6 +37,12 @@ LEAN = {(r["op"], int(r["agg_b"])): float(r["median_ns"]) / 1e6       # millisec
         for r in _rows(HW / "p1_lean.authbc-pi4b.csv")}
 DESKTOP = {(r["op"], int(r["agg_b"])): float(r["median_ns"]) / 1e6
            for r in _rows(REPO / "results" / "raw" / "p1_lean.x86-desktop.20261009.csv")}
+# The afternoon's session (audit F81): the receiver as it was, then the receiver that keeps frames
+CONTROL = {(r["op"], int(r["agg_b"])): float(r["median_ns"]) / 1e6
+           for r in _rows(HW / "p1_lean.authbc-pi4b.control-20261009.csv")}
+KEPT = {(r["op"], int(r["agg_b"])): float(r["median_ns"]) / 1e6
+        for r in _rows(HW / "p1_lean.authbc-pi4b.frames-kept.csv")}
+RETIMING_REGISTERED = "61a4b4f"
 
 
 def _crypto(name: str) -> dict[tuple[str, str], float]:
@@ -107,10 +115,14 @@ class TestWhatWasWrittenDownBeforehand:
 
 class TestWhatTheDocumentsQuote:
     def test_the_times(self) -> None:
+        """The sender's are the morning's, which the energy runs were registered against; the
+        receiver's are of the receiver that keeps frames (1.41 and 0.65 ms before it did)."""
         assert NUMBERS["leanSendMs"] == f"{LEAN[('frame_send', 4)]:.2f}" == "0.87"
-        assert NUMBERS["leanRecvMs"] == f"{LEAN[('frame_receive', 4)]:.2f}" == "1.41"
         assert NUMBERS["leanSendOneMs"] == f"{LEAN[('frame_send', 1)]:.2f}" == "0.38"
-        assert NUMBERS["leanRecvOneMs"] == f"{LEAN[('frame_receive', 1)]:.2f}" == "0.65"
+        assert NUMBERS["leanRecvMs"] == f"{KEPT[('frame_receive', 4)]:.2f}" == "1.43"
+        assert NUMBERS["leanRecvOneMs"] == f"{KEPT[('frame_receive', 1)]:.2f}" == "0.66"
+        assert (f"{LEAN[('frame_receive', 4)]:.2f}", f"{LEAN[('frame_receive', 1)]:.2f}") == \
+            ("1.41", "0.65")
 
     def test_the_lean_rows_model_is_the_timed_frame_at_the_metered_power(self) -> None:
         """The "model" column of the lean rows: the frame's time on the board times the power
@@ -139,14 +151,98 @@ class TestWhatTheDocumentsQuote:
         assert "it cannot test the power" in method
 
     def test_the_receiver_costs_five_times_its_verification(self) -> None:
-        verify_ms = _crypto("p1_crypto.authbc-pi4b.20261009.csv")[("ed25519", "verify")] / 1e6
-        assert NUMBERS["leanRecvOverVerify"] == f"{LEAN[('frame_receive', 4)] / verify_ms:.1f}"
+        verify_ms = _crypto("p1_crypto.authbc-pi4b.frames-kept.csv")[("ed25519", "verify")] / 1e6
+        assert NUMBERS["leanRecvOverVerify"] == f"{KEPT[('frame_receive', 4)] / verify_ms:.1f}"
         assert 5.0 < float(NUMBERS["leanRecvOverVerify"]) < 6.0
 
     def test_one_core_of_the_prototype_serves_57_nodes_and_the_design_needs_two_cores(self) -> None:
-        per_neighbour_s = 50 / 4 * LEAN[("frame_receive", 4)] / 1e3      # 12.5 frames a second
+        per_neighbour_s = 50 / 4 * KEPT[("frame_receive", 4)] / 1e3      # 12.5 frames a second
         assert NUMBERS["ncpuProto"] == str(1 + math.floor(1 / per_neighbour_s)) == "57"
         n_max = int(NUMBERS["nmaxLeanDesign"])
         assert NUMBERS["cpuProtoCores"] == f"{(n_max - 1) * per_neighbour_s:.1f}" == "2.2"
         assert int(NUMBERS["ncpuProto"]) < n_max < int(NUMBERS["ncpuBatch"])
         assert "for the prototype on one core the processor binds first" in CODESIGN
+
+
+class TestTheReceiverThatKeepsFramesWasTimedAgainstAControl:
+    """Audit F81. The receiver was changed to keep every accepted frame; its time is in the
+    paper. Two runs in one session on the same board: the receiver as it was, then the new one.
+    What each should show was committed before either (hw/BENCH_SESSION.md, 61a4b4f)."""
+
+    @staticmethod
+    def _git(*args: str) -> str:
+        return subprocess.run(["git", *args], cwd=REPO, capture_output=True, text=True,
+                              check=True).stdout
+
+    def test_the_expectation_was_committed_before_the_new_receiver_and_before_its_timing(
+            self) -> None:
+        sheet = self._git("show", f"{RETIMING_REGISTERED}:hw/BENCH_SESSION.md")
+        for needle in ("**1.383–1.439 ms** (four records), **0.640–0.666 ms** (one)",
+                       "between **1.00 and 1.02 times the control**",
+                       "**57** while t ≤ 1.4286 ms",
+                       "the code is not tuned to get under"):
+            assert needle in sheet, needle
+        files = self._git("ls-tree", "-r", "--name-only", RETIMING_REGISTERED)
+        assert "frames-kept" not in files and "control-20261009" not in files
+        receiver = self._git("show",
+                             f"{RETIMING_REGISTERED}:src/authbc/placement/session_v2.py")
+        assert "frame_of" not in receiver and "proves_equivocation" not in receiver
+
+    def test_the_receiver_in_the_repository_is_the_one_that_was_timed(self) -> None:
+        """Read on the board after the run, by SHA-256. If one of these files changes, the
+        receive time in the paper is of code that no longer exists: time it again on the board
+        (hw/BENCH_SESSION.md) and record the new hashes with the new file."""
+        timed = {
+            "src/authbc/placement/session_v2.py":
+                "42f954ad58cdeeb98e1b3b00da057c7a7bc8aa0a13a64172102bed90997fae8a",
+            "src/authbc/ledger/store.py":
+                "5fc6c4a98a8b4b14021b04192b9178e8e598abd553eb055bf3f8024a31dd2ff2",
+            "src/authbc/placement/wire_v2.py":
+                "6edf42a8af07c83e96f34e34b4ecac3104ed71e75dec0a5f360ddb7eddb94db0",
+        }
+        for path, digest in timed.items():
+            assert hashlib.sha256((REPO / path).read_bytes()).hexdigest() == digest, path
+            assert digest in BENCH, path
+
+    def test_both_runs_were_valid_and_on_the_same_board(self) -> None:
+        for name in ("control-20261009", "frames-kept"):
+            head = _header(HW / f"p1_lean.authbc-pi4b.{name}.csv")
+            assert head["device_host"] == "authbc-pi4b" and head["python"] == "3.12.13"
+            assert head["device_governor"] == "performance"
+            assert head["device_throttled_before"] == head["device_throttled_after"] == "0x0"
+        runs = [_header(HW / f"p1_lean.authbc-pi4b.{n}.csv")["run_utc"]
+                for n in ("control-20261009", "frames-kept")]
+        assert runs == sorted(runs) and runs[0][:8] == runs[1][:8] == "20261009"
+
+    def test_all_three_runs_computed_the_same_thing(self) -> None:
+        def sums(name: str) -> dict[tuple[str, str], str]:
+            return {(r["op"], r["agg_b"]): r["checksum"] for r in _rows(HW / name)}
+        assert sums("p1_lean.authbc-pi4b.csv") == sums("p1_lean.authbc-pi4b.control-20261009.csv") \
+            == sums("p1_lean.authbc-pi4b.frames-kept.csv")
+
+    def test_the_control_reproduces_the_morning_within_two_percent(self) -> None:
+        for b, (lo, hi) in ((4, (1.383, 1.439)), (1, (0.640, 0.666))):
+            assert lo <= CONTROL[("frame_receive", b)] <= hi
+        assert abs(CONTROL[("frame_receive", 4)] / LEAN[("frame_receive", 4)] - 1) < 0.005
+
+    def test_keeping_frames_costs_under_one_percent_where_two_were_allowed(self) -> None:
+        for b in (1, 4):
+            ratio = KEPT[("frame_receive", b)] / CONTROL[("frame_receive", b)]
+            assert 1.00 <= ratio <= 1.02
+            assert ratio < 1.01
+        added_us = 1e3 * (KEPT[("frame_receive", 4)] - CONTROL[("frame_receive", 4)])
+        assert 3.0 <= added_us <= 12.0                       # the figure expected beforehand
+        assert NUMBERS["leanRecvKeepUs"] == f"{added_us:.0f}" == "10"
+        assert NUMBERS["leanRecvKeepPct"] == "0.7"
+
+    def test_the_senders_time_did_not_move(self) -> None:
+        for b in (1, 4):
+            assert abs(KEPT[("frame_send", b)] / CONTROL[("frame_send", b)] - 1) < 0.01
+
+    def test_fifty_seven_nodes_stand_by_two_parts_in_a_thousand(self) -> None:
+        """Said so in the thesis: the count is one frame-time step from 56."""
+        bound_ms = 1e3 / (12.5 * 56)
+        assert f"{bound_ms:.4f}" == "1.4286"
+        margin = 1 - KEPT[("frame_receive", 4)] / bound_ms
+        assert 0.001 < margin < 0.003
+        assert "by a margin of two parts in a thousand" in CODESIGN

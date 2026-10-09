@@ -118,8 +118,8 @@ integrity & no field of a stored record was altered in transit &
 replay rejection & a frame delivered twice is stored once &
   \texttt{seq} strictly increasing per sender \\
 equivocation evidence & two validly signed records for one $(\texttt{src}, \texttt{seq})$ are
-  detected and kept as a pair & each is proof to a third party only with the frame that carried
-  it, since the signature covers the frame \\
+  detected and the two frames that carried them are kept & each frame verifies alone under the
+  sender's public key, so the pair is proof to a third party \\
 continuity & omission or re-ordering within what is held is detectable &
   each record's \texttt{prev\_hash}; one link per frame commits to the record before it \\
 non-repudiation & a sender cannot later deny a record &
@@ -129,14 +129,27 @@ non-repudiation & a sender cannot later deny a record &
 \end{tabular}
 \end{center}
 
-\begin{remark}[What the prototype's store keeps]
+\begin{remark}[What the receiver keeps, and what it did not]
 The last two rows are properties of the frame on air. They become evidence only where the frame
-is kept, and the store of this prototype does not keep it: it holds the verified records, and
-the pair it retains on an equivocation is a pair of records. Neither the signature nor the
-other records of the frame, without which the signature cannot be checked, is stored. What a
-receiver holds is therefore its own account of what it verified, and not yet something a third
-party can check. Keeping the frame would cost its length on air for every $b$ records held. This
-was found in a review of the paper on 2026-10-09 and is an open item, not a result.
+is kept: one signature covers a frame, so a record cannot be checked without the other records
+of its frame and the signature. Until 2026-10-09 the receiver of this prototype kept verified
+records and discarded the frame; the pair it retained on an equivocation was a pair of records,
+and nothing it held could be checked by anyone else. A review of the paper found it, and a test
+that had passed throughout: it counted the pairs and never asked whether one could be checked.
+
+The receiver now keeps every accepted frame as it arrived, and both frames of an equivocation.
+Two functions are what a third party runs: one returns the records of a frame that decodes and
+verifies under the sender's public key with nothing else, the other says whether two such
+frames give one sequence number two different records. Neither reads any state of the receiver.
+The cost is storage: a frame's length on air for every $b$ records held, \bprLeanDesign\,B per
+record in the design, beside the record itself. A frame that is coded against its predecessor
+cannot be shown alone; the design sends a keyframe in every frame, so every frame can.
+
+Fixing this found a second defect. The receiver offered a frame's records to the store in order
+and let the first refusal decide the frame. A frame whose first record repeated one already
+held was therefore refused as a replay, and a different record signed for a later sequence
+number in the same frame was never seen. Every record of a verified frame is now compared with
+what is held before any is stored.
 \end{remark}
 
 \subsection{What is not claimed}

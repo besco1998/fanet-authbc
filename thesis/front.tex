@@ -41,8 +41,8 @@ signature and one record that decodes without its predecessor. A link whose payl
 those admits no such telemetry at any batch size, and packet loss forecloses fragmentation as an
 escape whenever the verifiability target is no looser than the loss rate. On LoRaWAN this removes
 \exclCount{} of the twelve EU863-870 data rates: five because a $64$\,B signature alone overflows
-a $51$\,B payload, and three because header, link and signature fill a $115$\,B payload before
-any record. The conditions under which that holds, and what each relaxation buys, are stated with
+a $51$\,B payload, and three because this format's header, link and signature fill a $115$\,B
+payload before any record. The conditions under which that holds, and what each relaxation buys, are stated with
 it.
 
 \textbf{Bytes.} Built as one frame format with a sender and a receiver, the design puts

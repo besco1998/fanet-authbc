@@ -276,9 +276,11 @@ for all twelve EU863-870 data rates and tabulates what each relaxation buys.
 
 \subsection{Scope}
 
-The theorem is conditional, and \Cref{ch:lowrate} states the four conditions in full: the payload
+The theorem is conditional, and \Cref{ch:lowrate} states its four conditions in full: the payload
 limit is that of the link layer in use; every frame carries a public-key signature; there is no
-loss recovery; and $\varepsilon \leq p$.
+loss recovery; and $\varepsilon \leq p$. A fifth belongs to the instantiation and not to the
+theorem: how many data rates it excludes depends on the header of the frame format, for
+\exclFmtCount{} of the \exclCount.
 
 \section{A withdrawn theorem}
 

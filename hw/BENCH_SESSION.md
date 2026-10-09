@@ -226,3 +226,34 @@ core it gives; the code is not tuned to get under.
 **What the paper will use.** The receiver's times from the new run — the code that is in the
 repository. The sender's times stay the morning's: its code is unchanged, and the energy runs
 of this sheet were registered against exactly those figures.
+
+### Outcome (2026-10-09, runs of 12:05:26Z and 12:13:19Z) — every line held
+
+| | morning | control | receiver that keeps frames | against the control |
+|---|---|---|---|---|
+| `frame_receive`, four records | 1.4112 ms | 1.4159 ms (inside 1.383–1.439) | **1.4260 ms** | **1.0071** — +10.0 µs (expected +3 to +12) |
+| `frame_receive`, one record | 0.6530 ms | 0.6536 ms (inside 0.640–0.666) | **0.6582 ms** | **1.0070** — +4.6 µs |
+| `frame_send`, four records | 0.8681 ms | 0.8693 ms | 0.8680 ms | 0.9985 |
+| `frame_send`, one record | 0.3793 ms | 0.3798 ms | 0.3793 ms | 0.9986 |
+
+Both runs: governor `performance`, `throttled=0x0` before and after, 51–60 °C, checksums equal
+to the morning's (the same computation). One core still serves **57** nodes, by a margin of
+0.18 % (1.4260 ms against the 1.4286 ms at which it becomes 56); 124 nodes still need 2.2 cores.
+The receiver costs 5.5 times its verification (5.4 before).
+
+**What I did during the runs, since it is the kind of thing that moved a number this
+morning:** I logged in to the board four times while the second run was going, each for about a
+second, to read the end of its log; one of those fell at the start of the lean timing. The
+figure is a median of 10 000 frames and the sender's rows, timed in the same minute, are within
+0.15 % of the control's. I do not think it moved anything, and I cannot show that it did not.
+
+The three source files of the receive path were read on the board after the run and are the
+ones in the repository, byte for byte (SHA-256; `tests/test_bench_session_hw.py` holds them):
+
+    42f954ad58cdeeb98e1b3b00da057c7a7bc8aa0a13a64172102bed90997fae8a  src/authbc/placement/session_v2.py
+    5fc6c4a98a8b4b14021b04192b9178e8e598abd553eb055bf3f8024a31dd2ff2  src/authbc/ledger/store.py
+    6edf42a8af07c83e96f34e34b4ecac3104ed71e75dec0a5f360ddb7eddb94db0  src/authbc/placement/wire_v2.py
+
+Files: `results/hw/p1_lean.authbc-pi4b.control-20261009.csv`,
+`results/hw/p1_lean.authbc-pi4b.frames-kept.csv` and, for the same session's signature
+timings, `results/hw/p1_crypto.authbc-pi4b.frames-kept.csv`.

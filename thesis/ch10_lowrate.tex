@@ -103,7 +103,7 @@ and not offered as a second argument.
 
 \subsection{Scope}
 
-The exclusion is a statement about a particular kind of system. It holds under four conditions,
+The exclusion is a statement about a particular kind of system. It holds under five conditions,
 and each is necessary.
 
 \begin{enumerate}
@@ -122,6 +122,15 @@ and each is necessary.
       $V \geq 1-\varepsilon$ needs $n \leq \lfloor \ln(1-\varepsilon)/\ln(1-p) \rfloor$, which is
       $1$ exactly when $\varepsilon \leq p$. At $p = 0.01$ and $\varepsilon = 0.05$ a signed unit
       may span five frames, and the exclusion no longer holds as stated.
+\item \textbf{The frame is this thesis's format.} \exclSigCountCap{} of the \exclCount{} rates
+      are excluded by the signature alone and would be in any format. The other
+      \exclFmtCount{} are not. A $115$\,B payload less a $64$\,B signature and a $32$\,B hash
+      leaves \exRoomAfterCrypto\,B, and the lean header at its floor with the framing of the
+      link field is exactly that many. A hand-packed layout would leave part of those bytes for
+      a record: fewer than the \keyLean\,B this telemetry's keyframe averages, so the three
+      rates stay out of reach for this telemetry, but no longer whatever the telemetry. This
+      condition was added after a review of the paper on 2026-10-09. Until then the count was
+      stated as if it belonged to the problem, where three eighths of it belong to the format.
 \end{enumerate}
 
 \subsection{What each relaxation buys}

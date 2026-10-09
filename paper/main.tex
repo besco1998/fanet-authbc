@@ -35,12 +35,12 @@ makes the frame the unit of design: a format, a sender and a receiver in which o
 one chain link cover $b$ records and every frame decodes and verifies alone. Batch size, encoding
 and signature scheme are chosen together under freshness, verifiability, channel capacity and
 receiver CPU. Two boundaries follow. Where the frame does not fit: when every frame must verify
-alone, \exclCount{} of the twelve EU863-870 LoRaWAN data rates cannot carry one. Where it does: at
+alone, \exclCount{} of the twelve EU863-870 LoRaWAN data rates cannot carry one: \exclSigCount{}
+cannot hold the signature in any format, \exclFmtCount{} more cannot hold our frame. Where it does: at
 50~records/s and a 100\,ms deadline the design sends \bprLeanDesign\,B per record against
 \bprLeanBase\,B for per-record signing, and in ns-3 one 802.11a collision domain delivers 95\% of
-frames among \nmaxLeanDesign{} nodes instead of \nmaxLeanBase. Batching and header design decide
-what can run; among 64\,B elliptic-curve signatures the scheme does not. Sender energy is
-metered. Capacities are simulated; contention was measured on two radios only. Record sizes are
+frames among \nmaxLeanDesign{} nodes instead of \nmaxLeanBase. Sender energy is metered.
+Capacities are simulated; contention was measured on two radios only. Record sizes are
 synthetic, checked against twelve public flight logs and a simulated autopilot.
 \end{abstract}
 
@@ -79,8 +79,9 @@ emitted, decoded and verified, and their sizes are measured lengths (Sec.~\ref{s
 size that is a sum of measured parts is marked as one. We give the field-level byte budget of
 two formats: a first, text-keyed one and a lean one that is \leanVsFirstPct\% smaller.
 \item \textbf{An exclusion bound with its scope.} On LoRaWAN, \exclCount{} of twelve EU863-870 data
-rates cannot carry one signed, chained frame; we state the four conditions under which that
-holds and what each relaxation buys (Sec.~\ref{sec:lowrate}).
+rates cannot carry one signed, chained frame: \exclSigCount{} because the signature alone does
+not fit, \exclFmtCount{} because of this frame's header. We state the five conditions under which
+that holds and what each relaxation buys (Sec.~\ref{sec:lowrate}).
 \item \textbf{A ladder that separates causes.} Sharing a frame, sharing a signature and delta
 coding are separate steps, and we report bytes, capacity and receiver CPU for each
 (Sec.~\ref{sec:results}), and sender energy with and without batching. Capacity is found by
@@ -145,8 +146,7 @@ G{\"u}ndo{\u{g}}an \emph{et al.} find 9\,B of application data left beside an Ed
 an 802.15.4 frame~\cite{gundogan2021firmware}, and post-quantum signatures do not fit one 5G
 broadcast block~\cite{arxiv2510pqsib1}. For Remote~ID, a 64-octet signature is paged over
 25-octet Bluetooth frames with a parity page~\cite{rfc9575}: the spreading and recovery that
-our scope excludes. Section~\ref{sec:lowrate} applies the same arithmetic to
-LoRaWAN with the chain link included. Compact encodings~\cite{rfc8949} and delta coding of time
+our scope excludes. Compact encodings~\cite{rfc8949} and delta coding of time
 series~\cite{pelkonen2015gorilla} are established; a lossy link limits how far a delta chain may
 run (Sec.~\ref{sec:loss}).
 
@@ -180,9 +180,9 @@ delays and drops frames, and may operate many radios. It holds no honest UAV's p
 \textbf{What is protected.} (i)~\emph{Origin and integrity:} a stored record was produced by the
 UAV it names and was not altered, by a public-key signature checked before anything is stored.
 (ii)~\emph{Replay:} sequence numbers are strictly increasing per sender; a repeated frame is
-refused. (iii)~\emph{Equivocation:} two validly signed records for one sequence number are detected and
-kept as a pair. Each is evidence to a third party only together with the frame that carried it,
-because the signature covers the frame (Sec.~\ref{sec:limits}).
+refused. (iii)~\emph{Equivocation:} two validly signed records for one sequence number are detected, and
+the two frames that carried them are kept. The signature covers a frame, so a record is
+evidence only with its frame; a third party checks the pair with the sender's public key alone.
 (iv)~\emph{Continuity:} omission or reordering within what a receiver holds is detected through
 the chain.
 
@@ -337,8 +337,7 @@ interfaces, each scheme checked against published test vectors (for Ed25519,
 those of~\cite{rfc8032}).
 
 \textbf{Telemetry.} Records come from a seeded random-walk generator: \seeds{} seeds of 1000
-records at 50\,ms spacing, that of the relaxed point. At the 20\,ms of the primary point its
-delta record is the same size, the floor of the format. Header fields are sized for a five-digit sender identifier one hour into
+records at 50\,ms spacing, that of the relaxed point. Header fields are sized for a five-digit sender identifier one hour into
 a 50\,Hz flight. Section~\ref{sec:px4} checks the generator against flight logs.
 
 \textbf{Timing and energy.} Signing, verification, hashing and encoding are timed on a
@@ -403,19 +402,20 @@ Figure~\ref{fig:excl} sets that against the payload limits. Five data rates (DR0
 allow 50 or 51\,B: the signature alone does not fit. Three (DR3, DR9, DR11) allow 115\,B: header,
 link and signature fill the payload and no record fits. Four (DR4--DR7) allow 222 or 242\,B and
 are feasible. \textbf{\exclCountCap{} of twelve data rates cannot carry one signed, chained frame}, in
-either format and under either of the standard's payload tables. None of the eight depends on the
-telemetry, since each is excluded against the format's floor; three of them depend on the format
-(condition~v).
+either format and under either of the standard's payload tables. None of the \exclCount{} depends
+on the telemetry, since each is excluded against the format's floor; \exclFmtCount{} of them depend
+on the format (condition~v).
 
 \textbf{Scope.} The result holds under five conditions. (i)~The limits are LoRaWAN's regional
 parameters; the LoRa PHY itself carries 255\,B~\cite{semtech_sx1276} and is not excluded.
 (ii)~Every frame carries a public-key signature. (iii)~There is no loss recovery. (iv)~$\epsilon
 \leq p$, which by Eq.~\eqref{eq:v} forbids spreading a signature over several frames; at
 $p=0.01$ and $\epsilon=0.05$ a signed unit may span five frames and the exclusion no longer holds
-as stated. (v)~The frame is the format of Sec.~\ref{sec:frame}. The five 50 and 51\,B rates are
-excluded by the signature alone, whatever the format; at 115\,B a signature and a 32\,B hash
-leave 19\,B, which this format's header and framing fill. A hand-packed layout would leave part
-of them for a record, less than the \keyLean\,B our keyframe averages.
+as stated. (v)~The frame is the format of Sec.~\ref{sec:frame}. The \exclSigCount{} rates of 50
+and 51\,B are excluded by the signature alone, whatever the format; at 115\,B a signature and a
+32\,B hash leave \exRoomAfterCrypto\,B, which this format's header and framing fill exactly. A
+hand-packed layout would leave part of them for a record, less than the \keyLean\,B our keyframe
+averages.
 
 \textbf{What each relaxation buys} (Table~\ref{tab:excl}). Taking the chain link off the air
 frees the three 115\,B rates: they are excluded by the link, not by the signature. The smallest
@@ -442,9 +442,6 @@ every few seconds; it is not the 802.11 design at a smaller scale.
 
 \section{Results on 802.11}\label{sec:results}
 
-On a link that carries the frame, the questions are what each design choice buys and how many
-nodes one channel then serves.
-
 \subsection{The design ladder}
 
 \begin{table*}[t]\centering\footnotesize
@@ -453,23 +450,25 @@ saturation bound. $N_{\max}$: largest neighbourhood with mean delivery $\geq 0.9
 [95\% interval]. CPU: share of one receiver core spent verifying and hashing at $N_{\max}$.}
 \label{tab:ladder}
 \setlength{\tabcolsep}{5pt}
-\begin{tabular}{l l r r r r r r r}
+\begin{tabular}{l l r r r r r r r r}
 \toprule
- & configuration & $b$ & frame (B) & B/record & with cert. & $N_{\mathrm{sat}}$ & $N_{\max}$ & CPU \\
+ & & & & & \multicolumn{2}{c}{with cert., one per} & & & \\
+\cmidrule(lr){6-7}
+ & configuration & $b$ & frame (B) & B/record & 5 frames & \certIntervalMs\,ms & $N_{\mathrm{sat}}$ & $N_{\max}$ & CPU \\
 \midrule
-\multicolumn{9}{l}{\emph{First format: text keys, a chain link in every record}$^\dagger$} \\
-1 & sign every record, one record per frame (baseline) & 1 & \frmFirstBase & \bprFirstBase & \certFirstBase & \nsatFirstBase & \nmaxFirstBase\ \ciFirstBase & \cpuFirstBase\% \\
-2 & sign every record, share the frame & 4 & \frmFirstInline & \bprFirstInline & \certFirstInline & \nsatFirstInline & \nmaxFirstInline\ \ciFirstInline & \cpuFirstInline\% \\
-3 & one signature per frame & 4 & \frmFirstCbor & \bprFirstCbor & \certFirstCbor & \nsatFirstCbor & \nmaxFirstCbor\ \ciFirstCbor & \cpuFirstCbor\% \\
-4 & \ldots{} and delta records & 4 & \frmFirstDesign & \bprFirstDesign & \certFirstDesign & \nsatFirstDesign & \nmaxFirstDesign\ \ciFirstDesign & \cpuFirstDesign\% \\
+\multicolumn{10}{l}{\emph{First format: text keys, a chain link in every record}$^\dagger$} \\
+1 & sign every record, one record per frame (baseline) & 1 & \frmFirstBase & \bprFirstBase & \certFirstBase & \certTFirstBase & \nsatFirstBase & \nmaxFirstBase\ \ciFirstBase & \cpuFirstBase\% \\
+2 & sign every record, share the frame & 4 & \frmFirstInline & \bprFirstInline & \certFirstInline & \certTFirstInline & \nsatFirstInline & \nmaxFirstInline\ \ciFirstInline & \cpuFirstInline\% \\
+3 & one signature per frame & 4 & \frmFirstCbor & \bprFirstCbor & \certFirstCbor & \certTFirstCbor & \nsatFirstCbor & \nmaxFirstCbor\ \ciFirstCbor & \cpuFirstCbor\% \\
+4 & \ldots{} and delta records & 4 & \frmFirstDesign & \bprFirstDesign & \certFirstDesign & \certTFirstDesign & \nsatFirstDesign & \nmaxFirstDesign\ \ciFirstDesign & \cpuFirstDesign\% \\
 \midrule
-\multicolumn{9}{l}{\emph{Lean format: integer keys, one chain link per frame}} \\
-5 & sign every record, one record per frame (baseline) & 1 & \frmLeanBase & \bprLeanBase & \certLeanBase & \nsatLeanBase & \nmaxLeanBase\ \ciLeanBase & \cpuLeanBase\% \\
-6 & sign every record, share the frame (delta records) & 4 & \frmLeanInline & \bprLeanInline & \certLeanInline & \nsatLeanInline & \nmaxLeanInline\ \ciLeanInline & \cpuLeanInline\% \\
-7 & one signature per frame, no delta coding$^\dagger$ & 4 & \frmLeanKeys & \bprLeanKeys & \certLeanKeys & \nsatLeanKeys & \nmaxLeanKeys\ \ciLeanKeys & \cpuLeanKeys\% \\
-8 & one signature per frame, delta records \textbf{(the design)} & 4 & \textbf{\frmLeanDesign} & \textbf{\bprLeanDesign} & \certLeanDesign & \nsatLeanDesign & \textbf{\nmaxLeanDesign}\ \ciLeanDesign & \cpuLeanDesign\% \\
+\multicolumn{10}{l}{\emph{Lean format: integer keys, one chain link per frame}} \\
+5 & sign every record, one record per frame (baseline) & 1 & \frmLeanBase & \bprLeanBase & \certLeanBase & \certTLeanBase & \nsatLeanBase & \nmaxLeanBase\ \ciLeanBase & \cpuLeanBase\% \\
+6 & sign every record, share the frame (delta records) & 4 & \frmLeanInline & \bprLeanInline & \certLeanInline & \certTLeanInline & \nsatLeanInline & \nmaxLeanInline\ \ciLeanInline & \cpuLeanInline\% \\
+7 & one signature per frame, no delta coding$^\dagger$ & 4 & \frmLeanKeys & \bprLeanKeys & \certLeanKeys & \certTLeanKeys & \nsatLeanKeys & \nmaxLeanKeys\ \ciLeanKeys & \cpuLeanKeys\% \\
+8 & one signature per frame, delta records \textbf{(the design)} & 4 & \textbf{\frmLeanDesign} & \textbf{\bprLeanDesign} & \certLeanDesign & \certTLeanDesign & \nsatLeanDesign & \textbf{\nmaxLeanDesign}\ \ciLeanDesign & \cpuLeanDesign\% \\
 \bottomrule
-\multicolumn{9}{l}{$^\dagger$ size is a sum of measured parts; rows 5, 6 and 8 are emitted frames.}
+\multicolumn{10}{l}{$^\dagger$ size is a sum of measured parts; rows 5, 6 and 8 are emitted frames.}
 \end{tabular}
 \end{table*}
 
@@ -628,9 +627,9 @@ runs reach it gives \nrunLeanBase{} and \nrunLeanDesign{} (\nrunFirstBase{} and
 \nrunFirstDesign{} in the first format), at most \nrunGap{} nodes fewer.
 
 Table~\ref{tab:capacity} repeats the comparison at the relaxed operating point. The ratio hardly
-moves with the operating point --- \ratioLean$\times$ and \ratioRelLean$\times$ in the lean
-format, \ratioFirst$\times$ and \ratioRelFirst$\times$ in the first --- and it depends on the
-format, so we quote it with the format and not as one number.
+moves --- \ratioLean$\times$ and \ratioRelLean$\times$ in the lean format, \ratioFirst$\times$
+and \ratioRelFirst$\times$ in the first --- and depends on the format, so we quote it with the
+format.
 
 \textbf{The capacity envelope: a rule for the crossing.} At the 5\% level, loss follows a
 line in airtime. With
@@ -689,23 +688,25 @@ four cores: on one core the processor binds before the channel. The figures of
 Eq.~\eqref{eq:cpu} are ceilings for a compiled receiver.
 
 \textbf{Other PHY rates.} We simulated one rate. For the others we give only the saturation
-bound, which at 6\,Mb/s rises from \nsatLeanBase{} to \nsatLeanDesign{} nodes. Evaluated with the
-same model at 12 and 24\,Mb/s, and on the 10\,MHz channel of 802.11p at 3--12\,Mb/s, the
+bound, which at 6\,Mb/s rises from \nsatLeanBase{} to \nsatLeanDesign{} nodes. With the same
+model at 12 and 24\,Mb/s, and on the 10\,MHz channel of 802.11p at 3--12\,Mb/s, the
 design-to-baseline ratio of $N_{\mathrm{sat}}$ runs from \phyRatioLo$\times$ to
-\phyRatioHi$\times$ over both formats. It grows with the rate: a faster PHY shortens the payload
-but not the fixed cost of a frame, so sending a quarter as many frames is worth more.
+\phyRatioHi$\times$ over both formats, growing with the rate: a faster PHY shortens the payload
+but not the fixed cost of a frame.
 
 \subsection{Certificates}\label{sec:certs}
 The rows so far assume that receivers already hold the senders' public keys. Vehicular practice
 sends a full certificate in every fifth message and an eight-octet digest in the
 others~\cite{ndss2024pqv2v}. Charging that to every frame --- a \certBytes\,B certificate, so
-\certPerFrame\,B per frame on average --- gives the ``with cert.'' column of
+\certPerFrame\,B per frame on average --- gives the first ``with cert.'' column of
 Table~\ref{tab:ladder}: \certLeanDesign\,B per record for the design against \certLeanBase{} for
-the baseline. Charged per frame, certificates are amortised by batching too. That reading
-favours the design: the practice it copies sends ten messages a second, so every fifth message
-is one certificate in 500\,ms, and at a cadence fixed in time only the digest would be
-amortised. These are explicit certificates; implicit ones are shorter (a signed message of at most 226\,B against
-330\,B~\cite{ndss2024pqv2v}) and are not priced, so the column is an upper bound.
+the baseline. That reading favours the design: the practice it copies sends ten messages a
+second, so one in five is one certificate in \certIntervalMs\,ms, and a baseline of 50 frames/s
+charged per frame sends five times that. The second column charges one certificate per
+\certIntervalMs\,ms at any frame rate, \certTLeanDesign\,B against \certTLeanBase; batching
+then amortises only the digest. These are explicit certificates; implicit ones are shorter (a signed message of at
+most 226\,B against 330\,B~\cite{ndss2024pqv2v}) and are not priced, so both columns are upper
+bounds.
 
 \subsection{Energy}
 
@@ -767,10 +768,8 @@ autopilot's 50\,Hz position stream holds a \sitlPeriod\,ms period to within
 $\pm\sitlJitter$\,ms (central 68\%).
 
 \subsection{Validation of the models}\label{sec:validation}
-\textbf{Models against the simulator.} As a check of the simulator's set-up, the unicast DCF
-model~\cite{bianchi2000} matches saturated ns-3 runs within $+\valUniHi$/$-\valUniLo$\%; the
-broadcast model~\cite{machen2008}, the one used here, matches within $\pm\valBcast$\% over
-$N=5$--50 (\seeds{} seeds).
+\textbf{Models against the simulator.} The broadcast model~\cite{machen2008} matches saturated
+ns-3 runs within $\pm\valBcast$\% over $N=5$--50 (\seeds{} seeds).
 
 \textbf{The access rule against two radios.} On two Raspberry~Pi~4 radios, one transmitter
 alone loses \hwLossFrames{} frames in \hwSentFrames{} ($p = \hwLoss$). With both radios
@@ -778,9 +777,9 @@ saturated, \hwSatOff\% of the frames put on air are lost where the access rule g
 \hwSatStd\%, a prediction registered before the run. Below saturation the agreement is poorer:
 as the medium fills from half to 85\% the radios lose \hwPoolLowRatio, \hwPoolMidRatio{} and
 \hwPoolHighRatio{} times what the model predicts, and the registered prediction held at the
-first two loads and failed at the third. The cause is not established. The saturated case
-isolates contention; below it a radio often holds two frames of its own, and a radio of this
-family sends its queued frames closer together than the standard allows --- one per
+first two loads and failed at the third. The cause is not established. Below saturation a
+radio often holds two frames of its own, and a radio of this family sends its queued frames
+closer together than the standard allows --- one per
 \hwCycleOn\,ms against \hwCycleStd\,ms --- as commercial cards are known
 to~\cite{bianchi2007cards}. That state is common with two busy radios and rare at the operating
 point. But a follow-up that switched off the vendor's frame bursting, with four further
@@ -791,7 +790,8 @@ capacity was measured: the capacities in this paper rest on simulation.
 
 \begin{table}[t]\centering\footnotesize
 \caption{Bytes per message of certificateless aggregate schemes as reported
-in~\cite{li2025clas} (with a 67\,B message), and per record of AUTHBC with certificates.}
+in~\cite{li2025clas} (with a 67\,B message), and per record of AUTHBC with certificates charged
+per frame.}
 \label{tab:clas}
 \begin{tabular}{l r}
 \toprule
@@ -856,8 +856,7 @@ The two act on different links, and the table should not be read as a ranking:
 those schemes provide conditional privacy, which AUTHBC does not; their group elements are
 128\,B where our signature is 64\,B; and their figures are for a different message. What the
 comparison does show is that per-message authentication of this kind costs several hundred
-bytes, against which a telemetry record is small, and that aggregation alone does not change
-that.
+bytes, and that aggregation alone does not change that.
 
 \section{Limitations}\label{sec:limits}
 
@@ -891,9 +890,8 @@ decoding; counting both, the prototype on one core serves fewer nodes than the c
 \textbf{Security scope.} Confidentiality, availability, key management and protection against a
 delaying attacker are outside the design (Sec.~\ref{sec:model}), and the security argument is
 informal. With one link per frame, continuity inside a frame rests on the frame signature alone,
-and showing one record to a third party means showing its frame. The prototype's store keeps
-verified records and not the frames and signatures that carried them, so what it holds is not
-yet evidence to anyone else.
+and showing one record to a third party means showing its frame. The receiver therefore keeps
+every accepted frame, at its on-air length for every $b$ records held.
 
 \textbf{Post-quantum signatures.} An ML-DSA signature is 2420\,B~\cite{ndss2024pqv2v} and exceeds
 the 1500\,B MTU with any header, so it cannot ride in one frame at any batch size; freshness caps
@@ -908,7 +906,8 @@ aggregate~\cite{bgls2003}. Both are implemented; neither is measured here.
 For small telemetry records the frame, not the record, is the unit at which authentication
 should be costed, and what a frame must carry decides where it can be sent. A frame that verifies alone needs a header,
 a chain link, a signature and one self-contained record: \exclCount{} of the twelve EU863-870 LoRaWAN
-data rates cannot carry that, at any batch size. Where the frame fits, one signature and one chain
+data rates cannot carry that at any batch size, \exclSigCount{} because the signature alone does
+not fit and \exclFmtCount{} because of this frame's own header. Where the frame fits, one signature and one chain
 link per four records cut the bytes per record by \saveLean\% and let one 802.11a collision
 domain carry \nmaxLeanDesign{} nodes where per-record signing carries \nmaxLeanBase. Two
 constraints shape the design: the batch is capped by freshness, not by the MTU, and a frame that depends on its predecessor does not meet a verifiability target equal

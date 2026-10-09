@@ -24,21 +24,23 @@ receiver core spent verifying at $\Nmax$. $^\dagger$~size is a sum of measured p
 \label{tab:ladder}
 \small
 \begin{adjustbox}{max width=\textwidth}
-\begin{tabular}{llrrrrrl}
+\begin{tabular}{llrrrrrrl}
 \toprule
- & configuration & $b$ & B/record & with cert. & $N_{\mathrm{sat}}$ & $\Nmax$ & CPU \\
+ & & & & \multicolumn{2}{c}{with cert., one per} & & & \\
+\cmidrule(lr){5-6}
+ & configuration & $b$ & B/record & 5 frames & \certIntervalMs\,ms & $N_{\mathrm{sat}}$ & $\Nmax$ & CPU \\
 \midrule
-\multicolumn{8}{l}{\emph{First format: text keys, a chain link in every record}$^\dagger$} \\
-1 & sign every record, one per frame & 1 & \bprFirstBase & \certFirstBase & \nsatFirstBase & \nmaxFirstBase\ \ciFirstBase & \cpuFirstBase\% \\
-2 & sign every record, share the frame & 4 & \bprFirstInline & \certFirstInline & \nsatFirstInline & \nmaxFirstInline\ \ciFirstInline & \cpuFirstInline\% \\
-3 & one signature per frame & 4 & \bprFirstCbor & \certFirstCbor & \nsatFirstCbor & \nmaxFirstCbor\ \ciFirstCbor & \cpuFirstCbor\% \\
-4 & \ldots{} and delta records & 4 & \bprFirstDesign & \certFirstDesign & \nsatFirstDesign & \nmaxFirstDesign\ \ciFirstDesign & \cpuFirstDesign\% \\
+\multicolumn{9}{l}{\emph{First format: text keys, a chain link in every record}$^\dagger$} \\
+1 & sign every record, one per frame & 1 & \bprFirstBase & \certFirstBase & \certTFirstBase & \nsatFirstBase & \nmaxFirstBase\ \ciFirstBase & \cpuFirstBase\% \\
+2 & sign every record, share the frame & 4 & \bprFirstInline & \certFirstInline & \certTFirstInline & \nsatFirstInline & \nmaxFirstInline\ \ciFirstInline & \cpuFirstInline\% \\
+3 & one signature per frame & 4 & \bprFirstCbor & \certFirstCbor & \certTFirstCbor & \nsatFirstCbor & \nmaxFirstCbor\ \ciFirstCbor & \cpuFirstCbor\% \\
+4 & \ldots{} and delta records & 4 & \bprFirstDesign & \certFirstDesign & \certTFirstDesign & \nsatFirstDesign & \nmaxFirstDesign\ \ciFirstDesign & \cpuFirstDesign\% \\
 \midrule
-\multicolumn{8}{l}{\emph{Lean format: integer keys, one chain link per frame}} \\
-5 & sign every record, one per frame & 1 & \bprLeanBase & \certLeanBase & \nsatLeanBase & \nmaxLeanBase\ \ciLeanBase & \cpuLeanBase\% \\
-6 & sign every record, share the frame & 4 & \bprLeanInline & \certLeanInline & \nsatLeanInline & \nmaxLeanInline\ \ciLeanInline & \cpuLeanInline\% \\
-7 & one signature per frame, no delta$^\dagger$ & 4 & \bprLeanKeys & \certLeanKeys & \nsatLeanKeys & \nmaxLeanKeys\ \ciLeanKeys & \cpuLeanKeys\% \\
-8 & one signature per frame, delta \textbf{(design)} & 4 & \textbf{\bprLeanDesign} & \certLeanDesign & \nsatLeanDesign & \textbf{\nmaxLeanDesign}\ \ciLeanDesign & \cpuLeanDesign\% \\
+\multicolumn{9}{l}{\emph{Lean format: integer keys, one chain link per frame}} \\
+5 & sign every record, one per frame & 1 & \bprLeanBase & \certLeanBase & \certTLeanBase & \nsatLeanBase & \nmaxLeanBase\ \ciLeanBase & \cpuLeanBase\% \\
+6 & sign every record, share the frame & 4 & \bprLeanInline & \certLeanInline & \certTLeanInline & \nsatLeanInline & \nmaxLeanInline\ \ciLeanInline & \cpuLeanInline\% \\
+7 & one signature per frame, no delta$^\dagger$ & 4 & \bprLeanKeys & \certLeanKeys & \certTLeanKeys & \nsatLeanKeys & \nmaxLeanKeys\ \ciLeanKeys & \cpuLeanKeys\% \\
+8 & one signature per frame, delta \textbf{(design)} & 4 & \textbf{\bprLeanDesign} & \certLeanDesign & \certTLeanDesign & \nsatLeanDesign & \textbf{\nmaxLeanDesign}\ \ciLeanDesign & \cpuLeanDesign\% \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -142,7 +144,11 @@ the sender \leanSendMs\,ms (for a frame of one record: \leanRecvOneMs\,ms and
 \leanSendOneMs\,ms). One core of the prototype therefore serves \ncpuProto{} nodes,
 not \ncpuBatch, and a neighbourhood of \nmaxLeanDesign{} needs \cpuProtoCores{} of the board's
 four cores. The sentence ``the channel binds first'' holds for a compiled receiver; for the
-prototype on one core the processor binds first. $N_{\mathrm{cpu}}$ and the CPU column of
+prototype on one core the processor binds first. The receive times are of the receiver that
+keeps every accepted frame (\Cref{sec:threat}): against a control of the earlier receiver timed
+in the same session, keeping the frame adds \leanRecvKeepUs\,\si{\micro\second} to a
+four-record frame, \leanRecvKeepPct\%, where at most $2\%$ had been written down beforehand
+(\Cref{app:prereg}). The node count is unchanged, by a margin of two parts in a thousand. $N_{\mathrm{cpu}}$ and the CPU column of
 \Cref{tab:ladder} are ceilings set by cryptography alone.
 
 Both times came in under what had been written down for them ($1.0$--$2.5$\,ms and
@@ -580,16 +586,31 @@ batch stops at four.
 The rows so far assume that receivers already hold the senders' public keys. Vehicular practice
 sends a full certificate in every fifth message and an eight-octet digest in the
 others~\cite{ndss2024pqv2v}. Charging that to every frame --- a \certBytes\,B certificate, hence
-\certPerFrame\,B per frame on average --- gives the ``with cert.'' column of \Cref{tab:ladder}.
-Certificates are a per-frame cost, so batching amortises them too, and both the baseline and the
-design are charged.
+\certPerFrame\,B per frame on average --- gives the first ``with cert.'' column of
+\Cref{tab:ladder}. Charged per frame, certificates are amortised by batching too, and both the
+baseline and the design are charged.
+
+\begin{remark}[The per-frame charge favours the design]
+The source's ``every fifth message'' is of ten messages a second: one certificate in every
+\certIntervalMs\,ms. Charged per frame, a baseline of $50$ frames a second sends one every
+$100$\,ms, five times what the practice it copies sends, while the design at $12.5$ frames a
+second sends one every $400$\,ms. The first column therefore charges the baseline
+\certLeanBase\,B per record and the design \certLeanDesign.
+
+The second column charges one certificate per \certIntervalMs\,ms at any frame rate, and the
+digest in every other frame: \certTLeanBase\,B against \certTLeanDesign. Under that reading a
+batch amortises the digest and not the certificate, and the baseline is about an eighth
+cheaper than the first column made it. At ten frames a second the two readings are one, which
+is why the first is a reading of the source and not an error; it is the one that leans this
+work's way, and it stood alone in the table until a review of 2026-10-09.
+\end{remark}
 
 These are \emph{explicit} certificates: a verification key and the issuer's signature over it.
 IEEE~1609.2 also defines \emph{implicit} certificates (ECQV), which carry only a reconstruction
 value from which the key is derived with the issuer's root certificate; the source this
 accounting follows gives a signed message of at most $226$\,B with an implicit certificate
 against $330$\,B with an explicit one~\cite{ndss2024pqv2v}. Implicit certificates are not priced
-here, so the column is an upper bound on what certificates cost either design. Pricing them is
+here, so both columns are upper bounds on what certificates cost either design. Pricing them is
 future work; it would lower both rows and leave the comparison between them where it is, since
 whichever certificate is used is paid once per frame.
 

@@ -69,7 +69,8 @@ prediction of their loss below saturation held at two loads and failed at the th
 capacity was measured (\Cref{ch:codesign,ch:validation}).
 
 \item[RQ5 --- where can the frame not be sent at all?] On \exclCount{} of the twelve
-EU863-870 LoRaWAN data rates, under four conditions; a $48$\,B signature, a $13$\,B tag or a
+EU863-870 LoRaWAN data rates, under five conditions, the fifth being this frame format for
+\exclFmtCount{} of them; a $48$\,B signature, a $13$\,B tag or a
 chain link kept off the air each recover some of them, and \Cref{tab:t6relax} says which
 (\Cref{ch:lowrate}).
 \end{description}
@@ -121,9 +122,9 @@ inequality: $64 > 51$.
 Confidentiality, availability, key management and protection against an attacker who delays
 frames are outside the design (\Cref{sec:threat}). With one chain link per frame, continuity
 inside a frame rests on the frame signature alone, and showing one record to a third party means
-showing its frame. The prototype's store keeps verified records and not the frames and
-signatures that carried them (\Cref{sec:threat}): what it holds is not yet evidence to anyone
-else. The security argument of this thesis is informal throughout.
+showing its frame. The receiver keeps every accepted frame for that purpose, which it did not
+do until a review of 2026-10-09 (\Cref{sec:threat}). The security argument of this thesis is
+informal throughout.
 
 \section{Future work}
 

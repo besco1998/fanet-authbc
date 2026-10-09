@@ -14,6 +14,8 @@ from pathlib import Path
 
 import pytest
 
+from authbc.bench import frame_experiments
+
 REPO = Path(__file__).resolve().parents[1]
 RAW = REPO / "results" / "raw"
 
@@ -278,6 +280,46 @@ class TestTheDesignAtTheAdoptedPoint:
             if r["rung"] != "SEARCH_OPTIMUM":
                 assert float(r["bytes_per_rec_with_cert"]) == pytest.approx(
                     (float(r["frame_bytes"]) + per_frame) / int(r["batch"]), abs=1e-3)
+
+
+class TestCertificatesAtACadenceInTime:
+    """The source's "every fifth message" is of ten messages a second: one certificate in
+    500 ms. Charged per frame, a sender of 50 frames/s sends one every 100 ms (audit F80, G30).
+    The ladder carries both readings; this one amortises only the digest over a batch."""
+
+    def test_the_share_of_frames_that_carry_the_certificate(self) -> None:
+        timed = frame_experiments.cert_bytes_per_frame_timed
+        assert timed(162, 8, 0.5, 50.0) == pytest.approx(0.04 * 162 + 0.96 * 8)      # 14.16
+        assert timed(162, 8, 0.5, 12.5) == pytest.approx(0.16 * 162 + 0.84 * 8)      # 32.64
+        assert timed(162, 8, 0.5, 10.0) == pytest.approx((162 + 4 * 8) / 5)          # the source
+        # fewer than one frame per interval: every frame carries the certificate, never more
+        assert timed(162, 8, 0.5, 2.0) == timed(162, 8, 0.5, 1.0) == 162
+
+    def test_at_ten_messages_a_second_the_two_readings_are_one(self) -> None:
+        """Which is what makes the per-frame figure a reading of the source and not an error."""
+        per_frame = (162 + 4 * 8) / 5
+        assert frame_experiments.cert_bytes_per_frame_timed(162, 8, 0.5, 10.0) \
+            == pytest.approx(per_frame)
+
+    def test_the_ladders_column(self) -> None:
+        for r in LADDER:
+            if r["rung"] == "SEARCH_OPTIMUM":
+                continue
+            batch, lam = int(r["batch"]), float(r["lambda_rec_per_s"])
+            per_frame = frame_experiments.cert_bytes_per_frame_timed(162, 8, 0.5, lam / batch)
+            assert float(r["bytes_per_rec_with_cert_timed"]) == pytest.approx(
+                (float(r["frame_bytes"]) + per_frame) / batch, abs=1e-3)
+
+    def test_per_time_the_baseline_pays_less_and_the_design_almost_the_same(self) -> None:
+        def row(rung: str) -> dict[str, str]:
+            (r,) = [x for x in LADDER if (x["op"], x["format"], x["rung"], x["scheme"])
+                    == ("adopted", "lean", rung, "ed25519")]
+            return r
+        base, design = row("inline-1"), row("batch-delta")
+        assert float(base["bytes_per_rec_with_cert_timed"]) == pytest.approx(159.93, abs=0.01)
+        assert float(design["bytes_per_rec_with_cert_timed"]) == pytest.approx(51.41, abs=0.01)
+        assert float(base["bytes_per_rec_with_cert"]) == pytest.approx(184.57, abs=0.01)
+        assert float(design["bytes_per_rec_with_cert"]) == pytest.approx(52.95, abs=0.01)
 
 
 class TestStreamSigningSchemesPlaced:

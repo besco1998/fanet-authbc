@@ -15,7 +15,13 @@ from authbc.crypto.ed25519 import Ed25519Scheme
 from authbc.ledger.chain import Chain
 from authbc.ledger.record import Record
 from authbc.placement import wire_v2
-from authbc.placement.session_v2 import LeanReceiver, LeanSender, Receipt
+from authbc.placement.session_v2 import (
+    LeanReceiver,
+    LeanSender,
+    Receipt,
+    proves_equivocation,
+    verified_records,
+)
 
 _ED = Ed25519Scheme()
 _SK, _PK = _ED.keygen(seed=bytes(range(32)))
@@ -184,3 +190,92 @@ class TestSenderGuards:
     def test_the_first_frame_of_each_group_is_the_only_self_contained_one(self) -> None:
         types = [cbor2.loads(f)[wire_v2.F_T] for f in _frames(8, ref_interval=4)]
         assert types == [1, 2, 2, 2, 1, 2, 2, 2]
+
+
+class TestWhatCanBeShownToSomeoneElse:
+    """One signature covers a frame, so a record is evidence only with its frame (audit F80).
+
+    Until 2026-10-09 the receiver kept records and threw the frame away: nothing it held could
+    be checked by a third party. These hold that it keeps the frame, and that a pair of frames
+    is checked here with the sender's public key and nothing else.
+    """
+
+    def _receiver_after_an_equivocation(self) -> tuple[LeanReceiver, bytes, bytes]:
+        first = LeanSender(_SK).frame(_records(B))
+        second = LeanSender(_SK).frame(_records(B, seed=99))   # same src and seq, other content
+        rx = LeanReceiver({7: _PK})
+        assert rx.receive(first).receipt is Receipt.ACCEPTED
+        assert rx.receive(second).receipt is Receipt.EQUIVOCATION
+        return rx, first, second
+
+    def test_the_frame_of_every_stored_record_is_kept(self) -> None:
+        frames = _frames(3, ref_interval=1)
+        rx = LeanReceiver({7: _PK})
+        for f in frames:
+            rx.receive(f)
+        for i, rec in enumerate(rx.store.records()):
+            assert rx.frame_of(7, rec.seq) == frames[i // B]
+            shown = verified_records(rx.frame_of(7, rec.seq), _PK)
+            assert shown is not None and rec in shown
+        assert rx.frame_of(7, 3 * B) is None and rx.frame_of(9, 0) is None
+
+    def test_a_refused_frame_is_not_kept(self) -> None:
+        frames = _frames(2, ref_interval=1)
+        rx = LeanReceiver({7: _PK})
+        rx.receive(frames[0])
+        forged = bytearray(frames[1])
+        forged[-1] ^= 1
+        assert rx.receive(bytes(forged)).receipt is Receipt.BAD_SIGNATURE
+        assert rx.frame_of(7, B) is None
+
+    def test_an_equivocation_keeps_both_frames_and_they_prove_it_alone(self) -> None:
+        rx, first, second = self._receiver_after_an_equivocation()
+        (kept,) = rx.evidence
+        assert (kept.src, kept.seq, kept.held, kept.offered) == (7, 0, first, second)
+        assert proves_equivocation(kept.held, kept.offered, _PK)
+        # the frame that was held stays the one of record: the offered one replaces nothing
+        assert rx.frame_of(7, 0) == first
+
+    def test_the_proof_needs_the_senders_key_and_two_frames_that_disagree(self) -> None:
+        rx, first, second = self._receiver_after_an_equivocation()
+        other_key = _ED.keygen(seed=bytes(range(1, 33)))[1]
+        assert not proves_equivocation(first, second, other_key)
+        assert not proves_equivocation(first, first, _PK)
+        honest = _frames(2, ref_interval=1)
+        assert not proves_equivocation(honest[0], honest[1], _PK)
+        tampered = bytearray(second)
+        tampered[-1] ^= 1
+        assert not proves_equivocation(first, bytes(tampered), _PK)
+        assert not proves_equivocation(first, b"\xff\x00", _PK)
+
+    def test_an_equivocation_behind_a_duplicate_first_record_is_still_found(self) -> None:
+        """The second frame repeats records 0 and 1 and signs a different record 2. The store
+        calls its first record a replay; the frame must not be dismissed as one."""
+        recs = _records(B)
+        chain = Chain(src=7)
+        for r in recs[:2]:
+            chain.append(dict(r.pl), ts=r.ts)
+        for r in _records(B, seed=99)[2:]:
+            chain.append(dict(r.pl), ts=r.ts)
+        forked = chain.records()
+        assert forked[:2] == recs[:2] and forked[2] != recs[2]
+        rx = LeanReceiver({7: _PK})
+        first, second = LeanSender(_SK).frame(recs), LeanSender(_SK).frame(forked)
+        assert rx.receive(first).receipt is Receipt.ACCEPTED
+        assert rx.receive(second).receipt is Receipt.EQUIVOCATION
+        (kept,) = rx.evidence
+        assert kept.seq == 2 and proves_equivocation(kept.held, kept.offered, _PK)
+        assert len(rx.store.equivocations) == 1
+
+    def test_a_replayed_frame_is_still_a_replay_and_leaves_no_evidence(self) -> None:
+        frames = _frames(2, ref_interval=1)
+        rx = LeanReceiver({7: _PK})
+        for f in frames:
+            rx.receive(f)
+        assert rx.receive(frames[0]).receipt is Receipt.REPLAY
+        assert rx.evidence == [] and rx.store.equivocations == []
+
+    def test_a_frame_that_depends_on_its_predecessor_cannot_be_shown_alone(self) -> None:
+        keyframe, dependent = _frames(2, ref_interval=2)
+        assert verified_records(keyframe, _PK) is not None
+        assert verified_records(dependent, _PK) is None

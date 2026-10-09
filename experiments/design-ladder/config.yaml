@@ -40,6 +40,11 @@ ref_candidates: [1, 2, 4, 8, 16]
 cert_bytes: 162
 cert_period: 5
 cert_digest_bytes: 8
+# The same policy read as a cadence in TIME. The source's "every fifth" is of ten messages a
+# second: one full certificate in every 500 ms (NDSS 2024, Sec. II). Per frame, a sender of
+# 50 frames/s would send one every 100 ms, which charges the unbatched baseline five times what
+# the practice it copies sends (audit F80, open item G30). Both readings are tabulated.
+cert_interval_s: 0.5
 
 # Measured on the Raspberry Pi 4 (decision D8) — the same inputs E5 uses.
 crypto_csv: p1_crypto.authbc-pi4a.csv
