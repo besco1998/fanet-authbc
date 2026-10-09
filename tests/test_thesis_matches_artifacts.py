@@ -489,7 +489,7 @@ class TestTheRegistrationsOfAppendixB:
         import subprocess
 
         named = sorted(set(re.findall(r"\\texttt\{([0-9a-f]{7})\}", self.APPENDIX)))
-        assert len(named) == 18
+        assert len(named) == 20
         shallow = subprocess.run(["git", "rev-parse", "--is-shallow-repository"], cwd=REPO,
                                  capture_output=True, text=True).stdout.strip()
         assert shallow == "false", (
@@ -505,8 +505,8 @@ class TestTheRegistrationsOfAppendixB:
         assert self.APPENDIX.count(r"\textbf{not scored}") == 1
         assert self.APPENDIX.count(r"\emph{registered,") == 0      # every one has been run
         assert "Three to five boards: not run" in self.APPENDIX    # … one of them in part
-        assert "Of its eighteen entries, seven failed" in _text("ch06_methodology.tex")
-        assert "Of the eighteen registrations" in _text("ch11_reproducibility.tex")
+        assert "Of its twenty entries, seven failed" in _text("ch06_methodology.tex")
+        assert "Of the twenty registrations" in _text("ch11_reproducibility.tex")
         assert "seven failed in whole or in part" in _text("ch11_reproducibility.tex")
 
 

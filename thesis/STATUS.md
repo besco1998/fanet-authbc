@@ -2,7 +2,7 @@
 
 *Created 2026-08-30; rewritten 2026-10-08 after the whole built PDF was audited, and updated
 twice on 2026-10-09 (findings F63–F77 in `docs/audits/model_provenance.md`). `main.pdf` builds
-to 125 pages with no errors, no undefined references and no layout warnings. **Read this before showing the PDF to anyone.***
+to 126 pages with no errors, no undefined references and no layout warnings. **Read this before showing the PDF to anyone.***
 
 ## In one paragraph
 

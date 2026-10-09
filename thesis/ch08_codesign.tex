@@ -323,6 +323,38 @@ each of the five configurations where the two rules disagree by more than a tent
 is closer to the line than to the ceiling, which misses the thirteen simulated configurations by
 up to \lineCeilWorst\%.
 
+\paragraph{The batch as a dimension.} Every configuration above holds one record to a frame or
+four, because both operating points have $\Lambda D_{\max} = 5$. The line and the model had
+therefore been checked across frame size and frame rate and never across the batch itself; a
+review of the paper pointed this out on 2026-10-09. Three more cells were registered before any
+of them was run (\Cref{app:prereg}): the frame the lean codec emits with two, three and eight
+records at $50$ records a second, which deadlines of $60$, $80$ and $180$\,ms would admit.
+\Cref{tab:batchdim} sets what was written down beside what the simulator returned.
+
+\begin{table}[h]
+\centering
+\caption{The lean design at three other batch sizes, $50$ records/s: the crossing of $0.95$
+delivery predicted by the airtime line (slope as calibrated before, band $\pm 6\%$) and by the
+access-rule model (nothing fitted, band $\pm 3\%$), and as simulated ($30$ seeds, $95\%$
+interval). All six predictions were committed before the first run.}
+\label{tab:batchdim}
+\small
+\begin{tabular}{rrrrrrr}
+\toprule
+records & deadline & line & model & simulated & from the line & from the model \\
+\midrule
+2 & $60$\,ms & \batLineTwo & \batModelTwo & \batNsTwo\ \batCiTwo & \batDlTwo\% & \batDmTwo\% \\
+3 & $80$\,ms & \batLineThree & \batModelThree & \batNsThree\ \batCiThree & \batDlThree\% & \batDmThree\% \\
+8 & $180$\,ms & \batLineEight & \batModelEight & \batNsEight\ \batCiEight & \batDlEight\% & \batDmEight\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+All six held. These are capacities of the same idealised scenario as every other in this
+chapter, and the three deadlines are hypothetical operating points: the freshness table, the
+loss experiment and the energy runs are all for four records, and nothing but the channel was
+evaluated at two, three or eight.
+
 \paragraph{A second test, on frames of another kind.} The stream-signing baselines of
 \Cref{tab:stream} are five more frames, all shorter or longer than any the line had seen and all
 at one frame per record. The same procedure was followed: the line's crossing for each, with

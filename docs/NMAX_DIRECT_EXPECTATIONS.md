@@ -1004,3 +1004,47 @@ earlier follow-ups, unchanged. The model's predictions take thirty of its own se
 node counts per cell and were computed once, by the command above.
 
 A crossing that falls outside its grid is extended and the extension is reported as one.
+
+## F6 — outcome (2026-10-09, 630 runs)
+
+**All six predictions held.** Slope, constant and model exactly as before; nothing re-fitted.
+
+| cell | records per frame | airtime line | ±6 % band | access-rule model | ±3 % band | **ns-3 crossing [95 %]** | `N_max` | from the line | from the model |
+|---|---|---|---|---|---|---|---|---|---|
+| B2 | 2 | 66.00 | 62.04–69.96 | 66.60 | 64.60–68.60 | **66.73** [66.43, 66.98] | 66 | **+1.11 %** | **+0.20 %** |
+| B3 | 3 | 96.29 | 90.52–102.07 | 95.96 | 93.08–98.84 | **96.51** [96.14, 96.82] | 96 | **+0.23 %** | **+0.57 %** |
+| B8 | 8 | 225.88 | 212.33–239.44 | 220.64 | 214.02–227.26 | **222.33** [221.49, 223.24] | 219 | **−1.57 %** | **+0.77 %** |
+
+(`results/raw/batch_capacity.csv`, written by `analysis/batch_capacity.py --score` from
+`results/raw/ns3_batch_runs.csv`. `N_max` is on the registered grids, whose steps are 2, 3 and 7
+nodes; the interpolated crossing is the figure scored, as registered.)
+
+**Where the two predictions parted, the simulator sided with the model.** At B8 they were
+2.4 % apart. The crossing is 0.77 % above the model and 1.57 % below the line: inside both
+bands, and three times nearer the one with no fitted constant.
+
+**The weaker expectation had the trend and missed the middle cell.** It said the line's error
+falls with the frame rate: B2 within a percent, B3 about one percent below, B8 about two
+below. The order is right (+1.11, +0.23, −1.57 %) and the last is near. B2 is a tenth of a
+percent outside "within a percent", and B3 is *above* its line where I expected it below.
+The residual changes sign somewhere under 16.7 frames a second, not near 20 as the earlier
+cells suggested.
+
+**The single ceiling**, listed for comparison, is 12.4 % and 17.1 % above the simulated
+crossings at B2 and B3 and 3.3 % below at B8: the same failure as in F2, on three more cells.
+
+**One crossing by hand.** B2 lies between 66 nodes (mean delivery 0.95124) and 68 (0.94783):
+66 + 2 × 0.00124 / 0.00341 = 66.73.
+
+**What was done with the scoring before it was run.** While the last ninety runs were going I
+looked at the two finished cells and at B8's four complete node counts, which already bracketed
+its crossing. The scoring function as registered would have scored B8 then. It was tightened
+before any result was written: a cell is scored only when every registered node count holds
+thirty seeds (`tests/test_batch_capacity.py`). The change cannot move a crossing; it stops an
+unfinished grid from being read as the test.
+
+**What this adds, and what it does not.** The rule and the model now hold across the batch
+(1, 2, 3, 4 and 8 records) as they held across frame size and rate. It is still one PHY rate,
+one loss level and one idealised scenario; and the deadlines of 60, 80 and 180 ms are
+hypothetical — the freshness table, the loss experiment and the energy runs remain those of
+four records.

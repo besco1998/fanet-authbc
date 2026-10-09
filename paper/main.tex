@@ -647,8 +647,12 @@ one-record frames of Table~\ref{tab:stream}, within \lineStreamWorst\% and all a
 single utilisation ceiling, measured at one point and applied to all, misses the first thirteen
 (six fitted, seven predicted) by up to \lineCeilWorst\%, in both directions.
 Equation~\eqref{eq:line} is a fit at one loss level and one PHY rate, checked for frames of
-\lineFrameLo--\lineFrameHi\,B, \lineFpsLo--\lineFpsHi~frames/s and \lineNlo--\lineNhi{} nodes,
-and for batches of one and four records only; the tables quote simulated values, not the rule.
+\lineFrameLo--\lineFrameHi\,B, \lineFpsLo--\lineFpsHi~frames/s and \lineNlo--\lineNhi{} nodes;
+the tables quote simulated values, not the rule. All of those configurations hold one record or
+four. Batches of two, three and eight, which deadlines of 60, 80 and 180\,ms would admit, were
+predicted before they were simulated: delivery crosses 0.95 at \batNsTwo, \batNsThree{} and
+\batNsEight{} nodes, within \batLineWorst\% of the rule and \batModelWorst\% of the access-rule
+model described next.
 
 \textbf{Why the crossing is there.} The slope is not a free constant. A frame is lost in this
 scenario in two ways. In the first, two stations that found the medium busy draw the same
@@ -874,8 +878,9 @@ repository.
 logs covers twelve logs of one autopilot at 5\,Hz position resolution; at 50\,Hz it rests on
 one simulated flight of the same autopilot.
 
-\textbf{One PHY, two batch sizes, generated loss.} Capacity was simulated at 6\,Mb/s only, and
-for batches of one and four records: both operating points have $\Lambda D_{\max} = 5$. The loss
+\textbf{One PHY, generated loss.} Capacity was simulated at 6\,Mb/s only. Both operating
+points have $\Lambda D_{\max} = 5$ and so a batch of four; batches of two, three and eight were
+simulated for the capacity rule alone, and nothing else here is evaluated at them. The loss
 experiment
 uses independent, Gilbert and length-dependent loss, all generated at the frame level, not a
 channel trace; under the last, the design is below its target where the baseline's frame loses

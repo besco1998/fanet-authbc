@@ -4099,3 +4099,41 @@ of F5 give the exact form, ρ·[1 − (1 − 1/W)^(ρ/(1−ρ))] + (N−1)·f·8
 2.3 %), and `tests/test_dcf_model_artifacts.py` holds it. The 8.1 % is the first-order
 simplification the paper prints. I had read the paper and not the registration. G33 is
 rewritten accordingly: if a figure is wanted in the paper, it is the 5.5 %, already tested.
+
+## F82 — the batch as a dimension: two, three and eight records to a frame, six predictions registered, six held (2026-10-09)
+
+*Decision 2 of Mohamed's five on the review of F80 (open item G31).*
+
+**What was missing.** Every simulated capacity was of a frame of one record or of four, because
+both operating points have Λ·D_max = 5. The capacity rule and the access-rule model had been
+checked across frame size and frame rate and never across the batch — which is the variable the
+paper is about.
+
+**What was done.** Three cells registered in `64322fc` before any run, not one seed: the frame
+the lean codec emits with two, three and eight records at 50 records/s. Two predictions each:
+the airtime line with its slope unchanged (±6 %) and the access-rule model with nothing fitted
+(±3 %). 630 runs, into a file of their own.
+
+| records | line | model | simulated [95 %] | from the line | from the model |
+|---|---|---|---|---|---|
+| 2 | 66.0 | 66.6 | **66.7** [66.4, 67.0] | +1.1 % | +0.2 % |
+| 3 | 96.3 | 96.0 | **96.5** [96.1, 96.8] | +0.2 % | +0.6 % |
+| 8 | 225.9 | 220.6 | **222.3** [221.5, 223.2] | −1.6 % | +0.8 % |
+
+**All six held.** Where the line and the model disagreed (2.4 % at eight records) the simulator
+is three times nearer the model. A weaker expectation recorded beside the predictions had the
+trend of the line's residual right and the sign of the middle cell wrong; it is reported as
+that in `docs/NMAX_DIRECT_EXPECTATIONS.md`.
+
+**What the documents say now.** The paper: one sentence in the capacity-rule paragraph, and the
+limitation reworded — the three batches were simulated for the rule alone and nothing else is
+evaluated at them. The thesis: a table in ch. 8 and a row in Appendix B (twenty registrations;
+seven failed in whole or in part, as before).
+
+**What it does not show.** Another PHY rate, another loss level, or a less idealised channel.
+And it does not make the deadlines of 60, 80 and 180 ms operating points of this work: only the
+channel was evaluated at them.
+
+**One thing about method.** The scoring function was tightened after two cells were complete
+and before anything was written, so that an unfinished grid cannot be scored. It was the right
+change and it was made after data had been looked at; both are said in the outcome section.

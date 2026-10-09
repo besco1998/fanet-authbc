@@ -1074,9 +1074,38 @@ def prototype() -> dict[str, str]:
     }
 
 
+def batch_dimension() -> dict[str, str]:
+    """The lean design at other batch sizes (docs/NMAX_DIRECT_EXPECTATIONS.md F6; audit F82).
+
+    Three cells registered in 64322fc before any run: two, three and eight records to a frame
+    at 50 records/s. The text says each simulated crossing is inside both of its registered
+    bands, the airtime line's and the access-rule model's; that is checked before a macro is
+    written, so a re-run that moved one outside would stop the build instead of the text.
+    """
+    table = {r["cell"]: r for r in rows(RAW / "batch_capacity.csv")}
+    names = {"B2": "Two", "B3": "Three", "B8": "Eight"}
+    if set(table) != set(names):
+        raise ValueError(f"follow-up F6 registered {sorted(names)}; scored {sorted(table)}")
+    m: dict[str, str] = {}
+    for cell, tag in names.items():
+        r = table[cell]
+        if (r["line_within_band"], r["model_within_band"]) != ("1", "1"):
+            raise ValueError(f"the text says every batch-size crossing is inside both registered "
+                             f"bands; {cell} is not")
+        m |= {f"batNs{tag}": f(r["ns3_crossing"], 1),
+              f"batCi{tag}": f"[{f(r['ns3_lo'], 1)},\\,{f(r['ns3_hi'], 1)}]",
+              f"batLine{tag}": f(r["line_crossing"], 1),
+              f"batModel{tag}": f(r["model_crossing"], 1),
+              f"batDl{tag}": signed(float(r["vs_line_pct"])),
+              f"batDm{tag}": signed(float(r["vs_model_pct"]))}
+    return m | {
+        "batLineWorst": f(max(abs(float(r["vs_line_pct"])) for r in table.values()), 1),
+        "batModelWorst": f(max(abs(float(r["vs_model_pct"])) for r in table.values()), 1)}
+
+
 SECTIONS = (frames, ladder, loss, stream, freshness, phy, energy, timings, flight_logs,
             validation, exclusion, low_rate, source_study, capacity_rule, capacity_model, sitl,
-            energy_runs, prototype)
+            energy_runs, prototype, batch_dimension)
 
 
 def macros() -> dict[str, str]:

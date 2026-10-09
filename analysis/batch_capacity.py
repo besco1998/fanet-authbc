@@ -123,13 +123,16 @@ def ns3_crossings() -> dict[str, dict]:
 
 
 def score() -> list[dict]:
-    """Each registered prediction against ns-3. A cell whose crossing its grid does not bracket
-    is left out, so an incomplete or mis-placed campaign cannot pass."""
+    """Each registered prediction against ns-3. A cell is scored only when every node count
+    registered for it holds all thirty seeds and its crossing is bracketed: an unfinished
+    campaign, or one run on other node counts than those written down, cannot pass."""
     out = []
     for cell, r in ns3_crossings().items():
+        reg = registered()[cell]
+        if r.get("grid") != reg["ns3_grid"]:
+            continue
         if r.get("bracketed") != 1 or r.get("n_cross_interp") in (None, ""):
             continue
-        reg = registered()[cell]
         measured = float(r["n_cross_interp"])
         line, model = float(reg["line_crossing"]), float(reg["model_crossing"])
         out.append({

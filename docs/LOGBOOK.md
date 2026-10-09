@@ -12,7 +12,7 @@ where the durable record lives. If you want the conclusion only, follow the poin
 
 ---
 
-# 2026-10-09, later — four of the review's five decisions carried out (F81); the fifth registered
+# 2026-10-09, later — the review's five decisions carried out (F81, F82)
 
 **What we were doing.** Mohamed: "go ahead for decisions 1–5" — the receiver keeps frames; other
 batch sizes simulated; the certificate column read in time; the exclusion count split by cause;
@@ -55,8 +55,18 @@ registering the batch runs I read the registration of F5 again: the exact closed
 has been in `docs/02` and under test since 2026-10-08. It is the lesson of F9 and F65 a third
 time — search before deriving — and the prior work this time was the project's own.
 
-**Record:** F81 (receiver, certificates, exclusion split); `hw/BENCH_SESSION.md` (re-timing,
-with outcome); `docs/NMAX_DIRECT_EXPECTATIONS.md` F6 (the batch sizes: registered, running).
+**The batch sizes, when they came in.** 630 runs, two hours. All six predictions inside their
+bands; where the line and the model parted (eight records, 2.4 %) the simulator is nearer the
+model. The weaker expectation I had written beside them was right about the trend and wrong
+about the middle cell, and is reported so.
+*One thing I did while waiting:* looked at the finished cells with ninety runs still to go, and
+saw that the scoring function would already have scored the unfinished one. I tightened it
+before writing any result. Looking early changed no number; it is said in the outcome anyway,
+because "I looked, and then changed the analysis" is a sentence that should never be left for
+someone else to find.
+
+**Record:** F81 (receiver, certificates, exclusion split), F82 (batch sizes);
+`hw/BENCH_SESSION.md` (re-timing, with outcome); `docs/NMAX_DIRECT_EXPECTATIONS.md` F6.
 
 ---
 
