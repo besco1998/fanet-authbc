@@ -12,13 +12,14 @@
 # ⚠️ SSH arrives over wlan0. Joining the cell drops it; the script runs unattended under nohup,
 # reverts itself, and sits behind the same two deadmen as the sweep.
 #
-#   run_adhoc_contention.sh <node> <nodes> <start-epoch> <rates> [freq] [mode]
+#   run_adhoc_contention.sh <node> <nodes> <start-epoch> <rates> [freq] [mode] [frameburst]
 #     node         1..nodes, this board
 #     nodes        how many boards are in the cell
 #     start-epoch  unix time at which window 0 opens, the same on every board
 #     rates        frames per second per node, comma separated, e.g. 125,175,213
 #     freq         5180 by default (channel 36)
 #     mode         full (four windows per rate) | probe (one short window at the first rate)
+#     frameburst   keep (default) | 0 | 1 — the chip's frame-burst mode during the windows
 set -u
 NODE="$1"
 NODES="$2"
@@ -26,6 +27,7 @@ START_EPOCH="$3"
 RATES="$4"
 FREQ="${5:-5180}"
 MODE="${6:-full}"
+FRAMEBURST="${7:-keep}"
 
 OUT=/home/pi/authbc_channel
 SSID=authbc-mesh
@@ -65,6 +67,14 @@ sudo -n /usr/sbin/iw dev wlan0 ibss join "$SSID" "$FREQ" fixed-freq >>"$OUT/sess
 sudo -n ip addr flush dev wlan0
 sudo -n ip addr add "$IP/24" dev wlan0 >>"$OUT/session.log" 2>&1
 sleep 12
+
+# Frame burst (frameburst.sh says what it is and why it matters here). `keep` leaves the driver's
+# setting alone. The value the firmware reports is logged before the first window and after the
+# last, whatever was asked: a session's result cannot be read without it.
+if [ "$FRAMEBURST" = 0 ] || [ "$FRAMEBURST" = 1 ]; then
+    sudo -n "$OUT/frameburst.sh" set "$FRAMEBURST" >/dev/null 2>&1
+fi
+log "frameburst before the windows: $(sudo -n "$OUT/frameburst.sh" get 2>&1) (asked: $FRAMEBURST)"
 
 log "type:  $(/usr/sbin/iw dev wlan0 info 2>/dev/null | grep -E 'type|channel' | tr '\n' ' ')"
 log "addr:  $(ip -4 -o addr show wlan0 2>/dev/null | grep -oE 'inet [0-9.]+' | tr '\n' ' ')"
@@ -114,6 +124,9 @@ for spec in "${WINDOWS[@]}"; do
 done
 
 /usr/sbin/iw dev wlan0 station dump >"$OUT/station_dump_node$NODE.txt" 2>&1
+log "frameburst after the windows: $(sudo -n "$OUT/frameburst.sh" get 2>&1)"
+# leave the chip as the driver configures it
+[ "$FRAMEBURST" = 0 ] && sudo -n "$OUT/frameburst.sh" set 1 >/dev/null 2>&1
 
 # ---- 4. Revert -----------------------------------------------------------------------------
 sudo -n "$OUT/revert_adhoc.sh"

@@ -228,9 +228,11 @@ def commands(n_nodes: int, hosts: list[str], mode: str) -> list[str]:
     rates = ",".join(str(rate_fps(n_nodes, u)) for u in OCCUPANCY)
     lines = ["START=$(( $(date +%s) + 60 ))"]
     for k, host in enumerate(hosts, start=1):
-        lines.append(f'ssh {host} "cd /home/pi/authbc_channel && nohup setsid '
-                     f'./run_adhoc_contention.sh {k} {n_nodes} $START {rates} 5180 {mode} '
-                     f'>/dev/null 2>&1 &"')
+        # No `cd … &&` in front: a backgrounded `a && b` is a subshell that keeps the ssh
+        # channel open, and the launching terminal then waits for the whole session.
+        lines.append(f'ssh {host} "nohup setsid /home/pi/authbc_channel/'
+                     f'run_adhoc_contention.sh {k} {n_nodes} $START {rates} 5180 {mode} '
+                     f'>/dev/null 2>&1 </dev/null &"')
     return lines
 
 
