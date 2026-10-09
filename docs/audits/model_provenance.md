@@ -3848,6 +3848,18 @@ committed before the first of them.
 
 **What is still not established:** the sensor's gain (G22).
 
+*Added the same day, after F79.* Two more things of the same kind, both in what a file says
+about the machine that made it. **Every results file made on a board carried the header line
+`governor=WSL, governor uncontrolled`, and `cpu=unknown`** — the development machine's note,
+written by a constant, beside the true values the board's script prepends as `device_governor`
+and `device_model`. The timings in those files were made under `performance`, as their
+`device_` lines say; the false line is in `p1_crypto.authbc-pi4a.csv` and the files of
+2026-10-09, which are left as they were made. The header now reads the governor and the board's
+model where the system exposes them, and is unchanged where it does not. And the C program
+behind the batch-verification figure was read: 64 distinct keys, messages and signatures,
+every result checked in every repetition, a failure aborts — and a ratio of 0.46 can only come
+from the batch path, since the library's fallback costs more than verifying singly.
+
 ## F79 — the lean sender metered, on a rig that had passed its check: four runs, four ranges held (2026-10-09)
 
 The first energy measurement since July, and the first of the format the paper reports.
