@@ -1,0 +1,1 @@
+pre lean_b4: throttled=0x0 temp=52.5'C gov performance load 0.25 0.41 0.31 uv 0

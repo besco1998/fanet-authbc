@@ -253,7 +253,9 @@ def main() -> None:
         "experiment": "d1_energy_e2e",
         "host": _plat.node(), "run_utc": time.strftime("%Y%m%dT%H%M%SZ", time.gmtime()),
         "platform": _plat.platform(), "python": _plat.python_version(),
-        "gpio_backend": "gpiod" if sync.available else "none",
+        # the backend that drove the line, as SyncLine names it. Until 2026-10-09 this wrote
+        # "gpiod" whenever any backend worked, including when the line was driven through sysfs.
+        "gpio_backend": sync.backend,
         "duration_s": args.seconds, "reps": args.reps,
         "configuration": {"encoding": ENCODING, "scheme": SCHEME, "placement": "B",
                           "batch": BATCH, "h_f": H_F, "g_a": G_A},

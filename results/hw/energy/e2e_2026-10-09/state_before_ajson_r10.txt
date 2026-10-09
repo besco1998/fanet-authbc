@@ -1,0 +1,1 @@
+pre ajson_r10: throttled=0x0 temp=50.1'C gov performance load 0.14 0.38 0.39 uv 0

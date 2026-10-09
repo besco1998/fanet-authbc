@@ -3847,3 +3847,60 @@ The energy runs follow, with what is expected of each written in `hw/BENCH_SESSI
 committed before the first of them.
 
 **What is still not established:** the sensor's gain (G22).
+
+## F79 — the lean sender metered, on a rig that had passed its check: four runs, four ranges held (2026-10-09)
+
+The first energy measurement since July, and the first of the format the paper reports.
+Expectations in `hw/BENCH_SESSION.md`, committed in `a38994f` with no run in existence. Board
+`authbc-pi4b` (July's software), meter channel 2, the rig check passed 2½ minutes before the
+first run (F78). Sixty-second windows, idle then loaded, the sync line high in both.
+`results/hw/energy/e2e_2026-10-09/`, `results/raw/energy_runs.csv`.
+
+| run | metered, µJ per record | registered | added power | |
+|---|---|---|---|---|
+| **control** — July's baseline row again (first format, CBOR, every record signed) | **116.2** [114.8, 120.7] | 113–125 | 0.737 W | held |
+| lean sender, four records to a frame | **155.4** [155.1, 155.8] | 146–179 | 0.738 W | held |
+| lean sender, one record to a frame | **273.1** [270.6, 276.9] | 256–313 | 0.723 W | held |
+| first format, JSON, every record signed — ten repetitions | **120.9** [120.5, 122.5] | 115–127 | 0.740 W | held |
+
+Every window clean by the firmware's flags (`0x0` throughout: this boot had no under-voltage
+at all) and by the kernel's count; every idle window within 34 mW of the others in its run;
+each window sixty seconds by the meter's clock as by the board's.
+
+**What the four say.**
+
+* **The two rigs agree.** The control is 2.2 % below July's 118.8 µJ, from the other board
+  through the other sensor, and its added power 2.4 % below July's 0.755 W. Today's figures
+  can stand beside July's. ⚠️ That bounds the *difference* between two sensors and two boards.
+  It does not check the gain they share: same nominal shunt, same calibration word (G22).
+* **The lean sender costs 2.7 times the energy per record of the first format's** —
+  155.4 µJ against 58.4. The lean codec was written for the size of the frame and is slower in
+  this interpreted prototype. Until today the energy table was of the first format only and
+  the text did not say what the reported design costs (F78 printed an estimate that morning:
+  163; the meter says 155).
+* **Batching saves 43 % of the lean sender's energy**, where its timing said 43 % and the first
+  format's saving is 51 %.
+* **The meter is 4.4 % and 3.9 % below the script's prediction** (time of one frame × 0.749 W),
+  inside the script's 10 % acceptance. Two causes, both measured: one busy core adds
+  0.72–0.74 W on this board against the constant from the other; and with four records to a
+  frame the metered loop runs a frame 3 % faster than the timed one (0.842 ms against
+  0.868 ms), which it does not with one record (0.379 ms both).
+* **The JSON row is reportable at last** (G11): ten repetitions of ten usable, where July had
+  two of five. 120.9 µJ against July's 119.3 and 121.8.
+
+**What I did wrong during it, and what it cost.** While the control was being metered I logged
+in to the board several times to see how far it had got, and started a waiter that did so
+every fifteen seconds. Each login costs the board processor time on another core. The
+control's second repetition reads 120.7 µJ where the other four read 114.8–117.0; its load
+window is the one those logins fell in. The repetition is kept — no rule written beforehand
+removes it — and the median, which is what is reported, does not move with it. From the second
+run on nothing was asked of the board until a run's expected end, and the five repetitions of
+the next run agree within ±0.25 %. ⚠️ The same care is owed to July's captures in
+retrospect: nothing in them shows such a step, and their idle windows are steady.
+
+**Also recorded:** the manifests name the sync pin's driver as `gpiod`; on this board it was
+the kernel's sysfs interface. The script wrote `gpiod` whenever any driver worked. Fixed in
+the script after the runs; the files are as the runs wrote them.
+
+**Closes:** G9 (the lean codec timed and metered), G11 (the JSON row). **Does not close:** G22
+— the sensor's gain against a reference load.

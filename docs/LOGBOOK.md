@@ -98,6 +98,28 @@ Mohamed attached the sync wire to pi-B. Before using it:
 
 **Durable record:** F78; `results/hw/energy/rig/README.md`; `hw/RIG.md` §8 item 7; G26.
 
+**And then the rig passed, and four runs were metered (F79).** Mohamed swapped the two boards'
+supplies and sensors; the branch that holds four cores now feeds pi-B.
+
+1. *The check failed twice more before it passed, for reasons of mine and of the PC's.* On a
+   board just booted the script's fallback for driving the sync pin gave up before the system
+   had made the pin writable (it waits now). Then the PC had dropped the Arduino. Then: every
+   line passed, +3.49 W with four cores at 5.07 V.
+2. *Wrote the four expected ranges and committed them* (`a38994f`) before starting anything.
+   The first run is a control — July's baseline row on this board and sensor — because the
+   power constant in every prediction came from the other board through the other sensor.
+3. *Control: 116.2 µJ, 2.2 % from July's.* The rigs agree.
+4. ⚠️ *I disturbed my own measurement.* Checking progress, I logged in to the board during the
+   control's second load window; that repetition reads 4 % high. Kept, reported, and from then
+   on nothing was asked of the board during a run. The next run's five repetitions agree
+   within ±0.25 %.
+5. *Lean sender: 155.4 µJ with four records, 273.1 with one; JSON row 120.9.* All four inside
+   their ranges. The lean sender costs 2.7 times the first format's energy per record — the
+   number the energy table had never carried.
+
+**Durable record:** F79; `results/hw/energy/e2e_2026-10-09/README.md`;
+`results/raw/energy_runs.csv`; `hw/BENCH_SESSION.md`.
+
 ---
 
 # 2026-10-09 — "solve all the issues": what could be closed from here, and what could not

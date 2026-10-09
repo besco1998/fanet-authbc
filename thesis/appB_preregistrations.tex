@@ -56,6 +56,11 @@ stepped) \\
 \texttt{9e9c096} 8~Oct & six crossings in conditions never simulated --- contention window
 doubled; $2\%$ and $10\%$ loss --- within $\pm 3\%$ of the access-rule model & held: all
 \modelPredCases, worst $\modelPredWorst\%$ \\
+\texttt{b69e08e} 8~Oct & on the Raspberry~Pi~4, per four-record frame: lean sender
+$1.0$--$2.5$\,ms, lean receiver $2$--$5$\,ms; Ed25519 in a batch of $64$ at $0.45$--$0.60$ of
+the cost of one at a time & both times \textbf{failed}, on the fast side (\leanSendMs{} and
+\leanRecvMs\,ms): the desktop figure they were scaled from was three to four times too high.
+The batch held (\edBatchRatio) \\
 \texttt{456a4e7} 9~Oct & contention on real radios: loss among two to five boards at three
 loads; with two boards, within $0.6$--$1.4$ times the access-rule model's & run with two
 boards: held at two loads, \textbf{failed} at the third ($\hwContHighRatio$ times the model's
@@ -69,6 +74,11 @@ burst on the loss is shown \\
 \texttt{9a85afa} 9~Oct & two saturated radios lose $11.8\%$ of the frames they put on air, band
 $7.1$--$16.5\%$; the author's expectation, recorded with it, was about $7\%$ & held:
 \hwSatOff\% with frame burst off, \hwSatOn\% with it on. The expectation was wrong \\
+\texttt{a38994f} 9~Oct & four energy runs on the second board and sensor, in
+\si{\micro\joule} per record: a control repeating July's baseline row at $113$--$125$; the lean
+sender within $10\%$ of its timed frame at the metered power, with four records and with one;
+the JSON row at $115$--$127$ & held, all four: \enCtlMeas; \enLeanMeas{} and \enLeanOneMeas;
+\enJsonMeas{} (\Cref{tab:energy}) \\
 \end{longtable}
 }
 

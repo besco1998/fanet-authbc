@@ -55,7 +55,7 @@ defect in this work's own practice, recorded in \Cref{ch:validation}: a pre-regi
 \emph{directional} prediction that the experiment had no statistical power to resolve.
 
 \Cref{app:prereg} lists every registration with its commit, what it predicted and what
-happened. Of its sixteen entries, six failed in whole or in part, one could not be scored and
+happened. Of its eighteen entries, seven failed in whole or in part, one could not be scored and
 one was met by a criterion that could not have failed; one has been run with two boards of the
 two to five it covers. They are in the table with the rest.
 
@@ -252,7 +252,13 @@ $12.3\%$, is therefore several times the uncertainty of its measurement and is a
 prototype (\Cref{ch:codesign}). The \emph{absolute} values in microjoules carry the sensor's
 gain error in addition, and that was not measured: the calibration against a known load that
 the procedure prescribes was not recorded for these runs. They should be read as accurate to
-the sensor's factory tolerance and no better.
+the sensor's factory tolerance and no better. One partial check exists. In October 2026 the
+baseline row was metered again on the second board through the second sensor and came out
+\enCtlVsJuly\% from July's figure (\Cref{tab:energy}). Two sensors with a gross error in one of
+them would not agree so; two sensors sharing an error --- the same nominal shunt, the same
+calibration word --- would, and this does not exclude it. The row that could not be reported in
+July, with JSON records, was metered again there with ten repetitions and no window disturbed:
+\enJsonMeas\,\si{\micro\joule} \enJsonRange{} per record.
 
 One configuration is not reported. In three of its five repetitions the idle window read up to
 $0.5$\,W above the others --- a background process on the board --- which makes the difference

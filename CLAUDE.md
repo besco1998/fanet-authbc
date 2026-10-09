@@ -61,7 +61,7 @@ type hints; no dead code; comments explain WHY, not what.
 - **Phase: P9 — revision after the supervisor's review (2026-10).** Branch `p9-supervisor-revision`, cut from `p8-audit-and-corrections`. Work from any machine: `git clone`, `git checkout p9-supervisor-revision`, `make setup && make all`.
 - ⚠️ **`make all` green on this machine is NOT the claim — CI green is** (2026-10-08: the gate passed here and failed on a clean install over an undeclared package). **Before every push run the WHOLE of `make all VENV=<a venv built from pip install -e '.[dev]' alone>`** — never a hand-picked subset of tests (the fix for that failure broke the build again exactly that way: a figure was regenerated and its copy in `thesis/` was not) — and do not say green until CI on the pushed commit has finished. Guards: `tests/test_declared_dependencies.py`, and no figure may embed a library version.
 - ⚠️ **TWO COPIES OF THIS FILE EXIST.** Sessions that start in `~/authbc_package` auto-load `~/authbc_package/CLAUDE.md`, which is an OLD copy. **This file, in the repository, is the status board.** A stale count read from the other one was "corrected" into the thesis on 2026-10-06 and had to be reverted.
-- **Green:** 2119 fast + **40** frozen-gate tests (**2159**), `ruff` clean, **`mypy` clean (0 / 57 files)**, paper builds (**10 pp**, **40 refs**, 0 undefined, 0 overfull, abstract **179 w** by the board's counter, about 190 as printed), methods paper 4 pp, thesis **123 pp** (61 refs, 0 overfull, 3 markers left — all Mohamed's). `make all` exit 0.
+- **Green:** 2151 fast + **40** frozen-gate tests (**2191**), `ruff` clean, **`mypy` clean (0 / 57 files)**, paper builds (**10 pp**, **40 refs**, 0 undefined, 0 overfull, abstract **179 w** by the board's counter, about 190 as printed), methods paper 4 pp, thesis **125 pp** (61 refs, 0 overfull, 3 markers left — all Mohamed's). `make all` exit 0.
 - **METHODOLOGY (Mohamed):** this is an optimization problem — *state everything, choose what to stick with, state the trade-offs for every decision*. **`docs/TRADEOFFS.md` is required reading before quoting any number.**
 - **LICENSE = all rights reserved** (© 2026 Mohamed A. Farouk). Vendored NS-3 + `signetlabdei/lorawan` stay GPLv2, **not** redistributed.
 
@@ -92,7 +92,7 @@ and bit-identical (D6).
 | "ratios are protected by construction" | **withdrawn** — the ceiling's error depends on the frame and does not cancel |
 | "Bor et al." | **Haxhibeqiri, Van den Abeele, Moerman & Hoebeke** (F49). Renamed everywhere |
 
-### ⚠️⚠️ 2026-10-09, night — THE BOARDS WERE ON: contention measured on two radios, and an August figure WITHDRAWN (F72–F78)
+### ⚠️⚠️ 2026-10-09, night — THE BOARDS WERE ON: contention measured on two radios, and an August figure WITHDRAWN (F72–F79)
 
 - **Two saturated radios lose 12.4 % of frames on air; the standard's rule gives 11.8 %
   (F76, registered `9a85afa`, HELD).** First hardware measurement of the contention mechanism.
@@ -144,9 +144,12 @@ and bit-identical (D6).
   * ⚠️ **The energy table's "model" uses a power that is the median of the same metered runs.**
     The table tests the composition of TIMES, not power. Never write "separately measured
     powers".
-  * ⚠️ **The lean sender's energy is NOT metered.** By timing × power it is ≈ **163 µJ/record
-    against the first format's metered 58** (284 vs 119 unbatched). Bytes and capacity are the
-    lean format's; metered energy is the first format's; no row has both.
+  * **The lean sender IS metered since that morning (F79), on the passing rig, four registered
+    ranges held: 155.4 µJ/record with four records to a frame, 273.1 with one (−43 %);
+    control (July's baseline row on this rig) 116.2 vs July's 118.8; JSON row 120.9, ten of ten
+    repetitions.** ⚠️ **The lean sender costs 2.7× the first format's energy per record**
+    (155 vs 58) — say so whenever energy is quoted. ⚠️ Do not log in to the board while a run is
+    being metered: my logins raised one repetition of the control by 4 %.
   * `manifest_d1_reduced.json` had hand-entered metadata, two values wrong (Python 3.11.2, a
     local time labelled UTC); corrected with a note in the file; no measured value changed.
   * Window validity now also counts the kernel's under-voltage events (`energy_loop.py`).
@@ -427,7 +430,7 @@ decides a headline and was never written down — defect class **C2**, the one c
 > ⚠️ **F18 came back.** On 2026-08-07 it was found still printed in `tab:lora-external` ("we are more optimistic" at N=5) — 100 lines below a bold sentence saying the opposite. **Retracting a finding in the register does not remove it from the paper.** When you retract, grep the paper. Guarded now by `test_no_row_revives_the_retracted_optimism_claim`, which checks the *artifact* rather than the wording.
 
 ### Where things live
-`docs/README.md` is the index. Findings **F1–F78** in `docs/audits/model_provenance.md`. Open items **only** in `docs/OPEN_ITEMS.md`. Trade-offs in `docs/TRADEOFFS.md`. Method and failed attempts in `docs/LOGBOOK.md`. **51 PDFs** in `docs/literature/` with each source's ROLE stated, and **20 more held on Mohamed's machine but NOT redistributed** (`docs/literature/HELD_LOCALLY.csv`, git-ignored files — ⚠️ never `git add -f` them); every bibliography entry is checked against its registry record by `make verify-citations` (`A3_CITATION_VERIFICATION.md` is the August record of a check that turned out not to compare authors — F49).
+`docs/README.md` is the index. Findings **F1–F79** in `docs/audits/model_provenance.md`. Open items **only** in `docs/OPEN_ITEMS.md`. Trade-offs in `docs/TRADEOFFS.md`. Method and failed attempts in `docs/LOGBOOK.md`. **51 PDFs** in `docs/literature/` with each source's ROLE stated, and **20 more held on Mohamed's machine but NOT redistributed** (`docs/literature/HELD_LOCALLY.csv`, git-ignored files — ⚠️ never `git add -f` them); every bibliography entry is checked against its registry record by `make verify-citations` (`A3_CITATION_VERIFICATION.md` is the August record of a check that turned out not to compare authors — F49).
 
 ### Deferred by Mohamed — plans written, DO NOT START unprompted
 - **Mobility (E20)** — `docs/MOBILITY_PLAN.md`. **Separate NEW scenario files**, literature survey first. Not for the 802.11 arm (Bianchi/Ma&Chen have no position term).

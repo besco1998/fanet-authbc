@@ -95,9 +95,10 @@ figure for airtime that earlier versions carried is withdrawn there. No capacity
 and the capacities of \Cref{ch:codesign} rest on simulation. Record sizes come from a synthetic
 generator, checked against twelve public flight logs at $0.2$\,s spacing and above and, at the
 $20$\,ms of the operating point, against one flight of an autopilot in simulation; no flight log
-recorded at $50$\,Hz was found. Only the sender's energy is metered, and only for the first
-format; composed energy is a lower bound by roughly $7$--$14\%$, the residual being uncharged
-prototype framing overhead. The receiver-CPU ceilings charge cryptography only, and the
+recorded at $50$\,Hz was found. Only the sender's energy is metered, in both formats, with a
+sensor never checked against a reference load; the lean sender costs \enLeanOverFirst{} times the
+first format's energy per record in this prototype; and the first format's composed energy is a
+lower bound by roughly $7$--$14\%$, the residual being uncharged prototype framing overhead. The receiver-CPU ceilings charge cryptography only, and the
 prototype's decoder costs several times more (\Cref{ch:codesign}). Capacity was simulated at
 one PHY rate.
 
@@ -131,10 +132,10 @@ periodically. Implicit (ECQV) certificates are the standard smaller alternative 
 modelled. The current charge is an upper bound, which cuts against this work's own comparison ---
 so the gap is safe but should be closed.
 
-\item[Metering the lean sender.] The lean codec is now timed on the board
-(\Cref{ch:codesign}); its energy is not metered, and the energy table still covers the first
-format only. The meter itself has never been checked against a known load
-(\Cref{sec:energy-uncertainty}). One session with a reference resistor closes both.
+\item[Calibrating the meter.] The lean sender is timed and metered on the board
+(\Cref{ch:codesign}). The meter itself has never been checked against a known load
+(\Cref{sec:energy-uncertainty}): two sensors agree with each other within \enCtlVsJuly\%, which
+is not the same thing. One session with a reference resistor closes it.
 
 \item[A compiled receiver.] The prototype's receiver is interpreted and serves \ncpuProto{}
 nodes per core where cryptography alone would allow \ncpuBatch. A receiver in a compiled

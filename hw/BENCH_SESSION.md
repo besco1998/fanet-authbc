@@ -22,16 +22,16 @@ new has to be wired. Each step says what to run, where, how long it takes and wh
 |---|---|
 | 0 calibrate the meter | **not done** — no reference resistor at the bench |
 | 1 time the lean sender and receiver | **done on `authbc-pi4b`**: 0.87 ms and 1.41 ms per four-record frame — both *under* the ranges below; one core of the prototype serves 57 nodes |
-| 2 meter the lean sender | **not done** — the sync wire GPIO17 → D2 is on neither board (`docs/OPEN_ITEMS.md` G26) |
-| 3 re-meter the contaminated row | **not done** — same |
+| 2 meter the lean sender | **done on `authbc-pi4b`, channel 2, after the rig check passed** (F79): 155.4 µJ per record with four records to a frame, 273.1 with one; a control repeating July's baseline row gave 116.2 against July's 118.8. Every registered range held |
+| 3 re-meter the contaminated row | **done** (F79): 120.9 µJ per record, ten of ten repetitions usable |
 | 4 smaller boards | **not done** — they were not switched on |
 | 5 Ed25519 batch verification | **done on `authbc-pi4b`**: 0.46 of the cost per signature in a batch of 64 — inside the range below |
 
 ⚠️ **The board named below as the device under test, `authbc-pi4a`, was found re-installed**
-(Debian 13, Python 3.13, no project environment). Steps 1 and 5 were run on `authbc-pi4b`, which
-has July's software and times signatures within 0.4 % of what `authbc-pi4a` did. Before steps
-0, 2 and 3: decide which board is the device under test, give it the sync wire and a steady
-5.15–5.2 V, and bring a 10 Ω resistor.
+(Debian 13, Python 3.13, no project environment). Every step done was run on `authbc-pi4b`,
+which has July's software and times signatures within 0.4 % of what `authbc-pi4a` did; it is
+on meter **channel 2** since the supplies were swapped. What remains is step 0 (a 10 Ω
+resistor) and step 4 (the smaller boards).
 
 ## Expected of the energy runs of 2026-10-09 — written and committed before the first of them
 

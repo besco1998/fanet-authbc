@@ -28,10 +28,12 @@ of `LOGBOOK.md` is that pass.
    the Pi** (F77): the prototype's receiver serves 57 nodes per core, not 296. What that leaves:
    * **Mohamed — one decision:** does submission still wait for three to five radios, or go
      with what two showed (`OPEN_ITEMS` G2)?
-   * **Mohamed — the rig (G26):** the sync wire is now on pi-B and a loose ground was found
-     and re-seated, but **the rig still fails its check**: pi-B's 5 V feed browns out with four
-     cores busy (F78). Shorten and thicken the leads, 5.15–5.2 V, bring a 10 Ω resistor; then
-     `hw/rig_check.py` must print PASSED before bench steps 0, 2 and 3 (an hour).
+   * **The rig passes and the energy steps are done (F78, F79):** after a loose ground and a
+     weak branch were found by test, Mohamed swapped the supplies; pi-B is on meter channel 2.
+     The lean sender is metered (155.4 µJ per record; 2.7 times the first format's), the JSON
+     row re-metered, a control ties the rig to July's within 2.2 %. **What is left at the
+     bench: a 10 Ω resistor for the calibration nobody has ever done (G22), and the smaller
+     boards (G15).**
    * **No hardware needed (G27):** find which rule for a radio's own queued frames reproduces
      the 36 windows on disk, in the event model. Register before fitting.
 1. **Mohamed's decisions — ALL TAKEN on 2026-10-08** (`DECISIONS.md`, "Decided by Mohamed,
@@ -46,9 +48,8 @@ of `LOGBOOK.md` is that pass.
 3. **Contention among three to five radios** (`OPEN_ITEMS` G4) — each station sending rarely
    enough to hold one frame, which two boards cannot do and the capacities assume. The
    predictions are registered (`456a4e7`). Two Pi 4 and a Pi 3B+ make three.
-4. **Still open from the bench session:** meter the lean sender (G9); re-meter the one energy
-   row that is not reportable (G11); crypto timing on the Pi 3B+ (G15); calibrate the meter
-   (G22).
+4. **Still open from the bench session:** crypto timing on the Pi 3B+ (G15); calibrate the
+   meter (G22). G9 and G11 closed on 2026-10-09.
    **Needs no hardware:** PX4 software-in-the-loop for records at 50 Hz and the real stream's
    timing (G7, G12).
 5. **Open questions about the simulator** (G6): why two traffic sources differ by 0.003 in mean
@@ -107,7 +108,7 @@ cd fanet-authbc && git checkout p8-audit-and-corrections
 make setup && make all          # green == you have reproduced the deterministic layer
 ```
 
-`make all` = lint + mypy + 2119 fast tests + the 40-test frozen gate. NS-3 and the Pi rig are
+`make all` = lint + mypy + 2151 fast tests + the 40-test frozen gate. NS-3 and the Pi rig are
 optional (`docs/05_REPRODUCTION_GUIDE.md`). ⚠️ A fresh clone has **no NS-3 tree** — it is gitignored
 by design. Fetch it from the **GitLab** archive; `nsnam.org/releases/...` returns an HTML error page.
 

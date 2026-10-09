@@ -603,33 +603,52 @@ fitting the correction to the answer.
 
 \begin{table}[h]
 \centering
-\caption{Sender energy per record on a Raspberry~Pi~4, first format: metered (median and range of
-five repetitions) against the composed model.}
+\caption{Sender energy per record on a Raspberry~Pi~4: metered (median and range of five
+repetitions) against time multiplied by power. The first-format rows are of July 2026; the
+lean rows are of October, on the second board through the second sensor, where a control that
+repeats the first row gives \enCtlMeas\,\si{\micro\joule}.}
 \label{tab:energy}
 \begin{tabular}{lrrr}
 \toprule
  & metered (\si{\micro\joule}) & model (\si{\micro\joule}) & gap \\
 \midrule
-every record signed & \enBaseMeas\ \enBaseRange & \enBaseModel & \enBaseGap\% \\
-one signature per four records & \enDesignMeas\ \enDesignRange & \enDesignModel & \enDesignGap\% \\
+first format, every record signed & \enBaseMeas\ \enBaseRange & \enBaseModel & \enBaseGap\% \\
+first format, one signature per four & \enDesignMeas\ \enDesignRange & \enDesignModel & \enDesignGap\% \\
+lean format, every record signed & \enLeanOneMeas\ \enLeanOneRange & \leanSendOneUj & \enLeanOneGap\% \\
+lean format, one signature per four & \enLeanMeas\ \enLeanRange & \leanSendUj & \enLeanGap\% \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The batched sender spends \enSavePct\% less energy per record. The model composes separately
-measured times with one processor power, and that power is the median over the metered runs
-themselves (\Cref{sec:hardware-method}). The comparison therefore tests the times, not the
-power: the model is \enDesignGap--\enBaseGap\% low, the gap being frame assembly in an
-interpreted prototype. Only the sender is metered, and only the first format's encoders: the lean
-sender is timed on the board (\leanSendMs\,ms for a frame of four records) and its energy is
-not metered; receiver and radio energy are modelled.
+The batched sender spends \enSavePct\% less energy per record in the first format and
+\enLeanSavePct\% less in the lean format. Only the sender is metered; receiver and radio energy
+are modelled.
 
-\begin{remark}[The lean sender costs more energy per record than the table shows]
-\Cref{tab:energy} is of the first format. Multiplying the lean sender's time by the metered
-processor power gives about \leanSendUj\,\si{\micro\joule} per record with four records to a
-frame and \leanSendOneUj\,\si{\micro\joule} with one --- an estimate from a time on one board
-and a power on the other, not a meter reading. Batching still saves, but each figure is two
-and a half to three times its counterpart in the table: the lean codec was written for the size of the frame
-and is slower to run in this interpreted prototype. The saving in bytes and the capacity are
-the lean format's; the metered energy is the first format's; no row of this thesis has both.
+The two pairs of rows are compared with two different models. For the first format the model
+composes separately measured times with one processor power, and that power is the median over
+the metered runs of July themselves (\Cref{sec:hardware-method}). That comparison tests the
+times, not the power: the model is \enDesignGap--\enBaseGap\% low, the gap being frame assembly
+in an interpreted prototype. For the lean format the model is the time of one whole frame on
+the board (\leanSendMs\,ms for four records) at that same power, written down before the meter
+was read; the meter is within $5\%$ of it, on the low side. One busy core adds $0.72$ to
+$0.74$\,W on the second board where the constant taken from the first is $0.749$, and with four
+records to a frame the loop that is metered runs a frame $3\%$ faster than the loop that was
+timed.
+
+\begin{remark}[What the lean rows are, and what they say]
+The lean rows were metered in October 2026 on the second board through the second sensor: the
+first board had been re-installed since July, and the rig had first to pass a test it failed
+three times that morning (\Cref{sec:hardware-method}). A control that repeats the first row of
+the table on that rig gives \enCtlMeas\,\si{\micro\joule} \enCtlRange{} per record and
+\enCtlPower\,W where July gave \enBaseMeas{} and $0.755$: \enCtlVsJuly\% apart, inside the
+range written down for it, so the four rows can share a table. The range of that control is wider than the others' because the author's own
+logins to the board fell in one of its windows.
+
+\textbf{The lean sender costs \enLeanOverFirst{} times the energy per record of the first
+format's.} The lean codec was written for the size of the frame and is slower to run in this
+interpreted prototype. The saving in bytes and the capacity reported in this thesis are the
+lean format's, and so now is its energy: it is the larger of the two, and the table says by
+how much. The absolute values still carry the sensors' gain, which no reference load has
+checked; that two sensors on two boards agree within \enCtlVsJuly\% on one workload bounds
+their difference and not their common error.
 \end{remark}

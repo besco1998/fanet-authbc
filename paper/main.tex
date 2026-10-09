@@ -694,16 +694,18 @@ explicit certificates; implicit ones are shorter (a signed message of at most 22
 \subsection{Energy}
 
 \begin{table}[t]\centering\footnotesize
-\caption{Sender energy per record on a Raspberry~Pi~4, first format, metered (median and range of
-five repetitions) against the composed model.}
+\caption{Sender energy per record on a Raspberry~Pi~4: metered (median and range of five
+repetitions) against time $\times$ power. Lean rows: second board and sensor.}
 \label{tab:energy}
 \setlength{\tabcolsep}{4pt}
 \begin{tabular}{l r r r}
 \toprule
  & metered ($\mu$J) & model ($\mu$J) & gap \\
 \midrule
-every record signed & \enBaseMeas\ \enBaseRange & \enBaseModel & \enBaseGap\% \\
-one signature per 4 & \enDesignMeas\ \enDesignRange & \enDesignModel & \enDesignGap\% \\
+first format, every record signed & \enBaseMeas\ \enBaseRange & \enBaseModel & \enBaseGap\% \\
+first format, one signature per 4 & \enDesignMeas\ \enDesignRange & \enDesignModel & \enDesignGap\% \\
+lean format, every record signed & \enLeanOneMeas\ \enLeanOneRange & \leanSendOneUj & \enLeanOneGap\% \\
+lean format, one signature per 4 & \enLeanMeas\ \enLeanRange & \leanSendUj & \enLeanGap\% \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -713,10 +715,11 @@ Table~\ref{tab:energy} meters the sender: encoding, hashing and signing a record
 is signed, \enSavePct\% less. The model composes separately measured times with one power, the
 median over these same metered runs, so the comparison tests the times: it is
 \enDesignGap--\enBaseGap\% low, the gap being frame assembly in an interpreted prototype. These
-measurements are of the first format's encoders; the lean sender is timed on the board
-(\leanSendMs\,ms per four-record frame) and not metered. At the metered power that time is
-about \leanSendUj\,$\mu$J per record against \leanSendOneUj{} unbatched: the lean codec is the
-smaller on air and, in this prototype, the slower to run. Receiver and radio energy are modelled,
+two rows are of the first format's encoders. The lean sender, whose model is its timed frame
+(\leanSendMs\,ms for four records) at that power, meters \enLeanMeas\,$\mu$J per record against
+\enLeanOneMeas{} unbatched, \enLeanSavePct\% less: the lean codec is the smaller on air and, in
+this prototype, the slower to run. Its rows were metered on a second board and sensor, where a
+control repeating the first row gives \enCtlMeas\,$\mu$J. Receiver and radio energy are modelled,
 not metered, the radio's power coming from a unicast measurement on another band: adding one
 receiver and the radio,
 the model gives \enDesignEndToEnd{} against \enBaseEndToEnd\,$\mu$J per record.
@@ -852,9 +855,9 @@ channel trace; under the last, the design is below its target where the baseline
 5\% (Sec.~\ref{sec:loss}). The stream-signing schemes of Table~\ref{tab:stream} are sized
 from their definitions and simulated as frames; none is implemented.
 
-\textbf{Energy and CPU.} Only the sender is metered, and only the first format; receiver and
-radio energy are modelled. The receiver's CPU share counts verification and hashing, not
-decoding.
+\textbf{Energy and CPU.} Only the sender is metered, with a sensor never checked against a
+reference load; receiver and radio energy are modelled. The receiver's CPU share counts
+verification and hashing, not decoding.
 
 \textbf{Security scope.} Confidentiality, availability, key management and protection against a
 delaying attacker are outside the design (Sec.~\ref{sec:model}). With one link per frame,

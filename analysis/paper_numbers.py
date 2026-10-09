@@ -944,6 +944,48 @@ def signed(percent: float) -> str:
     return ("+" if percent >= 0 else "$-$") + f(abs(percent), 1)
 
 
+def energy_runs() -> dict[str, str]:
+    """The energy runs of 2026-10-09 (finding F79), on the second board through the second sensor.
+
+    Four runs registered before the first (hw/BENCH_SESSION.md, commit a38994f): a control that
+    repeats July's baseline row, the lean sender with four records to a frame and with one,
+    and the JSON row with ten repetitions. The documents say every range held; if one stops
+    holding, this refuses to print.
+    """
+    table = {r["run"]: r for r in rows(RAW / "energy_runs.csv")}
+    for name, r in table.items():
+        if not r["reportable"] == r["inside_registered"] == r["power_inside_registered"] == "1":
+            raise ValueError(f"the documents say every registered range held; {name} does not")
+    control, lean4, lean1, json10 = (table[k] for k in
+                                     ("control_cbor", "lean_b4", "lean_b1", "ajson_r10"))
+    july = rows(RAW / "energy_table.csv")
+    july_base = float(one(july, encoding="cbor", batch="1")["sender_uj_per_rec_median"])
+    july_design = float(one(july, encoding="delta", batch="4")["sender_uj_per_rec_median"])
+
+    def med(r: dict[str, str]) -> float:
+        return float(r["uj_per_record_median"])
+
+    def span(r: dict[str, str]) -> str:
+        return f"[{f(r['uj_per_record_min'], 1)},\\,{f(r['uj_per_record_max'], 1)}]"
+
+    def gap(r: dict[str, str]) -> str:
+        """Metered over the script's prediction, in percent, with its sign."""
+        g = 100.0 * (float(r["metered_over_predicted"]) - 1.0)
+        return ("$-$" if g < 0 else "") + f(abs(g), 1)
+
+    return {
+        "enCtlMeas": f(med(control), 1), "enCtlRange": span(control),
+        "enCtlVsJuly": f(100.0 * abs(med(control) / july_base - 1.0), 1),
+        "enCtlPower": f(control["added_power_w_median"], 3),
+        "enLeanMeas": f(med(lean4), 1), "enLeanRange": span(lean4), "enLeanGap": gap(lean4),
+        "enLeanOneMeas": f(med(lean1), 1), "enLeanOneRange": span(lean1),
+        "enLeanOneGap": gap(lean1),
+        "enLeanSavePct": f(100.0 * (1.0 - med(lean4) / med(lean1)), 0),
+        "enLeanOverFirst": f(med(lean4) / july_design, 1),
+        "enJsonMeas": f(med(json10), 1), "enJsonRange": span(json10),
+    }
+
+
 def prototype() -> dict[str, str]:
     """The lean sender and receiver as they run on the Pi 4, and Ed25519 in batches (F77).
 
@@ -993,7 +1035,7 @@ def prototype() -> dict[str, str]:
 
 SECTIONS = (frames, ladder, loss, stream, freshness, phy, energy, timings, flight_logs,
             validation, exclusion, low_rate, source_study, capacity_rule, capacity_model, sitl,
-            prototype)
+            energy_runs, prototype)
 
 
 def macros() -> dict[str, str]:
