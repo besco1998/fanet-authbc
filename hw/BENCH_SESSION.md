@@ -287,3 +287,31 @@ is then replaced in both documents by what the board delivered. **If one worker 
 
 **Nobody logs in to the board while it runs.** The script prints `DONE` when it has written its
 file; it is read after that, and not before the 4 minutes it must take.
+
+### Outcome (2026-10-09, run of 16:34:36Z) — three lines held, two failed
+
+| workers | frames/s | times one | each worker | nodes served | board after | expected | |
+|---|---|---|---|---|---|---|---|
+| 1 | 692.45 | 1.000 | 692 | **56** | 55.0 °C | 680–708 frames/s | held |
+| 2 | 1317.86 | **1.903** | 659 | **106** | 60.3 °C | 1.90–2.00 | held |
+| 3 | 1867.27 | **2.697** | 622 | **150** | 66.2 °C | 2.75–3.00 | ⚠️ **failed**, low |
+| 4 | 2329.45 | **3.364** | 582 | **187** | 70.6 °C | 3.50–4.00 | ⚠️ **failed**, low |
+
+`throttled=0x0` before and after every run. Two workers serve fewer than 124 nodes and three
+serve more: that line **held**.
+
+**What it says.** The cores do not add up. Each added worker slows every worker by about a
+twentieth (692 → 659 → 622 → 582 frames a second each), with no throttle bit set and the board
+at 71 °C at most. The workers share the cache and the memory bus; which of them costs this was
+not examined. **"124 nodes need 2.2 cores" was arithmetic and is wrong on this board: two
+cores serve 106 nodes. Three are needed.** Both documents now say three, and the thesis keeps
+the 2.2 beside it as what the arithmetic gave.
+
+**A smaller thing the same run showed.** One worker in a loop serves 56 nodes, not the 57 that
+the median frame time gives. The 57 had 0.18 % to spare; a loop pays its clock reading and a
+new receiver every thousand frames, and loses it. Both figures are quoted for what they are.
+
+**Nobody logged in to the board during the run.** It was started at 16:31:29Z and first read at
+16:37:58Z, after it had printed `DONE`.
+
+File: `results/hw/multicore_receive.authbc-pi4b.csv`.

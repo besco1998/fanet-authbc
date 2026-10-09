@@ -21,6 +21,13 @@ of `LOGBOOK.md` is that pass.
 
 **What is waiting, in the order it should be done:**
 
+000. ⚠️ **2026-10-09, night — four weak points of that review were worked** (F84, F85):
+   * **Unequal power and capture raise the capacities by about an eighth** (four registered
+     predictions, all held). **What remains is hidden stations (`OPEN_ITEMS` G35)**: a swarm
+     wider than its carrier-sense range. It needs a model with a sensing graph; no hardware.
+   * **The board needs three of its four cores for 124 nodes**, measured; "2.2" was arithmetic.
+   * The abstract says where the design gains nothing; a figure shows capacity against
+     deadline; the introduction leads with the capacity rule (G36 is Mohamed's to settle).
 00. ⚠️ **2026-10-09, afternoon — the paper was reviewed as a supervisor would review it, and
    Mohamed's five decisions on the review were carried out** (findings F80–F82; branch
    `p10-followups`). What changed that a new session must know:
@@ -127,7 +134,7 @@ cd fanet-authbc && git checkout p8-audit-and-corrections
 make setup && make all          # green == you have reproduced the deterministic layer
 ```
 
-`make all` = lint + mypy + 2250 fast tests + the 42-test frozen gate. NS-3 and the Pi rig are
+`make all` = lint + mypy + 2273 fast tests + the 42-test frozen gate. NS-3 and the Pi rig are
 optional (`docs/05_REPRODUCTION_GUIDE.md`). ⚠️ A fresh clone has **no NS-3 tree** — it is gitignored
 by design. Fetch it from the **GitLab** archive; `nsnam.org/releases/...` returns an HTML error page.
 

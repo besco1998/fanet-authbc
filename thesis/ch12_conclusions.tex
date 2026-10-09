@@ -93,7 +93,9 @@ do not. Post-quantum sizes are projections, not implementations.
 On hardware, two radios gave the loss of a link, the access rule between two saturated
 stations, and a failed prediction of the loss between two busy ones (\Cref{sec:hardware}); a
 figure for airtime that earlier versions carried is withdrawn there. No capacity was measured,
-and the capacities of \Cref{ch:codesign} rest on simulation. Record sizes come from a synthetic
+and the capacities of \Cref{ch:codesign} rest on simulation, of one collision domain in which
+every station hears every other. Unequal received power and capture were simulated and raise
+them by about an eighth (\Cref{sec:spread}); hidden stations were not. Record sizes come from a synthetic
 generator, checked against twelve public flight logs at $0.2$\,s spacing and above and, at the
 $20$\,ms of the operating point, against one flight of an autopilot in simulation; no flight log
 recorded at $50$\,Hz was found. Only the sender's energy is metered, in both formats, with a
@@ -145,8 +147,9 @@ so the gap is safe but should be closed.
 is not the same thing. One session with a reference resistor closes it.
 
 \item[A compiled receiver.] The prototype's receiver is interpreted and serves \ncpuProto{}
-nodes per core where cryptography alone would allow \ncpuBatch. A receiver in a compiled
-language, verifying signatures in batches, is what the capacity figures assume.
+nodes per core where cryptography alone would allow \ncpuBatch; measured on the board, it needs
+three of the four cores for the design's neighbourhood. A receiver in a compiled language,
+verifying signatures in batches, is what the capacity figures assume.
 
 \item[Telemetry at the operating rate.] Public flight logs carry position at 5\,Hz, and the
 delta record at 20\,ms spacing rests on the generator and on one simulated flight of one

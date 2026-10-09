@@ -1135,3 +1135,45 @@ mobility, antenna patterns: none. (iii) That the simulator's capture rule is a r
   `docs/02` §6h, 30 m: a disc of radius 18 m is 36 m across and leaves 0.2 dB of margin.
 
 A crossing that falls outside its grid is extended and the extension is reported as one.
+
+## F7 — outcome (2026-10-09, 840 runs)
+
+**All four predictions held.** Threshold, exponent and model exactly as registered.
+
+| case | kind | predicted | capture model | **ns-3 crossing [95 %]** | from the model | above equal power |
+|---|---|---|---|---|---|---|
+| C, 15 m | point | 37.54–41.50 | 39.52 | **39.58** [39.48, 39.67] | **+0.15 %** | +12.25 % |
+| D, 15 m | point | 132.68–146.64 | 139.66 | **140.35** [139.83, 140.78] | **+0.49 %** | +12.69 % |
+| C, 100 m | bracket | 35.26–41.50 | 39.52 | **39.40** [39.30, 39.49] | **−0.30 %** | +11.74 % |
+| D, 100 m | bracket | 124.55–146.64 | 139.66 | **139.34** [138.95, 139.80] | **−0.23 %** | +11.87 % |
+
+(`results/raw/spread_capacity.csv`, written by `analysis/spread_capacity.py --score` from
+`ns3_spread_r15_runs.csv` and `ns3_spread_r100_runs.csv`.)
+
+**What it says.**
+
+* **The published capacities are conservative for unequal received power**, by about an
+  eighth: with the nodes spread out a receiver keeps the stronger of two colliding frames
+  often enough to raise the design's neighbourhood from 124.6 to 140.4 nodes.
+* **The model is within half a percent of every crossing**, with one rule added to the access
+  rule and nothing fitted. The band registered for it was ±5 %.
+* **The ratio of design to baseline does not move**: 3.53 with equal power, 3.55 at 15 m, 3.54
+  at 100 m. Capture rescues the same share of both.
+
+**The weaker expectation had the sign and was too large.** It said that at 100 m ns-3 would sit
+below the 15 m figure "by a few percent", because a station that can lock onto neither of two
+colliding frames may take the medium for idle. It sits below by 0.45 % (C) and 0.72 % (D).
+The mechanism the model lacks is real in direction and costs almost nothing at this load.
+
+**One crossing by hand.** D at 100 m lies between 134 nodes (mean delivery 0.95458) and 140
+(0.94943): 134 + 6 × 0.00458 / 0.00515 = 139.34.
+
+**What was looked at before the campaign ended.** The first case (C, 15 m) was complete an hour
+before the last, and I looked at it then, and at the three complete cases again a few minutes
+before the fourth finished. The scoring function refuses a case whose registered grid is not
+complete, so nothing was scored early; the result file was written once, after all 840 runs.
+
+**What this still does not show** is what the registration said it could not: hidden stations,
+fading, mobility, a real radio's capture. It removes one doubt — that equal power was the
+favourable assumption — and leaves the larger one, a swarm wider than its own carrier-sense
+range, where it was.

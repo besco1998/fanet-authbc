@@ -264,3 +264,70 @@ class TestTheMultiCoreMeasurementScript:
         text = (REPO / "hw" / "multicore_receive.py").read_text(encoding="utf-8")
         assert "FRAMES_PER_NODE_S = 50.0 / BATCH" in text and "BATCH = 4" in text
         assert '"nodes_served": 1 + int(total // FRAMES_PER_NODE_S)' in text
+
+
+MULTICORE = {int(r["workers"]): r for r in _rows(HW / "multicore_receive.authbc-pi4b.csv")}
+MULTICORE_REGISTERED = "eb2751b"
+
+
+class TestTheReceiverOnFourCoresAsItCameOut:
+    """Audit F84. Registered in eb2751b before the run: three of its five lines held, and the
+    scaling at three and at four cores came in below what had been written down."""
+
+    @staticmethod
+    def _git(*args: str) -> str:
+        return subprocess.run(["git", *args], cwd=REPO, capture_output=True, text=True,
+                              check=True).stdout
+
+    def test_the_ranges_were_committed_with_the_script_and_without_a_measurement(self) -> None:
+        sheet = self._git("show", f"{MULTICORE_REGISTERED}:hw/BENCH_SESSION.md")
+        for needle in ("| one worker | **680–708 frames/s** |",
+                       "| two workers | **1.90–2.00** times",
+                       "| three | **2.75–3.00** times", "| four | **3.50–4.00** times",
+                       "two workers **below 124**, three **at or above** it"):
+            assert needle in sheet, needle
+        files = self._git("ls-tree", "-r", "--name-only", MULTICORE_REGISTERED)
+        assert "hw/multicore_receive.py" in files and "multicore_receive.authbc" not in files
+
+    def test_the_run_was_valid(self) -> None:
+        head = _header(HW / "multicore_receive.authbc-pi4b.csv")
+        assert head["device_host"] == "authbc-pi4b" and head["device_governor"] == "performance"
+        assert head["python"] == "3.12.13" and head["device_cores"] == "4"
+        assert set(MULTICORE) == {1, 2, 3, 4}
+        for r in MULTICORE.values():
+            assert r["throttled_before"] == r["throttled_after"] == "throttled=0x0"
+            assert float(r["seconds"]) == 30.0
+            # every worker of a run at the same rate: none starved, none favoured
+            assert float(r["worker_max_fps"]) / float(r["worker_min_fps"]) < 1.002
+
+    def test_one_and_two_workers_held_and_three_and_four_failed_low(self) -> None:
+        one = float(MULTICORE[1]["frames_per_s"])
+        scale = {k: float(r["frames_per_s"]) / one for k, r in MULTICORE.items()}
+        assert 680.0 <= one <= 708.0
+        assert 1.90 <= scale[2] <= 2.00
+        assert scale[3] < 2.75 and scale[4] < 3.50                  # the two that failed
+        assert (f"{scale[2]:.2f}", f"{scale[3]:.2f}", f"{scale[4]:.2f}") == \
+            ("1.90", "2.70", "3.36") == (NUMBERS["mcScaleTwo"], NUMBERS["mcScaleThree"],
+                                         NUMBERS["mcScaleFour"])
+        assert "⚠️ **failed**, low" in BENCH and BENCH.count("⚠️ **failed**, low") == 2
+
+    def test_the_design_needs_three_cores_and_the_documents_say_three(self) -> None:
+        nodes = {k: int(r["nodes_served"]) for k, r in MULTICORE.items()}
+        assert nodes == {1: 56, 2: 106, 3: 150, 4: 187}
+        n_max = int(NUMBERS["nmaxLeanDesign"])
+        assert nodes[2] < n_max <= nodes[3]
+        paper = re.sub(r"\s+", " ", (REPO / "paper" / "main.tex").read_text(encoding="utf-8"))
+        assert "so \\nmaxLeanDesign{} nodes need three of them" in paper
+        assert "less than we had written down beforehand" in paper
+        assert "\\cpuProtoCores" not in paper            # the arithmetic figure is the thesis's
+        assert "therefore needs three of the board's four cores, not \\cpuProtoCores" in CODESIGN
+        assert "The last two are below what had been written down" in CODESIGN
+
+    def test_each_added_worker_slows_every_worker(self) -> None:
+        each = [float(MULTICORE[k]["worker_min_fps"]) for k in (1, 2, 3, 4)]
+        assert all(a > b for a, b in zip(each, each[1:], strict=False))
+        assert NUMBERS["mcSlowFourPct"] == f"{100 * (1 - each[3] / each[0]):.0f}" == "16"
+
+    def test_a_loop_serves_one_node_fewer_than_the_median_frame_time(self) -> None:
+        assert int(MULTICORE[1]["nodes_served"]) == int(NUMBERS["ncpuProto"]) - 1 == 56
+        assert "one fewer than the count from the median frame time" in CODESIGN

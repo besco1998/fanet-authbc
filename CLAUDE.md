@@ -61,7 +61,7 @@ type hints; no dead code; comments explain WHY, not what.
 - **Phase: P9 — revision after the supervisor's review (2026-10).** Branch `p9-supervisor-revision`, cut from `p8-audit-and-corrections`. Work from any machine: `git clone`, `git checkout p9-supervisor-revision`, `make setup && make all`.
 - ⚠️ **`make all` green on this machine is NOT the claim — CI green is** (2026-10-08: the gate passed here and failed on a clean install over an undeclared package). **Before every push run the WHOLE of `make all VENV=<a venv built from pip install -e '.[dev]' alone>`** — never a hand-picked subset of tests (the fix for that failure broke the build again exactly that way: a figure was regenerated and its copy in `thesis/` was not) — and do not say green until CI on the pushed commit has finished. Guards: `tests/test_declared_dependencies.py`, and no figure may embed a library version.
 - ⚠️ **TWO COPIES OF THIS FILE EXIST.** Sessions that start in `~/authbc_package` auto-load `~/authbc_package/CLAUDE.md`, which is an OLD copy. **This file, in the repository, is the status board.** A stale count read from the other one was "corrected" into the thesis on 2026-10-06 and had to be reverted.
-- **Green:** 2250 fast + **42** frozen-gate tests (**2292**), `ruff` clean, **`mypy` clean (0 / 58 files)**, paper builds (**11 pp**, **44 refs**, 0 undefined, 0 overfull, abstract **178 w** by the board's counter, 183 by the paper test's, which counts a macro as a word), methods paper 4 pp, thesis **128 pp** (65 refs, 0 overfull, 3 markers left — all Mohamed's). `make all` exit 0.
+- **Green:** 2273 fast + **42** frozen-gate tests (**2315**), `ruff` clean, **`mypy` clean (0 / 58 files)**, paper builds (**11 pp**, **44 refs**, 0 undefined, 0 overfull, abstract **180 w** by the board's counter, 184 by the paper test's, which counts a macro as a word), methods paper 4 pp, thesis **131 pp** (65 refs, 0 overfull, 3 markers left — all Mohamed's). `make all` exit 0.
 - **METHODOLOGY (Mohamed):** this is an optimization problem — *state everything, choose what to stick with, state the trade-offs for every decision*. **`docs/TRADEOFFS.md` is required reading before quoting any number.**
 - **LICENSE = all rights reserved** (© 2026 Mohamed A. Farouk). Vendored NS-3 + `signetlabdei/lorawan` stay GPLv2, **not** redistributed.
 
@@ -91,6 +91,24 @@ and bit-identical (D6).
 | capacities 31→100, 88→213, ratios "1.9–3.2×" from the ceiling **U = 2.435** | **the ceiling is not N-invariant (F50; a pre-registered ±10 % prediction FAILED).** Capacities are simulated per configuration, 30 seeds, bootstrap interval — quote them from `results/raw/design_ladder.csv`, never from the ceiling |
 | "ratios are protected by construction" | **withdrawn** — the ceiling's error depends on the frame and does not cancel |
 | "Bor et al." | **Haxhibeqiri, Van den Abeele, Moerman & Hoebeke** (F49). Renamed everywhere |
+
+### ⚠️⚠️ 2026-10-09, night — FOUR WEAK POINTS OF THE REVIEW WORKED (F84, F85)
+
+- **Nodes spread out + capture (F85):** baseline / design capacity **39.6 / 140.4** nodes in a
+  15 m disc and **39.4 / 139.3** at 100 m, against 35.3 / 124.6 with equal power. Four
+  predictions registered first (`db0bca1`), ALL HELD, model within 0.5 %. **The published
+  equal-power capacities are conservative by about an eighth; the ratio stays 3.5.**
+  ⚠️ **Hidden stations are NOT tested — G35, the weak point that remains.** Never write that
+  the capacities were validated for a realistic channel.
+- **The Pi's four cores, measured (F84, `eb2751b`):** 56 / 106 / 150 / 187 nodes with 1–4
+  receiver processes; scaling 1.90 / 2.70 / 3.36 (**the last two FAILED their registered
+  ranges**). ⚠️ **124 nodes need THREE cores, not 2.2** — "2.2" survives only in the thesis as
+  what the arithmetic gave. One core in a loop serves **56**, the frame-time figure is 57.
+- **Abstract:** "batching gains nothing unless record rate times deadline exceeds two".
+  New figure `fig_capacity_vs_deadline.png`.
+- **The paper's introduction leads with the capacity rule**; abstract and section order still
+  lead with the exclusion (the supervisor's request, held by tests) — **G36, Mohamed's**.
+- Appendix B: **twenty-two** registrations, **eight** failed in whole or in part.
 
 ### ⚠️⚠️ 2026-10-09, afternoon — THE PAPER REVIEWED AS A SUPERVISOR WOULD (F80), and Mohamed's five decisions on it CARRIED OUT (F81, F82)
 
@@ -471,7 +489,7 @@ decides a headline and was never written down — defect class **C2**, the one c
 > ⚠️ **F18 came back.** On 2026-08-07 it was found still printed in `tab:lora-external` ("we are more optimistic" at N=5) — 100 lines below a bold sentence saying the opposite. **Retracting a finding in the register does not remove it from the paper.** When you retract, grep the paper. Guarded now by `test_no_row_revives_the_retracted_optimism_claim`, which checks the *artifact* rather than the wording.
 
 ### Where things live
-`docs/README.md` is the index. Findings **F1–F83** in `docs/audits/model_provenance.md`. Open items **only** in `docs/OPEN_ITEMS.md`. Trade-offs in `docs/TRADEOFFS.md`. Method and failed attempts in `docs/LOGBOOK.md`. **51 PDFs** in `docs/literature/` with each source's ROLE stated, and **20 more held on Mohamed's machine but NOT redistributed** (`docs/literature/HELD_LOCALLY.csv`, git-ignored files — ⚠️ never `git add -f` them); every bibliography entry is checked against its registry record by `make verify-citations` (`A3_CITATION_VERIFICATION.md` is the August record of a check that turned out not to compare authors — F49).
+`docs/README.md` is the index. Findings **F1–F85** in `docs/audits/model_provenance.md`. Open items **only** in `docs/OPEN_ITEMS.md`. Trade-offs in `docs/TRADEOFFS.md`. Method and failed attempts in `docs/LOGBOOK.md`. **51 PDFs** in `docs/literature/` with each source's ROLE stated, and **20 more held on Mohamed's machine but NOT redistributed** (`docs/literature/HELD_LOCALLY.csv`, git-ignored files — ⚠️ never `git add -f` them); every bibliography entry is checked against its registry record by `make verify-citations` (`A3_CITATION_VERIFICATION.md` is the August record of a check that turned out not to compare authors — F49).
 
 ### Deferred by Mohamed — plans written, DO NOT START unprompted
 - **Mobility (E20)** — `docs/MOBILITY_PLAN.md`. **Separate NEW scenario files**, literature survey first. Not for the 802.11 arm (Bianchi/Ma&Chen have no position term).

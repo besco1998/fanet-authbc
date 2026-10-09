@@ -705,7 +705,7 @@ the capacities of §6e follow from that rule and a 4 µs detection time; it does
 behaves so. Capture, hidden terminals and a real preamble detector are outside both
 (`OPEN_ITEMS` G4).
 
-### 6h. Unequal received power and capture — the same access rule, one more question (2026-10-09, F84)
+### 6h. Unequal received power and capture — the same access rule, one more question (2026-10-09, F85)
 
 §6g and every capacity of this work put all stations at one point: equal received power, so a
 frame that overlaps another is lost at every receiver. A review named that scenario as the

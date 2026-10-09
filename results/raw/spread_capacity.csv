@@ -1,0 +1,15 @@
+# python=3.12.3
+# platform=Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=spread_capacity
+# config_hash=75a33e68be1b9a7c
+case,cell,radius_m,kind,ns3_crossing,ns3_lo,ns3_hi,n_max,n_max_per_run,predicted_lo,predicted_hi,within_prediction,model_crossing,vs_model_pct,equal_power_crossing,vs_equal_power_pct,grid
+"C, 15 m",C,15,point,39.58,39.48,39.67,39,38,37.54,41.5,1,39.52,0.15,35.26,12.25,37 38 39 40 41 42 43
+"D, 15 m",D,15,point,140.35,139.83,140.78,140,136,132.68,146.64,1,139.66,0.49,124.55,12.69,128 132 136 140 144 148 152
+"C, 100 m",C,100,bracket,39.4,39.3,39.49,39,37,35.26,41.5,1,39.52,-0.3,35.26,11.74,33 35 37 39 41 43 45
+"D, 100 m",D,100,bracket,139.34,138.95,139.8,134,134,124.55,146.64,1,139.66,-0.23,124.55,11.87,116 122 128 134 140 146 152

@@ -4188,3 +4188,107 @@ The paper is **11 pages** (44 references), where it had been held at 10. Nothing
 count: the venue decided on 2026-10-08 is a journal and the class changes then. Getting back to
 10 would mean removing about 250 words of content, which was not done. The thesis is 128 pages
 (65 references).
+
+## F84 — the receiver on the board's four cores: "2.2 cores" was arithmetic, and the board needs three (2026-10-09)
+
+*Mohamed: "fix the first 4 weak points as recommended". This is the fourth: the prototype does
+not reach its own design point on one core, and what the paper said about more cores had never
+been measured.*
+
+**What the documents said.** One core of the interpreted receiver serves 57 nodes, so 124 nodes
+"need 2.2 of the board's four cores". The 2.2 is 123 neighbours × 12.5 frames/s × 1.43 ms.
+
+**What was done.** `hw/multicore_receive.py`: K receiver processes, one pinned to each of K
+cores, each fed the stream the benchmark times one frame of, started together, 30 s each,
+K = 1…4. The expected figures were committed with the script before the run (`eb2751b`).
+Nobody logged in to the board while it ran.
+
+| cores | frames/s | times one core | nodes served | registered | |
+|---|---|---|---|---|---|
+| 1 | 692 | 1.00 | **56** | 680–708 frames/s | held |
+| 2 | 1318 | **1.90** | **106** | 1.90–2.00 | held |
+| 3 | 1867 | **2.70** | **150** | 2.75–3.00 | ⚠️ failed, low |
+| 4 | 2329 | **3.36** | **187** | 3.50–4.00 | ⚠️ failed, low |
+
+No throttling; 71 °C at most. The line "two cores below 124 nodes, three at or above" held.
+
+**What it changes.**
+
+* **124 nodes need three cores, not 2.2.** Two serve 106. The paper and the thesis say three;
+  the thesis keeps the 2.2 beside it as what the arithmetic gave, and says the two scaling
+  ranges were missed.
+* **The cores do not add up**: each added process slows every process by about a twentieth
+  (692 → 659 → 622 → 582 frames a second each). The processes share the cache and the memory
+  bus; which of the two costs this was not examined, and the documents say so.
+* **One core in a loop serves 56 nodes, not 57.** The 57 came from the median frame time with
+  0.18 % to spare (F81). A loop does not keep that margin. Both are quoted for what they are:
+  57 by the frame time, 56 as measured over thirty seconds.
+
+**What it is not.** There was no radio and no dispatcher: a frame reached its process for free.
+A deployed receiver has to hand each sender's frames to one process, and that cost is not in
+these figures. The Limitations of the paper say so.
+
+**Why the expectation was wrong.** I assumed an interpreted workload would not be bound by
+memory and so would scale almost linearly. It scales at 95, 90 and 84 % of linear. The
+assumption was mine and untested; it is the kind of sentence that "2.2 cores" also was.
+
+## F85 — nodes spread out, and capture: equal power was the unfavourable assumption; and two smaller changes of emphasis (2026-10-09)
+
+*Mohamed: "fix the first 4 weak points as recommended". This finding is weak points 1, 2 and 3
+of the review of F80; the fourth is F84.*
+
+### 1 · The channel scenario (weak point 1)
+
+**The doubt.** Every capacity was simulated with all nodes at one point and equal received
+power. A reader's first question is what happens when they are not.
+
+**What was done.** Two scenario options (absent by default; nine stored runs reproduce bit for
+bit after the rebuild) place the nodes in a disc with free-space loss. `sim/dcf_capture.py`
+adds one rule to the access-rule model: of the frames that start together a receiver keeps the
+strongest if it is 4 dB above the rest — the simulator's own rule and threshold, read in its
+source (`docs/02` §6h). Four crossings registered in `db0bca1`, then 840 runs.
+
+| | predicted | simulated [95 %] | from the model | above equal power |
+|---|---|---|---|---|
+| baseline, 15 m | 39.5 ± 5 % | **39.6** [39.5, 39.7] | +0.2 % | +12.3 % |
+| design, 15 m | 139.7 ± 5 % | **140.4** [139.8, 140.8] | +0.5 % | +12.7 % |
+| baseline, 100 m | 35.3–41.5 | **39.4** [39.3, 39.5] | −0.3 % | +11.7 % |
+| design, 100 m | 124.6–146.6 | **139.3** [139.0, 139.8] | −0.2 % | +11.9 % |
+
+**All four held.** The published capacities are conservative for unequal power by about an
+eighth; the design-to-baseline ratio stays 3.5; the swarm-scale radius costs under one percent
+against the small one, where I had expected "a few percent".
+
+**What it does not change.** Hidden stations are in neither disc. A swarm wider than its
+carrier-sense range (about 370 m in the simulator's terms) is still unexamined, and that is
+the case in which capacity falls. The paper's Limitations and the thesis say so in terms.
+
+**Disclosed with the registration:** three single-seed runs made to check the new option, and
+a scratch run of the model at three thresholds made to size the grids. And one of my own
+numbers was wrong in a draft: I had written the energy-detection range as 30 m; it is 36.9 m,
+and the small disc was reduced from 18 m to 15 m radius before anything was registered.
+
+### 2 · Where the design gains nothing (weak point 2)
+
+The abstract now says that batching gains nothing unless record rate times deadline exceeds
+two, and a new figure (`fig_capacity_vs_deadline.png`) sets the five simulated batch sizes on
+the airtime line against the deadline that admits each: at 40 ms the batch is one record and
+the design is the baseline.
+
+### 3 · What the introduction leads with (weak point 3)
+
+The contribution list of the paper's introduction now opens with the capacity rule and its
+mechanism, which the review judged the most original part; the ladder, the exclusion bound and
+the built frame follow. ⚠️ **The abstract and the order of the sections still put the exclusion
+first**: the supervisor's review asked for that and two tests hold it. Reordering only the
+list leaves a small asymmetry between abstract and introduction; it is Mohamed's to resolve.
+One sentence of the first draft of the new list was wrong and was corrected before it was
+built: it credited the *fitted constant* to "a loss mechanism earlier analyses do not contain".
+The constant is the tie term, which they do contain; the mechanism they lack is the detection
+window.
+
+### What it cost
+
+The paper is 11 pages with one more figure. The thesis is 131 pages. Appendix B lists
+twenty-two registrations, of which eight failed in whole or in part (the multi-core
+measurement of F84 is the eighth).

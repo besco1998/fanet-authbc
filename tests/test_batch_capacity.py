@@ -263,6 +263,7 @@ class TestWhatTheDocumentsQuote:
 
     def test_the_thesis_tabulates_all_three_and_scopes_them(self) -> None:
         for needle in ("\\label{tab:batchdim}", "\\batNsTwo\\ \\batCiTwo",
-                       "\\batNsEight\\ \\batCiEight", "All six held.",
+                       "\\batNsEight\\ \\batCiEight", "All six held;",
+                       "\\label{fig:deadline}",
                        "the three deadlines are hypothetical operating points"):
             assert needle in self.CODESIGN, needle

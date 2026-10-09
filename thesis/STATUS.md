@@ -2,7 +2,7 @@
 
 *Created 2026-08-30; rewritten 2026-10-08 after the whole built PDF was audited, and updated
 three times on 2026-10-09 (findings F63–F83 in `docs/audits/model_provenance.md`). `main.pdf` builds
-to 128 pages with no errors, no undefined references and no layout warnings. **Read this before showing the PDF to anyone.***
+to 131 pages with no errors, no undefined references and no layout warnings. **Read this before showing the PDF to anyone.***
 
 ## In one paragraph
 
@@ -25,6 +25,11 @@ freshness remark (the bound is a peak age); ch. 8 — a second certificate colum
 remark, the receiver's time after it keeps frames, and the table of three other batch sizes;
 ch. 10 — a fifth scope condition; ch. 12 — the limitations; Appendix B — two more
 registrations.
+
+⚠️ **And that evening, for four weak points of the same review** (F84, F85): ch. 8 — the
+paragraph *The board's four cores, measured* (124 nodes need three cores, not 2.2; two
+registered ranges failed), the figure of capacity against deadline, and the section on nodes
+spread out with capture; ch. 12 and Appendix B follow them.
 
 ## Per chapter
 
@@ -71,6 +76,9 @@ registrations.
 * **"Sixty-five references is few."** Every one was read at source. Raising the number means
   reading more, not listing more (G23).
 * **"Chapter 11 is unusual."** It is deliberate. It now says where it sits in the literature.
+* **"Can your board serve 124 nodes at all?"** With three of its four cores, measured: two serve
+  106, three 150, four 187. The cores scale at 1.90, 2.70 and 3.36 times one — the last two
+  below what was written down beforehand, and ch. 8 says so.
 * **"Most of your capacity gain is frame aggregation."** About three fifths, yes. Ch. 2 and
   ch. 8 say so, cite the 802.11n mechanism, and say why a broadcast sender cannot use it.
 * **"Your exclusion count depends on your own header."** For three of the eight, yes; five

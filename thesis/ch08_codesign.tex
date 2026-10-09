@@ -142,13 +142,28 @@ prototype is interpreted Python. Timed on the Raspberry~Pi~4 as it runs, the lea
 \leanRecvMs\,ms for a four-record frame, \leanRecvOverVerify{} times its one verification, and
 the sender \leanSendMs\,ms (for a frame of one record: \leanRecvOneMs\,ms and
 \leanSendOneMs\,ms). One core of the prototype therefore serves \ncpuProto{} nodes,
-not \ncpuBatch, and a neighbourhood of \nmaxLeanDesign{} needs \cpuProtoCores{} of the board's
-four cores. The sentence ``the channel binds first'' holds for a compiled receiver; for the
+not \ncpuBatch, and a neighbourhood of \nmaxLeanDesign{} needs, by that arithmetic,
+\cpuProtoCores{} of the board's four cores (measured, below: three). The sentence ``the channel binds first'' holds for a compiled receiver; for the
 prototype on one core the processor binds first. The receive times are of the receiver that
 keeps every accepted frame (\Cref{sec:threat}): against a control of the earlier receiver timed
 in the same session, keeping the frame adds \leanRecvKeepUs\,\si{\micro\second} to a
 four-record frame, \leanRecvKeepPct\%, where at most $2\%$ had been written down beforehand
-(\Cref{app:prereg}). The node count is unchanged, by a margin of two parts in a thousand. $N_{\mathrm{cpu}}$ and the CPU column of
+(\Cref{app:prereg}). The node count is unchanged, by a margin of two parts in a thousand.
+
+\paragraph{The board's four cores, measured.} ``\cpuProtoCores{} of the board's four cores'' is
+arithmetic from one core's time. It was put to the board: one receiver process pinned to each
+of one, two, three and four cores, each fed the stream the benchmark times one frame of, all
+started together and run for thirty seconds; what should come out was written down first
+(\Cref{app:prereg}). One process handles \mcOneFps{} frames a second and serves \mcNodesOne{}
+nodes --- one fewer than the count from the median frame time, which had two parts in a thousand
+to spare and does not keep them in a loop. Two processes together serve \mcNodesTwo{} nodes,
+three \mcNodesThree{} and four \mcNodesFour: \mcScaleTwo, \mcScaleThree{} and \mcScaleFour{}
+times one. The last two are below what had been written down ($2.75$ and $3.5$ at least). At
+four, each process runs \mcSlowFourPct\% slower than one alone, with no throttling recorded;
+what the processes share --- the cache, the memory bus --- was not examined. \textbf{The
+design's neighbourhood of \nmaxLeanDesign{} nodes therefore needs three of the board's four
+cores, not \cpuProtoCores}, and that with no radio and no dispatcher in the path: a frame
+reached its process for free. $N_{\mathrm{cpu}}$ and the CPU column of
 \Cref{tab:ladder} are ceilings set by cryptography alone.
 
 Both times came in under what had been written down for them ($1.0$--$2.5$\,ms and
@@ -352,8 +367,18 @@ records & deadline & line & model & simulated & from the line & from the model \
 \end{tabular}
 \end{table}
 
-All six held. These are capacities of the same idealised scenario as every other in this
-chapter, and the three deadlines are hypothetical operating points: the freshness table, the
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.7\textwidth]{fig_capacity_vs_deadline.png}
+\caption{The neighbourhood the lean design serves at $50$ records/s, by batch size and the
+smallest deadline that admits it: the five simulated crossings of $0.95$ delivery ($95\%$
+intervals, smaller than the markers) and the airtime line through the batch sizes that were not
+simulated. At $40$\,ms the batch is one record and nothing is gained.}
+\label{fig:deadline}
+\end{figure}
+
+All six held; \Cref{fig:deadline} sets them on the line. These are capacities of the same
+idealised scenario as every other in this chapter, and the three deadlines are hypothetical operating points: the freshness table, the
 loss experiment and the energy runs are all for four records, and nothing but the channel was
 evaluated at two, three or eight.
 
@@ -584,9 +609,79 @@ within one collision domain.
 \begin{remark}[What this does not show]
 The model and ns-3 implement one standard. Their agreement says the capacities of this chapter
 follow from that standard's access rule and a detection time of $4$\,\si{\micro\second}. It
-does not say a radio behaves so: capture, hidden terminals and a real preamble detector are
-outside both. The question was put to two radios (\Cref{sec:hardware}): they keep the rule
-where contention can be isolated, and depart from the model below saturation.
+does not say a radio behaves so: hidden terminals and a real preamble detector are outside
+both, and capture was outside both until \Cref{sec:spread}. The question was put to two radios
+(\Cref{sec:hardware}): they keep the rule where contention can be isolated, and depart from the
+model below saturation.
+\end{remark}
+
+\subsection{Nodes spread out, and capture}\label{sec:spread}
+
+Every capacity so far is of one scenario: all nodes at one point, equal received power, so that
+a frame which overlaps another is lost at every receiver. A review of the paper on 2026-10-09
+ranked that first among its weak points. The part of ``less idealised'' that could be predicted
+was taken up at once: unequal received power, and with it capture.
+
+\paragraph{The scenario.} Two options were added to the simulated scenario, both absent by
+default so that the published one is invoked exactly as before; the rebuilt simulator
+reproduces stored runs bit for bit. One places the nodes uniformly in a disc. The other makes
+received power fall with distance as in free space.
+
+\paragraph{The model.} The access-rule model of \Cref{sec:why}, unchanged, with one question
+added for every group of frames that start together: does a receiver that is not itself sending
+get the strongest of them at least $4$\,dB above the sum of the rest? If so it receives that
+frame, and none of the others. The $4$\,dB is not chosen. It is the simulator's default for
+detecting a preamble, read in its source, where the rule is also to be found: of the preambles
+that arrive within one detection period the strongest is kept. Nothing is fitted. With power
+falling as the inverse square of distance the ratios do not change when the disc is scaled, so
+the model gives one answer for every radius: \sprModelBase{} nodes for the baseline and
+\sprModelDesign{} for the design, \sprGainLo\% above the equal-power crossings.
+
+\paragraph{Two radii, two kinds of prediction.} At $15$\,m the disc is $30$\,m across and the
+simulator's energy detection reaches $37$\,m: every station senses every other exactly as in
+the published scenario, and only the received powers differ. There the model should hold, and
+the prediction was a point with a band of $\pm 5\%$. At $100$\,m, a swarm's scale, most pairs
+are sensed by their preamble and not by their energy, and a station that can lock onto neither
+of two colliding frames may take the medium for idle and send over them. The model has perfect
+sensing and cannot show that, so the prediction there was a bracket: no lower than the
+published equal-power crossing, no higher than the model's band. All four were committed before
+any run (\Cref{app:prereg}).
+
+\begin{table}[h]
+\centering
+\caption{The lean baseline (146\,B at $50$ frames/s) and the design (173\,B at $12.5$) with the
+nodes uniform in a disc and free-space loss: the crossing of $0.95$ delivery as predicted and
+as simulated ($30$ seeds, each with its own placement; $95\%$ interval).}
+\label{tab:spread}
+\small
+\begin{tabular}{llrrrr}
+\toprule
+ & radius & predicted & simulated & from the model & above equal power \\
+\midrule
+baseline & $15$\,m & \sprModelBase, $\pm 5\%$ & \sprNearBase\ \sprCiNearBase & \sprDmNearBase\% & \sprGeNearBase\% \\
+design & $15$\,m & \sprModelDesign, $\pm 5\%$ & \sprNearDesign\ \sprCiNearDesign & \sprDmNearDesign\% & \sprGeNearDesign\% \\
+baseline & $100$\,m & bracket & \sprFarBase\ \sprCiFarBase & \sprDmFarBase\% & \sprGeFarBase\% \\
+design & $100$\,m & bracket & \sprFarDesign\ \sprCiFarDesign & \sprDmFarDesign\% & \sprGeFarDesign\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+All four held, and the model is within \sprModelWorst\% of every one (\Cref{tab:spread}). Three
+things follow. \textbf{The published capacities are conservative for unequal received power}:
+with the nodes spread out a neighbourhood is \sprGainLo--\sprGainHi\% larger, not smaller. The
+ratio of design to baseline does not move: \sprRatioNear$\times$ at $15$\,m and
+\sprRatioFar$\times$ at $100$\,m, as with equal power, because capture rescues the same share of
+both. And imperfect sensing, the mechanism the model lacks, costs at most \sprFarBelowPct\% at
+this load: the $100$\,m crossings sit just under the $15$\,m ones. The expectation written
+beside the predictions was ``a few percent''; it was the right sign and too large.
+
+\begin{remark}[What this does not show]
+Hidden stations. Both discs keep every pair within decoding range, so every station still
+hears every other. A swarm wider than about $370$\,m in this simulator's terms has stations
+that cannot hear each other at all; that lowers the capacity, needs a model with a sensing
+graph, and was not attempted. Nor does it show fading, mobility or an antenna pattern, or that
+the simulator's capture rule is a radio's. What it removes from the list of doubts is one
+item: that equal power was the favourable assumption. It was the unfavourable one.
 \end{remark}
 
 \section{Freshness, with every term}

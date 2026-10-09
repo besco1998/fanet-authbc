@@ -12,6 +12,51 @@ where the durable record lives. If you want the conclusion only, follow the poin
 
 ---
 
+# 2026-10-09, night — four weak points of the review, worked in parallel (F84, F85)
+
+**What we were doing.** Mohamed: "fix the first 4 weak points as recommended in parallel" — the
+idealised channel, the applicability of the design, what the introduction leads with, and the
+prototype on more than one core.
+
+**How "in parallel" was done.** Two things needed machines and time: the board (six minutes)
+and the simulator (two hours). Both were registered first and started; the writing was done
+while they ran. The order was set by the longest job's registration, not by the numbering.
+
+**The channel.** Before writing a model I read the simulator's source for what it does with
+two preambles that arrive together: it keeps the strongest and asks whether it is 4 dB above
+the rest. That made the model one rule on top of the access-rule model, with a threshold that
+is read and not chosen. An exploratory run (disclosed) sized the grids. Then the part that
+took judgement: at a realistic radius most stations sense each other by preamble, and a
+station that locks onto neither of two colliding frames may think the medium idle. The model
+cannot show that. I did not try to model it in an evening; I registered a *bracket* for that
+radius and a point for the radius where the effect cannot occur, and wrote down that I
+expected the larger radius to come out "a few percent" lower. It came out 0.5–0.7 % lower.
+All four predictions held, and the model is within half a percent of each.
+⚠️ **A number of mine was wrong on the way:** I wrote the energy-detection range as 30 m in a
+draft of docs/02; computing it gave 36.9 m. The small disc had been planned at 18 m radius —
+36 m across, 0.2 dB inside the range — and was reduced to 15 m before registration. The
+verification of constants (Law 2) was done after the sentence was written, not before; it
+caught the error only because it was done at all.
+
+**The board.** Expected near-linear scaling; got 1.90, 2.70, 3.36. Two of five registered lines
+failed. "2.2 cores" had been in the paper and the thesis since the morning as if it were a
+property of the board; it was a product of three numbers. The board needs three cores. This
+time nobody logged in during the run: started 16:31:29Z, first read 16:37:58Z.
+
+**The introduction.** Reordered to lead with the capacity rule. The first draft of the new
+first item credited the fitted constant to the mechanism that earlier analyses lack — the
+wrong way round (they have the ties; they lack the detection window). Caught on a proof-read
+of the built text, before any commit.
+
+**What is left open by it:** hidden stations (G35) — the real remaining doubt about the
+capacity; the asymmetry between the abstract and the reordered introduction (G36, Mohamed's);
+why the cores do not add up (G37, optional).
+
+**Record:** F84, F85; `hw/BENCH_SESSION.md` (multi-core, with outcome);
+`docs/NMAX_DIRECT_EXPECTATIONS.md` F7; `docs/02` §6h.
+
+---
+
 # 2026-10-09, evening — the review's last two items: four sources read, the closed form quoted (F83)
 
 **What we were doing.** Mohamed: "yes for both" — the four related-work gaps and the no-fit

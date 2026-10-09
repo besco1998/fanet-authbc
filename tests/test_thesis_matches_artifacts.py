@@ -489,7 +489,7 @@ class TestTheRegistrationsOfAppendixB:
         import subprocess
 
         named = sorted(set(re.findall(r"\\texttt\{([0-9a-f]{7})\}", self.APPENDIX)))
-        assert len(named) == 20
+        assert len(named) == 22
         shallow = subprocess.run(["git", "rev-parse", "--is-shallow-repository"], cwd=REPO,
                                  capture_output=True, text=True).stdout.strip()
         assert shallow == "false", (
@@ -500,14 +500,14 @@ class TestTheRegistrationsOfAppendixB:
             assert done.returncode == 0, f"{commit} is not an ancestor of HEAD"
 
     def test_the_chapter_counts_what_the_table_holds(self) -> None:
-        assert self.APPENDIX.count(r"\textbf{failed}") == 6
+        assert self.APPENDIX.count(r"\textbf{failed}") == 7
         assert self.APPENDIX.count(r"\textbf{refuted}") == 1
         assert self.APPENDIX.count(r"\textbf{not scored}") == 1
         assert self.APPENDIX.count(r"\emph{registered,") == 0      # every one has been run
         assert "Three to five boards: not run" in self.APPENDIX    # … one of them in part
-        assert "Of its twenty entries, seven failed" in _text("ch06_methodology.tex")
-        assert "Of the twenty registrations" in _text("ch11_reproducibility.tex")
-        assert "seven failed in whole or in part" in _text("ch11_reproducibility.tex")
+        assert "Of its twenty-two entries, eight failed" in _text("ch06_methodology.tex")
+        assert "Of the twenty-two registrations" in _text("ch11_reproducibility.tex")
+        assert "eight failed in whole or in part" in _text("ch11_reproducibility.tex")
 
 
 class TestTheLibraryIsTheSizeTheChapterSays:

@@ -1083,6 +1083,90 @@ def prototype() -> dict[str, str]:
     }
 
 
+def spread() -> dict[str, str]:
+    """Nodes spread over a disc, and capture (docs/NMAX_DIRECT_EXPECTATIONS.md F7; audit F85).
+
+    Four crossings registered in db0bca1 before any run: the lean baseline and the design at
+    15 m (inside ±5 % of the capture model) and at 100 m (between the published equal-power
+    crossing and the model's band). The text says all four held, that the published capacities
+    are conservative by about an eighth, and that the ratio of design to baseline does not
+    move; each is checked before a macro is written.
+    """
+    table = {r["case"]: r for r in rows(RAW / "spread_capacity.csv")}
+    names = {"C, 15 m": "NearBase", "D, 15 m": "NearDesign",
+             "C, 100 m": "FarBase", "D, 100 m": "FarDesign"}
+    if set(table) != set(names):
+        raise ValueError(f"follow-up F7 registered {sorted(names)}; scored {sorted(table)}")
+    if any(r["within_prediction"] != "1" for r in table.values()):
+        raise ValueError("the text says every spread-node crossing is inside its prediction")
+    x = {tag: float(table[case]["ns3_crossing"]) for case, tag in names.items()}
+    gains = [float(r["vs_equal_power_pct"]) for r in table.values()]
+    if not 10.0 <= min(gains) <= max(gains) <= 15.0:
+        raise ValueError("the text says the capacities rise by about an eighth")
+    published = {r["cell"]: float(r["equal_power_crossing"]) for r in table.values()}
+    ratios = {"equal": published["D"] / published["C"], "near": x["NearDesign"] / x["NearBase"],
+              "far": x["FarDesign"] / x["FarBase"]}
+    if max(ratios.values()) - min(ratios.values()) > 0.05:
+        raise ValueError("the text says the ratio of design to baseline does not move")
+    if not (x["FarBase"] < x["NearBase"] and x["FarDesign"] < x["NearDesign"]):
+        raise ValueError("the text says the 100 m crossings sit just below the 15 m ones")
+    model = {r["cell"]: float(r["model_crossing"]) for r in table.values()}
+    per_case: dict[str, str] = {}
+    for case, tag in names.items():            # the thesis tabulates each case
+        r = table[case]
+        per_case |= {f"sprCi{tag}": f"[{f(r['ns3_lo'], 1)},\\,{f(r['ns3_hi'], 1)}]",
+                     f"sprDm{tag}": signed(float(r["vs_model_pct"])),
+                     f"sprGe{tag}": signed(float(r["vs_equal_power_pct"]))}
+    return per_case | {f"spr{tag}": f(v, 1) for tag, v in x.items()} | {
+        "sprModelBase": f(model["C"], 1), "sprModelDesign": f(model["D"], 1),
+        "sprModelWorst": f(max(abs(float(r["vs_model_pct"])) for r in table.values()), 1),
+        "sprGainLo": f(min(gains), 0), "sprGainHi": f(max(gains), 0),
+        "sprFarBelowPct": f(100 * max(1 - x["FarBase"] / x["NearBase"],
+                                      1 - x["FarDesign"] / x["NearDesign"]), 1),
+        "sprRatioNear": f(ratios["near"], 1), "sprRatioFar": f(ratios["far"], 1),
+    }
+
+
+def multicore() -> dict[str, str]:
+    """The receiver on one to four cores of the Pi 4 at once (hw/BENCH_SESSION.md; audit F84).
+
+    Registered in eb2751b before the run. One worker and two landed inside their ranges; three
+    and four cores scale below theirs (2.70 and 3.36 times one, where 2.75 and 3.50 at least
+    were written down). The text reports the cores as measured and says the two ranges were
+    missed; the outcome of each line is held here so that a re-run cannot change it silently.
+    """
+    table = {int(r["workers"]): r for r in rows(HW / "multicore_receive.authbc-pi4b.csv")}
+    if set(table) != {1, 2, 3, 4}:
+        raise ValueError("the multi-core measurement was registered for one to four workers")
+    if any(r["throttled_before"] != "throttled=0x0" or r["throttled_after"] != "throttled=0x0"
+           for r in table.values()):
+        raise ValueError("a run of the multi-core measurement was throttled: not reportable")
+    one = float(table[1]["frames_per_s"])
+    scale = {k: float(r["frames_per_s"]) / one for k, r in table.items()}
+    nodes = {k: int(r["nodes_served"]) for k, r in table.items()}
+    held = {"one": 680.0 <= one <= 708.0, "two": 1.90 <= scale[2] <= 2.00,
+            "three": 2.75 <= scale[3] <= 3.00, "four": 3.50 <= scale[4] <= 4.00}
+    if held != {"one": True, "two": True, "three": False, "four": False}:
+        raise ValueError(f"the text says which registered ranges held; the file says {held}")
+    design = int(one_design_nmax())
+    if not nodes[2] < design <= nodes[3]:
+        raise ValueError("the text says the design's neighbourhood needs three cores")
+    return {
+        "mcOneFps": f(one, 0),
+        "mcNodesOne": str(nodes[1]), "mcNodesTwo": str(nodes[2]),
+        "mcNodesThree": str(nodes[3]), "mcNodesFour": str(nodes[4]),
+        "mcScaleTwo": f(scale[2], 2), "mcScaleThree": f(scale[3], 2),
+        "mcScaleFour": f(scale[4], 2),
+        "mcSlowFourPct": f(100 * (1 - float(table[4]["worker_min_fps"]) / one), 0),
+    }
+
+
+def one_design_nmax() -> str:
+    """N_max of the lean design at the adopted point, as the ladder holds it."""
+    return one(rows(RAW / "design_ladder.csv"), op="adopted", format="lean",
+               rung="batch-delta", scheme="ed25519")["n_max_v95"]
+
+
 def batch_dimension() -> dict[str, str]:
     """The lean design at other batch sizes (docs/NMAX_DIRECT_EXPECTATIONS.md F6; audit F82).
 
@@ -1114,7 +1198,7 @@ def batch_dimension() -> dict[str, str]:
 
 SECTIONS = (frames, ladder, loss, stream, freshness, phy, energy, timings, flight_logs,
             validation, exclusion, low_rate, source_study, capacity_rule, capacity_model, sitl,
-            energy_runs, prototype, batch_dimension)
+            energy_runs, prototype, batch_dimension, multicore, spread)
 
 
 def macros() -> dict[str, str]:
