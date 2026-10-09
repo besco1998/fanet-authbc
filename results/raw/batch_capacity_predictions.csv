@@ -1,0 +1,14 @@
+# python=3.12.3
+# platform=Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=batch_capacity_predictions
+# config_hash=988385d895c459bd
+cell,batch,deadline_ms,frame_bytes,frames_per_s,frame_time_us,line_slope,line_crossing,line_lo,line_hi,model_crossing,model_lo,model_hi,single_ceiling,ns3_grid,ns3_stem
+B2,2,60,155,25.0,314.0,0.071,66.0,62.04,69.96,66.6,64.6,68.6,75,60 62 64 66 68 70 72,ns3_batch
+B3,3,80,164,16.6667,326.0,0.071,96.29,90.52,102.07,95.96,93.08,98.84,113,87 90 93 96 99 102 105,ns3_batch
+B8,8,180,209,6.25,386.0,0.071,225.88,212.33,239.44,220.64,214.02,227.26,215,205 212 219 226 233 240 247,ns3_batch

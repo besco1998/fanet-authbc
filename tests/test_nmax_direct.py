@@ -241,7 +241,21 @@ class TestCellsAreTheLaddersFrames:
         assert (cell.batch, cell.fps) == (1, float(row["frames_per_s"]))
 
     @pytest.mark.parametrize("name", sorted(k for k, c in drv.CELLS.items()
-                                            if not c.label.startswith("stream/")))
+                                            if c.label.startswith("batch/")))
+    def test_a_batch_cell_is_the_frame_the_lean_codec_emits_at_that_batch(self, name: str) -> None:
+        """Follow-up F6: the lean design with two, three and eight records to a frame."""
+        cell = drv.CELLS[name]
+        (row,) = [r for r in _rows(RAW / "frame_components.csv")
+                  if (r["kind"], r["format"], r["item"], r["ref_interval"], r["batch"])
+                  == ("frame", "lean", "self-batch", "1", str(cell.batch))]
+        assert cell.label == f"batch/lean-{cell.batch}" and cell.lam == 50.0
+        assert cell.frame_bytes == round(float(row["mean_bytes"]))
+        ceiling = max(n for n in range(1, 400) if drv.optimizer.channel_utilisation(
+            n, cell.lam, cell.batch, cell.frame_bytes) <= 2.435)
+        assert cell.model_n == ceiling
+
+    @pytest.mark.parametrize("name", sorted(k for k, c in drv.CELLS.items()
+                                            if not c.label.startswith(("stream/", "batch/"))))
     def test_frame_rate_and_model_value(self, name: str) -> None:
         cell = drv.CELLS[name]
         op = {50.0: "adopted", 20.0: "relaxed"}[cell.lam]

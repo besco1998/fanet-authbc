@@ -101,6 +101,12 @@ CELLS: dict[str, Cell] = {
     "SG": Cell("stream/gennaro-rohatgi", 114, 1, 50.0, 39),
     "SE": Cell("stream/emss", 146, 1, 50.5, 34),
     "SW": Cell("stream/wong-lam-tree", 211, 1, 50.0, 28),
+    # --- the lean design at other batch sizes (follow-up F6): the frame the lean codec emits
+    #     with two, three and eight records, at 50 records/s. Every cell above has one record
+    #     to a frame or four. Simulated into a file of their own (analysis/batch_capacity.py). ---
+    "B2": Cell("batch/lean-2", 155, 2, 50.0, 75),
+    "B3": Cell("batch/lean-3", 164, 3, 50.0, 113),
+    "B8": Cell("batch/lean-8", 209, 8, 50.0, 215),
 }
 
 

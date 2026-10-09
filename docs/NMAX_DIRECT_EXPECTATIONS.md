@@ -940,3 +940,67 @@ and a measurement.
 
 This is the fifth registered prediction of the capacity study to be scored and the fourth to
 hold. The one that failed (F50) is the reason the others were asked.
+
+---
+
+# Follow-up F6 — the batch size as a dimension. Written before its runs (2026-10-09)
+
+**Why.** A review of the paper (audit F80, `OPEN_ITEMS` G31) found that every capacity
+simulated so far is of a frame of one record or of four. Both operating points have
+Λ·D_max = 5, so the search returns b = 4 at each, and the 23 cells of
+`ns3/run_nmax_direct.py` hold no other batch. The airtime line and the access-rule model have
+been checked across frame size (94–565 B) and frame rate (5–50.5 frames/s), never across the
+batch as such. A reader who asks what a deadline of 60 ms or 180 ms would buy has only the
+rule to go by. Mohamed, 2026-10-09: simulate two, three and eight, predictions first.
+
+**What is run.** Three cells: the frame the lean codec emits with two, three and eight records
+(`results/raw/frame_components.csv`, lean, one link per frame, a keyframe in every frame), at
+50 records/s. J = one period, 30 seeds, 20 s, seven node counts each; into
+`results/raw/ns3_batch_runs.csv`, a file of their own, so no reported sample is touched
+(`experiments/nmax-direct/plan_batch.txt`).
+
+| cell | records per frame | smallest deadline that admits it | frame | frames/s | **airtime line** (a = 0.0710, unchanged) | ±6 % band | **access-rule model** (nothing fitted) | ±3 % band | single ceiling | node counts |
+|---|---|---|---|---|---|---|---|---|---|---|
+| B2 | 2 | 60 ms | 155 B | 25 | **66.00** | 62.04–69.96 | **66.60** | 64.60–68.60 | 75 | 60 62 64 66 68 70 72 |
+| B3 | 3 | 80 ms | 164 B | 16.67 | **96.29** | 90.52–102.07 | **95.96** | 93.08–98.84 | 113 | 87 90 93 96 99 102 105 |
+| B8 | 8 | 180 ms | 209 B | 6.25 | **225.88** | 212.33–239.44 | **220.64** | 214.02–227.26 | 215 | 205 212 219 226 233 240 247 |
+
+(`results/raw/batch_capacity_predictions.csv`, written by `analysis/batch_capacity.py
+--predict` and committed with this text.)
+
+**Predictions, two per cell, six in all.**
+
+1. *The line.* Each interpolated crossing lies inside ±6 % of the airtime line, with the slope
+   and the constant exactly as calibrated on cells A–F before F2. Nothing is re-fitted.
+2. *The model.* Each lies inside ±3 % of the access-rule model's crossing
+   (`src/authbc/sim/dcf_unsaturated.py`, no fitted constant), the band registered for F5.
+
+**Recorded expectation, weaker than a prediction.** The line's error has had a sign that goes
+with the frame rate. Over the eighteen crossings on file: +3.4 to +4.2 % at 50 frames/s (seven
+cells), +0.3 and +0.7 % at 20, −0.3 to −2.7 % at 12.5 (seven cells, mean −2.0 %), −1.4 and
+−3.4 % at 5. If that holds, B2 (25 /s) will sit within a percent of its line, B3 (16.7 /s) about
+one percent below it, and B8 (6.25 /s) about two percent below — which is where the model
+already is (220.6 against 225.9).
+
+**Where the two differ.** At B8 the line and the model are 2.4 % apart and the model's band
+(214.0–227.3) is the narrower. A crossing between 227.3 and 239.4 would keep the line and fail
+the model; one between 212.3 and 214.0 the same. Elsewhere they differ by under 1 %.
+
+**How it will be read.** Six inside: the rule and the model hold across the batch as they held
+across size and rate, and the paper may say what a deadline buys with the simulated figure
+beside the rule's. Any outside: reported as a failure with its size and sign; neither the slope
+nor the model is adjusted. The single ceiling is listed for comparison only — it is 14 % and
+17 % above the line at B2 and B3, and 5 % below it at B8.
+
+**What this cannot show.** (i) These are capacities of the same idealised scenario as every
+other: one collision domain, equal received power, static nodes. (ii) The three deadlines are
+hypothetical operating points; nothing else in the paper is evaluated at them (the freshness
+table, the loss experiment and the energy runs are for four records). (iii) Three more points
+on one curve do not validate the rule at another PHY rate or loss level.
+
+**Disclosure.** No ns-3 run of any of these three cells has been made, not even one seed to
+time the simulator. The line's slope, the model's code and both tolerances are those of the
+earlier follow-ups, unchanged. The model's predictions take thirty of its own seeds at nine
+node counts per cell and were computed once, by the command above.
+
+A crossing that falls outside its grid is extended and the extension is reported as one.
