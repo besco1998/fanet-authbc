@@ -120,7 +120,10 @@ inequality: $64 > 51$.
 
 Confidentiality, availability, key management and protection against an attacker who delays
 frames are outside the design (\Cref{sec:threat}). With one chain link per frame, continuity
-inside a frame rests on the frame signature alone.
+inside a frame rests on the frame signature alone, and showing one record to a third party means
+showing its frame. The prototype's store keeps verified records and not the frames and
+signatures that carried them (\Cref{sec:threat}): what it holds is not yet evidence to anyone
+else. The security argument of this thesis is informal throughout.
 
 \section{Future work}
 

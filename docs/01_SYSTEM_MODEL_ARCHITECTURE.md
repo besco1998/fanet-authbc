@@ -107,9 +107,9 @@ metric, not a security claim.
 | origin authentication | a stored record was produced by the UAV named in `src` | public-key signature over the canonical records | `verify_v2`, before anything is stored |
 | integrity | no field of a stored record was altered in transit | the same signature (every one of 1328 single-bit flips of a frame fails it) | ″ |
 | replay rejection | a frame delivered twice is stored once | `seq` strictly increasing per sender | `Store.ingest` → `REPLAY` |
-| equivocation evidence | two validly signed records for one `(src, seq)` are kept as a pair | both carry the sender's signature, so the pair is transferable proof | `Store.ingest` → `EQUIVOCATION` |
+| equivocation evidence | two validly signed records for one `(src, seq)` are detected and kept as a pair | each is proof to a third party only with the frame that carried it, since the signature covers the frame. ⚠️ **The store keeps the two records, not the frames or signatures (audit F80, open item G28)** | `Store.ingest` → `EQUIVOCATION` |
 | continuity | omission or re-ordering inside what is held is detectable | each record's `prev_hash`; one link per frame commits to the record before it | `Store.ingest` → `TAMPERED` when the predecessor is held |
-| non-repudiation | a sender cannot later deny a record | follows from a public-key signature; a symmetric tag would not give it | — |
+| non-repudiation | a sender cannot later deny a record | follows from a public-key signature, for whoever holds the frame; a symmetric tag would not give it. ⚠️ No stored object keeps a signature (F80) | — |
 
 *The adversary* controls the radio: it can read, inject, replay, modify, delay and drop frames,
 and may run any number of its own radios. It holds no honest UAV's private key.

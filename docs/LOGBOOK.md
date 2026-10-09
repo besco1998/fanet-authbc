@@ -12,6 +12,39 @@ where the durable record lives. If you want the conclusion only, follow the poin
 
 ---
 
+# 2026-10-09, afternoon — the paper read as a supervisor would read it (F80)
+
+**What we were doing.** Mohamed asked for the paper to be audited as a supervisor would:
+contradictions, tone, passages hard to read, and whether the concept is sound and publishable.
+
+**How it was read.** Start to finish, once for the argument and once line by line, with
+`paper/numbers.tex` open beside it; every suspected contradiction was then checked against the
+result file or the code before a word was changed. Six of the candidate contradictions were of
+one kind: a sentence written before the hardware session of the night before and not revisited
+after it (the abstract's "contention is simulated", the Method's "the same board", the
+receiver's "the channel binds first").
+
+**What reading the code found that reading the paper could not.** The threat model promises
+"transferable evidence" of equivocation. The store keeps two records and no signature. The
+test for it (`test_two_different_signed_records_for_one_sequence_number_are_kept_as_evidence`)
+had always passed: it counts the pairs and never asks whether a pair can be checked.
+⚠️ **A test named for a property is not a test of the property.**
+
+**Two things I checked and did not change.** The certificate column (per frame against per
+500 ms) and the exclusion count (three of eight rest on the format): both are stated in the
+text now, and both are Mohamed's to decide on (G29, G30). The numbers were not touched.
+
+**One number computed and deliberately not recorded as a result:** the closed form with nothing
+fitted, 8.1 % at worst over the eighteen crossings. Computed after the data, for the review.
+
+**Fitting it in ten pages.** The rewrites took the paper to eleven. It came back by saying once
+what had been said three times (freshness-not-MTU is in the introduction, the constraints and
+the conclusion; it was also in two results paragraphs).
+
+**Record:** F80; open items G28–G34; `tests/test_evidence_claim.py`.
+
+---
+
 # 2026-10-09, night — the boards were switched on
 
 **What we were doing.** Mohamed switched on the two Raspberry Pi 4, wired the meter and

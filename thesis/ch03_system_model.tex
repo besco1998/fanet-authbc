@@ -117,15 +117,27 @@ integrity & no field of a stored record was altered in transit &
   the same signature: every one of \bitflips{} single-bit flips of a design frame is refused \\
 replay rejection & a frame delivered twice is stored once &
   \texttt{seq} strictly increasing per sender \\
-equivocation evidence & two validly signed records for one $(\texttt{src}, \texttt{seq})$ are kept
-  as a pair & both carry the sender's signature, so the pair is transferable proof \\
+equivocation evidence & two validly signed records for one $(\texttt{src}, \texttt{seq})$ are
+  detected and kept as a pair & each is proof to a third party only with the frame that carried
+  it, since the signature covers the frame \\
 continuity & omission or re-ordering within what is held is detectable &
   each record's \texttt{prev\_hash}; one link per frame commits to the record before it \\
 non-repudiation & a sender cannot later deny a record &
-  follows from a public-key signature; a symmetric tag would not give it \\
+  follows from a public-key signature, for whoever holds the frame; a symmetric tag would not
+  give it \\
 \bottomrule
 \end{tabular}
 \end{center}
+
+\begin{remark}[What the prototype's store keeps]
+The last two rows are properties of the frame on air. They become evidence only where the frame
+is kept, and the store of this prototype does not keep it: it holds the verified records, and
+the pair it retains on an equivocation is a pair of records. Neither the signature nor the
+other records of the frame, without which the signature cannot be checked, is stored. What a
+receiver holds is therefore its own account of what it verified, and not yet something a third
+party can check. Keeping the frame would cost its length on air for every $b$ records held. This
+was found in a review of the paper on 2026-10-09 and is an open item, not a result.
+\end{remark}
 
 \subsection{What is not claimed}
 

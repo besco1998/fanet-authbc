@@ -3916,3 +3916,97 @@ the script after the runs; the files are as the runs wrote them.
 
 **Closes:** G9 (the lean codec timed and metered), G11 (the JSON row). **Does not close:** G22
 — the sensor's gain against a reference load.
+
+## F80 — the paper read as a supervisor would read it: seven statements that contradicted the paper's own results, one security claim the code does not deliver (2026-10-09)
+
+*Mohamed: "audit and review the paper as a supervisor and check it for any contradictions, any
+non scientific tone, any unclear or hard to read or understand section to rewrite … review them
+deeply on the concept and what it lacks and is it sound and publishable or not."* The whole of
+`paper/main.tex` was read against `paper/numbers.tex`, the result files and the code.
+
+### What contradicted what
+
+| # | where | it said | what the paper's own results say | now |
+|---|---|---|---|---|
+| 1 | abstract | "contention is simulated" | Sec. VIII and the Limitations report contention measured between two radios | "Capacities are simulated; contention was measured on two radios only" |
+| 2 | Method | sender energy metered "on the same board" | the lean rows are from a second board and sensor (the table's own caption) | says which format was metered where |
+| 3 | contribution 4 | one core "keeps up with" 296 nodes | the receiver that was built serves 57; 124 nodes need 2.2 cores | both figures, and that the prototype serves fewer than the channel admits |
+| 4 | Receiver CPU | "the channel binds first" | true of cryptography alone; for the prototype on one core the processor binds first (the thesis already said so) | the paragraph is split: the count by Eq. (cpu), then the receiver as built |
+| 5 | contribution 3 | energy reported "for each" step of the ladder | energy is metered for two steps in each format | "sender energy with and without batching" |
+| 6 | validation | the radio's closer spacing was set beside the failed prediction as if it explained it | the follow-up registered to test that explanation failed all four of its predictions (F76) | "The cause is not established", and the failed follow-up is reported |
+| 7 | energy | "the lean codec is … the slower to run" | the lean sender costs 2.7 times the first format's energy per record (F79); the thesis said so, the paper did not | the ratio is in the text and in the Limitations |
+
+Also: "the thirteen" followed a sentence that had just counted twelve (it is six fitted plus
+seven predicted); the conclusion said the access rule "was observed between two radios" without
+the load at which the prediction failed; the end-to-end energy model was not labelled as the
+first format's; the title's "capacity envelope" was not among the listed contributions.
+
+### The security claim (the one finding that is not wording)
+
+Paper, thesis ch. 3 and `docs/01` said: two validly signed records for one sequence number are
+kept as a pair, "which is transferable evidence because both carry the sender's signature".
+
+`ledger/store.py` keeps `equivocations: list[tuple[Record, Record]]`. A `Record` has five
+fields and none is a signature. In the lean format one signature covers a frame, and
+`LeanReceiver` hands the store the records and discards the frame. **Nothing the receiver
+holds can be checked by a third party — neither the pair, nor any stored record.** The frame on
+air carries everything needed; the prototype does not keep it. The introduction motivates the
+work by "evidence afterwards", so this matters more than its size suggests.
+
+**Done now (wording, to match the code):** the three documents say that a record is evidence
+only with its frame and that the store does not keep frames; the Limitations say what the store
+holds "is not yet evidence to anyone else". `tests/test_evidence_claim.py` holds both the fact
+and the wording. **Not done:** changing the receiver to keep frames. That is a change to the
+timed receive path (the board's 1.41 ms was measured on today's code) and is G28, for Mohamed.
+
+### What is narrower than it was stated
+
+* **The exclusion count depends on the format for three of its eight rates.** Signature plus
+  SHA-256 link are 96 B: the five 50/51 B rates are excluded whatever the format. At 115 B, 19 B
+  remain, and the lean format's header (16 B at its floor) and the link's framing (3 B) are
+  exactly 19. A hand-packed layout would leave some of those bytes for a record — fewer than the
+  24.0 B this telemetry's keyframe averages, so the rates stay out of reach *for this telemetry*,
+  but not "whatever the telemetry". The scope paragraph now has a fifth condition. The abstract
+  and the conclusion still say "eight of twelve … cannot carry one" (G29).
+* **Certificates "every fifth message" is a cadence in time in the source** (ten messages a
+  second, so one certificate in 500 ms — read in the PDF, lines on "every fifth SPDU" and "every
+  500 ms interval"). Charged per frame, the baseline at 50 frames/s sends one every 100 ms and
+  the design one every 400 ms. At a fixed 500 ms the reviewer's arithmetic gives about 160 B
+  per record for the baseline (table: 184.57) and 51.4 for the design (52.95): the column
+  favours the design by about 13 % of the baseline. The paper now says which reading it uses
+  and that it favours the design; the numbers are unchanged (G30).
+* **Capacity was simulated for batches of one and four records only**, because both operating
+  points have Λ·D_max = 5. Every simulated configuration in `ns3/run_nmax_direct.py` has b = 1
+  or b = 4. The rule of Eq. (line) is therefore checked across frame size and frame rate, and
+  not across batch size as such. Stated in the capacity paragraph and the Limitations (G31).
+* **"Among 64 B signatures the scheme does not decide what can run" is true by construction**
+  for bytes and capacity (equal sizes give equal frames) and is a statement about CPU only where
+  it says anything. The ladder paragraph now says so. It remains a headline (G32).
+
+### A check made for the review and NOT entered as a result
+
+The paper gives the loss at the crossing as ρ²/(W(1−ρ)) + ρc/T. Solving that for ρ at 5 % with
+nothing fitted and setting N = ρ/(fT) gives the eighteen simulated crossings within **8.1 %**
+(median about 2 %; worst is the 565 B frame), where the fitted line gives 4.2 %. It was computed
+after the data, from a scratch script, to judge whether "the slope is not a free constant" is
+quantitative. It is. It is not in the paper, has no registration and no test; whether to
+report it is G33.
+
+### Tone and reading
+
+Phrases removed: "The message is short", "in an unexpected order", "kinder", "the whole prize",
+"takes the following ones with it", "a slow record of provenance", "easy to get wrong", "the
+right unit", "whatever the authenticator weighs", "Asked for crossings". Paragraphs rewritten
+for order: the channel simulation (scenario, then source timing and why, then the estimator),
+the rule and its mechanism (each mechanism described before it is credited), the receiver's
+CPU, the energy paragraph (one format at a time), the validation (simulator, then radios).
+Statements made two or three times are made once: freshness-not-MTU, the generated-numbers
+sentence, the stream table's sizing, the periodic source. A paragraph on relayed records sat
+among the constraints and constrained nothing; it is one sentence of the Limitations. The
+energy table was 11.7 pt wider than its column.
+
+**Judgement, for the record.** Sound within the scope it states, after these corrections.
+Novelty is in the accounting and in the capacity rule with its mechanism, not in batching.
+The weakest points are the realism of the capacity scenario, the single batch size, a receiver
+that does not keep what the paper is about, and a comparison of certificates that leans its
+way. The full review was given to Mohamed in the session of 2026-10-09.
