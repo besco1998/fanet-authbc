@@ -17,7 +17,7 @@
 #   frameburst.sh get        prints 0 or 1
 #   frameburst.sh set 0|1    sets it, then prints what the firmware reports
 set -u
-IW=/usr/sbin/iw
+IW="${IW:-/usr/sbin/iw}"       # overridable so the reply parser can be tested off a board
 OUI=0x001018
 SUBCMD=0x1
 

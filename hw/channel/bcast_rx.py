@@ -39,6 +39,7 @@ def main() -> None:
 
     seen: dict[str, set[int]] = {}
     dups: dict[str, int] = {}
+    heard: dict[str, list[float]] = {}      # sender -> [first arrival, last arrival]
     first = last = None
     deadline = time.monotonic() + a.seconds
     while time.monotonic() < deadline:
@@ -59,13 +60,17 @@ def main() -> None:
         now = time.monotonic()
         first = first if first is not None else now
         last = now
+        heard.setdefault(src, [now, now])[1] = now
 
     s.close()
     by_source = {src: {"received_unique": len(got), "duplicates": dups.get(src, 0),
-                       "max_seq": max(got)} for src, got in sorted(seen.items())}
+                       "min_seq": min(got), "max_seq": max(got),
+                       "span_s": heard[src][1] - heard[src][0]}
+                 for src, got in sorted(seen.items())}
     everything = [seq for got in seen.values() for seq in got]
     with open(a.out, "w") as fh:
         json.dump({"received_unique": len(everything), "duplicates": sum(dups.values()),
+                   "min_seq": min(everything) if everything else -1,
                    "max_seq": max(everything) if everything else -1,
                    "span_s": (last - first) if first and last else 0.0,
                    "rcvbuf_bytes": rcvbuf, "self": a.own, "by_source": by_source}, fh)

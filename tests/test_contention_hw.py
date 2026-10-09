@@ -219,3 +219,79 @@ class TestTheSenderAndReceiverScripts:
         assert sent["redraw"] is True and 95 <= sent["sent"] <= 100
         assert got["by_source"]["127.0.0.1"]["received_unique"] == sent["sent"]
         assert got["received_unique"] == sent["sent"] and got["duplicates"] == 0
+
+
+CHANNEL = REPO / "hw" / "channel"
+
+
+class TestTheFrameBurstSwitch:
+    """`hw/channel/frameburst.sh`, and how the two sessions use it.
+
+    The driver switches the chip's frame-burst mode on; a session's loss cannot be read without
+    knowing its state (docs/CONTENTION_HW_FRAMEBURST_EXPECTATIONS.md)."""
+
+    @staticmethod
+    def _get(tmp_path: Path, reply: str) -> tuple[int, str]:
+        import subprocess
+
+        fake = tmp_path / "iw"
+        fake.write_text(f"#!/bin/bash\necho 'vendor response: {reply}'\n")
+        fake.chmod(0o755)
+        run = subprocess.run(["bash", str(CHANNEL / "frameburst.sh"), "get"],
+                             env={"IW": str(fake), "PATH": "/usr/bin:/bin"},
+                             capture_output=True, text=True, check=False)
+        return run.returncode, run.stdout.strip()
+
+    def test_the_value_is_read_from_the_data_attribute_of_the_reply(self, tmp_path: Path) -> None:
+        # as the boards answered on 2026-10-09: data (type 2) = 1, then length (type 1) = 4
+        assert self._get(tmp_path, "08 00 02 00 01 00 00 00 06 00 01 00 04 00 00 00") == (0, "1")
+        assert self._get(tmp_path, "08 00 02 00 00 00 00 00 06 00 01 00 04 00 00 00") == (0, "0")
+
+    def test_the_order_of_the_attributes_does_not_matter(self, tmp_path: Path) -> None:
+        assert self._get(tmp_path, "06 00 01 00 04 00 00 00 08 00 02 00 01 00 00 00") == (0, "1")
+
+    def test_a_reply_without_data_is_an_error_and_not_a_zero(self, tmp_path: Path) -> None:
+        code, out = self._get(tmp_path, "06 00 01 00 04 00 00 00")
+        assert code != 0 and out.startswith("error")
+
+    def test_the_commands_are_the_firmwares_get_and_set(self) -> None:
+        text = (CHANNEL / "frameburst.sh").read_text()
+        assert "header 218 0" in text and "header 219 1" in text and "OUI=0x001018" in text
+
+    @pytest.mark.parametrize("name", ["run_adhoc_contention.sh", "run_adhoc_sweep.sh"])
+    def test_a_session_sets_it_after_joining_and_logs_it_around_windows(self, name: str) -> None:
+        text = (CHANNEL / name).read_text()
+        joined = text.index("ibss join")
+        asked = text.index('frameburst.sh" set "$FRAMEBURST"')
+        before = text.index("frameburst before the windows")
+        windows = text.index("for spec in")
+        after = text.index("frameburst after the windows")
+        assert joined < asked < before < windows < after
+        assert 'FRAMEBURST="${' in text and ":-keep}" in text
+
+    def test_every_way_out_of_a_session_puts_it_back(self) -> None:
+        assert 'frameburst.sh" set 1' in (CHANNEL / "revert_adhoc.sh").read_text()
+
+
+class TestTheSaturatedReducer:
+    def test_frames_on_air_are_what_the_receiver_spans(self, tmp_path: Path) -> None:
+        dirs = []
+        for k, peer in ((1, 2), (2, 1)):
+            d = tmp_path / f"node{k}"
+            d.mkdir()
+            # sendto accepted 6000; the peer heard sequence numbers 10…5009 and missed 500 of them
+            (d / f"tx_node{k}_00_C_400fps.json").write_text(json.dumps(
+                {"sent": 6000, "rate": 400.0, "achieved_fps": 272.0, "late": 3000}))
+            (d / f"rx_node{k}_00_C_400fps.json").write_text(json.dumps(
+                {"duplicates": 0, "by_source": {f"10.0.0.{peer}": {
+                    "received_unique": 4500, "min_seq": 10, "max_seq": 5009, "span_s": 20.0}}}))
+            (d / f"ctr_node{k}_00_C_400fps.json").write_text(json.dumps(
+                {"tx_dropped": 0, "tx_packets": 6000, "rx_packets": 4500}))
+            dirs.append(d)
+        rows = hw.saturated(dirs, 2)
+        assert [(r["sender"], r["receiver"]) for r in rows] == [(1, 2), (2, 1)]
+        for r in rows:
+            assert r["on_air"] == 5000 and r["received"] == 4500
+            assert r["loss"] == pytest.approx(0.1)
+            assert r["air_fps"] == pytest.approx(4999 / 20.0, abs=0.01)
+            assert r["accepted_by_sendto"] == 6000        # recorded, and not the denominator

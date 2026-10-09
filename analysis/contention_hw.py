@@ -15,6 +15,7 @@ from each of the others (`hw/channel/run_adhoc_contention.sh`).
         prints the commands that start a three-board session
     python analysis/contention_hw.py --reduce 3 results/hw/channel/contention_3/node*
         writes results/hw/channel/contention_3nodes.csv and scores it against the predictions
+        (--tag fb_off names a second session's files contention_3nodes_fb_off.csv)
 
 A delivered fraction is frames received over frames sent, summed over every ordered pair of
 boards — the definition the ns-3 scenario uses.
@@ -188,6 +189,42 @@ def windows(node_dirs: list[Path], n_nodes: int) -> list[dict]:
     return rows
 
 
+def saturated(node_dirs: list[Path], n_nodes: int) -> list[dict]:
+    """Senders offered more than the medium carries: one row per window and sender.
+
+    What a sender put on air is read at its receivers, not from its own count: `sendto` accepts
+    frames that are still queued when the window ends. A receiver spans the sequence numbers
+    from the first frame it heard to the last; frames on air are that span, and the loss is the
+    share of it that did not arrive.
+    """
+    by_tag: dict[str, dict[str, dict[int, dict]]] = {}
+    for d in node_dirs:
+        for path in sorted(d.glob("*_node*_*.json")):
+            m = re.fullmatch(r"(tx|rx|ctr)_node(\d+)_(.+)\.json", path.name)
+            if m:
+                by_tag.setdefault(m.group(3), {}).setdefault(m.group(1), {})[int(m.group(2))] = \
+                    _load(path)
+    rows = []
+    for tag, parts in sorted(by_tag.items()):
+        tx, rx, ctr = parts.get("tx", {}), parts.get("rx", {}), parts.get("ctr", {})
+        for s in range(1, n_nodes + 1):
+            for r in range(1, n_nodes + 1):
+                if r == s:
+                    continue
+                got = rx[r]["by_source"][f"10.0.0.{s}"]
+                on_air = got["max_seq"] - got["min_seq"] + 1
+                rows.append({
+                    "window": tag, "nodes": n_nodes, "sender": s, "receiver": r,
+                    "offered_fps": round(float(tx[s]["rate"])),
+                    "accepted_by_sendto": tx[s]["sent"], "tx_dropped": ctr[s]["tx_dropped"],
+                    "on_air": on_air, "received": got["received_unique"],
+                    "loss": round(1.0 - got["received_unique"] / on_air, 5),
+                    "span_s": round(got["span_s"], 4),
+                    "air_fps": round((on_air - 1) / got["span_s"], 2),
+                })
+    return rows
+
+
 def usable(row: dict) -> bool:
     """A window measures the channel only if the senders did what they were asked to do."""
     return (row["tx_dropped"] == 0
@@ -244,10 +281,14 @@ def main() -> None:
     what.add_argument("--ns3-check", action="store_true")
     what.add_argument("--commands", type=int, metavar="NODES")
     what.add_argument("--reduce", type=int, metavar="NODES")
+    what.add_argument("--saturated", type=int, metavar="NODES",
+                      help="reduce a session in which every sender was offered too much")
     ap.add_argument("dirs", nargs="*", type=Path, help="one directory per board (--reduce)")
     ap.add_argument("--hosts", nargs="*", default=[], help="ssh targets, node 1 first")
     ap.add_argument("--mode", default="full", choices=("full", "probe"))
     ap.add_argument("--workers", type=int, default=4)
+    ap.add_argument("--tag", default="",
+                    help="suffix of the two files --reduce writes, for a second session")
     args = ap.parse_args()
     if args.predict:
         rows = predict(args.workers)
@@ -265,11 +306,20 @@ def main() -> None:
                   f"± {100 * r['ns3_loss_se']:.3f} %  ratio {r['ns3_over_model']}")
     elif args.commands:
         print("\n".join(commands(args.commands, args.hosts, args.mode)))
+    elif args.saturated:
+        rows = saturated(args.dirs, args.saturated)
+        stem = f"saturated_{args.saturated}nodes" + (f"_{args.tag}" if args.tag else "")
+        _write(HW / f"{stem}.csv", rows, "contention_hw_saturated")
+        for r in rows:
+            print(f"  {r['window']:14} {r['sender']}>{r['receiver']}  on air {r['on_air']:5} "
+                  f"({r['air_fps']:6.1f}/s)  received {r['received']:5}  "
+                  f"loss {100 * r['loss']:5.2f} %")
     else:
         rows = windows(args.dirs, args.reduce)
-        _write(HW / f"contention_{args.reduce}nodes_windows.csv", rows, "contention_hw_windows")
+        stem = f"contention_{args.reduce}nodes" + (f"_{args.tag}" if args.tag else "")
+        _write(HW / f"{stem}_windows.csv", rows, "contention_hw_windows")
         scored = score(rows)
-        _write(HW / f"contention_{args.reduce}nodes.csv", scored, "contention_hw")
+        _write(HW / f"{stem}.csv", scored, "contention_hw")
         for r in scored:
             verdict = {True: "inside", False: "OUTSIDE", "": "no usable window"}[r["inside_band"]]
             print(f"  {r['rate_fps_per_node']:>4} frames/s  measured {r['measured_loss']}  "
