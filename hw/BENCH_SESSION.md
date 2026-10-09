@@ -257,3 +257,33 @@ ones in the repository, byte for byte (SHA-256; `tests/test_bench_session_hw.py`
 Files: `results/hw/p1_lean.authbc-pi4b.control-20261009.csv`,
 `results/hw/p1_lean.authbc-pi4b.frames-kept.csv` and, for the same session's signature
 timings, `results/hw/p1_crypto.authbc-pi4b.frames-kept.csv`.
+
+## Expected of the multi-core receive measurement of 2026-10-09 (audit F84)
+
+*Written before the run. One core of the interpreted prototype serves 57 nodes; the paper and
+the thesis say 124 nodes "need 2.2 of the board's four cores", which is arithmetic from one
+core's time. This measures whether the cores deliver it when they run together.*
+
+`hw/multicore_receive.py` on `authbc-pi4b`, governor `performance`, nothing else running: K
+worker processes, one pinned to each of K cores, each a `LeanReceiver` fed the stream that
+`authbc.bench.micro` times one frame of, all started together and run for 30 s; K = 1, 2, 3, 4
+with 20 s between. No radio and no dispatcher: a frame reaches its worker for free. It measures
+what the cores give the receive path, not the path from a socket.
+
+| | expected | why |
+|---|---|---|
+| one worker | **680–708 frames/s** | the timed median is 1.4260 ms a frame, 701 a second; a loop also pays its own clock reading, a new receiver every thousand frames, and whatever the median hides |
+| two workers | **1.90–2.00** times one | the workers share nothing but the cache and the memory bus |
+| three | **2.75–3.00** times | |
+| four | **3.50–4.00** times | every core busy: the least certain row, for heat |
+| nodes served at 12.5 frames a second each | two workers **below 124**, three **at or above** it | 124 nodes are 123 neighbours, 1537.5 frames a second |
+
+**Validity.** `throttled=0x0` before and after every run. A run during which a throttle bit
+rises is reported as throttled and is not used for a figure.
+
+**If the scaling is below a range:** reported as measured, with the temperatures; "2.2 cores"
+is then replaced in both documents by what the board delivered. **If one worker is outside
+680–708:** the loop is not the benchmark's frame, and the rows are quoted as ratios only.
+
+**Nobody logs in to the board while it runs.** The script prints `DONE` when it has written its
+file; it is read after that, and not before the 4 minutes it must take.

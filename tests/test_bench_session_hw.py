@@ -246,3 +246,21 @@ class TestTheReceiverThatKeepsFramesWasTimedAgainstAControl:
         margin = 1 - KEPT[("frame_receive", 4)] / bound_ms
         assert 0.001 < margin < 0.003
         assert "by a margin of two parts in a thousand" in CODESIGN
+
+
+class TestTheMultiCoreMeasurementScript:
+    """`hw/multicore_receive.py` (audit F84): K receivers on K cores at once."""
+
+    def test_its_self_test_runs_two_workers_and_writes_nothing(self, tmp_path: Path) -> None:
+        import sys
+        done = subprocess.run([sys.executable, str(REPO / "hw" / "multicore_receive.py"),
+                               "--check", "--workers", "1", "2"], cwd=tmp_path,
+                              capture_output=True, text=True, timeout=120)
+        assert done.returncode == 0, done.stderr
+        assert "OK: multicore_receive.py --check ran 2 runs" in done.stdout
+        assert not list(tmp_path.iterdir())
+
+    def test_a_neighbour_is_charged_twelve_and_a_half_frames_a_second(self) -> None:
+        text = (REPO / "hw" / "multicore_receive.py").read_text(encoding="utf-8")
+        assert "FRAMES_PER_NODE_S = 50.0 / BATCH" in text and "BATCH = 4" in text
+        assert '"nodes_served": 1 + int(total // FRAMES_PER_NODE_S)' in text
