@@ -22,7 +22,7 @@ import os
 import subprocess
 import sys
 import tempfile
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
@@ -191,9 +191,11 @@ def main() -> None:
                    if k not in ("nNodes", "frameSize", "framesPerSec", "seed")}}
 
     with ThreadPoolExecutor(max_workers=args.workers) as pool:
-        for i, row in enumerate(pool.map(job, todo), 1):
-            runs.append({k: str(v) for k, v in row.items()})
-            if i % 30 == 0 or i == len(todo):
+        # in the order runs finish, so a kill loses at most the last ten (see run_nmax_direct)
+        futures = [pool.submit(job, t) for t in todo]
+        for i, fut in enumerate(as_completed(futures), 1):
+            runs.append({k: str(v) for k, v in fut.result().items()})
+            if i % 10 == 0 or i == len(todo):
                 runs.sort(key=_key)
                 write(path, runs, f"ns3_spatial_{args.stem}_runs", config)
                 print(f"  {i}/{len(todo)} done", flush=True)

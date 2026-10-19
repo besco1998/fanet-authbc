@@ -174,6 +174,16 @@ R1–R18 (`DECISIONS.md`).*
 
 ---
 
+## H. Opened by the reviewer-revision plan (2026-10-19; `docs/revision/EXECUTION_PLAN.md`)
+
+| # | Item | Status | Why it matters | Action |
+|---|---|---|---|---|
+| **H1** | **Uncommitted paper edits of 2026-10-12** (`paper/main.tex` in the published style, `paper/block_diagram.png`, the `platforms()` table of `analysis/paper_numbers.py`, a new bib entry) | **OPEN — Mohamed's** | They are not the agent's to commit; with them in the working tree 16 tests fail (the bib entry has no registry record; the rewritten text drops sentences the review tests hold). The revision's commits stage files by name and leave them untouched | Say whether they are to be committed, and into which `main.tex` the revision's text changes go |
+| **H2** | **Bootstrap intervals of a mean at 30 seeds cover 92–94 %** (F86) | **OPEN — Mohamed's** | Every V interval in the paper is about a tenth too narrow | Keep (and say so), or recompute V intervals as t-intervals; crossing intervals to be checked the same way |
+| **H3** | **Part B of the plan needs purchases or flights** (B1 radio for monitor mode, B2 three to eight radios, B3 power profiler, B4/B5 drones) | **OPEN — Mohamed's** | No hardware capacity exists; B1 may explain the below-saturation mismatch (F73) | Decide purchases; G4 is the same question |
+| **H4** | **The Pi boards are off** (2026-10-19) | **OPEN** | A7, A8, A13 and A15 measure on pi-B; host numbers are prepared but are never Pi numbers | Switch pi-B on (192.168.1.20) |
+| **H5** | **Hidden-terminal broadcast models not yet read** (IEEE Access 2020, doi:10.1109/ACCESS.2020.3027550; EURASIP JWCN 2019, doi:10.1186/s13638-019-1548-4; FMAC, IEEE IoT J 2021) | **OPEN** | A1's mechanism and A4's controller must be placed against them before entering the paper | Read in full; credit; state what is added |
+
 ## What is genuinely settled
 Freshness enforced as constraint + objective (F10) · Ma & Chen broadcast model, cited, ≤0.36 % vs
 NS-3 (F9) · NS-3 sink lifetime (F8) · OFDM-quantised airtime (D9) · 30-seed size protocol (F4) ·

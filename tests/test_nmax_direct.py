@@ -255,6 +255,21 @@ class TestCellsAreTheLaddersFrames:
         assert cell.model_n == ceiling
 
     @pytest.mark.parametrize("name", sorted(k for k, c in drv.CELLS.items()
+                                            if c.label.startswith("nf/")))
+    def test_an_nf_cell_is_a_papers_frame_at_another_rate(self, name: str) -> None:
+        """Revision A12: the design's or the baseline's frame, as Table 3 simulated it, at a
+        rate registered in predictions/A12.md; `model_n` is the single ceiling's value."""
+        cell = drv.CELLS[name]
+        paper = drv.CELLS["D"] if cell.label.startswith("nf/design") else drv.CELLS["C"]
+        assert (cell.frame_bytes, cell.batch) == (paper.frame_bytes, paper.batch)
+        (row,) = [r for r in _rows(RAW / "nf_equivalence_predictions.csv")
+                  if r["ns3_cell"] == name]
+        assert cell.fps == float(row["frames_per_s"])
+        ceiling = max(n for n in range(1, 3000) if drv.optimizer.channel_utilisation(
+            n, cell.lam, cell.batch, cell.frame_bytes) <= 2.435)
+        assert cell.model_n == ceiling
+
+    @pytest.mark.parametrize("name", sorted(k for k, c in drv.CELLS.items()
                                             if c.label.startswith("map/")))
     def test_a_map_cell_is_the_frame_registered_for_it(self, name: str) -> None:
         """Revision A2: each design-map cell is the emitted frame predictions/A2.md registered,
@@ -270,7 +285,7 @@ class TestCellsAreTheLaddersFrames:
 
     @pytest.mark.parametrize("name", sorted(k for k, c in drv.CELLS.items()
                                             if not c.label.startswith(("stream/", "batch/",
-                                                                       "map/"))))
+                                                                       "map/", "nf/"))))
     def test_frame_rate_and_model_value(self, name: str) -> None:
         cell = drv.CELLS[name]
         op = {50.0: "adopted", 20.0: "relaxed"}[cell.lam]
@@ -340,12 +355,14 @@ class TestOnePeriodOfJitterIsAcceptedByTheScenario:
     def test_every_rate_used_before_is_unchanged(self) -> None:
         # "before": the cells of 2026-10-09; the revision's design-map cells came later and
         # some of their rates (7.142857… /s, 33.33… /s) are ones the step-down applies to.
-        for fps in sorted({c.fps for c in drv.CELLS.values() if not c.label.startswith("map/")}):
+        for fps in sorted({c.fps for c in drv.CELLS.values()
+                           if not c.label.startswith(("map/", "nf/"))}):
             assert drv.one_period_ms(fps) == 1000.0 / fps, fps
             assert drv.source_of("period", fps) == (1000.0 / fps, 0.0)
 
-    def test_every_rate_of_the_design_map_passes_the_guard(self) -> None:
-        for fps in sorted({c.fps for c in drv.CELLS.values() if c.label.startswith("map/")}):
+    def test_every_rate_of_the_revision_passes_the_guard(self) -> None:
+        for fps in sorted({c.fps for c in drv.CELLS.values()
+                           if c.label.startswith(("map/", "nf/"))}):
             assert self._guard_accepts(drv.one_period_ms(fps), fps), fps
             assert drv.one_period_ms(fps) == pytest.approx(1000.0 / fps, rel=1e-12)
 

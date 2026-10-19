@@ -30,7 +30,7 @@ import os
 import subprocess
 import sys
 import tempfile
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from pathlib import Path
 from statistics import mean, stdev
@@ -124,6 +124,17 @@ CELLS: dict[str, Cell] = {
     "MD100-40": Cell("map/design-100-40", 164, 3, 100.0, 48),
     "MD100-500": Cell("map/design-100-500", 580, 49, 100.0, 260),
     "MD100-100": Cell("map/design-100-100", 218, 9, 100.0, 136),     # beyond the plan's ten
+    # --- revision A12 (predictions/A12.md): the paper's two frames with the total offered
+    #     frame rate N·f of their crossings split over fewer, faster nodes. Simulated into
+    #     results/raw/ns3_nf_equivalence_runs.csv (analysis/nf_equivalence.py). ---
+    "NFD25": Cell("nf/design-25", 173, 4, 100.0, 68),
+    "NFD50": Cell("nf/design-50", 173, 4, 200.0, 31),
+    "NFD97": Cell("nf/design-97", 173, 4, 388.0, 21),
+    "NFD194": Cell("nf/design-194", 173, 4, 776.0, 14),
+    "NFB25": Cell("nf/base-25", 146, 1, 25.0, 78),
+    "NFB97": Cell("nf/base-97.5", 146, 1, 97.5, 22),
+    "NFB195": Cell("nf/base-195", 146, 1, 195.0, 15),
+    "NFB350": Cell("nf/base-350", 146, 1, 350.0, 11),
 }
 
 
@@ -462,9 +473,15 @@ def main() -> None:
     if args.radius_m or args.path_loss_exp:     # one file, one geometry
         config |= {"radius_m": args.radius_m, "path_loss_exp": args.path_loss_exp}
     with ThreadPoolExecutor(max_workers=args.workers) as pool:
-        for i, row in enumerate(pool.map(job, todo), 1):
-            runs.append({k: str(v) for k, v in row.items()})
-            if i % 30 == 0 or i == len(todo):       # checkpoint: a long sweep must survive a kill
+        # Checkpoint in the order runs FINISH. Taken in the order they were submitted
+        # (pool.map), runs that finished behind a slow first one stayed in memory: on
+        # 2026-10-20 the VM ran out of memory and ~2.5 hours of finished runs were lost
+        # with it. The rows are sorted before every write, so the file does not depend on
+        # the order.
+        futures = [pool.submit(job, t) for t in todo]
+        for i, fut in enumerate(as_completed(futures), 1):
+            runs.append({k: str(v) for k, v in fut.result().items()})
+            if i % 10 == 0 or i == len(todo):       # checkpoint: a long sweep must survive a kill
                 runs.sort(key=lambda r: (list(CELLS).index(r["cell"]), *_run_key(r)[1:]))
                 _write(runs_path, runs, f"{args.out_stem}_runs", config)
                 print(f"  {i}/{len(todo)} done", flush=True)

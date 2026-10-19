@@ -4292,3 +4292,29 @@ window.
 The paper is 11 pages with one more figure. The thesis is 131 pages. Appendix B lists
 twenty-two registrations, of which eight failed in whole or in part (the multi-core
 measurement of F84 is the eighth).
+
+## F86 — the bootstrap interval of a mean at thirty seeds covers 92–94 %, not 95 % (2026-10-20)
+
+*Found while scoring revision A3 (`predictions/A3.md`).*
+
+**What was seen.** The model's value lay inside the measured bootstrap interval in 179 of 200
+cells of the verifiability sweep with one keyframe in r > 1 frames (89.5 %), against about 190
+expected at 95 %. No bias: the fifteen group means of (measured − model) lie within ±0.004 with
+scattered signs, and the model's ordering of the loss processes holds in all forty groups.
+
+**Checked directly, with a known mean.** `authbc.bench.stats.bootstrap_ci` (percentile, statistic
+= mean, 10 000 resamples) on thirty per-seed values: **93.7 %** coverage for binomial values
+(240 frames, p = 0.05), **91.8 %** for overdispersed (beta-binomial) values of the same mean;
+a Student-t interval on the same samples covers **95.3 %**. 600–2 000 trials each. Cells with
+r > 1 are overdispersed — one lost frame takes its group's later frames with it — which is
+why they fell lower.
+
+**What it touches.** Every V interval the paper prints is this interval at thirty seeds
+(`lossCi…`, `lossBerCi`). They are a little narrow — about a tenth in width. Crossing intervals
+(`interpolated_crossing_ci`) resample the same way and were not checked here. Nothing published
+is changed by this finding: whether to move the V intervals to a t-interval (or BCa) is a
+decision (open item H2).
+
+**The general lesson, again small-sample.** A tolerance for "measured within x of the model"
+must come from the interval's width at the sample size used, and a claim over many cells must
+expect its share of misses. Two of my A3 predictions failed for exactly these reasons.
