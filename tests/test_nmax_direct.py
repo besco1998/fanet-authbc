@@ -255,6 +255,15 @@ class TestCellsAreTheLaddersFrames:
         assert cell.model_n == ceiling
 
     @pytest.mark.parametrize("name", sorted(k for k, c in drv.CELLS.items()
+                                            if c.label.startswith("pq/")))
+    def test_a_pq_cell_is_the_falcon_frame_registered_for_it(self, name: str) -> None:
+        """Revision A15: the lean frame with a 666 B Falcon signature, as registered."""
+        cell = drv.CELLS[name]
+        (row,) = [r for r in _rows(RAW / "pq_capacity_predictions.csv") if r["cell"] == name]
+        assert (cell.frame_bytes, cell.batch, cell.fps) == (
+            int(row["frame_bytes"]), int(row["batch"]), float(row["frames_per_s"]))
+
+    @pytest.mark.parametrize("name", sorted(k for k, c in drv.CELLS.items()
                                             if c.label.startswith("nf/")))
     def test_an_nf_cell_is_a_papers_frame_at_another_rate(self, name: str) -> None:
         """Revision A12: the design's or the baseline's frame, as Table 3 simulated it, at a
@@ -285,7 +294,7 @@ class TestCellsAreTheLaddersFrames:
 
     @pytest.mark.parametrize("name", sorted(k for k, c in drv.CELLS.items()
                                             if not c.label.startswith(("stream/", "batch/",
-                                                                       "map/", "nf/"))))
+                                                                       "map/", "nf/", "pq/"))))
     def test_frame_rate_and_model_value(self, name: str) -> None:
         cell = drv.CELLS[name]
         op = {50.0: "adopted", 20.0: "relaxed"}[cell.lam]
@@ -356,7 +365,7 @@ class TestOnePeriodOfJitterIsAcceptedByTheScenario:
         # "before": the cells of 2026-10-09; the revision's design-map cells came later and
         # some of their rates (7.142857… /s, 33.33… /s) are ones the step-down applies to.
         for fps in sorted({c.fps for c in drv.CELLS.values()
-                           if not c.label.startswith(("map/", "nf/"))}):
+                           if not c.label.startswith(("map/", "nf/", "pq/"))}):
             assert drv.one_period_ms(fps) == 1000.0 / fps, fps
             assert drv.source_of("period", fps) == (1000.0 / fps, 0.0)
 

@@ -135,6 +135,10 @@ CELLS: dict[str, Cell] = {
     "NFB97": Cell("nf/base-97.5", 146, 1, 97.5, 22),
     "NFB195": Cell("nf/base-195", 146, 1, 195.0, 15),
     "NFB350": Cell("nf/base-350", 146, 1, 350.0, 11),
+    # --- revision A15 (predictions/A15.md): the lean frame signed with Falcon-padded-512
+    #     (666 B), one record and four, at 50 records/s (analysis/pq_capacity.py). ---
+    "PQ1": Cell("pq/falcon-1", 749, 1, 50.0, 16),
+    "PQ4": Cell("pq/falcon-4", 776, 4, 50.0, 36),
 }
 
 
