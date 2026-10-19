@@ -87,8 +87,9 @@ def binary() -> tuple[Path, Path]:
 
 
 def run_one(scenario: Scenario, cfg: Config, n: int, seed: int, sim_time: float
-            ) -> tuple[dict[str, float], str]:
-    """One run: the scenario's key/value summary, and its per-pair file if it wrote one."""
+            ) -> tuple[dict[str, float], str, str]:
+    """One run: the scenario's key/value summary, its per-pair file if it wrote one, and where
+    the nodes were (at the end of the run; for a static layout, throughout)."""
     root, exe = binary()
     with tempfile.TemporaryDirectory() as td:
         prefix = Path(td) / "s"
@@ -102,7 +103,8 @@ def run_one(scenario: Scenario, cfg: Config, n: int, seed: int, sim_time: float
         rows = dict(csv.reader(prefix.with_suffix(".csv").read_text().splitlines()[1:]))
         pairs = Path(f"{prefix}_pairs.csv")
         pair_text = pairs.read_text() if pairs.exists() else ""
-    return {k: float(v) for k, v in rows.items()}, pair_text
+        positions = Path(f"{prefix}_pos.csv").read_text()
+    return {k: float(v) for k, v in rows.items()}, pair_text, positions
 
 
 def read_plan(path: Path, known: dict[str, Scenario]) -> list[tuple[str, str, list[int]]]:
@@ -159,6 +161,9 @@ def main() -> None:
         raise SystemExit("this plan counts neighbours: give the measured --d-ref")
     path = RAW / f"ns3_spatial_{args.stem}_runs.csv"
     pair_dir = RAW / f"ns3_spatial_{args.stem}_pairs"
+    # A placement depends on (layout, N, seed) and not on the frame, so one file serves every
+    # configuration; the hidden-station share of the analysis is computed from it.
+    pos_dir = RAW / f"ns3_spatial_{args.stem}_positions"
     runs = read_runs(path)
     done = {_key(r) for r in runs}
     todo = [(s, c, n, seed) for s, c, ns in plan for n in ns
@@ -170,10 +175,16 @@ def main() -> None:
 
     def job(t: tuple[str, str, int, int]) -> dict:
         scen, cfg, n, seed = t
-        got, pairs = run_one(known[scen], CONFIGS[cfg], n, seed, args.sim_time)
+        got, pairs, positions = run_one(known[scen], CONFIGS[cfg], n, seed, args.sim_time)
         if pairs:
             pair_dir.mkdir(exist_ok=True)
             (pair_dir / f"{scen}.{cfg}.{n}.{seed}.csv").write_text(pairs)
+        if known[scen].layout in ("disc", "clusters"):
+            pos_dir.mkdir(exist_ok=True)
+            where = pos_dir / f"{scen}.{n}.{seed}.csv"
+            if not where.exists():
+                where.write_text("".join(",".join(ln.split(",")[:4]) + "\n"
+                                         for ln in positions.splitlines()))
         return {"scenario": scen, "config": cfg, "frame_bytes": CONFIGS[cfg].frame_bytes,
                 "frames_per_s": CONFIGS[cfg].frames_per_s, "n_nodes": n, "seed": seed,
                 **{k: (int(v) if v.is_integer() else v) for k, v in got.items()

@@ -23,3 +23,23 @@ frames should agree within one grid step, since the threshold, not the frame len
 
 **Disclosure.** One 5-second pair run at 200 m (173 B, seed 1) was made to check the new
 layout: 61 of 61 frames delivered.
+
+---
+
+## Outcome (2026-10-19, 4 590 runs)
+
+**d_ref = 215 m — inside the expected 215–225 m.** `results/raw/spatial_dref.csv` from
+`results/raw/ns3_spatial_dref_runs.csv` (`analysis/spatial_capacity.py --dref`).
+
+| distance | 146 B (base) | 173 B (design) | 372 B (row 6) |
+|---|---|---|---|
+| 215 m | 0.99109 | 0.99101 | 0.99101 |
+| 220 m | **0.98999** | 0.99007 | 0.99007 |
+| 225 m | 0.98872 | 0.98887 | 0.98887 |
+
+The 173 B and 372 B frames reach 220 m; the baseline's frame misses 0.99 at 220 m by 0.00001,
+so the common d_ref is 215 m. The hand value (221 m, where the threshold sits exactly at the
+1 % fade) falls between the two grid points. Frame length does not matter here, as expected:
+the two 12.5 /s frames have identical delivery at every distance (the same fading draws, and
+the −82 dBm preamble threshold binds before the error-rate model); the 50 /s frame differs only
+by its own draws.
