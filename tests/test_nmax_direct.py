@@ -255,7 +255,22 @@ class TestCellsAreTheLaddersFrames:
         assert cell.model_n == ceiling
 
     @pytest.mark.parametrize("name", sorted(k for k, c in drv.CELLS.items()
-                                            if not c.label.startswith(("stream/", "batch/"))))
+                                            if c.label.startswith("map/")))
+    def test_a_map_cell_is_the_frame_registered_for_it(self, name: str) -> None:
+        """Revision A2: each design-map cell is the emitted frame predictions/A2.md registered,
+        and its `model_n` is the single ceiling's value, as for every other cell."""
+        cell = drv.CELLS[name]
+        (row,) = {r["ns3_cell"]: r for r in _rows(RAW / "design_map_predictions.csv")
+                  if r["ns3_cell"] == name}.values()
+        assert (cell.frame_bytes, cell.batch) == (int(row["frame_bytes"]), int(row["batch"]))
+        assert cell.lam == float(row["lambda_rec_per_s"])
+        ceiling = max(n for n in range(1, 3000) if drv.optimizer.channel_utilisation(
+            n, cell.lam, cell.batch, cell.frame_bytes) <= 2.435)
+        assert cell.model_n == ceiling
+
+    @pytest.mark.parametrize("name", sorted(k for k, c in drv.CELLS.items()
+                                            if not c.label.startswith(("stream/", "batch/",
+                                                                       "map/"))))
     def test_frame_rate_and_model_value(self, name: str) -> None:
         cell = drv.CELLS[name]
         op = {50.0: "adopted", 20.0: "relaxed"}[cell.lam]
@@ -323,9 +338,16 @@ class TestOnePeriodOfJitterIsAcceptedByTheScenario:
         assert drv.one_period_ms(116) == pytest.approx(1000.0 / 116, rel=1e-12)
 
     def test_every_rate_used_before_is_unchanged(self) -> None:
-        for fps in sorted({c.fps for c in drv.CELLS.values()}):
+        # "before": the cells of 2026-10-09; the revision's design-map cells came later and
+        # some of their rates (7.142857… /s, 33.33… /s) are ones the step-down applies to.
+        for fps in sorted({c.fps for c in drv.CELLS.values() if not c.label.startswith("map/")}):
             assert drv.one_period_ms(fps) == 1000.0 / fps, fps
             assert drv.source_of("period", fps) == (1000.0 / fps, 0.0)
+
+    def test_every_rate_of_the_design_map_passes_the_guard(self) -> None:
+        for fps in sorted({c.fps for c in drv.CELLS.values() if c.label.startswith("map/")}):
+            assert self._guard_accepts(drv.one_period_ms(fps), fps), fps
+            assert drv.one_period_ms(fps) == pytest.approx(1000.0 / fps, rel=1e-12)
 
     def test_a_sweep_of_rates_never_trips_the_guard(self) -> None:
         for fps in [x / 2 for x in range(2, 1000)]:

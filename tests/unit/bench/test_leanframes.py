@@ -43,6 +43,30 @@ class TestChainedRecords:
             leanframes.chained_records(1, 10, stride=0)
 
 
+class TestRecordSpacing:
+    """The design map (revision A2) emits frames at each record rate; the default must not move."""
+
+    def test_the_default_spacing_is_the_published_walk(self) -> None:
+        assert (leanframes.chained_records(2, 30)
+                == leanframes.chained_records(2, 30, step_ms=telemgen.TS_STEP_MS))
+
+    def test_another_spacing_is_its_own_walk_and_its_own_cache_entry(self) -> None:
+        leanframes.generator_records(3, 200)                       # warm the 50 ms walk
+        fine = leanframes.generator_records(3, 120, step_ms=20)
+        assert fine == telemgen.samples(seed=3, n=120, step_ms=20)
+        assert leanframes.generator_records(3, 120) == telemgen.samples(seed=3, n=120)
+
+    def test_records_are_step_ms_apart_within_the_generator_jitter(self) -> None:
+        recs = leanframes.chained_records(4, 50, step_ms=20)
+        gaps = [b.ts - a.ts for a, b in zip(recs, recs[1:], strict=False)]
+        assert all(17 <= g <= 23 for g in gaps)
+
+    def test_frame_sizes_at_the_default_spacing_are_unchanged(self) -> None:
+        assert (leanframes.lean_frame_sizes(4, seeds=(1, 2), n=200)
+                == leanframes.lean_frame_sizes(4, seeds=(1, 2), n=200,
+                                               step_ms=telemgen.TS_STEP_MS))
+
+
 class TestRecordSizes:
     def test_the_lean_record_is_about_24_bytes_alone_and_9_as_a_difference(self) -> None:
         key, delta = leanframes.lean_record_sizes()

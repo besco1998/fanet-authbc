@@ -53,26 +53,33 @@ class SizeStats:
         return cls(mean=mean(sizes), lo=min(sizes), hi=max(sizes), n=len(sizes))
 
 
-_STREAMS: dict[int, list[telemgen.TelemetryRecord]] = {}
+_STREAMS: dict[tuple[int, int], list[telemgen.TelemetryRecord]] = {}
 
 
-def generator_records(seed: int, n: int) -> list[telemgen.TelemetryRecord]:
-    """The first `n` records of the seeded generator stream.
+def generator_records(seed: int, n: int, *, step_ms: int = telemgen.TS_STEP_MS
+                      ) -> list[telemgen.TelemetryRecord]:
+    """The first `n` records of the seeded generator stream, `step_ms` apart.
 
     The generator is sequential, so a shorter stream is a prefix of a longer one from the same
     seed (`tests/unit/bench/test_leanframes.py` holds this). Sweeping the record spacing asks for
     the same thirty streams at many lengths; each is generated once, at the longest length asked
     for so far, and sliced.
+
+    `step_ms` other than the default generates the walk at that spacing (the revision's design
+    map, `analysis/design_map.py`, emits frames at each record rate). It is not the same walk
+    thinned: a `stride` keeps every k-th record of the 50 ms walk.
     """
-    have = _STREAMS.get(seed, [])
+    key = (seed, step_ms)
+    have = _STREAMS.get(key, [])
     if len(have) < n:
-        have = _STREAMS[seed] = telemgen.samples(seed=seed, n=max(n, 2 * len(have)))
+        have = _STREAMS[key] = telemgen.samples(seed=seed, n=max(n, 2 * len(have)),
+                                                step_ms=step_ms)
     return have[:n]
 
 
 def chained_records(seed: int, n: int, *, src: int = CONVENTION_SRC,
                     base_seq: int = CONVENTION_BASE_SEQ, ts0: int = CONVENTION_TS0_MS,
-                    stride: int = 1) -> list[Record]:
+                    stride: int = 1, step_ms: int = telemgen.TS_STEP_MS) -> list[Record]:
     """`n` consecutive chained ledger records from the seeded generator, mid-flight.
 
     The telemetry is the generator's; `src`, `seq` and the time origin are placed where the caller
@@ -81,15 +88,15 @@ def chained_records(seed: int, n: int, *, src: int = CONVENTION_SRC,
     """
     if stride < 1:
         raise ValueError(f"stride must be ≥ 1, got {stride}")
-    return list(_chained(seed, n, src, base_seq, ts0, stride))
+    return list(_chained(seed, n, src, base_seq, ts0, stride, step_ms))
 
 
 @cache
 def _chained(seed: int, n: int, src: int, base_seq: int, ts0: int,
-             stride: int) -> tuple[Record, ...]:
+             stride: int, step_ms: int) -> tuple[Record, ...]:
     # Cached: every measurement of one stream needs the same n SHA-256 chain links, and the
     # frame-size sweeps ask for the same thirty streams a dozen times over.
-    raw = generator_records(seed, n * stride)[::stride]
+    raw = generator_records(seed, n * stride, step_ms=step_ms)[::stride]
     t_first = raw[0].ts
     recs: list[Record] = []
     ph = bytes(32)
@@ -141,7 +148,8 @@ def lean_frame_sizes(batch: int, ref_interval: int = 1, *, inline: bool = False,
                      seeds: Sequence[int] = SIZE_SEEDS, n: int = RECORDS_PER_SEED,
                      stride: int = 1, src: int = CONVENTION_SRC,
                      base_seq: int = CONVENTION_BASE_SEQ, ts0: int = CONVENTION_TS0_MS,
-                     sig_bytes: int = SIG_BYTES) -> SizeStats:
+                     sig_bytes: int = SIG_BYTES,
+                     step_ms: int = telemgen.TS_STEP_MS) -> SizeStats:
     """Lengths of emitted lean frames of `batch` records, one self-contained frame per interval.
 
     The signature is `sig_bytes` of zeros: a frame's length does not depend on the signature's
@@ -155,7 +163,7 @@ def lean_frame_sizes(batch: int, ref_interval: int = 1, *, inline: bool = False,
     sizes: list[int] = []
     for seed in seeds:
         recs = chained_records(seed, n - n % batch, stride=stride, src=src, base_seq=base_seq,
-                               ts0=ts0)
+                               ts0=ts0, step_ms=step_ms)
         for k, start in enumerate(range(0, len(recs), batch)):
             chunk = recs[start:start + batch]
             prev = recs[start - 1] if k % ref_interval else None

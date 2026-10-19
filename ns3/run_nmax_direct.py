@@ -107,6 +107,23 @@ CELLS: dict[str, Cell] = {
     "B2": Cell("batch/lean-2", 155, 2, 50.0, 75),
     "B3": Cell("batch/lean-3", 164, 3, 50.0, 113),
     "B8": Cell("batch/lean-8", 209, 8, 50.0, 215),
+    # --- revision A2 (predictions/A2.md): the design map's validation cells. MB<Λ> is the lean
+    #     one-record frame at Λ records/s, MD<Λ>-<D> the lean frame of b* records the deadline
+    #     D admits, both as emitted at that record spacing (analysis/design_map.py). Λ = 50 is
+    #     the published C and D. Simulated into results/raw/ns3_design_map_runs.csv. ---
+    "MB10": Cell("map/base-10", 146, 1, 10.0, 184),
+    "MB20": Cell("map/base-20", 146, 1, 20.0, 101),
+    "MB25": Cell("map/base-25", 146, 1, 25.0, 78),
+    "MB40": Cell("map/base-40", 146, 1, 40.0, 42),
+    "MB75": Cell("map/base-75", 146, 1, 75.0, 26),
+    "MB100": Cell("map/base-100", 146, 1, 100.0, 22),
+    "MD10-500": Cell("map/design-10-500", 176, 4, 10.0, 404),
+    "MD40-100": Cell("map/design-40-100", 164, 3, 40.0, 138),
+    "MD50-150": Cell("map/design-50-150", 200, 7, 50.0, 200),
+    "MD75-200": Cell("map/design-75-200", 263, 14, 75.0, 213),
+    "MD100-40": Cell("map/design-100-40", 164, 3, 100.0, 48),
+    "MD100-500": Cell("map/design-100-500", 580, 49, 100.0, 260),
+    "MD100-100": Cell("map/design-100-100", 218, 9, 100.0, 136),     # beyond the plan's ten
 }
 
 
