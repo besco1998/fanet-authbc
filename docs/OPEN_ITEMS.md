@@ -182,6 +182,8 @@ R1–R18 (`DECISIONS.md`).*
 | **H2** | **Bootstrap intervals of a mean at 30 seeds cover 92–94 %** (F86) | **OPEN — Mohamed's** | Every V interval in the paper is about a tenth too narrow | Keep (and say so), or recompute V intervals as t-intervals; crossing intervals to be checked the same way |
 | **H3** | **Part B of the plan needs purchases or flights** (B1 radio for monitor mode, B2 three to eight radios, B3 power profiler, B4/B5 drones) | **OPEN — Mohamed's** | No hardware capacity exists; B1 may explain the below-saturation mismatch (F73) | Decide purchases; G4 is the same question |
 | **H4** | **The Pi boards are off** (2026-10-19) | **OPEN** | A7, A8, A13 and A15 measure on pi-B; host numbers are prepared but are never Pi numbers | Switch pi-B on (192.168.1.20) |
+| **H6** | **NR sidelink (A11) not run** | **OPEN** | The plan's most relevant 3GPP link; needs the 5G-LENA NR V2X module, released against its own ns-3 version, built beside 3.48 | Build 5G-LENA on its pinned ns-3; register the plan's 1.5–2.5× before running |
+| **H7** | **A9 flights need a quiet host** (2026-10-20) | **OPEN** | PX4's SIH simulator runs in lockstep with the wall clock; at load 25+ the fixed wing lost its barometer, compass and position and fell into failsafe repeatedly (test mission 99) | Fly missions 1–10 of each airframe after the ns-3 campaigns, alone on the host |
 | **H5** | **Hidden-terminal broadcast models not yet read** (IEEE Access 2020, doi:10.1109/ACCESS.2020.3027550; EURASIP JWCN 2019, doi:10.1186/s13638-019-1548-4; FMAC, IEEE IoT J 2021) | **OPEN** | A1's mechanism and A4's controller must be placed against them before entering the paper | Read in full; credit; state what is added |
 
 ## What is genuinely settled
