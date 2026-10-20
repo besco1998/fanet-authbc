@@ -7,8 +7,11 @@
 # cbor2=5.8.0
 # msgpack=1.2.1
 # run=links_identity
-# config_hash=74d0ac25022dc00f
-cell,n_nodes,seed,jitter_ms,tx_frames,rx_frames,delivered_frac
-C,35,1,20,34953,1128052,0.949218
-C,35,2,20,34944,1130568,0.95158
-D,124,1,80,30812,3598980,0.94963
+# config_hash=faaf4c7c35236912
+cell,n_nodes,seed,traced,jitter_ms,tx_frames,rx_frames,delivered_frac
+C,35,1,0,20,34953,1128052,0.949218
+C,35,1,1,20,34953,1128052,0.949218
+C,35,2,0,20,34944,1130568,0.95158
+C,35,2,1,20,34944,1130568,0.95158
+D,124,1,0,80,30812,3598980,0.94963
+D,124,1,1,80,30812,3598980,0.94963

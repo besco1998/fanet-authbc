@@ -32,3 +32,10 @@ def test_every_recorded_identity_run_equals_the_published_run() -> None:
 
 def test_the_check_covers_both_published_frames() -> None:
     assert {c["cell"] for c in _rows(RAW / "links_identity.csv")} >= {"C", "D"}
+
+
+def test_a_traced_run_is_the_untraced_run() -> None:
+    # tracing once moved the random streams (2026-10-20): every check is made both ways
+    checks = _rows(RAW / "links_identity.csv")
+    assert {(c["cell"], c["seed"]) for c in checks if c["traced"] == "1"} == {
+        (c["cell"], c["seed"]) for c in checks if c["traced"] == "0"}

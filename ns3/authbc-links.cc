@@ -268,9 +268,12 @@ main(int argc, char* argv[])
     nodes.Create(nNodes);
     if (traceLinks > 0)
     {
-        // a stream of its own (12288), drawn only here: with traceLinks = 0 nothing moves
-        Ptr<UniformRandomVariable> pick = CreateObject<UniformRandomVariable>();
-        pick->SetStream(12288);
+        // A stream of its own (12288), set AT CONSTRUCTION: constructed with the default and
+        // then SetStream, the variable first takes the next automatic stream index, and every
+        // stream assigned after it (backoff, fading) shifts — a traced run was then not the
+        // untraced run of the same seed. Held by results/raw/links_identity.csv.
+        Ptr<UniformRandomVariable> pick =
+            CreateObjectWithAttributes<UniformRandomVariable>("Stream", IntegerValue(12288));
         while (g_tracePairs.size() < traceLinks)
         {
             const uint32_t a = pick->GetInteger(0, nNodes - 1);

@@ -398,10 +398,11 @@ main(int argc, char* argv[])
     for (uint32_t i = 0; i < nNodes; ++i) g_mob.push_back(g_nodes.Get(i)->GetObject<MobilityModel>());
     if (traceLinks > 0)
     {
-        // pairs that are neighbours where the nodes start; a stream of their own (12288), so
-        // that choosing them moves no other random number
-        Ptr<UniformRandomVariable> pick = CreateObject<UniformRandomVariable>();
-        pick->SetStream(12288);
+        // Pairs that are neighbours where the nodes start, drawn from a stream of their own
+        // (12288) set AT CONSTRUCTION: set afterwards, the variable would first take the next
+        // automatic stream index and shift every later one (see authbc-links.cc).
+        Ptr<UniformRandomVariable> pick =
+            CreateObjectWithAttributes<UniformRandomVariable>("Stream", IntegerValue(12288));
         for (uint32_t tries = 0; g_traced.size() < traceLinks && tries < 100000; ++tries)
         {
             const uint32_t s = pick->GetInteger(0, nNodes - 1);

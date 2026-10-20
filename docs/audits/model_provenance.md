@@ -4318,3 +4318,37 @@ decision (open item H2).
 **The general lesson, again small-sample.** A tolerance for "measured within x of the model"
 must come from the interval's width at the sample size used, and a claim over many cells must
 expect its share of misses. Two of my A3 predictions failed for exactly these reasons.
+
+## F87 — a traced ns-3 run was not its seed's untraced run: F37's mechanism, entered again (2026-10-20)
+
+*Found while preparing revision A3 part 2; before any traced run was kept.*
+
+**What was seen.** A smoke run of the spatial scenario with `--traceLinks 5` and the same run
+without it (20 nodes, 2 s, seed 1) gave different summaries: 471 against 470 frames sent,
+delivery 1.000 against 0.996. Two untraced runs were identical.
+
+**Cause.** The trace option picks its links from a random variable meant to have a stream of its
+own: `CreateObject<UniformRandomVariable>()` then `SetStream(12288)`. ns-3 constructs the variable
+with its `Stream` attribute at the default −1 first, and −1 takes the next automatic stream index
+(`RandomVariableStream::SetStream`, `ObjectBase::ConstructSelf` in ns-3.48's source) — so every
+variable created after it (backoff, fading) drew from a stream one index further on. The code's
+comment said the opposite ("so that choosing them moves no other random number"); it was not
+checked. The same pattern was in `authbc-links.cc`, whose traced runs are revision A10.
+
+**Fix.** Both scenarios build the variable with the stream as a construction attribute,
+`CreateObjectWithAttributes<UniformRandomVariable>("Stream", IntegerValue(12288))`: no automatic
+index is taken. The links identity record (`results/raw/links_identity.csv`) now runs each check
+traced and untraced, and `tests/test_links_scenario.py` requires both to equal the published run.
+The spatial scenario gets the same check before A3's trace runs (its binary is in use by A1
+stage 2 until then).
+
+**What it touched.** Nothing kept: A1's runs are untraced (the option absent changes nothing,
+checked when the trace code was added); A10's first launch was stopped after 12 s with no run
+written. **What it would have done:** traced runs that are honest samples of the scenario but
+not the runs the registrations and identity checks name — the kind of difference F37 turned into
+a 5-point "mobility penalty".
+
+**The lesson.** F37's fix was "pin streams by node id"; the rule it implies is wider: in ns-3,
+*creating* a random variable moves the stream of everything created after it, whatever is done
+to it afterwards. Any option that is meant not to change a run is checked by running with and
+without it and requiring identical output.

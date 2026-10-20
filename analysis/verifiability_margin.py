@@ -14,6 +14,14 @@ run, so it is applied here and not simulated. A frame counts only if `LeanReceiv
 verifies and stores it. Registration: `predictions/A3.md`.
 
     python analysis/verifiability_margin.py --run      # results/raw/verifiability_margin.csv
+
+Part 2 replaces the loss process by ns-3's: per-link success sequences of A1's spatial runs
+(`ns3/run_spatial.py --trace-links 50`), replayed frame by frame through the same codec. V is
+averaged over a run's links and its interval bootstrapped over runs, not links: the links of one
+run share one channel.
+
+    python analysis/verifiability_margin.py --traces results/raw/ns3_spatial_<stem>_traces
+                                                     # results/raw/verifiability_margin_trace.csv
 """
 from __future__ import annotations
 
@@ -38,6 +46,7 @@ from authbc.models import frame as frame_model  # noqa: E402
 from authbc.placement.session_v2 import LeanReceiver, LeanSender, Receipt  # noqa: E402
 
 OUT = REPO / "results" / "raw" / "verifiability_margin.csv"
+OUT_TRACE = REPO / "results" / "raw" / "verifiability_margin_trace.csv"
 P_VALUES: tuple[float, ...] = (0.01, 0.02, 0.03, 0.05, 0.08)
 EPSILONS: tuple[float, ...] = (0.05, 0.08, 0.10)
 BATCHES: tuple[int, ...] = (1, 2, 3, 4)
@@ -112,12 +121,96 @@ def cell(job: tuple[int, int]) -> list[dict]:
     return rows
 
 
+# --------------------------------------------------------------------------- part 2: ns-3 traces
+def read_traces(path: Path) -> list[np.ndarray]:
+    """One run's traced links as lost-frame masks, each in the order its source sent."""
+    rows = csv.DictReader(path.read_text().splitlines())
+    return [np.frombuffer(r["got"].encode(), dtype=np.uint8) == ord("0") for r in rows]
+
+
+def burst_stats(masks: list[np.ndarray]) -> tuple[int, int]:
+    """(frames lost, runs of consecutive lost frames) over all masks; their ratio is the mean
+    burst."""
+    lost = bursts = 0
+    for m in masks:
+        edges = np.diff(np.concatenate(([0], m.astype(np.int8), [0])))
+        lost += int(m.sum())
+        bursts += int((edges == 1).sum())
+    return lost, bursts
+
+
+def v_of_masks(frames: list[bytes], pk: object, masks: list[np.ndarray]) -> list[float]:
+    """V of each mask: the frames the real receiver decodes, verifies and stores, over those sent.
+    `frames` is one sender's stream, at least as long as every mask."""
+    out = []
+    for lost in masks:
+        if len(lost) > len(frames):
+            raise ValueError(f"a trace of {len(lost)} frames, a stream of {len(frames)}")
+        rx = LeanReceiver({leanframes.CONVENTION_SRC: pk})
+        for data, gone in zip(frames, lost, strict=False):
+            if not gone:
+                rx.receive(data)
+        odd = {x: c for x, c in rx.counters.items()
+               if c and x not in (Receipt.ACCEPTED, Receipt.DESYNC)}
+        if odd:
+            raise RuntimeError(f"a loss-only link produced {odd}")
+        out.append(rx.counters[Receipt.ACCEPTED] / len(lost))
+    return out
+
+
+def trace_cell(job: tuple[int, int, dict[str, list[list[np.ndarray]]]]) -> list[dict]:
+    """Every group of runs through frames of `batch` records with one reference per `ref`."""
+    batch, ref, groups = job
+    sk, pk = Ed25519Scheme().keygen(seed=bytes(range(32)))
+    longest = max(len(m) for runs in groups.values() for run in runs for m in run)
+    recs = leanframes.chained_records(1, longest * batch)
+    sender = LeanSender(sk, ref_interval=ref)
+    frames = [sender.frame(recs[i:i + batch]) for i in range(0, len(recs), batch)]
+    rows = []
+    for label, runs in groups.items():
+        v_run = [st.mean(v_of_masks(frames, pk, run)) for run in runs]
+        masks = [m for run in runs for m in run]
+        lost, bursts = burst_stats(masks)
+        p_hat = lost / sum(len(m) for m in masks)
+        lo, hi = bootstrap_ci(v_run, seed=CI_SEED, statistic=np.mean)
+        v = st.mean(v_run)
+        v_iid = frame_model.verifiability(p_hat, ref)
+        v_g8 = frame_model.verifiability_gilbert(p_hat, 8.0, ref)
+        row = {"group": label, "runs": len(runs), "links": len(masks), "batch": batch,
+               "ref_interval": ref, "p_hat": round(p_hat, 5),
+               "mean_burst": round(lost / bursts, 3) if bursts else "",
+               "V_trace": round(v, 5), "V_ci_lo": round(lo, 5), "V_ci_hi": round(hi, 5),
+               "V_iid": round(v_iid, 5), "V_gilbert8": round(v_g8, 5),
+               "between_iid_and_gilbert8": int(min(v_iid, v_g8) <= v <= max(v_iid, v_g8))}
+        for eps in EPSILONS:
+            row[f"meets_eps{eps:g}"] = int(v >= 1 - eps)
+            row[f"margin_eps{eps:g}"] = round(v - (1 - eps), 5)
+        rows.append(row)
+    return rows
+
+
+def read_trace_dir(trace_dir: Path) -> dict[str, list[list[np.ndarray]]]:
+    """Runs grouped by (scenario, configuration, node count): `<scen>.<cfg>.<n>.<seed>.csv`."""
+    groups: dict[str, list[list[np.ndarray]]] = {}
+    for f in sorted(trace_dir.glob("*.csv"), key=lambda f: (f.stem.rsplit(".", 1)[0],
+                                                             int(f.stem.rsplit(".", 1)[1]))):
+        groups.setdefault(f.stem.rsplit(".", 1)[0], []).append(read_traces(f))
+    if not groups:
+        raise SystemExit(f"no traces in {trace_dir}")
+    return groups
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--run", action="store_true", required=True)
+    mode = ap.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--run", action="store_true", help="part 1: the synthetic loss processes")
+    mode.add_argument("--traces", type=Path, help="part 2: a directory of ns-3 link traces")
     ap.add_argument("--workers", type=int, default=3)
     args = ap.parse_args()
+    if args.traces:
+        main_traces(args.traces, args.workers)
+        return
     jobs = [(b, r) for b in BATCHES for r in REF_INTERVALS]
     with Pool(args.workers) as pool:
         rows = [row for part in pool.map(cell, jobs) for row in part]
@@ -132,6 +225,24 @@ def main() -> None:
     w.writerows(rows)
     OUT.write_text(buf.getvalue())
     print(f"{len(rows)} cells -> {OUT}")
+
+
+def main_traces(trace_dir: Path, workers: int) -> None:
+    groups = read_trace_dir(trace_dir)
+    with Pool(workers) as pool:
+        rows = [row for part in pool.map(trace_cell, [(b, r, groups) for b in BATCHES
+                                                      for r in REF_INTERVALS]) for row in part]
+    buf = io.StringIO()
+    config = {"traces": trace_dir.name, "eps": EPSILONS, "b": BATCHES, "r": REF_INTERVALS,
+              "ci": CI_SEED}
+    for k, v in {**provenance.env_block(), "run": "verifiability_margin_trace",
+                 "config_hash": provenance.config_hash(config)}.items():
+        buf.write(f"# {k}={v}\n")
+    w = csv.DictWriter(buf, fieldnames=list(rows[0]), lineterminator="\n")
+    w.writeheader()
+    w.writerows(rows)
+    OUT_TRACE.write_text(buf.getvalue())
+    print(f"{len(rows)} cells -> {OUT_TRACE}")
 
 
 if __name__ == "__main__":

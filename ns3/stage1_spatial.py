@@ -63,7 +63,7 @@ def main() -> None:
                 if (r["scenario"], r["config"], int(r["n_nodes"])) == (scen, cfg, n)]
 
     def one(scen: str, cfg: str, n: int, seed: int) -> None:
-        got, _, positions = rs.run_one(known[scen], rs.CONFIGS[cfg], n, seed, args.sim_time)
+        got, _, positions, _ = rs.run_one(known[scen], rs.CONFIGS[cfg], n, seed, args.sim_time)
         if known[scen].layout in ("disc", "clusters"):
             pos_dir.mkdir(exist_ok=True)
             where = pos_dir / f"{scen}.{n}.{seed}.csv"

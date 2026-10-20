@@ -86,17 +86,19 @@ def binary() -> tuple[Path, Path]:
     return root, root / "build" / "scratch" / "ns3.48-authbc-spatial-optimized"
 
 
-def run_one(scenario: Scenario, cfg: Config, n: int, seed: int, sim_time: float
-            ) -> tuple[dict[str, float], str, str]:
-    """One run: the scenario's key/value summary, its per-pair file if it wrote one, and where
-    the nodes were (at the end of the run; for a static layout, throughout)."""
+def run_one(scenario: Scenario, cfg: Config, n: int, seed: int, sim_time: float,
+            trace_links: int = 0) -> tuple[dict[str, float], str, str, str]:
+    """One run: the scenario's key/value summary, its per-pair file if it wrote one, where the
+    nodes were (at the end of the run; for a static layout, throughout), and the per-link
+    traces when `trace_links` > 0 (revision A3, part 2)."""
     root, exe = binary()
     with tempfile.TemporaryDirectory() as td:
         prefix = Path(td) / "s"
         args = [f"--layout={scenario.layout}", f"--nNodes={n}",
                 f"--frameSize={cfg.frame_bytes}", f"--framesPerSec={cfg.frames_per_s!r}",
                 f"--simTime={sim_time!r}", f"--seed={seed}", f"--outPrefix={prefix}",
-                *(f"--{k}={v}" for k, v in scenario.args)]
+                *(f"--{k}={v}" for k, v in scenario.args),
+                *([f"--traceLinks={trace_links}"] if trace_links else [])]
         subprocess.run([str(exe), *args], cwd=root, check=True,
                        env={**os.environ, "LD_LIBRARY_PATH": str(root / "build" / "lib")},
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -104,7 +106,8 @@ def run_one(scenario: Scenario, cfg: Config, n: int, seed: int, sim_time: float
         pairs = Path(f"{prefix}_pairs.csv")
         pair_text = pairs.read_text() if pairs.exists() else ""
         positions = Path(f"{prefix}_pos.csv").read_text()
-    return {k: float(v) for k, v in rows.items()}, pair_text, positions
+        trace_text = Path(f"{prefix}_trace.csv").read_text() if trace_links else ""
+    return {k: float(v) for k, v in rows.items()}, pair_text, positions, trace_text
 
 
 def read_plan(path: Path, known: dict[str, Scenario]) -> list[tuple[str, str, list[int]]]:
@@ -153,6 +156,8 @@ def main() -> None:
     ap.add_argument("--d-ref", type=float, default=D_REF_M,
                     help="neighbour distance in m (the measured d_ref)")
     ap.add_argument("--workers", type=int, default=12)
+    ap.add_argument("--trace-links", type=int, default=0,
+                    help="neighbour pairs whose every frame is kept (A3 part 2); 0 = none")
     args = ap.parse_args()
     known = scenarios(args.d_ref)
     plan = read_plan(args.plan, known)
@@ -164,6 +169,7 @@ def main() -> None:
     # A placement depends on (layout, N, seed) and not on the frame, so one file serves every
     # configuration; the hidden-station share of the analysis is computed from it.
     pos_dir = RAW / f"ns3_spatial_{args.stem}_positions"
+    trace_dir = RAW / f"ns3_spatial_{args.stem}_traces"
     runs = read_runs(path)
     done = {_key(r) for r in runs}
     todo = [(s, c, n, seed) for s, c, ns in plan for n in ns
@@ -172,10 +178,16 @@ def main() -> None:
     config = {"seeds": args.seeds, "t": args.sim_time, "d_ref": args.d_ref,
               "configs": {k: asdict(v) for k, v in CONFIGS.items()},
               "scenarios": {s: asdict(known[s]) for s, _, _ in plan}}
+    if args.trace_links:   # only then, so the hash of every untraced campaign is unchanged
+        config["trace_links"] = args.trace_links
 
     def job(t: tuple[str, str, int, int]) -> dict:
         scen, cfg, n, seed = t
-        got, pairs, positions = run_one(known[scen], CONFIGS[cfg], n, seed, args.sim_time)
+        got, pairs, positions, traces = run_one(known[scen], CONFIGS[cfg], n, seed,
+                                                args.sim_time, args.trace_links)
+        if traces:
+            trace_dir.mkdir(exist_ok=True)
+            (trace_dir / f"{scen}.{cfg}.{n}.{seed}.csv").write_text(traces)
         if pairs:
             pair_dir.mkdir(exist_ok=True)
             (pair_dir / f"{scen}.{cfg}.{n}.{seed}.csv").write_text(pairs)
