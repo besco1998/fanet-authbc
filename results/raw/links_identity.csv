@@ -1,0 +1,14 @@
+# python=3.12.3
+# platform=Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=links_identity
+# config_hash=74d0ac25022dc00f
+cell,n_nodes,seed,jitter_ms,tx_frames,rx_frames,delivered_frac
+C,35,1,20,34953,1128052,0.949218
+C,35,2,20,34944,1130568,0.95158
+D,124,1,80,30812,3598980,0.94963

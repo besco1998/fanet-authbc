@@ -1,0 +1,12 @@
+# Revision A10 (predictions/A10.md): the stream-signing schemes' frames in the published
+# scenario, 30 seeds, 20 traced links per run. Grids reach below the delivery crossing so that a
+# lower in-time crossing is bracketed too. Costliest first.
+LTB 131 136 141 146 151
+LST 26 30 34 36 38 39 40 41 42 43
+LSM 39 40 41 42 43 44 45
+LSG 37 38 39 40 41 42
+LSE 32 33 34 35 36 37
+LE16 30 31 32 33 34 35 36
+LE8 28 29 30 31 32 33 34
+LE4 20 23 25 26 27 28 29 30
+LSW 26 27 28 29 30 31
