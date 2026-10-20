@@ -19,7 +19,7 @@ as memory-capped systemd user units (`scripts/capped.sh`; `systemctl --user list
 | A9 | registered `prereg-A9` (size code reproduces the encoder on 9 fields, tested); flights need a quiet host (H7) | SIH flies all three airframes; fixed-wing needed two parameters (stated) |
 | A10 | registered `prereg-A10`; schemes ✔ (tests); **queued** after A12 | |
 | A11 | registered `prereg-A11`; **queued** after A10; NR sidelink not run (H6) | the no-fit model puts the ratio at 3.4–3.8 on every PHY, not 1.7–4.3 |
-| A12 | registered `prereg-A12`; **running** | |
+| A12 | ✔ (330 runs) | delivery follows the total frame rate: every plan statement held, the model within 0.0011 up to 350 frames/s per node; eight radios can stand for 124 nodes in ns-3 |
 | A13 | not started — depends on A8's timing on pi-B | |
 | A14 | not started — the plan's lowest priority ("keep for a follow-up paper") | |
 | A15 | capacity ✔; timing waits for a quiet host / pi-B | Falcon fits; the design with it serves 43.5 nodes; the ratio is 3.5, as with Ed25519 (the plan's "larger" failed) |

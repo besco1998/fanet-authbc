@@ -60,3 +60,10 @@ def test_nothing_is_scored_before_the_runs(tmp_path: Path,
     monkeypatch.setattr(nf, "PREDICTIONS", REPO / "results" / "raw" /
                         "nf_equivalence_predictions.csv")
     assert nf.score() == []
+
+
+def test_the_reference_split_is_the_papers_configuration() -> None:
+    with (REPO / "results" / "raw" / "nf_equivalence_predictions.csv").open() as fh:
+        reg = list(csv.DictReader(ln for ln in fh if not ln.startswith("#")))
+    assert nf.reference_split([r for r in reg if r["frame_bytes"] == "173"], 173) == ("D", 124)
+    assert nf.reference_split([r for r in reg if r["frame_bytes"] == "146"], 146) == ("C", 35)

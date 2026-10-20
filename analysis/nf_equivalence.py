@@ -40,7 +40,8 @@ PREDICTIONS = RAW / "nf_equivalence_predictions.csv"
 OUT = RAW / "nf_equivalence.csv"
 STEM = "ns3_nf_equivalence"
 SEEDS = 30
-# (ns-3 cell, frame bytes, N, frames/s per node); the reference split of each group first
+# (ns-3 cell, frame bytes, N, frames/s per node); a group's reference split is the one at the
+# paper's own rate (REFERENCE), wherever it is listed
 SPLITS: tuple[tuple[str, int, int, float], ...] = (
     ("D", 173, 124, 12.5), ("NFD25", 173, 62, 25.0), ("NFD50", 173, 31, 50.0),
     ("NFD97", 173, 16, 97.0), ("NFD194", 173, 8, 194.0),
@@ -125,6 +126,15 @@ def interpolate(curve: dict[int, float], x: float) -> float | None:
     return curve[lo] if hi == lo else curve[lo] + (curve[hi] - curve[lo]) * (x - lo) / (hi - lo)
 
 
+def reference_split(group: list[dict[str, str]], frame: int) -> tuple[str, int]:
+    """The paper's configuration among a group's splits: the one at the frame's own rate.
+
+    Not the first listed — the base group lists (70, 25) before cell C (35, 50), and a first
+    scoring took (70, 25) as the reference (caught before the outcome was written)."""
+    (ref,) = [r for r in group if float(r["frames_per_s"]) == REFERENCE[frame]]
+    return ref["ns3_cell"], int(ref["n_nodes"])
+
+
 def score() -> list[dict]:
     with PREDICTIONS.open(encoding="utf-8") as fh:
         reg = list(csv.DictReader(ln for ln in fh if not ln.startswith("#")))
@@ -132,7 +142,7 @@ def score() -> list[dict]:
     rows = []
     for frame in (173, 146):
         group = [r for r in reg if int(r["frame_bytes"]) == frame]
-        ref_key = (group[0]["ns3_cell"], int(group[0]["n_nodes"]))
+        ref_key = reference_split(group, frame)
         if ref_key not in got:
             continue
         curve = reference_curve(frame)
