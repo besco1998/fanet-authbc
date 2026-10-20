@@ -25,9 +25,9 @@ IMPORT_NAME = {"pyyaml": "yaml"}
 # Imported by one tool that the test suite never runs, inside the function that needs it. Each
 # entry names the only file allowed to import it, and why it is not a dependency.
 OUTSIDE = {
-    "pymavlink": ("analysis/px4_sitl_flight.py",
-                  "flies the simulated mission; run with PX4's own Python environment"),
-    "pypdf": ("analysis/direction_c_survey.py",
+    "pymavlink": (frozenset({"analysis/px4_sitl_flight.py", "analysis/px4_airframe_flight.py"}),
+                  "flies the simulated missions; run with PX4's own Python environment"),
+    "pypdf": (frozenset({"analysis/direction_c_survey.py"}),
               "a one-off literature sweep over PDFs that are not in the repository"),
 }
 
@@ -93,13 +93,13 @@ def test_the_flight_log_reader_is_pinned() -> None:
 
 def test_a_package_kept_outside_is_used_only_where_stated_and_only_on_demand() -> None:
     found = _third_party()
-    for name, (only_file, _why) in OUTSIDE.items():
+    for name, (only_files, _why) in OUTSIDE.items():
         uses = found.get(name, [])
         assert uses, f"{name} is no longer imported anywhere: remove it from OUTSIDE"
-        assert {f for f, _ in uses} == {only_file}, (name, uses)
+        assert {f for f, _ in uses} == only_files, (name, uses)
         assert not any(top for _, top in uses), (
-            f"{name} is imported at module level in {only_file}: importing that file would "
-            "then need a package that is not installed")
+            f"{name} is imported at module level in {sorted(only_files)}: importing that file "
+            "would then need a package that is not installed")
 
 
 def test_nothing_is_both_declared_and_kept_outside() -> None:

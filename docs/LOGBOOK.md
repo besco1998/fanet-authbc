@@ -30,7 +30,11 @@ from under 8 000 lines to 8 617, and ch. 5 still said "nearly eight thousand". A
 stale, caught by the test written for exactly that; local runs of the touched test files had not
 included it. Fix: the sentence says "about eight and a half thousand", the test holds 8 250–8 750
 and now also checks the sentence. The thesis PDF is rebuilt after H1 (it would pick up the
-uncommitted `thesis/numbers.tex`).
+uncommitted `thesis/numbers.tex`). **The next gate (6029148) failed one test the same way:**
+A9's flight script imports `pymavlink`, which is kept out of the declared dependencies and was
+allowed in one named file only; the A9 commit had been checked with its own test file alone. The
+allowance now names both flight scripts. Twice in a day: a commit is checked against the whole
+fast suite, not the files it touched.
 
 **Tamarin (A6): what made the proofs end.** The registered model settled 3 of 9 lemmas; a model
 without the hash chain still did not settle its two counter invariants (heap, 1 GB), and the six
