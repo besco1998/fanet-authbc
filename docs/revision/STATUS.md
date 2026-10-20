@@ -16,7 +16,7 @@ as memory-capped systemd user units (`scripts/capped.sh`; `systemctl --user list
 | A6 | registered model: 3 of 9 lemmas verified, 6 not settled (1 GB heap). **After registration:** lemma 5 in a small timed model — attack trace found without the window, gone with it, bounded-delay freshness proven; lemmas 1–4 in a clock-free model, **running** | the change of model is reported as one |
 | A7 | registered `prereg-A7`; code + tests ✔; timing waits for pi-B (H4) | the tag costs 3 % of capacity (not 2 %) |
 | A8 | registered `prereg-A8`; Rust codec ✔; **byte-identical to Python on 10 000 frames**; timing and energy wait for pi-B (H4, G22) | |
-| A9 | registered draft (`predictions/A9.md`, not committed); flights need a quiet host (H7) | SIH flies all three airframes; fixed-wing needed two parameters (stated) |
+| A9 | registered `prereg-A9` (size code reproduces the encoder on 9 fields, tested); flights need a quiet host (H7) | SIH flies all three airframes; fixed-wing needed two parameters (stated) |
 | A10 | registered `prereg-A10`; schemes ✔ (tests); **queued** after A12 | |
 | A11 | registered `prereg-A11`; **queued** after A10; NR sidelink not run (H6) | the no-fit model puts the ratio at 3.4–3.8 on every PHY, not 1.7–4.3 |
 | A12 | registered `prereg-A12`; **running** | |
