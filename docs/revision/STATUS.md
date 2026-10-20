@@ -8,7 +8,7 @@ as memory-capped systemd user units (`scripts/capped.sh`; `systemctl --user list
 
 | ID | State | What is known |
 |---|---|---|
-| A1 | stage 1 done (430 runs); **stage 2 running** (4 230 runs, `prereg-A1-stage2`) | d_ref = 215 m. Stage 1: ratio ≈ 3.3–3.7 everywhere; at R = 1 000 m the design crosses with ≈ 8 neighbours |
+| A1 | ✔ stage 2 (4 230 runs) | ratio 3.46–3.58 in every layout, equal power to a 1 km disc (hidden share up to 0.11); capacity in neighbours falls (8.7 at R = 1 km), in nodes it rises (218). My A1-2 bracket [10, 40] missed. ⚠️ S3's 5 and 15 m/s are identical runs: group speed untestable in this scenario (F88, H8) |
 | A2 | map ✔, age part ✔ (all held); **ns-3 validation frozen** behind stage 2, resumes automatically | one lost frame, not two, breaks the deadline |
 | A3 | part 1 ✔; part 2 (traces) after A1 stage 2 — code and tests ✔; the spatial binary is rebuilt with the trace fix (below) once stage 2 is done, and a traced run checked equal to its untraced run before the trace runs | tolerable loss held; the margin rule fails in 5 of 192 bursty cells (interval); F86 |
 | A4 | registered `prereg-A4`; **running** (120 runs, 10 seeds) | controller held V ≥ 0.951 on a development ramp after one definitional fix (disclosed) |

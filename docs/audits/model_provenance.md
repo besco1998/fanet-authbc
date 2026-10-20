@@ -4352,3 +4352,28 @@ a 5-point "mobility penalty".
 *creating* a random variable moves the stream of everything created after it, whatever is done
 to it afterwards. Any option that is meant not to change a run is checked by running with and
 without it and requiring identical output.
+
+## F88 — the spatial scenario's group speed cannot change a run (2026-10-20)
+
+*Found while scoring revision A1, stage 2 (`predictions/A1.md`).*
+
+**What was seen.** S3 at 5 m/s and at 15 m/s gave the same crossings to the last digit — and the
+same runs: 450 of 450 identical in every column. Speed 0 differed.
+
+**Cause.** In `ns3/authbc-spatial.cc`, layout `group`, `--speedMps` drives only the group's
+reference point; each member's offset is a random walk at ns-3's default speed (2–4 m/s) that
+does not depend on it, with streams pinned by `AssignStreams`. The channel is log-distance with
+Nakagami fading drawn per frame: positions matter, velocities do not. So every speed above zero
+is a rigid translation of the same relative geometry. The scenario's header comment also said
+the members walk at speed 0; the code holds them still. Neither was checked before the
+registration, which described the sweep as testing "motion up to 15 m/s".
+
+**What it touches.** The plan's motion criterion and my A1-4 are scored HELD for what was run —
+members drifting at 2–4 m/s against members still, |ΔV| ≤ 0.0006 — and the group speeds are
+reported as not tested. Nothing published used S3.
+
+**The lesson.** The tell is F37's in reverse: there, two speeds that should have differed were
+identical because of bookkeeping; here they were identical because the model has no way to tell
+them apart. A sweep over a parameter needs, before it runs, a reason the output *can* depend on
+it — and two settings that agree to the last digit are a reason to look at the model, not a
+result.

@@ -17,8 +17,11 @@
 //             M at the origin, sep = --separationM. A and B cannot always sense each other;
 //             receivers in M hear both: the hidden-station case.
 //   group     S3: one reference point under Gauss-Markov motion at --speedMps mean speed in a
-//             2 km box, 50-150 m altitude; each member a random walk within +-60 m of it.
-//             --speedMps 0 keeps the reference still (members still walk within the box).
+//             2 km box, 50-150 m altitude; each member a random walk (ns-3's default 2-4 m/s)
+//             within +-60 m of it. --speedMps 0 holds the reference AND the members still.
+//             The members' walk does not depend on --speedMps and the channel has no velocity
+//             term, so any speed > 0 gives the same run: the sweep compares drifting members
+//             with still ones, not group speeds (F88).
 //
 // CHANNEL (every layout except point): log-distance, exponent 2, 46.7 dB at 1 m (free space at
 // 5.2 GHz), then Nakagami m = 3 on every link; 20 dBm; frame capture with a 4 dB margin.
