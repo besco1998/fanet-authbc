@@ -1,0 +1,18 @@
+[package]
+name = "authbc-rx"
+version = "0.1.0"
+edition = "2021"
+description = "The lean AUTHBC frame (wire v2) in compiled code: encode, decode, rebuild, verify (revision A8)"
+license = "LicenseRef-AllRightsReserved"
+publish = false
+
+[dependencies]
+ed25519-dalek = { version = "=2.1.1", features = ["batch", "rand_core"] }
+sha2 = "=0.10.8"
+serde_json = "=1.0.128"
+hex = "=0.4.3"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
