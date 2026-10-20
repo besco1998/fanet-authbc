@@ -3,6 +3,7 @@
 //!   authbc-rx encode  RECORDS.jsonl SK_HEX BATCH  > FRAMES.bin   sign frames of BATCH records
 //!   authbc-rx verify  FRAMES.bin PK_HEX                          decode, rebuild, verify each
 //!   authbc-rx bench   FRAMES.bin PK_HEX REPS                     time the receive path
+//!   authbc-rx lazy    FRAMES.bin PK_HEX REPS                     time the two tiers (A13)
 //!
 //! A frames file is a sequence of (u32 big-endian length, frame bytes). A records file has one
 //! JSON object per line: {"src", "seq", "ts", "ph" (hex), "pl": [lat, lon, alt, vel_x, vel_y,
@@ -110,8 +111,46 @@ fn main() {
             println!("batch64_verify_ns_per_frame,{:.0}", median(batch64));
             println!("frames,{}", frames.len());
         }
+        Some("lazy") => {
+            // Revision A13: a real-time tier (an 8 B group tag, then decode and rebuild: the
+            // records are usable at once) and an evidence tier (Ed25519 in batches of 64, as
+            // the ledger is written). The tags are made here, as the senders would make them;
+            // only their checking is timed.
+            use hmac::{Hmac, Mac};
+            type HmacSha256 = Hmac<sha2::Sha256>;
+            let pk = VerifyingKey::from_bytes(&key32(&args[3])).expect("public key");
+            let frames = read_frames(&args[2]);
+            let reps: usize = args[4].parse().unwrap();
+            let key = b"swarm group key (A13 bench)";
+            let tag = |f: &[u8]| {
+                let mut m = HmacSha256::new_from_slice(key).unwrap();
+                m.update(f);
+                m.finalize().into_bytes()[..8].to_vec()
+            };
+            let tagged: Vec<(Vec<u8>, &Vec<u8>)> = frames.iter().map(|f| (tag(f), f)).collect();
+            let (mut tier1, mut tier2) = (Vec::new(), Vec::new());
+            for _ in 0..reps {
+                let t = Instant::now();
+                let mut decoded = Vec::with_capacity(frames.len());
+                for (t8, f) in &tagged {
+                    let mut m = HmacSha256::new_from_slice(key).unwrap();
+                    m.update(f);
+                    m.verify_truncated_left(t8).expect("tag");
+                    decoded.push(decode_frame(f).unwrap());
+                }
+                tier1.push(t.elapsed().as_nanos() as f64 / frames.len() as f64);
+                let t = Instant::now();
+                for chunk in decoded.chunks(64) {
+                    assert!(verify_batch(chunk, &pk));
+                }
+                tier2.push(t.elapsed().as_nanos() as f64 / frames.len() as f64);
+            }
+            println!("tier1_tag_decode_ns_per_frame,{:.0}", median(tier1));
+            println!("tier2_batch64_ns_per_frame,{:.0}", median(tier2));
+            println!("frames,{}", frames.len());
+        }
         _ => {
-            eprintln!("usage: authbc-rx encode|verify|bench ...");
+            eprintln!("usage: authbc-rx encode|verify|bench|lazy ...");
             std::process::exit(2);
         }
     }
