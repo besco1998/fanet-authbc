@@ -4462,3 +4462,12 @@ By the freshness rule and frame lengths: ADS-B and Bluetooth-4 Remote ID cannot 
 at all; CAM at 10 Hz with a 100 ms deadline admits no frame, one record at 200 ms, two at 300 ms,
 nine at 1 s. Consistent with these standards signing each message, not an explanation of it.
 **Cross-check:** the three CAM cells by hand from b/Λ + T_ch + t_v ≤ D_max (b < 1, b = 2, b = 9).
+
+## F98 — ns-3's collision loss is independent from frame to frame (revision A3, part 2, 2026-10-21)
+
+3 000 traced neighbour links at the design's crossing (S1 at R = 1 km, S3): loss 0.052 with a
+mean burst of 1.06 frames, against 1.055 for independent loss at that rate. Verifiability with a
+reference every r frames therefore follows Eq. (3) for independent loss (V_trace − V_iid
+between −0.0002 and +0.0009 at r = 2 and 4), not the Gilbert form the plan expected; it is the
+pessimistic case for r > 1 and irrelevant for the design (r = 1). **Cross-check:** at r = 1 the
+replayed V equals 1 − p̂ exactly and equals the runs' own pooled V (0.9481 / 0.9483), and every traced run equals its untraced stage-2 run.
