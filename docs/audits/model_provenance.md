@@ -4377,3 +4377,88 @@ identical because of bookkeeping; here they were identical because the model has
 them apart. A sweep over a parameter needs, before it runs, a reason the output *can* depend on
 it — and two settings that agree to the last digit are a reason to look at the model, not a
 result.
+
+---
+
+*F89–F97: the revision's experiments, one entry each, as its acceptance criteria require
+(`docs/revision/EXECUTION_PLAN.md`). Each is scored in full in its `predictions/<ID>.md`; what
+follows is what is true now and the cross-check made by a second method.*
+
+## F89 — the design's ×3.5 does not depend on how the swarm is spread (revision A1, 2026-10-20)
+
+4 230 ns-3 runs of a scenario with log-distance loss, Nakagami-3 fading and 4 dB capture, from
+equal power to a 1 km disc: the design/base ratio lies in 3.46–3.58 in every layout (lowest
+interval end 3.31, at R = 1 km, where 11 % of the nodes able to spoil a frame cannot hear it
+coming). Capacity counted in neighbours (215 m) falls — 8.7 at R = 1 km — while counted in nodes
+it rises (218, spatial reuse): a receiver contends with the nodes of its carrier-sensing range,
+which it does not count. That mechanism is Hu & Dai's (IEEE Access 2020, Eq. 22) and is credited,
+not claimed. **Cross-check:** the equal-power layout of the new program reproduces the published
+crossings (124.55 exactly; 35.10 against 35.26, intervals overlapping). Group speed was not
+tested (F88).
+
+## F90 — one lost frame, not two, breaks the deadline (revision A2, age part, 2026-10-20)
+
+Peak age under loss at b = 4, Λ = 50 /s: the mean meets D_max = 100 ms at every p ≤ 0.10, but a
+single lost frame gives 169.75 ms, so the deadline holds for a share 1 − p of updates, as V does.
+**Cross-check:** the measured time-average age equals the closed form within 0.6 ms at every p
+(43.84 / 43.75 ms at p = 0). The ns-3 validation of the design map is running.
+
+## F91 — the adaptive controller runs at the target's edge (revision A4, 2026-10-20)
+
+120 ns-3 runs. The registered controller (smallest b with predicted delivery ≥ 0.96) saves 9–41 ms
+of peak age against fixed b = 4, but realises V ≈ 0.955 on a growing swarm, so a quarter of
+one-second windows fall below 0.95 and it fails at 76 nodes (fixed b = 4: 127; an oracle that
+knows N: 125). The 0.005 is lag, not model error. **Cross-check:** at constant N (the merged
+minute) its mean V equals the oracle's (0.962 / 0.965); below 30 nodes it is the fixed b = 1 run
+bit for bit. A larger margin is a new registration (H9).
+
+## F92 — a time window closes the delay-line attack while GNSS time is held (revision A5, 2026-10-20)
+
+At zero bytes, a 150–250 ms window refuses every frame held back by 250 ms or more, which
+sequence numbers alone never do; it costs clock quality (2 % of honest frames refused at
+σ = 50 ms) and, in a GNSS outage, a fixed 250 ms window fails after 75 min, not the plan's two
+hours. **Cross-check:** the drift of two clocks measured in the harness equals the computed
+144 ms/h; every Gaussian tail lies in its binomial interval.
+
+## F93 — the frame protocol's five properties are proven, in three models (revision A6, 2026-10-20)
+
+The registered Tamarin model settled 3 of 9 lemmas. Keying each counter by a fresh session id
+(Tamarin then treats the state as injective) and giving the receiver a start rule made a model
+without the chain and the clock settle all fifteen of its lemmas in one run (129 s): origin and
+integrity, no replay, injective agreement, equivocation implies a revealed key, gap detection.
+Continuity is proven in the registered model; the delayed-replay attack and its fix in a timed
+model. One model with everything did not settle. **Cross-check:** the delayed-replay trace is
+found in two models (the timed one and the full one), and origin and integrity is verified in two
+(the registered one and the counters one).
+
+## F94 — few radios sending fast stand for many sending slowly (revision A12, 2026-10-20)
+
+330 ns-3 runs at fixed N·f: delivery depends on the total frame rate to within the (N − 1)/N
+correction (at most 0.5 % over a 25-fold change of split), so eight radios at 194 frames/s stand
+for the design's 124 nodes at 12.5 — in ns-3; real drivers are B1/B2's question. **Cross-check:**
+the access-rule model, nothing fitted, is within 0.0011 of every split up to 350 frames/s per
+node; cells C and D re-run here reproduce the published means exactly.
+
+## F95 — with Falcon-512 the gain is the same ×3.5, and the design fits (revision A15, 2026-10-20)
+
+420 ns-3 runs: per-record Falcon crosses at 12.4 nodes, the design signed with Falcon at 43.5,
+ratio 3.51 — the same as Ed25519's 3.53, not larger as the plan expected: the gain is the frame
+count, which does not care how large the signature is. The paper's "post-quantum signatures do
+not fit" holds for ML-DSA only. **Cross-check:** the access-rule model within 0.6 % of both
+crossings, at frames longer than any it had met; Eq. (6) is 7 % off at the per-record frame,
+outside its fitted range. Timing waits for pi-B (H4).
+
+## F96 — the ledger can be audited from the uploads alone (revision A16, 2026-10-20)
+
+One pass over three UAVs' uploads (391 495 frames, one flight hour) finds a planted equivocation
+and a planted forgery with nothing but the public keys, and no false finding; 6.4 min of one core
+per flight hour in Python; kept frames cost 42.94 B a record (0.96 GB per hour for 124
+neighbours). **Cross-check:** the 0.7 % below the sizing convention's 43.25 B is the convention's
+sender id and sequence numbers (an hour into a flight), not the audit's arithmetic.
+
+## F97 — the deployed broadcast standards give no reason to batch (revision A17, 2026-10-20)
+
+By the freshness rule and frame lengths: ADS-B and Bluetooth-4 Remote ID cannot carry a signature
+at all; CAM at 10 Hz with a 100 ms deadline admits no frame, one record at 200 ms, two at 300 ms,
+nine at 1 s. Consistent with these standards signing each message, not an explanation of it.
+**Cross-check:** the three CAM cells by hand from b/Λ + T_ch + t_v ≤ D_max (b < 1, b = 2, b = 9).
