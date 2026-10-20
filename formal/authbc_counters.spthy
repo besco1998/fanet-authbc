@@ -1,0 +1,159 @@
+theory AUTHBC_Frames_Counters
+begin
+
+/*
+ * Revision A6, after registration (predictions/A6.md, outcome): lemmas 1-4 without the chain
+ * link and without the clock. The registered model (formal/authbc.spthy) settled three of its
+ * nine lemmas within a 1 GB heap; lemma 5 is settled in formal/authbc_time.spthy. Two changes
+ * made the rest settle here:
+ *
+ *  1. The link is dropped. Replay, agreement, equivocation and gap detection rest on the
+ *     signature and the sequence numbers, not on the chain; continuity, the one property that
+ *     needs the chain, was verified in the registered model (1508 steps).
+ *  2. Each counter lives in a state fact whose first argument is a fresh session id
+ *     (Snd(~sid, ..), Rcv(~rid, ..)). Tamarin then treats the fact as injective (one live
+ *     instance per session) and the counter invariants are provable; keyed by the public name,
+ *     as registered, they ran out of the heap. The receiver's session starts in a rule of its
+ *     own with nothing accepted yet ('none'): when the first acceptance also drew the fresh id,
+ *     the search did not end. One sender and one receiver per name, as registered (OnlyOnce),
+ *     so a session is a name.
+ *
+ * Otherwise the registered model: a sender signs <'authbc', S, seq, data> with a counter that
+ * starts at 1 and steps by one; a receiver verifies, accepts the first frame at any number and
+ * then only a newer one, records a skipped number, keeps what it accepted, and keeps two valid
+ * frames with one number as evidence. Assumption A1 as before: canonical encoding is injective
+ * (free tuples). The eight helper lemmas were added after registration; the seven after them
+ * are the registered statements.
+ */
+
+builtins: signing, natural-numbers
+
+rule Register_key:
+    [ Fr(~sk) ] --[ OnlyOnce(<'key', $S>) ]-> [ !Ltk($S, ~sk), !Pk($S, pk(~sk)), Out(pk(~sk)) ]
+
+rule Reveal_key:
+    [ !Ltk($S, sk) ] --[ Reveal($S) ]-> [ Out(sk) ]
+
+rule Sender_start:
+    [ !Ltk($S, sk), Fr(~sid) ]
+  --[ OnlyOnce(<'sender', $S>), SenderStart($S, ~sid) ]->
+    [ Snd(~sid, $S, %1) ]
+
+rule Send:
+    let frame = <'authbc', $S, %seq, ~data>
+    in
+    [ Snd(~sid, $S, %seq), !Ltk($S, sk), Fr(~data) ]
+  --[ Sent($S, %seq, ~data), SentIn(~sid, $S, %seq) ]->
+    [ Snd(~sid, $S, %seq %+ %1), Out(<frame, sign(frame, sk)>) ]
+
+rule Receiver_start:
+    [ Fr(~rid), !Pk($S, pkS) ]
+  --[ OnlyOnce(<'receiver', $R, $S>), ReceiverStart($R, $S, ~rid) ]->
+    [ Rcv(~rid, $R, $S, 'none') ]
+
+rule Accept_first:
+    let frame = <'authbc', $S, %seq, data>
+    in
+    [ Rcv(~rid, $R, $S, 'none'), In(<frame, sig>), !Pk($S, pkS) ]
+  --[ Eq(verify(sig, frame, pkS), true), Accept($R, $S, %seq, data),
+      AcceptIn(~rid, $R, $S, %seq) ]->
+    [ Rcv(~rid, $R, $S, %seq), !Stored($R, $S, %seq, frame) ]
+
+rule Accept_next:
+    let frame = <'authbc', $S, %last %+ %1, data>
+    in
+    [ Rcv(~rid, $R, $S, %last), In(<frame, sig>), !Pk($S, pkS) ]
+  --[ Eq(verify(sig, frame, pkS), true), Accept($R, $S, %last %+ %1, data),
+      AcceptIn(~rid, $R, $S, %last %+ %1) ]->
+    [ Rcv(~rid, $R, $S, %last %+ %1), !Stored($R, $S, %last %+ %1, frame) ]
+
+rule Accept_gap:
+    let frame = <'authbc', $S, %seq, data>
+    in
+    [ Rcv(~rid, $R, $S, %last), In(<frame, sig>), !Pk($S, pkS) ]
+  --[ Eq(verify(sig, frame, pkS), true), Less(%last %+ %1, %seq),
+      Accept($R, $S, %seq, data), AcceptIn(~rid, $R, $S, %seq), Gap($R, $S, %last, %seq) ]->
+    [ Rcv(~rid, $R, $S, %seq), !Stored($R, $S, %seq, frame) ]
+
+rule Evidence:
+    let held    = <'authbc', $S, %seq, d1>
+        offered = <'authbc', $S, %seq, d2>
+    in
+    [ !Stored($R, $S, %seq, held), In(<offered, sig>), !Pk($S, pkS) ]
+  --[ Eq(verify(sig, offered, pkS), true), Neq(held, offered),
+      Equivocation($R, $S, %seq) ]->
+    [ ]
+
+restriction Equality: "All x y #i. Eq(x, y) @ #i ==> x = y"
+restriction Inequality: "All x #i. Neq(x, x) @ #i ==> F"
+restriction Less_than: "All x y #i. Less(x, y) @ #i ==> x << y"
+restriction Only_once: "All x #i #j. OnlyOnce(x) @ #i & OnlyOnce(x) @ #j ==> #i = #j"
+
+/* ---------------------------------------------------------------- helpers */
+
+lemma sender_session_counter_increases [reuse]:
+  "All sid S %n %m #i #j.
+      SentIn(sid, S, %n) @ #i & SentIn(sid, S, %m) @ #j & #i < #j ==> %n << %m"
+
+lemma sender_session_has_start [use_induction, reuse]:
+  "All sid S %n #i. SentIn(sid, S, %n) @ #i ==> Ex #s. SenderStart(S, sid) @ #s & #s < #i"
+
+lemma one_session_per_sender [reuse]:
+  "All s1 s2 S %n %m #i #j. SentIn(s1, S, %n) @ #i & SentIn(s2, S, %m) @ #j ==> s1 = s2"
+
+lemma sent_seq_increases [reuse]:
+  "All S %n %m d1 d2 #i #j.
+      Sent(S, %n, d1) @ #i & Sent(S, %m, d2) @ #j & #i < #j ==> %n << %m"
+
+lemma receiver_session_counter_increases [use_induction, reuse]:
+  "All rid R S %n %m #i #j.
+      AcceptIn(rid, R, S, %n) @ #i & AcceptIn(rid, R, S, %m) @ #j & #i < #j ==> %n << %m"
+
+lemma receiver_session_has_start [use_induction, reuse]:
+  "All rid R S %n #i.
+      AcceptIn(rid, R, S, %n) @ #i ==> Ex #s. ReceiverStart(R, S, rid) @ #s & #s < #i"
+
+lemma one_session_per_receiver [reuse]:
+  "All r1 r2 R S %n %m #i #j.
+      AcceptIn(r1, R, S, %n) @ #i & AcceptIn(r2, R, S, %m) @ #j ==> r1 = r2"
+
+lemma accept_seq_increases [reuse]:
+  "All R S %n %m d1 d2 #i #j.
+      Accept(R, S, %n, d1) @ #i & Accept(R, S, %m, d2) @ #j & #i < #j ==> %n << %m"
+
+/* ---------------------------------------------------------------- properties */
+
+lemma executable_two_frames_in_order:
+  exists-trace
+  "Ex R S d1 d2 #i #j.
+      Accept(R, S, %1, d1) @ #i & Accept(R, S, %1 %+ %1, d2) @ #j & #i < #j
+    & not (Ex X #r. Reveal(X) @ #r)"
+
+lemma origin_and_integrity:
+  "All R S seq data #i.
+      Accept(R, S, seq, data) @ #i
+    ==> (Ex #j. Sent(S, seq, data) @ #j & #j < #i) | (Ex #r. Reveal(S) @ #r & #r < #i)"
+
+lemma no_replay:
+  "All R S seq d1 d2 #i #j. Accept(R, S, seq, d1) @ #i & Accept(R, S, seq, d2) @ #j ==> #i = #j"
+
+lemma injective_agreement:
+  "All R S seq data #i.
+      Accept(R, S, seq, data) @ #i
+    ==> ( (Ex #j. Sent(S, seq, data) @ #j & #j < #i)
+          & not (Ex #i2. Accept(R, S, seq, data) @ #i2 & not (#i2 = #i)) )
+      | (Ex #r. Reveal(S) @ #r & #r < #i)"
+
+lemma equivocation_implies_revealed_key:
+  "All R S seq #i. Equivocation(R, S, seq) @ #i ==> (Ex #r. Reveal(S) @ #r & #r < #i)"
+
+lemma equivocation_evidence_reachable:
+  exists-trace "Ex R S seq #i. Equivocation(R, S, seq) @ #i"
+
+lemma a_skipped_frame_is_detected:
+  "All R S %n d1 d3 #i #k.
+      Accept(R, S, %n, d1) @ #i & Accept(R, S, %n %+ %1 %+ %1, d3) @ #k & #i < #k
+    & not (Ex d2 #j. Accept(R, S, %n %+ %1, d2) @ #j)
+    ==> (Ex #g. Gap(R, S, %n, %n %+ %1 %+ %1) @ #g)"
+
+end

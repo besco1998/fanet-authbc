@@ -12,6 +12,47 @@ where the durable record lives. If you want the conclusion only, follow the poin
 
 ---
 
+# 2026-10-20 — the reviewer revision (`docs/AUTHBC Revision Plan.md`): two failures and a proof
+
+Branch `p11-reviewer-revision`; per item, `docs/revision/STATUS.md`; registrations and outcomes,
+`predictions/`.
+
+**The machine ran out of memory at 01:02** (WSL's own init was OOM-killed). Cause: two uncapped
+Tamarin proofs (5.7 GB and growing), the frozen test gate (4.2 GB), ten ns-3 runs (3.4 GB) and the
+editor, against 14 GB + 4 GB swap. Lost: about 2.5 h of A2 runs, because the driver wrote its
+checkpoint in submission order, and everything under `/tmp`. Fixed at the cause, not the symptom:
+every long job is a memory-capped systemd unit (`scripts/capped.sh`, one slice capped at 8 GB),
+drivers checkpoint in completion order, logs and the clean gate live under `~/.cache`.
+
+**The clean fast gate failed one test on 3b06582:** `test_nearly_eight_thousand_lines` — the
+revision's new modules (freshness rule, admission, stream schemes, ledger audit) took `src/authbc`
+from under 8 000 lines to 8 617, and ch. 5 still said "nearly eight thousand". A count that went
+stale, caught by the test written for exactly that; local runs of the touched test files had not
+included it. Fix: the sentence says "about eight and a half thousand", the test holds 8 250–8 750
+and now also checks the sentence. The thesis PDF is rebuilt after H1 (it would pick up the
+uncommitted `thesis/numbers.tex`).
+
+**Tamarin (A6): what made the proofs end.** The registered model settled 3 of 9 lemmas; a model
+without the hash chain still did not settle its two counter invariants (heap, 1 GB), and the six
+lemmas that "verified" in seconds there had used those unproven invariants as `[reuse]`
+assumptions. **Those verdicts were never counted.** Bisection on theories of five lines found two
+causes: (1) a counter kept in a state fact keyed by a public name — keyed by a fresh session id,
+Tamarin treats the fact as injective and the invariant proves (sender: 2 steps; receiver: 1 474);
+(2) a receiver whose first acceptance also drew the fresh id — with a start rule of its own, the
+induction ends. A gap written as `%last %+ %1 %+ %k` in the pattern did not end either; the
+registered `Less` restriction does. Durable record: `predictions/A6.md` (outcome), the models in
+`formal/`, the proof output in `formal/proofs/`.
+
+**A traced ns-3 run was not its untraced run (F87).** A smoke test of the spatial driver's new
+`--trace-links` ran one seed with and without the option: 471 against 470 frames. The links
+were picked by a variable built with `CreateObject` and then given stream 12288 — but building
+it took the next automatic stream index first, shifting every later stream (F37's mechanism).
+The A10 queue had started 12 s earlier on the links binary with the same pattern; stopped,
+nothing written. Fixed with the stream as a construction attribute; the links identity record
+now holds traced = untraced = published, digit for digit, for C (seeds 1, 2) and D (seed 1).
+
+---
+
 # 2026-10-09, night — four weak points of the review, worked in parallel (F84, F85)
 
 **What we were doing.** Mohamed: "fix the first 4 weak points as recommended in parallel" — the

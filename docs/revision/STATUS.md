@@ -1,6 +1,6 @@
 # Revision status — one row per item of `docs/AUTHBC Revision Plan.md`
 
-*Updated 2026-10-20, 07:40. Branch `p11-reviewer-revision`. Registrations are
+*Updated 2026-10-20, 08:30. Branch `p11-reviewer-revision`. Registrations are
 `predictions/<ID>.md`, tagged `prereg-<ID>` at the commit that registered them; outcomes are
 appended to the same file below a line. Rules: `docs/revision/EXECUTION_PLAN.md`. Long jobs run
 as memory-capped systemd user units (`scripts/capped.sh`; `systemctl --user list-units
@@ -10,15 +10,15 @@ as memory-capped systemd user units (`scripts/capped.sh`; `systemctl --user list
 |---|---|---|
 | A1 | stage 1 done (430 runs); **stage 2 running** (4 230 runs, `prereg-A1-stage2`) | d_ref = 215 m. Stage 1: ratio ≈ 3.3–3.7 everywhere; at R = 1 000 m the design crosses with ≈ 8 neighbours |
 | A2 | map ✔, age part ✔ (all held); **ns-3 validation frozen** behind stage 2, resumes automatically | one lost frame, not two, breaks the deadline |
-| A3 | part 1 ✔; part 2 (traces) after A1 stage 2 | tolerable loss held; the margin rule fails in 5 of 192 bursty cells (interval); F86 |
+| A3 | part 1 ✔; part 2 (traces) after A1 stage 2 — code and tests ✔; the spatial binary is rebuilt with the trace fix (below) once stage 2 is done, and a traced run checked equal to its untraced run before the trace runs | tolerable loss held; the margin rule fails in 5 of 192 bursty cells (interval); F86 |
 | A4 | registered `prereg-A4`; **running** (120 runs, 10 seeds) | controller held V ≥ 0.951 on a development ramp after one definitional fix (disclosed) |
 | A5 | ✔ | the window closes the delay-line attack; the plan's "2 hours" failed as predicted (75 min) |
-| A6 | registered model: 3 of 9 lemmas verified, 6 not settled (1 GB heap). **After registration:** lemma 5 in a small timed model — attack trace found without the window, gone with it, bounded-delay freshness proven; lemmas 1–4 in a clock-free model, **running** | the change of model is reported as one |
+| A6 | ✔ — registered model: 3 of 9 settled (19 predicted verdicts, 4 came true). **After registration**, two encodings changed (counters keyed by a fresh session id; a receiver start rule) and helpers added: lemmas 1–3 and gap detection verified in `formal/authbc_counters.spthy` (all 15, one run); continuity in the registered model; lemma 5 attack-then-fix in `formal/authbc_time.spthy`. One model with everything (`formal/authbc_full.spthy`) did not settle | the plan's statement held across three models, two made after registration |
 | A7 | registered `prereg-A7`; code + tests ✔; timing waits for pi-B (H4) | the tag costs 3 % of capacity (not 2 %) |
 | A8 | registered `prereg-A8`; Rust codec ✔; **byte-identical to Python on 10 000 frames**; timing and energy wait for pi-B (H4, G22) | |
 | A9 | registered `prereg-A9` (size code reproduces the encoder on 9 fields, tested); flights need a quiet host (H7) | SIH flies all three airframes; fixed-wing needed two parameters (stated) |
-| A10 | registered `prereg-A10`; schemes ✔ (tests); **queued** after A12 | |
-| A11 | registered `prereg-A11`; **queued** after A10; NR sidelink not run (H6) | the no-fit model puts the ratio at 3.4–3.8 on every PHY, not 1.7–4.3 |
+| A10 | registered `prereg-A10`; schemes ✔ (tests); **running** since 2026-10-20 23:26 on the fixed binary (F87: tracing had shifted ns-3's random streams; the traced identity runs now equal the published ones digit for digit). A first launch ran 12 s on the old binary and kept nothing (disclosed) | |
+| A11 | registered `prereg-A11`; **queued** with A10; NR sidelink not run (H6) | the no-fit model puts the ratio at 3.4–3.8 on every PHY, not 1.7–4.3 |
 | A12 | ✔ (330 runs) | delivery follows the total frame rate: every plan statement held, the model within 0.0011 up to 350 frames/s per node; eight radios can stand for 124 nodes in ns-3 |
 | A13 | not started — depends on A8's timing on pi-B | |
 | A14 | not started — the plan's lowest priority ("keep for a follow-up paper") | |
