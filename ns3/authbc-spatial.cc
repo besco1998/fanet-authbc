@@ -71,6 +71,15 @@ uint64_t g_rxFar = 0;                        // receptions from beyond d_ref
 // Peak age: per (source, receiver), when the source sent the last frame this receiver got.
 std::vector<double> g_lastSent;
 std::vector<uint32_t> g_pairGot;             // receptions per (source, receiver), every distance
+// Per-link traces (revision A3, part 2): for a few neighbour pairs, every frame of the source
+// as received (1) or not (0), in the order sent. Absent unless --traceLinks > 0.
+struct TracedLink
+{
+    uint32_t src, rx;
+    std::vector<uint8_t> got;
+    std::map<uint64_t, uint32_t> at;          // packet uid -> its position in `got`
+};
+std::vector<TracedLink> g_traced;
 std::vector<uint64_t> g_ageHist;             // 1 ms bins
 const uint32_t kAgeBins = 5000;
 
@@ -99,6 +108,12 @@ OnSend(uint32_t src, Ptr<const Packet> p)
         }
     }
     g_neighbourSum[src] += k;
+    for (auto& t : g_traced)
+        if (t.src == src && Dist(src, t.rx) <= g_dRef)
+        {
+            t.at[p->GetUid()] = t.got.size();
+            t.got.push_back(0);
+        }
 }
 
 void
@@ -111,6 +126,12 @@ OnReceive(uint32_t rx, Ptr<const Packet> p, const Address&)
     if (sent < g_warmup) return;
     ++g_rxAll[rx];
     ++g_pairGot[static_cast<size_t>(src) * g_n + rx];
+    for (auto& t : g_traced)
+        if (t.src == src && t.rx == rx)
+        {
+            auto pos = t.at.find(p->GetUid());
+            if (pos != t.at.end()) t.got[pos->second] = 1;
+        }
     if (Dist(src, rx) > g_dRef)
     {
         ++g_rxFar;
@@ -244,6 +265,7 @@ main(int argc, char* argv[])
     double nakagamiM = 3.0;            // 0 switches fading off (a diagnostic, not a scenario)
     double captureMarginDb = 4.0;      // < 0 removes the capture model
     bool pairs = false;                // also write <outPrefix>_pairs.csv (S2: links by class)
+    uint32_t traceLinks = 0;           // trace this many neighbour pairs (<outPrefix>_trace.csv)
 
     CommandLine cmd(__FILE__);
     cmd.AddValue("nNodes", "number of nodes", nNodes);
@@ -265,6 +287,7 @@ main(int argc, char* argv[])
     cmd.AddValue("captureMarginDb", "frame-capture margin in dB; < 0 = no capture model",
                  captureMarginDb);
     cmd.AddValue("pairs", "also write receptions per (source, receiver) pair", pairs);
+    cmd.AddValue("traceLinks", "neighbour pairs whose every frame is traced", traceLinks);
     cmd.Parse(argc, argv);
     const double period = 1.0 / framesPerSec;
     const double jitter = txJitterMs > 0.0 ? txJitterMs * 1e-3 : period;
@@ -373,6 +396,19 @@ main(int argc, char* argv[])
         mobility.Install(g_nodes);
     }
     for (uint32_t i = 0; i < nNodes; ++i) g_mob.push_back(g_nodes.Get(i)->GetObject<MobilityModel>());
+    if (traceLinks > 0)
+    {
+        // pairs that are neighbours where the nodes start; a stream of their own (12288), so
+        // that choosing them moves no other random number
+        Ptr<UniformRandomVariable> pick = CreateObject<UniformRandomVariable>();
+        pick->SetStream(12288);
+        for (uint32_t tries = 0; g_traced.size() < traceLinks && tries < 100000; ++tries)
+        {
+            const uint32_t s = pick->GetInteger(0, nNodes - 1);
+            const uint32_t r = pick->GetInteger(0, nNodes - 1);
+            if (s != r && Dist(s, r) <= dRefM) g_traced.push_back(TracedLink{s, r, {}, {}});
+        }
+    }
 
     PacketSocketHelper packetSocket;
     packetSocket.Install(g_nodes);
@@ -479,6 +515,18 @@ main(int argc, char* argv[])
         const Vector v = g_nodes.Get(i)->GetObject<MobilityModel>()->GetPosition();
         posOut << i << "," << v.x << "," << v.y << "," << v.z << "," << g_tx[i] << ","
                << g_expect[i] << "," << g_got[i] << "\n";
+    }
+    if (traceLinks > 0)
+    {
+        std::ofstream traceOut(outPrefix + "_trace.csv");
+        traceOut << "link,src,rx,got\n";
+        for (size_t k = 0; k < g_traced.size(); ++k)
+        {
+            std::string bits;
+            for (uint8_t b : g_traced[k].got) bits.push_back(b ? '1' : '0');
+            traceOut << k << "," << g_traced[k].src << "," << g_traced[k].rx << "," << bits
+                     << "\n";
+        }
     }
     if (pairs)
     {
