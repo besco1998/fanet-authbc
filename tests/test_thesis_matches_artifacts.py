@@ -511,10 +511,15 @@ class TestTheRegistrationsOfAppendixB:
 
 
 class TestTheLibraryIsTheSizeTheChapterSays:
-    def test_nearly_eight_thousand_lines(self) -> None:
+    def test_about_eight_and_a_half_thousand_lines(self) -> None:
+        # The revision (2026-10) added the freshness rule, admission, stream schemes and the
+        # ledger audit: 8617 lines, past the 8000 the chapter's "nearly eight thousand" allowed.
         lines = sum(len(p.read_text().splitlines())
                     for p in (REPO / "src" / "authbc").rglob("*.py"))
-        assert 7500 <= lines < 8000, f"ch. 5 says 'nearly eight thousand lines'; it is {lines}"
+        assert 8250 <= lines < 8750, (
+            f"ch. 5 says 'about eight and a half thousand lines'; it is {lines}")
+        assert "library of about eight and a half thousand lines" in _text(
+            "ch05_implementation.tex")
 
 
 # --------------------------------------------------------------------------- 2026-10-09
