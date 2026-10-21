@@ -1,0 +1,137 @@
+# What the revision changes in the paper — proposals, item by item
+
+*Drafted 2026-10-21 for Mohamed. Nothing here is in `paper/main.tex`: which `main.tex` the text
+goes into is H1. Places are given by the section labels, which both versions share. Every number
+below must reach the paper through `analysis/paper_numbers.py` (one macro each), not typed in;
+the source CSV is named with each. Scoring and caveats are in `predictions/<ID>.md`; the one-line
+findings are F86–F98 in `docs/audits/model_provenance.md`.*
+
+## Ready (experiment scored)
+
+### A1 — spread swarm, fading, capture (`sec:capacity`, `sec:limits`, `sec:method`, Conclusion)
+
+**Now says:** "one collision domain of static nodes … hidden terminals and mobility are identified
+as future work"; Limitations: "hidden terminals, spatial reuse and mobility are absent".
+
+**Proposed:** a paragraph in `sec:capacity` and the plan's figure (capacity against neighbour
+density, S1 at four radii, S2, S3): *"Spread over a disc of up to 1 km with log-distance loss,
+Nakagami-3 fading and 4 dB capture, the design keeps its advantage: the ratio of crossings lies
+between 3.46 and 3.58 in every layout, although at R = 1 km 11 % of the nodes able to spoil a
+frame cannot hear its sender. Capacity counted in neighbours falls (8.7 within 215 m at
+R = 1 km) because a receiver contends with every node in its carrier-sensing range [Hu & Dai];
+counted in nodes in the area it rises (218)."* Limitations: hidden terminals and spatial reuse
+are then simulated; mobility only as 2–4 m/s drift of members (F88, decision H8).
+
+Numbers: `results/raw/spatial_capacity.csv`. Cite Hu & Dai 2020 (held, CC BY; needs a bib
+entry). ⚠️ Do not write "because hidden terminals add collisions" (the plan's reason): the
+hidden share is a minority of the spoilers.
+
+### A2, age part (Results, the Freshness subsection)
+
+**Proposed:** *"Under loss the mean peak age still meets D_max (87.7 ms at p = 0.05), but one
+lost frame takes an update to 169.75 ms: the deadline holds for a share 1 − p of updates, as V
+does."* Numbers: `results/raw/aoi_under_loss.csv`. The design-map heatmap (the plan's main
+design figure) waits for the ns-3 validation, which is running.
+
+### A3 — margin against the target, and a channel trace (`sec:loss`, `sec:limits`, Discussion)
+
+**Now says (Limitations):** loss "all generated at the frame level, not a channel trace".
+
+**Proposed:** *"ns-3 traces of 3 000 neighbour links at the crossing show collision loss that is
+independent from frame to frame (mean burst 1.06 frames against 1.055 for independent loss), so
+Eq. (3) is the model for V, the pessimistic one when frames depend on each other."* Deployment
+rule for the Discussion: *"set ε at least 0.02 above the expected frame loss for the mean V; at
+0.03 the 95 % interval also clears the target under bursts of four frames or more."* Numbers:
+`verifiability_margin.csv`, `verifiability_margin_trace.csv`. ⚠️ H2 first: every V interval in
+the paper is a percentile bootstrap that covers 92–94 % (F86).
+
+### A4 — adaptive batching (decision H9 before any text)
+
+The plan wanted a contribution bullet and a Results subsection. As registered, the controller
+saves 9–41 ms of peak age but holds V ≥ 0.95 in only 75 % of one-second windows of a growing
+swarm and fails at 76 nodes (fixed b = 4: 127). **Two honest options:** (a) a Discussion
+paragraph stating exactly that, with the oracle (holds to 125) as evidence that the gain is
+reachable with more margin; (b) register a second controller and run it, then decide. Not a
+contribution bullet as it stands. Numbers: `adaptive_batching.csv`.
+
+### A5 — bounded-delay freshness (`sec:model` "What Is Not Protected", `sec:limits` "Security Scope")
+
+**Now says:** "a frame that an attacker withholds and delivers later is accepted … refusing it
+requires a clock shared with the sender, which we do not assume."
+
+**Proposed:** a protected property (v): *"Bounded-delay freshness, while GNSS time is held: a
+receiver refuses a frame stamped more than Δ before its own clock reads (Δ = 150–250 ms). In
+72 000 honest frames per setting none was refused at clock error σ ≤ 10 ms, and every frame held
+back 250 ms or more was refused. In a GNSS outage two clocks part by 144 ms an hour, so a fixed
+250 ms window holds for 75 minutes; one widened by the worst drift keeps working, its bound
+growing by 144 ms an hour."* The delaying attacker leaves the "not protected" list, with that
+condition. Numbers: `replay_window.csv`.
+
+### A6 — the protocol in Tamarin (`sec:limits` "Security Scope")
+
+**Now says:** "the security argument is informal."
+
+**Proposed:** *"The frame protocol is modelled in Tamarin (files in the repository). Origin and
+integrity, no replay, injective agreement, equivocation evidence implying a revealed key, and
+gap detection are proven in a model with counters and signatures; continuity through the chain
+in the full frame model; and a delayed frame is accepted without the time window and refused
+with it. The properties are proven in three models, not one: a single model with the chain and
+the clock did not terminate within 1 GB a lemma. Canonical encoding is assumed injective."* The
+three-model caveat must stay in the sentence (`predictions/A6.md`).
+
+### A12 — few radios for many (Supplementary note, for B2)
+
+**Proposed:** *"At a fixed total frame rate, delivery depends on how the rate is split among
+nodes only through each node's not colliding with itself: after an (N − 1)/N correction, splits
+from 124 nodes at 12.5 frames/s to 5 at 350 agree within 0.005 of V in ns-3, and the access-rule
+model agrees with every split within 0.0011."* With the caveat that real drivers' queues are
+B1/B2's question. Numbers: `nf_equivalence.csv`.
+
+### A15 — post-quantum (`sec:limits` "Post-Quantum Signatures", Conclusion)
+
+**Now says:** "An ML-DSA signature is 2420 B … A post-quantum variant would be a different design."
+
+**Proposed:** keep the ML-DSA sentence and add: *"Falcon-512's padded signature (666 B) fits: the
+design signed with it serves 43.5 nodes against 12.4 for signing each record, a ratio of 3.5, as
+with Ed25519 — the gain comes from sending a quarter as many frames, whatever the signature's
+size."* Numbers: `pq_capacity.csv`. Sign/verify timing waits for pi-B (H4); until then no
+energy or CPU claim for Falcon.
+
+### A16 — the audit (`sec:model` Ledger subsection)
+
+**Proposed:** *"A ledger is audited from the uploads alone: one pass over the frames of a mission
+finds every equivocation and every frame that does not verify, with the senders' public keys,
+and the auditor signs a Merkle root of what it accepted. For three UAVs over a flight hour
+(391 495 frames) a planted equivocation and a planted forgery were found with no false finding,
+in 6.4 minutes of one core; keeping frames costs 42.9 B a record, about 1 GB an hour for 124
+neighbours."* This also bears on the plan's question whether "blockchain-style ledger" becomes
+"hash-chained log" (`EXECUTION_PLAN.md`, decisions). Numbers: `ledger_audit.csv`.
+
+### A17 — other broadcast standards (Discussion table)
+
+**Proposed:** the plan's short table — ADS-B 1090ES and Bluetooth-4 Remote ID cannot carry a
+signature; Bluetooth-5/Wi-Fi Remote ID fits up to seven records, but at one message a second
+the freshness rule admits no frame for deadlines up to 1 s and one record at 2 s; CAM at 10 Hz with a 100 ms deadline admits no frame, one record at 200 ms, two at 300 ms —
+with the sentence that this is consistent with these standards signing each message, not an
+explanation of it. Numbers: `other_links.csv`.
+
+## Not ready
+
+| item | waits for |
+|---|---|
+| A2 design map (heatmap figure) | ns-3 validation, running |
+| A10 stream schemes against a deadline (Table 5 simulated, footnote 2 goes) | A10, running |
+| A11 other PHYs | A11, after A10; NR sidelink not run (H6) |
+| A7 DoS / HMAC field, A8 compiled receiver, A13 lazy verification, A15 timing | pi-B (H4) |
+| A9 richer records, three airframes | flights on a quiet host (H7) |
+| A14 | not started — the plan keeps it for a follow-up paper |
+| B1–B5 | purchases and flights (H3) |
+
+## Claims to keep out
+
+* "Hidden terminals reduce capacity" as the mechanism (A1: they are a minority of spoilers; the
+  carrier-sensing range is the cause, and it is Hu & Dai's model, not ours).
+* "Mobility up to 15 m/s does not matter" (F88: group speed was not tested).
+* "The adaptive controller keeps V ≥ 0.95 up to 120 nodes" (A4: it did not).
+* "Batching matters more with post-quantum signatures" (A15: the same ×3.5).
+* Any Tamarin sentence without "in three models".
