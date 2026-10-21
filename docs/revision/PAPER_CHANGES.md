@@ -44,14 +44,19 @@ rule for the Discussion: *"set ε at least 0.02 above the expected frame loss fo
 `verifiability_margin.csv`, `verifiability_margin_trace.csv`. ⚠️ H2 first: every V interval in
 the paper is a percentile bootstrap that covers 92–94 % (F86).
 
-### A4 — adaptive batching (decision H9 before any text)
+### A4 / A4b — adaptive batching (decisions H9 done; text still Mohamed's)
 
-The plan wanted a contribution bullet and a Results subsection. As registered, the controller
-saves 9–41 ms of peak age but holds V ≥ 0.95 in only 75 % of one-second windows of a growing
-swarm and fails at 76 nodes (fixed b = 4: 127). **Two honest options:** (a) a Discussion
-paragraph stating exactly that, with the oracle (holds to 125) as evidence that the gain is
-reachable with more margin; (b) register a second controller and run it, then decide. Not a
-contribution bullet as it stands. Numbers: `adaptive_batching.csv`. ⚠️ Cite FMAC (Huang et al. 2021, held locally) as the nearest prior work: it adapts the contention window, A4 the batch; and its prediction of the next period's density is the precedent for the second controller's growth term.
+A4's registered controller (margin 0.01) holds V ≥ 0.95 in 75 % of a growing swarm's one-second
+windows and fails at 76 nodes; A4b's second controllers, one change each: margin 0.02 → 93 %,
+fails at 116, saves 20–21 ms of peak age against fixed b = 4 (ramp, merge); a growth term alone →
+85 %, 108. Fixed b = 4: 99 %, 127. **Proposed:** a Results subsection or Discussion paragraph,
+not a headline contribution: *"Choosing b from the channel's measured occupancy buys 20 ms of
+freshness at a cost in reliability margin; with a 0.02 margin the controller holds V ≥ 0.95 in
+93 % of one-second windows of a swarm growing by 1.5 nodes a second and fails at 116 nodes,
+against 127 for b = 4 fixed."* The plan's figure (merge time series) from `ns3_adaptive_b_ts/`.
+Numbers: `adaptive_batching.csv`, `adaptive_batching_b.csv`. ⚠️ Cite FMAC (held locally) as the
+nearest prior work (it adapts the contention window; its prediction is the growth term's
+precedent). ⚠️ Do not use the mobile scenario as evidence for any controller (identical runs).
 
 ### A5 — bounded-delay freshness (`sec:model` "What Is Not Protected", `sec:limits` "Security Scope")
 

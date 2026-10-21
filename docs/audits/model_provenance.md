@@ -4511,3 +4511,13 @@ step-3 grid (as A2) and a step-1 grid (as the published D).
 `run_loss_codec`); the loss table and the three printed intervals that moved (`\lossBerCi`,
 `\lossCiFour`, `\lossCiSixteen`, each by 0.001–0.003) are regenerated; no point estimate changed.
 **Adopted 2026-10-21 (Mohamed, H2):** crossing intervals are expanded percentile intervals — the same bootstrap at the level 1 − 2Φ(−√(n/(n−1)) t_{0.975,n−1}) (96.25 % for 30 seeds), `interpolated_crossing_ci(expanded=True)`, nominal coverage on both grids. The paper's two tables of interpolated crossings (spread nodes, batch sizes) are regenerated; each limit moved by 0.01–0.06 nodes and two printed intervals changed (`\batCiEight`, `\sprCiFarDesign`); no crossing moved. The grid crossing N_max keeps its plain interval: it already covers ≈ 100 % (conservative, discrete). The delta method, my first candidate, does worse than the bootstrap on a fine grid because replicates change bracket. The revision's registered analyses keep the plain interval they were scored with (the library default); an interval from them enters the paper only through the expanded option.
+
+## F102 — the adaptive controller's shortfall was mostly margin (revision A4b, 2026-10-21)
+
+60 ns-3 runs of two registered second controllers, one change each. Twice the margin (0.02, from
+A4's measured one-second scatter): V ≥ 0.95 in 93 % of a growing swarm's windows (A4: 75 %),
+failure at 116 nodes (A4: 76; fixed b = 4: 127), 20–21 ms of peak age saved against fixed b = 4.
+A growth term at A4's margin: 85 %, failure at 108, age as A4's. Neither is within 5 % of fixed
+b = 4. **Cross-check:** below 30 nodes both are A4's runs (b = 1, age identical); in the mobile
+scenario all controllers give identical series because every threshold is exceeded from the first
+second — a scenario that cannot discriminate, reported as such.
