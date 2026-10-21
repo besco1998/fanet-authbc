@@ -24,7 +24,11 @@
 // newest record was taken in its first bytes, so receivers can count gaps and ages.
 //
 // Policies: adaptive (the controller), fixed (b = --fixedB throughout), oracle (knows the true
-// number of nodes it contends with and applies the same model to it, without hysteresis).
+// number of nodes it contends with and applies the same model to it, without hysteresis), and
+// predict (revision A4b, predictions/A4b.md: the controller deciding on the occupancy
+// extrapolated over its own lag — one period measured, two of hysteresis — and only upward,
+// rho_ahead = rho + kLagPeriods * max(0, rho - rho_prev); the idea of acting on the predicted next
+// state is FMAC's, Huang et al., IEEE IoT J 2021, which predicts density from motion).
 //
 // Scenarios: ramp — one collision domain at equal power (the published channel, FixedRss), the
 // number of active nodes rising from --rampStart to --rampEnd over --rampSeconds; merge — two
@@ -61,6 +65,7 @@ const uint32_t kFrameBytes[kBMax + 1] = {0, 146, 155, 164, 173};
 const double kW = 16.0;
 const double kDetect = 8e-6;
 const uint32_t kHeader = 4 + 4 + 1 + 8 + 8;          // src, seq, records, newest, sent
+const double kLagPeriods = 3.0;                      // predict: one period measured + two hysteresis
 
 double
 Airtime(uint32_t bytes)                              // authbc.models.bianchi.t_broadcast
@@ -239,12 +244,20 @@ class AdaptiveSource : public Application
             // what the node would hear were every node at b = 1, from what it hears at m_b
             want = SmallestBatch(rho * Load(1) / Load(m_b), target);
         }
+        else if (m_policy == "predict")
+        {
+            // the same occupancy, carried forward over the controller's own lag while it grows
+            const double rho1 = rho * Load(1) / Load(m_b);
+            const double rise = m_lastRho1 < 0.0 ? 0.0 : std::max(0.0, rho1 - m_lastRho1);
+            m_lastRho1 = rho1;
+            want = SmallestBatch(rho1 + kLagPeriods * rise, target);
+        }
         else if (m_policy == "oracle")
         {
             const double rhoTrue = (m_trueContenders > 0 ? m_trueContenders : 0) * Load(1);
             want = SmallestBatch(rhoTrue, target);
         }
-        if (m_policy == "adaptive")
+        if (m_policy == "adaptive" || m_policy == "predict")
         {
             const int dir = (want > m_b) - (want < m_b);
             if (dir != 0 && dir == m_lastDir)
@@ -282,6 +295,7 @@ class AdaptiveSource : public Application
     uint32_t m_seq = 0;
     int m_lastDir = 0;
     uint32_t m_trueContenders = 0;
+    double m_lastRho1 = -1.0;                         // predict: the previous period's occupancy
 };
 
 void
@@ -362,7 +376,7 @@ main(int argc, char* argv[])
 
     CommandLine cmd(__FILE__);
     cmd.AddValue("scenario", "ramp | merge | mobile", scenario);
-    cmd.AddValue("policy", "adaptive | fixed | oracle", policy);
+    cmd.AddValue("policy", "adaptive | fixed | oracle | predict", policy);
     cmd.AddValue("fixedB", "batch of the fixed policy", fixedB);
     cmd.AddValue("margin", "delivery the controller aims above 0.95", margin);
     cmd.AddValue("nNodes", "nodes (merge: both groups; mobile: the group)", nNodes);

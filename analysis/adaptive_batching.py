@@ -3,7 +3,9 @@
 
 Reads `results/raw/ns3_adaptive_runs.csv` and the per-second series in
 `results/raw/ns3_adaptive_ts/`, and writes `results/raw/adaptive_batching.csv`: one row per
-(scenario, policy), means over seeds with the seed-to-seed range.
+(scenario, policy), means over seeds with the seed-to-seed range. `--set a4b` does the same for
+the second controllers (predictions/A4b.md): `ns3_adaptive_b_runs.csv`, `ns3_adaptive_b_ts/`
+→ `adaptive_batching_b.csv`.
 
 A window is one second of sending; its V is the share of the frames sent in it that reached the
 neighbours they were due at; its age is the mean peak age of the receptions of those frames.
@@ -11,6 +13,7 @@ The first two windows (sources starting) are left out.
 """
 from __future__ import annotations
 
+import argparse
 import csv
 import io
 import statistics as st
@@ -23,8 +26,11 @@ sys.path.insert(0, str(REPO / "src"))
 from authbc.bench import provenance  # noqa: E402
 
 RAW = REPO / "results" / "raw"
-SERIES = RAW / "ns3_adaptive_ts"
-OUT = RAW / "adaptive_batching.csv"
+SETS = {"a4": (RAW / "ns3_adaptive_runs.csv", RAW / "ns3_adaptive_ts",
+               RAW / "adaptive_batching.csv"),
+        "a4b": (RAW / "ns3_adaptive_b_runs.csv", RAW / "ns3_adaptive_b_ts",
+                RAW / "adaptive_batching_b.csv")}
+RUNS, SERIES, OUT = SETS["a4"]
 V_TARGET = 0.95
 SKIP = 2
 
@@ -84,7 +90,7 @@ def per_seed(scenario: str, policy: str, seed: int, summary: dict[str, str]) -> 
 
 
 def score() -> list[dict]:
-    with (RAW / "ns3_adaptive_runs.csv").open(encoding="utf-8") as fh:
+    with RUNS.open(encoding="utf-8") as fh:
         runs = list(csv.DictReader(ln for ln in fh if not ln.startswith("#")))
     groups: dict[tuple[str, str], list[dict[str, float]]] = {}
     for r in runs:
@@ -103,6 +109,11 @@ def score() -> list[dict]:
 
 
 def main() -> None:
+    global RUNS, SERIES, OUT
+    ap = argparse.ArgumentParser(description=__doc__,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--set", default="a4", choices=list(SETS))
+    RUNS, SERIES, OUT = SETS[ap.parse_args().set]
     rows = score()
     buf = io.StringIO()
     for k, v in {**provenance.env_block(), "run": "adaptive_batching",
