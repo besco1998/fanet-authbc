@@ -109,9 +109,13 @@ def fly(px4: Path, plan: dict, timeout_s: float) -> None:
               ("COM_DISARM_LAND", 2), ("COM_RC_IN_MODE", 4)]   # no sticks: auto only
     # A fixed wing otherwise requires a landing pattern in every mission, and SIH has no
     # airspeed sensor for the preflight check; the airspeed field then comes from PX4's estimate.
+    # The maximum airspeed is kept 5 m/s above the trim, the airframe's own default margin
+    # (trim 15, max 20): with a trim above the default maximum (20 m/s) the aircraft took off and
+    # never climbed (A9, mission airplane-02, 2026-10-22; added after registration, disclosed).
     params += ([("MPC_XY_CRUISE", speed), ("MPC_XY_VEL_MAX", max(12.0, speed))]
                if plan["airframe"] == "quadx" else
-               [("FW_AIRSPD_TRIM", speed), ("MIS_TKO_LAND_REQ", 0), ("SYS_HAS_NUM_ASPD", 0)])
+               [("FW_AIRSPD_TRIM", speed), ("FW_AIRSPD_MAX", max(20.0, speed + 5.0)),
+                ("MIS_TKO_LAND_REQ", 0), ("SYS_HAS_NUM_ASPD", 0)])
     gcs = mavutil.mavlink_connection(f"udpin:127.0.0.1:{GCS_PORT}")
     gcs.wait_heartbeat(timeout=90)
     beating = threading.Event()
@@ -184,12 +188,21 @@ def main() -> None:
                                      "PX4_SIMULATOR": "sihsim"})
         try:
             fly(args.px4, plan, args.timeout)
-        finally:
+        except SystemExit:
+            # keep what the failed flight logged, for the diagnosis, before the next run clears it
             client(args.px4, "shutdown")
             try:
                 proc.wait(timeout=30)
             except subprocess.TimeoutExpired:
                 proc.kill()
+            for k, log in enumerate(sorted((rootfs / "log").rglob("*.ulg"))):
+                shutil.copyfile(log, args.out / f"failed_flight_{k}.ulg")
+            raise
+        client(args.px4, "shutdown")
+        try:
+            proc.wait(timeout=30)
+        except subprocess.TimeoutExpired:
+            proc.kill()
     logs = sorted((rootfs / "log").rglob("*.ulg"))
     if len(logs) != 1:
         raise SystemExit(f"expected one flight log, found {len(logs)}")
