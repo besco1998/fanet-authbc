@@ -115,12 +115,23 @@ the freshness rule admits no frame for deadlines up to 1 s and one record at 2 s
 with the sentence that this is consistent with these standards signing each message, not an
 explanation of it. Numbers: `other_links.csv`.
 
+### A10 — the stream schemes against the deadline (Table `tab:stream`, its footnote)
+
+**Now says:** the stream-signing columns "are upper bounds" (footnote ‡: "a packet does not
+verify alone: N_max is an upper bound"); Limitations: "none is implemented".
+
+**Proposed:** Table 5 gains a simulated, deadline-aware column — MAVLink 2 42.1, Wong–Lam 29.1,
+TESLA 39.6–39.8 with d = 2 and I ≤ 20 ms; Gennaro–Rohatgi, EMSS (any k) and TESLA with four
+records a frame: no crossing — and the footnote becomes *"implemented and run on simulated
+links; a record counts if it verifies within D_max"*. Limitations loses "none is implemented".
+Numbers: `stream_deadline.csv`. ⚠️ TESLA's d = 1 cells depend on the 1 ms arrival assumed
+(F99); print the d = 2 values.
+
 ## Not ready
 
 | item | waits for |
 |---|---|
 | A2 design map (heatmap figure) | ns-3 validation, running |
-| A10 stream schemes against a deadline (Table 5 simulated, footnote 2 goes) | A10, running |
 | A11 other PHYs | A11, after A10; NR sidelink not run (H6) |
 | A7 DoS / HMAC field, A8 compiled receiver, A13 lazy verification, A15 timing | pi-B (H4) |
 | A9 richer records, three airframes | flights on a quiet host (H7) |

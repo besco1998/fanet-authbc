@@ -4471,3 +4471,13 @@ reference every r frames therefore follows Eq. (3) for independent loss (V_trace
 between −0.0002 and +0.0009 at r = 2 and 4), not the Gilbert form the plan expected; it is the
 pessimistic case for r > 1 and irrelevant for the design (r = 1). **Cross-check:** at r = 1 the
 replayed V equals 1 − p̂ exactly and equals the runs' own pooled V (0.9481 / 0.9483), and every traced run equals its untraced stage-2 run.
+
+## F99 — the stream-signing schemes against a deadline (revision A10, 2026-10-21)
+
+1 860 ns-3 runs with each scheme implemented and run on traced links: delivery reproduces Table 5
+(every N_max inside its interval; the access-rule model within 1 % of all nine cells), and the
+deadline-aware V removes most of it — Gennaro–Rohatgi, EMSS at any k and TESLA with four records
+a frame never reach 0.95 in time; TESLA reaches it only with d = 2 and I ≤ 20 ms (39.6–39.8
+nodes); MAVLink 2 (42.1) and Wong–Lam (29.1) are unchanged. TESLA with d = 1 loses a share
+(arrival delay)/I of packets to its own safe-packet test. **Cross-check:** that share, 1 ms / I,
+predicts the measured in-time/delivery ratios at I = 10, 20, 50 ms to within 0.003.

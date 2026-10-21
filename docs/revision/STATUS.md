@@ -17,8 +17,8 @@ as memory-capped systemd user units (`scripts/capped.sh`; `systemctl --user list
 | A7 | registered `prereg-A7`; code + tests ✔; timing waits for pi-B (H4) | the tag costs 3 % of capacity (not 2 %) |
 | A8 | registered `prereg-A8`; Rust codec ✔; **byte-identical to Python on 10 000 frames**; timing and energy wait for pi-B (H4, G22) | |
 | A9 | registered `prereg-A9` (size code reproduces the encoder on 9 fields, tested); flights need a quiet host (H7) | SIH flies all three airframes; fixed-wing needed two parameters (stated) |
-| A10 | registered `prereg-A10`; schemes ✔ (tests); **running** since 2026-10-20 23:26 on the fixed binary (F87: tracing had shifted ns-3's random streams; the traced identity runs now equal the published ones digit for digit). A first launch ran 12 s on the old binary and kept nothing (disclosed) | |
-| A11 | registered `prereg-A11`; **queued** with A10; NR sidelink not run (H6) | the no-fit model puts the ratio at 3.4–3.8 on every PHY, not 1.7–4.3 |
+| A10 | ✔ (1 860 runs) | Table 5 reproduced (all N_max in their intervals); against 100 ms only MAVLink 2 (42.1), Wong–Lam (29.1) and TESLA with d = 2, I ≤ 20 ms (39.6–39.8) cross; G-R, every EMSS and TESLA-batch4 never do. F99 |
+| A11 | registered `prereg-A11`; **running** (started 2026-10-21 04:16); NR sidelink not run (H6) | the no-fit model puts the ratio at 3.4–3.8 on every PHY, not 1.7–4.3 |
 | A12 | ✔ (330 runs) | delivery follows the total frame rate: every plan statement held, the model within 0.0011 up to 350 frames/s per node; eight radios can stand for 124 nodes in ns-3 |
 | A13 | not started — depends on A8's timing on pi-B | |
 | A14 | not started — the plan's lowest priority ("keep for a follow-up paper") | |
