@@ -4481,3 +4481,12 @@ a frame never reach 0.95 in time; TESLA reaches it only with d = 2 and I ≤ 20 
 nodes); MAVLink 2 (42.1) and Wong–Lam (29.1) are unchanged. TESLA with d = 1 loses a share
 (arrival delay)/I of packets to its own safe-packet test. **Cross-check:** that share, 1 ms / I,
 predicts the measured in-time/delivery ratios at I = 10, 20, 50 ms to within 0.003.
+
+## F100 — the design map holds in simulation over Λ × D_max (revision A2, 2026-10-21)
+
+3 150 ns-3 runs at fifteen roles of the (Λ, D_max) map, 18–609 nodes, frames of 146–580 B at
+2–100 frames/s: every crossing within 1.05 % of the access-rule model (nothing fitted); the ratio
+rises with the best batch (at 100 records/s: 2.66, 6.63, 17.8 for b* = 3, 9, 49) and is 6.63 at
+(100 /s, 100 ms). **Cross-check:** every run of cells C and D that the published campaign also
+ran (240) is identical in every value; D's crossing differs by 0.13 nodes only because the two
+grids bracket it with different points.

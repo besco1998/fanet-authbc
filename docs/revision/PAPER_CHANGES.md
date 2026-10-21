@@ -30,8 +30,7 @@ hidden share is a minority of the spoilers.
 
 **Proposed:** *"Under loss the mean peak age still meets D_max (87.7 ms at p = 0.05), but one
 lost frame takes an update to 169.75 ms: the deadline holds for a share 1 − p of updates, as V
-does."* Numbers: `results/raw/aoi_under_loss.csv`. The design-map heatmap (the plan's main
-design figure) waits for the ns-3 validation, which is running.
+does."* Numbers: `results/raw/aoi_under_loss.csv`. **The design map** (the plan's main design figure, a heatmap of b\* and the capacity ratio over Λ × D_max) is now validated: fifteen roles in ns-3, every crossing within 1.05 % of the model, ratio 6.63 at (100 /s, 100 ms) (`design_map.csv`, `design_map_validation.csv`). It can replace the single operating point as the design figure, captioned as model-computed and simulation-checked at the marked cells.
 
 ### A3 — margin against the target, and a channel trace (`sec:loss`, `sec:limits`, Discussion)
 
@@ -131,7 +130,6 @@ Numbers: `stream_deadline.csv`. ⚠️ TESLA's d = 1 cells depend on the 1 ms ar
 
 | item | waits for |
 |---|---|
-| A2 design map (heatmap figure) | ns-3 validation, running |
 | A11 other PHYs | A11, after A10; NR sidelink not run (H6) |
 | A7 DoS / HMAC field, A8 compiled receiver, A13 lazy verification, A15 timing | pi-B (H4) |
 | A9 richer records, three airframes | flights on a quiet host (H7) |
