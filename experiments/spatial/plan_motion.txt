@@ -1,0 +1,9 @@
+# Revision A1, motion (predictions/A1-motion.md; decision H8): every node on its own Gauss-Markov
+# path in a square of S1's R = 1 km disc area; v = 0 is the static control. Grids: S1-R1000's
+# stage-2 grids. 30 seeds; run with --stem motion. Costliest first.
+gm-r1000-v0 design 199 208 217 225 234
+gm-r1000-v5 design 199 208 217 225 234
+gm-r1000-v15 design 199 208 217 225 234
+gm-r1000-v0 base 60 63 65 68 70
+gm-r1000-v5 base 60 63 65 68 70
+gm-r1000-v15 base 60 63 65 68 70

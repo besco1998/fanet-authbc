@@ -61,6 +61,16 @@ D_REF_M: float = 0.0
 class Scenario:
     layout: str
     args: tuple[tuple[str, str], ...] = ()
+    program: str = "authbc-spatial"     # the motion scenarios run authbc-spatial-mobile (H8)
+
+
+def scenario_config(sc: Scenario) -> dict:
+    """What a scenario contributes to a campaign's config hash; the program only when it is not
+    the default, so the hashes of the campaigns run before it existed are unchanged."""
+    d = asdict(sc)
+    if sc.program == Scenario.program:
+        del d["program"]
+    return d
 
 
 def scenarios(d_ref: float) -> dict[str, Scenario]:
@@ -76,14 +86,19 @@ def scenarios(d_ref: float) -> dict[str, Scenario]:
     }
     for r in (100, 300, 600, 1000):
         out[f"s1-r{r}"] = Scenario("disc", ref + (("radiusM", str(r)),))
+    # Motion (decision H8, predictions/A1-motion.md): every node on its own Gauss-Markov path in
+    # a square of S1's R = 1 km disc area (side R sqrt(pi)); speed 0 is the static control.
+    for v in (0, 5, 15):
+        out[f"gm-r1000-v{v}"] = Scenario("gm", ref + (("boxM", "1772.45"), ("speedMps", str(v))),
+                                         program="authbc-spatial-mobile")
     for d in range(150, 405, 5):                          # the isolated link, for d_ref
         out[f"pair-{d}"] = Scenario("pair", (("pairDistanceM", str(d)),))
     return out
 
 
-def binary() -> tuple[Path, Path]:
+def binary(program: str = "authbc-spatial") -> tuple[Path, Path]:
     root = ns3_root()
-    return root, root / "build" / "scratch" / "ns3.48-authbc-spatial-optimized"
+    return root, root / "build" / "scratch" / f"ns3.48-{program}-optimized"
 
 
 def run_one(scenario: Scenario, cfg: Config, n: int, seed: int, sim_time: float,
@@ -91,7 +106,7 @@ def run_one(scenario: Scenario, cfg: Config, n: int, seed: int, sim_time: float,
     """One run: the scenario's key/value summary, its per-pair file if it wrote one, where the
     nodes were (at the end of the run; for a static layout, throughout), and the per-link
     traces when `trace_links` > 0 (revision A3, part 2)."""
-    root, exe = binary()
+    root, exe = binary(scenario.program)
     with tempfile.TemporaryDirectory() as td:
         prefix = Path(td) / "s"
         args = [f"--layout={scenario.layout}", f"--nNodes={n}",
@@ -177,7 +192,7 @@ def main() -> None:
     print(f"{len(runs)} runs on file, {len(todo)} to do, {args.workers} at a time", flush=True)
     config = {"seeds": args.seeds, "t": args.sim_time, "d_ref": args.d_ref,
               "configs": {k: asdict(v) for k, v in CONFIGS.items()},
-              "scenarios": {s: asdict(known[s]) for s, _, _ in plan}}
+              "scenarios": {s: scenario_config(known[s]) for s, _, _ in plan}}
     if args.trace_links:   # only then, so the hash of every untraced campaign is unchanged
         config["trace_links"] = args.trace_links
 
