@@ -140,11 +140,19 @@ known truth and 30 seeds, the plain percentile bootstrap covered 92–94 % of th
 (expanded). Grid intervals (`\ci…`, `\strCi…`) are unchanged (≈ 100 % coverage). Needs the
 Hesterberg bib entry (held locally; arXiv:1411.5279).
 
+### A11 — other 802.11 PHYs and rates (the Discussion paragraph on other links; Supplementary Note 7)
+
+**Now says:** the gain "follows … 1.7× to 4.3×" across links (a closed form's saturation
+ratios). **Proposed:** a short table, simulated: *"On 802.11a at 6, 12 and 24 Mb/s and 802.11p at
+3, 6 and 12 Mb/s, the design's capacity is 3.4–3.8 times the baseline's, rising slightly with the
+rate."* Numbers: `phy_links.csv`. ⚠️ State that the no-fit model is 4–4.6 % optimistic at the
+fastest rates (F104) if model values are printed beside ns-3's. NR sidelink stays unsimulated (H6).
+
 ## Not ready
 
 | item | waits for |
 |---|---|
-| A11 other PHYs | A11, after A10; NR sidelink not run (H6) |
+| A11 NR sidelink | not run (H6) |
 | A7 DoS / HMAC field, A8 compiled receiver, A13 lazy verification, A15 timing | pi-B (H4) |
 | A9 richer records, three airframes | flights on a quiet host (H7) |
 | A14 | not started — the plan keeps it for a follow-up paper |

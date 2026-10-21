@@ -4531,3 +4531,13 @@ the R = 1 km disc's area (decision H8; the new file `ns3/authbc-spatial-mobile.c
 (within 0.85 %): motion changes who contends, not how many. **Cross-check:** the new file with
 the disc layout reproduces three stage-2 runs of `authbc-spatial.cc` bit for bit. Closes F88's
 open question for relative motion; Doppler and time-correlated fading remain outside the channel.
+
+## F104 — on six 802.11 PHYs and rates the gain is 3.4–3.8×; the model is optimistic at short frames (revision A11, 2026-10-22)
+
+2 520 ns-3 runs, 802.11a at 6/12/24 Mb/s and 802.11p (10 MHz) at 3/6/12 Mb/s: the design/base
+ratio is 3.39–3.80 and rises with rate at each width; the paper's "1.7–4.3×" (a closed form's
+saturation ratios) is not what the delivery crossings show. The access-rule model (nothing
+fitted) is within 1.5 % at frames of 178 µs and longer, and 4.0–4.6 % optimistic at the fastest
+rate of each width (118–242 µs frames); the cause is not established (the preamble-detection
+constant is not it alone). **Cross-check:** the 802.11a 6 Mb/s cells reproduce the published
+crossings exactly.
