@@ -1,0 +1,25 @@
+# python=3.12.3
+# platform=Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=interval_coverage
+# config_hash=c86c0bad430378c4
+grid,method,trials,coverage,coverage_lo,coverage_hi
+step3,v_mean_bootstrap,2000,0.935,0.9233,0.9454
+step3,v_mean_t,2000,0.953,0.9428,0.9619
+step3,crossing_bootstrap,2000,0.9425,0.9314,0.9523
+step3,crossing_expanded_bootstrap,2000,0.951,0.9406,0.96
+step3,v_mean_expanded_bootstrap,2000,0.952,0.9417,0.9609
+step3,crossing_delta_t,2000,0.9285,0.9163,0.9394
+step3,n_max_bootstrap,2000,0.9995,0.9972,1.0
+step1,v_mean_bootstrap,2000,0.922,0.9094,0.9334
+step1,v_mean_t,2000,0.941,0.9298,0.9509
+step1,crossing_bootstrap,2000,0.9305,0.9185,0.9413
+step1,crossing_expanded_bootstrap,2000,0.9495,0.939,0.9587
+step1,v_mean_expanded_bootstrap,2000,0.9405,0.9292,0.9505
+step1,crossing_delta_t,2000,0.879,0.8639,0.893
+step1,n_max_bootstrap,2000,0.999,0.9964,0.9999

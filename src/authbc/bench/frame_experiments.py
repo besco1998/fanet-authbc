@@ -27,8 +27,8 @@ from typing import Any
 import numpy as np
 
 from authbc.bench import framesizes, leanframes, provenance
-from authbc.bench.experiments import CI_SEED, _read_raw, _Runner
-from authbc.bench.stats import bootstrap_ci
+from authbc.bench.experiments import _read_raw, _Runner
+from authbc.bench.stats import t_interval
 from authbc.bench.telemgen import TelemetryRecord
 from authbc.crypto.ed25519 import Ed25519Scheme
 from authbc.encodings.delta_enc import DeltaEncoder
@@ -218,10 +218,10 @@ def run_loss_codec(cfg: dict) -> list[dict]:
                     v_by_seed.append(rx.counters[Receipt.ACCEPTED] / n_frames)
                     desync += rx.counters[Receipt.DESYNC]
                     lost_n += int(lost.sum())
-                # The CI is of the MEAN, the statistic reported beside it. `bootstrap_ci` defaults
-                # to the median, which is right for timings and wrong here: on a skewed sample
-                # the median's interval need not even contain the mean.
-                lo, hi = bootstrap_ci(v_by_seed, seed=CI_SEED, statistic=np.mean)
+                # The CI is of the MEAN, the statistic reported beside it, and it is a t interval:
+                # at 30 seeds the percentile bootstrap of a mean covered 92-94 % (F86, decision
+                # H2; analysis/interval_coverage.py).
+                lo, hi = t_interval(v_by_seed)
                 if model == "ber":
                     v_th = mean(frame_model.verifiability_per_frame(list(q), ref)
                                 for q in by_length)

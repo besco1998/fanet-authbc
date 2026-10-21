@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from statistics import median
 
 import numpy as np
+from scipy import stats as sps
 
 DEFAULT_RESAMPLES = 10_000
 
@@ -44,6 +45,21 @@ def bootstrap_ci(
     lo = float(np.percentile(stats, 100 * (1 - ci) / 2))
     hi = float(np.percentile(stats, 100 * (1 + ci) / 2))
     return lo, hi
+
+
+def t_interval(samples: list[float], *, ci: float = 0.95) -> tuple[float, float]:
+    """Student-t interval of the MEAN of ``samples``.
+
+    The interval for V, a mean over seeds (decision H2, finding F86): with a known mean, the
+    percentile bootstrap of a mean over 30 seeds covered 93.7 % (binomial values) and 91.8 %
+    (overdispersed ones) of the time, the t interval 95.3 %.
+    """
+    if len(samples) < 2:
+        raise ValueError("need >= 2 samples for a t interval")
+    arr = np.asarray(samples, dtype=float)
+    half = float(sps.t.ppf((1 + ci) / 2, len(arr) - 1) * arr.std(ddof=1) / np.sqrt(len(arr)))
+    mean = float(arr.mean())
+    return mean - half, mean + half
 
 
 def summarize(

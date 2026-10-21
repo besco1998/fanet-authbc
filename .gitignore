@@ -63,6 +63,8 @@ thesis/*.blg
 # decision of 2026-10-07). The files stay on the author's machine; never `git add -f` them.
 docs/literature/bernstein2011_ed25519.pdf
 docs/literature/huang2021_fmac_flocking_mac_iotj.pdf
+docs/literature/yang2025_gmg_marching_formation_arxiv.pdf
+docs/literature/hesterberg2015_bootstrap_teachers_arxiv.pdf
 docs/literature/ma2009_dsrc_safety_broadcast_jwcn.pdf
 docs/literature/kurkowski2005_manet_simulation_incredibles.pdf
 docs/literature/xu2020_clas_secure_routing_scn.pdf

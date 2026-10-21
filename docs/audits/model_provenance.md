@@ -4490,3 +4490,28 @@ rises with the best batch (at 100 records/s: 2.66, 6.63, 17.8 for b* = 3, 9, 49)
 (100 /s, 100 ms). **Cross-check:** every run of cells C and D that the published campaign also
 ran (240) is identical in every value; D's crossing differs by 0.13 nodes only because the two
 grids bracket it with different points.
+
+## F101 — the capacity intervals cover 93–94 % too; the expanded percentile bootstrap fixes them (H2, 2026-10-21)
+
+*Decision H2 (Mohamed): V intervals become t intervals; test the crossing intervals the same way
+before deciding for them.* `analysis/interval_coverage.py` → `results/raw/interval_coverage.csv`:
+synthetic per-seed curves with a known crossing, shaped like cell D (30 seeds, per-seed sd
+0.0019, slope −0.00106 per node), through the repository's own interval code, 2 000 trials, on a
+step-3 grid (as A2) and a step-1 grid (as the published D).
+
+| interval | step 3 | step 1 |
+|---|---|---|
+| V at one N: percentile bootstrap / **t** | 0.935 / **0.953** | 0.922 / **0.941** |
+| interpolated crossing: percentile bootstrap (every capacity interval the paper prints) | 0.943 | 0.930 |
+| interpolated crossing: **expanded percentile** bootstrap (Hesterberg 2015, §5.3) | **0.951** | **0.950** |
+| interpolated crossing: delta-method t (a candidate) | 0.928 | 0.879 |
+| grid crossing N_max: percentile bootstrap | 1.000 | 0.999 (conservative) |
+
+(± about 0.01 at 2 000 trials.) **Done:** V intervals are t intervals (`stats.t_interval`;
+`run_loss_codec`); the loss table and the three printed intervals that moved (`\lossBerCi`,
+`\lossCiFour`, `\lossCiSixteen`, each by 0.001–0.003) are regenerated; no point estimate changed.
+**Open (H2):** the crossing intervals — the expanded percentile interval is the same code at the
+level 1 − 2Φ(−√(n/(n−1)) t_{0.975,n−1}) (96.25 % for 30 seeds) and reaches nominal coverage on
+both grids; the delta method, my first candidate, does worse than the bootstrap on a fine grid
+because replicates change bracket. A3 and the other revision outcomes keep the bootstrap they
+were registered and scored with.
