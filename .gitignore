@@ -62,6 +62,7 @@ thesis/*.blg
 # Literature that is held and read but NOT redistributed (docs/literature/HELD_LOCALLY.csv,
 # decision of 2026-10-07). The files stay on the author's machine; never `git add -f` them.
 docs/literature/bernstein2011_ed25519.pdf
+docs/literature/huang2021_fmac_flocking_mac_iotj.pdf
 docs/literature/ma2009_dsrc_safety_broadcast_jwcn.pdf
 docs/literature/kurkowski2005_manet_simulation_incredibles.pdf
 docs/literature/xu2020_clas_secure_routing_scn.pdf

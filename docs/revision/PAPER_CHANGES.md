@@ -52,7 +52,7 @@ saves 9–41 ms of peak age but holds V ≥ 0.95 in only 75 % of one-second wind
 swarm and fails at 76 nodes (fixed b = 4: 127). **Two honest options:** (a) a Discussion
 paragraph stating exactly that, with the oracle (holds to 125) as evidence that the gain is
 reachable with more margin; (b) register a second controller and run it, then decide. Not a
-contribution bullet as it stands. Numbers: `adaptive_batching.csv`.
+contribution bullet as it stands. Numbers: `adaptive_batching.csv`. ⚠️ Cite FMAC (Huang et al. 2021, held locally) as the nearest prior work: it adapts the contention window, A4 the batch; and its prediction of the next period's density is the precedent for the second controller's growth term.
 
 ### A5 — bounded-delay freshness (`sec:model` "What Is Not Protected", `sec:limits` "Security Scope")
 
@@ -85,7 +85,7 @@ three-model caveat must stay in the sentence (`predictions/A6.md`).
 nodes only through each node's not colliding with itself: after an (N − 1)/N correction, splits
 from 124 nodes at 12.5 frames/s to 5 at 350 agree within 0.005 of V in ns-3, and the access-rule
 model agrees with every split within 0.0011."* With the caveat that real drivers' queues are
-B1/B2's question. Numbers: `nf_equivalence.csv`.
+B1/B2's question. Numbers: `nf_equivalence.csv`. ⚠️ Cite Kumar, Choi & Kim 2019 (held, CC BY) as the earlier use of the emulation, with hidden transmitters only; claim only the contended case.
 
 ### A15 — post-quantum (`sec:limits` "Post-Quantum Signatures", Conclusion)
 

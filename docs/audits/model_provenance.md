@@ -4437,7 +4437,7 @@ found in two models (the timed one and the full one), and origin and integrity i
 correction (at most 0.5 % over a 25-fold change of split), so eight radios at 194 frames/s stand
 for the design's 124 nodes at 12.5 — in ns-3; real drivers are B1/B2's question. **Cross-check:**
 the access-rule model, nothing fitted, is within 0.0011 of every split up to 350 frames/s per
-node; cells C and D re-run here reproduce the published means exactly.
+node; cells C and D re-run here reproduce the published means exactly. **Prior art (read 2026-10-21):** Kumar, Choi & Kim (EURASIP JWCN 2019, §6.2) made two V2X radios send every 1 ms to emulate 100 vehicles each, with the transmitters hidden from each other (no access collisions); what is added here is the equivalence under carrier-sensing contention.
 
 ## F95 — with Falcon-512 the gain is the same ×3.5, and the design fits (revision A15, 2026-10-20)
 
