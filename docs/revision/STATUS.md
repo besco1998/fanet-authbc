@@ -9,7 +9,7 @@ as memory-capped systemd user units (`scripts/capped.sh`; `systemctl --user list
 | ID | State | What is known |
 |---|---|---|
 | A1 | ✔ stage 2 (4 230 runs) | ratio 3.46–3.58 in every layout, equal power to a 1 km disc (hidden share up to 0.11); capacity in neighbours falls (8.7 at R = 1 km), in nodes it rises (218). My A1-2 bracket [10, 40] missed. ⚠️ S3's 5 and 15 m/s are identical runs: group speed untestable in this scenario (F88, H8) |
-| A1-motion | registered `prereg-A1-motion` (decision H8): every node on its own Gauss–Markov path at 0/5/15 m/s, new file `authbc-spatial-mobile.cc` (E20), parameters from `MOBILITY_SURVEY.md` §6; 900 runs | |
+| A1-motion | ✔ (900 runs) | every node moving on its own at 0/5/15 m/s: ΔV ≤ 0.0005, ratio 3.57–3.63; motion changes the runs (0/300 identical) but not the neighbour count. F103 (closes H8) |
 | A2 | ✔ map, age part, ns-3 validation (3 150 runs) | one lost frame breaks the deadline; the map holds in ns-3 at 15 roles within 1.05 % of the model; ratio 6.63 at (100 /s, 100 ms) (F90, F100) |
 | A3 | ✔ part 1 and part 2 (60 traced runs, 3 000 links) | tolerable loss held; the margin rule fails in 5 of 192 bursty cells (interval; F86). Traces: ns-3 collision loss is independent frame to frame (burst 1.06), so V follows Eq. (3) for independent loss, not the Gilbert form (F98); plan (3) missed in 1 of 4 by 0.0002 |
 | A4 | ✔ (120 runs) | the controller saves 9–41 ms of peak age but runs at the target's edge: V ≈ 0.955, a quarter of windows < 0.95 on the ramp, fails at 76 nodes (fixed b = 4: 127; oracle: 125). Plan (2), (3) failed; (1), (4)–(6) held. H9 |

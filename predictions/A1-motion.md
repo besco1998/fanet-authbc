@@ -61,3 +61,44 @@ Scored as: (1) at every node count of each configuration, |V(5) − V(0)| and |V
 Doppler and time-correlated fading (not in the channel at any speed); collision avoidance and
 formation keeping (independent random motion is the harder case for the neighbour set, not the
 realistic one for a swarm); hovering is assumed at v = 0 (rotary-wing only, E20 §5.3).
+
+---
+
+## Outcome (2026-10-21; 900 ns-3 runs)
+
+`results/raw/spatial_motion.csv` (`analysis/spatial_capacity.py --score motion --d-ref 215 --out
+results/raw/spatial_motion.csv`); runs `results/raw/ns3_spatial_motion_runs.csv`.
+
+| | base: crossing [95 %] | design: crossing [95 %] | ratio |
+|---|---|---|---|
+| still (control) | 62.10 [60.46, 63.76] | 223.86 [220.85, 226.92] | 3.605 |
+| 5 m/s | 61.38 [60.22, 63.16] | 222.53 [219.57, 225.86] | 3.625 |
+| 15 m/s | 62.02 [60.44, 63.57] | 221.30 [217.75, 225.03] | 3.568 |
+
+(Intervals are the plain percentile bootstrap, the method A1 was registered with; F101.)
+
+ΔV against the still control, per node count (30-seed means of per-receiver V):
+
+| | base 60 | 63 | 65 | 68 | 70 | design 199 | 208 | 217 | 225 | 234 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 5 m/s | −0.0003 | −0.0005 | −0.0005 | −0.0001 | −0.0001 | −0.0002 | −0.0001 | −0.0002 | −0.0002 | −0.0001 |
+| 15 m/s | −0.0001 | 0.0000 | −0.0004 | +0.0001 | +0.0001 | −0.0004 | −0.0003 | −0.0004 | −0.0004 | −0.0005 |
+
+* Plan (1), |ΔV| < 0.01 at every node count: **HELD** — largest 0.0005, now with every node
+  moving on its own (relative speeds up to ~30 m/s at 15 m/s each).
+* Plan (2), ratio in [3.0, 4.0] at each speed: **HELD** (3.57–3.63).
+* AM-1, |ΔV| ≤ 0.005: **HELD**. The design at 15 m/s is lower at all five node counts
+  (−0.0003 to −0.0005; about 1.8 standard errors on their mean) — if real, an effect a tenth of
+  the bound; not significant here.
+* AM-2, ratio within ±3 % of the control's: **HELD** (+0.6 %, −1.0 %).
+* AM-3, the square's control 0–5 % above the disc's crossings: design **HELD** (+2.8 %); base
+  **MISSED** (−1.4 %; the two intervals overlap).
+* AM-4 (discriminators): 5 and 15 m/s identical in **0 of 300** runs — motion does change the
+  runs, unlike F88's group; mean neighbours equal across speeds within 0.85 % (base) and 0.22 %
+  (design).
+
+**What it means.** With every node flying its own path at up to 15 m/s — neighbours appearing and
+leaving during a run — delivery moves by at most 0.0005 and the design's advantage stays at 3.6×.
+In this channel, which has no Doppler or time-correlated fading, motion acts through who
+contends, and at uniform density the number who contend does not change. The plan's mobility
+statement is now tested for relative motion, not only for a rigid group (F88).

@@ -5,6 +5,8 @@ Reads the runs of `ns3/run_spatial.py` and writes what the registration scores:
 
     python analysis/spatial_capacity.py --dref           # results/raw/spatial_dref.csv
     python analysis/spatial_capacity.py --score STEM...  # results/raw/spatial_capacity.csv
+    python analysis/spatial_capacity.py --score motion --d-ref 215 \
+        --out results/raw/spatial_motion.csv               # A1-motion
 
 * **d_ref.** The largest distance of the pair sweep at which the 30-seed mean delivery of an
   isolated link is at least 0.99 for every frame of A1, and at every shorter distance.
@@ -197,6 +199,8 @@ def main() -> None:
     what.add_argument("--dref", action="store_true")
     what.add_argument("--score", nargs="+", metavar="STEM")
     ap.add_argument("--d-ref", type=float, default=0.0)
+    ap.add_argument("--out", type=Path, default=RAW / "spatial_capacity.csv",
+                    help="where --score writes (A1-motion: results/raw/spatial_motion.csv)")
     args = ap.parse_args()
     if args.dref:
         best, means = d_ref(read_runs("dref"))
@@ -214,7 +218,7 @@ def main() -> None:
     if args.d_ref <= 0:
         raise SystemExit("--score needs the measured --d-ref")
     rows = score(args.score, args.d_ref)
-    _write(RAW / "spatial_capacity.csv", rows, "spatial_capacity",
+    _write(args.out, rows, "spatial_capacity",
            {"stems": args.score, "d_ref": args.d_ref, "seeds": SEEDS, "level": V_TARGET})
     for r in rows:
         print({k: r.get(k, "") for k in ("scenario", "config", "n_cross", "n_cross_lo",

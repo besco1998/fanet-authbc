@@ -20,7 +20,7 @@ between 3.46 and 3.58 in every layout, although at R = 1 km 11 % of the nodes ab
 frame cannot hear its sender. Capacity counted in neighbours falls (8.7 within 215 m at
 R = 1 km) because a receiver contends with every node in its carrier-sensing range [Hu & Dai];
 counted in nodes in the area it rises (218)."* Limitations: hidden terminals and spatial reuse
-are then simulated; mobility only as 2–4 m/s drift of members (F88, decision H8).
+are then simulated, and so is relative motion: *"with every node moving on its own Gauss–Markov path at up to 15 m/s, delivery changes by at most 0.0005 and the ratio stays at 3.6 (F103)"* — with the caveat that the channel has no Doppler or time-correlated fading. Numbers: `spatial_motion.csv`. Cite Bujari et al. 2017 (held, CC BY) for the model's parameters.
 
 Numbers: `results/raw/spatial_capacity.csv`. Cite Hu & Dai 2020 (held, CC BY; needs a bib
 entry). ⚠️ Do not write "because hidden terminals add collisions" (the plan's reason): the
@@ -154,7 +154,7 @@ Hesterberg bib entry (held locally; arXiv:1411.5279).
 
 * "Hidden terminals reduce capacity" as the mechanism (A1: they are a minority of spoilers; the
   carrier-sensing range is the cause, and it is Hu & Dai's model, not ours).
-* "Mobility up to 15 m/s does not matter" (F88: group speed was not tested).
+* "Mobility does not matter" without the channel's caveat (no Doppler, no time-correlated fading; F103).
 * "The adaptive controller keeps V ≥ 0.95 up to 120 nodes" (A4: it did not).
 * "Batching matters more with post-quantum signatures" (A15: the same ×3.5).
 * Any Tamarin sentence without "in three models".

@@ -4521,3 +4521,13 @@ A growth term at A4's margin: 85 %, failure at 108, age as A4's. Neither is with
 b = 4. **Cross-check:** below 30 nodes both are A4's runs (b = 1, age identical); in the mobile
 scenario all controllers give identical series because every threshold is exceeded from the first
 second — a scenario that cannot discriminate, reported as such.
+
+## F103 — relative motion up to 15 m/s does not change delivery (revision A1-motion, 2026-10-21)
+
+900 ns-3 runs, every node an independent Gauss–Markov process at 0, 5 or 15 m/s in a square of
+the R = 1 km disc's area (decision H8; the new file `ns3/authbc-spatial-mobile.cc`, E20's rule):
+ΔV ≤ 0.0005 at every node count of both configurations; design/base ratio 3.57–3.63 (still:
+3.61). The runs do differ with speed (0 of 300 identical) and the neighbour count does not
+(within 0.85 %): motion changes who contends, not how many. **Cross-check:** the new file with
+the disc layout reproduces three stage-2 runs of `authbc-spatial.cc` bit for bit. Closes F88's
+open question for relative motion; Doppler and time-correlated fading remain outside the channel.
