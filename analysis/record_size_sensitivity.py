@@ -199,9 +199,14 @@ def main() -> None:
     for flight in args.flights:
         plan = json.loads((flight / "mission.json").read_text())
         recs = records(flight / "flight.ulg")
+        # the speed drawn, the cruise commanded (fixed wing and VTOL capped at 15 m/s, decided
+        # 2026-10-22) and the ground speed flown, mean over the in-flight records
+        flown = st.mean(float(np.hypot(r["vel_x"], r["vel_y"])) / 100.0 for r in recs)
         for n_fields, fields in SETS.items():
             rows.append({"airframe": plan["airframe"], "mission": plan["number"],
-                         "speed_mps": plan["speed_mps"], "fields": n_fields,
+                         "speed_mps": plan["speed_mps"],
+                         "cruise_mps": plan.get("cruise_flown_mps", plan["speed_mps"]),
+                         "ground_speed_mps": round(flown, 2), "fields": n_fields,
                          **{k: round(v, 3) for k, v in summarise(recs, fields).items()}})
     for n_fields in SETS:
         group = [r for r in rows if r["fields"] == n_fields]

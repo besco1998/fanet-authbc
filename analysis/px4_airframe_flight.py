@@ -34,6 +34,11 @@ LOGGER_TOPICS = "\n".join(f"{t} 20" for t in (
     "battery_status", "vehicle_status", "vehicle_thrust_setpoint")) + "\n" + \
     "vehicle_land_detected 0\n"
 GCS_PORT = 14550
+# PX4's SIH airplane flies at 12-15 m/s whatever it is told (airspeed never above 15 in the
+# missions flown); told more, it misses its waypoints and circles (A9, missions airplane-02 and
+# -06). Decided by Mohamed, 2026-10-22: fixed-wing and VTOL cruise is capped at the airframe's
+# own trim, 15 m/s; the drawn speed and the mission's geometry are kept and both are recorded.
+FW_CRUISE_CAP_MPS = 15.0
 HOME = (47.397742, 8.545594)            # PX4's default SITL home (Zurich)
 AIRFRAMES = {
     # model, cruise speed range (m/s), leg length range (m), altitude (m)
@@ -104,7 +109,7 @@ def upload(gcs, plan: dict) -> int:
 
 def fly(px4: Path, plan: dict, timeout_s: float) -> None:
     from pymavlink import mavutil
-    speed = plan["speed_mps"]
+    speed = plan["cruise_flown_mps"]
     params = [("NAV_DLL_ACT", 0), ("NAV_RCL_ACT", 0), ("COM_RCL_EXCEPT", 4),
               ("COM_DISARM_LAND", 2), ("COM_RC_IN_MODE", 4)]   # no sticks: auto only
     # A fixed wing otherwise requires a landing pattern in every mission, and SIH has no
@@ -171,6 +176,8 @@ def main() -> None:
     ap.add_argument("--timeout", type=float, default=1200.0)
     args = ap.parse_args()
     plan = mission(args.airframe, args.mission)
+    plan["cruise_flown_mps"] = (plan["speed_mps"] if args.airframe == "quadx"
+                                else min(plan["speed_mps"], FW_CRUISE_CAP_MPS))
     build = args.px4 / "build" / "px4_sitl_default"
     rootfs = build / "rootfs"
     (build / "etc" / "logging").mkdir(parents=True, exist_ok=True)
