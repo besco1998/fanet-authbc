@@ -4510,8 +4510,4 @@ step-3 grid (as A2) and a step-1 grid (as the published D).
 (± about 0.01 at 2 000 trials.) **Done:** V intervals are t intervals (`stats.t_interval`;
 `run_loss_codec`); the loss table and the three printed intervals that moved (`\lossBerCi`,
 `\lossCiFour`, `\lossCiSixteen`, each by 0.001–0.003) are regenerated; no point estimate changed.
-**Open (H2):** the crossing intervals — the expanded percentile interval is the same code at the
-level 1 − 2Φ(−√(n/(n−1)) t_{0.975,n−1}) (96.25 % for 30 seeds) and reaches nominal coverage on
-both grids; the delta method, my first candidate, does worse than the bootstrap on a fine grid
-because replicates change bracket. A3 and the other revision outcomes keep the bootstrap they
-were registered and scored with.
+**Adopted 2026-10-21 (Mohamed, H2):** crossing intervals are expanded percentile intervals — the same bootstrap at the level 1 − 2Φ(−√(n/(n−1)) t_{0.975,n−1}) (96.25 % for 30 seeds), `interpolated_crossing_ci(expanded=True)`, nominal coverage on both grids. The paper's two tables of interpolated crossings (spread nodes, batch sizes) are regenerated; each limit moved by 0.01–0.06 nodes and two printed intervals changed (`\batCiEight`, `\sprCiFarDesign`); no crossing moved. The grid crossing N_max keeps its plain interval: it already covers ≈ 100 % (conservative, discrete). The delta method, my first candidate, does worse than the bootstrap on a fine grid because replicates change bracket. The revision's registered analyses keep the plain interval they were scored with (the library default); an interval from them enters the paper only through the expanded option.

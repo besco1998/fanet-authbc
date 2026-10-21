@@ -126,6 +126,15 @@ links; a record counts if it verifies within D_max"*. Limitations loses "none is
 Numbers: `stream_deadline.csv`. ⚠️ TESLA's d = 1 cells depend on the 1 ms arrival assumed
 (F99); print the d = 2 values.
 
+### H2 — the intervals (Methods; every printed interval)
+
+**Proposed Methods sentence:** *"A 95 % interval of a mean over seeds is a Student-t interval; an
+interval of a crossing is an expanded percentile bootstrap interval (Hesterberg, 2015). With a
+known truth and 30 seeds, the plain percentile bootstrap covered 92–94 % of the time, these 95 %
+(F86, F101)."* Already in `numbers.tex`: `\lossCi…`, `\lossBerCi` (t), `\sprCi…`, `\batCi…`
+(expanded). Grid intervals (`\ci…`, `\strCi…`) are unchanged (≈ 100 % coverage). Needs the
+Hesterberg bib entry (held locally; arXiv:1411.5279).
+
 ## Not ready
 
 | item | waits for |

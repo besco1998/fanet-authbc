@@ -338,12 +338,13 @@ def _per_run_crossing(per_n: dict[int, list[float]]) -> int:
     return crossing_point(share, PER_RUN_SHARE)
 
 
-def summarise(runs: list[dict[str, str]], seeds: int) -> list[dict]:
+def summarise(runs: list[dict[str, str]], seeds: int, *, expanded: bool = False) -> list[dict]:
     """Per-(cell, source, N) dispersion rows, then one CROSSING row per (cell, source).
 
     A source is a (jitter, rate offset) pair. A node count enters only once all ``seeds`` runs
     are on file, so a half-finished sweep can be summarised without a short sample being compared
-    against the threshold.
+    against the threshold. ``expanded`` selects the expanded percentile interval of the crossing
+    (`stats.interpolated_crossing_ci`, F101) — what the paper prints.
     """
     groups: dict[tuple[str, float, float], dict[int, list[float]]] = {}
     for r in runs:
@@ -375,7 +376,8 @@ def summarise(runs: list[dict[str, str]], seeds: int) -> list[dict]:
         n_max = crossing_point(means, V_TARGET)
         ci = threshold_crossing_ci(per_n, threshold=V_TARGET, seed=BOOTSTRAP_SEED)
         interp = interpolated_crossing(means, V_TARGET)
-        interp_ci = interpolated_crossing_ci(per_n, threshold=V_TARGET, seed=BOOTSTRAP_SEED)
+        interp_ci = interpolated_crossing_ci(per_n, threshold=V_TARGET, seed=BOOTSTRAP_SEED,
+                                             expanded=expanded)
         row = {
             **head, "n_nodes": "CROSSING", "seeds": seeds,
             # the estimate is the SAMPLE's crossing; the bootstrap supplies only the interval

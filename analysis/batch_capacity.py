@@ -118,7 +118,7 @@ def ns3_crossings() -> dict[str, dict]:
     path = RAW / f"{STEM}_runs.csv"
     if not path.exists():
         return {}
-    return {r["cell"]: r for r in drv.summarise(drv.read_runs(path), SEEDS)
+    return {r["cell"]: r for r in drv.summarise(drv.read_runs(path), SEEDS, expanded=True)
             if r["n_nodes"] == "CROSSING" and r["cell"] in GRIDS}
 
 

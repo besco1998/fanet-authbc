@@ -35,6 +35,7 @@ sys.path.insert(0, str(REPO / "src"))
 from authbc.bench import provenance  # noqa: E402
 from authbc.bench.stats import (  # noqa: E402
     bootstrap_ci,
+    expanded_level,
     interpolated_crossing,
     interpolated_crossing_ci,
     t_interval,
@@ -87,14 +88,6 @@ def delta_t_crossing(per_n: dict[int, list[float]], ci: float = 0.95
     se = float(np.sqrt(dx_dva ** 2 * se2[a] + dx_dvb ** 2 * se2[b]))
     q = float(sps.t.ppf((1 + ci) / 2, SEEDS - 1))
     return x - q * se, x + q * se
-
-
-def expanded_level(n: int, ci: float = 0.95) -> float:
-    """The percentile level that makes a bootstrap interval of a mean as wide as the t interval:
-    alpha' / 2 = Phi(-sqrt(n / (n - 1)) t(1 - alpha / 2; n - 1)) (Hesterberg's expanded
-    percentile interval)."""
-    z = float(np.sqrt(n / (n - 1)) * sps.t.ppf((1 + ci) / 2, n - 1))
-    return 1 - 2 * float(sps.norm.cdf(-z))
 
 
 def trial(rng: np.random.Generator, grid: tuple[int, ...], k: int) -> dict[str, int]:

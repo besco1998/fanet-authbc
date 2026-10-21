@@ -38,3 +38,32 @@ def test_it_covers_95_percent_where_the_bootstrap_did_not() -> None:
         boot_hits += blo <= true_v <= bhi
     assert 0.94 <= t_hits / trials <= 0.96
     assert boot_hits < t_hits
+
+
+def test_the_expanded_level_is_hesterbergs() -> None:
+    from authbc.bench.stats import expanded_level
+    assert expanded_level(30) == pytest.approx(0.962492, abs=1e-6)
+    assert expanded_level(100_000) == pytest.approx(0.95, abs=1e-4)   # the plain level, large n
+
+
+def test_the_expanded_crossing_interval_contains_the_plain_one() -> None:
+    from authbc.bench.stats import interpolated_crossing_ci
+    rng = np.random.default_rng(7)
+    per_n = {n: list(rng.normal(0.95 - 0.00106 * (n - 124.55), 0.0019, 30))
+             for n in range(115, 134, 3)}
+    plain = interpolated_crossing_ci(per_n, threshold=0.95, seed=3)
+    wide = interpolated_crossing_ci(per_n, threshold=0.95, seed=3, expanded=True)
+    assert plain is not None and wide is not None
+    assert wide[0] <= plain[0] < plain[1] <= wide[1]
+
+
+def test_the_measured_coverage_is_what_the_choice_rests_on() -> None:
+    """F101: the committed study, not a claim — the expanded crossing interval at 95 %."""
+    import csv
+    from pathlib import Path
+    path = Path(__file__).resolve().parents[3] / "results" / "raw" / "interval_coverage.csv"
+    rows = [r for r in csv.DictReader(ln for ln in path.open() if not ln.startswith("#"))]
+    got = {(r["grid"], r["method"]): float(r["coverage"]) for r in rows}
+    for grid in ("step3", "step1"):
+        assert 0.94 <= got[(grid, "crossing_expanded_bootstrap")] <= 0.96
+        assert got[(grid, "crossing_bootstrap")] < got[(grid, "crossing_expanded_bootstrap")]

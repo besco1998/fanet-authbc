@@ -144,7 +144,7 @@ def ns3_crossing(case: Case) -> dict | None:
     path = RAW / f"{case.stem}_runs.csv"
     if not path.exists():
         return None
-    rows = [r for r in drv.summarise(drv.read_runs(path), SEEDS)
+    rows = [r for r in drv.summarise(drv.read_runs(path), SEEDS, expanded=True)
             if r["n_nodes"] == "CROSSING" and r["cell"] == case.cell]
     return rows[0] if rows else None
 

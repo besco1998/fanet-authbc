@@ -121,6 +121,14 @@ def _replicate_means(per_n: Mapping[int, list[float]], resamples: int,
     return ns, means
 
 
+def expanded_level(n: int, ci: float = 0.95) -> float:
+    """The level at which a percentile bootstrap interval is Hesterberg's expanded percentile
+    interval for ``n`` samples: 1 − 2Φ(−√(n/(n−1)) t(1 − α/2; n − 1)) (The American
+    Statistician 69(4), 2015, §5.3). 0.9625 for n = 30 at 95 %."""
+    z = float(np.sqrt(n / (n - 1)) * sps.t.ppf((1 + ci) / 2, n - 1))
+    return 1.0 - 2.0 * float(sps.norm.cdf(-z))
+
+
 def interpolated_crossing_ci(
     per_n: Mapping[int, list[float]],
     *,
@@ -128,14 +136,22 @@ def interpolated_crossing_ci(
     resamples: int = DEFAULT_RESAMPLES,
     ci: float = 0.95,
     seed: int = 0,
+    expanded: bool = False,
 ) -> tuple[float, float, float] | None:
     """Bootstrap interval of `interpolated_crossing`: ``(lo, hi, share of replicates bracketed)``.
 
     Replicates whose crossing leaves the grid cannot be interpolated and are left out, so the
     interval is only as good as the share that stayed inside — returned so the caller can refuse
     a grid that is too narrow. ``None`` if no replicate was bracketed.
+
+    ``expanded=True`` gives the expanded percentile interval (`expanded_level`): at 30 seeds the
+    plain percentile interval of a crossing covered 93–94 % with a known crossing, the expanded
+    one 95.0–95.1 % (F101, decision H2). It is what the paper prints; the default stays the plain
+    interval because the revision's registered analyses were scored with it.
     """
     ns, means = _replicate_means(per_n, resamples, seed)
+    if expanded:
+        ci = expanded_level(len(next(iter(per_n.values()))), ci)   # seeds, equal for every N
     grid = np.asarray(ns, dtype=float)
     prefix = np.cumprod(means >= threshold, axis=1).sum(axis=1)
     inside = (prefix > 0) & (prefix < len(ns))
