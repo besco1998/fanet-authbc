@@ -4,7 +4,7 @@
 goes into is H1. Places are given by the section labels, which both versions share. Every number
 below must reach the paper through `analysis/paper_numbers.py` (one macro each), not typed in;
 the source CSV is named with each. Scoring and caveats are in `predictions/<ID>.md`; the one-line
-findings are F86–F107 in `docs/audits/model_provenance.md`.*
+findings are F86–F110 in `docs/audits/model_provenance.md`.*
 
 ## Ready (experiment scored)
 
@@ -163,12 +163,39 @@ damping term of the simulator, F107; at 21 m/s the delta grows by 0.1–0.3 B an
 move), and SIH's GNSS fields are constant. Do not write "fixed wings cost more bytes at 50 Hz"
 (F105, F107: they do not, up to 21 m/s).
 
+### A8, A13 — the compiled receiver (`sec:validation` or `sec:discussion`, where the receiver's three cores are stated; `sec:limits`)
+
+**Now says:** the Python receiver takes 1.43 ms per frame, so 124 neighbours need about three
+cores (F84). **Proposed:** *"Compiled (Rust, ed25519-dalek), the same receiver takes 0.28 ms per
+frame on the Raspberry Pi 4, five times faster; one core serves 289 neighbours, 643 when
+signatures are checked 64 at a time. With a fast tier (group tag and decode, 10 µs) and an
+evidence tier (batched signatures), one core serves 628 neighbours and a record is signed
+evidence within 171 ms of being sampled."* Numbers: `results/hw/compiled_receiver.authbc-pi4b.csv`.
+⚠️ The three-core statement must then be said to be the prototype's, not the design's.
+
+### A7 — flooding (`sec:model` threat model; `sec:limits`)
+
+**Proposed:** *"A forged frame — a real sender, a newer sequence number, a well-formed signature by
+another key — costs the Python receiver 1.08 ms on a Pi 4. An 8-byte group tag refuses an
+outsider's frame in 22.5 µs: with 3 000 forged frames/s, more than one channel can carry, honest
+delivery stays at 0.98. The tag costs 3 % of capacity. A member holding the group key is not
+stopped by the tag, cheap checks or a per-sender rate cap: forgeries spread over every sender
+reduce honest delivery below 0.95 from about 130 frames/s."* Numbers:
+`results/hw/flood_cost.authbc-pi4b.csv`, `flood_udp.authbc-pi4b.csv`. ⚠️ Do not write "the cap
+limits an insider to the sender it impersonates" without "when it names one sender" (F109).
+
+### A15 — Falcon timing (with the A15 capacity text)
+
+**Proposed:** *"On the Raspberry Pi 4, Falcon-512 signs in 0.64 ms and verifies in 0.09 ms, three
+times faster than Ed25519 verifies; a sender spends 0.8 % of a core and a receiver of 124
+neighbours 14 %."* Numbers: `results/hw/pq_speed_sig.authbc-pi4b.csv`.
+
 ## Not ready
 
 | item | waits for |
 |---|---|
 | A11 NR sidelink | not run (H6) |
-| A7 DoS / HMAC field, A8 compiled receiver, A13 lazy verification, A15 timing | pi-B (H4) |
+| A8 energy per record | the rig's calibration (G22) |
 | A14 | not started — the plan keeps it for a follow-up paper |
 | B1–B5 | purchases and flights (H3) |
 

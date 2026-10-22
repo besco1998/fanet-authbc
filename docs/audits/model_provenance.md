@@ -4612,3 +4612,77 @@ will move").
 
 **Cross-check:** the two different ways of flying faster give the same sizes to 0.02 B.
 `results/raw/sih_speed_limit.csv`, `results/raw/record_size_speed.csv`.
+
+## F108 — compiled, the receiver serves 289 neighbours per Pi 4 core, 628 with lazy verification (revisions A8, A13; pi-B, 2026-10-22)
+
+The identity gate's 10 000 frames on pi-B:
+
+| receiver | per frame | neighbours per core |
+|---|---|---|
+| Rust (`ed25519-dalek`) | **0.277 ms** | **289** |
+| Python | 1.409 ms (the paper's 1.43) | 57 |
+| Rust, batches of 64 | | **643** |
+| Rust, lazy: tag + decode 10.2 µs, then batches 117.2 µs | | **628** |
+
+* Rust is 5.1 times faster than Python, and verification is 97 % of its time.
+* Batch-of-64 verification costs 0.435 of a single verification.
+* With lazy verification, records are evidence ≤ 171 ms after sampling.
+
+Every plan statement of A8 and A13 that was run held. A8's energy statement was not run: it
+waits for the rig's calibration (G22). My A13-2 bound (170 ms) missed by 1 ms, an arithmetic
+slip in the registration.
+
+**Cross-check:** the Python cost reproduces 1.43 ms on the same board to 1.5 %.
+"124 neighbours need ~3 cores" (F84) is a property of the interpreter: compiled, the channel
+binds again.
+
+## F109 — an outsider's flood is stopped by the 8 B group tag; an insider is stopped by nothing tested (revision A7; pi-B, 2026-10-22)
+
+On pi-B, per frame:
+
+| frame | cost |
+|---|---|
+| honest | 1 436 µs |
+| forged (real sender, newer sequence, another key's signature) | 1 078 µs (it never reaches the store) |
+| outsider's frame refused by the tag | 22.5 µs |
+
+UDP flood against one receiver core carrying 41 senders (80 % busy). Honest V falls below 0.95
+from the forged-frame rates below.
+
+| defence | V < 0.95 from |
+|---|---|
+| none | 247 frames/s |
+| cheap checks | 171 frames/s |
+| group tag, insider | 129 frames/s |
+| per-sender cap, forgeries spread over every sender | 123 frames/s |
+| per-sender cap, all naming one sender | 2 200 frames/s |
+| group tag, outsider | never: V = 0.984 at 3 000 frames/s; the channel carries at most 2 857 |
+
+Plan and agent misses:
+
+* "700 forged frames/s per core": the measured figure is 928.
+* "> 100 000 outsider frames/s": 44 400.
+* "Cap limits damage to the impersonated sender": only when one sender is named.
+* "About 2 % of N_max": 2.6 % by Eq. (6).
+
+**Cross-check:** the interrupted first attempt, ended by a reboot, agrees on V to within 0.013
+over 60 rows.
+
+Arithmetic from A8's costs: an unprotected compiled receiver would fail near 2 000 forged
+frames/s, within the channel's reach. The tag is needed with either receiver.
+
+## F110 — on a Pi 4, Falcon-512 verifies three times faster than Ed25519 (revision A15, timing; 2026-10-22)
+
+liboqs 0.16.0 on pi-B:
+
+| | sign | verify |
+|---|---|---|
+| Falcon-padded-512 | 638 µs | 88.2 µs |
+| Ed25519 (`cryptography`) | 87.8 µs | 258.7 µs |
+
+On the quiet host: 157 µs sign, 28.2 µs verify. At the design's rates Falcon costs a sender
+0.8 % of a core and a receiver of 124 neighbours 13.7 %. Falcon's price is airtime, not
+computation.
+
+**Cross-check:** three 10 s repetitions agree within 1 %, and the host-to-Pi ratio (3.1×)
+matches Ed25519's (3.0×).

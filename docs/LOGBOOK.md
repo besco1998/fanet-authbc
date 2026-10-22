@@ -38,6 +38,22 @@ worktree.
 DER length, which fails once in about 512 runs (F106). The test was fixed to an exact length,
 not widened. A deterministic case was added.
 
+**Later: pi-B switched on (H4), and why the fixed wing stopped at 14 m/s.**
+
+* **Board set-up, nothing system-wide.** pi-B got a worktree of the branch beside its old
+  clone, which has uncommitted July edits and was left untouched. It also got a project venv,
+  rustup 1.99.1 in `~` (the host's compiler) and liboqs 0.16.0 with the host's options, built
+  with cmake and ninja from a throwaway venv.
+* **Harnesses committed before any timing.** The A7 flood harness and the A8/A13 driver were
+  committed first (8824e91, 2719fba); the board printed their SHA-256 before running.
+* **Runs.** One sequence, no logins while it ran. A8/A13 and A7's costs finished.
+* **The reboot.** The board rebooted at ~10:17, 16 minutes into the flood (cause unknown here;
+  flags were clean before and after every part). The flood was repeated whole rather than
+  completed, and the interrupted rows kept: they agree within 0.013.
+* **The fixed wing.** Throttle was pinned at 100 % with airspeed stuck at 14 m/s. The source
+  showed SIH's linear damper; one diagnostic flight with it removed, and one with doubled
+  thrust, each reached 21 m/s (F107). I had reported the commanded 15 m/s as flown: corrected.
+
 # 2026-10-20 — the reviewer revision (`docs/AUTHBC Revision Plan.md`): two failures and a proof
 
 Branch `p11-reviewer-revision`; per item, `docs/revision/STATUS.md`; registrations and outcomes,
