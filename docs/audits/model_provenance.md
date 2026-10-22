@@ -4541,3 +4541,33 @@ fitted) is within 1.5 % at frames of 178 µs and longer, and 4.0–4.6 % optimis
 rate of each width (118–242 µs frames); the cause is not established (the preamble-detection
 constant is not it alone). **Cross-check:** the 802.11a 6 Mb/s cells reproduce the published
 crossings exactly.
+
+## F105 — at 50 Hz the delta costs a byte per field on every airframe; 25 fields keep a 3.05× gain (revision A9, 2026-10-22)
+
+30 PX4 v1.17.0 SIH flights (quadrotor, fixed wing, VTOL; missions 1–10 each; 1 506 552 records
+on the 20 ms grid), with records of 9, 15 and 25 fields:
+
+| fields | delta | keyframe | saving at b = 4 | ratio |
+|---|---|---|---|---|
+| 9 | 9.0 B | 22.8 B | 70.1 % | 3.51 |
+| 15 | 16.0 B | 32.8 B | 67.2 % | 3.31 |
+| 25 | 26.0 B | 45.4 B | 63.4 % | 3.05 |
+
+Between airframes the delta differs by at most 0.1 B and the ratio by 0.016. At 20 ms no field
+but the roll and pitch rates changes by more than the ±63 units a one-byte zig-zag varint holds,
+so the delta is the field count. Compare the paper's 5 Hz public logs, where fast vehicles go
+above the floor.
+
+The plan's ~60 B keyframe and 10–13 B fixed-wing delta both missed. The fixed wing flew at
+15 m/s, not 15–25 m/s: SIH's airplane does not fly faster, and Mohamed decided the cap
+(2026-10-22). The encoding bounds the 9-field delta below 10 B at 25 m/s anyway.
+
+The ratio stays above 2 until a delta of 159–282 B.
+
+**Cross-checks:**
+
+* On nine fields the size code reproduces `wire_v2`'s bytes and frame lengths (tests).
+* The rerun from the logs is bit-identical.
+* Taking the nearest sample instead of holding it (the logs alternate 16 and 24 ms) moves no
+  ratio by more than 0.007. It does remove the fixed-wing 9-field excess over the quadrotor,
+  which was the hold's doubled steps (A9-3 held only as registered).

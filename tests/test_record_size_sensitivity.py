@@ -12,6 +12,7 @@ import importlib.util
 import sys
 from pathlib import Path
 
+import numpy as np
 import pytest
 
 from authbc.bench import leanframes
@@ -84,3 +85,19 @@ def test_more_fields_never_shrink_a_record(recs: list[Record]) -> None:
     d = [{**_as_dict(r), **extra} for r in recs]
     k = [rs.key_bytes(d[0], rs.SETS[n]) for n in (9, 15, 25)]
     assert k[0] < k[1] < k[2]
+
+
+def test_hold_repeats_a_16_24_ms_source_on_a_20_ms_grid() -> None:
+    """The SIH logs' samples alternate 16 and 24 ms apart (F105); holding them on the 20 ms grid
+    repeats every other one, the nearest sample does not."""
+    t_src = np.cumsum([0] + [24, 16] * 5).astype(float)          # 0, 24, 40, 64, 80, ...
+    v = np.arange(len(t_src), dtype=float)
+    grid = np.arange(0.0, t_src[-1], 20.0)
+    assert np.diff(rs._hold(t_src, v, grid)).tolist() == [0, 2, 0, 2, 0, 2, 0, 2, 0]
+    assert np.diff(rs._nearest(t_src, v, grid)).tolist() == [1] * 9
+
+
+def test_nearest_is_nan_before_the_first_sample() -> None:
+    out = rs._nearest(np.array([10.0, 30.0]), np.array([5.0, 7.0]), np.array([0.0, 10.0, 19.0,
+                                                                                 21.0, 99.0]))
+    assert np.isnan(out[0]) and out[1:].tolist() == [5.0, 5.0, 7.0, 7.0]

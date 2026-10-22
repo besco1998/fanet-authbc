@@ -4,7 +4,7 @@
 goes into is H1. Places are given by the section labels, which both versions share. Every number
 below must reach the paper through `analysis/paper_numbers.py` (one macro each), not typed in;
 the source CSV is named with each. Scoring and caveats are in `predictions/<ID>.md`; the one-line
-findings are F86–F98 in `docs/audits/model_provenance.md`.*
+findings are F86–F105 in `docs/audits/model_provenance.md`.*
 
 ## Ready (experiment scored)
 
@@ -148,13 +148,25 @@ ratios). **Proposed:** a short table, simulated: *"On 802.11a at 6, 12 and 24 Mb
 rate."* Numbers: `phy_links.csv`. ⚠️ State that the no-fit model is 4–4.6 % optimistic at the
 fastest rates (F104) if model values are printed beside ns-3's. NR sidelink stays unsimulated (H6).
 
+### A9 — richer records, three airframes (`sec:px4`, its "Operating Rate" paragraph; `sec:limits`)
+
+**Now says:** one simulated quadrotor at 50 Hz, nine fields: "every delta record is
+\deltaLean\,B, the floor of the format". **Proposed** (after that paragraph): *"Thirty further
+flights — ten each of a quadrotor, a fixed wing and a VTOL, PX4 SIH at 50 Hz — show the same floor
+for every airframe: one byte per field. With 15 fields (adding attitude and body rates) the design
+saves 67 % and serves 3.3 times the nodes; with 25 (adding GNSS quality, airspeed, wind, mission
+item, status and thrust) 63 % and 3.05 times. The gain is set by the frame count, not by the
+record: it stays above 2× until a record's delta reaches about 160 B."* Numbers:
+`record_size.csv` (one macro each via `analysis/paper_numbers.py`). ⚠️ With it, in `sec:limits`:
+the simulated fixed wing flew at 15 m/s (SIH's ceiling; Mohamed's cap), and SIH's GNSS fields are
+constant. Do not write "fixed wings cost more bytes at 50 Hz" (F105: they do not, at 15 m/s).
+
 ## Not ready
 
 | item | waits for |
 |---|---|
 | A11 NR sidelink | not run (H6) |
 | A7 DoS / HMAC field, A8 compiled receiver, A13 lazy verification, A15 timing | pi-B (H4) |
-| A9 richer records, three airframes | flights on a quiet host (H7) |
 | A14 | not started — the plan keeps it for a follow-up paper |
 | B1–B5 | purchases and flights (H3) |
 

@@ -19,6 +19,7 @@ Capacity is the closed form of docs/02 §6g (no fitted constant; within 5.5 % of
 simulated crossings), baseline at 50 frames/s, the design at 12.5.
 
     python analysis/record_size_sensitivity.py FLIGHT_DIR ...   # results/raw/record_size.csv
+    ... --nearest FLIGHT_DIR ...     # nearest sample, not held: record_size_nearest.csv (F105)
 """
 from __future__ import annotations
 
@@ -63,12 +64,28 @@ def _hold(t_src: np.ndarray, v: np.ndarray, t: np.ndarray) -> np.ndarray:
     return out
 
 
-def records(path: Path) -> list[dict[str, int]]:
+def _nearest(t_src: np.ndarray, v: np.ndarray, t: np.ndarray) -> np.ndarray:
+    """The sample of `v` nearest in time to each `t`; NaN before the first sample.
+
+    A sensitivity check on `_hold` (F105): the SIH logs' samples alternate 16 and 24 ms apart, so
+    holding them on the 20 ms grid repeats every other value and doubles the next step.
+    """
+    right = np.clip(np.searchsorted(t_src, t, side="left"), 0, len(t_src) - 1)
+    left = np.clip(right - 1, 0, len(t_src) - 1)
+    idx = np.where(np.abs(t_src[left] - t) <= np.abs(t_src[right] - t), left, right)
+    out = v[idx].astype(float)
+    out[t < t_src[0]] = np.nan
+    return out
+
+
+def records(path: Path, *, nearest: bool = False) -> list[dict[str, int]]:
     """In-flight records on the 20 ms grid, every field present.
 
     Timestamps are placed an hour into a flight (the sizing convention's origin,
     `leanframes.CONVENTION_TS0_MS`): a keyframe's time field is then as long as the paper's.
+    Each topic is held (the registered method) or, with ``nearest``, its nearest sample taken.
     """
+    resample = _nearest if nearest else _hold
     from pyulog import ULog  # a pinned development dependency; only this reader needs it
 
     log = ULog(str(path))
@@ -77,7 +94,7 @@ def records(path: Path) -> list[dict[str, int]]:
     def col(topic: str, field: str, t: np.ndarray) -> np.ndarray:
         if topic not in d or field not in d[topic]:
             return np.full(t.shape, np.nan)
-        return _hold(d[topic]["timestamp"], d[topic][field], t)
+        return resample(d[topic]["timestamp"], d[topic][field], t)
 
     gp, lp = d["vehicle_global_position"], d["vehicle_local_position"]
     t = np.arange(max(gp["timestamp"][0], lp["timestamp"][0]),
@@ -194,11 +211,13 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("flights", nargs="+", type=Path)
+    ap.add_argument("--nearest", action="store_true",
+                    help="take each topic's nearest sample instead of holding it (F105)")
     args = ap.parse_args()
     rows = []
     for flight in args.flights:
         plan = json.loads((flight / "mission.json").read_text())
-        recs = records(flight / "flight.ulg")
+        recs = records(flight / "flight.ulg", nearest=args.nearest)
         # the speed drawn, the cruise commanded (fixed wing and VTOL capped at 15 m/s, decided
         # 2026-10-22) and the ground speed flown, mean over the in-flight records
         flown = st.mean(float(np.hypot(r["vel_x"], r["vel_y"])) / 100.0 for r in recs)
@@ -214,14 +233,16 @@ def main() -> None:
         for r in group:
             r["delta_where_ratio_below_2"] = round(where_ratio_falls_below(2.0, k_per_d), 1)
     buf = io.StringIO()
+    config: dict[str, object] = {"sets": SETS, "spacing": SPACING_MS}
+    if args.nearest:   # the registered hold keeps its hash
+        config["resample"] = "nearest"
     for k, v in {**provenance.env_block(), "run": "record_size",
-                 "config_hash": provenance.config_hash({"sets": SETS, "spacing": SPACING_MS})
-                 }.items():
+                 "config_hash": provenance.config_hash(config)}.items():
         buf.write(f"# {k}={v}\n")
     w = csv.DictWriter(buf, fieldnames=list(rows[0]), lineterminator="\n")
     w.writeheader()
     w.writerows(rows)
-    OUT.write_text(buf.getvalue())
+    (OUT.with_name("record_size_nearest.csv") if args.nearest else OUT).write_text(buf.getvalue())
     for r in rows:
         print({k: r[k] for k in ("airframe", "mission", "fields", "key_mean", "delta_mean",
                                  "saving_pct", "ratio")})

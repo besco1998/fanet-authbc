@@ -1,6 +1,6 @@
 # Revision status — one row per item of `docs/AUTHBC Revision Plan.md`
 
-*Updated 2026-10-20, 08:30. Branch `p11-reviewer-revision`. Registrations are
+*Updated 2026-10-22. Branch `p11-reviewer-revision`. Registrations are
 `predictions/<ID>.md`, tagged `prereg-<ID>` at the commit that registered them; outcomes are
 appended to the same file below a line. Rules: `docs/revision/EXECUTION_PLAN.md`. Long jobs run
 as memory-capped systemd user units (`scripts/capped.sh`; `systemctl --user list-units
@@ -18,7 +18,7 @@ as memory-capped systemd user units (`scripts/capped.sh`; `systemctl --user list
 | A6 | ✔ — registered model: 3 of 9 settled (19 predicted verdicts, 4 came true). **After registration**, two encodings changed (counters keyed by a fresh session id; a receiver start rule) and helpers added: lemmas 1–3 and gap detection verified in `formal/authbc_counters.spthy` (all 15, one run); continuity in the registered model; lemma 5 attack-then-fix in `formal/authbc_time.spthy`. One model with everything (`formal/authbc_full.spthy`) did not settle | the plan's statement held across three models, two made after registration |
 | A7 | registered `prereg-A7`; code + tests ✔; timing waits for pi-B (H4) | the tag costs 3 % of capacity (not 2 %) |
 | A8 | registered `prereg-A8`; Rust codec ✔; **byte-identical to Python on 10 000 frames**; timing and energy wait for pi-B (H4, G22) | |
-| A9 | registered `prereg-A9`; **flying** on a quiet host (H7 met 2026-10-22). Quadrotor missions 1–10 flown, all at the first attempt. **Two changes after registration (disclosed):** (1) FW_AIRSPD_MAX kept 5 m/s above the trim; (2) **decided by Mohamed 2026-10-22:** PX4's SIH airplane flies at 12–15 m/s whatever it is told (airspeed never above 15 m/s; told 19–20 m/s it misses waypoints and circles), so fixed-wing and VTOL cruise is capped at 15 m/s, the airframe's trim; drawn speeds and geometry kept, both recorded. All fixed-wing and VTOL missions are flown under (1) and (2); the earlier attempts are kept, not used | SIH flies all three airframes; the simulated fixed wing is not faster than the quadrotor's upper range |
+| A9 | ✔ (30 SIH flights, 1.5 M records) | delta = one byte per field on every airframe (9.0 / 16.0 / 26.0 B); 25 fields: saving 63.4 %, ratio 3.05 (plan's (1) saving and (2) ratio held; ~60 B keyframe missed: 45 B; fixed-wing 10–13 B delta missed: 9.06 B). **Disclosed:** FW_AIRSPD_MAX fix; fixed wing/VTOL capped at 15 m/s (Mohamed, 2026-10-22), so the registered 15–25 m/s was not flown; earlier attempts kept, not used. Nearest-sample check: ratios ±0.007; the fixed-wing 9-field excess was the hold's artefact. F105 | the gain is set by the frame count: 2× until a 159–282 B delta |
 | A10 | ✔ (1 860 runs) | Table 5 reproduced (all N_max in their intervals); against 100 ms only MAVLink 2 (42.1), Wong–Lam (29.1) and TESLA with d = 2, I ≤ 20 ms (39.6–39.8) cross; G-R, every EMSS and TESLA-batch4 never do. F99 |
 | A11 | ✔ 802.11 (2 520 runs); NR sidelink not run (H6) | ratio 3.39–3.80 on six PHYs/rates, rising with rate (not the plan's 1.7–4.3); the model within 1.5 % down to 178 µs frames, 4–4.6 % optimistic at the fastest rates (F104) |
 | A12 | ✔ (330 runs) | delivery follows the total frame rate: every plan statement held, the model within 0.0011 up to 350 frames/s per node; eight radios can stand for 124 nodes in ns-3 |
