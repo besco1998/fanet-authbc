@@ -198,6 +198,23 @@ pub fn encode_frame(recs: &[Record], sk: &SigningKey) -> Vec<u8> {
     out
 }
 
+/// What the sender does per frame, as `wire_v2.encode_frame_v2` does it: check that the records
+/// share a sender, run consecutively and chain (one SHA-256 per record, `_check_encodable`),
+/// then encode and sign. The work the energy runs meter (A8).
+pub fn send_frame(recs: &[Record], sk: &SigningKey) -> Result<Vec<u8>, String> {
+    let mut expected = recs[0].prev_hash;
+    for (i, r) in recs.iter().enumerate() {
+        if r.src != recs[0].src || r.seq != recs[0].seq + i as u64 {
+            return Err("records must share the frame's src and have consecutive seq".into());
+        }
+        if r.prev_hash != expected {
+            return Err(format!("record {i} does not chain"));
+        }
+        expected = record_hash(r);
+    }
+    Ok(encode_frame(recs, sk))
+}
+
 struct Reader<'a> {
     d: &'a [u8],
     pos: usize,
@@ -316,4 +333,42 @@ pub fn verify_batch(frames: &[Frame], pk: &VerifyingKey) -> bool {
     let sigs: Vec<Signature> = frames.iter().map(|f| Signature::from_bytes(&f.sig)).collect();
     let keys = vec![*pk; frames.len()];
     ed25519_dalek::verify_batch(&refs, &sigs, &keys).is_ok()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn chained(n: usize) -> Vec<Record> {
+        let mut out: Vec<Record> = Vec::new();
+        let mut ph = [0u8; 32];
+        for i in 0..n {
+            let r = Record { src: 7, seq: 100 + i as u64, ts: 3_600_000 + 20 * i as i64,
+                             prev_hash: ph, pl: [473977420 + i as i64, 85455940, 4880, 120,
+                                                 -40, 3, 87, 3] };
+            ph = record_hash(&r);
+            out.push(r);
+        }
+        out
+    }
+
+    #[test]
+    fn send_frame_is_encode_frame_on_a_chained_run() {
+        let sk = SigningKey::from_bytes(&[7u8; 32]);
+        let recs = chained(8);
+        for chunk in recs.chunks(4) {
+            assert_eq!(send_frame(chunk, &sk).unwrap(), encode_frame(chunk, &sk));
+        }
+    }
+
+    #[test]
+    fn send_frame_refuses_records_that_do_not_chain() {
+        let sk = SigningKey::from_bytes(&[7u8; 32]);
+        let mut recs = chained(4);
+        recs[2].prev_hash[0] ^= 1;                 // as wire_v2._check_encodable refuses
+        assert!(send_frame(&recs, &sk).is_err());
+        let mut recs = chained(4);
+        recs[3].seq += 1;
+        assert!(send_frame(&recs, &sk).is_err());
+    }
 }

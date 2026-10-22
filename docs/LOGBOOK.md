@@ -47,8 +47,8 @@ not widened. A deterministic case was added.
 * **Harnesses committed before any timing.** The A7 flood harness and the A8/A13 driver were
   committed first (8824e91, 2719fba); the board printed their SHA-256 before running.
 * **Runs.** One sequence, no logins while it ran. A8/A13 and A7's costs finished.
-* **The reboot.** The board rebooted at ~10:17, 16 minutes into the flood (cause unknown here;
-  flags were clean before and after every part). The flood was repeated whole rather than
+* **The reboot.** The board rebooted at ~10:17, 16 minutes into the flood: Mohamed had jostled
+  its power supply (flags were clean before and after every part). The flood was repeated whole rather than
   completed, and the interrupted rows kept: they agree within 0.013.
 * **The fixed wing.** Throttle was pinned at 100 % with airspeed stuck at 14 m/s. The source
   showed SIH's linear damper; one diagnostic flight with it removed, and one with doubled

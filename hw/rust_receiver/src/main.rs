@@ -4,12 +4,15 @@
 //!   authbc-rx verify  FRAMES.bin PK_HEX                          decode, rebuild, verify each
 //!   authbc-rx bench   FRAMES.bin PK_HEX REPS                     time the receive path
 //!   authbc-rx lazy    FRAMES.bin PK_HEX REPS                     time the two tiers (A13)
+//!   authbc-rx sendbench RECORDS.jsonl SK_HEX BATCH REPS          time the sender per frame (A8)
+//!   authbc-rx sendloop  RECORDS.jsonl SK_HEX BATCH SECONDS       send back to back for a metered
+//!                                                                window; prints frames made (A8)
 //!
 //! A frames file is a sequence of (u32 big-endian length, frame bytes). A records file has one
 //! JSON object per line: {"src", "seq", "ts", "ph" (hex), "pl": [lat, lon, alt, vel_x, vel_y,
 //! vel_z, battery, mode]}.
 
-use authbc_rx::{decode_frame, encode_frame, verify, verify_batch, Frame, Record};
+use authbc_rx::{decode_frame, encode_frame, send_frame, verify, verify_batch, Frame, Record};
 use ed25519_dalek::{SigningKey, VerifyingKey};
 use std::io::{Read, Write};
 use std::time::Instant;
@@ -27,6 +30,26 @@ fn read_frames(path: &str) -> Vec<Vec<u8>> {
     out
 }
 
+fn read_records(path: &str) -> Vec<Record> {
+    let text = std::fs::read_to_string(path).expect("records file");
+    text.lines()
+        .map(|l| {
+            let v: serde_json::Value = serde_json::from_str(l).unwrap();
+            let mut pl = [0i64; 8];
+            for (k, x) in v["pl"].as_array().unwrap().iter().enumerate() {
+                pl[k] = x.as_i64().unwrap();
+            }
+            Record {
+                src: v["src"].as_u64().unwrap(),
+                seq: v["seq"].as_u64().unwrap(),
+                ts: v["ts"].as_i64().unwrap(),
+                prev_hash: key32(v["ph"].as_str().unwrap()),
+                pl,
+            }
+        })
+        .collect()
+}
+
 fn key32(hex_str: &str) -> [u8; 32] {
     hex::decode(hex_str).expect("hex").try_into().expect("32 bytes")
 }
@@ -42,24 +65,7 @@ fn main() {
         Some("encode") => {
             let sk = SigningKey::from_bytes(&key32(&args[3]));
             let batch: usize = args[4].parse().unwrap();
-            let text = std::fs::read_to_string(&args[2]).expect("records file");
-            let recs: Vec<Record> = text
-                .lines()
-                .map(|l| {
-                    let v: serde_json::Value = serde_json::from_str(l).unwrap();
-                    let mut pl = [0i64; 8];
-                    for (k, x) in v["pl"].as_array().unwrap().iter().enumerate() {
-                        pl[k] = x.as_i64().unwrap();
-                    }
-                    Record {
-                        src: v["src"].as_u64().unwrap(),
-                        seq: v["seq"].as_u64().unwrap(),
-                        ts: v["ts"].as_i64().unwrap(),
-                        prev_hash: key32(v["ph"].as_str().unwrap()),
-                        pl,
-                    }
-                })
-                .collect();
+            let recs = read_records(&args[2]);
             let mut out = std::io::stdout().lock();
             for chunk in recs.chunks(batch) {
                 if chunk.len() < batch {
@@ -149,8 +155,44 @@ fn main() {
             println!("tier2_batch64_ns_per_frame,{:.0}", median(tier2));
             println!("frames,{}", frames.len());
         }
+        Some("sendbench") => {
+            let sk = SigningKey::from_bytes(&key32(&args[3]));
+            let batch: usize = args[4].parse().unwrap();
+            let reps: usize = args[5].parse().unwrap();
+            let recs = read_records(&args[2]);
+            let groups: Vec<&[Record]> = recs.chunks_exact(batch).collect();
+            let mut per_frame = Vec::new();
+            for _ in 0..reps {
+                let t = Instant::now();
+                for g in &groups {
+                    std::hint::black_box(send_frame(g, &sk).unwrap());
+                }
+                per_frame.push(t.elapsed().as_nanos() as f64 / groups.len() as f64);
+            }
+            println!("send_ns_per_frame,{:.0}", median(per_frame));
+            println!("frames,{}", groups.len());
+        }
+        Some("sendloop") => {
+            // One metered window (A8 energy): frames back to back for SECONDS, cycling through
+            // the records; the records are read before the clock starts.
+            let sk = SigningKey::from_bytes(&key32(&args[3]));
+            let batch: usize = args[4].parse().unwrap();
+            let seconds: f64 = args[5].parse().unwrap();
+            let recs = read_records(&args[2]);
+            let groups: Vec<&[Record]> = recs.chunks_exact(batch).collect();
+            let (mut n, mut checksum) = (0u64, 0u64);
+            let t = Instant::now();
+            while t.elapsed().as_secs_f64() < seconds {
+                let f = send_frame(groups[n as usize % groups.len()], &sk).unwrap();
+                checksum = checksum.wrapping_mul(1_000_003).wrapping_add(f[f.len() - 1] as u64);
+                n += 1;
+            }
+            println!("frames,{n}");
+            println!("seconds,{:.6}", t.elapsed().as_secs_f64());
+            println!("checksum,{checksum}");
+        }
         _ => {
-            eprintln!("usage: authbc-rx encode|verify|bench|lazy ...");
+            eprintln!("usage: authbc-rx encode|verify|bench|lazy|sendbench|sendloop ...");
             std::process::exit(2);
         }
     }

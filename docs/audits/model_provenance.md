@@ -4665,7 +4665,8 @@ Plan and agent misses:
 * "Cap limits damage to the impersonated sender": only when one sender is named.
 * "About 2 % of N_max": 2.6 % by Eq. (6).
 
-**Cross-check:** the interrupted first attempt, ended by a reboot, agrees on V to within 0.013
+**Cross-check:** the interrupted first attempt, ended by a reboot (a jostled power supply),
+agrees on V to within 0.013
 over 60 rows.
 
 Arithmetic from A8's costs: an unprotected compiled receiver would fail near 2 000 forged
