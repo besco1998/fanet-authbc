@@ -12,6 +12,32 @@ where the durable record lives. If you want the conclusion only, follow the poin
 
 ---
 
+# 2026-10-22 — A9's thirty flights, and two clean gates that failed
+
+**The fixed wing would not fly the registered speeds.** The registered script set
+`FW_AIRSPD_TRIM` to the drawn cruise and left `FW_AIRSPD_MAX` at PX4's default, below it. Airplane
+mission 2 circled its first waypoint for 20 minutes. Keeping the maximum 5 m/s above the trim
+(3fd8fa3) was not enough: SIH's airplane never went faster than about 15 m/s through the air.
+Missions 2 and 6, commanded at 19–20 m/s, dipped and circled again. The failed logs showed this
+(altitude, airspeed, mission sequence), so I asked rather than tuned. Mohamed capped the cruise
+at 15 m/s (299571a). All 30 missions then flew at the first attempt. The attempts flown under
+the earlier procedures are kept, unused, and listed in `predictions/A9.md`.
+
+**A surprise in the sizes, run down before writing.** Half of the airplane's position deltas
+were exactly zero at 12 m/s. The raw topic had none. Its samples alternate 16 and 24 ms apart,
+and holding them on the 20 ms grid repeats every other one. A nearest-sample option measured
+the effect: ratios move by ≤ 0.007. But my A9-3 held at 9 fields only through this artefact,
+which the outcome says (F105).
+
+**Clean gate 1 (23784c6) failed** `test_fast_suite_size`: two new tests, and the guide's count
+not updated. Local runs could not show it, because Mohamed's uncommitted `refs.bib` adds two
+citation tests here (2389 local, 2387 committed). The count is now taken from the clean
+worktree.
+
+**Clean gate 2 (6696614) failed a test untouched since July:** an ECDSA test asserting a 70–72 B
+DER length, which fails once in about 512 runs (F106). The test was fixed to an exact length,
+not widened. A deterministic case was added.
+
 # 2026-10-20 — the reviewer revision (`docs/AUTHBC Revision Plan.md`): two failures and a proof
 
 Branch `p11-reviewer-revision`; per item, `docs/revision/STATUS.md`; registrations and outcomes,

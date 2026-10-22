@@ -2,7 +2,8 @@
 
 Wycheproof gives (pubkey wx/wy, msg, DER sig, result) verify vectors incl. many negatives;
 we verify DER directly (verify_der) and assert the outcome. A separate test proves our public
-API emits/consumes the fixed-width 64 B r‖s form, NOT the 70–72 B DER (docs/06 §4).
+API emits/consumes the fixed-width 64 B r‖s form, NOT the variable-length DER (docs/06 §4): up
+to 72 B, and 70–72 B for all but ~0.2 % of signatures (r or s below 2^247).
 """
 
 from __future__ import annotations
@@ -53,8 +54,19 @@ def test_wycheproof_ecdsa_verify(pk, msg: bytes, sig_hex: str, result: str) -> N
         assert isinstance(ok, bool)
 
 
+def _der_int_len(x: int) -> int:
+    """Bytes of a positive DER INTEGER's content: minimal big-endian, plus 0x00 if the top bit
+    is set (X.690 §8.3)."""
+    return x.bit_length() // 8 + 1
+
+
 def test_signature_is_fixed_width_64_not_der() -> None:
-    """Our sign() must emit exactly 64 B r‖s (a DER sig would be 70–72 B)."""
+    """Our sign() must emit exactly 64 B r‖s, whatever length its DER form has.
+
+    ⚠️ This test asserted 70 ≤ len(DER) ≤ 72 from 2026-07-03 until the clean gate of
+    2026-10-22 drew a 69 B signature: an r or s below 2^247 shortens its DER integer, ~1 run in
+    512 (measured 0.21 % of 50 000). The DER length is now checked exactly against r and s.
+    """
     sk, pk = SCHEME.keygen()
     sig = SCHEME.sign(sk, b"authbc-p1")
     assert len(sig) == SCHEME.sig_len == 64
@@ -62,9 +74,27 @@ def test_signature_is_fixed_width_64_not_der() -> None:
     assert SCHEME.verify(pk, b"tampered", sig) is False
     # round-trip raw↔DER is lossless, and the DER form verifies through cryptography directly
     der = raw64_to_der(sig)
-    assert 70 <= len(der) <= 72
+    r, s = int.from_bytes(sig[:32], "big"), int.from_bytes(sig[32:], "big")
+    assert len(der) == 6 + _der_int_len(r) + _der_int_len(s) <= 72
     assert der_to_raw64(der) == sig
     assert SCHEME.verify_der(pk, b"authbc-p1", der) is True
+
+
+@pytest.mark.parametrize(("r", "s", "der_len"), [
+    (2**255, 2**255, 72),          # both top bits set: two 33 B integers
+    (2**254, 2**254, 70),          # neither: two 32 B integers
+    (2**247, 2**254, 70),          # r = 2^247: 31 B with the top bit set, so 32 again
+    (2**246, 2**254, 69),          # r below 2^247: 31 B
+    (2**246, 2**246, 68),
+    (1, 2**255, 40),               # leading zero bytes are dropped in DER ...
+])
+def test_raw_der_round_trip_keeps_leading_zeros(r: int, s: int, der_len: int) -> None:
+    """... and restored by der_to_raw64: the fixed-width form never shrinks (the case the random
+    test above meets about once in 512 runs, here every run)."""
+    raw = r.to_bytes(32, "big") + s.to_bytes(32, "big")
+    der = raw64_to_der(raw)
+    assert len(der) == der_len == 6 + _der_int_len(r) + _der_int_len(s)
+    assert der_to_raw64(der) == raw
 
 
 def test_verify_rejects_wrong_length_sig() -> None:

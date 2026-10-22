@@ -4571,3 +4571,19 @@ The ratio stays above 2 until a delta of 159–282 B.
 * Taking the nearest sample instead of holding it (the logs alternate 16 and 24 ms) moves no
   ratio by more than 0.007. It does remove the fixed-wing 9-field excess over the quadrotor,
   which was the hold's doubled steps (A9-3 held only as registered).
+
+## F106 — a crypto test asserted a false DER range and failed one run in 512 (clean gate, 2026-10-22)
+
+`test_signature_is_fixed_width_64_not_der` (from 2026-07-03, c23b283) asserted that an ECDSA
+P-256 signature's DER form is 70–72 B, with a fresh key and nonce on every run. When r or s lies
+below 2^247, its DER integer is 31 B, so the DER form is 68–69 B. That happens in 0.21 % of
+50 000 signatures measured; analytically about 1/512. The clean gate on 6696614 drew a 69 B
+signature.
+
+The code was right: the fixed-width 64 B form pads with leading zeros. Only the test's claim and
+two docstrings were wrong. The test now checks the DER length exactly against r and s.
+A deterministic test covers the short-integer cases (68, 69, 40 B) and the 2^247 boundary on
+every run.
+
+**Cross-check:** 5 000 repetitions of the fixed test pass, 9 of them with a short DER. No number
+in the project used the 70–72 B range: signatures are byte-accounted at 64 B.
