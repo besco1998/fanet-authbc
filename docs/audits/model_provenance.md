@@ -4587,3 +4587,28 @@ every run.
 
 **Cross-check:** 5 000 repetitions of the fixed test pass, 9 of them with a short DER. No number
 in the project used the 70–72 B range: signatures are byte-accounted at 64 B.
+
+## F107 — PX4's SIH fixed wing stops near 14 m/s because of a simulator damping term, and speed does not change A9 (2026-10-22)
+
+The registered A9 fixed-wing and VTOL flights were commanded at 15 m/s but held 13.0–13.9 and
+12.8 m/s in level flight, mostly at full throttle. A9's outcome had reported the commanded
+speed as flown; it is corrected in its addendum.
+
+**Cause:** 6 N of thrust (4 N for the VTOL's pusher) against the aerodynamic drag plus SIH's
+linear damping `SIH_KDV · v` (0.2 N per m/s; PX4: "the greater this value, the slower the quad
+will move").
+
+**Causal check:** one mission commanded to 22 m/s.
+
+| change | level airspeed |
+|---|---|
+| none | 10.4 m/s (mission not finished) |
+| `SIH_KDV` = 0 | 20.9 m/s |
+| `SIH_T_MAX` = 12 N | 21.3 m/s |
+
+**Effect:** at about 18 m/s ground speed the 9-field delta is 9.09 B (nearest sample) against
+9.00, and the capacity ratio is 3.503 against 3.503. The 25-field ratio is 3.058 against
+3.03–3.05.
+
+**Cross-check:** the two different ways of flying faster give the same sizes to 0.02 B.
+`results/raw/sih_speed_limit.csv`, `results/raw/record_size_speed.csv`.

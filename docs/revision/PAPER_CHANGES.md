@@ -4,7 +4,7 @@
 goes into is H1. Places are given by the section labels, which both versions share. Every number
 below must reach the paper through `analysis/paper_numbers.py` (one macro each), not typed in;
 the source CSV is named with each. Scoring and caveats are in `predictions/<ID>.md`; the one-line
-findings are F86–F105 in `docs/audits/model_provenance.md`.*
+findings are F86–F107 in `docs/audits/model_provenance.md`.*
 
 ## Ready (experiment scored)
 
@@ -158,8 +158,10 @@ saves 67 % and serves 3.3 times the nodes; with 25 (adding GNSS quality, airspee
 item, status and thrust) 63 % and 3.05 times. The gain is set by the frame count, not by the
 record: it stays above 2× until a record's delta reaches about 160 B."* Numbers:
 `record_size.csv` (one macro each via `analysis/paper_numbers.py`). ⚠️ With it, in `sec:limits`:
-the simulated fixed wing flew at 15 m/s (SIH's ceiling; Mohamed's cap), and SIH's GNSS fields are
-constant. Do not write "fixed wings cost more bytes at 50 Hz" (F105: they do not, at 15 m/s).
+the simulated fixed wing flew at 13–14 m/s (commanded 15: SIH's airplane is held there by a
+damping term of the simulator, F107; at 21 m/s the delta grows by 0.1–0.3 B and the ratio does not
+move), and SIH's GNSS fields are constant. Do not write "fixed wings cost more bytes at 50 Hz"
+(F105, F107: they do not, up to 21 m/s).
 
 ## Not ready
 
