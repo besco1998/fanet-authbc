@@ -11,6 +11,11 @@ sizes of `record_size_sensitivity.py` (both resamplings).
 
     python analysis/sih_speed_limit.py [DIR]     # DIR defaults to ~/.cache/authbc-px4
         -> results/raw/sih_speed_limit.csv, results/raw/record_size_speed.csv
+    python analysis/sih_speed_limit.py ~/.cache/authbc-px4/fast --out results/raw/a9_fast_speeds.csv
+        (A9-fast: the flight-quality check, AF-5; no sizes)
+
+Cruise is level fixed-wing flight more than 20 m above home. A touchdown is any return below
+5 m after first passing 50 m (A9 Addendum 2: the airplane's ground-level first leg).
 """
 from __future__ import annotations
 
@@ -67,6 +72,10 @@ def speed_row(directory: Path) -> dict | None:
     thr, vz = _at(th, "xyz[0]", t), _at(lp, "vz", t)
     fw = (_at(vs, "vehicle_type", t) == FIXED_WING) & np.isfinite(tas) & (tas > 5.0)
     level = fw & (np.abs(vz) < 0.3)
+    up = -_at(lp, "z", t)
+    cruise = level & (up > 20.0)
+    high = np.flatnonzero(up > 50.0)
+    touchdown = bool(len(high)) and bool((up[high[0]:] < 5.0).any())
     return {"flight": directory.name, "airframe": plan["airframe"], "mission": plan["number"],
             "completed": int(completed), "speed_drawn_mps": plan["speed_mps"],
             "cruise_commanded_mps": plan.get("cruise_flown_mps", plan["speed_mps"]),
@@ -75,6 +84,9 @@ def speed_row(directory: Path) -> dict | None:
             "airspeed_p99": round(float(np.percentile(tas[fw], 99)), 2),
             "airspeed_max": round(float(tas[fw].max()), 2),
             "level_throttle_p50": round(float(np.median(thr[level])), 3),
+            "cruise_airspeed_p50": round(float(np.median(tas[cruise])), 2) if cruise.any() else "",
+            "cruise_throttle_p50": round(float(np.median(thr[cruise])), 3) if cruise.any() else "",
+            "touchdown_after_takeoff": int(touchdown),
             "full_throttle_share": round(float(np.mean(thr[fw] >= 0.99)), 3),
             "log": ulg.name, "sha256": hashlib.sha256(ulg.read_bytes()).hexdigest()}
 
@@ -107,14 +119,18 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("dir", nargs="?", type=Path, default=Path.home() / ".cache" / "authbc-px4")
+    ap.add_argument("--out", type=Path,
+                    help="speeds table (default results/raw/sih_speed_limit.csv); "
+                         "given, the sizes table is not written")
     args = ap.parse_args()
     dirs = sorted(d for d in args.dir.iterdir()
                   if d.is_dir() and re.match(r"(airplane|vtol|diag)-", d.name))
     rows = [r for d in dirs if (r := speed_row(d)) is not None]
-    _write(OUT, rows, "sih_speed_limit")
-    sizes = [r for name in SIZED if (args.dir / name / "flight.ulg").exists()
-             for r in size_rows(args.dir / name)]
-    _write(OUT_SIZES, sizes, "record_size_speed")
+    _write(args.out or OUT, rows, "sih_speed_limit")
+    sizes = [] if args.out else [r for name in SIZED if (args.dir / name / "flight.ulg").exists()
+                                 for r in size_rows(args.dir / name)]
+    if sizes:
+        _write(OUT_SIZES, sizes, "record_size_speed")
     for r in rows:
         print({k: r[k] for k in ("flight", "completed", "cruise_commanded_mps", "extra_params",
                                  "level_airspeed_p50", "airspeed_max", "level_throttle_p50")})

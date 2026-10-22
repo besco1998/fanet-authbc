@@ -158,10 +158,9 @@ saves 67 % and serves 3.3 times the nodes; with 25 (adding GNSS quality, airspee
 item, status and thrust) 63 % and 3.05 times. The gain is set by the frame count, not by the
 record: it stays above 2× until a record's delta reaches about 160 B."* Numbers:
 `record_size.csv` (one macro each via `analysis/paper_numbers.py`). ⚠️ With it, in `sec:limits`:
-the simulated fixed wing flew at 13–14 m/s (commanded 15: SIH's airplane is held there by a
-damping term of the simulator, F107; at 21 m/s the delta grows by 0.1–0.3 B and the ratio does not
-move), and SIH's GNSS fields are constant. Do not write "fixed wings cost more bytes at 50 Hz"
-(F105, F107: they do not, up to 21 m/s).
+the fixed-wing and VTOL flights were re-flown at their drawn 15–25 m/s with SIH's damping
+term removed (A9-fast, F111): the delta is the quadrotor's plus 0.2 B and the ratio unchanged; and
+SIH's GNSS fields are constant. Do not write "fixed wings cost more bytes at 50 Hz" (F111: +0.2 B).
 
 ### A8, A13 — the compiled receiver (`sec:validation` or `sec:discussion`, where the receiver's three cores are stated; `sec:limits`)
 

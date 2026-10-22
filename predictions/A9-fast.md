@@ -107,3 +107,66 @@ steps alternate 0 and 40 ms.
 * No registered mission (1–10) has been flown under this profile.
 * The size code has run on the development flights above, only to read their speeds and
   throttle; it has not run on any registered fast flight.
+
+---
+
+## Outcome (2026-10-22, 23:21; 20 flights, each at the first attempt)
+
+* Sizes: `results/raw/record_size_fast.csv` (registered: hold, all in-flight records),
+  `record_size_fast_nearest.csv`, `record_size_fast_airborne.csv` (`--min-alt 20`). The 20 fast
+  flights plus A9's 10 quadrotor flights.
+* Flown speeds and each log's SHA-256: `results/raw/a9_fast_speeds.csv`. The logs stay in
+  `~/.cache/authbc-px4/fast/`.
+
+**Flown.**
+
+* Airplane cruise airspeed was 0.28 below to 0.67 above its drawn speed (16.4–25.1 m/s), at
+  30–71 % throttle; mean ground speed 20.1 m/s, against A9's 11.9.
+* The VTOL was 0.47 below to 0.56 above its drawn speed (15.8–20.7 m/s), at full throttle on
+  its four fastest missions; mean ground speed 16.2 m/s, against A9's 11.2.
+* No flight touched down after takeoff.
+
+| fields | airframe | keyframe | delta (hold / nearest) | saving | ratio |
+|---|---|---|---|---|---|
+| 9 | airplane | 23.06 | **9.215** / 9.061 | 70.05 % | 3.511 |
+| 9 | VTOL | 22.76 | **9.205** / 9.029 | 70.03 % | 3.503 |
+| 9 | quadrotor (A9's) | 22.69 | 9.000 / 9.000 | 70.13 % | 3.503 |
+| 25 | airplane | 46.04 | 26.256 / 26.102 | 63.28 % | 3.039 |
+| 25 | VTOL | 45.67 | 26.221 / 26.046 | 63.26 % | 3.036 |
+| **25** | **all 30** | **45.49** (44.3–46.6) | **26.15** | **63.29 %** | **3.042** (3.026–3.058) |
+
+### Scoring
+
+* Plan (1), 25 fields:
+  * keyframe 50–70 B: **MISSED** (45.5);
+  * delta 20–30 B: **HELD** (26.1);
+  * saving 60–70 %: **HELD** (63.3 %).
+* Plan (2), ratio within 2.6–3.4: **HELD** (3.04).
+* Plan (3), fixed-wing delta 10–13 B and 1–2 B above the quadrotor: **MISSED, now at the speeds
+  it was written for.** The airplane's delta is 9.22 B, 0.22 above the quadrotor; at 20 ms and
+  ≤ 25 m/s almost every field still changes by less than its first byte holds.
+* AF-1, the pattern of the plan's three statements: **HELD**.
+* AF-2:
+  * hold, airplane 9.1–9.8 B: **HELD** (9.215);
+  * hold, VTOL 9.05–9.6 B: **HELD** (9.205);
+  * nearest sample 9.0–9.25 B: **HELD** (9.061, 9.029).
+* AF-3:
+  * 9-field ratio 3.50–3.53: **HELD** (3.511, 3.503);
+  * 25-field ratio 3.02–3.07: **HELD** (3.039, 3.036, 3.051);
+  * saving 63.0–63.6 %: **HELD** (63.29).
+* AF-4:
+  * the airplane's delta grows by 0.0–0.8 B (hold) and 0.0–0.25 B (nearest) over A9's flights
+    of the same missions: **HELD** (+0.16 and +0.06 on average; single flights −0.17 to +0.54
+    and +0.01 to +0.18);
+  * no ratio moves by more than 0.03: **MISSED narrowly.** The airframe means move by at most
+    0.015, but one flight's 9-field ratio moved by 0.041, which is one OFDM symbol of airtime.
+* AF-5, cruise within 1 m/s of the drawn speed (all airplane flights, ≥ 9 VTOL) and no
+  touchdown: **HELD** (20 of 20, no touchdown).
+* The `--min-alt 20` sensitivity changes no delta by more than 0.01 B. These flights had no
+  ground segment to remove.
+
+**What it means.** At the speeds the plan registered, fixed-wing and VTOL records cost what
+the quadrotor's do, plus about 0.2 B. The 25-field gain stays at 63 % of the bytes and 3.04
+times the capacity. Speed, the reason the plan expected fixed wings to differ, does not move
+the result. That conclusion now rests on clean registered flights, not on A9's speed-limited
+ones or F107's two diagnostic flights.

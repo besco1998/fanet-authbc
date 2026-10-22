@@ -4706,3 +4706,30 @@ pi-B on the INA219 rig, the rig check passed the same day, 5 × 60 s repetitions
 
 **Cross-check:** the metered rate (38 600 records/s) reproduces the board timing of the
 compiled sender (103.4 µs a frame) to 0.2 %. Power × time gives the metered energy.
+
+## F111 — at the registered 15–25 m/s, fixed-wing records cost the quadrotor's plus 0.2 B (revision A9-fast, 2026-10-22)
+
+A9's ten airplane and ten VTOL missions were re-flown at their drawn speeds. The profile:
+
+* SIH's brake removed (`SIH_KDV` 0);
+* the airplane's thrust raised to 12 N;
+* TECS reset before the mission.
+
+Cruise held within 1 m/s on all 20 flights, with no touchdown; mean ground speed was 20.1 and
+16.2 m/s.
+
+| airframe | 9-field delta | ratio |
+|---|---|---|
+| airplane | 9.22 B | 3.511 |
+| VTOL | 9.21 B | 3.503 |
+| quadrotor | 9.00 B | 3.503 |
+
+At 25 fields: saving 63.3 %, ratio 3.04. The plan's "10–13 B for fixed wings" misses at its own
+speeds.
+
+**Also found:** every registered A9 airplane flight had a ground-level first leg. The cause is
+TECS's reference altitude starting at sea level (A9 Addendum 2); excluding those records
+changes nothing.
+
+**Cross-check:** the nearest-sample and altitude-floor sensitivities move no delta by more than
+0.16 B. Against A9's own flights of the same missions, the airplane's delta grows by 0.16 B.

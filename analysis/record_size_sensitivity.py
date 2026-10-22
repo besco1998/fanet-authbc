@@ -225,6 +225,7 @@ def main() -> None:
     ap.add_argument("flights", nargs="+", type=Path)
     ap.add_argument("--nearest", action="store_true",
                     help="take each topic's nearest sample instead of holding it (F105)")
+    ap.add_argument("--out", type=Path, help="output path (A9-fast); default by the options above")
     ap.add_argument("--min-alt", type=float,
                     help="drop records below this height above home (m): record_size_airborne.csv")
     args = ap.parse_args()
@@ -260,7 +261,7 @@ def main() -> None:
     w.writerows(rows)
     name = ("record_size_airborne.csv" if args.min_alt is not None
             else "record_size_nearest.csv" if args.nearest else OUT.name)
-    OUT.with_name(name).write_text(buf.getvalue())
+    (args.out or OUT.with_name(name)).write_text(buf.getvalue())
     for r in rows:
         print({k: r[k] for k in ("airframe", "mission", "fields", "key_mean", "delta_mean",
                                  "saving_pct", "ratio")})

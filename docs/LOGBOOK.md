@@ -12,6 +12,44 @@ where the durable record lives. If you want the conclusion only, follow the poin
 
 ---
 
+# 2026-10-22, evening — A8's energy, and why the SIH airplane dived after takeoff
+
+Mohamed: assume the sensor calibrated, re-fly the fixed wing for completeness (plan approved).
+
+**A8 energy.**
+
+* The Arduino was re-attached by `usbipd`, and the rig check passed twice (live, then against
+  the board's record).
+* The board timed the compiled sender first. The expectation was registered, then the meter
+  read in three runs, nobody on the board.
+* The control landed inside October's range (118.0 µJ).
+* The compiled sender metered 17.1 and 60.7 µJ per record, both below my ranges, because the
+  compiled loop draws 0.65 W, not Python's 0.75. The plan's statement held (F112).
+
+**The airplane's descent: one wrong diagnosis, then the right one.**
+
+1. While choosing the fast profile, a checker found that every airplane flight, registered
+   ones included, touched the ground after takeoff for 80–100 s; GPS and the global altitude
+   agreed.
+2. I read PX4's controller, found the altitude first-order hold, and committed it as the cause
+   with a climb-out waypoint as the fix. The waypoint changed nothing, and a 25 m/s airplane
+   circled it for 15 minutes.
+3. One flight with the controller's setpoints logged showed the cause directly: TECS's
+   reference altitude started at sea level, 490 m under the airfield, and climbed at 3–5 m/s.
+4. Three seconds in manual mode before the mission (a gap re-initialises TECS) fixed it. The
+   addendum was corrected in place, with the first attribution kept visibly.
+
+Lesson in the memory notes: log the internal state an explanation predicts before calling it
+the cause.
+
+**A9-fast.**
+
+* Profile chosen on mission 98 by a ladder fixed in the plan: the airplane with the brake
+  removed and 12 N; the VTOL with the brake removed only, since raising its thrust failed its
+  takeoff ("unable to reach heading").
+* Registered with every development flight listed. All 20 missions flew at the first attempt,
+  each within 1 m/s of its drawn speed, with no touchdown.
+
 # 2026-10-22 — A9's thirty flights, and two clean gates that failed
 
 **The fixed wing would not fly the registered speeds.** The registered script set
