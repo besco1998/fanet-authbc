@@ -33,12 +33,28 @@ LOGGER_TOPICS = "\n".join(f"{t} 20" for t in (
     "vehicle_angular_velocity", "sensor_gps", "airspeed_validated", "wind", "mission_result",
     "battery_status", "vehicle_status", "vehicle_thrust_setpoint")) + "\n" + \
     "vehicle_land_detected 0\n"
+# Development flights only (--log-setpoints): what the controller was asked to do, for the
+# diagnosis of the airplane's descent after takeoff (A9 addendum 2).
+SETPOINT_TOPICS = "\n".join(f"{t} 20" for t in (
+    "position_setpoint_triplet", "tecs_status", "fixed_wing_longitudinal_setpoint",
+    "fixed_wing_runway_control", "navigator_status", "airspeed_validated")) + "\n"
 GCS_PORT = 14550
 # PX4's SIH airplane flies at 12-15 m/s whatever it is told (airspeed never above 15 in the
 # missions flown); told more, it misses its waypoints and circles (A9, missions airplane-02 and
 # -06). Decided by Mohamed, 2026-10-22: fixed-wing and VTOL cruise is capped at the airframe's
 # own trim, 15 m/s; the drawn speed and the mission's geometry are kept and both are recorded.
 FW_CRUISE_CAP_MPS = 15.0
+# A9-fast (predictions/A9-fast.md): the registered missions flown at their drawn speeds. SIH's
+# linear brake SIH_KDV is removed (it is what held the airframes at 14 and 12.8 m/s, F107) and
+# thrust raised only as far as the development flights of mission 98 showed it was needed; the
+# VTOL's rotor torque is scaled with its thrust, since thrust alone took its yaw authority.
+PROFILES: dict[str, dict[str, dict]] = {
+    "fast": {
+        "airplane": {"params": {"SIH_KDV": 0.0, "SIH_T_MAX": 12.0}, "climbout": True},
+        "vtol": {"params": {"SIH_KDV": 0.0, "SIH_T_MAX": 3.0, "SIH_Q_MAX": 0.0248},
+                 "climbout": False},
+    },
+}
 HOME = (47.397742, 8.545594)            # PX4's default SITL home (Zurich)
 CMD_WAYPOINT, CMD_TAKEOFF, CMD_VTOL_TAKEOFF = 16, 22, 84    # MAV_CMD_NAV_* (MAVLink common)
 AIRFRAMES = {
@@ -95,12 +111,21 @@ def mission_items(plan: dict) -> list[tuple[int, float, float, float]]:
 
 
 def check_options(mission_no: int, *, cruise: float | None, params: list[str], climbout: bool,
-                  profile: str | None) -> None:
+                  profile: str | None, log_setpoints: bool = False) -> None:
     """Ad-hoc options are for development missions only; a registered mission (1-10) is flown as
     registered or under a named, registered profile."""
-    if (cruise is not None or params or climbout) and 1 <= mission_no <= 10:
-        raise SystemExit("--cruise/--param/--climbout are for development missions, "
-                         "not the registered 1-10")
+    if (cruise is not None or params or climbout or log_setpoints) and 1 <= mission_no <= 10:
+        raise SystemExit("--cruise/--param/--climbout/--log-setpoints are for development "
+                         "missions, not the registered 1-10")
+
+
+def apply_profile(plan: dict, profile: str) -> dict:
+    """The plan flown under a registered profile: the drawn speed, the profile's parameters."""
+    if plan["airframe"] not in PROFILES[profile]:
+        raise SystemExit(f"profile {profile} has no settings for {plan['airframe']}")
+    p = PROFILES[profile][plan["airframe"]]
+    return {**plan, "profile": profile, "cruise_flown_mps": plan["speed_mps"],
+            "extra_params": dict(p["params"]), **({"climbout": True} if p["climbout"] else {})}
 
 
 def upload(gcs, plan: dict) -> int:
@@ -204,9 +229,13 @@ def main() -> None:
                     help="a further PX4 parameter, set after start-up and read back")
     ap.add_argument("--climbout", action="store_true",
                     help="a waypoint above home at mission altitude after the takeoff")
+    ap.add_argument("--log-setpoints", action="store_true",
+                    help="also log the controller's setpoints (development missions only)")
+    ap.add_argument("--profile", choices=list(PROFILES),
+                    help="a registered profile (A9-fast): the drawn speed, its SIH parameters")
     args = ap.parse_args()
     check_options(args.mission, cruise=args.cruise, params=args.param, climbout=args.climbout,
-                  profile=None)
+                  profile=args.profile, log_setpoints=args.log_setpoints)
     plan = mission(args.airframe, args.mission)
     plan["cruise_flown_mps"] = (plan["speed_mps"] if args.airframe == "quadx"
                                 else min(plan["speed_mps"], FW_CRUISE_CAP_MPS))
@@ -216,10 +245,13 @@ def main() -> None:
         plan["extra_params"] = {k: float(v) for k, v in (a.split("=", 1) for a in args.param)}
     if args.climbout:
         plan["climbout"] = True
+    if args.profile:
+        plan = apply_profile(plan, args.profile)
     build = args.px4 / "build" / "px4_sitl_default"
     rootfs = build / "rootfs"
     (build / "etc" / "logging").mkdir(parents=True, exist_ok=True)
-    (build / "etc" / "logging" / "logger_topics.txt").write_text(LOGGER_TOPICS)
+    (build / "etc" / "logging" / "logger_topics.txt").write_text(
+        LOGGER_TOPICS + (SETPOINT_TOPICS if args.log_setpoints else ""))
     shutil.rmtree(rootfs / "log", ignore_errors=True)
     for stale in rootfs.glob("parameters*.bson"):       # another airframe's parameters
         stale.unlink()

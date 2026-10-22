@@ -4,7 +4,7 @@
 goes into is H1. Places are given by the section labels, which both versions share. Every number
 below must reach the paper through `analysis/paper_numbers.py` (one macro each), not typed in;
 the source CSV is named with each. Scoring and caveats are in `predictions/<ID>.md`; the one-line
-findings are F86–F110 in `docs/audits/model_provenance.md`.*
+findings are F86–F112 in `docs/audits/model_provenance.md`.*
 
 ## Ready (experiment scored)
 
@@ -190,12 +190,22 @@ limits an insider to the sender it impersonates" without "when it names one send
 times faster than Ed25519 verifies; a sender spends 0.8 % of a core and a receiver of 124
 neighbours 14 %."* Numbers: `results/hw/pq_speed_sig.authbc-pi4b.csv`.
 
+### A8 — energy of the compiled sender (`sec:energy`, Table `tab:energy` and its paragraph)
+
+**Now says:** the lean sender costs 2.7 times the first format's energy per record; "the design
+that is smallest on air is not the cheapest to compute". **Proposed:** two rows added to Table
+`tab:energy`: compiled lean sender, 17.1 µJ (four records a frame) and 60.7 µJ (one). And:
+*"Compiled, the lean sender spends 17.1 µJ per record on the Raspberry Pi 4 — a third of the
+first format's 58.4 and a ninth of the Python prototype's 155.4: the reversed order was the
+interpreter's."* Numbers: `results/raw/energy_runs_2026-10-22.csv`. ⚠️ State that the sensor's
+gain is not calibrated (G22 waived), as for the other rows, and that compiled code drew 12–14 %
+less power than the single power figure the model uses (F112).
+
 ## Not ready
 
 | item | waits for |
 |---|---|
 | A11 NR sidelink | not run (H6) |
-| A8 energy per record | the rig's calibration (G22) |
 | A14 | not started — the plan keeps it for a follow-up paper |
 | B1–B5 | purchases and flights (H3) |
 

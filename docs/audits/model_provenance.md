@@ -4687,3 +4687,22 @@ computation.
 
 **Cross-check:** three 10 s repetitions agree within 1 %, and the host-to-Pi ratio (3.1×)
 matches Ed25519's (3.0×).
+
+## F112 — compiled, the lean sender is the cheapest: 17.1 µJ per record against the first format's 58.4 (revision A8, energy; pi-B, 2026-10-22)
+
+pi-B on the INA219 rig, the rig check passed the same day, 5 × 60 s repetitions per run:
+
+| run | µJ per record | added power |
+|---|---|---|
+| control, first format, every record signed | 118.0 (inside its registered range; October 116.2) | 0.747 W |
+| compiled lean sender, b = 4 | **17.1** | 0.660 W |
+| compiled lean sender, b = 1 | **60.7** | 0.646 W |
+
+* The lean format is now 3.4 times cheaper than the first format with batching, and 1.9 times
+  cheaper without. The paper's reversed order (Python lean at 155.4 µJ) was the interpreter's.
+* My registered ranges missed low: the compiled loop draws 12–14 % less added power than the
+  Python figure used to predict it.
+* The sensor's gain is assumed (G22 waived by Mohamed, 2026-10-22).
+
+**Cross-check:** the metered rate (38 600 records/s) reproduces the board timing of the
+compiled sender (103.4 µs a frame) to 0.2 %. Power × time gives the metered energy.

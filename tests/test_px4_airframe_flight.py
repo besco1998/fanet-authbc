@@ -51,3 +51,20 @@ def test_ad_hoc_options_are_refused_for_registered_missions(mission: int) -> Non
     with pytest.raises(SystemExit):
         fl.check_options(mission, cruise=None, params=[], climbout=True, profile=None)
     fl.check_options(mission, cruise=None, params=[], climbout=False, profile=None)
+
+
+def test_the_fast_profile_flies_the_drawn_speed_with_its_parameters() -> None:
+    for af in ("airplane", "vtol"):
+        plan = fl.apply_profile(fl.mission(af, 3), "fast")
+        assert plan["cruise_flown_mps"] == plan["speed_mps"]          # not capped at 15 m/s
+        assert plan["profile"] == "fast"
+        assert plan["extra_params"] == fl.PROFILES["fast"][af]["params"]
+        assert plan.get("climbout", False) == fl.PROFILES["fast"][af]["climbout"]
+    assert fl.PROFILES["fast"]["airplane"]["params"]["SIH_KDV"] == 0.0   # the brake is the cause
+    assert fl.PROFILES["fast"]["vtol"]["params"]["SIH_KDV"] == 0.0
+
+
+def test_the_profile_is_allowed_for_registered_missions_but_not_for_the_quadrotor() -> None:
+    fl.check_options(3, cruise=None, params=[], climbout=False, profile="fast")
+    with pytest.raises(SystemExit):
+        fl.apply_profile(fl.mission("quadx", 3), "fast")

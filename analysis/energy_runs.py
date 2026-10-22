@@ -12,6 +12,10 @@ frame, keeps a repetition only if its idle window is within `IDLE_TOLERANCE` of 
 median idle power — the rule of the energy table — and sets the median beside the expectation.
 
     python analysis/energy_runs.py        # writes results/raw/energy_runs.csv
+    python analysis/energy_runs.py --session 2026-10-22     # energy_runs_2026-10-22.csv
+
+The session of 2026-10-22 (predictions/A8.md, energy; tag prereg-A8-energy): the control
+again, and the compiled sender (`authbc-rx sendloop`) with four records to a frame and with one.
 """
 from __future__ import annotations
 
@@ -43,17 +47,29 @@ REGISTERED: dict[str, tuple[str, tuple[float, float]]] = {
 }
 
 
+# The session of 2026-10-22: name -> (what, registered µJ per record, registered added power)
+RUNS_1022 = REPO / "results" / "hw" / "energy" / "e2e_2026-10-22"
+OUT_1022 = REPO / "results" / "raw" / "energy_runs_2026-10-22.csv"
+REGISTERED_1022: dict[str, tuple[str, tuple[float, float], tuple[float, float]]] = {
+    "control_cbor": ("control: first format, CBOR, every record signed", (113.0, 125.0),
+                     (0.70, 0.80)),
+    "rust_b4": ("compiled lean sender, four records to a frame", (17.4, 21.3), (0.70, 0.85)),
+    "rust_b1": ("compiled lean sender, one record to a frame", (63.2, 77.3), (0.70, 0.85)),
+}
+
+
 def _rows(path: Path) -> list[dict[str, str]]:
     body = [ln for ln in path.read_text().splitlines() if not ln.startswith("#")]
     return list(csv.DictReader(io.StringIO("\n".join(body))))
 
 
-def reduce_run(name: str, idle_median_w: float) -> dict:
+def reduce_run(name: str, idle_median_w: float, *, runs: Path = RUNS,
+               registered: tuple | None = None) -> dict:
     """One run: its usable repetitions, in µJ per record."""
-    what, (lo, hi) = REGISTERED[name]
-    manifest = json.loads((RUNS / f"manifest_{name}.json").read_text())
+    what, (lo, hi), power_range = registered or (*REGISTERED[name], POWER_RANGE_W)
+    manifest = json.loads((runs / f"manifest_{name}.json").read_text())
     batch = int(manifest["configuration"]["batch"])
-    reps = _rows(RUNS / f"energy_{name}.csv")
+    reps = _rows(runs / f"energy_{name}.csv")
     clean = [r for r in reps
              if abs(float(r["p_idle_w"]) - idle_median_w) <= IDLE_TOLERANCE * idle_median_w]
     per_record = sorted(float(r["energy_per_op_uj"]) / batch for r in clean)
@@ -73,16 +89,18 @@ def reduce_run(name: str, idle_median_w: float) -> dict:
                                        for r in clean), 1),
         "registered_lo": lo, "registered_hi": hi,
         "inside_registered": int(lo <= median <= hi),
-        "power_inside_registered": int(POWER_RANGE_W[0] <= st.median(power) <= POWER_RANGE_W[1]),
+        "power_inside_registered": int(power_range[0] <= st.median(power) <= power_range[1]),
         "script_predicted_uj_per_record": round(predicted, 3),
         "metered_over_predicted": round(median / predicted, 4),
     }
 
 
-def collect() -> list[dict]:
-    names = [n for n in REGISTERED if (RUNS / f"energy_{n}.csv").exists()]
-    idle = st.median(float(r["p_idle_w"]) for n in names for r in _rows(RUNS / f"energy_{n}.csv"))
-    rows = [reduce_run(n, idle) for n in names]
+def collect(session: str = "2026-10-09") -> list[dict]:
+    runs, reg = ((RUNS, {k: (*v, POWER_RANGE_W) for k, v in REGISTERED.items()})
+                 if session == "2026-10-09" else (RUNS_1022, REGISTERED_1022))
+    names = [n for n in reg if (runs / f"energy_{n}.csv").exists()]
+    idle = st.median(float(r["p_idle_w"]) for n in names for r in _rows(runs / f"energy_{n}.csv"))
+    rows = [reduce_run(n, idle, runs=runs, registered=reg[n]) for n in names]
     for r in rows:
         r["idle_power_median_w"] = round(idle, 4)
     return rows
@@ -96,17 +114,25 @@ def july_baseline() -> tuple[float, float]:
 
 
 def main() -> None:
-    rows = collect()
+    import argparse
+    ap = argparse.ArgumentParser(description=__doc__,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--session", choices=("2026-10-09", "2026-10-22"), default="2026-10-09")
+    session = ap.parse_args().session
+    rows = collect(session)
     buf = io.StringIO()
-    config = {"idle_tolerance": IDLE_TOLERANCE, "min_clean_reps": MIN_CLEAN_REPS,
-              "registered": {k: v[1] for k, v in REGISTERED.items()}, "power": POWER_RANGE_W}
+    config: dict = {"idle_tolerance": IDLE_TOLERANCE, "min_clean_reps": MIN_CLEAN_REPS,
+                    "registered": {k: v[1] for k, v in REGISTERED.items()}, "power": POWER_RANGE_W}
+    if session != "2026-10-09":
+        config = {"idle_tolerance": IDLE_TOLERANCE, "min_clean_reps": MIN_CLEAN_REPS,
+                  "registered": {k: v[1:] for k, v in REGISTERED_1022.items()}}
     for k, v in {**provenance.env_block(), "run": "energy_runs",
                  "config_hash": provenance.config_hash(config)}.items():
         buf.write(f"# {k}={v}\n")
     w = csv.DictWriter(buf, fieldnames=list(rows[0]), lineterminator="\n")
     w.writeheader()
     w.writerows(rows)
-    OUT.write_text(buf.getvalue())
+    (OUT if session == "2026-10-09" else OUT_1022).write_text(buf.getvalue())
     uj, watts = july_baseline()
     print(f"July's baseline row, other board and sensor: {uj:.1f} µJ per record, {watts:.3f} W")
     for r in rows:
@@ -115,7 +141,7 @@ def main() -> None:
               f"{r['added_power_w_median']:.3f} W  {r['reps_clean']} of {r['reps_metered']} reps  "
               f"registered {r['registered_lo']:.0f}–{r['registered_hi']:.0f}: "
               f"{'inside' if r['inside_registered'] else 'OUTSIDE'}; "
-              f"power {'inside' if r['power_inside_registered'] else 'OUTSIDE'} 0.70–0.80 W")
+              f"power {'inside' if r['power_inside_registered'] else 'OUTSIDE'} its range")
 
 
 if __name__ == "__main__":
