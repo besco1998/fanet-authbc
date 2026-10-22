@@ -1,11 +1,9 @@
-"""The missions the A9 flights upload (analysis/px4_airframe_flight.py).
+"""The missions the A9 flights upload, and the registered profile of A9-fast
+(analysis/px4_airframe_flight.py).
 
-The climb-out waypoint (A9-fast, 2026-10-22): PX4's fixed-wing controller slides each leg's
-altitude target from the previous waypoint's altitude to the current one's
-(FixedWingModeManager::control_auto_position, "altitude first order hold"). After a fixed-wing
-takeoff the first leg's previous point lay at ground level, and every registered A9 airplane
-flight flew most of that leg at ground level. A waypoint above home at mission altitude, right
-after the takeoff item, makes the first leg start from that altitude.
+A climb-out waypoint above home was tried first (2026-10-22) against the airplane's descent
+after takeoff; it did not stop it, and a 25 m/s airplane circled it for fifteen minutes. The
+cause was TECS's reference altitude starting from sea level (`reset_tecs`).
 """
 
 from __future__ import annotations
@@ -33,13 +31,6 @@ def test_the_registered_mission_is_takeoff_then_the_waypoints() -> None:
     assert all(i[0] == fl.CMD_WAYPOINT and i[3] == plan["alt_m"] for i in items[1:])
 
 
-def test_the_climb_out_waypoint_sits_above_home_right_after_takeoff() -> None:
-    plan = {**fl.mission("airplane", 3), "climbout": True}
-    items = fl.mission_items(plan)
-    assert items[1] == (fl.CMD_WAYPOINT, *fl.HOME, plan["alt_m"])
-    assert items[2:] == fl.mission_items(fl.mission("airplane", 3))[1:]
-
-
 def test_a_vtol_takes_off_as_a_vtol() -> None:
     assert fl.mission_items(fl.mission("vtol", 1))[0][0] == fl.CMD_VTOL_TAKEOFF
 
@@ -47,10 +38,10 @@ def test_a_vtol_takes_off_as_a_vtol() -> None:
 @pytest.mark.parametrize("mission", [1, 10])
 def test_ad_hoc_options_are_refused_for_registered_missions(mission: int) -> None:
     with pytest.raises(SystemExit):
-        fl.check_options(mission, cruise=20.0, params=[], climbout=False, profile=None)
+        fl.check_options(mission, cruise=20.0, params=[], tecs_reset=False, profile=None)
     with pytest.raises(SystemExit):
-        fl.check_options(mission, cruise=None, params=[], climbout=True, profile=None)
-    fl.check_options(mission, cruise=None, params=[], climbout=False, profile=None)
+        fl.check_options(mission, cruise=None, params=[], tecs_reset=True, profile=None)
+    fl.check_options(mission, cruise=None, params=[], tecs_reset=False, profile=None)
 
 
 def test_the_fast_profile_flies_the_drawn_speed_with_its_parameters() -> None:
@@ -59,12 +50,12 @@ def test_the_fast_profile_flies_the_drawn_speed_with_its_parameters() -> None:
         assert plan["cruise_flown_mps"] == plan["speed_mps"]          # not capped at 15 m/s
         assert plan["profile"] == "fast"
         assert plan["extra_params"] == fl.PROFILES["fast"][af]["params"]
-        assert plan.get("climbout", False) == fl.PROFILES["fast"][af]["climbout"]
+        assert plan.get("tecs_reset", False) == fl.PROFILES["fast"][af]["tecs_reset"]
     assert fl.PROFILES["fast"]["airplane"]["params"]["SIH_KDV"] == 0.0   # the brake is the cause
     assert fl.PROFILES["fast"]["vtol"]["params"]["SIH_KDV"] == 0.0
 
 
 def test_the_profile_is_allowed_for_registered_missions_but_not_for_the_quadrotor() -> None:
-    fl.check_options(3, cruise=None, params=[], climbout=False, profile="fast")
+    fl.check_options(3, cruise=None, params=[], tecs_reset=False, profile="fast")
     with pytest.raises(SystemExit):
         fl.apply_profile(fl.mission("quadx", 3), "fast")

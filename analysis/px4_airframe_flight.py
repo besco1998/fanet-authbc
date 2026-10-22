@@ -45,14 +45,15 @@ GCS_PORT = 14550
 # own trim, 15 m/s; the drawn speed and the mission's geometry are kept and both are recorded.
 FW_CRUISE_CAP_MPS = 15.0
 # A9-fast (predictions/A9-fast.md): the registered missions flown at their drawn speeds. SIH's
-# linear brake SIH_KDV is removed (it is what held the airframes at 14 and 12.8 m/s, F107) and
-# thrust raised only as far as the development flights of mission 98 showed it was needed; the
-# VTOL's rotor torque is scaled with its thrust, since thrust alone took its yaw authority.
+# linear brake SIH_KDV is removed (it is what held the airframes at 14 and 12.8 m/s, F107); the
+# airplane's thrust is raised as far as the development flights of mission 98 showed it was
+# needed (12 N: 25.3 m/s at 73 % throttle; 9 N needed 98 %). The VTOL keeps its thrust: raising
+# it, alone or with the rotor torque, failed its takeoff ("unable to reach heading"). The
+# airplane's runway takeoff needs `reset_tecs`; the VTOL's TECS starts at its transition.
 PROFILES: dict[str, dict[str, dict]] = {
     "fast": {
-        "airplane": {"params": {"SIH_KDV": 0.0, "SIH_T_MAX": 12.0}, "climbout": True},
-        "vtol": {"params": {"SIH_KDV": 0.0, "SIH_T_MAX": 3.0, "SIH_Q_MAX": 0.0248},
-                 "climbout": False},
+        "airplane": {"params": {"SIH_KDV": 0.0, "SIH_T_MAX": 12.0}, "tecs_reset": True},
+        "vtol": {"params": {"SIH_KDV": 0.0}, "tecs_reset": False},
     },
 }
 HOME = (47.397742, 8.545594)            # PX4's default SITL home (Zurich)
@@ -96,26 +97,35 @@ def mission_items(plan: dict) -> list[tuple[int, float, float, float]]:
 
     Only in-flight records are used, so the mission ends at its last waypoint: a fixed-wing
     landing needs an approach pattern, and PX4 refuses return-to-launch in a global frame.
-    `climbout` (A9-fast) adds a waypoint above home at mission altitude after the takeoff: PX4's
-    fixed-wing controller slides a leg's altitude target from the previous point's altitude, and
-    after a fixed-wing takeoff that point lay at ground level, so the registered A9 airplane
-    flights flew most of their first leg at ground level (found 2026-10-22).
     """
     alt = plan["alt_m"]
     takeoff = CMD_VTOL_TAKEOFF if plan["airframe"] == "vtol" else CMD_TAKEOFF
-    items = [(takeoff, *HOME, alt)]
-    if plan.get("climbout"):
-        items.append((CMD_WAYPOINT, *HOME, alt))
-    items += [(CMD_WAYPOINT, la, lo, alt) for la, lo in plan["waypoints"]]
-    return items
+    return [(takeoff, *HOME, alt)] + [(CMD_WAYPOINT, la, lo, alt) for la, lo in plan["waypoints"]]
 
 
-def check_options(mission_no: int, *, cruise: float | None, params: list[str], climbout: bool,
+def reset_tecs(px4: Path) -> str:
+    """Make PX4's fixed-wing energy controller (TECS) start from the aircraft's altitude.
+
+    TECS runs in every mode that controls position or altitude, from start-up, and re-initialises
+    its reference altitude only after a gap of more than 1 s in its updates (TECS.cpp, DT_MAX).
+    In SIH its first update reads 0 m above sea level, before the estimator has an altitude; the
+    reference then climbs at 3-5 m/s from there, so after a runway takeoff the airplane followed
+    a reference far below the airfield, dived to the ground and skimmed it for 80-100 s (every
+    registered A9 airplane flight; found 2026-10-22 with the setpoints logged). Manual mode does
+    not run TECS: three seconds in it are a gap, and the mission then starts from the true
+    altitude.
+    """
+    out = client(px4, "commander", "mode", "manual")
+    time.sleep(3.0)
+    return out
+
+
+def check_options(mission_no: int, *, cruise: float | None, params: list[str], tecs_reset: bool,
                   profile: str | None, log_setpoints: bool = False) -> None:
     """Ad-hoc options are for development missions only; a registered mission (1-10) is flown as
     registered or under a named, registered profile."""
-    if (cruise is not None or params or climbout or log_setpoints) and 1 <= mission_no <= 10:
-        raise SystemExit("--cruise/--param/--climbout/--log-setpoints are for development "
+    if (cruise is not None or params or tecs_reset or log_setpoints) and 1 <= mission_no <= 10:
+        raise SystemExit("--cruise/--param/--tecs-reset/--log-setpoints are for development "
                          "missions, not the registered 1-10")
 
 
@@ -125,7 +135,7 @@ def apply_profile(plan: dict, profile: str) -> dict:
         raise SystemExit(f"profile {profile} has no settings for {plan['airframe']}")
     p = PROFILES[profile][plan["airframe"]]
     return {**plan, "profile": profile, "cruise_flown_mps": plan["speed_mps"],
-            "extra_params": dict(p["params"]), **({"climbout": True} if p["climbout"] else {})}
+            "extra_params": dict(p["params"]), **({"tecs_reset": True} if p["tecs_reset"] else {})}
 
 
 def upload(gcs, plan: dict) -> int:
@@ -189,6 +199,8 @@ def fly(px4: Path, plan: dict, timeout_s: float) -> None:
         if f": {float(value):.4f}" not in shown and f": {int(value)}" not in shown:
             raise SystemExit(f"parameter {name} did not take the value {value}: {shown[-200:]}")
     n_items = upload(gcs, plan)
+    if plan.get("tecs_reset"):
+        plan["tecs_reset_reply"] = reset_tecs(px4).strip()[-200:]
     def armed_within(seconds: float) -> bool:
         end = time.monotonic() + seconds
         while time.monotonic() < end:
@@ -227,14 +239,14 @@ def main() -> None:
     ap.add_argument("--cruise", type=float, help="commanded cruise (m/s) instead of the cap")
     ap.add_argument("--param", action="append", default=[], metavar="NAME=VALUE",
                     help="a further PX4 parameter, set after start-up and read back")
-    ap.add_argument("--climbout", action="store_true",
-                    help="a waypoint above home at mission altitude after the takeoff")
+    ap.add_argument("--tecs-reset", action="store_true",
+                    help="three seconds in manual mode before the mission (see reset_tecs)")
     ap.add_argument("--log-setpoints", action="store_true",
                     help="also log the controller's setpoints (development missions only)")
     ap.add_argument("--profile", choices=list(PROFILES),
                     help="a registered profile (A9-fast): the drawn speed, its SIH parameters")
     args = ap.parse_args()
-    check_options(args.mission, cruise=args.cruise, params=args.param, climbout=args.climbout,
+    check_options(args.mission, cruise=args.cruise, params=args.param, tecs_reset=args.tecs_reset,
                   profile=args.profile, log_setpoints=args.log_setpoints)
     plan = mission(args.airframe, args.mission)
     plan["cruise_flown_mps"] = (plan["speed_mps"] if args.airframe == "quadx"
@@ -243,8 +255,8 @@ def main() -> None:
         plan["cruise_flown_mps"] = args.cruise
     if args.param:
         plan["extra_params"] = {k: float(v) for k, v in (a.split("=", 1) for a in args.param)}
-    if args.climbout:
-        plan["climbout"] = True
+    if args.tecs_reset:
+        plan["tecs_reset"] = True
     if args.profile:
         plan = apply_profile(plan, args.profile)
     build = args.px4 / "build" / "px4_sitl_default"
