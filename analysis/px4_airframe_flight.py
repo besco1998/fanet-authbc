@@ -121,6 +121,7 @@ def fly(px4: Path, plan: dict, timeout_s: float) -> None:
                if plan["airframe"] == "quadx" else
                [("FW_AIRSPD_TRIM", speed), ("FW_AIRSPD_MAX", max(20.0, speed + 5.0)),
                 ("MIS_TKO_LAND_REQ", 0), ("SYS_HAS_NUM_ASPD", 0)])
+    params += [(k, v) for k, v in plan.get("extra_params", {}).items()]   # diagnostic flights
     gcs = mavutil.mavlink_connection(f"udpin:127.0.0.1:{GCS_PORT}")
     gcs.wait_heartbeat(timeout=90)
     beating = threading.Event()
@@ -174,10 +175,20 @@ def main() -> None:
     ap.add_argument("--mission", type=int, required=True)
     ap.add_argument("--out", type=Path, required=True)
     ap.add_argument("--timeout", type=float, default=1200.0)
+    # Diagnostic flights only (never missions 1-10): why the SIH fixed wing stops near 14 m/s.
+    ap.add_argument("--cruise", type=float, help="commanded cruise (m/s) instead of the cap")
+    ap.add_argument("--param", action="append", default=[], metavar="NAME=VALUE",
+                    help="a further PX4 parameter, set after start-up and read back")
     args = ap.parse_args()
+    if (args.cruise is not None or args.param) and 1 <= args.mission <= 10:
+        raise SystemExit("--cruise/--param are for diagnostic missions, not the registered 1-10")
     plan = mission(args.airframe, args.mission)
     plan["cruise_flown_mps"] = (plan["speed_mps"] if args.airframe == "quadx"
                                 else min(plan["speed_mps"], FW_CRUISE_CAP_MPS))
+    if args.cruise is not None:
+        plan["cruise_flown_mps"] = args.cruise
+    if args.param:
+        plan["extra_params"] = {k: float(v) for k, v in (a.split("=", 1) for a in args.param)}
     build = args.px4 / "build" / "px4_sitl_default"
     rootfs = build / "rootfs"
     (build / "etc" / "logging").mkdir(parents=True, exist_ok=True)
