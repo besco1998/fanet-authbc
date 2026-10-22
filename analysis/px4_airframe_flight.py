@@ -40,6 +40,7 @@ GCS_PORT = 14550
 # own trim, 15 m/s; the drawn speed and the mission's geometry are kept and both are recorded.
 FW_CRUISE_CAP_MPS = 15.0
 HOME = (47.397742, 8.545594)            # PX4's default SITL home (Zurich)
+CMD_WAYPOINT, CMD_TAKEOFF, CMD_VTOL_TAKEOFF = 16, 22, 84    # MAV_CMD_NAV_* (MAVLink common)
 AIRFRAMES = {
     # model, cruise speed range (m/s), leg length range (m), altitude (m)
     "quadx": ("sihsim_quadx", (5.0, 15.0), (150.0, 400.0), 40.0),
@@ -74,17 +75,39 @@ def client(px4: Path, tool: str, *args: str) -> str:
     return out.stdout + out.stderr
 
 
+def mission_items(plan: dict) -> list[tuple[int, float, float, float]]:
+    """(command, lat, lon, relative altitude) of every item uploaded.
+
+    Only in-flight records are used, so the mission ends at its last waypoint: a fixed-wing
+    landing needs an approach pattern, and PX4 refuses return-to-launch in a global frame.
+    `climbout` (A9-fast) adds a waypoint above home at mission altitude after the takeoff: PX4's
+    fixed-wing controller slides a leg's altitude target from the previous point's altitude, and
+    after a fixed-wing takeoff that point lay at ground level, so the registered A9 airplane
+    flights flew most of their first leg at ground level (found 2026-10-22).
+    """
+    alt = plan["alt_m"]
+    takeoff = CMD_VTOL_TAKEOFF if plan["airframe"] == "vtol" else CMD_TAKEOFF
+    items = [(takeoff, *HOME, alt)]
+    if plan.get("climbout"):
+        items.append((CMD_WAYPOINT, *HOME, alt))
+    items += [(CMD_WAYPOINT, la, lo, alt) for la, lo in plan["waypoints"]]
+    return items
+
+
+def check_options(mission_no: int, *, cruise: float | None, params: list[str], climbout: bool,
+                  profile: str | None) -> None:
+    """Ad-hoc options are for development missions only; a registered mission (1-10) is flown as
+    registered or under a named, registered profile."""
+    if (cruise is not None or params or climbout) and 1 <= mission_no <= 10:
+        raise SystemExit("--cruise/--param/--climbout are for development missions, "
+                         "not the registered 1-10")
+
+
 def upload(gcs, plan: dict) -> int:
     """MAVLink mission protocol: count, then each item as it is requested."""
     from pymavlink import mavutil
     m = mavutil.mavlink
-    vtol = plan["airframe"] == "vtol"
-    alt = plan["alt_m"]
-    lat0, lon0 = HOME
-    items = [(m.MAV_CMD_NAV_VTOL_TAKEOFF if vtol else m.MAV_CMD_NAV_TAKEOFF, lat0, lon0, alt)]
-    # Only in-flight records are used, so the mission ends at its last waypoint: a fixed-wing
-    # landing needs an approach pattern, and PX4 refuses return-to-launch in a global frame.
-    items += [(m.MAV_CMD_NAV_WAYPOINT, la, lo, alt) for la, lo in plan["waypoints"]]
+    items = mission_items(plan)
     gcs.mav.mission_count_send(gcs.target_system, gcs.target_component, len(items),
                                m.MAV_MISSION_TYPE_MISSION)
     sent = 0
@@ -179,9 +202,11 @@ def main() -> None:
     ap.add_argument("--cruise", type=float, help="commanded cruise (m/s) instead of the cap")
     ap.add_argument("--param", action="append", default=[], metavar="NAME=VALUE",
                     help="a further PX4 parameter, set after start-up and read back")
+    ap.add_argument("--climbout", action="store_true",
+                    help="a waypoint above home at mission altitude after the takeoff")
     args = ap.parse_args()
-    if (args.cruise is not None or args.param) and 1 <= args.mission <= 10:
-        raise SystemExit("--cruise/--param are for diagnostic missions, not the registered 1-10")
+    check_options(args.mission, cruise=args.cruise, params=args.param, climbout=args.climbout,
+                  profile=None)
     plan = mission(args.airframe, args.mission)
     plan["cruise_flown_mps"] = (plan["speed_mps"] if args.airframe == "quadx"
                                 else min(plan["speed_mps"], FW_CRUISE_CAP_MPS))
@@ -189,6 +214,8 @@ def main() -> None:
         plan["cruise_flown_mps"] = args.cruise
     if args.param:
         plan["extra_params"] = {k: float(v) for k, v in (a.split("=", 1) for a in args.param)}
+    if args.climbout:
+        plan["climbout"] = True
     build = args.px4 / "build" / "px4_sitl_default"
     rootfs = build / "rootfs"
     (build / "etc" / "logging").mkdir(parents=True, exist_ok=True)

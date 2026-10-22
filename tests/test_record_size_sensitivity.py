@@ -101,3 +101,13 @@ def test_nearest_is_nan_before_the_first_sample() -> None:
     out = rs._nearest(np.array([10.0, 30.0]), np.array([5.0, 7.0]), np.array([0.0, 10.0, 19.0,
                                                                                  21.0, 99.0]))
     assert np.isnan(out[0]) and out[1:].tolist() == [5.0, 5.0, 7.0, 7.0]
+
+
+def test_the_altitude_floor_drops_low_records_and_keeps_the_rest() -> None:
+    """--min-alt (A9 addendum): the registered airplane flights flew part of their first leg at
+    ground level with the land detector reading 'not landed'; the floor measures what that did."""
+    finite = np.array([True, True, True, True, False])
+    landed = np.array([1, 0, 0, 0, 0])
+    up = np.array([0.0, 2.0, 30.0, 80.0, 80.0])
+    assert rs.in_flight(finite, landed, up, None).tolist() == [False, True, True, True, False]
+    assert rs.in_flight(finite, landed, up, 20.0).tolist() == [False, False, True, True, False]

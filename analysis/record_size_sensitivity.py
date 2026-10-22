@@ -78,7 +78,18 @@ def _nearest(t_src: np.ndarray, v: np.ndarray, t: np.ndarray) -> np.ndarray:
     return out
 
 
-def records(path: Path, *, nearest: bool = False) -> list[dict[str, int]]:
+def in_flight(finite: np.ndarray, landed: np.ndarray, up: np.ndarray,
+              min_alt_m: float | None) -> np.ndarray:
+    """Records used: every field present, the land detector saying airborne, and (with a floor)
+    at least `min_alt_m` above home. The floor is a sensitivity check (A9 addendum): the
+    registered airplane flights flew part of their first leg at ground level, airborne by the
+    land detector."""
+    ok = finite & (landed == 0)
+    return ok if min_alt_m is None else ok & (up >= min_alt_m)
+
+
+def records(path: Path, *, nearest: bool = False,
+            min_alt_m: float | None = None) -> list[dict[str, int]]:
     """In-flight records on the 20 ms grid, every field present.
 
     Timestamps are placed an hour into a flight (the sizing convention's origin,
@@ -134,7 +145,8 @@ def records(path: Path, *, nearest: bool = False) -> list[dict[str, int]]:
         "thrust": np.clip(np.nan_to_num(thrust), 0, 2) * 1000,
     }
     mat = np.column_stack([raw[f] for f in FIELDS_25])
-    ok = np.isfinite(mat).all(axis=1) & (landed == 0)
+    ok = in_flight(np.isfinite(mat).all(axis=1), landed,
+                   -col("vehicle_local_position", "z", t), min_alt_m)
     rows = np.rint(np.nan_to_num(mat)).astype(np.int64)
     return [dict(zip(FIELDS_25, r.tolist(), strict=True)) for r, good in zip(rows, ok,
                                                                               strict=True)
@@ -213,11 +225,13 @@ def main() -> None:
     ap.add_argument("flights", nargs="+", type=Path)
     ap.add_argument("--nearest", action="store_true",
                     help="take each topic's nearest sample instead of holding it (F105)")
+    ap.add_argument("--min-alt", type=float,
+                    help="drop records below this height above home (m): record_size_airborne.csv")
     args = ap.parse_args()
     rows = []
     for flight in args.flights:
         plan = json.loads((flight / "mission.json").read_text())
-        recs = records(flight / "flight.ulg", nearest=args.nearest)
+        recs = records(flight / "flight.ulg", nearest=args.nearest, min_alt_m=args.min_alt)
         # the speed drawn, the cruise commanded (fixed wing and VTOL capped at 15 m/s, decided
         # 2026-10-22) and the ground speed flown, mean over the in-flight records
         flown = st.mean(float(np.hypot(r["vel_x"], r["vel_y"])) / 100.0 for r in recs)
@@ -236,13 +250,17 @@ def main() -> None:
     config: dict[str, object] = {"sets": SETS, "spacing": SPACING_MS}
     if args.nearest:   # the registered hold keeps its hash
         config["resample"] = "nearest"
+    if args.min_alt is not None:
+        config["min_alt_m"] = args.min_alt
     for k, v in {**provenance.env_block(), "run": "record_size",
                  "config_hash": provenance.config_hash(config)}.items():
         buf.write(f"# {k}={v}\n")
     w = csv.DictWriter(buf, fieldnames=list(rows[0]), lineterminator="\n")
     w.writeheader()
     w.writerows(rows)
-    (OUT.with_name("record_size_nearest.csv") if args.nearest else OUT).write_text(buf.getvalue())
+    name = ("record_size_airborne.csv" if args.min_alt is not None
+            else "record_size_nearest.csv" if args.nearest else OUT.name)
+    OUT.with_name(name).write_text(buf.getvalue())
     for r in rows:
         print({k: r[k] for k in ("airframe", "mission", "fields", "key_mean", "delta_mean",
                                  "saving_pct", "ratio")})
