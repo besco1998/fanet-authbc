@@ -89,7 +89,7 @@ sit at three different values in three files. Start here.*
 | what telemetry costs at 50 Hz, and how regular a real stream is | **F60** — PX4 in software-in-the-loop, `PX4_LOGS_EXPECTATIONS.md` (the follow-up and its outcome), `results/raw/px4_sitl_*.csv` |
 | whether the two simulated traffic sources differ | **F61** — no: `NMAX_DIRECT_EXPECTATIONS.md` follow-up F4 |
 | what the 2026-10 revision decided | `DECISIONS.md`, R1–R18, and **"Decided by Mohamed, 2026-10-08"** for every point it had left to him; what is still open, `OPEN_ITEMS.md` §G |
-| what the reviewer revision (`AUTHBC Revision Plan.md`, 2026-10-19) found, and what it would change in the paper | per item: `revision/STATUS.md`; registrations and outcomes: `../predictions/`; rules: `revision/EXECUTION_PLAN.md`; proposed paper text, item by item: `revision/PAPER_CHANGES.md` (not applied — H1); findings **F86–F98** |
+| what the reviewer revision (`AUTHBC Revision Plan.md`, 2026-10-19) found, and what it would change in the paper | per item: `revision/STATUS.md`; registrations and outcomes: `../predictions/`; rules: `revision/EXECUTION_PLAN.md`; proposed paper text, item by item: `revision/PAPER_CHANGES.md` (not applied — H1); the point-by-point response to the review (draft): `revision/RESPONSE_TO_REVIEWERS.md`; findings **F86–F112** |
 | where a number in the paper comes from | `paper/numbers.tex`, written by `analysis/paper_numbers.py` from `results/` — the paper has **no typed results** |
 | what a given source file does | `05_REPRODUCTION_GUIDE.md` §5 |
 | why the build keeps killing WSL | `05_REPRODUCTION_GUIDE.md` §8 (it is the OOM killer) |
