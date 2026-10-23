@@ -200,11 +200,24 @@ interpreter's."* Numbers: `results/raw/energy_runs_2026-10-22.csv`. ⚠️ State
 gain is not calibrated (G22 waived), as for the other rows, and that compiled code drew 12–14 %
 less power than the single power figure the model uses (F112).
 
+### Future work (Conclusion; decided by Mohamed, 2026-10-24)
+
+**Proposed:** one paragraph listing what was not done, each with what it would answer:
+
+* **5G NR sidelink (A11):** the capacity accounting on the 3GPP V2X link, which needs a separate
+  simulator (5G-LENA).
+* **Signature aggregation at relays (A14):** Ed25519 half-aggregation or BLS on multi-hop paths.
+* **Hardware (B1–B5):**
+  * a monitor-mode radio to explain the below-saturation mismatch;
+  * an 8-radio testbed using the few-radio emulation (A12) to confirm capacity on hardware;
+  * a flight-controller port with a calibrated meter;
+  * air-to-air loss traces;
+  * a multi-drone flight.
+
 ## Not ready
 
 | item | waits for |
 |---|---|
-| A11 NR sidelink | not run (H6) |
 | A14 | not started — the plan keeps it for a follow-up paper |
 | B1–B5 | purchases and flights (H3) |
 
