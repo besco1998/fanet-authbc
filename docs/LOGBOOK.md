@@ -32,6 +32,15 @@ future work, until purchased.
 3. **Six references added and checked against their registries.** Three held PDFs I added on
    2026-10-21 had no manifest row; they have one now. The paper is 15 pages.
 4. **A12 left out:** it only prepared a hardware test.
+5. **The first clean gate failed four quote tests, and they were right.** Rewriting the
+   Limitations and the energy table, I had dropped four disclosures that earlier tests pin by
+   their words, and renamed the table's rows:
+   * the batches of two, three and eight serve the capacity rule alone;
+   * hidden stations, which would lower the capacity, are not in the two-disc test;
+   * the first format's codec is the slower one in this prototype;
+   * unequal power with capture raises the capacities.
+
+   All four are restored word for word, and the table's rows have their names back.
 
 # 2026-10-22, evening — A8's energy, and why the SIH airplane dived after takeoff
 
