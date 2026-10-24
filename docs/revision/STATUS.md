@@ -21,13 +21,13 @@ as memory-capped systemd user units (`scripts/capped.sh`; `systemctl --user list
 | A9 | ✔ (30 SIH flights) + **A9-fast ✔** (the 20 fixed-wing/VTOL missions re-flown at their drawn 15–25 m/s, 2026-10-22) | delta = one byte per field on every airframe; at the registered speeds fixed wings cost +0.2 B (9.22 vs 9.00); 25 fields: saving 63.3 %, ratio 3.04. The plan's ~60 B keyframe and 10–13 B fixed-wing delta missed at every speed. A9's airplane flights had a ground-level first leg (TECS reference from sea level): no effect. F105, F107, F111 | the gain is set by the frame count: 2× until a 159–282 B delta |
 | A10 | ✔ (1 860 runs) | Table 5 reproduced (all N_max in their intervals); against 100 ms only MAVLink 2 (42.1), Wong–Lam (29.1) and TESLA with d = 2, I ≤ 20 ms (39.6–39.8) cross; G-R, every EMSS and TESLA-batch4 never do. F99 |
 | A11 | ✔ 802.11 (2 520 runs); NR sidelink: **future work** (Mohamed, 2026-10-24) | ratio 3.39–3.80 on six PHYs/rates, rising with rate (not the plan's 1.7–4.3); the model within 1.5 % except at the fastest rate of each channel width, 2.9–4.6 % optimistic there (F104, corrected 2026-10-24) |
-| A12 | ✔ (330 runs) | delivery follows the total frame rate: every plan statement held, the model within 0.0011 up to 350 frames/s per node; eight radios can stand for 124 nodes in ns-3 |
+| A12 | ✔ (330 runs) | delivery follows the total frame rate: every plan statement held, the model within 0.0011 up to 350 frames/s per node; eight radios can stand for 124 nodes in ns-3. Not in the paper: it only prepared B2 |
 | A13 | ✔ (pi-B, 2026-10-22) | lazy verification: tier 1 10.2 µs, tier 2 117.2 µs per frame → 628 nodes per core; evidence ≤ 171 ms (my 170 ms bound missed by 1 ms). F108 |
-| A14 | not done — **future work** (a follow-up paper, as the plan says) | |
+| A14 | not done — **not stated** in the paper or the letter, not even as future work, until the purchases (Mohamed, 2026-10-24) | |
 | A15 | ✔ capacity and timing (host + pi-B, 2026-10-22) | Falcon fits; the design with it serves 43.5 nodes; the ratio is 3.5, as with Ed25519 (the plan's "larger" failed). Falcon-512 on pi-B: sign 638 µs, verify 88 µs (3× faster than Ed25519's 259). F110 |
 | A16 | ✔ | both faults caught, no false finding; 6.4 min of a core per flight hour; 0.96 GB/h for 124 neighbours |
 | A17 | ✔ | the CAM deadline is not in its standard |
-| B1–B5 | not executable here — purchases, flights (H3) | |
+| B1–B5 | not executable here — purchases, flights (H3); **not stated** in the paper or the letter until the purchases (Mohamed, 2026-10-24) | |
 
 ## The crash of 2026-10-20 01:02
 
