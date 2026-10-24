@@ -43,6 +43,12 @@ DEFINED = dict(re.findall(r"\\newcommand\{\\([A-Za-z]+)\}\{(.*)\}", NUMBERS))
 BODY = "\n".join(ln for ln in TEX.splitlines() if not ln.lstrip().startswith("%"))
 
 
+def _ci_index(text: str, needle: str) -> int:
+    """Where `needle` starts, ignoring case: the 2026-10-12 rewrite sets run-in labels in Title
+    Case ("What Is Protected"), and what these tests hold is the content, not the capitals."""
+    return text.lower().index(needle.lower())
+
+
 def _section(title: str) -> str:
     start = BODY.index(f"\\section{{{title}}}")
     nxt = BODY.find("\\section", start + 10)
@@ -149,9 +155,9 @@ class TestWhatTheReviewAskedForIsInTheText:
             assert key in related, key
 
     def test_there_is_a_threat_model_that_says_what_is_not_protected(self) -> None:
-        model = _section("System and Threat Model")
+        model = _section("System and Threat Model").lower()
         for needle in ("Adversary", "What is protected", "What is not", "Replay", "Equivocation"):
-            assert needle in model, needle
+            assert needle.lower() in model, needle
 
     def test_the_exclusion_is_the_first_result(self) -> None:
         """The review asked for it first; an earlier rewrite of this paper put it after 802.11."""
@@ -185,7 +191,8 @@ class TestWhatTheReviewAskedForIsInTheText:
 
     def test_the_capacity_model_cites_the_broadcast_model_not_the_unicast_one(self) -> None:
         constraints = _section("Constraints")
-        channel = constraints[constraints.index("\\textbf{Channel.}"):]
+        label = "\\runin{Channel}" if "\\runin{Channel}" in constraints else "\\textbf{Channel.}"
+        channel = constraints[constraints.index(label):]
         assert "machen2008" in channel[:900]
 
     def test_the_clas_table_says_whose_numbers_it_reports(self) -> None:
@@ -197,7 +204,7 @@ class TestWhatTheReviewAskedForIsInTheText:
         limits = _section("Limitations")
         for needle in ("Capacities are simulated", "Telemetry is synthetic", "Multi-hop",
                        "Only the sender is metered"):
-            assert needle in limits, needle
+            assert needle.lower() in limits.lower(), needle
         # until 2026-10-09 this read "Contention is simulated"; two radios have since been
         # measured, and the limitation is that no capacity has
         assert "between two radios\nonly" in limits or "between two radios only" in limits
@@ -264,7 +271,7 @@ class TestWhatTheReviewAskedForIsInTheText:
         """The paragraph gave the 242 B frame's rate and the 222 B simulation's total, the same
         kind of mismatch the review listed under inconsistencies."""
         low = _section("Low-Rate Links: Where No Batch Helps")
-        carry = low[low.index("What the feasible rates carry"):]
+        carry = low[_ci_index(low, "What the feasible rates carry"):]
         for macro in ("\\loraSimBytes", "\\loraSimRecs", "\\loraSimRate", "222"):
             assert macro in carry, macro
         assert carry.index("\\loraSimRate") < carry.index("\\loraAgg")

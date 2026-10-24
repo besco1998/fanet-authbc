@@ -1,5 +1,5 @@
 # run=citation_check
-# checked=2026-10-09
+# checked=2026-10-24
 # bib=paper/refs.bib
 key,kind,identifier,registry,authors_bib,authors_registry,authors_match,title_match,year_bib,years_registry,year_match,status,fingerprint
 bianchi2000,doi,10.1109/49.840210,crossref,bianchi,G. Bianchi,1,1.00,2000,2000,1,ok,c1cc699a34bca9c9
@@ -75,3 +75,4 @@ skordoulis2008aggregation,doi,10.1109/MWC.2008.4454703,crossref,skordoulis; ni; 
 pannetrat2003multicast,document,docs/literature/pannetrat2003_multicast_packet_authentication_ndss.pdf,,pannetrat; molva,,,,2003,,,document,605f8c8717193b87
 strohmeier2015adsb,doi,10.1109/COMST.2014.2365951,crossref,strohmeier; lenders; martinovic,Martin Strohmeier; Vincent Lenders; Ivan Martinovic,1,1.00,2015,2015,1,ok,ee1f0afb320a5a5a
 yates2021aoi,doi,10.1109/JSAC.2021.3065072,crossref,yates; sun; brown; kaul; modiano; ulukus,Roy D. Yates; Yin Sun; D. Richard Brown; Sanjit K. Kaul; Eytan Modiano; Sennur Ulukus,1,1.00,2021,2021,1,ok,5a404adc8fa2570c
+farouk2026encoding,doi,10.1109/IEEC69628.2026.11584026,crossref,farouk; abdelaziz; darwesh; elbayoumy,Mohamed A. Farouk; Mahmoud Abdelaziz; Ahmed F. Darwesh; Ashraf D. Elbayoumy,1,1.00,2026,2026,1,ok,d08e3a99ee640e50

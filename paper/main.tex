@@ -197,10 +197,9 @@ them to each authentication configuration at its own frame size and frame rate.
 
 \begin{figure}[t]\centering
 \includegraphics[width=\columnwidth]{block_diagram.png}
-\caption{The lean frame, to scale (bytes below). Per-record signing repeats header, chain link
-and signature with every record; the design carries them once per four records, and the three
-records after the first are coded as differences ($\delta$).}
-\label{fig:nmax}
+\caption{The lean frame to scale. Per-record signing repeats header, chain link and signature
+for every record; the design sends them once per four records.}
+\label{fig:frame}
 \end{figure}
 
 \subsection{Network and Traffic}
@@ -290,7 +289,8 @@ given neighbor. We require $V \geq 1-\epsilon$ and take $\epsilon = 0.05$ throug
 \end{table}
 
 \subsection{Frame Structure}
-A frame is one canonical CBOR map~\cite{rfc8949} with integer keys (Table~\ref{tab:fields});
+A frame is one canonical CBOR map~\cite{rfc8949} with integer keys (Table~\ref{tab:fields},
+Fig.~\ref{fig:frame});
 Appendix~\ref{app:frame} provides the complete layout. The fields \texttt{src} and
 \texttt{base\_seq} name the sender and the sequence number of the first record; \texttt{link}
 is the hash of the record before it; \texttt{recs} is the record stream and \texttt{auth} one
@@ -992,8 +992,7 @@ AUTHBC design (row~8), with certificates & \certLeanDesign \\
 
 \begin{table}[t]\centering\footnotesize
 \caption{Stream-signing schemes at 50~records/s: the lean one-record frame with the
-authenticator of each scheme, sized from its definition, and $N_{\max}$ simulated as in
-Table~\ref{tab:ladder}.}
+authenticator of each scheme, and $N_{\max}$ simulated as in Table~\ref{tab:ladder}.}
 \label{tab:stream}
 \setlength{\tabcolsep}{3.5pt}
 \begin{tabular}{l r r r r}
@@ -1210,6 +1209,10 @@ recomputed by the receiver and never read from the frame.
 \item \emph{Signed Bytes:} A signature covers the canonical CBOR encoding of the rebuilt
 ledger records, not the record stream.
 \end{itemize}
+
+\section*{Use of Generative AI}
+An AI coding agent assisted with code, analysis and drafting under the author's direction. The
+author reviewed the work and takes responsibility for its content.
 
 \bibliographystyle{IEEEtran}
 \bibliography{refs}
