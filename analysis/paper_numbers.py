@@ -20,6 +20,7 @@ from __future__ import annotations
 import argparse
 import csv
 import math
+import re
 import statistics as st
 import sys
 from collections import defaultdict
@@ -57,6 +58,13 @@ def one(table: list[dict[str, str]], **want: str) -> dict[str, str]:
     if len(hits) != 1:
         raise LookupError(f"expected one row for {want}, found {len(hits)}")
     return hits[0]
+
+
+def header(path: Path) -> dict[str, str]:
+    """The `# key=value` provenance lines a result file opens with."""
+    pairs = (ln[1:].strip().split("=", 1) for ln in path.read_text(encoding="utf-8").splitlines()
+             if ln.startswith("#") and "=" in ln)
+    return {k.strip(): v.strip() for k, v in pairs}
 
 
 MISSING: list[str] = []          # values an artifact does not hold yet (see --allow-missing)
@@ -1196,9 +1204,58 @@ def batch_dimension() -> dict[str, str]:
         "batModelWorst": f(max(abs(float(r["vs_model_pct"])) for r in table.values()), 1)}
 
 
+def _libc(platform: str) -> str:
+    """'…-with-glibc2.39' -> 'glibc 2.39'."""
+    match = re.search(r"-with-([a-z]+)([\d.]+)$", platform)
+    if match is None:
+        raise ValueError(f"no C library in the platform string {platform!r}")
+    return f"{match.group(1)} {match.group(2)}"
+
+
+def _keyed(text: str, sep: str) -> dict[str, str]:
+    """Lines of 'key<sep>value' as a mapping (lscpu output, os-release)."""
+    pairs = (ln.split(sep, 1) for ln in text.splitlines() if sep in ln)
+    return {k.strip(): v.strip().strip('"') for k, v in pairs}
+
+
+def platforms() -> dict[str, str]:
+    """The two machines and the libraries, as the result files recorded them (paper Table II).
+
+    Nothing here is typed. The simulation host is the header of the design ladder; the board is
+    the header of the receiver timing the paper quotes, with the `lscpu` and `os-release` output
+    the same run stored beside it. A table of platforms copied by hand is the kind of statement
+    that outlives a re-install: one of the two boards was re-installed on 2026-10-09.
+    """
+    host = header(RAW / "design_ladder.csv")
+    if header(RAW / "ns3_nmax_direct_runs.csv")["cpu"] != host["cpu"]:
+        raise ValueError("the ladder and the capacity runs name different simulation hosts")
+    board = header(HW / "p1_lean.authbc-pi4b.frames-kept.csv")
+    if header(HW / "multicore_receive.authbc-pi4b.csv")["device_model"] != board["device_model"]:
+        raise ValueError("the receiver timing and the multi-core run name different boards")
+    meta = HW / "meta" / f"{board['device_host']}-{board['run_utc']}"
+    cpu = _keyed((meta / "lscpu.txt").read_text(encoding="utf-8"), ":")
+    release = _keyed((meta / "os-release.txt").read_text(encoding="utf-8"), "=")
+    libraries = ("cbor2", "cryptography", "blspy")
+    if any(host[name] != board[name] for name in libraries):
+        raise ValueError("host and board ran different versions of a library the text names once")
+    return {
+        "pfHostCpu": host["cpu"].replace("(R)", "").replace("(TM)", ""),
+        "pfHostOs": "Linux (WSL2)" if "WSL2" in host["platform"] else "Linux",
+        "pfHostLibc": _libc(host["platform"]), "pfHostPython": host["python"],
+        "pfPiModel": board["device_model"], "pfPiCpu": cpu["Model name"],
+        "pfPiCores": cpu["CPU(s)"], "pfPiGhz": f(float(cpu["CPU max MHz"]) / 1000, 1),
+        "pfPiOs": f"{release['ID'].capitalize()} {release['VERSION_ID']} "
+                  f"({release['VERSION_CODENAME']})",
+        "pfPiLibc": _libc(board["platform"]), "pfPiPython": board["python"],
+        "pfPiGovernor": board["device_governor"],
+        "verCbor": host["cbor2"], "verCryptography": host["cryptography"],
+        "verBlspy": host["blspy"],
+    }
+
+
 SECTIONS = (frames, ladder, loss, stream, freshness, phy, energy, timings, flight_logs,
             validation, exclusion, low_rate, source_study, capacity_rule, capacity_model, sitl,
-            energy_runs, prototype, batch_dimension, multicore, spread)
+            energy_runs, prototype, batch_dimension, multicore, spread, platforms)
 
 
 def macros() -> dict[str, str]:
