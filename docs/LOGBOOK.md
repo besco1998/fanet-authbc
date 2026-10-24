@@ -12,6 +12,27 @@ where the durable record lives. If you want the conclusion only, follow the poin
 
 ---
 
+# 2026-10-24 — the revision written into Mohamed's 2026-10-12 paper
+
+Mohamed: "edit the latest uncommitted main.tex"; hardware items not to be stated, not even as
+future work, until purchased.
+
+1. **His version committed as his** (87bd25a), then made green (6764ce1).
+   * The block diagram and the capacity figure shared the label `fig:nmax`, so the capacity
+     figure's references pointed at the diagram.
+   * Two captions were over two lines.
+   * The AI-use statement had been removed, and was restored.
+   * Tests that matched lowercase run-in labels now accept his Title Case.
+2. **The revision text, every number through `paper_numbers.py`.** Sixteen new generator
+   functions, each refusing to run where its artifact stops saying what the text says in words.
+   Two of those guards fired on claims I had written earlier:
+   * the trace link count (36 000 counted where 3 000 were traced, rows repeated per batch);
+   * F104's "within 1.5 % at frames of 178 µs and longer". 802.11p at 12 Mb/s is 2.9 % off at
+     226 µs; what holds is by rate.
+3. **Six references added and checked against their registries.** Three held PDFs I added on
+   2026-10-21 had no manifest row; they have one now. The paper is 15 pages.
+4. **A12 left out:** it only prepared a hardware test.
+
 # 2026-10-22, evening — A8's energy, and why the SIH airplane dived after takeoff
 
 Mohamed: assume the sensor calibrated, re-fly the fixed wing for completeness (plan approved).

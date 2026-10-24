@@ -12,7 +12,7 @@
 
 ---
 
-We thank the reviewers for their careful reading. The revision adds seventeen experiments. Each
+We thank the reviewers for their careful reading. The revision adds fifteen experiments. Each
 was registered, with its expected outcome and pass criterion, in a tagged commit before it ran.
 Predictions that failed are reported as failed, and a new Supplementary Table lists every
 prediction with its tag, its outcome and whether it held. The main changes are:
@@ -265,50 +265,30 @@ bound" and the limitation "none is implemented" are removed.
 **Response.** The capacity crossings were simulated on six 802.11 physical layers: 802.11a at 6,
 12 and 24 Mb/s, and 802.11p (10 MHz) at 3, 6 and 12 Mb/s (2 520 runs). The design's capacity is
 3.39–3.80 times the baseline's, rising slightly with the rate; the plan's estimate was 1.7–4.3.
-Our access-rule model is within 1.5 % down to 178 µs frames and 4.0–4.6 % optimistic at the
-fastest rate of each width. **5G NR sidelink is stated as future work.**
+Our access-rule model is within 1.5 % at every rate but the fastest of each channel width,
+where it is 2.9–4.6 % optimistic. **5G NR sidelink is stated as future work.**
 
 *Results:* `phy_links.csv` (F104).
 
 **Changes.** Discussion (a short table), Supplementary Note 7, Future Work (NR sidelink).
 
-## Comment 12 — "Can the capacity be tested on hardware with few radios?" (preparation)
-
-**Response.** In ns-3, delivery depends on how a total frame rate is divided among nodes only
-through each node's not colliding with itself. After an (N − 1)/N correction, splits from 124
-nodes at 12.5 frames/s to 5 nodes at 350 agree within 0.005 of V, and our model agrees with every
-split within 0.0011 (330 runs). Eight radios can therefore stand for 124 nodes. The emulation
-itself was used earlier by Kumar, Choi and Kim, with hidden transmitters only; we claim the
-contended case.
-
-*Results:* `nf_equivalence.csv`.
-
-**Changes.** A Supplementary Note.
-
-## Comment 13 — "The receiver is CPU-bound; is there a cheaper verification path?"
+## Comment 12 — "The receiver is CPU-bound; is there a cheaper verification path?"
 
 **Response.** Lazy verification, with two tiers:
 
 * records are usable at once, after the group tag and decoding (10.2 µs per frame);
 * signatures are verified in batches of 64 before records enter the ledger (117.2 µs per frame).
 
-One Raspberry Pi 4 core then serves 628 neighbours, and a record becomes signed evidence at most
-171 ms after it was sampled. The cost: in that window a swarm member holding the group key could
+One Raspberry Pi 4 core then serves 628 neighbours. A record becomes signed evidence within
+191 ms by the paper's freshness convention (Eq. (2), which counts the whole filling period), or
+171 ms after the oldest record of its frame was sampled. The cost: in that window a swarm member holding the group key could
 inject records that are acted on and only later purged.
 
 *Results:* `compiled_receiver.authbc-pi4b.csv` (F108).
 
 **Changes.** Discussion (the two tiers and their trade-off).
 
-## Comment 14 — "Signatures could be aggregated at relays."
-
-**Response.** We agree that this is promising. It needs the multi-hop forwarding scenario and an
-aggregation scheme that is not yet standard (Ed25519 half-aggregation), so it is left to a
-follow-up paper and stated as future work.
-
-**Changes.** Future Work.
-
-## Comment 15 — "There is no post-quantum path."
+## Comment 13 — "There is no post-quantum path."
 
 **Response.** Falcon-512's padded signature (666 B) fits in the frame.
 
@@ -325,7 +305,7 @@ matters the same. ML-DSA's 2 420 B signature still does not fit.
 
 **Changes.** `sec:limits` ("Post-Quantum Signatures"), Conclusion.
 
-## Comment 16 — "The blockchain framing is not supported."
+## Comment 14 — "The blockchain framing is not supported."
 
 **Response.** A ledger is audited from the uploads alone. One pass over a mission's frames finds
 every equivocation and every frame that does not verify, using only the senders' public keys,
@@ -339,7 +319,7 @@ hour for 124 neighbours.
 **Changes.** `sec:model` (Ledger). ⚠️ *For Mohamed: whether the title keeps "blockchain-style
 ledger" or becomes "hash-chained log" is your decision.*
 
-## Comment 17 — "The generality claim is not examined."
+## Comment 15 — "The generality claim is not examined."
 
 **Response.** The same accounting was applied to ADS-B, Remote ID and V2X:
 
@@ -357,13 +337,3 @@ they do.
 *Results:* `other_links.csv`.
 
 **Changes.** Discussion (a short table).
-
----
-
-## What was not done, and why
-
-**Hardware capacity, monitor-mode capture, a microcontroller port with a calibrated meter,
-air-to-air loss traces and a multi-drone flight (plan items B1–B5) need equipment or flights.**
-They are stated as limitations and future work. The capacities in the paper therefore remain
-simulated. Contention was measured on two radios, and the few-radio emulation of Comment 12
-prepares the hardware test.

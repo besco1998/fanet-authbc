@@ -1,7 +1,9 @@
 # What the revision changes in the paper — proposals, item by item
 
-*Drafted 2026-10-21 for Mohamed. Nothing here is in `paper/main.tex`: which `main.tex` the text
-goes into is H1. Places are given by the section labels, which both versions share. Every number
+*Drafted 2026-10-21 for Mohamed. **Applied 2026-10-24** to the 2026-10-12 `main.tex` (Mohamed:
+"edit the latest uncommitted main.tex"), except A12, which prepared a hardware test, and every
+hardware item (B1–B5) and A14: by Mohamed's decision of 2026-10-24 these are neither stated nor
+listed as future work until the purchases are made. Places are given by the section labels, which both versions share. Every number
 below must reach the paper through `analysis/paper_numbers.py` (one macro each), not typed in;
 the source CSV is named with each. Scoring and caveats are in `predictions/<ID>.md`; the one-line
 findings are F86–F112 in `docs/audits/model_provenance.md`.*
@@ -83,7 +85,7 @@ with it. The properties are proven in three models, not one: a single model with
 the clock did not terminate within 1 GB a lemma. Canonical encoding is assumed injective."* The
 three-model caveat must stay in the sentence (`predictions/A6.md`).
 
-### A12 — few radios for many (Supplementary note, for B2)
+### A12 — few radios for many — **not used in the paper** (it prepared a hardware test; Mohamed, 2026-10-24)
 
 **Proposed:** *"At a fixed total frame rate, delivery depends on how the rate is split among
 nodes only through each node's not colliding with itself: after an (N − 1)/N correction, splits
@@ -206,13 +208,9 @@ less power than the single power figure the model uses (F112).
 
 * **5G NR sidelink (A11):** the capacity accounting on the 3GPP V2X link, which needs a separate
   simulator (5G-LENA).
-* **Signature aggregation at relays (A14):** Ed25519 half-aggregation or BLS on multi-hop paths.
-* **Hardware (B1–B5):**
-  * a monitor-mode radio to explain the below-saturation mismatch;
-  * an 8-radio testbed using the few-radio emulation (A12) to confirm capacity on hardware;
-  * a flight-controller port with a calibrated meter;
-  * air-to-air loss traces;
-  * a multi-drone flight.
+* A variant for post-quantum signatures that do not fit one frame (kept from the paper).
+
+A14 and the hardware items B1–B5 are not stated (Mohamed, 2026-10-24: not until the purchases).
 
 ## Not ready
 

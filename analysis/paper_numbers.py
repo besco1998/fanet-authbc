@@ -437,12 +437,12 @@ def freshness() -> dict[str, str]:
 
 # ============================================================================== phy, energy
 def phy() -> dict[str, str]:
+    # the saturation ratios of the other PHYs (phyRatioLo/Hi) gave way to simulated crossings
+    # (phy_simulated, revision A11)
     table = rows(RAW / "phy_sweep.csv")
-    ratios = [float(r["ratio"]) for r in table]
     lean = one(table, channel="20MHz", rate_mbps="6", format="lean")
     return {"fixedCost": f(lean["fixed_cost_us"], 0),
-            "fixedSharePct": f(lean["fixed_share_of_baseline_pct"], 0),
-            "phyRatioLo": f(min(ratios), 1), "phyRatioHi": f(max(ratios), 1)}
+            "fixedSharePct": f(lean["fixed_share_of_baseline_pct"], 0)}
 
 
 def energy() -> dict[str, str]:
@@ -1253,9 +1253,306 @@ def platforms() -> dict[str, str]:
     }
 
 
+# ============================================================================ the reviewer revision
+# docs/AUTHBC Revision Plan.md, items A1-A17, each registered in predictions/<ID>.md before it ran
+# (tag prereg-<ID>). One function per item; each refuses to run where its artifact stops saying
+# what the text says in words.
+
+def _v_at_grid(cell: str) -> dict[int, float]:
+    return {int(n): float(v) for n, v in (pair.split(":") for pair in cell.split())}
+
+
+def spread_swarm() -> dict[str, str]:
+    """A1: the swarm spread over discs, grouped and moving (F88, F103)."""
+    sc = rows(RAW / "spatial_capacity.csv")
+    layouts = [r for r in sc if r["config"] == "design" and r["scenario"] != "fixed"]
+    ratios = [float(r["ratio_to_base"]) for r in layouts]
+    far = one(sc, scenario="s1-r1000", config="design")
+    mv = rows(RAW / "spatial_motion.csv")
+    dv = 0.0
+    for config in ("base", "design"):
+        still = _v_at_grid(one(mv, scenario="gm-r1000-v0", config=config)["v_at_grid"])
+        for speed in ("gm-r1000-v5", "gm-r1000-v15"):
+            moving = _v_at_grid(one(mv, scenario=speed, config=config)["v_at_grid"])
+            dv = max(dv, max(abs(moving[n] - still[n]) for n in still))
+    moving_ratios = [float(r["ratio_to_base"]) for r in mv if r["config"] == "design"]
+    return {"spRatioLo": f(min(ratios), 2), "spRatioHi": f(max(ratios), 2),
+            "spHiddenPct": f(100 * float(far["hidden_share"]), 0),
+            "spNeighbours": f(far["neighbours_at_cross"], 1), "spArea": f(far["n_cross"], 0),
+            "mvDeltaV": f(dv, 4), "mvRatioLo": f(min(moving_ratios), 2),
+            "mvRatioHi": f(max(moving_ratios), 2)}
+
+
+def design_map() -> dict[str, str]:
+    """A2: the batch the deadline admits over rate x deadline, checked in ns-3 (F100), and the
+    age of information under loss (F90)."""
+    t = rows(RAW / "design_map_validation.csv")
+    if not all(r["within_band"] == "1" for r in t):
+        raise ValueError("the text says every simulated cell lies in the model's band")
+    base = one(t, ns3_cell="MB100")
+    design = one(t, ns3_cell="MD100-100")
+    age = one(rows(RAW / "aoi_under_loss.csv"), lambda_rec_per_s="50", batch="4", p="0.05")
+    return {"dmCells": str(len(t)),
+            "dmWorst": f(max(abs(float(r["vs_model_pct"])) for r in t), 2),
+            "dmRatio": f(float(design["ns3_crossing"]) / float(base["ns3_crossing"]), 2),
+            "dmBatch": design["batch"],
+            "aoiPeakMean": f(age["peak_mean_ms"], 1), "aoiPeakPnn": f(age["peak_p99_ms"], 1),
+            "aoiOverPct": f(100 * float(age["share_peak_over_dmax"]), 1)}
+
+
+def loss_trace() -> dict[str, str]:
+    """A3: collision loss in ns-3 traced link by link (F98)."""
+    # one row per (group, batch, reference interval) over the same traced links: count each
+    # group of links once
+    t = [r for r in rows(RAW / "verifiability_margin_trace.csv")
+         if r["batch"] == "1" and r["ref_interval"] == "1"]
+    p_hat = st.mean(float(r["p_hat"]) for r in t)
+    burst = max(float(r["mean_burst"]) for r in t)
+    if not burst < 1.1:
+        raise ValueError("the text calls the traced loss independent from frame to frame")
+    return {"trLinks": thousands(sum(int(r["links"]) for r in t)), "trBurst": f(burst, 2),
+            "trBurstIid": f(1.0 / (1.0 - p_hat), 3)}
+
+
+def adaptive() -> dict[str, str]:
+    """A4/A4b: the batch chosen at run time on a growing swarm (F102)."""
+    a, b = rows(RAW / "adaptive_batching.csv"), rows(RAW / "adaptive_batching_b.csv")
+    reg = one(a, scenario="ramp", policy="adaptive")
+    fixed = one(a, scenario="ramp", policy="fixed4")
+    second = one(b, scenario="ramp", policy="adaptive-m20")
+
+    def share(r: dict[str, str]) -> str:
+        return f(100 * float(r["frac_v95_n_le_115"]), 0)
+
+    return {"adRegShare": share(reg), "adRegFail": f(reg["failure_n"], 0),
+            "adShare": share(second), "adFail": f(second["failure_n"], 0),
+            "adFixShare": share(fixed), "adFixFail": f(fixed["failure_n"], 0),
+            "adAgeSaved": f(float(fixed["peak_age_mean_ms"])
+                            - float(second["peak_age_mean_ms"]), 0)}
+
+
+def replay_window() -> dict[str, str]:
+    """A5: a GNSS-time window against the delaying attacker."""
+    t = rows(RAW / "replay_window.csv")
+    for sigma in ("1.0", "10.0"):
+        if one(t, study="honest", policy="fixed150", sigma_ms=sigma)["honest_refused"] != "0":
+            raise ValueError("the text says no honest frame is refused at sigma <= 10 ms")
+        if float(one(t, study="delay", policy="fixed150", sigma_ms=sigma,
+                     delay_ms="250.0")["detection"]) != 1.0:
+            raise ValueError("the text says every frame held back 250 ms is refused")
+    honest = one(t, study="honest", policy="fixed150", sigma_ms="10.0")
+    outage = [r for r in t if r["study"] == "outage" and r["policy"] == "fixed250"]
+    hour = one(outage, outage_min="60.0")
+    holds = max(float(r["outage_min"]) for r in outage if float(r["false_rejection"]) < 1e-4)
+    return {"rpFrames": thousands(int(honest["honest_frames"])),
+            "rpDrift": f(hour["clock_apart_ms"], 0), "rpHolds": f(holds, 0)}
+
+
+def _crossing_rate(senders: int, policy: str, attack: str, udp: list[dict[str, str]]) -> float:
+    """The forged-frame rate at which honest V first falls below 0.95, interpolated."""
+    pts = sorted((float(r["rate_offered"]), float(r["honest_V"])) for r in udp
+                 if r["senders"] == str(senders) and r["policy"] == policy
+                 and r["attack"] == attack)
+    for (r0, v0), (r1, v1) in zip(pts, pts[1:], strict=False):
+        if v1 < 0.95 <= v0:
+            return r0 + (r1 - r0) * (v0 - 0.95) / (v0 - v1)
+    return math.inf
+
+
+def flooding() -> dict[str, str]:
+    """A7: what a forged frame costs, and the group tag (pi-B; F109)."""
+    cost = {r["path"]: float(r["median_us"]) for r in rows(HW / "flood_cost.authbc-pi4b.csv")}
+    udp = rows(HW / "flood_udp.authbc-pi4b.csv")
+    senders = 41
+    outsider = one(udp, senders=str(senders), policy="mac", attack="outsider",
+                   rate_offered="3000")
+    if not math.isinf(_crossing_rate(senders, "mac", "outsider", udp)):
+        raise ValueError("the text says outsiders never push honest V below 0.95")
+    design = one(rows(RAW / "design_ladder.csv"), format="lean", rung="batch-delta",
+                 op="adopted", scheme="ed25519")
+    frame = float(design["frame_bytes"])
+    tagged = 1 - (modelcheck.closed_form_crossing(12.5, bianchi.t_broadcast(frame + 8))
+                  / modelcheck.closed_form_crossing(12.5, bianchi.t_broadcast(frame)))
+    return {"flForgedMs": f(cost["forged_none"] / 1e3, 2),
+            "flHonestMs": f(cost["honest_none"] / 1e3, 2), "flTagUs": f(cost["outsider_mac"], 1),
+            "flSenders": str(senders), "flOutsiderV": f(outsider["honest_V"], 3),
+            "flNoneRate": f(_crossing_rate(senders, "none", "forged", udp), 0),
+            "flInsiderRate": f(_crossing_rate(senders, "mac", "insider", udp), 0),
+            "flSpreadRate": f(_crossing_rate(senders, "cap", "forged", udp), 0),
+            "flChannel": thousands(int(1 / bianchi.t_broadcast(round(frame) + 8))),
+            "flTagCostPct": f(100 * tagged, 1)}
+
+
+def compiled() -> dict[str, str]:
+    """A8/A13: the receiver in Rust on pi-B (F108)."""
+    c = {(r["impl"], r["metric"]): float(r["median_ns"])
+         for r in rows(HW / "compiled_receiver.authbc-pi4b.csv")}
+    ident = rows(RAW / "rust_identity.csv")[0]
+    if not ident["frames"] == ident["identical"] == ident["rust_verifies_python"]:
+        raise ValueError("the text says the two codecs are byte-identical")
+    tier2 = c[("rust", "tier2_batch64_ns_per_frame")] / 1e6
+    fresh = one(rows(RAW / "freshness_budget.csv"), op="adopted", scheme="ed25519",
+                channel_stat="delay_max_ms")
+    evidence = float(fresh["fill_ms"]) + float(fresh["channel_ms"]) + 100.0 + 64 * tier2
+    return {"rxRustMs": f(c[("rust", "receive_ns_per_frame")] / 1e6, 3),
+            "rxSpeedup": f(c[("derived", "python_over_rust_receive")], 1),
+            "rxRustNodes": f(c[("derived", "nodes_per_core_rust")], 0),
+            "rxBatchNodes": f(c[("derived", "nodes_per_core_rust_batch64")], 0),
+            "rxLazyNodes": f(c[("derived", "nodes_per_core_lazy")], 0),
+            "rxTierOneUs": f(c[("rust", "tier1_tag_decode_ns_per_frame")] / 1e3, 1),
+            "rxEvidenceMs": f(evidence, 0), "rustIdFrames": thousands(int(ident["frames"]))}
+
+
+def compiled_energy() -> dict[str, str]:
+    """A8: the compiled sender metered on pi-B (F112); the gain of the sensor is assumed."""
+    t = {r["run"]: r for r in rows(RAW / "energy_runs_2026-10-22.csv")}
+    if t["control_cbor"]["inside_registered"] != "1":
+        raise ValueError("the text sets these rows beside October's on the strength of the control")
+
+    def gap(r: dict[str, str]) -> str:
+        g = 100.0 * (float(r["metered_over_predicted"]) - 1.0)
+        return ("$-$" if g < 0 else "") + f(abs(g), 1)
+
+    def span(r: dict[str, str]) -> str:
+        return f"[{f(r['uj_per_record_min'], 1)},\\,{f(r['uj_per_record_max'], 1)}]"
+
+    b4, b1 = t["rust_b4"], t["rust_b1"]
+    july = rows(RAW / "energy_table.csv")
+    first4 = float(one(july, encoding="delta", batch="4")["sender_uj_per_rec_median"])
+    return {"enRustMeas": f(b4["uj_per_record_median"], 1), "enRustRange": span(b4),
+            "enRustModel": f(b4["script_predicted_uj_per_record"], 1), "enRustGap": gap(b4),
+            "enRustOneMeas": f(b1["uj_per_record_median"], 1), "enRustOneRange": span(b1),
+            "enRustOneModel": f(b1["script_predicted_uj_per_record"], 1),
+            "enRustOneGap": gap(b1),
+            "enRustPower": f(b4["added_power_w_median"], 2),
+            "enFirstOverRust": f(first4 / float(b4["uj_per_record_median"]), 1),
+            "enCtlNewMeas": f(t["control_cbor"]["uj_per_record_median"], 1)}
+
+
+def airframes() -> dict[str, str]:
+    """A9 and A9-fast: records of 9, 15 and 25 fields from SIH flights of three airframes
+    (F105, F111)."""
+    reg, fast = rows(RAW / "record_size.csv"), rows(RAW / "record_size_fast.csv")
+    # the records the text quotes: A9's quadrotor and the fixed wings at their planned speeds
+    flights = {(r["airframe"], r["mission"]) for r in fast}
+    if not {r["airframe"] for r in reg} == {r["airframe"] for r in fast}:
+        raise ValueError("the text names the same three airframes as A9")
+
+    def at(fields: str, key: str, airframe: str | None = None) -> float:
+        return st.mean(float(r[key]) for r in fast
+                       if r["fields"] == fields and (airframe is None or r["airframe"] == airframe))
+
+    for fields, n in (("9", 9), ("15", 15), ("25", 25)):
+        if not n <= at(fields, "delta_mean") < n + 1.5:
+            raise ValueError("the text says a delta costs about a byte per field")
+    wing = [r for r in fast if r["airframe"] != "quadx" and r["fields"] == "9"]
+    return {"afFlights": str(len(flights)),
+            "afSaveFifteen": f(at("15", "saving_pct"), 1),
+            "afRatioFifteen": f(at("15", "ratio"), 2),
+            "afSaveTwentyFive": f(at("25", "saving_pct"), 1),
+            "afRatioTwentyFive": f(at("25", "ratio"), 2),
+            "afWingExtra": f(at("9", "delta_mean", "airplane") - at("9", "delta_mean", "quadx"), 1),
+            "afSpeedLo": f(min(float(r["speed_mps"]) for r in wing), 0),
+            "afSpeedHi": f(max(float(r["speed_mps"]) for r in wing), 0)}
+
+
+def stream_deadline() -> dict[str, str]:
+    """A10: the stream schemes run in ns-3, a record counted only if it verifies in time (F99)."""
+    t = rows(RAW / "stream_deadline.csv")
+    for variant in ("gennaro-rohatgi", "tesla-batch4", "emss-k4", "emss-k8", "emss-k16",
+                    "emss-k100"):
+        if one(t, variant=variant)["in_time_crossing"] != "":
+            raise ValueError(f"the text says {variant} never reaches 0.95 in time")
+    tesla = [float(one(t, variant=v)["in_time_crossing"]) for v in ("tesla-I10-d2",
+                                                                     "tesla-I20-d2")]
+    return {"sdMav": f(one(t, variant="mavlink2")["in_time_crossing"], 1),
+            "sdWl": f(one(t, variant="wong-lam")["in_time_crossing"], 1),
+            "sdTeslaLo": f(min(tesla), 1), "sdTeslaHi": f(max(tesla), 1)}
+
+
+def phy_simulated() -> dict[str, str]:
+    """A11: capacity simulated on six 802.11 PHYs and rates (F104)."""
+    t = rows(RAW / "phy_links.csv")
+    ratios = [float(r["ns3_ratio"]) for r in t]
+    fastest = {std: max(int(r["rate_mbps"]) for r in t if r["standard"] == std)
+               for std in {r["standard"] for r in t}}
+    gap = [(abs(float(r["vs_model_pct"])), int(r["rate_mbps"]) == fastest[r["standard"]])
+           for r in t]
+    top = [g for g, is_top in gap if is_top]
+    rest = [g for g, is_top in gap if not is_top]
+    # F104 first said "within 1.5 % at frames of 178 us and longer": 802.11p at 12 Mb/s has
+    # 226 us frames and is 2.9 % off. What holds is by rate (corrected 2026-10-24).
+    if not max(rest) <= 1.5 < min(top):
+        raise ValueError("the text says only the fastest rate of each width leaves 1.5 %")
+    return {"phySimRatioLo": f(min(ratios), 2), "phySimRatioHi": f(max(ratios), 2),
+            "phyModelRest": f(max(rest), 1), "phyModelTopLo": f(min(top), 1),
+            "phyModelTopHi": f(max(top), 1)}
+
+
+def post_quantum() -> dict[str, str]:
+    """A15: Falcon-512 in the frame (capacity in ns-3; timing on pi-B; F110)."""
+    pq = rows(RAW / "pq_capacity.csv")
+    one_rec, four = one(pq, cell="PQ1"), one(pq, cell="PQ4")
+    timing = {(r["alg"], r["op"]): float(r["median_us"])
+              for r in rows(HW / "pq_speed_sig.authbc-pi4b.csv")}
+    log = (HW / "pq_speed_sig.authbc-pi4b.log").read_text(encoding="utf-8")
+    sig = re.search(r"signature bytes: (\d+)", log)
+    if sig is None:
+        raise ValueError("liboqs no longer states the signature length")
+    return {"pqSigBytes": sig.group(1), "pqBase": f(one_rec["ns3_crossing"], 1),
+            "pqDesign": f(four["ns3_crossing"], 1),
+            "pqRatio": f(float(four["ns3_crossing"]) / float(one_rec["ns3_crossing"]), 1),
+            "pqSignUs": f(timing[("Falcon-padded-512", "sign")], 0),
+            "pqVerifyUs": f(timing[("Falcon-padded-512", "verify")], 0)}
+
+
+def ledger_audit() -> dict[str, str]:
+    """A16: the ledger audited from the uploads alone."""
+    r = rows(RAW / "ledger_audit.csv")[0]
+    found = r["equivocation_detected"] == r["forgery_detected"] == "1"
+    if not (found and r["false_findings"] == "0"):
+        raise ValueError("the text says both planted faults were found and nothing else")
+    return {"auUavs": WORDS[int(r["uavs"])], "auFrames": thousands(int(r["frames_audited"])),
+            "auMinutes": f(float(r["audit_s"]) / 60, 1),
+            "auKept": f(r["kept_bytes_per_record"], 1)}
+
+
+def other_links() -> dict[str, str]:
+    """A17: the same accounting for ADS-B, Remote ID and V2X CAM."""
+    t = rows(RAW / "other_links.csv")
+    for system in ("ADS-B 1090ES (ME field)", "Remote ID, Bluetooth 4 legacy"):
+        if any(r["signature_fits"] != "0" for r in t if r["system"] == system):
+            raise ValueError("the text says these cannot carry a signature")
+    rid = [r for r in t if r["system"].startswith("Remote ID, Bluetooth 5")]
+    if any(r["fresh_batch"] != "0" for r in rid if float(r["d_max_ms"]) <= 1000):
+        raise ValueError("the text says no Remote ID frame meets a deadline up to 1 s")
+    cam = {float(r["d_max_ms"]): r for r in t if r["system"].startswith("V2X CAM at 10 Hz")}
+    if cam[100.0]["fresh_batch"] != "0":
+        raise ValueError("the text says CAM at 10 Hz admits no frame at 100 ms")
+    return {"olRidRecords": WORDS[int(rid[0]["payload_batch"])],
+            "olCamTwo": WORDS[int(cam[200.0]["fresh_batch"])],
+            "olCamThree": WORDS[int(cam[300.0]["fresh_batch"])]}
+
+
+def intervals() -> dict[str, str]:
+    """H2: how often the intervals contain the truth (F86, F101)."""
+    t = rows(RAW / "interval_coverage.csv")
+
+    def cov(method: str) -> list[float]:
+        return [100 * float(r["coverage"]) for r in t if r["method"] == method]
+
+    plain = cov("v_mean_bootstrap") + cov("crossing_bootstrap")
+    fixed = cov("v_mean_t") + cov("crossing_expanded_bootstrap")
+    return {"covPlainLo": f(min(plain), 0), "covPlainHi": f(max(plain), 0),
+            "covFixedLo": f(min(fixed), 0), "covFixedHi": f(max(fixed), 0)}
+
+
 SECTIONS = (frames, ladder, loss, stream, freshness, phy, energy, timings, flight_logs,
             validation, exclusion, low_rate, source_study, capacity_rule, capacity_model, sitl,
-            energy_runs, prototype, batch_dimension, multicore, spread, platforms)
+            energy_runs, prototype, batch_dimension, multicore, spread, platforms,
+            spread_swarm, design_map, loss_trace, adaptive, replay_window, flooding, compiled,
+            compiled_energy, airframes, stream_deadline, phy_simulated, post_quantum,
+            ledger_audit, other_links, intervals)
 
 
 def macros() -> dict[str, str]:

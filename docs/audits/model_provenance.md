@@ -4537,10 +4537,13 @@ open question for relative motion; Doppler and time-correlated fading remain out
 2 520 ns-3 runs, 802.11a at 6/12/24 Mb/s and 802.11p (10 MHz) at 3/6/12 Mb/s: the design/base
 ratio is 3.39–3.80 and rises with rate at each width; the paper's "1.7–4.3×" (a closed form's
 saturation ratios) is not what the delivery crossings show. The access-rule model (nothing
-fitted) is within 1.5 % at frames of 178 µs and longer, and 4.0–4.6 % optimistic at the fastest
-rate of each width (118–242 µs frames); the cause is not established (the preamble-detection
+fitted) is within 1.5 % at every rate but the fastest of each channel width, where it is
+2.9–4.6 % optimistic (118–242 µs frames); the cause is not established (the preamble-detection
 constant is not it alone). **Cross-check:** the 802.11a 6 Mb/s cells reproduce the published
-crossings exactly.
+crossings exactly. *Corrected 2026-10-24, when the paper's generator checked the claim: this
+finding first said "within 1.5 % at frames of 178 µs and longer, and 4.0–4.6 % at the fastest
+rate". 802.11p at 12 Mb/s has 226 µs baseline frames and is 2.9 % off; what holds is by rate, not
+by frame time (the outcome's table in `predictions/A11.md` was right).*
 
 ## F105 — at 50 Hz the delta costs a byte per field on every airframe; 25 fields keep a 3.05× gain (revision A9, 2026-10-22)
 

@@ -76,3 +76,9 @@ pannetrat2003multicast,document,docs/literature/pannetrat2003_multicast_packet_a
 strohmeier2015adsb,doi,10.1109/COMST.2014.2365951,crossref,strohmeier; lenders; martinovic,Martin Strohmeier; Vincent Lenders; Ivan Martinovic,1,1.00,2015,2015,1,ok,ee1f0afb320a5a5a
 yates2021aoi,doi,10.1109/JSAC.2021.3065072,crossref,yates; sun; brown; kaul; modiano; ulukus,Roy D. Yates; Yin Sun; D. Richard Brown; Sanjit K. Kaul; Eytan Modiano; Sennur Ulukus,1,1.00,2021,2021,1,ok,5a404adc8fa2570c
 farouk2026encoding,doi,10.1109/IEEC69628.2026.11584026,crossref,farouk; abdelaziz; darwesh; elbayoumy,Mohamed A. Farouk; Mahmoud Abdelaziz; Ahmed F. Darwesh; Ashraf D. Elbayoumy,1,1.00,2026,2026,1,ok,d08e3a99ee640e50
+hu2020hidden,doi,10.1109/ACCESS.2020.3027550,crossref,hu; dai,Lin Hu; Zhijian Dai,1,1.00,2020,2020,1,ok,344c85799494c092
+bujari2017fanet,doi,10.1177/1550147717738192,crossref,bujari; calafate; cano; manzoni; palazzi; ronzani,Armir Bujari; Carlos T Calafate; Juan-Carlos Cano; Pietro Manzoni; Claudio Enrico Palazzi; Daniele Ronzani,1,1.00,2017,2017,1,ok,0f232103ee0eb0ca
+hesterberg2015bootstrap,doi,10.1080/00031305.2015.1089789,crossref,hesterberg,Tim C. Hesterberg,1,1.00,2015,2015,1,ok,4dc159aacf26ab8e
+huang2021fmac,doi,10.1109/JIOT.2020.3007071,crossref,huang; liu; zhou; yu; wang; shen,Xinquan Huang; Aijun Liu; Haibo Zhou; Kai Yu; Wei Wang; Xuemin Shen,1,0.93,2021,2021,1,ok,6a44a66da366b394
+yang2025gmg,arxiv,2503.16834,arxiv,yang; zhao; wang; dong; ju,Shaoshi Yang; Wei Zhao; Chu-Meng Wang; Wen-Yu Dong; Xiaojie Ju,1,1.00,2025,2025,1,ok,5a63b78ac2e1a519
+tamarin,document,"software: tamarin-prover 1.12.0 binary release, run for the proofs in formal/ (2026-10-20)",,basin; cremers; dreier; meier; sasse; schmidt,,,,2023,,,document,b108505a2a574df1
