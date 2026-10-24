@@ -1,0 +1,1 @@
+post control_cbor: throttled=0x0 temp=52.1'C uv 0

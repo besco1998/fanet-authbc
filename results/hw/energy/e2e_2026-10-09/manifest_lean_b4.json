@@ -1,0 +1,250 @@
+{
+  "experiment": "d1_energy_e2e",
+  "host": "authbc-pi4b",
+  "run_utc": "20261009T053658Z",
+  "platform": "Linux-6.12.93+rpt-rpi-v8-aarch64-with-glibc2.36",
+  "python": "3.12.13",
+  "gpio_backend": "gpiod",
+  "duration_s": 60.0,
+  "reps": 5,
+  "configuration": {
+    "encoding": "lean",
+    "scheme": "ed25519",
+    "placement": "B",
+    "batch": 4,
+    "h_f": 44,
+    "g_a": 64
+  },
+  "model_inputs": {
+    "p_cpu_w": 0.749,
+    "t_enc_ns": 47759.0,
+    "t_sign_ns": 88120.2,
+    "verify": "not run, not predicted",
+    "format": "lean",
+    "t_frame_ns": 868098.3
+  },
+  "predicted_cpu_uj_per_record": 162.55140667500004,
+  "windows": [
+    {
+      "rep": 1,
+      "kind": "idle",
+      "op": "idle",
+      "n_ops": 0,
+      "checksum": 0,
+      "duration_s": 60.00086915499992,
+      "records": 0,
+      "throttle_clean": true,
+      "before": {
+        "temp": "temp=52.1'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance",
+        "undervoltage_events": "0"
+      },
+      "after": {
+        "temp": "temp=50.1'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance",
+        "undervoltage_events": "0"
+      }
+    },
+    {
+      "rep": 1,
+      "kind": "load",
+      "op": "e2e_frame_pipeline",
+      "n_ops": 70743,
+      "checksum": 173,
+      "duration_s": 60.00126603600006,
+      "records": 282972,
+      "throttle_clean": true,
+      "before": {
+        "temp": "temp=51.1'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance",
+        "undervoltage_events": "0"
+      },
+      "after": {
+        "temp": "temp=57.4'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance",
+        "undervoltage_events": "0"
+      }
+    },
+    {
+      "rep": 2,
+      "kind": "idle",
+      "op": "idle",
+      "n_ops": 0,
+      "checksum": 0,
+      "duration_s": 60.00080234899997,
+      "records": 0,
+      "throttle_clean": true,
+      "before": {
+        "temp": "temp=55.5'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance",
+        "undervoltage_events": "0"
+      },
+      "after": {
+        "temp": "temp=51.1'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance",
+        "undervoltage_events": "0"
+      }
+    },
+    {
+      "rep": 2,
+      "kind": "load",
+      "op": "e2e_frame_pipeline",
+      "n_ops": 71424,
+      "checksum": 3,
+      "duration_s": 60.00093165200019,
+      "records": 285696,
+      "throttle_clean": true,
+      "before": {
+        "temp": "temp=50.1'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance",
+        "undervoltage_events": "0"
+      },
+      "after": {
+        "temp": "temp=58.4'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance",
+        "undervoltage_events": "0"
+      }
+    },
+    {
+      "rep": 3,
+      "kind": "idle",
+      "op": "idle",
+      "n_ops": 0,
+      "checksum": 0,
+      "duration_s": 60.00084578299993,
+      "records": 0,
+      "throttle_clean": true,
+      "before": {
+        "temp": "temp=56.0'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance",
+        "undervoltage_events": "0"
+      },
+      "after": {
+        "temp": "temp=50.6'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance",
+        "undervoltage_events": "0"
+      }
+    },
+    {
+      "rep": 3,
+      "kind": "load",
+      "op": "e2e_frame_pipeline",
+      "n_ops": 71241,
+      "checksum": 173,
+      "duration_s": 60.001223183999855,
+      "records": 284964,
+      "throttle_clean": true,
+      "before": {
+        "temp": "temp=50.6'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance",
+        "undervoltage_events": "0"
+      },
+      "after": {
+        "temp": "temp=57.9'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance",
+        "undervoltage_events": "0"
+      }
+    },
+    {
+      "rep": 4,
+      "kind": "idle",
+      "op": "idle",
+      "n_ops": 0,
+      "checksum": 0,
+      "duration_s": 60.00086047900004,
+      "records": 0,
+      "throttle_clean": true,
+      "before": {
+        "temp": "temp=56.0'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance",
+        "undervoltage_events": "0"
+      },
+      "after": {
+        "temp": "temp=51.1'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance",
+        "undervoltage_events": "0"
+      }
+    },
+    {
+      "rep": 4,
+      "kind": "load",
+      "op": "e2e_frame_pipeline",
+      "n_ops": 71243,
+      "checksum": 174,
+      "duration_s": 60.001501061,
+      "records": 284972,
+      "throttle_clean": true,
+      "before": {
+        "temp": "temp=50.6'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance",
+        "undervoltage_events": "0"
+      },
+      "after": {
+        "temp": "temp=57.4'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance",
+        "undervoltage_events": "0"
+      }
+    },
+    {
+      "rep": 5,
+      "kind": "idle",
+      "op": "idle",
+      "n_ops": 0,
+      "checksum": 0,
+      "duration_s": 60.00083697399987,
+      "records": 0,
+      "throttle_clean": true,
+      "before": {
+        "temp": "temp=55.0'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance",
+        "undervoltage_events": "0"
+      },
+      "after": {
+        "temp": "temp=53.0'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance",
+        "undervoltage_events": "0"
+      }
+    },
+    {
+      "rep": 5,
+      "kind": "load",
+      "op": "e2e_frame_pipeline",
+      "n_ops": 71402,
+      "checksum": 3,
+      "duration_s": 60.00153047799995,
+      "records": 285608,
+      "throttle_clean": true,
+      "before": {
+        "temp": "temp=51.1'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance",
+        "undervoltage_events": "0"
+      },
+      "after": {
+        "temp": "temp=57.4'C",
+        "throttled": "throttled=0x0",
+        "governor": "performance",
+        "undervoltage_events": "0"
+      }
+    }
+  ],
+  "note": "Reduce with hw/ina219_capture.py --reduce <this> <samples.csv> --channel 1. Measured \u00b5J/record = (P_active - P_idle) * duration_s / records."
+}

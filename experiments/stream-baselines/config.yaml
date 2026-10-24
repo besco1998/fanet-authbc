@@ -1,0 +1,27 @@
+# E17 — the classical stream-signing schemes at this work's operating point (docs/02 §6f;
+# review comments 2.3b, 2.3c). Sizes are a MODEL: no scheme here is implemented. Each is the lean
+# one-record frame with its authenticator in place of the signature. Its V >= 0.95 capacity is
+# the direct ns-3 search on a frame of that size (docs/NMAX_DIRECT_EXPECTATIONS.md, follow-up F3).
+experiment: stream-baselines
+lambda_rec_per_s: 50
+batch: 4
+
+# Primitives of THIS project, not of the papers (which used MD5, SHA-1, RSA and 80-bit hashes).
+hash_bytes: 32          # SHA-256, the digest of the chain
+sig_bytes: 64           # Ed25519
+
+wong_lam_block: 4       # a block of four packets: the same sender delay as a batch of four
+# EMSS as in the example of Perrig et al. 2000 (§3, Fig. 6 and the evaluation that follows it):
+# two digests per packet, a signature packet every 100 packets.
+emss_hashes_per_packet: 2
+emss_sig_period: 100
+# TESLA as its authors' prototype: "both the disclosed key and the MAC are 10 bytes long. The
+# remaining four bytes are used to send the interval index" (Perrig et al. 2000, §2).
+tesla: {mac_bytes: 10, key_bytes: 10, index_bytes: 4}
+
+u_saturation: 1.000
+n_ceiling: 800
+
+# The simulated capacities, read for the same traffic source as the design ladder's.
+nmax_csv: ns3_nmax_direct.csv
+nmax_source: period

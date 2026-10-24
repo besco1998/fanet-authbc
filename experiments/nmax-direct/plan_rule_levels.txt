@@ -1,0 +1,5 @@
+# Follow-up F5 (docs/NMAX_DIRECT_EXPECTATIONS.md): the access-rule model's predictions at loss
+# levels of 2 % and 10 %, cells C and D, the standard window.
+#   python ns3/run_nmax_direct.py --plan <this file> --out-stem ns3_rule_levels --no-summary
+C period 20 21 22 23 24 25 26 44 45 46 47 48 49 50
+D period 74 77 80 83 86 157 161 165 169 173

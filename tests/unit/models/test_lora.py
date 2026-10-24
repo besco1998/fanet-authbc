@@ -131,3 +131,31 @@ def test_mtu_batch_uses_the_regional_payload_limit() -> None:
         (242 - 40 - 64) // 45.0)
     # DR0's 51 B cannot even hold one 45 B record plus a 64 B signature and a 40 B header
     assert lora.max_batch_for_mtu(45.0, auth_bytes=64, frame_hdr_bytes=40, dr=0) == 0
+
+
+# ---------------------------------------------------------------- all twelve data rates (F47)
+def test_rp002_defines_twelve_eu868_data_rates_and_the_table_has_them_all() -> None:
+    """RP002-1.0.3 Table 8: DR0–6 LoRa, DR7 FSK, DR8–11 LR-FHSS. Read from the held document."""
+    limits = lora.EU868_PAYLOAD_LIMITS
+    assert sorted(limits) == list(range(12))
+    assert [limits[d].modulation.split()[0] for d in range(12)] == \
+        ["LoRa"] * 7 + ["FSK"] + ["LR-FHSS"] * 4
+
+
+def test_payload_limits_match_rp002_tables_12_and_13() -> None:
+    limits = lora.EU868_PAYLOAD_LIMITS
+    assert [limits[d].n_not_repeater for d in range(12)] == \
+        [51, 51, 51, 115, 242, 242, 242, 242, 50, 115, 50, 115]           # Table 13
+    assert [limits[d].n_repeater for d in range(12)] == \
+        [51, 51, 51, 115, 222, 222, 222, 222, 50, 115, 50, 115]           # Table 12
+
+
+def test_the_lora_rows_agree_with_the_time_on_air_table() -> None:
+    for dr, rate in lora.EU868_DATA_RATES.items():
+        assert lora.EU868_PAYLOAD_LIMITS[dr].n_not_repeater == rate.max_app_payload
+
+
+def test_the_regional_limit_is_tighter_than_the_radio_at_every_rate() -> None:
+    """The exclusion bound is a LoRaWAN limit: the radio itself takes 255 B at any SF."""
+    assert all(lim.n_not_repeater < lora.LORA_PHY_MAX_PAYLOAD
+               for lim in lora.EU868_PAYLOAD_LIMITS.values())

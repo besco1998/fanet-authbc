@@ -30,6 +30,7 @@
 #include "ns3/wifi-module.h"
 
 #include <algorithm>
+#include <deque>
 #include <fstream>
 #include <map>
 #include <numeric>
@@ -45,12 +46,25 @@ static std::map<uint64_t, double> g_txTime;
 static std::vector<double> g_delays;      // seconds, one entry per (frame, receiver)
 static uint64_t g_txCount = 0;
 static uint64_t g_rxCount = 0;
+// Per-source counts, filled only when --perNode is given (a diagnostic: WHICH nodes lose frames).
+static std::map<uint64_t, uint32_t> g_srcOf;      // packet UID -> source node
+static std::vector<uint64_t> g_txBySrc;
+static std::vector<uint64_t> g_rxBySrc;           // receptions of that source's frames, all sinks
 
 void
 AppTxTrace(Ptr<const Packet> p)
 {
     g_txTime[p->GetUid()] = Simulator::Now().GetSeconds();
     ++g_txCount;
+}
+
+// Bound variant of AppTxTrace: the same bookkeeping, plus which node sent the frame.
+void
+AppTxTraceFrom(uint32_t node, Ptr<const Packet> p)
+{
+    AppTxTrace(p);
+    g_srcOf[p->GetUid()] = node;
+    ++g_txBySrc[node];
 }
 
 void
@@ -61,6 +75,8 @@ SinkRxTrace(Ptr<const Packet> p, const Address&)
     {
         g_delays.push_back(Simulator::Now().GetSeconds() - it->second);
         ++g_rxCount;
+        auto src = g_srcOf.find(p->GetUid());
+        if (src != g_srcOf.end()) ++g_rxBySrc[src->second];
     }
 }
 
@@ -75,6 +91,74 @@ Percentile(std::vector<double>& v, double q)
     return (lo == hi) ? v[lo] : v[lo] + (pos - lo) * (v[hi] - v[lo]);
 }
 
+// A periodic source whose every frame is delayed by its own small random amount.
+//
+// WHY THIS EXISTS (direct N_max search, 2026-10-06). The default OnOff source is strictly periodic
+// and is de-synchronised only by one start offset per node, so two nodes' relative phase is FROZEN
+// for the whole run. ns-3 raises CCA-busy only at the end of its 4 us preamble-detection period
+// (WifiPhy::GetPreambleDetectionDuration), so two nodes whose phases fall within 4 us of each
+// other both see an idle medium and collide — and with frozen phases they do so in EVERY period.
+// Real senders are not phase-locked to the microsecond: an OS timer jitters by far more than
+// 4 us. This source keeps the mean rate exactly and moves each frame by U(0, jitter) from its
+// place on the node's own grid, so that the two readings can be compared: whether frozen phases
+// change the 30-seed mean or only its spread is a measurement, recorded with its prediction in
+// docs/NMAX_DIRECT_EXPECTATIONS.md.
+//
+// It is used ONLY when --txJitterMs > 0; the default path is untouched and bit-identical.
+class JitteredPeriodicSource : public Application
+{
+  public:
+    JitteredPeriodicSource(Address dest, Time period, Time jitter, uint32_t pktSize,
+                           uint32_t node)
+        : m_dest(dest), m_period(period), m_jitter(jitter), m_pktSize(pktSize), m_node(node)
+    {
+        m_rand = CreateObject<UniformRandomVariable>();
+    }
+
+  private:
+    void StartApplication() override
+    {
+        m_socket = Socket::CreateSocket(GetNode(), PacketSocketFactory::GetTypeId());
+        m_socket->Bind();
+        m_socket->Connect(m_dest);
+        // First frame one period after start, as OnOff does at a constant rate.
+        m_tick = Simulator::Schedule(m_period, &JitteredPeriodicSource::Tick, this);
+    }
+
+    void StopApplication() override
+    {
+        Simulator::Cancel(m_tick);
+        for (auto& e : m_pending) Simulator::Cancel(e);
+        m_pending.clear();
+    }
+
+    // The grid itself never moves: jitter is added to each frame, not accumulated into the phase.
+    void Tick()
+    {
+        const Time extra = Seconds(m_rand->GetValue(0.0, m_jitter.GetSeconds()));
+        m_pending.push_back(Simulator::Schedule(extra, &JitteredPeriodicSource::Send, this));
+        m_tick = Simulator::Schedule(m_period, &JitteredPeriodicSource::Tick, this);
+    }
+
+    void Send()
+    {
+        m_pending.pop_front();          // jitter <= period, so frames leave in grid order
+        Ptr<Packet> p = Create<Packet>(m_pktSize);
+        AppTxTraceFrom(m_node, p);
+        m_socket->Send(p);
+    }
+
+    Address m_dest;
+    Time m_period;
+    Time m_jitter;
+    uint32_t m_pktSize;
+    uint32_t m_node;
+    Ptr<UniformRandomVariable> m_rand;
+    Ptr<Socket> m_socket;
+    EventId m_tick;
+    std::deque<EventId> m_pending;
+};
+
 int
 main(int argc, char* argv[])
 {
@@ -84,6 +168,25 @@ main(int argc, char* argv[])
     uint32_t seed = 1;
     std::string outPrefix = "ns3_delay";
     double framesPerSec = 5.0;    // per node: Lambda/b = 20/4 at the reference operating point
+    double txJitterMs = 0.0;      // 0 = the published strictly periodic source (see above)
+    bool perNode = false;         // also write <outPrefix>_nodes.csv: delivery per SOURCE node
+    // Phase sweep. Each node's period is stretched by its own factor drawn from U(-s, +s) ppm, so
+    // every pair of nodes drifts through every relative phase during the run and one run
+    // time-averages what would otherwise take many frozen-phase seeds. Each node stays strictly
+    // periodic (one frame per period of its own); only the relative phases move. Real crystals
+    // do the same thing at 20-50 ppm, a hundred times more slowly.
+    double txSkewPpm = 0.0;
+    // Contention window. 0 leaves the standard's value (CWmin = 15 for 802.11a) and the scenario
+    // exactly as published. Any other value tests the derivation of docs/02 §6g, which says
+    // how the capacity must move when the window is widened.
+    uint32_t cwMin = 0;
+    // Geometry. Both at 0 leave the scenario exactly as published: every node at one point,
+    // equal received power, so no frame is ever captured. radiusM > 0 places the nodes
+    // uniformly in a disc of that radius, and pathLossExp > 0 makes received power fall with
+    // distance (2 = free space). A receiver then keeps the strongest of the frames that start
+    // together if it is strong enough: the capture the published scenario excludes.
+    double radiusM = 0.0;
+    double pathLossExp = 0.0;
 
     CommandLine cmd(__FILE__);
     cmd.AddValue("nNodes", "number of nodes in the collision domain", nNodes);
@@ -92,19 +195,38 @@ main(int argc, char* argv[])
     cmd.AddValue("seed", "RNG run number", seed);
     cmd.AddValue("outPrefix", "output file prefix", outPrefix);
     cmd.AddValue("framesPerSec", "per-node offered frame rate (Lambda/b)", framesPerSec);
+    cmd.AddValue("txJitterMs",
+                 "per-frame uniform send jitter in ms, at most one period; 0 = strictly periodic",
+                 txJitterMs);
+    cmd.AddValue("perNode", "also write per-source delivery to <outPrefix>_nodes.csv", perNode);
+    cmd.AddValue("txSkewPpm",
+                 "per-node period offset drawn from U(-x, +x) ppm (needs txJitterMs > 0)",
+                 txSkewPpm);
+    cmd.AddValue("cwMin", "minimum contention window; 0 = the standard's (default)", cwMin);
+    cmd.AddValue("radiusM", "disc radius in m for uniform placement; 0 = one point (default)",
+                 radiusM);
+    cmd.AddValue("pathLossExp", "log-distance path-loss exponent; 0 = equal power (default)",
+                 pathLossExp);
     cmd.Parse(argc, argv);
+    NS_ABORT_MSG_IF(txJitterMs < 0.0 || txJitterMs * 1e-3 > 1.0 / framesPerSec,
+                    "txJitterMs must lie in [0, one period]");
+    NS_ABORT_MSG_IF(txSkewPpm < 0.0 || (txSkewPpm > 0.0 && txJitterMs <= 0.0),
+                    "txSkewPpm must be >= 0 and needs the jittered source (txJitterMs > 0)");
 
     RngSeedManager::SetSeed(1);
     RngSeedManager::SetRun(seed);
 
     NodeContainer nodes;
     nodes.Create(nNodes);
+    g_txBySrc.assign(nNodes, 0);
+    g_rxBySrc.assign(nNodes, 0);
 
     // Same equal-power single collision domain as the Bianchi scenario, for the same reason:
     // every node must contend with every other, with no capture and no spatial reuse.
     YansWifiChannelHelper channel;
     channel.SetPropagationDelay("ns3::ConstantSpeedPropagationDelayModel");
-    channel.AddPropagationLoss("ns3::LogDistancePropagationLossModel", "Exponent", DoubleValue(0.0));
+    channel.AddPropagationLoss("ns3::LogDistancePropagationLossModel",
+                               "Exponent", DoubleValue(pathLossExp));
     YansWifiPhyHelper phy;
     phy.SetChannel(channel.Create());
 
@@ -118,10 +240,38 @@ main(int argc, char* argv[])
     NetDeviceContainer devices = wifi.Install(phy, mac, nodes);
     Config::Set("/NodeList/*/DeviceList/*/$ns3::WifiNetDevice/RemoteStationManager/RtsCtsThreshold",
                 UintegerValue(4692480)); // RTS/CTS off
+    if (cwMin > 0)
+    {
+        // Broadcast frames are never retransmitted, so the window stays at its minimum.
+        for (uint32_t i = 0; i < nNodes; ++i)
+        {
+            Ptr<WifiNetDevice> dev = DynamicCast<WifiNetDevice>(devices.Get(i));
+            Ptr<Txop> txop = dev->GetMac()->GetTxop();
+            NS_ABORT_MSG_IF(!txop, "the scenario's MAC has no DCF Txop");
+            txop->SetMinCw(cwMin);
+            txop->SetMaxCw(std::max(cwMin, txop->GetMaxCw()));
+        }
+    }
 
     MobilityHelper mobility;
     Ptr<ListPositionAllocator> posAlloc = CreateObject<ListPositionAllocator>();
-    for (uint32_t i = 0; i < nNodes; ++i) posAlloc->Add(Vector(i * 0.01, 0.0, 0.0));
+    if (radiusM > 0.0)
+    {
+        // Uniform in area. The variable takes a stream of its own, far from the automatic
+        // ones, and is created only here: with radiusM = 0 no stream moves.
+        Ptr<UniformRandomVariable> place = CreateObject<UniformRandomVariable>();
+        place->SetStream(4096);
+        for (uint32_t i = 0; i < nNodes; ++i)
+        {
+            const double r = radiusM * std::sqrt(place->GetValue(0.0, 1.0));
+            const double a = place->GetValue(0.0, 2.0 * M_PI);
+            posAlloc->Add(Vector(r * std::cos(a), r * std::sin(a), 0.0));
+        }
+    }
+    else
+    {
+        for (uint32_t i = 0; i < nNodes; ++i) posAlloc->Add(Vector(i * 0.01, 0.0, 0.0));
+    }
     mobility.SetPositionAllocator(posAlloc);
     mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel");
     mobility.Install(nodes);
@@ -145,12 +295,25 @@ main(int argc, char* argv[])
     // exactly DataRate, so the source is periodic rather than Poisson: that is the telemetry
     // pattern (a sensor sampling at Lambda), not an arbitrary arrival process.
     const uint64_t bps = static_cast<uint64_t>(framesPerSec * frameSize * 8.0);
+    Ptr<UniformRandomVariable> skew;
+    if (txSkewPpm > 0.0) skew = CreateObject<UniformRandomVariable>();
     for (uint32_t i = 0; i < nNodes; ++i)
     {
         PacketSocketAddress dest;
         dest.SetSingleDevice(devices.Get(i)->GetIfIndex());
         dest.SetPhysicalAddress(devices.Get(i)->GetBroadcast());
         dest.SetProtocol(protocol);
+        if (txJitterMs > 0.0)
+        {
+            const double stretch =
+                skew ? 1.0 + skew->GetValue(-txSkewPpm, txSkewPpm) * 1e-6 : 1.0;
+            Ptr<JitteredPeriodicSource> src = CreateObject<JitteredPeriodicSource>(
+                Address(dest), Seconds(stretch / framesPerSec), Seconds(txJitterMs * 1e-3),
+                frameSize, i);
+            nodes.Get(i)->AddApplication(src);
+            srcApps.Add(src);
+            continue;
+        }
         OnOffHelper onoff("ns3::PacketSocketFactory", Address(dest));
         onoff.SetAttribute("OnTime", StringValue("ns3::ConstantRandomVariable[Constant=1]"));
         onoff.SetAttribute("OffTime", StringValue("ns3::ConstantRandomVariable[Constant=0]"));
@@ -173,8 +336,19 @@ main(int argc, char* argv[])
     sinkApps.Start(Seconds(0.0));
     sinkApps.Stop(Seconds(1.0 + simTime));
 
-    for (uint32_t i = 0; i < srcApps.GetN(); ++i)
-        srcApps.Get(i)->TraceConnectWithoutContext("Tx", MakeCallback(&AppTxTrace));
+    if (txJitterMs <= 0.0)      // the jittered source records its own sends
+    {
+        for (uint32_t i = 0; i < srcApps.GetN(); ++i)
+        {
+            // A trace sink observes; it cannot change the simulation. The bound variant is still
+            // used only on request, so the default run executes exactly the published code.
+            if (perNode)
+                srcApps.Get(i)->TraceConnectWithoutContext("Tx",
+                                                           MakeBoundCallback(&AppTxTraceFrom, i));
+            else
+                srcApps.Get(i)->TraceConnectWithoutContext("Tx", MakeCallback(&AppTxTrace));
+        }
+    }
     for (uint32_t i = 0; i < sinkApps.GetN(); ++i)
         sinkApps.Get(i)->TraceConnectWithoutContext("Rx", MakeCallback(&SinkRxTrace));
 
@@ -201,7 +375,20 @@ main(int argc, char* argv[])
         << "delay_p95_ms," << Percentile(g_delays, 0.95) * 1e3 << "\n"
         << "delay_p99_ms," << Percentile(g_delays, 0.99) * 1e3 << "\n"
         << "delay_max_ms," << (g_delays.empty() ? 0.0 : *std::max_element(g_delays.begin(), g_delays.end())) * 1e3 << "\n";
+    if (txJitterMs > 0.0) out << "tx_jitter_ms," << txJitterMs << "\n";
+    if (txSkewPpm > 0.0) out << "tx_skew_ppm," << txSkewPpm << "\n";
     out.close();
+    if (perNode)
+    {
+        std::ofstream nodesOut(outPrefix + "_nodes.csv");
+        nodesOut << "node,tx_frames,rx_copies,delivered_frac\n";
+        for (uint32_t i = 0; i < nNodes; ++i)
+        {
+            const double want = static_cast<double>(g_txBySrc[i]) * (nNodes - 1);
+            nodesOut << i << "," << g_txBySrc[i] << "," << g_rxBySrc[i] << ","
+                     << (want > 0 ? g_rxBySrc[i] / want : 0.0) << "\n";
+        }
+    }
     Simulator::Destroy();
     return 0;
 }

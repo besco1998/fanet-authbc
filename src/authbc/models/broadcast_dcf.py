@@ -31,9 +31,14 @@ The backoff counter is therefore NOT a Markov process once CFP is included, so t
 it into two sub-processes: the sequential backoff process (SBP, zero initial backoff excluded)
 and the CFP itself.
 
-Verified against our own NS-3 3.41 measurements (802.11a, 6 Mb/s, W₀=16, L=1400 B): throughput,
-p_s and idle-slots-per-busy-period all agree to **≤0.36 %** at N = 5, 10, 20, 35, 50 — a parameter
-regime the original papers did not test (they used W₀ = 32 and 128 at 1 Mb/s).
+Verified against our own NS-3 measurements (802.11a, 6 Mb/s, W₀=16, L=1400 B, N = 5, 10, 20, 35,
+50) — a parameter regime the original papers did not test (they used W₀ = 32 and 128 at 1 Mb/s).
+On ns-3.48 at 30 seeds saturation goodput agrees to **±0.51 %**; docs/02 §6a has the table per
+quantity and per simulator version.
+
+⚠️ Until 2026-10-06 this docstring said throughput, p_s and idle slots "all agree to ≤0.36 %".
+That was the ns-3.41 throughput bound: the idle-slot column reached 0.75 % even there, and
+docs/02 had carried the correction since 2026-07-29 without it reaching this file.
 """
 
 from __future__ import annotations

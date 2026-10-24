@@ -1,0 +1,19 @@
+# python=3.12.3
+# platform=Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=px4_sitl_stream_timing
+# px4=v1.17.0
+# model=sihsim_quadx
+# host_loadavg_at_end=13.94970703125
+# config_hash=875a1e8855f38b2e
+quantity,n,mean_ms,sd_ms,half_p16_p84_ms,min_ms,p01_ms,median_ms,p99_ms,max_ms,autopilot_per_clock,note
+"flight: received, wall clock",14584,20.0317,54.0522,0.3741,-2320.9109,20.2939,21.1155,25.4916,112.3366,0.9985,as registered; the host clock was stepped during the flight
+"flight: received, wall clock, clock steps removed",14570,21.2681,1.2127,0.3736,9.818,20.3071,21.1156,25.2997,55.1142,,14 intervals outside 0-60 ms removed; decided after seeing the data
+flight: stamped (time_boot_ms),14584,20.0025,4.0256,4.0,8.0,16.0,24.0,24.0,56.0,,"sample time of the position each message carries, not its send time; 49.9 % at 16 ms, 0.0 % at 20 ms, 50.0 % at 24 ms"
+"ground: received, monotonic clock",8478,21.2506,1.333,0.3699,14.2758,20.31,21.113,25.018,64.9111,0.9411,"second capture, vehicle on the ground; not the registered capture"
+"ground: received, wall clock",8478,19.6034,61.9198,0.364,-2334.2395,20.3919,21.1155,24.9199,65.2907,1.0202,8 intervals outside 0-60 ms

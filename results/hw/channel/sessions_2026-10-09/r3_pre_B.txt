@@ -1,0 +1,2 @@
+authbc-pi4b 2026-10-09T04:20:50+03:00 governor performance rmem_max 8388608 temp temp=50.1'C throttled throttled=0x50000 timers 0 rxsha 98b0137a2872
+udp_before: Udp: 268910 26 0 93283 0 0 0 119 0

@@ -1,0 +1,31 @@
+# python=3.12.13
+# platform=Linux-6.12.93+rpt-rpi-v8-aarch64-with-glibc2.36
+# cpu=Raspberry Pi 4 Model B Rev 1.4
+# governor=performance
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.3
+# run=flood_cost
+# config_hash=5ac882330abed1ce
+# before_throttled=throttled=0x0
+# before_arm_clock=frequency(48)=1800457088
+# after_throttled=throttled=0x0
+# after_arm_clock=frequency(48)=1800457088
+path,meets,median_us,ci_lo_us,ci_hi_us,n_ops
+receiver_only,"accepted, LeanReceiver alone",1428.21,1427.88,1428.6,10000
+honest_none,accepted,1435.69,1435.36,1436.13,10000
+honest_cheap,accepted,1467.58,1467.1,1468.03,10000
+honest_cap,accepted,1506.01,1505.62,1506.58,10000
+honest_mac,accepted,1500.23,1499.69,1500.69,10000
+forged_none,bad signature,1077.88,1077.69,1078.11,10000
+forged_cheap,bad signature,1109.5,1109.3,1109.81,10000
+forged_cap_refused,refused: rate,61.17,61.16,61.18,10000
+insider_mac,bad signature,1144.56,1144.32,1144.85,10000
+outsider_mac,refused: mac,22.5,22.49,22.51,10000
+garbage_cheap,refused: shape,22.62,22.43,22.78,10000
+replay_cheap,refused: seq window,30.61,30.6,30.61,10000
+unknown_cheap,refused: unknown sender,30.17,30.16,30.18,10000
+hmac_check,tag check alone,16.99,16.98,16.99,11740
+ed25519_verify,"one verification, 170 B message",262.56,262.52,262.59,10000
+honest_batch64_arith,"honest_cheap with its verification at 0.46 of one (arithmetic, hw/ed25519_batch)",1325.8,,,

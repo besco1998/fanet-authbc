@@ -1,0 +1,44 @@
+% The frame, drawn to scale. Compiled from source so that it cannot drift from the paper it
+% lives in; every byte count is a macro from numbers.tex.
+%
+% What it must convey: per-record signing sends a header, a link and a signature with EVERY
+% record; the design sends them once per four records, and three of the four records shrink
+% because they are coded against the one before.
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[font=\scriptsize,
+  seg/.style={draw, minimum height=0.52cm, inner sep=0pt, outer sep=0pt, anchor=west},
+  hdr/.style={seg, fill=black!8},
+  lnk/.style={seg, fill=black!22},
+  rec/.style={seg, fill=white},
+  sig/.style={seg, fill=black!42, text=white},
+  lab/.style={anchor=west, font=\scriptsize},
+]
+% ---- per-record signing: one of four identical frames -----------------------------------
+\node[lab] at (0,1.62) {\textbf{Per-record signing:} one frame per record, \frmLeanBase\,B each};
+\node[hdr, minimum width=1.10cm] (bh) at (0,1.15) {$H_f$};
+\node[lnk, minimum width=1.67cm] (bl) at (bh.east) {link};
+\node[rec, minimum width=1.15cm] (bk) at (bl.east) {key};
+\node[sig, minimum width=3.06cm] (bs) at (bk.east) {signature};
+\node[lab] at (bs.east) {\;$\times\,4$};
+% ---- the design: one frame for four records ---------------------------------------------
+\node[lab] at (0,0.47) {\textbf{AUTHBC:} one frame per four records, \frmLeanDesign\,B};
+\node[hdr, minimum width=1.10cm] (dh) at (0,0) {$H_f$};
+\node[lnk, minimum width=1.67cm] (dl) at (dh.east) {link};
+\node[rec, minimum width=1.15cm] (dk) at (dl.east) {key};
+\node[rec, minimum width=0.43cm] (d1) at (dk.east) {$\delta$};
+\node[rec, minimum width=0.43cm] (d2) at (d1.east) {$\delta$};
+\node[rec, minimum width=0.43cm] (d3) at (d2.east) {$\delta$};
+\node[sig, minimum width=3.06cm] (ds) at (d3.east) {signature};
+% ---- byte counts under the design frame --------------------------------------------------
+\node[font=\tiny, anchor=north] at (dh.south) {\hdrLean};
+\node[font=\tiny, anchor=north] at (dl.south) {\linkField};
+\node[font=\tiny, anchor=north] at (dk.south) {\keyLean};
+\node[font=\tiny, anchor=north] at (d2.south) {$3{\times}$\deltaLean};
+\node[font=\tiny, anchor=north] at (ds.south) {64};
+\end{tikzpicture}
+\caption{The lean frame, to scale (bytes below). Per-record signing repeats header, chain link
+and signature with every record; the design carries them once per four records, and the three
+records after the first are coded as differences ($\delta$).}
+\label{fig:frame}
+\end{figure}

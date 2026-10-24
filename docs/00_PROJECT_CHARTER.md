@@ -48,6 +48,14 @@ extends the same framework to low-rate links afterward.
 6. **Authentication-exclusion threshold (T6)**: a link admits per-frame-verifiable telemetry only if
    M ≥ H_f + g_a + s_min, and T3 (n_max = 1 at ε ≤ p) closes the fragmentation escape — bounding
    where co-design is possible at all, and excluding the four longest-range LoRa modes outright.
+
+   > ⚠️ **Items 5 and 6 as restated on 2026-10-06** (findings F45–F50; the text above is kept as
+   > chartered). **5:** the envelope came from one load ceiling, which a direct search showed is
+   > not invariant; capacities are now simulated per configuration with intervals, on a design
+   > that is built as one frame — `results/raw/design_ladder.csv`, not the figures above.
+   > **6:** a frame that verifies alone must also carry its chain link and a record that decodes
+   > alone, and the standard defines twelve data rates: **eight of twelve** are excluded, under
+   > four stated conditions (docs/02 T6′).
 7. **Reproducible open testbed + dataset** (repo, seeds, raw CSVs, figures pipeline).
 
 Target venues: Ad Hoc Networks / MDPI Drones primary; IEEE IoT Journal if results are strong.

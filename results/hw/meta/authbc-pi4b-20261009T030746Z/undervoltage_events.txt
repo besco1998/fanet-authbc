@@ -1,0 +1,7 @@
+# Under-voltage events in the kernel log of authbc-pi4b for the boot that carried the runs of 2026-10-09
+# (seconds since boot). The benchmark p1_* ran from about 260 s to 585 s, ed25519_batch from 690 s to 724 s.
+# The firmware flag read 0x50000 throughout: both of its bits are of the kind that stay set once
+# raised, and both were raised by the event at boot shown here. No later event is logged.
+[   10.557687] hwmon hwmon1: Undervoltage detected!
+[   16.605617] hwmon hwmon1: Voltage normalised
+# boot: 2026-10-09 06:03:36   read at uptime 742 s

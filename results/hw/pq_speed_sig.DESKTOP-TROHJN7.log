@@ -1,0 +1,252 @@
+# host DESKTOP-TROHJN7 2026-10-22T10:04:50+03:00 load 0.75 0.90 0.84 cpu  Intel(R) Core(TM) i5-14400F
+## rep 1 Falcon-512
+Configuration info
+==================
+Target platform:  x86_64-Linux-6.18.33.2-microsoft-standard-WSL2
+Compiler:         gcc (13.3.0)
+Compile options:  [-march=native;-Wa,--noexecstack;-fomit-frame-pointer;-fdata-sections;-ffunction-sections;-Wl,--gc-sections;-Wbad-function-cast]
+OQS version:      0.16.0 (major: 0, minor: 16, patch: 0)
+Git commit:       5a1a854b0dc9f2141bdc771c555ee60c37950183
+OpenSSL enabled:  Yes (OpenSSL 3.0.13 30 Jan 2024)
+AES:              NI
+SHA-2:            OpenSSL
+SHA-3:            C
+OQS build flags:  OQS_LIBJADE_BUILD OQS_OPT_TARGET=auto CMAKE_BUILD_TYPE=Release 
+CPU exts compile-time:  ADX AES AVX AVX2 BMI1 BMI2 PCLMULQDQ POPCNT SSE SSE2 SSE3
+
+Speed test
+==========
+Started at 2026-10-22 10:04:50
+Operation                            | Iterations | Total time (s) | Time (us): mean | pop. stdev | CPU cycles: mean          | pop. stdev
+------------------------------------ | ----------:| --------------:| ---------------:| ----------:| -------------------------:| ----------:
+Falcon-512                           |            |                |                 |            |                           |           
+keypair                              |       2143 |         10.006 |        4669.338 |   1256.769 |                  11692073 |    3146559
+sign                                 |      63692 |         10.000 |         157.007 |     17.707 |                    394579 |      44474
+verify                               |     353424 |         10.000 |          28.295 |      4.579 |                     69867 |      11170
+Ended at 2026-10-22 10:05:20
+## rep 1 Falcon-padded-512
+Configuration info
+==================
+Target platform:  x86_64-Linux-6.18.33.2-microsoft-standard-WSL2
+Compiler:         gcc (13.3.0)
+Compile options:  [-march=native;-Wa,--noexecstack;-fomit-frame-pointer;-fdata-sections;-ffunction-sections;-Wl,--gc-sections;-Wbad-function-cast]
+OQS version:      0.16.0 (major: 0, minor: 16, patch: 0)
+Git commit:       5a1a854b0dc9f2141bdc771c555ee60c37950183
+OpenSSL enabled:  Yes (OpenSSL 3.0.13 30 Jan 2024)
+AES:              NI
+SHA-2:            OpenSSL
+SHA-3:            C
+OQS build flags:  OQS_LIBJADE_BUILD OQS_OPT_TARGET=auto CMAKE_BUILD_TYPE=Release 
+CPU exts compile-time:  ADX AES AVX AVX2 BMI1 BMI2 PCLMULQDQ POPCNT SSE SSE2 SSE3
+
+Speed test
+==========
+Started at 2026-10-22 10:05:20
+Operation                            | Iterations | Total time (s) | Time (us): mean | pop. stdev | CPU cycles: mean          | pop. stdev
+------------------------------------ | ----------:| --------------:| ---------------:| ----------:| -------------------------:| ----------:
+Falcon-padded-512                    |            |                |                 |            |                           |           
+keypair                              |       2184 |         10.002 |        4579.446 |   1297.384 |                  11449773 |    3244826
+sign                                 |      64692 |         10.000 |         154.579 |     15.308 |                    388335 |      38447
+verify                               |     352392 |         10.000 |          28.378 |      4.644 |                     70245 |      11398
+Ended at 2026-10-22 10:05:50
+## rep 1 ML-DSA-44
+Configuration info
+==================
+Target platform:  x86_64-Linux-6.18.33.2-microsoft-standard-WSL2
+Compiler:         gcc (13.3.0)
+Compile options:  [-march=native;-Wa,--noexecstack;-fomit-frame-pointer;-fdata-sections;-ffunction-sections;-Wl,--gc-sections;-Wbad-function-cast]
+OQS version:      0.16.0 (major: 0, minor: 16, patch: 0)
+Git commit:       5a1a854b0dc9f2141bdc771c555ee60c37950183
+OpenSSL enabled:  Yes (OpenSSL 3.0.13 30 Jan 2024)
+AES:              NI
+SHA-2:            OpenSSL
+SHA-3:            C
+OQS build flags:  OQS_LIBJADE_BUILD OQS_OPT_TARGET=auto CMAKE_BUILD_TYPE=Release 
+CPU exts compile-time:  ADX AES AVX AVX2 BMI1 BMI2 PCLMULQDQ POPCNT SSE SSE2 SSE3
+
+Speed test
+==========
+Started at 2026-10-22 10:05:50
+Operation                            | Iterations | Total time (s) | Time (us): mean | pop. stdev | CPU cycles: mean          | pop. stdev
+------------------------------------ | ----------:| --------------:| ---------------:| ----------:| -------------------------:| ----------:
+ML-DSA-44                            |            |                |                 |            |                           |           
+keypair                              |     509267 |         10.000 |          19.636 |      3.857 |                     48924 |       9592
+sign                                 |     171602 |         10.000 |          58.274 |     36.300 |                    146183 |      91154
+verify                               |     501983 |         10.000 |          19.921 |      3.999 |                     49447 |       9879
+Ended at 2026-10-22 10:06:20
+## rep 2 Falcon-512
+Configuration info
+==================
+Target platform:  x86_64-Linux-6.18.33.2-microsoft-standard-WSL2
+Compiler:         gcc (13.3.0)
+Compile options:  [-march=native;-Wa,--noexecstack;-fomit-frame-pointer;-fdata-sections;-ffunction-sections;-Wl,--gc-sections;-Wbad-function-cast]
+OQS version:      0.16.0 (major: 0, minor: 16, patch: 0)
+Git commit:       5a1a854b0dc9f2141bdc771c555ee60c37950183
+OpenSSL enabled:  Yes (OpenSSL 3.0.13 30 Jan 2024)
+AES:              NI
+SHA-2:            OpenSSL
+SHA-3:            C
+OQS build flags:  OQS_LIBJADE_BUILD OQS_OPT_TARGET=auto CMAKE_BUILD_TYPE=Release 
+CPU exts compile-time:  ADX AES AVX AVX2 BMI1 BMI2 PCLMULQDQ POPCNT SSE SSE2 SSE3
+
+Speed test
+==========
+Started at 2026-10-22 10:06:20
+Operation                            | Iterations | Total time (s) | Time (us): mean | pop. stdev | CPU cycles: mean          | pop. stdev
+------------------------------------ | ----------:| --------------:| ---------------:| ----------:| -------------------------:| ----------:
+Falcon-512                           |            |                |                 |            |                           |           
+keypair                              |       2197 |         10.005 |        4553.821 |   1246.913 |                  11332240 |    3104605
+sign                                 |      64746 |         10.000 |         154.451 |     16.526 |                    387660 |      41454
+verify                               |     354347 |         10.000 |          28.221 |      4.579 |                     70582 |      11390
+Ended at 2026-10-22 10:06:50
+## rep 2 Falcon-padded-512
+Configuration info
+==================
+Target platform:  x86_64-Linux-6.18.33.2-microsoft-standard-WSL2
+Compiler:         gcc (13.3.0)
+Compile options:  [-march=native;-Wa,--noexecstack;-fomit-frame-pointer;-fdata-sections;-ffunction-sections;-Wl,--gc-sections;-Wbad-function-cast]
+OQS version:      0.16.0 (major: 0, minor: 16, patch: 0)
+Git commit:       5a1a854b0dc9f2141bdc771c555ee60c37950183
+OpenSSL enabled:  Yes (OpenSSL 3.0.13 30 Jan 2024)
+AES:              NI
+SHA-2:            OpenSSL
+SHA-3:            C
+OQS build flags:  OQS_LIBJADE_BUILD OQS_OPT_TARGET=auto CMAKE_BUILD_TYPE=Release 
+CPU exts compile-time:  ADX AES AVX AVX2 BMI1 BMI2 PCLMULQDQ POPCNT SSE SSE2 SSE3
+
+Speed test
+==========
+Started at 2026-10-22 10:06:50
+Operation                            | Iterations | Total time (s) | Time (us): mean | pop. stdev | CPU cycles: mean          | pop. stdev
+------------------------------------ | ----------:| --------------:| ---------------:| ----------:| -------------------------:| ----------:
+Falcon-padded-512                    |            |                |                 |            |                           |           
+keypair                              |       2196 |         10.002 |        4554.819 |   1198.535 |                  11265908 |    2963816
+sign                                 |      63632 |         10.000 |         157.154 |     14.782 |                    393741 |      37027
+verify                               |     354748 |         10.000 |          28.189 |      4.727 |                     70811 |      11825
+Ended at 2026-10-22 10:07:20
+## rep 2 ML-DSA-44
+Configuration info
+==================
+Target platform:  x86_64-Linux-6.18.33.2-microsoft-standard-WSL2
+Compiler:         gcc (13.3.0)
+Compile options:  [-march=native;-Wa,--noexecstack;-fomit-frame-pointer;-fdata-sections;-ffunction-sections;-Wl,--gc-sections;-Wbad-function-cast]
+OQS version:      0.16.0 (major: 0, minor: 16, patch: 0)
+Git commit:       5a1a854b0dc9f2141bdc771c555ee60c37950183
+OpenSSL enabled:  Yes (OpenSSL 3.0.13 30 Jan 2024)
+AES:              NI
+SHA-2:            OpenSSL
+SHA-3:            C
+OQS build flags:  OQS_LIBJADE_BUILD OQS_OPT_TARGET=auto CMAKE_BUILD_TYPE=Release 
+CPU exts compile-time:  ADX AES AVX AVX2 BMI1 BMI2 PCLMULQDQ POPCNT SSE SSE2 SSE3
+
+Speed test
+==========
+Started at 2026-10-22 10:07:20
+Operation                            | Iterations | Total time (s) | Time (us): mean | pop. stdev | CPU cycles: mean          | pop. stdev
+------------------------------------ | ----------:| --------------:| ---------------:| ----------:| -------------------------:| ----------:
+ML-DSA-44                            |            |                |                 |            |                           |           
+keypair                              |     502595 |         10.000 |          19.897 |      4.048 |                     49018 |       9911
+sign                                 |     172513 |         10.000 |          57.967 |     35.863 |                    144979 |      89759
+verify                               |     508392 |         10.000 |          19.670 |      3.480 |                     49385 |       8696
+Ended at 2026-10-22 10:07:50
+## rep 3 Falcon-512
+Configuration info
+==================
+Target platform:  x86_64-Linux-6.18.33.2-microsoft-standard-WSL2
+Compiler:         gcc (13.3.0)
+Compile options:  [-march=native;-Wa,--noexecstack;-fomit-frame-pointer;-fdata-sections;-ffunction-sections;-Wl,--gc-sections;-Wbad-function-cast]
+OQS version:      0.16.0 (major: 0, minor: 16, patch: 0)
+Git commit:       5a1a854b0dc9f2141bdc771c555ee60c37950183
+OpenSSL enabled:  Yes (OpenSSL 3.0.13 30 Jan 2024)
+AES:              NI
+SHA-2:            OpenSSL
+SHA-3:            C
+OQS build flags:  OQS_LIBJADE_BUILD OQS_OPT_TARGET=auto CMAKE_BUILD_TYPE=Release 
+CPU exts compile-time:  ADX AES AVX AVX2 BMI1 BMI2 PCLMULQDQ POPCNT SSE SSE2 SSE3
+
+Speed test
+==========
+Started at 2026-10-22 10:07:50
+Operation                            | Iterations | Total time (s) | Time (us): mean | pop. stdev | CPU cycles: mean          | pop. stdev
+------------------------------------ | ----------:| --------------:| ---------------:| ----------:| -------------------------:| ----------:
+Falcon-512                           |            |                |                 |            |                           |           
+keypair                              |       2170 |         10.003 |        4609.753 |   1284.710 |                  11396058 |    3171765
+sign                                 |      64648 |         10.000 |         154.685 |     14.510 |                    386334 |      36128
+verify                               |     357692 |         10.000 |          27.957 |      3.869 |                     70188 |       9643
+Ended at 2026-10-22 10:08:20
+## rep 3 Falcon-padded-512
+Configuration info
+==================
+Target platform:  x86_64-Linux-6.18.33.2-microsoft-standard-WSL2
+Compiler:         gcc (13.3.0)
+Compile options:  [-march=native;-Wa,--noexecstack;-fomit-frame-pointer;-fdata-sections;-ffunction-sections;-Wl,--gc-sections;-Wbad-function-cast]
+OQS version:      0.16.0 (major: 0, minor: 16, patch: 0)
+Git commit:       5a1a854b0dc9f2141bdc771c555ee60c37950183
+OpenSSL enabled:  Yes (OpenSSL 3.0.13 30 Jan 2024)
+AES:              NI
+SHA-2:            OpenSSL
+SHA-3:            C
+OQS build flags:  OQS_LIBJADE_BUILD OQS_OPT_TARGET=auto CMAKE_BUILD_TYPE=Release 
+CPU exts compile-time:  ADX AES AVX AVX2 BMI1 BMI2 PCLMULQDQ POPCNT SSE SSE2 SSE3
+
+Speed test
+==========
+Started at 2026-10-22 10:08:20
+Operation                            | Iterations | Total time (s) | Time (us): mean | pop. stdev | CPU cycles: mean          | pop. stdev
+------------------------------------ | ----------:| --------------:| ---------------:| ----------:| -------------------------:| ----------:
+Falcon-padded-512                    |            |                |                 |            |                           |           
+keypair                              |       2175 |         10.002 |        4598.569 |   1265.593 |                  11412908 |    3145408
+sign                                 |      63837 |         10.000 |         156.649 |     16.573 |                    390446 |      40891
+verify                               |     355979 |         10.000 |          28.092 |      4.429 |                     70472 |      11065
+Ended at 2026-10-22 10:08:50
+## rep 3 ML-DSA-44
+Configuration info
+==================
+Target platform:  x86_64-Linux-6.18.33.2-microsoft-standard-WSL2
+Compiler:         gcc (13.3.0)
+Compile options:  [-march=native;-Wa,--noexecstack;-fomit-frame-pointer;-fdata-sections;-ffunction-sections;-Wl,--gc-sections;-Wbad-function-cast]
+OQS version:      0.16.0 (major: 0, minor: 16, patch: 0)
+Git commit:       5a1a854b0dc9f2141bdc771c555ee60c37950183
+OpenSSL enabled:  Yes (OpenSSL 3.0.13 30 Jan 2024)
+AES:              NI
+SHA-2:            OpenSSL
+SHA-3:            C
+OQS build flags:  OQS_LIBJADE_BUILD OQS_OPT_TARGET=auto CMAKE_BUILD_TYPE=Release 
+CPU exts compile-time:  ADX AES AVX AVX2 BMI1 BMI2 PCLMULQDQ POPCNT SSE SSE2 SSE3
+
+Speed test
+==========
+Started at 2026-10-22 10:08:50
+Operation                            | Iterations | Total time (s) | Time (us): mean | pop. stdev | CPU cycles: mean          | pop. stdev
+------------------------------------ | ----------:| --------------:| ---------------:| ----------:| -------------------------:| ----------:
+ML-DSA-44                            |            |                |                 |            |                           |           
+keypair                              |     510125 |         10.000 |          19.603 |      3.650 |                     48858 |       9020
+sign                                 |     171134 |         10.000 |          58.434 |     36.884 |                    144821 |      91469
+verify                               |     509639 |         10.000 |          19.622 |      3.477 |                     49125 |       8654
+Ended at 2026-10-22 10:09:20
+Configuration info
+==================
+Target platform:  x86_64-Linux-6.18.33.2-microsoft-standard-WSL2
+Compiler:         gcc (13.3.0)
+Compile options:  [-march=native;-Wa,--noexecstack;-fomit-frame-pointer;-fdata-sections;-ffunction-sections;-Wl,--gc-sections;-Wbad-function-cast]
+OQS version:      0.16.0 (major: 0, minor: 16, patch: 0)
+Git commit:       5a1a854b0dc9f2141bdc771c555ee60c37950183
+OpenSSL enabled:  Yes (OpenSSL 3.0.13 30 Jan 2024)
+AES:              NI
+SHA-2:            OpenSSL
+SHA-3:            C
+OQS build flags:  OQS_LIBJADE_BUILD OQS_OPT_TARGET=auto CMAKE_BUILD_TYPE=Release 
+CPU exts compile-time:  ADX AES AVX AVX2 BMI1 BMI2 PCLMULQDQ POPCNT SSE SSE2 SSE3
+
+Speed test
+==========
+Started at 2026-10-22 10:09:20
+Operation                            | Iterations | Total time (s) | Time (us): mean | pop. stdev | CPU cycles: mean          | pop. stdev
+------------------------------------ | ----------:| --------------:| ---------------:| ----------:| -------------------------:| ----------:
+Falcon-padded-512                    |            |                |                 |            |                           |           
+keypair                              |        654 |          3.004 |        4592.806 |   1197.616 |                  11541603 |    3009181
+sign                                 |      19007 |          3.000 |         157.838 |     14.136 |                    396764 |      35521
+verify                               |     109160 |          3.000 |          27.483 |      3.095 |                     69061 |       7695
+public key bytes: 897, secret key bytes: 1281, signature bytes: 666
+Ended at 2026-10-22 10:09:29
+# end 2026-10-22T10:09:29+03:00 load 1.00 1.00 0.91

@@ -1,0 +1,45 @@
+[2026-10-09T04:04:05+03:00] deadmen armed: revert 800 s, reboot 1100 s | node=2/2 freq=5180 mode=full rates=124,174,211
+[2026-10-09T04:04:22+03:00] frameburst before the windows: 0 (asked: 0)
+[2026-10-09T04:04:22+03:00] type:  	type IBSS 	channel 36 (5180 MHz), width: 20 MHz, center1: 5180 MHz 
+[2026-10-09T04:04:22+03:00] addr:  inet 10.0.0.2 
+[2026-10-09T04:04:24+03:00] peer 10.0.0.1 reachable
+{"sent": 2728, "achieved_fps": 124.0, "late": 0}
+{"received_unique": 2722, "senders": 1, "duplicates": 0}
+[2026-10-09T04:05:30+03:00] window 00_C_124fps done
+{"sent": 2728, "achieved_fps": 124.0, "late": 0}
+{"received_unique": 2722, "senders": 1, "duplicates": 0}
+[2026-10-09T04:05:59+03:00] window 01_C_124fps done
+{"sent": 2728, "achieved_fps": 124.0, "late": 0}
+{"received_unique": 2716, "senders": 1, "duplicates": 0}
+[2026-10-09T04:06:29+03:00] window 02_C_124fps done
+{"sent": 2728, "achieved_fps": 124.0, "late": 0}
+{"received_unique": 2720, "senders": 1, "duplicates": 0}
+[2026-10-09T04:06:59+03:00] window 03_C_124fps done
+{"sent": 3828, "achieved_fps": 174.0, "late": 0}
+{"received_unique": 3812, "senders": 1, "duplicates": 0}
+[2026-10-09T04:07:29+03:00] window 04_C_174fps done
+{"sent": 3828, "achieved_fps": 174.0, "late": 0}
+{"received_unique": 3806, "senders": 1, "duplicates": 0}
+[2026-10-09T04:07:59+03:00] window 05_C_174fps done
+{"sent": 3828, "achieved_fps": 174.0, "late": 0}
+{"received_unique": 3806, "senders": 1, "duplicates": 0}
+[2026-10-09T04:08:29+03:00] window 06_C_174fps done
+{"sent": 3828, "achieved_fps": 174.0, "late": 0}
+{"received_unique": 3810, "senders": 1, "duplicates": 0}
+[2026-10-09T04:09:00+03:00] window 07_C_174fps done
+{"sent": 4642, "achieved_fps": 211.0, "late": 0}
+{"received_unique": 4589, "senders": 1, "duplicates": 0}
+[2026-10-09T04:09:29+03:00] window 08_C_211fps done
+{"sent": 4642, "achieved_fps": 211.0, "late": 0}
+{"received_unique": 4598, "senders": 1, "duplicates": 0}
+[2026-10-09T04:09:59+03:00] window 09_C_211fps done
+{"sent": 4642, "achieved_fps": 211.0, "late": 0}
+{"received_unique": 4606, "senders": 1, "duplicates": 0}
+[2026-10-09T04:10:29+03:00] window 10_C_211fps done
+{"sent": 4642, "achieved_fps": 211.0, "late": 0}
+{"received_unique": 4612, "senders": 1, "duplicates": 0}
+[2026-10-09T04:10:59+03:00] window 11_C_211fps done
+[2026-10-09T04:10:59+03:00] frameburst after the windows: 0
+[2026-10-09T04:10:59+03:00] revert: starting
+[2026-10-09T04:11:08+03:00] revert: finished, wlan0 = inet 192.168.1.20
+[2026-10-09T04:11:13+03:00] reverted OK, both deadmen disarmed

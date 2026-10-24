@@ -1,0 +1,1 @@
+post ajson_r10: throttled=0x0 temp=52.5'C uv 0

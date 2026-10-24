@@ -115,3 +115,46 @@ Per-frame Doppler remains unmodelled — see F37's closing caveat before quoting
    **stall speed** — a non-zero minimum — while a quadrotor can hover. Our {0, 5, 20} grid assumes
    hovering is physical, which is true only for rotary craft. **Unresolved; state it as an
    assumption until a source settles it.**
+
+---
+
+## 6. 2026-10-21 — the 802.11 spatial arm: relative motion (decision H8)
+
+*Why the 802.11 arm now, against `MOBILITY_PLAN.md`'s "No" for it:* that verdict was for the
+single-collision-domain scenarios, where position cannot enter (Bianchi, Ma & Chen). Revision A1
+added layouts that span several domains, where motion changes who is a neighbour and who
+contends. A1's group layout tested only a rigid translation (F88); Mohamed chose to test relative
+motion (H8). This section adds six sources to §1's five, read for that choice. Every value was
+read in the PDF; files in `docs/literature/` (`README.md`, 2026-10-21 section).
+
+| source | kind | models it uses or recommends | speeds | nodes, area, duration |
+|---|---|---|---|---|
+| Bujari, Calafate, Cano, Manzoni, Palazzi & Ronzani, IJDSN 13(10), 2017 (CC BY) | survey | Random Walk / Waypoint / Direction are **excluded from every FANET application** (its Table 3); Gauss–Markov (GM), Smooth Turn, group (column, nomadic, pursue) and path-planned models per application. GM: smooth acceleration, no smooth curves (Table 1). ns-3 implements GM and reference-point group mobility (Table 2) | GM example: mean 10 m/s, speed σ 1 m/s, heading σ 45°, α = 0.8, step 1 s (Fig. 6); Smooth Turn 15 m/s, turn radius 10–100 m (Fig. 7); Random Walk example 10–30 m/s | — |
+| Guillen-Perez & Cano, Sensors 18:3571, 2018 (CC BY) | survey + case study | rotary-wing: Random Waypoint in the works it cites; fixed-wing: Paparazzi or Smooth Turn (Table 2) | rotary-wing ~50 km/h (14 m/s), fixed-wing ~100 km/h (28 m/s) (Table 2) | — |
+| Wheeb, Nordin, Samah, Alsharif & Khan, Drones 6:9, 2022 (CC BY) | survey | 14 models compared (Table 2); Enhanced GM as the FANET-specific GM | EGM "typically … 30–60 m/s … suitable for quadcopter UAVs" (§2.3.4) — high for small quadcopters; quoted as written | — |
+| Huang et al. (FMAC), IEEE IoT J 8(1), 2021 (held locally) | primary, flocking | flocking control through obstacles | virtual leader 6 m/s | 150 UAVs, 10 Hz, 100 s |
+| Kumar, Choi & Kim, EURASIP JWCN 2019 (CC BY) | primary, VANET | constant speed per lane | 40–140 km/h (11–39 m/s) | ns-3, 10 km highway, 50 s |
+| Yang, Zhao, Wang, Dong & Ju, arXiv:2503.16834, 2025 (held locally) | primary, formation | GM group (leaders GM, followers around them), α = 0.5 | leaders 200 m/s (a marching formation) | ns-3, 36–144 nodes, 100 s |
+
+**The envelope with §1:** small rotary-wing UAVs 5.6–19.4 m/s (§1) and 6–15 m/s here;
+fixed-wing ~28 m/s; one survey's 30–60 m/s and one formation study's 200 m/s are outliers for
+small swarms. GM is the standard time-correlated choice; Random Waypoint is common practice but
+excluded by Bujari et al. for every FANET application, and on the LoRa arm it made no difference
+(§4).
+
+**Our configuration** (`ns3/authbc-spatial-mobile.cc`, layout `gm`; `predictions/A1-motion.md`):
+
+| | value | anchored to |
+|---|---|---|
+| model | **GM per node** — each node independent, so relative motion | §1 and Bujari et al.; the group case is A1's S3 (F88) |
+| α, step | **0.85, 0.5 s** | 0.5–0.85 published; A1's S3 used 0.85 / 0.5 s |
+| speed | **0 (control), 5, 15 m/s** | inside 5.6–19.4 (§1); 15 is the plan's "up to 15 m/s" (H8) |
+| speed / heading noise | **σ = 0.1 × mean; 45°** | Bujari et al.'s GM example |
+| nodes | **60–70 (base), 199–234 (design)** | A1's stage-2 grids at R = 1 km; 36–150 published |
+| area | a square of the area of A1's 1 km disc (side 1 772 m), altitude 50–150 m | A1 S1 |
+| duration | **20 s**, as every A1 run; 300 m of travel at 15 m/s | 50–100 s published; ours is shorter, stated |
+
+⚠️ **Hovering is assumed** for the speed-0 control and for 5 m/s: physical for rotary-wing
+craft, not for fixed-wing ones with a stall speed (§5.3, still open). ⚠️ **No Doppler, no
+time-correlated fading** — ns-3 draws Nakagami fading per frame, right for moving nodes at frame
+spacings of 20–80 ms, pessimistic for still ones; motion acts only through geometry.

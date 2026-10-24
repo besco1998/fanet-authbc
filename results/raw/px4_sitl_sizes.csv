@@ -1,0 +1,21 @@
+# python=3.12.3
+# platform=Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=px4_sitl_sizes
+# px4=v1.17.0
+# model=sihsim_quadx
+# host_loadavg_at_end=13.94970703125
+# config_hash=875a1e8855f38b2e
+part,spacing_ms,records,mean_speed_mps,max_speed_mps,lean_key_mean,lean_delta_mean,lean_delta_min,lean_delta_max,delta_at_floor_pct,frame_1_mean,frame_b_mean,bytes_per_rec,saving_pct
+whole flight,20,14317,3.72,10.39,20.889,9,9,9,100.0,141.889,169.889,42.472,70.07
+takeoff,20,785,0.19,0.41,20.205,9,9,9,100.0,141.205,169.204,42.301,70.04
+square_5mps,20,6004,4.6,5.04,21.137,9,9,9,100.0,142.137,170.137,42.534,70.08
+square_12mps,20,2503,9.14,10.39,21.66,9,9,9,100.0,142.66,170.662,42.666,70.09
+hold,20,3009,0.69,9.66,20.093,9,9,9,100.0,141.093,169.094,42.274,70.04
+land,20,1934,0.27,0.62,20.676,9,9,9,100.0,141.676,169.677,42.419,70.06
+whole flight,200,1432,3.72,10.37,20.887,10.641,10,14,40.3,141.887,174.796,43.699,69.2

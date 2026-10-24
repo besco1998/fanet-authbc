@@ -67,3 +67,28 @@ def test_summary_and_provenance() -> None:
     env = provenance.env_block()
     assert env["python"].startswith("3.12") and "cbor2" in env
     assert provenance.config_hash({"a": 1, "b": 2}) == provenance.config_hash({"b": 2, "a": 1})
+
+
+class TestTheHeaderDescribesTheMachineThatMadeTheFile:
+    """Until 2026-10-09 a file made on a board said `governor=WSL, governor uncontrolled` and
+    `cpu=unknown` beside the true values the board script prepends (finding F78)."""
+
+    def test_a_board_reports_its_own_governor(self, tmp_path, monkeypatch) -> None:
+        exposed = tmp_path / "scaling_governor"
+        exposed.write_text("performance\n")
+        monkeypatch.setattr(provenance, "GOVERNOR_FILE", exposed)
+        assert provenance.governor() == "performance"
+        assert provenance.env_block()["governor"] == "performance"
+
+    def test_a_machine_that_exposes_none_keeps_the_old_note_word_for_word(
+            self, tmp_path, monkeypatch) -> None:
+        monkeypatch.setattr(provenance, "GOVERNOR_FILE", tmp_path / "absent")
+        assert provenance.governor() == "WSL, governor uncontrolled"
+
+    def test_the_processor_is_named_on_x86_and_on_a_raspberry_pi(self) -> None:
+        x86 = "processor\t: 0\nmodel name\t: Intel(R) Core(TM) i5-14400F\nflags\t: fpu\n"
+        board = ("processor\t: 0\nBogoMIPS\t: 108.00\nHardware\t: BCM2835\n"
+                 "Model\t\t: Raspberry Pi 4 Model B Rev 1.4\n")
+        assert provenance.model_in_cpuinfo(x86) == "Intel(R) Core(TM) i5-14400F"
+        assert provenance.model_in_cpuinfo(board) == "Raspberry Pi 4 Model B Rev 1.4"
+        assert provenance.model_in_cpuinfo("processor\t: 0\n") is None

@@ -1,43 +1,128 @@
 \chapter{Background and Related Work}\label{ch:background}
 
-\needswork{STATUS: OUTLINED, PARTLY DRAFTED. The positioning below is adapted from the paper's
-Related Work, where every reference was verified against the Crossref record for its DOI. A thesis
-requires materially broader coverage than a 15-page paper: each section below names the reading
-that must still be done. Do not submit this chapter as it stands. See \texttt{thesis/STATUS.md}.}
-
-\section{Citation integrity in this thesis}
-
-One methodological commitment applies to the whole chapter and is stated before any claim is made.
-Every reference was confirmed against the Crossref record for its DOI rather than from a search
-summary, and no figure or number is quoted from a source that has not been read in full. Where a
-source establishes prior art for something this thesis might otherwise have claimed as novel, that
-is said explicitly.
-
-That rule exists because it was broken once. An early finding claimed this work was the
-\emph{more optimistic} of two LoRa capacity models; the claim was drawn from a figure in a paper
-that reported pure-ALOHA results alongside LoRa results, and the wrong figure was read. The finding
-was retracted and the lesson recorded as a rule: \textbf{quoting the paper is not enough --- quote
-the figure}. \Cref{ch:reproducibility} returns to this.
+This chapter places the work: the networks and the telemetry it concerns, what a hash chain
+and a signature each provide, how messages are authenticated in practice and in the
+stream-signing literature, how batching and aggregation differ, and the channel models the
+evaluation rests on. Every source cited was read at the source and not through a summary of it.
+Where a figure reaches this thesis through another paper, that is said at the point of use;
+where only part of a long document bears on this work, the register of sources kept with the
+repository records which part was read. \Cref{sec:citations} describes how the bibliography
+is checked.
 
 \section{Flying ad-hoc networks and UAV telemetry}
 
-\needswork{TO WRITE. Required coverage: FANET as distinct from MANET/VANET (mobility degree,
-topology change rate, energy asymmetry); the telemetry workload itself, anchored to autopilot
-source rather than secondary summaries --- PX4's \texttt{MAVLINK\_MODE\_ONBOARD} at 50\,Hz and
-ArduPilot's vehicle-specific defaults; and 3GPP TS~22.125 S5.2.2 as the independent standards
-anchor for direct UAV-to-UAV broadcast. Sources are held; the synthesis is not written.}
+A flying ad-hoc network is a set of unmanned aircraft that exchange information directly, without
+a base station between them. Chen, Tang and Lao's review of swarm communication distinguishes
+the architectures by where information is exchanged --- between the aircraft, or between the
+aircraft and a central control centre --- and treats the routing protocols that each
+needs~\cite{chen2020uavswarm}. This thesis is concerned with the simplest exchange the
+decentralised architectures share, and the one all the others rest on: every aircraft
+periodically \emph{broadcasts its own state} to whichever neighbours can hear it. There is no
+route, no acknowledgement and no retransmission; a neighbourhood is a set of receivers within
+range of one another, and \Cref{ch:sysmodel} models it as one collision domain.
+
+Surveys of the field treat such networks as a class of their own. Gupta, Jain and Vaszkun set
+UAV networks beside mobile and vehicular ad hoc networks and find that results for those two do
+not carry over unchanged: the nodes may be anything from stationary to fast, the topology
+changes and links come and go, a node that fails or leaves can partition the network, and a
+small aircraft has little energy to spend~\cite{gupta2016uavsurvey}. They organise the open
+problems around architecture, routing, handover between nodes and energy. Authentication of
+what the nodes broadcast is not among them, and the word does not occur in the survey. The
+literature on these networks concentrates on the layers above the single-hop broadcast; this
+thesis is about the cost of making that broadcast attributable, which every one of those layers
+takes as given.
+
+\subsection{The workload, read at source}
+
+What such a broadcast carries, and how often, is taken here from autopilot source code and from
+a standard, not from secondary summaries.
+
+\paragraph{PX4.} The MAVLink module configures its streams by link mode. For a link to a
+companion computer (\texttt{MAVLINK\_MODE\_ONBOARD}) the global position is streamed at
+$50$\,Hz, attitude at $100$\,Hz, the local position at $30$\,Hz and battery status at
+$0.5$\,Hz~\cite{px4_mavlink_streams}; these four rates were read again in the source of release
+v1.17.0 when it was built for \Cref{sec:e6}. The $50$ records per second of the adopted
+operating point is that position rate.
+
+\paragraph{ArduPilot.} Its default stream rates are set per vehicle type, and for the
+multicopter firmware they default to zero~\cite{ardupilot_stream_rates}. An earlier draft of this work said ArduPilot ``defaults to
+$1$\,Hz''; reading the parameter table corrected it. No single telemetry rate describes
+``an autopilot'', which is why the operating point is treated as a variable in
+\Cref{ch:codesign} and not as a constant.
+
+\paragraph{The standard.} 3GPP specifies direct UAV-to-UAV local broadcast as a service, with
+requirements that bound the same quantities this thesis optimises~\cite{3gpp_ts22125}: at least
+ten messages per second, an end-to-end latency of at most $100$\,ms, and a payload of
+$50$--$1500$\,B ``not including security-related message component(s)''. The last clause matters
+here. The standard itself separates the bytes of authentication from the payload it sizes, and
+says nothing about how large they may be; that silence is the gap this thesis measures.
+
+\paragraph{How small the messages are.} Rotta and Mykytyn, designing authenticated telemetry
+broadcast for a swarm, observe that MAVLink telemetry messages are ``much smaller than $256$
+bytes''~\cite{rotta2024telemetrybroadcast}. The record of \Cref{ch:sysmodel} --- time, position,
+velocity, battery, mode --- is \keyLean\,B standing alone and \deltaLean\,B as a difference from
+its predecessor.
+
+\subsection{How such networks are usually evaluated}
+
+Simulation in ns-3 is the common instrument, and a recent swarm protocol stack shows what a
+typical scenario states: $20$--$100$ nodes in a $400 \times 400 \times 1000$\,m volume, Random
+Waypoint mobility, Nakagami fading and an 802.11ah MAC~\cite{bhatt2025uavswarmmac}. It does not
+state the speed range or the pause time of its mobility model, the two parameters that define
+what that model did. The observation is not a criticism of one paper. Kurkowski, Camp and
+Colagrosso surveyed the $151$ papers of one ad hoc networking conference over six years: $114$
+used simulation, none of those said its code was available, and $87.5\%$ of those with plots
+showed no confidence intervals; of the papers with mobility, half stated the pause time. They
+concluded that fewer than $15\%$ were repeatable~\cite{kurkowski2005incredibles}. A decade
+later Cavalcanti \emph{et al.} found vehicular-network research little
+better~\cite{cavalcanti2018vanet}. \Cref{ch:reproducibility} is this thesis's answer to that
+record: every result is regenerated from stored runs, every simulated capacity carries an
+interval, and the parameters that define each scenario are in the result files' headers.
+
+Two things follow for the design of this study. Capacity is reported for \emph{one collision
+domain with static nodes}, stated as such, because the contention model has no position term and
+a mobility model would add parameters without adding a mechanism (\Cref{ch:validation}). And
+the telemetry itself is synthetic, checked against public flight logs and against the autopilot
+run in simulation (\Cref{sec:e6}), because a public corpus of $50$\,Hz swarm telemetry was not
+found.
 
 \section{Tamper-evident telemetry and hash-chained ledgers}
 
-Nakamoto's hash chain~\cite{nakamoto2008} makes an append-only log tamper-evident: altering a
-record invalidates every subsequent link. UAV-blockchain systems, surveyed
+Linking each record to the hash of its predecessor makes an append-only log tamper-evident:
+altering a record invalidates every subsequent link. The construction is Haber and
+Stornetta's~\cite{haber1991timestamp}; Bitcoin made it the spine of a
+blockchain~\cite{nakamoto2008}. UAV-blockchain systems, surveyed
 in~\cite{mehta2020blockchainuav}, place telemetry or attestations on such a chain, gaining
 integrity at a per-record overhead cost. This thesis targets exactly that substrate cost and is
 agnostic to the consensus layer above it; finality and witnessing semantics are out of scope.
 
-\needswork{TO EXPAND: the distinction between a hash chain (integrity of ordering) and a signature
-(attribution) is load-bearing for the threat model in \Cref{ch:sysmodel} and deserves a full
-subsection.}
+\subsection{What the chain gives and what the signature gives}
+
+The two mechanisms answer different questions, and the threat model of \Cref{ch:sysmodel}
+needs both.
+
+A \emph{hash chain} fixes order and content relative to one value. Whoever holds the hash of the
+latest record can detect any change to, removal of, or insertion among the records before it;
+they need trust nothing but that one hash. The chain says nothing about \emph{who} wrote the
+records: anyone can build a consistent chain over data of their choosing.
+
+A \emph{signature} fixes origin. A record signed by a vehicle's key was produced by a holder of
+that key, and a third party can be shown so. A signature on a single record says nothing about
+the records around it: a signer can sign two different records for the same position in the
+sequence, and each verifies.
+
+Together they give what neither gives alone. A signed record that names its predecessor's hash
+commits its signer to \emph{one history}; two validly signed records that claim the same
+sequence number are then evidence of equivocation that anyone can check, because both carry the
+signer's own signature. That property --- transferable evidence of inconsistency --- is why this
+thesis requires a public-key signature and does not accept a shared-key tag in its place, and it
+is the property lost by the cheaper per-message schemes of \Cref{sec:bg-permsg}.
+
+It also explains a choice in the lean frame (\Cref{ch:sysmodel}). Within one frame the records
+are signed together, so their order and content already rest on the signature; the link each
+record would carry to its predecessor \emph{inside the same frame} can be recomputed by the
+receiver and need not be sent. Only the link out of the frame, to the last record of the frame
+before, carries information the signature does not. The stored ledger is unchanged.
 
 \section{Signatures for constrained authentication}
 
@@ -53,29 +138,143 @@ self-batching and BLS worthwhile only for cross-signer relay traffic.
 
 Independent work on UAV swarms adopts precisely the design this thesis treats as its naive
 baseline: Rotta and Mykytyn attach a HMAC-256 signature with a timestamp to \emph{each} broadcast
-telemetry message, and observe that MAVLink telemetry messages are much smaller than
-$256$\,bytes~\cite{rotta2024telemetrybroadcast} --- corroborating both the premise and the baseline
-from outside this work. Their construction is a symmetric MAC under a group key, so it provides
+telemetry message~\cite{rotta2024telemetrybroadcast} --- corroborating the baseline from outside
+this work. Their construction is a symmetric MAC under a group key, so it provides
 integrity and group authenticity but \emph{not} non-repudiation, and therefore cannot underwrite a
 ledger attributable to a specific UAV. That is a different trust model, not a cheaper solution to
 this one.
 
-\section{Batch and aggregate verification}
+\section{Authenticating messages one at a time, and signing streams}
+
+\subsection{Per-message practice}\label{sec:bg-permsg}
+
+MAVLink~2 signing appends a link identifier, a 48-bit timestamp and a 48-bit truncated SHA-256
+tag computed with a shared secret~\cite{mavlink2signing}: thirteen bytes per message. It is cheap
+and it authenticates a \emph{link} --- any holder of the key can produce any message --- so a
+record cannot be attributed to one vehicle afterwards. Vehicular broadcast uses public-key
+signatures: an ECDSA signature on each message, with the signer's certificate in some messages
+and an eight-octet digest of it in the others~\cite{etsi_ts103097,ndss2024pqv2v}. That is the
+trust model adopted here, and the per-message cost this thesis starts from.
+
+\subsection{Amortising one signature over many packets}
+
+This is a classical problem and the closest prior art to batching. Gennaro and Rohatgi sign the
+first packet of a stream and chain the rest by hashes~\cite{gennaro1997streams}; one lost packet
+breaks the chain. Wong and Lam sign a hash tree over a block and send in every packet the hashes
+needed to reach the root~\cite{wong1999flows}, so each packet verifies alone --- the \emph{signing
+cost} is amortised, the bytes are not. EMSS tolerates loss by carrying several hashes per packet
+with a periodic signature packet, and TESLA replaces the signature by a MAC whose key is disclosed
+later~\cite{perrig2000emss,perrig2002tesla}; TBRD applies TESLA to UAS Remote ID and reports
+about half the overhead of signatures~\cite{veara2025tbrd}.
+
+A further family recovers from loss with erasure codes. Pannetrat and Molva hash every packet
+of a block, sign the block, and spread the hashes and the signature over the block's own
+packets with two erasure codes, so that the block verifies whenever no more than a chosen share
+of its packets is lost~\cite{pannetrat2003multicast}. The overhead is small where blocks are
+long: with a $128$\,B signature and $16$\,B hashes, $2$\,B per packet for blocks of $128$
+packets that may lose $5\%$ of them, and $10$\,B for blocks of sixteen. The price is a latency
+of one block at the receiver, or a buffer of one block at the sender, and a packet that cannot
+be verified without others of its block. They compare with an earlier scheme of the same
+family, SAIDA, which was not obtained for this thesis.
+
+All of these spread \emph{one authenticator across packets}, and so make packets depend on each
+other or on a later one. This thesis does the opposite: it puts \emph{several records in one
+packet}, which is possible only because a telemetry record is a small fraction of a frame. Each
+frame then stays self-verifying and the cost moves to latency, at the sender. TESLA instead delays
+verification at the receiver, and a disclosed MAC key gives no non-repudiation, which a ledger
+needs. The lesson of the stream-signing literature that does transfer is the one this thesis
+learned late: a unit that depends on its predecessor inherits its predecessor's loss
+(\Cref{thm:t3prime}). \Cref{sec:stream} places each of these schemes at this thesis's operating
+point, by authenticator bytes and by frames per second.
+
+\subsection{A standard that faces the same disproportion}\label{sec:bg-drip}
+
+Broadcast Remote ID is the nearest standardised case of a signature that does not fit its
+frame. Over Bluetooth~4 a Remote ID frame carries 25 octets, and the IETF's authentication
+formats for it use a 64-octet signature~\cite{rfc9575}. The standard resolves the mismatch in
+the two ways this thesis sets aside. It \emph{pages} an authentication message over several
+frames, 23 octets of it to a page and at most nine pages of signed content, and adds one parity
+page from which a single lost page can be rebuilt. And it \emph{defers}: a signed manifest
+carries short hashes of up to eleven messages already sent, with the hash of the previous
+manifest among them, so that a stream is authenticated after the fact for less than its own
+size again in overhead, and the manifests form a chain.
+
+Both choices suit their setting. Remote ID messages are sent about once a second to observers
+on the ground, a signed unit a few seconds late is still useful, and one parity page is cheap
+insurance. They are also exactly the relaxations under which the exclusion of
+\Cref{ch:lowrate} does not hold: a signed unit spread over frames, and recovery from loss.
+The difference in regime is the point. At fifty records a second under a deadline of a tenth of
+a second there is no time in which to collect nine pages, and a record that is verified only
+when a later manifest arrives is, for that deadline, a record not yet verified.
+
+Civil aviation has the same disproportion in a harsher form. An ADS-B message on $1090$\,MHz
+is $112$ bits, of which $56$ are free for data and are normally occupied by position.
+Strohmeier, Lenders and Martinovic survey the proposals to secure it: a public-key scheme must
+distribute one signature over several messages, which receivers buffer until the last has
+arrived, or change the message format~\cite{strohmeier2015adsb}. That is once more a signed
+unit spread over frames.
+
+
+\subsection{Certificates}
+
+A signature is checked against a public key, and a receiver must learn that key from somewhere.
+Vehicular practice attaches the signer's certificate to some messages and a short digest of it
+to the rest~\cite{etsi_ts103097,ndss2024pqv2v}; \Cref{ch:codesign} charges that policy to every
+frame. IEEE~1609.2 defines two kinds of certificate. An \emph{explicit} certificate carries the
+verification key and the issuer's signature over it. An \emph{implicit} certificate (ECQV)
+carries only a reconstruction value from which the key is derived using the issuer's root
+certificate, and is shorter: a signed message is at most $226$\,B with one against $330$\,B with
+an explicit certificate~\cite{ndss2024pqv2v}. This thesis prices explicit certificates only. The
+certificate figures of \Cref{ch:codesign} are therefore upper bounds, for the baseline and the
+design alike.
+
+\section{Batch and aggregate verification}\label{sec:bg-batch}
 
 Zhang \emph{et al.}~\cite{zhang2008batch} let a roadside unit verify multiple received signatures
 simultaneously, motivated by the same pressure from the opposite side: a hard deadline --- DSRC's
 $300$\,ms --- within which sequential verification does not scale. Their batching is
 \emph{receiver-side} and buys verification time; the batching in this thesis is \emph{sender-side}
-and buys airtime. The two are complementary rather than competing. This work generalises from
+and buys airtime. The two are complementary rather than competing. The nearest FANET work is
+of the same kind: Rajasekaran \emph{et al.}~\cite{rajasekaran2022batchfanet} authenticate a
+group of drones to a user in one batch check of a pairing-based scheme, and report the communication cost of
+$n$ authentications as $n$ times that of one ($1184\,n$ bits) --- the verifier's work is
+shared, the bytes are not. This work generalises from
 receiver batching to authentication \emph{placement}, co-designs it with encoding and scheme, and
 adds a loss-robustness frontier that pure aggregation does not address.
 
-\needswork{TO WRITE: certificateless aggregate signature (CLAS) schemes as the closest external
-comparator. The finding to develop is the \emph{axis}, not a ratio: published CLAS overheads are
-linear in message count (583--859\,B/record) because aggregation compresses the verifier's work,
-not the wire. Do not claim to beat CLAS --- those schemes buy conditional privacy this work does
-not offer, and their group element is $128$\,B against our $64$\,B. Also outstanding: implicit
-(ECQV) certificates from IEEE 1609.2, which were never priced here.}
+Certificateless aggregate signature (CLAS) schemes for vehicular broadcast are the closest
+external comparator. Li \emph{et al.}~\cite{li2025clas} tabulate the per-message size of their
+own scheme and four others, for a $67$\,B traffic message: $583$\,B (theirs, and Cahyadi
+\emph{et al.}), $596$\,B (Xu \emph{et al.}), $735$\,B (Liang \emph{et al.}) and $859$\,B (Wang
+\emph{et al.}). Those totals are Li \emph{et al.}'s accounting of what one signer sends with
+each message. The four other papers were then read for what they say of size themselves.
+Cahyadi \emph{et al.} give the same figure as the table, $583$\,B for one message and $583\,n$
+for $n$~\cite{cahyadi2022clas}. Liang and Liu, like Wang \emph{et al.}, work with group
+elements of $128$\,B~\cite{liang2023clas}. Xu \emph{et al.} state no size in bytes, so their
+$596$\,B is Li \emph{et al.}'s count~\cite{xu2020clas}.
+
+What a signer sends for $n$ messages is $n$ times what it sends for one, since each message
+carries its own identity, key and signature components. Aggregation acts after that. In the
+scheme of Wang \emph{et al.} a vehicle signs, a roadside unit aggregates the signatures it
+has received into one, and a traffic management centre verifies the aggregate; a single
+signature is three group elements and a timestamp, $388$\,B, and the aggregate of a hundred
+is $784$\,B~\cite{wang2022clas}. So aggregation compresses the verifier's work and the link
+\emph{from} the aggregator; it does not touch the link on which each signer first sends.
+\textbf{The finding is the axis, not a ratio}: batching compresses what one sender puts on the
+air for its own records, and aggregation compresses what an intermediary passes on for many
+senders --- placements B and C of \Cref{ch:sysmodel}. A FANET in which every node broadcasts
+its own state to its neighbours has the first link and no aggregator on it. No claim is made
+to beat those schemes. They provide conditional privacy, which this work does not, their group elements are
+$128$\,B against a $64$\,B signature here, and their figures are for a different message.
+
+What these schemes are for is worth stating, since it is not what this thesis is for. In a
+certificateless scheme a key-generation centre issues part of each signer's private key and the
+signer adds a secret of its own, which removes certificates without giving the centre the whole
+key; the aggregate property lets a verifier check many signatures at once. Li \emph{et al.}
+show that one such scheme, by Cahyadi \emph{et al.}, falls to a public-key replacement attack
+and to a malicious key-generation centre, and repair it~\cite{li2025clas}. That is the
+literature's centre of gravity: constructions, attacks on them and proofs, with communication
+cost reported as a per-message size and never as what a channel can then carry.
 
 \section{Compact serialisation and delta coding}
 
@@ -84,8 +283,12 @@ telemetry time series is established practice, most prominently in Gorilla~\cite
 which stores delta-of-delta timestamps and XOR-folded values for roughly a $10\times$ reduction.
 
 The variant used here differs in one respect the link forces. Gorilla is a database and can chain
-deltas indefinitely; a lossy broadcast link makes an unbounded chain fragile, so this work
-re-anchors on a keyframe every $K$ records and pays the resulting size for loss independence.
+deltas indefinitely. On a lossy broadcast link a record coded against one the receiver never got
+cannot be decoded, and a frame that cannot be decoded cannot be verified (\Cref{thm:t3prime}).
+The first design of this work re-anchored on a self-contained record every $K = 16$ records, and
+missed its own verifiability target for that reason; the design reported here starts
+\emph{every frame} with a self-contained record and codes only the records behind it in the same
+frame (\Cref{sec:e7}).
 
 \section{Channel models for IEEE 802.11}
 
@@ -97,29 +300,68 @@ which dominates when the contention window is small relative to the station coun
 Bianchi and Xiao~\cite{tinnirello2010} supply the anomalous-slot refinement that explains a
 residual small-frame bias observed in \Cref{ch:validation}.
 
+Both are models of a saturated channel, in which every station always has a frame to send, and
+Ma and Chen name non-saturated traffic as future work~\cite{machen2008}. The capacities of this
+thesis lie well below saturation: each node offers one frame per period and the question is
+how many of them are lost. That regime has been analysed for vehicular safety messages. Ma,
+Chen and Refai extend the broadcast model to non-saturated traffic on a highway --- messages
+arriving at random at each vehicle, a queue per vehicle, hidden terminals, fading and vehicles
+that move out of range --- and obtain the share of the receivers in range that get a packet;
+one of its loss terms is the simultaneous transmission of stations within
+range~\cite{ma2009dsrc}. Cao \emph{et al.} treat the periodic case in a fully connected
+network: a packet is sent at once if it finds the medium idle and after a backoff in a fixed
+window if it does not, and a fixed point gives the delivery ratio~\cite{cao2021dsrc}. Both
+check the analysis against a simulation the authors wrote. \Cref{sec:why} builds on the same
+mechanism and adds a second, which neither has: the few microseconds in which a transmission
+that has begun cannot yet be sensed. Two further analyses that Cao \emph{et al.} cite were not
+obtained.
+
+\subsection{Frame aggregation}\label{sec:bg-aggregation}
+
+That every frame pays a fixed cost in preamble, inter-frame space and backoff, and that the
+cost is best paid once for several payloads, is the principle of frame aggregation in
+IEEE~802.11n. Skordoulis \emph{et al.} describe its two forms and simulate a point-to-point
+link on which aggregation raises the saturated throughput about four and a half times for
+packets of $1000$\,B~\cite{skordoulis2008aggregation}. Both forms carry frames for one
+receiver. The subframes of an A-MSDU must share the receiver's address, and the authors say in
+terms that broadcasting or multicasting is not allowed; the frames of an A-MPDU must be
+addressed to the same receiver as well. A broadcast sender cannot use either. Batching records
+at the application is how this thesis obtains the same effect for broadcast frames, and
+\Cref{ch:codesign} shows it to be the larger part of the capacity gain: sharing a frame alone
+takes the capacity from \nmaxLeanBase{} to \nmaxLeanInline{} nodes before any signature is
+shared. One detail of the standard is this thesis's freshness constraint in another setting:
+an A-MSDU is closed when it is full or when the delay of its oldest packet reaches a set value.
+
 \section{LoRa and LoRaWAN capacity}
 
-Bor \emph{et al.}~\cite{bor2017lora} provide the only published LoRa capacity model found that is
+Haxhibeqiri \emph{et al.}~\cite{haxhibeqiri2017lora} provide the only published LoRa capacity model found that is
 grounded in hardware interference measurements rather than an analytical collision assumption, and
 state it in closed form so it can be evaluated at this work's operating point rather than merely
 quoted at theirs. Zirak \emph{et al.}~\cite{zirak2021swarm} supply the only air-to-air LoRa PDR-versus-range
 field data located, which range-limits the capacity result of \Cref{ch:lowrate}.
 
-\needswork{TO EXPAND: LoRaWAN's regional parameters as a \emph{regulatory} rather than a
-technical constraint --- the EU868 duty cycle is enforced per sub-band, which is why adding
-channels buys no extra airtime. This is developed in \Cref{ch:lowrate} but belongs partly here.}
+\subsection{Limits that are rules, not physics}
+
+Two of the limits that shape \Cref{ch:lowrate} are set by documents and not by the radio. The
+LoRa physical layer carries up to $255$\,B in a frame~\cite{semtech_sx1276}; the payload limits
+of $51$, $115$, $222$ or $242$\,B that the exclusion bound is computed against are those of
+LoRaWAN's regional parameters for the EU863--870 band, one per data rate~\cite{lora_rp002}. A
+system that used the LoRa radio without the LoRaWAN link layer would not be bound by them, and
+the exclusion is stated with that condition. The second is the duty cycle: the same document
+limits a device's transmit time in the band to less than $1\%$, which fixes how many records per
+second a node may send whatever its neighbourhood. The link layer itself is specified
+in~\cite{lorawan_ts001}, which also requires an end device to vary its transmit times
+pseudo-randomly ``to prevent systematic synchronization of populations of end-device
+transmissions'' --- the standard's own statement of the artifact that strictly periodic
+simulated senders produce (\Cref{ch:reproducibility}).
 
 \section{Where this thesis sits}
 
 The adjacent literature almost uniformly proposes a \emph{new construction} and evaluates it
 against its predecessors. This thesis deliberately proposes none. Its contribution is a boundary:
-the set of configurations in which no choice of existing, standardised cryptography is feasible at
-all. That result is arithmetic rather than empirical for the part that matters most, so unlike a
-performance figure it does not move as models, hardware or schemes improve --- and it is invisible
-to the byte models the literature optimises against.
-
-\needswork{HONESTY REQUIREMENT for this section. The reference count currently stands at 46,
-short of the 45--60 a thesis of this scope would normally carry, and it stops there deliberately:
-46 is every source held and \emph{read}. Reaching a higher count requires a genuine sourcing pass
---- find, download, read, then cite. Padding the list would be the same defect this project spent
-its audit removing.}
+the links on which a frame that verifies alone cannot be sent at any batch size, stated with the
+conditions under which that holds. For a given authenticator the result is arithmetic rather
+than empirical, so unlike a performance figure it does not move as models or hardware improve. It
+does move with the authenticator --- a $48$\,B signature or a $13$\,B tag fits where a $64$\,B
+signature does not --- and \Cref{ch:lowrate} gives the matrix. It is invisible to the byte
+models the literature optimises against.

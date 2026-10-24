@@ -1,0 +1,40 @@
+[2026-10-09T04:12:03+03:00] deadmen armed: revert 800 s, reboot 1100 s | role=rx freq=5180 mode=full
+[2026-10-09T04:12:20+03:00] frameburst before the windows: 0 (asked: 0)
+[2026-10-09T04:12:20+03:00] type:  	type IBSS 	channel 36 (5180 MHz), width: 20 MHz, center1: 5180 MHz 
+[2026-10-09T04:12:20+03:00] link:  Joined IBSS fe:20:f1:07:c4:1f (on wlan0) 	SSID: authbc-mesh 
+[2026-10-09T04:12:20+03:00] addr:  inet 10.0.0.2 
+[2026-10-09T04:12:22+03:00] PEER 10.0.0.1 REACHABLE — link formed at 5180 MHz
+{"received_unique": 2200, "senders": 1, "duplicates": 0}
+[2026-10-09T04:13:29+03:00] window 00_A_100fps done
+{"received_unique": 2200, "senders": 1, "duplicates": 0}
+[2026-10-09T04:13:58+03:00] window 01_A_100fps done
+{"received_unique": 2200, "senders": 1, "duplicates": 0}
+[2026-10-09T04:14:28+03:00] window 02_A_100fps done
+{"received_unique": 2200, "senders": 1, "duplicates": 0}
+[2026-10-09T04:14:59+03:00] window 03_A_100fps done
+{"received_unique": 2200, "senders": 1, "duplicates": 0}
+[2026-10-09T04:15:28+03:00] window 04_A_100fps done
+{"received_unique": 2200, "senders": 1, "duplicates": 0}
+[2026-10-09T04:15:58+03:00] window 05_A_100fps done
+{"received_unique": 2200, "senders": 1, "duplicates": 0}
+[2026-10-09T04:16:28+03:00] window 06_A_100fps done
+{"received_unique": 2200, "senders": 1, "duplicates": 0}
+[2026-10-09T04:16:58+03:00] window 07_A_100fps done
+{"received_unique": 600, "senders": 1, "duplicates": 0}
+[2026-10-09T04:17:18+03:00] window 08_B_50fps done
+{"received_unique": 1200, "senders": 1, "duplicates": 0}
+[2026-10-09T04:17:38+03:00] window 09_B_100fps done
+{"received_unique": 2400, "senders": 1, "duplicates": 0}
+[2026-10-09T04:17:58+03:00] window 10_B_200fps done
+{"received_unique": 3593, "senders": 1, "duplicates": 0}
+[2026-10-09T04:18:19+03:00] window 11_B_300fps done
+{"received_unique": 4789, "senders": 1, "duplicates": 0}
+[2026-10-09T04:18:38+03:00] window 12_B_400fps done
+{"received_unique": 5957, "senders": 1, "duplicates": 0}
+[2026-10-09T04:18:58+03:00] window 13_B_600fps done
+{"received_unique": 5940, "senders": 1, "duplicates": 0}
+[2026-10-09T04:19:18+03:00] window 14_B_900fps done
+[2026-10-09T04:19:18+03:00] frameburst after the windows: 0
+[2026-10-09T04:19:18+03:00] revert: starting
+[2026-10-09T04:19:27+03:00] revert: finished, wlan0 = inet 192.168.1.20
+[2026-10-09T04:19:32+03:00] reverted OK, both deadmen disarmed

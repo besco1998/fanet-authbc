@@ -1,0 +1,17 @@
+# python=3.12.3
+# platform=Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=spatial_capacity
+# config_hash=6b5dc189c4c1358f
+scenario,config,grid,n_max,n_cross,n_cross_lo,n_cross_hi,bracketed,neighbours_at_cross,v_at_grid,stem,ratio_to_base,ratio_lo,ratio_hi
+gm-r1000-v0,base,60 63 65 68 70,60,62.1,60.46,63.76,1,2.44,60:0.9512 63:0.9495 65:0.9481 68:0.9457 70:0.9450,motion,,,
+gm-r1000-v0,design,199 208 217 225 234,217,223.86,220.85,226.92,1,8.98,199:0.9543 208:0.9525 217:0.9510 225:0.9498 234:0.9486,motion,3.605,3.464,3.753
+gm-r1000-v15,base,60 63 65 68 70,60,62.02,60.44,63.57,1,2.46,60:0.9511 63:0.9495 65:0.9477 68:0.9458 70:0.9451,motion,,,
+gm-r1000-v15,design,199 208 217 225 234,217,221.3,217.75,225.03,1,8.88,199:0.9539 208:0.9522 217:0.9506 225:0.9495 234:0.9481,motion,3.568,3.425,3.723
+gm-r1000-v5,base,60 63 65 68 70,60,61.38,60.22,63.16,1,2.41,60:0.9508 63:0.9490 65:0.9476 68:0.9455 70:0.9449,motion,,,
+gm-r1000-v5,design,199 208 217 225 234,217,222.53,219.57,225.86,1,8.92,199:0.9541 208:0.9524 217:0.9508 225:0.9496 234:0.9485,motion,3.625,3.476,3.751

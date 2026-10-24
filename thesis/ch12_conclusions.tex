@@ -1,9 +1,5 @@
 \chapter{Conclusions, Limitations and Future Work}\label{ch:conclusions}
 
-\needswork{STATUS: DRAFTED. The future-work section is the one most likely to be examined for
-evidence that the candidate understands the work's boundaries; it is written accordingly and
-deliberately does not oversell.}
-
 \section{What this thesis establishes}
 
 \begin{enumerate}
@@ -20,37 +16,95 @@ law that motivates aggressive compression is never operative: compression pays e
 On low-rate links the frame size binds and the leverage is real. \textbf{The regimes are different
 in kind.}
 
-\item Three of seven EU868 data rates admit no per-frame-verifiable telemetry at any encoding,
-batch, header or chain design, because a $64$\,B signature does not fit a $51$\,B payload. This is
-arithmetic and cannot move.
+\item A delta-coded frame that depends on its predecessor does not meet a verifiability target
+equal to the loss rate. Every frame of the design therefore carries a self-contained record, and
+the cost of that is small.
 
-\item Joined to a validated channel model, the co-designed configuration sustains
-$1.9$--$3.2\times$ the neighbourhood of an inline baseline, at $58.7\%$ fewer on-air bytes, at an
-operating point compliant with 3GPP TS~22.125.
+\item \exclCountCap{} of the twelve EU863-870 data rates cannot carry one signed, hash-chained
+frame: five because a $64$\,B signature does not fit a $51$\,B payload, three because header,
+chain link and signature fill a $115$\,B payload. The result holds under four stated conditions.
 
-\item Of the four design axes, only placement and batching genuinely interact. The four-axis
-co-design claim, as originally stated, was overstated.
+\item Built as one frame format and simulated directly, the design carries \bprLeanDesign\,B per
+record where per-record signing carries \bprLeanBase\,B (\saveLean\% fewer), and sustains
+\nmaxLeanDesign{} nodes at 95\% delivery where per-record signing sustains \nmaxLeanBase, at
+an operating point compliant with 3GPP TS~22.125.
+
+\item Of the four design axes, placement and batching interact exactly, by $\ga(1-1/b)$, and in
+the frame as built delta coding is conditional on batching as well: both gains are zero at
+$b = 1$. The scheme axis is byte-neutral. The four-axis co-design claim, as originally stated,
+was overstated; what is true is that batching is the axis the other gains depend on.
 \end{enumerate}
 
-\section{Limitations, stated as such}
+\section{The research questions, answered}\label{sec:rq-answers}
+
+\begin{description}
+\item[RQ1 --- how large is the overhead, and where does it dominate?] The authentication
+fraction is $\ga/(s+\ga)$ and passes one half exactly when the record is no larger than the
+signature (\Cref{thm:t1}). With $64$\,B signatures that is where compact encodings put a
+telemetry record: $49\%$ for CBOR and $59\%$ for delta coding, and $96$ of $109$\,B once the
+chain link inside the record is counted as authentication material (\Cref{ch:bytes}).
+
+\item[RQ2 --- which placement?] One signature over the records of one frame. It verifies with
+probability $1-p$ whatever the batch, where a signed unit spread over $n$ frames verifies with
+$(1-p)^n$ and is infeasible beyond one frame once $\varepsilon \leq p$
+(\Cref{thm:t3,thm:t3c}); and the frame must also decode alone (\Cref{thm:t3prime}).
+Self-batching needs one ordinary signature. Cross-signer aggregation is needed only for
+relayed records, which this thesis models and does not evaluate.
+
+\item[RQ3 --- when does an aggregatable scheme win?] Not in any of the eighty cells evaluated
+at $6$\,Mb/s. For a node's own records BLS costs bytes; for relayed ones it pays only where the
+radio draws more than thirty times the power of the CPU, against a measured ratio of $0.29$, and
+one core cannot verify it above $200$ records per second (\Cref{ch:codesign}). Its regime is
+links on which airtime is orders of magnitude dearer than computation.
+
+\item[RQ4 --- the end-to-end configuration, and do the models survive?] Delta coding, Ed25519,
+one signature and one chain link per frame, four records, a self-contained record at the head of
+every frame: \bprLeanDesign\,B per record against \bprLeanBase\,B, and \nmaxLeanDesign{} nodes
+against \nmaxLeanBase. The saturation model of the broadcast channel survives simulation, within
+\valBcast\%. The single utilisation ceiling built on it did not, and was replaced by direct
+simulation; a model of the access rule alone then reproduced the simulated capacities within
+\modelWorst\% and predicted \modelPredCases{} unseen ones within \modelPredWorst\%. On two
+radios the access rule was observed within $6\%$ where contention can be isolated; a registered
+prediction of their loss below saturation held at two loads and failed at the third; no
+capacity was measured (\Cref{ch:codesign,ch:validation}).
+
+\item[RQ5 --- where can the frame not be sent at all?] On \exclCount{} of the twelve
+EU863-870 LoRaWAN data rates, under five conditions, the fifth being this frame format for
+\exclFmtCount{} of them; a $48$\,B signature, a $13$\,B tag or a
+chain link kept off the air each recover some of them, and \Cref{tab:t6relax} says which
+(\Cref{ch:lowrate}).
+\end{description}
+
+\section{Limitations}
 
 \subsection{Modelling scope}
 
 The single collision domain admits no spatial reuse and no hidden terminals; a real formation has
-both, one helping and one hurting. Mobility was tested and found null for collision-limited
-capacity, but per-frame Doppler is unmodelled --- the null result means mobility does not change
-\emph{collision-limited capacity}, not that mobility is harmless to a link. Loss is independent per
-frame; the ordering result survives correlation but absolute verifiability figures do not. The
-keyframe interval is fixed and unoptimised. Post-quantum sizes are projections, not
-implementations.
+both, one helping and one hurting. Nodes are static. On the low-rate arm mobility was tested and
+moves collision-limited delivery by nothing measurable (\Cref{sec:lora-mobility}); that is not a
+statement that mobility is harmless to a link, and Doppler is unmodelled. On 802.11 it was not
+tested, because the contention model has no position term. Loss in the verifiability experiments
+is generated at the frame level --- independent, bursty, or growing with frame length --- and is
+not a channel trace: the ordering result survives correlation but absolute verifiability figures
+do not. Post-quantum sizes are projections, not implementations.
 
 \subsection{Validation scope}
 
-Simulation validates \emph{throughput}. Latency, energy and loss behaviour are not validated by it,
-and ``simulation-validated'' must not be read as more. Hardware validates \emph{airtime} on a
-two-node link; contention remains simulation-only. The utilisation ceiling is measured at one node
-count. Composed energy is a lower bound by roughly $10$--$14\%$, and the residual is uncharged
-prototype framing overhead --- measured, stated, not corrected away.
+On hardware, two radios gave the loss of a link, the access rule between two saturated
+stations, and a failed prediction of the loss between two busy ones (\Cref{sec:hardware}); a
+figure for airtime that earlier versions carried is withdrawn there. No capacity was measured,
+and the capacities of \Cref{ch:codesign} rest on simulation, of one collision domain in which
+every station hears every other. Unequal received power and capture were simulated and raise
+them by about an eighth (\Cref{sec:spread}); hidden stations were not. Record sizes come from a synthetic
+generator, checked against twelve public flight logs at $0.2$\,s spacing and above and, at the
+$20$\,ms of the operating point, against one flight of an autopilot in simulation; no flight log
+recorded at $50$\,Hz was found. Only the sender's energy is metered, in both formats, with a
+sensor never checked against a reference load; the lean sender costs \enLeanOverFirst{} times the
+first format's energy per record in this prototype; and the first format's composed energy is a
+lower bound by roughly $7$--$14\%$, the residual being uncharged prototype framing overhead. The receiver-CPU ceilings charge cryptography only, and the
+prototype's decoder costs several times more (\Cref{ch:codesign}). Capacity was simulated at
+one PHY rate, and for batches other than one record and four only as a test of the capacity
+rule (\Cref{tab:batchdim}): nothing else was evaluated at them.
 
 \subsection{The low-rate arm}
 
@@ -60,46 +114,73 @@ confidence interval is a knife edge.
 
 \subsection{The boundary itself}
 
-Three of the four excluded data rates are arithmetic. The fourth was excluded by this design's own
-frame header, and this thesis says so and quantifies the recovery. A reader should treat the
-three-rate claim as durable and the fourth as an engineering statement about \emph{this} wire
-format.
+The exclusion is conditional: on LoRaWAN's regional payload limits, on a public-key signature in
+every frame, on no loss recovery, on a verifiability target no looser than the loss rate, and,
+for \exclFmtCount{} of its \exclCount{} data rates, on the frame format of this thesis. It was
+also stated wrongly twice before reaching its present form (\Cref{sec:excl-history}), and
+narrowed a third time when a review of 2026-10-09 separated what belongs to the problem from
+what belongs to the format; a reader is entitled to weigh that. What has not moved in any version is the part that rests on one
+inequality: $64 > 51$.
+
+\subsection{Security scope}
+
+Confidentiality, availability, key management and protection against an attacker who delays
+frames are outside the design (\Cref{sec:threat}). With one chain link per frame, continuity
+inside a frame rests on the frame signature alone, and showing one record to a third party means
+showing its frame. The receiver keeps every accepted frame for that purpose, which it did not
+do until a review of 2026-10-09 (\Cref{sec:threat}). The security argument of this thesis is
+informal throughout.
 
 \section{Future work}
 
-\subsection{Immediately available, and cheap}
+\subsection{Small}
 
 \begin{description}
-\item[Invariance of the utilisation ceiling in $N$.] Frame-size invariance was measured; node-count
-invariance was not. One additional sweep closes it, and the scenario already exists.
-
 \item[Pricing implicit certificates.] The certificate accounting charges an explicit certificate
 periodically. Implicit (ECQV) certificates are the standard smaller alternative and were never
 modelled. The current charge is an upper bound, which cuts against this work's own comparison ---
 so the gap is safe but should be closed.
 
-\item[An integer-keyed wire profile, adopted rather than measured.] \Cref{ch:lowrate} measures it
-and declines to adopt it, because the format is frozen for reproducibility. A successor should
-adopt it, re-freeze, and report the boundary that results --- which will be a \emph{smaller}
-exclusion and a better-engineered system.
+\item[Calibrating the meter.] The lean sender is timed and metered on the board
+(\Cref{ch:codesign}). The meter itself has never been checked against a known load
+(\Cref{sec:energy-uncertainty}): two sensors agree with each other within \enCtlVsJuly\%, which
+is not the same thing. One session with a reference resistor closes it.
+
+\item[A compiled receiver.] The prototype's receiver is interpreted and serves \ncpuProto{}
+nodes per core where cryptography alone would allow \ncpuBatch; measured on the board, it needs
+three of the four cores for the design's neighbourhood. A receiver in a compiled language,
+verifying signatures in batches, is what the capacity figures assume.
+
+\item[Telemetry at the operating rate.] Public flight logs carry position at 5\,Hz, and the
+delta record at 20\,ms spacing rests on the generator and on one simulated flight of one
+autopilot. A log recorded at 50\,Hz on a real vehicle would settle it.
 \end{description}
 
-\subsection{Substantial, and worth doing}
+\subsection{Substantial}
 
 \begin{description}
-\item[Channel-access delay in the freshness model.] The freshness constraint that \emph{sets} the
-batch omits the dominant delay term at high load. It is currently mitigated by reporting
-utilisation alongside, not by fixing the model. A DCF access-delay term would make the freshness
-constraint credible at high utilisation, where it currently is not.
+\item[An analytical channel-access delay.] The constraint that \emph{sets} the batch counts fill
+time and airtime. \Cref{tab:fresh} adds the channel-access delay as simulated at the
+capacity point --- under a millisecond on average and \frChMax\,ms at worst, against a fill time
+of \frFill\,ms --- so the batch is not affected; but the figure exists only where a simulation
+was run. An access-delay term from the model of \Cref{sec:why} would let the constraint be
+evaluated at any load.
+
+\item[Mobility and more than one collision domain on 802.11.] Both are outside the contention
+model used here, which has no position term. They need a different scenario, with hidden
+terminals and capture, and the contention experiment below to anchor it.
 
 \item[Multi-spreading-factor capacity on the low-rate arm.] Each run fixes one data rate,
 forfeiting the quasi-orthogonality that supplies much of a real deployment's capacity. That answers
 a different question --- deployment capacity rather than per-configuration feasibility --- and it
 is the question an operator would ask next.
 
-\item[Contention on real hardware.] Two radios validate airtime; the contention model, which
-carries the capacity envelope, remains simulation-only. A rig with enough nodes to reach the
-interesting region of the curve is the single most valuable missing measurement in this thesis.
+\item[Contention among more than two radios.] Two radios keep the access rule where contention
+can be isolated, and do not space their own queued frames as the standard does
+(\Cref{sec:hardware}). Three to five radios in one collision domain would not reach the
+crossing, but each could send rarely enough to hold one frame at a time, which is the regime the
+capacities are in. The predictions for them are registered. It remains the single most valuable
+missing measurement in this thesis.
 
 \item[A post-quantum arm that is implemented rather than projected.] The projections show that
 batching cannot rescue post-quantum signature sizes, because freshness caps the batch and one
@@ -107,21 +188,22 @@ signature plus header already exceeds the frame budget. That is a strong negativ
 deserves measurement rather than arithmetic.
 \end{description}
 
-\subsection{Speculative, and stated as such}
+\subsection{Speculative}
 
 The exclusion bound is link-agnostic. Instantiating it on other constrained bands --- and on the
 signature sizes the post-quantum standards actually mandate --- would say which of tomorrow's radio
 and cryptographic combinations are feasible before either is deployed. That is the natural
-generalisation, and it is the one this author would pursue.
+generalisation of this work.
 
 \section{Closing}
 
 This thesis introduces no new cryptographic primitive and makes no claim to one. Its contribution
 is a reproducible co-design of existing, standardised components; the quantified trade-offs that
-co-design entails; the boundary beyond which no choice of those components helps at all; and an
+co-design entails; the boundary beyond which no batch size helps, with its conditions; and an
 account --- unusually explicit for a thesis --- of the errors made in establishing that boundary and
 the classes of defect that survived the safeguards intended to prevent them.
 
-The most durable result here is also the smallest one that survived scrutiny: on the longest-range
-EU868 data rates, a $64$-byte signature does not fit a $51$-byte payload, and nothing in the design
-space changes that.
+The most durable result here is also the smallest one that survived scrutiny: on five EU863-870
+data rates, a $64$-byte signature does not fit a $51$-byte payload, and no batch size, encoding
+or placement changes that. A shorter authenticator does, and \Cref{ch:lowrate} says what it
+buys.

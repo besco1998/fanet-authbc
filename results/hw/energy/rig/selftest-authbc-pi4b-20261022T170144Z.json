@@ -1,0 +1,72 @@
+{
+  "schema": "authbc.rig.selftest/1",
+  "host": "authbc-pi4b",
+  "run_utc": "20261022T170144Z",
+  "platform": "Linux-6.12.93+rpt-rpi-v8-aarch64-with-glibc2.36",
+  "python": "3.12.13",
+  "gpio_backend": "sysfs(+512)",
+  "cores": 4,
+  "before": {
+    "temp": "temp=48.2'C",
+    "throttled": "throttled=0x0",
+    "governor": "performance",
+    "undervoltage_events": "0"
+  },
+  "after": {
+    "temp": "temp=53.0'C",
+    "throttled": "throttled=0x0",
+    "governor": "performance",
+    "undervoltage_events": "0"
+  },
+  "steps": [
+    {
+      "line_high": false,
+      "busy_cores": 0,
+      "asked_s": 3.0,
+      "duration_s": 3.0007,
+      "t_start_utc": "2026-10-22T17:01:19.156479+00:00"
+    },
+    {
+      "line_high": true,
+      "busy_cores": 0,
+      "asked_s": 5.0,
+      "duration_s": 5.0006,
+      "t_start_utc": "2026-10-22T17:01:22.157284+00:00"
+    },
+    {
+      "line_high": false,
+      "busy_cores": 0,
+      "asked_s": 2.0,
+      "duration_s": 2.0005,
+      "t_start_utc": "2026-10-22T17:01:27.157958+00:00"
+    },
+    {
+      "line_high": true,
+      "busy_cores": 1,
+      "asked_s": 5.0,
+      "duration_s": 5.0005,
+      "t_start_utc": "2026-10-22T17:01:29.158494+00:00"
+    },
+    {
+      "line_high": false,
+      "busy_cores": 0,
+      "asked_s": 2.0,
+      "duration_s": 2.0005,
+      "t_start_utc": "2026-10-22T17:01:34.159064+00:00"
+    },
+    {
+      "line_high": true,
+      "busy_cores": 4,
+      "asked_s": 5.0,
+      "duration_s": 5.0026,
+      "t_start_utc": "2026-10-22T17:01:36.159659+00:00"
+    },
+    {
+      "line_high": false,
+      "busy_cores": 0,
+      "asked_s": 3.0,
+      "duration_s": 3.0006,
+      "t_start_utc": "2026-10-22T17:01:41.162271+00:00"
+    }
+  ]
+}

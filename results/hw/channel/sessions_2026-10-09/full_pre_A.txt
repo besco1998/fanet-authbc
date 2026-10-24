@@ -1,0 +1,2 @@
+pi-a 2026-10-09T03:38:13+03:00 governor performance rmem_max 4194304 temp temp=47.7'C throttled throttled=0x0 load 0.13 0.17 0.09 timers 0
+udp_before: Udp: 5443 58 0 3692 0 0 0 55 0

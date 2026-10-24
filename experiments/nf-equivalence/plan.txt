@@ -1,0 +1,14 @@
+# Revision A12 (predictions/A12.md): N·f fixed at each crossing, split over fewer, faster nodes.
+# One sending period of jitter (the published source), 30 seeds. Largest runs first.
+# Run: python ns3/run_nmax_direct.py --plan experiments/nf-equivalence/plan.txt \
+#        --out-stem ns3_nf_equivalence --no-summary --workers 4
+D period 124
+NFD25 period 62
+NFB25 period 70
+NFD50 period 31
+C period 29 35
+NFB97 period 18
+NFD97 period 16
+NFB195 period 9
+NFD194 period 8
+NFB350 period 5

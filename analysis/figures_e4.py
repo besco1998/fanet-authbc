@@ -88,7 +88,8 @@ def main() -> None:
              fontsize=6, color="gray")
     fig.tight_layout()
     OUT.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(OUT, dpi=150)
+    # No "Software" tag: the file must not name the matplotlib release that drew it.
+    fig.savefig(OUT, dpi=150, metadata={"Software": None})
     print(f"wrote {OUT}")
 
 

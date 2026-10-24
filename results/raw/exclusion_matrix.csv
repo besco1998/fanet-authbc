@@ -1,0 +1,119 @@
+# python=3.12.3
+# platform=Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=exclusion_matrix
+# config_hash=95804a241b463866
+dr,modulation,payload_not_repeater,payload_repeater,auth_object,auth_bytes,design,frame_floor_bytes,frame_min_bytes,frame_max_bytes,signature_alone_overflows,verdict,verdict_repeater
+0,LoRa SF12 / 125 kHz,51,51,Ed25519 / ECDSA-P256 signature,64,first,146,158,169,1,excluded,excluded
+0,LoRa SF12 / 125 kHz,51,51,Ed25519 / ECDSA-P256 signature,64,lean,124,134,147,1,excluded,excluded
+0,LoRa SF12 / 125 kHz,51,51,Ed25519 / ECDSA-P256 signature,64,lean without on-air chain link,89,99,112,1,excluded,excluded
+1,LoRa SF11 / 125 kHz,51,51,Ed25519 / ECDSA-P256 signature,64,first,146,158,169,1,excluded,excluded
+1,LoRa SF11 / 125 kHz,51,51,Ed25519 / ECDSA-P256 signature,64,lean,124,134,147,1,excluded,excluded
+1,LoRa SF11 / 125 kHz,51,51,Ed25519 / ECDSA-P256 signature,64,lean without on-air chain link,89,99,112,1,excluded,excluded
+2,LoRa SF10 / 125 kHz,51,51,Ed25519 / ECDSA-P256 signature,64,first,146,158,169,1,excluded,excluded
+2,LoRa SF10 / 125 kHz,51,51,Ed25519 / ECDSA-P256 signature,64,lean,124,134,147,1,excluded,excluded
+2,LoRa SF10 / 125 kHz,51,51,Ed25519 / ECDSA-P256 signature,64,lean without on-air chain link,89,99,112,1,excluded,excluded
+3,LoRa SF9 / 125 kHz,115,115,Ed25519 / ECDSA-P256 signature,64,first,146,158,169,0,excluded,excluded
+3,LoRa SF9 / 125 kHz,115,115,Ed25519 / ECDSA-P256 signature,64,lean,124,134,147,0,excluded,excluded
+3,LoRa SF9 / 125 kHz,115,115,Ed25519 / ECDSA-P256 signature,64,lean without on-air chain link,89,99,112,0,feasible,feasible
+4,LoRa SF8 / 125 kHz,242,222,Ed25519 / ECDSA-P256 signature,64,first,146,158,169,0,feasible,feasible
+4,LoRa SF8 / 125 kHz,242,222,Ed25519 / ECDSA-P256 signature,64,lean,124,134,147,0,feasible,feasible
+4,LoRa SF8 / 125 kHz,242,222,Ed25519 / ECDSA-P256 signature,64,lean without on-air chain link,89,99,112,0,feasible,feasible
+5,LoRa SF7 / 125 kHz,242,222,Ed25519 / ECDSA-P256 signature,64,first,146,158,169,0,feasible,feasible
+5,LoRa SF7 / 125 kHz,242,222,Ed25519 / ECDSA-P256 signature,64,lean,124,134,147,0,feasible,feasible
+5,LoRa SF7 / 125 kHz,242,222,Ed25519 / ECDSA-P256 signature,64,lean without on-air chain link,89,99,112,0,feasible,feasible
+6,LoRa SF7 / 250 kHz,242,222,Ed25519 / ECDSA-P256 signature,64,first,146,158,169,0,feasible,feasible
+6,LoRa SF7 / 250 kHz,242,222,Ed25519 / ECDSA-P256 signature,64,lean,124,134,147,0,feasible,feasible
+6,LoRa SF7 / 250 kHz,242,222,Ed25519 / ECDSA-P256 signature,64,lean without on-air chain link,89,99,112,0,feasible,feasible
+7,FSK 50 kb/s,242,222,Ed25519 / ECDSA-P256 signature,64,first,146,158,169,0,feasible,feasible
+7,FSK 50 kb/s,242,222,Ed25519 / ECDSA-P256 signature,64,lean,124,134,147,0,feasible,feasible
+7,FSK 50 kb/s,242,222,Ed25519 / ECDSA-P256 signature,64,lean without on-air chain link,89,99,112,0,feasible,feasible
+8,"LR-FHSS CR1/3, 137 kHz",50,50,Ed25519 / ECDSA-P256 signature,64,first,146,158,169,1,excluded,excluded
+8,"LR-FHSS CR1/3, 137 kHz",50,50,Ed25519 / ECDSA-P256 signature,64,lean,124,134,147,1,excluded,excluded
+8,"LR-FHSS CR1/3, 137 kHz",50,50,Ed25519 / ECDSA-P256 signature,64,lean without on-air chain link,89,99,112,1,excluded,excluded
+9,"LR-FHSS CR2/3, 137 kHz",115,115,Ed25519 / ECDSA-P256 signature,64,first,146,158,169,0,excluded,excluded
+9,"LR-FHSS CR2/3, 137 kHz",115,115,Ed25519 / ECDSA-P256 signature,64,lean,124,134,147,0,excluded,excluded
+9,"LR-FHSS CR2/3, 137 kHz",115,115,Ed25519 / ECDSA-P256 signature,64,lean without on-air chain link,89,99,112,0,feasible,feasible
+10,"LR-FHSS CR1/3, 336 kHz",50,50,Ed25519 / ECDSA-P256 signature,64,first,146,158,169,1,excluded,excluded
+10,"LR-FHSS CR1/3, 336 kHz",50,50,Ed25519 / ECDSA-P256 signature,64,lean,124,134,147,1,excluded,excluded
+10,"LR-FHSS CR1/3, 336 kHz",50,50,Ed25519 / ECDSA-P256 signature,64,lean without on-air chain link,89,99,112,1,excluded,excluded
+11,"LR-FHSS CR2/3, 336 kHz",115,115,Ed25519 / ECDSA-P256 signature,64,first,146,158,169,0,excluded,excluded
+11,"LR-FHSS CR2/3, 336 kHz",115,115,Ed25519 / ECDSA-P256 signature,64,lean,124,134,147,0,excluded,excluded
+11,"LR-FHSS CR2/3, 336 kHz",115,115,Ed25519 / ECDSA-P256 signature,64,lean without on-air chain link,89,99,112,0,feasible,feasible
+0,LoRa SF12 / 125 kHz,51,51,BLS12-381 minimal signature,48,first,130,142,153,0,excluded,excluded
+0,LoRa SF12 / 125 kHz,51,51,BLS12-381 minimal signature,48,lean,108,118,131,0,excluded,excluded
+0,LoRa SF12 / 125 kHz,51,51,BLS12-381 minimal signature,48,lean without on-air chain link,73,83,96,0,excluded,excluded
+1,LoRa SF11 / 125 kHz,51,51,BLS12-381 minimal signature,48,first,130,142,153,0,excluded,excluded
+1,LoRa SF11 / 125 kHz,51,51,BLS12-381 minimal signature,48,lean,108,118,131,0,excluded,excluded
+1,LoRa SF11 / 125 kHz,51,51,BLS12-381 minimal signature,48,lean without on-air chain link,73,83,96,0,excluded,excluded
+2,LoRa SF10 / 125 kHz,51,51,BLS12-381 minimal signature,48,first,130,142,153,0,excluded,excluded
+2,LoRa SF10 / 125 kHz,51,51,BLS12-381 minimal signature,48,lean,108,118,131,0,excluded,excluded
+2,LoRa SF10 / 125 kHz,51,51,BLS12-381 minimal signature,48,lean without on-air chain link,73,83,96,0,excluded,excluded
+3,LoRa SF9 / 125 kHz,115,115,BLS12-381 minimal signature,48,first,130,142,153,0,excluded,excluded
+3,LoRa SF9 / 125 kHz,115,115,BLS12-381 minimal signature,48,lean,108,118,131,0,excluded for this telemetry,excluded for this telemetry
+3,LoRa SF9 / 125 kHz,115,115,BLS12-381 minimal signature,48,lean without on-air chain link,73,83,96,0,feasible,feasible
+4,LoRa SF8 / 125 kHz,242,222,BLS12-381 minimal signature,48,first,130,142,153,0,feasible,feasible
+4,LoRa SF8 / 125 kHz,242,222,BLS12-381 minimal signature,48,lean,108,118,131,0,feasible,feasible
+4,LoRa SF8 / 125 kHz,242,222,BLS12-381 minimal signature,48,lean without on-air chain link,73,83,96,0,feasible,feasible
+5,LoRa SF7 / 125 kHz,242,222,BLS12-381 minimal signature,48,first,130,142,153,0,feasible,feasible
+5,LoRa SF7 / 125 kHz,242,222,BLS12-381 minimal signature,48,lean,108,118,131,0,feasible,feasible
+5,LoRa SF7 / 125 kHz,242,222,BLS12-381 minimal signature,48,lean without on-air chain link,73,83,96,0,feasible,feasible
+6,LoRa SF7 / 250 kHz,242,222,BLS12-381 minimal signature,48,first,130,142,153,0,feasible,feasible
+6,LoRa SF7 / 250 kHz,242,222,BLS12-381 minimal signature,48,lean,108,118,131,0,feasible,feasible
+6,LoRa SF7 / 250 kHz,242,222,BLS12-381 minimal signature,48,lean without on-air chain link,73,83,96,0,feasible,feasible
+7,FSK 50 kb/s,242,222,BLS12-381 minimal signature,48,first,130,142,153,0,feasible,feasible
+7,FSK 50 kb/s,242,222,BLS12-381 minimal signature,48,lean,108,118,131,0,feasible,feasible
+7,FSK 50 kb/s,242,222,BLS12-381 minimal signature,48,lean without on-air chain link,73,83,96,0,feasible,feasible
+8,"LR-FHSS CR1/3, 137 kHz",50,50,BLS12-381 minimal signature,48,first,130,142,153,0,excluded,excluded
+8,"LR-FHSS CR1/3, 137 kHz",50,50,BLS12-381 minimal signature,48,lean,108,118,131,0,excluded,excluded
+8,"LR-FHSS CR1/3, 137 kHz",50,50,BLS12-381 minimal signature,48,lean without on-air chain link,73,83,96,0,excluded,excluded
+9,"LR-FHSS CR2/3, 137 kHz",115,115,BLS12-381 minimal signature,48,first,130,142,153,0,excluded,excluded
+9,"LR-FHSS CR2/3, 137 kHz",115,115,BLS12-381 minimal signature,48,lean,108,118,131,0,excluded for this telemetry,excluded for this telemetry
+9,"LR-FHSS CR2/3, 137 kHz",115,115,BLS12-381 minimal signature,48,lean without on-air chain link,73,83,96,0,feasible,feasible
+10,"LR-FHSS CR1/3, 336 kHz",50,50,BLS12-381 minimal signature,48,first,130,142,153,0,excluded,excluded
+10,"LR-FHSS CR1/3, 336 kHz",50,50,BLS12-381 minimal signature,48,lean,108,118,131,0,excluded,excluded
+10,"LR-FHSS CR1/3, 336 kHz",50,50,BLS12-381 minimal signature,48,lean without on-air chain link,73,83,96,0,excluded,excluded
+11,"LR-FHSS CR2/3, 336 kHz",115,115,BLS12-381 minimal signature,48,first,130,142,153,0,excluded,excluded
+11,"LR-FHSS CR2/3, 336 kHz",115,115,BLS12-381 minimal signature,48,lean,108,118,131,0,excluded for this telemetry,excluded for this telemetry
+11,"LR-FHSS CR2/3, 336 kHz",115,115,BLS12-381 minimal signature,48,lean without on-air chain link,73,83,96,0,feasible,feasible
+0,LoRa SF12 / 125 kHz,51,51,MAVLink 2 symmetric tag,13,first,94,106,117,0,excluded,excluded
+0,LoRa SF12 / 125 kHz,51,51,MAVLink 2 symmetric tag,13,lean,72,82,95,0,excluded,excluded
+0,LoRa SF12 / 125 kHz,51,51,MAVLink 2 symmetric tag,13,lean without on-air chain link,37,47,60,0,marginal,marginal
+1,LoRa SF11 / 125 kHz,51,51,MAVLink 2 symmetric tag,13,first,94,106,117,0,excluded,excluded
+1,LoRa SF11 / 125 kHz,51,51,MAVLink 2 symmetric tag,13,lean,72,82,95,0,excluded,excluded
+1,LoRa SF11 / 125 kHz,51,51,MAVLink 2 symmetric tag,13,lean without on-air chain link,37,47,60,0,marginal,marginal
+2,LoRa SF10 / 125 kHz,51,51,MAVLink 2 symmetric tag,13,first,94,106,117,0,excluded,excluded
+2,LoRa SF10 / 125 kHz,51,51,MAVLink 2 symmetric tag,13,lean,72,82,95,0,excluded,excluded
+2,LoRa SF10 / 125 kHz,51,51,MAVLink 2 symmetric tag,13,lean without on-air chain link,37,47,60,0,marginal,marginal
+3,LoRa SF9 / 125 kHz,115,115,MAVLink 2 symmetric tag,13,first,94,106,117,0,marginal,marginal
+3,LoRa SF9 / 125 kHz,115,115,MAVLink 2 symmetric tag,13,lean,72,82,95,0,feasible,feasible
+3,LoRa SF9 / 125 kHz,115,115,MAVLink 2 symmetric tag,13,lean without on-air chain link,37,47,60,0,feasible,feasible
+4,LoRa SF8 / 125 kHz,242,222,MAVLink 2 symmetric tag,13,first,94,106,117,0,feasible,feasible
+4,LoRa SF8 / 125 kHz,242,222,MAVLink 2 symmetric tag,13,lean,72,82,95,0,feasible,feasible
+4,LoRa SF8 / 125 kHz,242,222,MAVLink 2 symmetric tag,13,lean without on-air chain link,37,47,60,0,feasible,feasible
+5,LoRa SF7 / 125 kHz,242,222,MAVLink 2 symmetric tag,13,first,94,106,117,0,feasible,feasible
+5,LoRa SF7 / 125 kHz,242,222,MAVLink 2 symmetric tag,13,lean,72,82,95,0,feasible,feasible
+5,LoRa SF7 / 125 kHz,242,222,MAVLink 2 symmetric tag,13,lean without on-air chain link,37,47,60,0,feasible,feasible
+6,LoRa SF7 / 250 kHz,242,222,MAVLink 2 symmetric tag,13,first,94,106,117,0,feasible,feasible
+6,LoRa SF7 / 250 kHz,242,222,MAVLink 2 symmetric tag,13,lean,72,82,95,0,feasible,feasible
+6,LoRa SF7 / 250 kHz,242,222,MAVLink 2 symmetric tag,13,lean without on-air chain link,37,47,60,0,feasible,feasible
+7,FSK 50 kb/s,242,222,MAVLink 2 symmetric tag,13,first,94,106,117,0,feasible,feasible
+7,FSK 50 kb/s,242,222,MAVLink 2 symmetric tag,13,lean,72,82,95,0,feasible,feasible
+7,FSK 50 kb/s,242,222,MAVLink 2 symmetric tag,13,lean without on-air chain link,37,47,60,0,feasible,feasible
+8,"LR-FHSS CR1/3, 137 kHz",50,50,MAVLink 2 symmetric tag,13,first,94,106,117,0,excluded,excluded
+8,"LR-FHSS CR1/3, 137 kHz",50,50,MAVLink 2 symmetric tag,13,lean,72,82,95,0,excluded,excluded
+8,"LR-FHSS CR1/3, 137 kHz",50,50,MAVLink 2 symmetric tag,13,lean without on-air chain link,37,47,60,0,marginal,marginal
+9,"LR-FHSS CR2/3, 137 kHz",115,115,MAVLink 2 symmetric tag,13,first,94,106,117,0,marginal,marginal
+9,"LR-FHSS CR2/3, 137 kHz",115,115,MAVLink 2 symmetric tag,13,lean,72,82,95,0,feasible,feasible
+9,"LR-FHSS CR2/3, 137 kHz",115,115,MAVLink 2 symmetric tag,13,lean without on-air chain link,37,47,60,0,feasible,feasible
+10,"LR-FHSS CR1/3, 336 kHz",50,50,MAVLink 2 symmetric tag,13,first,94,106,117,0,excluded,excluded
+10,"LR-FHSS CR1/3, 336 kHz",50,50,MAVLink 2 symmetric tag,13,lean,72,82,95,0,excluded,excluded
+10,"LR-FHSS CR1/3, 336 kHz",50,50,MAVLink 2 symmetric tag,13,lean without on-air chain link,37,47,60,0,marginal,marginal
+11,"LR-FHSS CR2/3, 336 kHz",115,115,MAVLink 2 symmetric tag,13,first,94,106,117,0,marginal,marginal
+11,"LR-FHSS CR2/3, 336 kHz",115,115,MAVLink 2 symmetric tag,13,lean,72,82,95,0,feasible,feasible
+11,"LR-FHSS CR2/3, 336 kHz",115,115,MAVLink 2 symmetric tag,13,lean without on-air chain link,37,47,60,0,feasible,feasible

@@ -1,0 +1,237 @@
+theory AUTHBC_Frames
+begin
+
+/*
+ * Revision A6 (docs/AUTHBC Revision Plan.md; registration predictions/A6.md).
+ *
+ * The lean frame as a protocol: a sender signs, per frame, its own identity, a strictly
+ * increasing sequence number, the chain link (the hash of its previous frame), the records
+ * and the timestamp of the newest record. A receiver verifies the signature, accepts only a
+ * sequence number newer than the last it accepted from that sender, and keeps every frame it
+ * accepted. What maps to what in the code (src/authbc/placement/):
+ *
+ *   frame tuple <'authbc', S, seq, link, data, t>   wire_v2.FrameV2 under canonical CBOR
+ *   sign / verify                                   build_B_v2 / verify_v2 (Ed25519)
+ *   Rcv state, the Less restriction                 ledger.store.Store (replay = not newer)
+ *   !Stored, rule Evidence                          LeanReceiver._frames, .evidence
+ *   rule Accept_gap / Accept_next                   a sequence number that skips
+ *   #ifdef TIME, the Fresh restriction              placement/freshness_rule.py (A5)
+ *
+ * ASSUMPTION A1 (stated, not proven here): canonical encoding is injective — two different
+ * frames never encode to the same bytes. Tamarin's tuples are free constructors, so the model
+ * has it by construction. Evidence that the code has it too: the byte-identity tests of the
+ * canonical encoder and the exhaustive bit-flip census of one frame (tests/unit/placement).
+ *
+ * The records of a frame are abstracted to one fresh value ~data; b records signed together
+ * are one term under one signature, so b does not appear.
+ *
+ * Time (only with -D=TIME): one global clock of natural numbers that only advances. A sender
+ * stamps the current tick; a receiver reads the current tick and, with TIME, accepts a frame
+ * only if it was stamped at most one tick ago. Without TIME the receiver reads the clock but
+ * does not check it — the published receiver.
+ */
+
+builtins: signing, hashing, natural-numbers
+
+/* ---------------------------------------------------------------- keys and the adversary */
+
+rule Register_key:
+    [ Fr(~sk) ]
+  --[ OnlyOnce(<'key', $S>) ]->
+    [ !Ltk($S, ~sk), !Pk($S, pk(~sk)), Out(pk(~sk)) ]
+
+// The adversary may compromise any sender's key (the plan's Reveal rule).
+rule Reveal_key:
+    [ !Ltk($S, sk) ]
+  --[ Reveal($S) ]->
+    [ Out(sk) ]
+
+/* ---------------------------------------------------------------- the clock */
+
+rule Clock_start:
+    [ ]
+  --[ OnlyOnce('clock'), Now(%1) ]->
+    [ Clock(%1) ]
+
+rule Clock_tick:
+    [ Clock(%t) ]
+  --[ Now(%t %+ %1) ]->
+    [ Clock(%t %+ %1) ]
+
+/* ---------------------------------------------------------------- the sender */
+
+rule Sender_start:
+    [ !Ltk($S, sk) ]
+  --[ OnlyOnce(<'sender', $S>) ]->
+    [ Snd($S, %1, 'genesis') ]
+
+rule Send:
+    let frame = <'authbc', $S, %seq, link, ~data, %t>
+    in
+    [ Snd($S, %seq, link), !Ltk($S, sk), Fr(~data), Clock(%t) ]
+  --[ Sent($S, %seq, link, ~data, %t) ]->
+    [ Snd($S, %seq %+ %1, h(frame)), Clock(%t),
+      Out(<frame, sign(frame, sk)>) ]
+
+/* ---------------------------------------------------------------- the receiver */
+
+rule Receiver_start:
+    [ !Pk($S, pkS) ]
+  --[ OnlyOnce(<'receiver', $R, $S>) ]->
+    [ RcvFirst($R, $S) ]
+
+// The first frame a receiver takes from a sender: any sequence number.
+rule Accept_first:
+    let frame = <'authbc', $S, %seq, link, data, %t>
+    in
+    [ RcvFirst($R, $S), In(<frame, sig>), !Pk($S, pkS), Clock(%now) ]
+  --[ Eq(verify(sig, frame, pkS), true),
+      Fresh(%t, %now),
+      Accept($R, $S, %seq, link, data, %t, %now) ]->
+    [ Rcv($R, $S, %seq, h(frame)), Clock(%now), !Stored($R, $S, %seq, frame) ]
+
+// The next frame in sequence: its link must be the hash of the frame accepted last.
+rule Accept_next:
+    let frame = <'authbc', $S, %last %+ %1, last_hash, data, %t>
+    in
+    [ Rcv($R, $S, %last, last_hash), In(<frame, sig>), !Pk($S, pkS), Clock(%now) ]
+  --[ Eq(verify(sig, frame, pkS), true),
+      Fresh(%t, %now),
+      Accept($R, $S, %last %+ %1, last_hash, data, %t, %now),
+      Contiguous($R, $S, %last, %last %+ %1) ]->
+    [ Rcv($R, $S, %last %+ %1, h(frame)), Clock(%now),
+      !Stored($R, $S, %last %+ %1, frame) ]
+
+// A frame that skips one or more sequence numbers: accepted, and the gap is recorded.
+rule Accept_gap:
+    let frame = <'authbc', $S, %seq, link, data, %t>
+    in
+    [ Rcv($R, $S, %last, last_hash), In(<frame, sig>), !Pk($S, pkS), Clock(%now) ]
+  --[ Eq(verify(sig, frame, pkS), true),
+      Less(%last %+ %1, %seq),
+      Fresh(%t, %now),
+      Accept($R, $S, %seq, link, data, %t, %now),
+      Gap($R, $S, %last, %seq) ]->
+    [ Rcv($R, $S, %seq, h(frame)), Clock(%now), !Stored($R, $S, %seq, frame) ]
+
+// Two valid frames of one sender with one sequence number and different contents: kept as
+// transferable evidence (LeanReceiver.evidence). Nothing is accepted by this rule.
+rule Evidence:
+    let held    = <'authbc', $S, %seq, l1, d1, %t1>
+        offered = <'authbc', $S, %seq, l2, d2, %t2>
+    in
+    [ !Stored($R, $S, %seq, held), In(<offered, sig>), !Pk($S, pkS) ]
+  --[ Eq(verify(sig, offered, pkS), true), Neq(held, offered),
+      Equivocation($R, $S, %seq) ]->
+    [ ]
+
+/* ---------------------------------------------------------------- restrictions */
+
+restriction Equality:
+  "All x y #i. Eq(x, y) @ #i ==> x = y"
+
+restriction Inequality:
+  "All x #i. Neq(x, x) @ #i ==> F"
+
+restriction Less_than:
+  "All x y #i. Less(x, y) @ #i ==> x << y"
+
+restriction Only_once:
+  "All x #i #j. OnlyOnce(x) @ #i & OnlyOnce(x) @ #j ==> #i = #j"
+
+#ifdef TIME
+// The receiver's window (A5): stamped at most one tick before now.
+restriction Fresh_window:
+  "All %t %now #i. Fresh(%t, %now) @ #i ==> (%now = %t) | (%now = %t %+ %1) | (%now << %t)"
+#endif
+
+/* ---------------------------------------------------------------- sanity: it runs */
+
+lemma executable_two_frames_in_order:
+  exists-trace
+  "Ex R S l1 d1 t1 n1 l2 d2 t2 n2 #i #j.
+      Accept(R, S, %1, l1, d1, t1, n1) @ #i & Accept(R, S, %1 %+ %1, l2, d2, t2, n2) @ #j
+    & #i < #j & not (Ex X #r. Reveal(X) @ #r)"
+
+/* ---------------------------------------------------------------- 1. origin and integrity */
+
+// Every accepted frame was sent, with exactly this content, by the sender it names, unless
+// that sender's key was revealed.
+lemma origin_and_integrity:
+  "All R S seq link data t now #i.
+      Accept(R, S, seq, link, data, t, now) @ #i
+    ==> (Ex #j. Sent(S, seq, link, data, t) @ #j & #j < #i)
+      | (Ex #r. Reveal(S) @ #r & #r < #i)"
+
+/* ---------------------------------------------------------------- 2. no replay */
+
+// A receiver accepts a sequence number of a sender at most once.
+lemma no_replay:
+  "All R S seq l1 d1 t1 n1 l2 d2 t2 n2 #i #j.
+      Accept(R, S, seq, l1, d1, t1, n1) @ #i & Accept(R, S, seq, l2, d2, t2, n2) @ #j
+    ==> #i = #j"
+
+// With 1 and 2 together: injective agreement — each sent frame accepted at most once.
+lemma injective_agreement:
+  "All R S seq link data t now #i.
+      Accept(R, S, seq, link, data, t, now) @ #i
+    ==> ( (Ex #j. Sent(S, seq, link, data, t) @ #j & #j < #i)
+          & not (Ex n2 #i2. Accept(R, S, seq, link, data, t, n2) @ #i2 & not (#i2 = #i)) )
+      | (Ex #r. Reveal(S) @ #r & #r < #i)"
+
+/* ---------------------------------------------------------------- 3. equivocation evidence */
+
+// An honest sender never signs two different frames with one sequence number, so evidence of
+// equivocation exists only for a sender whose key was revealed (or that misbehaves, which the
+// model can only express as the adversary holding its key).
+lemma equivocation_implies_revealed_key:
+  "All R S seq #i. Equivocation(R, S, seq) @ #i ==> (Ex #r. Reveal(S) @ #r & #r < #i)"
+
+// The evidence rule can fire: an adversary with the key can make a receiver hold it.
+lemma equivocation_evidence_reachable:
+  exists-trace
+  "Ex R S seq #i. Equivocation(R, S, seq) @ #i"
+
+/* ---------------------------------------------------------------- 4. continuity */
+
+// Contiguity is checked by the chain link, not trusted from the sequence number: when a
+// receiver takes seq+1 directly after seq, the frame it took at seq is the one the sender
+// sent at seq, and the new frame's link is that frame's hash, as the sender computed it.
+lemma continuity_follows_the_senders_chain:
+  "All R S last next #i.
+      Contiguous(R, S, last, next) @ #i
+    ==> (Ex l d t l2 d2 t2 #a #b.
+            Sent(S, last, l, d, t) @ #a & Sent(S, next, l2, d2, t2) @ #b
+          & l2 = h(<'authbc', S, last, l, d, t>))
+      | (Ex #r. Reveal(S) @ #r & #r < #i)"
+
+// A receiver that takes seq and then seq+2, never seq+1, records a gap.
+lemma a_skipped_frame_is_detected:
+  "All R S %n l1 d1 t1 a1 l3 d3 t3 a3 #i #k.
+      Accept(R, S, %n, l1, d1, t1, a1) @ #i
+    & Accept(R, S, %n %+ %1 %+ %1, l3, d3, t3, a3) @ #k & #i < #k
+    & not (Ex l2 d2 t2 a2 #j. Accept(R, S, %n %+ %1, l2, d2, t2, a2) @ #j)
+    ==> (Ex #g. Gap(R, S, %n, %n %+ %1 %+ %1) @ #g)"
+
+/* ---------------------------------------------------------------- 5. delayed frames */
+
+// A frame accepted two or more ticks after it was stamped. WITHOUT -D=TIME this trace exists
+// (the published receiver accepts a held-back frame); WITH it, it must not.
+lemma delayed_frame_accepted:
+  exists-trace
+  "Ex R S seq link data %t %now #i.
+      Accept(R, S, seq, link, data, %t, %now) @ #i
+    & (%t %+ %1 %+ %1 = %now | %t %+ %1 %+ %1 << %now)
+    & not (Ex X #r. Reveal(X) @ #r)"
+
+#ifdef TIME
+// With the window: whatever is accepted was sent by its sender at most one tick earlier.
+lemma bounded_delay_freshness:
+  "All R S seq link data %t %now #i.
+      Accept(R, S, seq, link, data, %t, %now) @ #i
+    ==> ( (Ex #j. Sent(S, seq, link, data, %t) @ #j & #j < #i)
+          & ((%now = %t) | (%now = %t %+ %1)) )
+      | (Ex #r. Reveal(S) @ #r & #r < #i)"
+#endif
+
+end
