@@ -33,6 +33,21 @@ an operating point compliant with 3GPP TS~22.125.
 the frame as built delta coding is conditional on batching as well: both gains are zero at
 $b = 1$. The scheme axis is byte-neutral. The four-axis co-design claim, as originally stated,
 was overstated; what is true is that batching is the axis the other gains depend on.
+
+\item The gain does not rest on the conditions it was first computed under. Spread over a
+$1$\,km disc with hidden stations, moving at up to $15$\,m/s, carried by six 802.11 PHYs and
+rates, or signed with Falcon-512, the design serves \phySimRatioLo--\phySimRatioHi{} times the
+nodes of per-record signing (\Cref{ch:codesign}). What changes is the batch a deadline admits,
+which the design map gives for any record rate and deadline.
+
+\item The protocol's properties are proven in Tamarin, in three models, and two defences close
+two of the gaps the first threat model left: a window on GNSS time refuses frames an attacker
+holds back, and an $8$\,B group tag stops floods from outside the swarm. A flood from a member is
+not stopped, and is stated (\Cref{ch:sysmodel,ch:codesign}).
+
+\item The prototype's two anomalies were the interpreter's. Compiled, one receiver core serves
+\rxRustNodes{} nodes, so the channel binds again, and the design's sender spends
+\enRustMeas\,\si{\micro\joule} per record, \enFirstOverRust{} times less than the first format.
 \end{enumerate}
 
 \section{The research questions, answered}\label{sec:rq-answers}
@@ -79,14 +94,16 @@ chain link kept off the air each recover some of them, and \Cref{tab:t6relax} sa
 
 \subsection{Modelling scope}
 
-The single collision domain admits no spatial reuse and no hidden terminals; a real formation has
-both, one helping and one hurting. Nodes are static. On the low-rate arm mobility was tested and
-moves collision-limited delivery by nothing measurable (\Cref{sec:lora-mobility}); that is not a
-statement that mobility is harmless to a link, and Doppler is unmodelled. On 802.11 it was not
-tested, because the contention model has no position term. Loss in the verifiability experiments
-is generated at the frame level --- independent, bursty, or growing with frame length --- and is
-not a channel trace: the ordering result survives correlation but absolute verifiability figures
-do not. Post-quantum sizes are projections, not implementations.
+The capacities are computed in one collision domain of static nodes. A separate scenario spread
+the nodes over discs of up to $1$\,km, with capture, Nakagami fading and hidden stations, and
+moved them on independent paths at up to $15$\,m/s (\Cref{sec:spread-swarm}): the gain held, and
+what a capacity counts changed. That scenario has one propagation model, no Doppler and no
+time-correlated fading. On the low-rate arm mobility moves collision-limited delivery by nothing
+measurable (\Cref{sec:lora-mobility}); that is not a statement that mobility is harmless to a
+link. Loss in the verifiability experiments is generated at the frame level --- independent,
+bursty, or growing with frame length --- and collision loss was traced in the simulator; no loss
+was measured on air. Falcon-512 was timed and simulated in the frame; signatures that do not fit
+one frame remain projections.
 
 \subsection{Validation scope}
 
@@ -95,16 +112,20 @@ stations, and a failed prediction of the loss between two busy ones (\Cref{sec:h
 figure for airtime that earlier versions carried is withdrawn there. No capacity was measured,
 and the capacities of \Cref{ch:codesign} rest on simulation, of one collision domain in which
 every station hears every other. Unequal received power and capture were simulated and raise
-them by about an eighth (\Cref{sec:spread}); hidden stations were not. Record sizes come from a synthetic
-generator, checked against twelve public flight logs at $0.2$\,s spacing and above and, at the
-$20$\,ms of the operating point, against one flight of an autopilot in simulation; no flight log
-recorded at $50$\,Hz was found. Only the sender's energy is metered, in both formats, with a
-sensor never checked against a reference load; the lean sender costs \enLeanOverFirst{} times the
-first format's energy per record in this prototype; and the first format's composed energy is a
-lower bound by roughly $7$--$14\%$, the residual being uncharged prototype framing overhead. The receiver-CPU ceilings charge cryptography only, and the
-prototype's decoder costs several times more (\Cref{ch:codesign}). Capacity was simulated at
-one PHY rate, and for batches other than one record and four only as a test of the capacity
-rule (\Cref{tab:batchdim}): nothing else was evaluated at them.
+them by about an eighth (\Cref{sec:spread}); hidden stations and motion were simulated
+separately (\Cref{sec:spread-swarm}). Record sizes come from a synthetic generator, checked
+against twelve public flight logs at $0.2$\,s spacing and above and, at the $20$\,ms of the
+operating point, against flights of an autopilot in simulation, whose navigation-quality fields
+do not vary (\Cref{tab:airframes}); no flight log recorded at $50$\,Hz was found. Only the
+sender's energy is metered, with a sensor never checked against a reference load: interpreted,
+the lean sender costs \enLeanOverFirst{} times the first format's energy per record; compiled,
+\enFirstOverRust{} times less. The first format's composed energy is a lower bound by roughly
+$7$--$14\%$, the residual being uncharged prototype framing overhead. The receiver-CPU ceilings
+charge cryptography only; the interpreted decoder costs several times more and the compiled one
+does not, timed without a radio or a dispatcher in the path (\Cref{ch:codesign}). Capacity was
+simulated on six 802.11 PHYs and rates and on no other family of link, and for batches other
+than one record and four only as a test of the capacity rule (\Cref{tab:batchdim}): nothing
+else was evaluated at them.
 
 \subsection{The low-rate arm}
 
@@ -124,12 +145,13 @@ inequality: $64 > 51$.
 
 \subsection{Security scope}
 
-Confidentiality, availability, key management and protection against an attacker who delays
-frames are outside the design (\Cref{sec:threat}). With one chain link per frame, continuity
-inside a frame rests on the frame signature alone, and showing one record to a third party means
+Confidentiality, availability and key management are outside the design (\Cref{sec:threat}). A
+member of the swarm holding the group key can still flood, and a delayed frame is refused only
+while GNSS time is held. The properties are proven in three models, not one, with canonical
+encoding assumed injective (\Cref{sec:formal}). With one chain link per frame, continuity inside
+a frame rests on the frame signature alone, and showing one record to a third party means
 showing its frame. The receiver keeps every accepted frame for that purpose, which it did not
-do until a review of 2026-10-09 (\Cref{sec:threat}). The security argument of this thesis is
-informal throughout.
+do until a review of 2026-10-09 (\Cref{sec:threat}).
 
 \section{Future work}
 
@@ -141,19 +163,9 @@ periodically. Implicit (ECQV) certificates are the standard smaller alternative 
 modelled. The current charge is an upper bound, which cuts against this work's own comparison ---
 so the gap is safe but should be closed.
 
-\item[Calibrating the meter.] The lean sender is timed and metered on the board
-(\Cref{ch:codesign}). The meter itself has never been checked against a known load
-(\Cref{sec:energy-uncertainty}): two sensors agree with each other within \enCtlVsJuly\%, which
-is not the same thing. One session with a reference resistor closes it.
-
-\item[A compiled receiver.] The prototype's receiver is interpreted and serves \ncpuProto{}
-nodes per core where cryptography alone would allow \ncpuBatch; measured on the board, it needs
-three of the four cores for the design's neighbourhood. A receiver in a compiled language,
-verifying signatures in batches, is what the capacity figures assume.
-
 \item[Telemetry at the operating rate.] Public flight logs carry position at 5\,Hz, and the
-delta record at 20\,ms spacing rests on the generator and on one simulated flight of one
-autopilot. A log recorded at 50\,Hz on a real vehicle would settle it.
+delta record at 20\,ms spacing rests on the generator and on simulated flights of one autopilot.
+A public log recorded at $50$\,Hz on a real vehicle, if one appears, would settle it.
 \end{description}
 
 \subsection{Substantial}
@@ -166,31 +178,25 @@ of \frFill\,ms --- so the batch is not affected; but the figure exists only wher
 was run. An access-delay term from the model of \Cref{sec:why} would let the constraint be
 evaluated at any load.
 
-\item[Mobility and more than one collision domain on 802.11.] Both are outside the contention
-model used here, which has no position term. They need a different scenario, with hidden
-terminals and capture, and the contention experiment below to anchor it.
-
 \item[Multi-spreading-factor capacity on the low-rate arm.] Each run fixes one data rate,
 forfeiting the quasi-orthogonality that supplies much of a real deployment's capacity. That answers
 a different question --- deployment capacity rather than per-configuration feasibility --- and it
 is the question an operator would ask next.
 
-\item[Contention among more than two radios.] Two radios keep the access rule where contention
-can be isolated, and do not space their own queued frames as the standard does
-(\Cref{sec:hardware}). Three to five radios in one collision domain would not reach the
-crossing, but each could send rarely enough to hold one frame at a time, which is the regime the
-capacities are in. The predictions for them are registered. It remains the single most valuable
-missing measurement in this thesis.
+\item[The 5G NR sidelink.] Only 802.11 was simulated. The direct link between devices of the
+cellular standard has a medium access of its own, which the access-rule model does not describe;
+whether the frame count dominates there as it does here needs its own simulation.
 
-\item[A post-quantum arm that is implemented rather than projected.] The projections show that
-batching cannot rescue post-quantum signature sizes, because freshness caps the batch and one
-signature plus header already exceeds the frame budget. That is a strong negative result and it
-deserves measurement rather than arithmetic.
+\item[Post-quantum signatures that do not fit one frame.] Falcon-512 fits a frame and the gain
+holds with it (\Cref{sec:phys}). An ML-DSA signature does not fit a frame at any batch, and the
+deadline caps the batch, so it cannot be amortised either; it needs a variant of the design built
+around fragmentation.
 \end{description}
 
 \subsection{Speculative}
 
-The exclusion bound is link-agnostic. Instantiating it on other constrained bands --- and on the
+The exclusion bound is link-agnostic, and three broadcast systems already in use have been put
+through it (\Cref{sec:other-links}). Instantiating it on other constrained bands --- and on the
 signature sizes the post-quantum standards actually mandate --- would say which of tomorrow's radio
 and cryptographic combinations are feasible before either is deployed. That is the natural
 generalisation of this work.

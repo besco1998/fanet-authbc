@@ -209,11 +209,6 @@ class TestWhatTheReviewAskedForIsInTheText:
         # measured, and the limitation is that no capacity has
         assert "between two radios\nonly" in limits or "between two radios only" in limits
 
-    def test_there_is_a_short_ai_statement(self) -> None:
-        start = BODY.index("\\section*{Use of Generative AI}")
-        statement = BODY[start:BODY.index("\\bibliographystyle", start)]
-        assert 10 < len(statement.split()) < 60
-
     def test_the_abstract_is_about_180_words(self) -> None:
         """The review asked for about 180; the looser bound above let it stand at about 200 as
         printed. This counter gives 179 for the abstract that prints as about 180 words."""

@@ -11,7 +11,9 @@ than retrofitted:
 
 \begin{itemize}
 \item At least $30$ seeded repetitions per configuration, with seeds logged in the artifact.
-\item Report median and bootstrap $95\%$ confidence interval over $10^4$ resamples.
+\item Report a $95\%$ interval with every estimate: a Student-$t$ interval for a mean over seeds,
+      and an expanded percentile bootstrap interval over $10^4$ resamples for an interpolated
+      crossing (\Cref{sec:coverage}).
 \item Microbenchmarks: $\geq 10^4$ iterations after $10^3$ warm-up, garbage collection disabled,
       runs spanning a suspend discarded.
 \item Comparisons state effect size; never bare means.
@@ -35,6 +37,15 @@ catalogues instances of each, several found in this project's own work \emph{aft
 rule was in force.
 \end{remark}
 
+\subsection{Intervals that cover what they say}\label{sec:coverage}
+
+Until October 2026 every interval in this thesis was a plain percentile bootstrap. A test with a
+known truth and thirty seeds found that it covered \covPlainLo--\covPlainHi\% of the time, not
+$95\%$: with thirty values the bootstrap distribution is too narrow. An interval of a mean is now
+a Student-$t$ interval, and an interval of a crossing an expanded percentile bootstrap
+interval~\cite{hesterberg2015bootstrap}; in the same test both covered
+\covFixedLo--\covFixedHi\%. The printed intervals widened slightly and no estimate moved.
+
 \subsection{Thresholds must be applied to distributions}
 
 A criterion of the form $V \geq 0.95$ is a \emph{reliability} requirement. Applying it to a mean
@@ -57,7 +68,11 @@ defect in this work's own practice, recorded in \Cref{ch:validation}: a pre-regi
 \Cref{app:prereg} lists every registration with its commit, what it predicted and what
 happened. Of its twenty-two entries, eight failed in whole or in part, one could not be scored and
 one was met by a criterion that could not have failed; one has been run with two boards of the
-two to five it covers. They are in the table with the rest.
+two to five it covers. They are in the table with the rest. The experiments added in October
+2026 are in a second table of their own (\Cref{tab:prereg-revision}): seventeen, each registered
+before it ran, with the plan's statements and finer ones added in the same registration. In
+fifteen of the seventeen at least one statement missed or failed, and each is reported as it
+came out.
 
 \section{Experiment matrix}
 
@@ -116,7 +131,7 @@ nine fields, and it is the same nine bytes when the generator is run at $20$\,ms
 (\Cref{sec:e6}). \emph{It is synthetic.} \Cref{sec:e6} sets it against twelve public flight
 logs at the spacing those logs allow, and against an autopilot run in simulation at $20$\,ms.
 
-\section{Simulation campaign}
+\section{Simulation campaign}\label{sec:simulation-campaign}
 
 Two scenarios are used, for two different questions. The \emph{saturation} scenario validates the
 channel models: IEEE 802.11a ad-hoc at $\SI{6}{\mega\bit\per\second}$, RTS/CTS off, with $N$
@@ -126,6 +141,16 @@ offering one frame per period, so the network runs at a chosen load and the deli
 read at the receivers. The capacities of \Cref{ch:codesign} come from the second, with the send
 instant redrawn in every period for the reasons given in \Cref{sec:capacity}. Transport is a packet socket rather than a flow monitor, because MAC-level
 goodput with no addressing artifacts is what the models predict.
+
+Five further scenarios were added in October 2026, each a separate program so that the
+published runs stay as they were. Nodes spread over discs and squares of up to $1$\,km with
+log-distance path loss, Nakagami fading and capture, still or moving on independent
+Gauss--Markov paths (\Cref{sec:spread-swarm}); a swarm that grows or merges while a controller
+chooses its batch (\Cref{sec:adaptive}); the design map's cells at other record rates and
+deadlines (\Cref{sec:design-map}); 802.11a at 12 and 24\,Mb/s and the 10\,MHz channel of
+802.11p; and the stream-signing schemes of \Cref{sec:stream}, each record counted only if it
+verifies in time. Collision loss was also traced link by link at the capacity crossing
+(\Cref{sec:e7}).
 
 \paragraph{How a capacity is read.} A configuration is a frame size and a frame rate per node.
 It is simulated over a grid of neighbourhood sizes $N$, thirty seeds per point, twenty seconds
@@ -195,6 +220,18 @@ the marking line, the supply must hold with every core busy, and the board must 
 under-voltage. The captures of July pass the meter's part of that test; a rig that fails is not
 measured on. The harness prints the value it \emph{expects} before it reads the meter, so that a
 measurement cannot be quietly fitted to expectation.
+
+\subsection{The compiled sender, and floods against one core}
+
+In October 2026 the board metered the compiled sender of \Cref{sec:compiled}, as one process
+running back to back for each sixty-second window, beside a control that repeats a row of the
+first format; the rig check passed the same day. The sensor's gain was taken as calibrated.
+The same board received floods, with no radio in the path. A receiver process pinned to one
+core reads a local UDP socket; a sender process on another core offers the honest load of
+\flSenders{} senders, each at $12.5$ frames/s --- one core's share of the design's neighbourhood
+--- and forged frames at a set rate. With each admission step of \Cref{sec:admission} switched on
+or off, honest $V$ is the honest frames accepted over those sent; frames the kernel drops at a
+full socket count as lost, as they are for an overloaded receiver.
 
 \subsection{The model the meter is compared with}
 

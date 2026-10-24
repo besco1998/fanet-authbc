@@ -482,6 +482,43 @@ page. Every bibliography entry is now compared with its registry record by a scr
 (\Cref{ch:reproducibility}).
 \end{remark}
 
+\section{The same accounting on other broadcast links}\label{sec:other-links}
+
+The exclusion is an inequality about a payload and a frame, and nothing in it belongs to LoRa. It
+was applied in October 2026 to three broadcast systems that aircraft and vehicles already use,
+each with its payload and message rate taken from its standard, and with this thesis's lean
+frame as the record (\Cref{tab:links}). ADS-B~1090ES leaves $56$ bits of each message for data
+and Bluetooth~4 Remote~ID $25$\,B: neither can carry a $64$\,B signature at all, the case of
+the five signature-bound LoRaWAN rates. Bluetooth~5 and Wi-Fi Remote~ID fit up to
+\olRidRecords{} records in a frame, but at one message a second a record waits a whole message
+period under the convention of \Cref{sec:freshness-convention}, so no frame meets any deadline up
+to $1$\,s. V2X CAM at $10$\,Hz admits no frame at $100$\,ms, \olCamTwo{} record at $200$\,ms and
+\olCamThree{} at $300$\,ms; CAM's standard bounds how often a message is generated, not when it
+must arrive, so the deadlines are swept, not quoted. This is consistent with these standards
+signing each message; it does not explain why they do.
+
+\begin{table}[htbp]\centering
+\caption{Records per frame each broadcast system admits with one signature per frame, by
+deadline, under the freshness bound; ---: no signature fits. The last row is this thesis's
+design, by the same rule.}
+\label{tab:links}
+\begin{tabular}{lrrrrrr}
+\toprule
+ & payload & rate & \multicolumn{4}{c}{$D_{\max}$} \\
+\cmidrule(lr){4-7}
+system & (B) & (/s) & $100$\,ms & $200$\,ms & $300$\,ms & $1$\,s \\
+\midrule
+ADS-B 1090ES & $7$ & $2$ & \olAdsbHundred & \olAdsbTwohundred & \olAdsbThreehundred & \olAdsbSecond \\
+Remote ID, Bluetooth~4 & $25$ & $1$ & \olRidfourHundred & \olRidfourTwohundred & \olRidfourThreehundred & \olRidfourSecond \\
+Remote ID, Bluetooth~5 / Wi-Fi & $225$ & $1$ & \olRidfiveHundred & \olRidfiveTwohundred & \olRidfiveThreehundred & \olRidfiveSecond \\
+V2X CAM, $10$\,Hz & $1500$ & $10$ & \olCamtenHundred & \olCamtenTwohundred & \olCamtenThreehundred & \olCamtenSecond \\
+V2X CAM, $1$\,Hz & $1500$ & $1$ & \olCamoneHundred & \olCamoneTwohundred & \olCamoneThreehundred & \olCamoneSecond \\
+\midrule
+this design, 802.11a & $1500$ & $50$ & \olDesignHundred & \olDesignTwohundred & \olDesignThreehundred & \olDesignSecond \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \section{What the regime is for}
 
 Three nodes at about $0.17$ records per second each are \loraAgg{} records per second in all,

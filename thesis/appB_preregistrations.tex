@@ -100,6 +100,93 @@ $100$\,m between the equal-power crossing and that model's band & held, all four
 \end{longtable}
 }
 
+\section*{The experiments of October 2026}
+
+The experiments added in October 2026 test the objections a revision plan expected reviewers to
+raise. Each was registered as above, with the plan's expected outcomes quoted and finer
+predictions added in the same commit (in italics below); each registration is tagged in the repository as
+\texttt{prereg-} followed by its name. \Cref{tab:prereg-revision} lists them in the order of the
+chapters that report them.
+
+{\small
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{2.0cm} >{\raggedright\arraybackslash}p{5.8cm}
+  >{\raggedright\arraybackslash}p{6.0cm}@{}}
+\caption{Registrations of October 2026 and their outcomes.}\label{tab:prereg-revision}\\
+\toprule
+commit, date & what was registered & outcome \\
+\midrule
+\endfirsthead
+\toprule
+commit, date & what was registered & outcome \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{d4bf273} 19~Oct, \texttt{c7f05c7} 20~Oct & spread swarm: ratio $3$--$4$ in every layout;
+capacity counted in neighbours falls at $1$\,km; motion moves $V$ by under $0.01$; \emph{at
+$1$\,km, $10$--$40$ neighbours at the crossing; hidden share rising with radius} & held, except
+\emph{the neighbour count}, \spNeighbours; the group's speed proved untestable in that scenario
+(a rigid translation) \\
+\texttt{13c406e} 21~Oct & every node moving on its own at $0$, $5$ and $15$\,m/s: $|\Delta V| <
+0.01$, ratio $3$--$4$; \emph{a square layout's control $0$--$5\%$ above the disc's} & held, except
+\emph{the square's baseline}, just below its band with overlapping intervals \\
+\texttt{b2b6ae6} 19~Oct & design map: ratio non-decreasing in $b^\ast$; above $5$ at $100$/s and
+$100$\,ms; every simulated role within $5\%$ of the model; mean peak age within $D_{\max}$ at
+$p = 0.05$, its 99th percentile above & all held (\dmRatio; within \dmWorst\%); the stated cause
+of the age tail, two lost frames, was wrong: one suffices \\
+\texttt{527ba59} 19~Oct & loss margin: $\varepsilon \geq p + 0.02$ meets $1-\varepsilon$, interval
+included; a tolerable loss under bit errors; traced $V$ between independent and Gilbert-8 loss;
+\emph{theory inside every interval} & tolerable loss held; the rule failed by its interval in $5$
+of $192$ cells, all bursty; traced $V$ below the band in one of four, by $0.0002$; \emph{theory
+outside $5$ of $100$ intervals}, what $95\%$ intervals give by chance \\
+\texttt{1469c2b} 20~Oct & batch controller: about $30$\,ms fresher than fixed $b = 4$ at low load;
+failure within $5\%$ of fixed $b = 4$'s; the target met while two swarms merge & merge and low-load
+age held; fresher by \adLowGain\,ms, not $30$; failure at \adRegFail{} nodes against
+\adFixFail{} --- \textbf{failed} \\
+\texttt{a36489a} 21~Oct & two further controllers: with a margin of $0.02$, failure at $115$
+nodes or more and the target in $95\%$ of windows; with a predicted load, failure at $105$ or
+more & both failure points held on the mean (\adFail); windows \textbf{missed} (\adShare\%);
+neither within $5\%$ of fixed $b = 4$ \\
+\texttt{04658f3} 20~Oct & time window: no honest frame refused at clock errors up to $10$\,ms;
+every frame held $250$\,ms refused; a $250$\,ms window survives about two hours without GNSS;
+\emph{it survives $75$\,min} & the first two held; about two hours \textbf{failed}
+(\rpHolds\,min), \emph{as the finer prediction said} \\
+\texttt{3b17a90} 20~Oct & formal model: properties (i)--(iv) proven; (v) shown as an attack, then
+its fix & held across three models, two made after registration; the registered model settled
+$3$ of its $9$ lemmas: \emph{$15$ of $19$ predicted verdicts missed}, the lemmas not settling \\
+\texttt{6dc683f} 20~Oct & flooding: about $700$ forged frames/s saturate a core; an outsider needs
+over $100\,000$ a second and is removed by the tag; a member remains a threat; the tag costs
+about $2\%$ & the outsider removed and the member's threat held; the rates \textbf{missed}
+(\flForgedRate{} and \flTagRate); the tag costs \flTagCostPct\% \\
+\texttt{3a9e85a} 20~Oct, \texttt{26f6f08} 22~Oct & compiled code: receive within $0.35$\,ms;
+at least $230$ nodes per core; energy per record follows the bytes & held (\rxRustUs\,\si{\micro\second},
+\rxRustNodes{} nodes, \enRustMeas\,\si{\micro\joule}); \emph{the energy ranges missed low} \\
+\texttt{3b06582} 20~Oct & lazy verification: over $500$ nodes per core; evidence within
+$100$--$200$\,ms; \emph{within $170$\,ms of sampling} & held (\rxLazyNodes); \emph{$170$\,ms
+missed by $1$\,ms} \\
+\texttt{aa3b86d} 20~Oct, \texttt{89cfd6f} 22~Oct & airframes, $25$ fields: delta $20$--$30$\,B,
+saving $60$--$70\%$, ratio $2.6$--$3.4$; keyframe $50$--$70$\,B; fixed-wing delta $10$--$13$\,B &
+delta, saving and ratio held; keyframe (\afKeyTwentyFive\,B) and fixed-wing delta
+(\afDeltaWingNine\,B) \textbf{missed}, the latter at the planned speeds as well \\
+\texttt{b7e1ae3} 20~Oct & stream schemes run against the deadline: every delivery capacity inside
+its earlier interval; schemes that cannot verify in time never cross & held; \emph{three finer
+predictions missed}: in-time delivery equal to delivery for two schemes, and crossings for TESLA
+with $d = 1$ and EMSS with $k = 4$ \\
+\texttt{b7e1ae3} 20~Oct & other PHYs: ratios spanning $1.7$--$4.3$, rising with the rate; every
+crossing within $\pm 3\%$ of the model & the rise held; the span \textbf{failed}
+(\phySimRatioLo--\phySimRatioHi); $\pm 3\%$ \textbf{failed} at the fastest rate of each width \\
+\texttt{50e715b} 20~Oct & Falcon-512: crossings within $10\%$ of $12$ and $45$ nodes; a ratio near
+$3.9$, larger than with Ed25519 & the crossings held; the ratio \textbf{failed}: \pqRatio, as with
+Ed25519 \\
+\texttt{baeb1d2} 20~Oct & ledger audit: both planted faults found; about $1.3$\,GB stored per hour
+for $124$ neighbours; \emph{no other finding; $7$--$10$ minutes of a core} & detection held, no
+false finding; the storage figure failed, less being stored, since frames are kept, not records;
+\emph{the time failed, faster}: \auMinutes\,min \\
+\texttt{fd128fd} 20~Oct & other broadcast systems: the accounting gives no reason to batch at
+their rates and deadlines & held \\
+\end{longtable}
+}
+
 \noindent All dates are 2026. Two entries of the project's history are absent on purpose. A
 prediction for the first hardware loss measurement was stated before the measurement and is
 what exposed the basic-rate artifact of \Cref{ch:validation}, but it was not a commit of its

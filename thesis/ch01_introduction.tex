@@ -117,6 +117,24 @@ stated it wrongly.
       under saturation, and a registered prediction of their loss below saturation that failed
       at one load of three (\Cref{ch:validation}).
 
+\item \textbf{The gain under the conditions a reviewer would vary.} Spread over discs of up to
+      $1$\,km with fading, capture and hidden stations, moving on independent paths, carried by
+      six 802.11 PHYs and rates, or signed with the post-quantum Falcon-512, the design serves
+      between \phySimRatioLo{} and \phySimRatioHi{} times the nodes of per-record signing; and a
+      design map over record rate and deadline gives the batch each pair admits, checked in ns-3
+      at \dmCells{} cells within \dmWorst\% (\Cref{ch:codesign}).
+
+\item \textbf{A formal model and two defences.} The protocol's properties are proven in the
+      Tamarin prover, in three models; a window on GNSS time refuses frames an attacker holds
+      back; and an $8$\,B group tag stops a flood from outside the swarm, while a flood from a
+      member is shown not to be stopped (\Cref{ch:sysmodel,ch:codesign}).
+
+\item \textbf{The prototype's anomalies traced to the interpreter.} Receiver and sender
+      rewritten in a compiled language, byte-identical on \rustIdFrames{} frames: one core of the
+      board then serves \rxRustNodes{} nodes, so the channel binds again, and the design's
+      sender spends \enRustMeas\,\si{\micro\joule} per record against the first format's
+      \enDesignMeas{} (\Cref{ch:implementation,ch:codesign}).
+
 \item \textbf{An ablation that narrows our own claim}, showing that in the byte model only
       placement and batching interact, that an apparent encoding interaction was a ratio-scale
       artifact, and that the one real coupling of encoding to batching appears only when the frame
@@ -130,8 +148,9 @@ stated it wrongly.
 
 \section{Explicit non-goals}
 
-This thesis introduces no new cryptographic primitive, no new consensus protocol and no
-post-quantum implementation; post-quantum sizes appear only as analytical projections. Key
+This thesis introduces no new cryptographic primitive, no new consensus protocol and no new
+post-quantum scheme: Falcon-512 is taken from a library, timed on the board and simulated in the
+frame, and signatures that do not fit one frame remain projections. Key
 compromise, multi-hop routing research and finality semantics are out of scope. The low-rate arm is
 a \emph{modelling} chapter: no LoRa radio was metered and no energy column exists for it.
 

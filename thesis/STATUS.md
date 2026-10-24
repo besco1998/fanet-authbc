@@ -1,15 +1,37 @@
 # Thesis status — what is written, what was checked, what is still missing
 
 *Created 2026-08-30; rewritten 2026-10-08 after the whole built PDF was audited, and updated
-three times on 2026-10-09 (findings F63–F83 in `docs/audits/model_provenance.md`). `main.pdf` builds
-to 131 pages with no errors, no undefined references and no layout warnings. **Read this before showing the PDF to anyone.***
+three times on 2026-10-09 (findings F63–F83 in `docs/audits/model_provenance.md`), and on 2026-10-24
+for the experiments of October (below). `main.pdf` builds to 151 pages with no errors, no undefined
+references and no overfull boxes. **Read this before showing the PDF to anyone.***
 
 ## In one paragraph
 
 Every chapter is written and was read end to end in the built PDF on 2026-10-08. The red
-"STATUS" boxes are gone because what they listed is done. **Three red markers remain, and all
-three are yours:** the declaration, the statement on generative AI, and the acknowledgements —
-with the degree and the department on the title page.
+"STATUS" boxes are gone because what they listed is done. **Two red markers remain, and both
+are yours:** the declaration and the acknowledgements — with the degree and the department on the
+title page. The statement on generative AI was removed on your decision of 2026-10-24.
+
+⚠️ **On 2026-10-24 the experiments of October 2026 were written into the chapters they belong to,
+and you have not read them.** Each result sits where its subject is:
+
+* **ch. 1:** three contributions.
+* **ch. 2:** mobility, FMAC, hidden terminals and Tamarin.
+* **ch. 3:** your block diagram as Fig. 3.1; two rows of the claims table; *Formal analysis, and
+  the evidence for each property* with its table; two items of "what is not claimed" rewritten.
+* **ch. 4:** peak age under loss, the window on GNSS time, the loss margin, the design map.
+* **ch. 5:** admission (group tag, cheap checks, rate cap) and the compiled codec.
+* **ch. 6:** intervals that cover, registrations, the new scenarios, the compiled sender and the
+  floods.
+* **ch. 7:** traced loss and the margin figure; richer records and airframes with their table.
+* **ch. 8:** compiled receiver table, stream schemes run in time, a spread and moving swarm, a
+  batch chosen at run time, other PHYs and Falcon-512, flooding, the design map, compiled energy
+  rows.
+* **ch. 9:** the access rule away from its operating point.
+* **ch. 10:** other broadcast links with their table.
+* **ch. 12:** three findings; limitations and future work rewritten. Nothing on hardware still to
+  be bought is stated (your decision).
+* **App. B:** a second table, the seventeen registrations of October with commit and outcome.
 
 ⚠️ **Chapter 9's hardware section was rewritten on the night of 2026-10-09 and has not been read
 by you.** It now reports contention measured between two radios — one registered prediction

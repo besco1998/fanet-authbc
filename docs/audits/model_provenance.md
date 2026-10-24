@@ -4736,3 +4736,29 @@ changes nothing.
 
 **Cross-check:** the nearest-sample and altitude-floor sensitivities move no delta by more than
 0.16 B. Against A9's own flights of the same missions, the airplane's delta grows by 0.16 B.
+
+## F113 — the batch controller's peak ages are 1.5 frame periods, not one: the source sends each frame within the next period (revision A4/A4b, found drawing its figure; 2026-10-24)
+
+Drawing `fig_adaptive.png`, fixed b = 4 showed a mean peak age of **124.3 ms**. The paper's
+"Age Under Loss" gives **83.7 ms** for the same design with no loss (87.7 ms at p = 0.05).
+Both use one definition: the time from the newest record of the previous frame to the arrival
+of the next frame.
+
+**Cause, checked in the source.** `ns3/authbc-adaptive.cc` is the published traffic source of
+the capacity runs (`authbc-delay.cc`, J = one period). It closes a frame at the end of its
+period and sends it at an instant drawn uniformly over the *next* period. The peak age is then
+P(1 + U), a mean of 1.5 P. `analysis/aoi_under_loss.py` sends at fill, which gives P.
+
+* fixed b = 4, P = 80 ms: 1.5 × 80 = 120 ms, plus 4 ms of channel = 124.3 ✓;
+* below 30 nodes, b = 1, P = 20 ms: 1.5 × 20 + 0.9 = 30.9 ✓.
+
+**What changes.**
+* The capacities do not change: the source's phase is what they need.
+* The controller's saving of **21 ms** of peak age is measured under this source. A sender
+  that transmits at fill would see about two-thirds of it, since the saving scales with the
+  period; that is an argument, not simulated.
+* The paper now says the ages include the send instant and run half a period above
+  Sec. Freshness. `tests/test_figures_revision.py` pins the 1.5-period mean.
+
+**Cross-check:** the explanation predicts both the b = 4 and the b = 1 values from the period
+alone, with no fitted term.

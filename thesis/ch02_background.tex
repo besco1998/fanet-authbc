@@ -32,6 +32,15 @@ literature on these networks concentrates on the layers above the single-hop bro
 thesis is about the cost of making that broadcast attributable, which every one of those layers
 takes as given.
 
+Two strands of that literature meet this thesis directly. Bujari \emph{et al.} survey the
+application scenarios of these networks and the mobility models used for
+them~\cite{bujari2017fanet}; the moving swarm of \Cref{sec:spread-swarm} uses one of those
+models, Gauss--Markov, with parameters in the range that literature reports. And at the medium
+access layer, FMAC adapts the contention window of a flocking swarm, predicting the flock's
+density from the motion its neighbours announce~\cite{huang2021fmac}. Acting on a predicted
+state is the precedent of the batch controller of \Cref{sec:adaptive}, which changes the batch
+where FMAC changes the window.
+
 \subsection{The workload, read at source}
 
 What such a broadcast carries, and how often, is taken here from autopilot source code and from
@@ -81,7 +90,9 @@ interval, and the parameters that define each scenario are in the result files' 
 
 Two things follow for the design of this study. Capacity is reported for \emph{one collision
 domain with static nodes}, stated as such, because the contention model has no position term and
-a mobility model would add parameters without adding a mechanism (\Cref{ch:validation}). And
+a mobility model would add parameters without adding a mechanism (\Cref{ch:validation}); a
+separate scenario, with every parameter stated, then spreads and moves the nodes to test what
+that choice hides (\Cref{sec:spread-swarm}). And
 the telemetry itself is synthetic, checked against public flight logs and against the autopilot
 run in simulation (\Cref{sec:e6}), because a public corpus of $50$\,Hz swarm telemetry was not
 found.
@@ -123,6 +134,12 @@ are signed together, so their order and content already rest on the signature; t
 record would carry to its predecessor \emph{inside the same frame} can be recomputed by the
 receiver and need not be sent. Only the link out of the frame, to the last record of the frame
 before, carries information the signature does not. The stored ledger is unchanged.
+
+Whether a protocol delivers such properties against an attacker who controls the network is a
+question for symbolic verification. The Tamarin prover~\cite{tamarin} takes the attacker to be
+the network itself, able to read, block and inject any message, and proves properties of every
+trace over an unbounded number of protocol runs. \Cref{sec:formal} uses it for the frames of
+this thesis.
 
 \section{Signatures for constrained authentication}
 
@@ -315,6 +332,13 @@ check the analysis against a simulation the authors wrote. \Cref{sec:why} builds
 mechanism and adds a second, which neither has: the few microseconds in which a transmission
 that has begun cannot yet be sensed. Two further analyses that Cao \emph{et al.} cite were not
 obtained.
+
+When stations do not all hear one another, a further loss appears: a receiver can be reached by
+two senders that cannot sense each other. Hu and Dai analyse prioritised safety broadcasts with
+such hidden terminals, Nakagami fading and distinct transmission, carrier-sensing and
+interference ranges~\cite{hu2020hidden}. The spread swarm of \Cref{sec:spread-swarm} loses
+capacity, counted in neighbours, by the mechanism their model contains: a receiver contends with
+every node within its carrier-sensing range, not only with those it counts as neighbours.
 
 \subsection{Frame aggregation}\label{sec:bg-aggregation}
 

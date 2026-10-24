@@ -341,3 +341,56 @@ minimises an average; the survey lists the probability that the peak age exceeds
 a metric of its own. This reading was found on 2026-10-09, after the convention had been
 chosen. It does not change the convention; it says what the convention bounds.
 \end{remark}
+
+\subsection{The peak age under loss}\label{sec:aoi-loss}
+
+The bound holds for a frame that arrives. A lost frame adds one frame period, $P = b/\Lambda_i$,
+to the age of the update after it: after $k$ consecutive losses the peak age is $(k+1)P$ plus the
+delay of the frame that does arrive. With independent loss $p$ the number of periods between
+deliveries is geometric, and the mean peak age is $P/(1-p) + T_{\mathrm{air}} + W_q$. At the
+design's $b = 4$ and $50$~records/s, simulated frame by frame through the codec at $p = 0.05$,
+the mean peak age is \aoiPeakMean\,ms, within $D_{\max}$, but its 99th percentile is
+\aoiPeakPnn\,ms: one lost frame is enough to break the deadline, and \aoiOverPct\% of updates do,
+the share of frames lost. The deadline therefore holds for a share $1-p$ of updates, the same
+share that $V$ counts.
+
+\subsection{A window on GNSS time}\label{sec:window}
+
+A sequence number refuses a frame delivered twice and accepts a frame delivered late. Every
+record carries its sampling time, signed with it, and every UAV keeps GNSS time, so a receiver
+can refuse a frame whose newest record is too old:
+\begin{equation}
+  t_{\mathrm{local}} - t_{\mathrm{newest}} \;\leq\; \Delta =
+  \frac{b}{\Lambda_i} + T_{\mathrm{air}} + W_q + t_v + 2\sigma_{\mathrm{clk}} + g,
+  \label{eq:window}
+\end{equation}
+with $\sigma_{\mathrm{clk}}$ the clock error between the two nodes and $g$ a guard. The check
+reads the timestamp before the signature; a frame whose timestamp was altered to look fresh then
+fails its signature, and one altered to look stale does what dropping it would. A stale frame
+therefore costs a receiver a decode, not a verification, and the rule costs no byte on air.
+
+While GNSS time is lost each node's crystal drifts, by up to $20$ parts per million, so two
+clocks part by up to \rpDrift\,ms an hour. A window widened by that drift keeps working, its
+bound growing at the same rate; a fixed window of $250$\,ms outlasts \rpHolds\,min of outage
+(\Cref{tab:security}). Beyond a set limit the receiver stops applying the rule and marks what it
+accepts as unverified in time, falling back on sequence numbers alone.
+
+\subsection{A loss budget with a margin}\label{sec:margin}
+
+With one self-contained frame in every frame, $V = 1-p$, so a target $V \geq 1-\epsilon$ is met
+with no margin at $\epsilon = p$: half of all runs fall below it by chance. The deployment rule
+of this thesis sets the budget at least $0.02$ above the expected loss, $\epsilon \geq p + 0.02$.
+\Cref{fig:margin} tests it under five loss processes of one mean.
+
+\subsection{The design map}\label{sec:design-map}
+
+The operating point fixes $\Lambda_i$ and $D_{\max}$; the freshness bound then fixes the batch.
+Over any pair, the largest batch the deadline admits is
+\begin{equation}
+  b^\ast(\Lambda_i, D_{\max}) = \max\,\{\, b : b/\Lambda_i + T_{\mathrm{air}} + W_q + t_v \leq
+  D_{\max} \,\},
+  \label{eq:bstar}
+\end{equation}
+and none where even one record misses the deadline. \Cref{fig:map} evaluates it over seven
+record rates and eight deadlines, with the capacity it buys over per-record signing from the
+access-rule model of \Cref{sec:why}.

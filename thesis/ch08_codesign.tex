@@ -173,10 +173,36 @@ seven times slower than the desktop on this interpreted code, against three time
 signature.
 \end{remark}
 
+\paragraph{A compiled receiver, and verification in two tiers.} Compiled
+(\Cref{sec:compiled}), the same receive path takes \rxRustMs\,ms on the board, \rxSpeedup{}
+times less, and one core serves \rxRustNodes{} nodes; with signatures verified in batches of
+$64$, \rxBatchNodes{} (\Cref{tab:receiver}). The channel binds again: the design's
+\nmaxLeanDesign{} nodes need less than half of one core. A receiver that uses records as soon as
+their tag and frame are checked, and verifies their signatures in batches before they enter the
+ledger, serves \rxLazyNodes{} nodes per core. A record is then evidence within
+\rxEvidenceMs\,ms by the convention of \Cref{sec:freshness-convention}; in that window a member
+holding the group key could have records acted on that are later purged.
+
+\begin{table}[htbp]\centering
+\caption{Time to receive a four-record frame on one Raspberry~Pi~4 core, and the nodes one core
+serves at $50$~records/s; all four timed in one session.}
+\label{tab:receiver}
+\begin{tabular}{lrr}
+\toprule
+receiver & \si{\micro\second} per frame & nodes per core \\
+\midrule
+interpreted (Python) & \rxPyUs & \rxPyNodes \\
+compiled (Rust) & \rxRustUs & \rxRustNodes \\
+compiled, batches of $64$ & \rxBatchUs & \rxBatchNodes \\
+lazy: tag and decode, then batches & \rxTierOneUs{} + \rxTierTwoUs & \rxLazyNodes \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \section{E17 --- the classical stream-signing schemes, placed}\label{sec:stream}
 
-\Cref{ch:background} describes the schemes that amortise one signature over many packets. None
-is implemented in this thesis. \Cref{tab:stream} places each at the adopted operating point as
+\Cref{ch:background} describes the schemes that amortise one signature over many packets.
+\Cref{tab:stream} places each at the adopted operating point as
 \emph{the lean one-record frame with that scheme's authenticator in place of the signature} ---
 the same header, chain link and record --- with the authenticator sized from the scheme's own
 definition and this thesis's primitives ($32$\,B digests, $64$\,B signatures). Two capacities
@@ -190,20 +216,21 @@ were predicted and committed before they were run (\Cref{sec:line}).
 for a frame of that size, with its 95\% bootstrap interval.
 $^\dagger$ no non-repudiation: a third party cannot be shown who sent a record;
 $^\ddagger$ a packet does not verify alone, so $\Nmax$ --- frames delivered --- is an upper
-bound on records verified.}
+bound on records verified; the last column counts a record only if it verifies within
+$D_{\max}$. $^\S$ disclosure delay of two intervals of at most $20$\,ms.}
 \label{tab:stream}
 \begin{adjustbox}{max width=\textwidth}
-\begin{tabular}{lrrrrl}
+\begin{tabular}{lrrrrlr}
 \toprule
-scheme & auth.\ B/record & frames/s & total B/record & $N_{\mathrm{sat}}$ & $\Nmax$ \\
+scheme & auth.\ B/record & frames/s & total B/record & $N_{\mathrm{sat}}$ & $\Nmax$ & in time \\
 \midrule
-MAVLink~2 tag$^{\dagger}$ & \strAuthMav & \strFpsMav & \strBprMav & \strNsatMav & \strNmaxMav\ \strCiMav \\
-TESLA$^{\dagger\ddagger}$ & \strAuthTesla & \strFpsTesla & \strBprTesla & \strNsatTesla & \strNmaxTesla\ \strCiTesla \\
-Gennaro--Rohatgi$^{\ddagger}$ & \strAuthGr & \strFpsGr & \strBprGr & \strNsatGr & \strNmaxGr\ \strCiGr \\
-EMSS$^{\ddagger}$ & \strAuthEmss & \strFpsEmss & \strBprEmss & \strNsatEmss & \strNmaxEmss\ \strCiEmss \\
-Wong--Lam tree, block of 4 & \strAuthWl & \strFpsWl & \strBprWl & \strNsatWl & \strNmaxWl\ \strCiWl \\
-a signature on every record & \strAuthSig & \strFpsSig & \strBprSig & \strNsatSig & \strNmaxSig\ \strCiSig \\
-this design, $b = 4$ & \strAuthDesign & \strFpsDesign & \strBprDesign & \strNsatDesign & \strNmaxDesign\ \strCiDesign \\
+MAVLink~2 tag$^{\dagger}$ & \strAuthMav & \strFpsMav & \strBprMav & \strNsatMav & \strNmaxMav\ \strCiMav & \sdMav \\
+TESLA$^{\dagger\ddagger}$ & \strAuthTesla & \strFpsTesla & \strBprTesla & \strNsatTesla & \strNmaxTesla\ \strCiTesla & \sdTeslaLo--\sdTeslaHi$^\S$ \\
+Gennaro--Rohatgi$^{\ddagger}$ & \strAuthGr & \strFpsGr & \strBprGr & \strNsatGr & \strNmaxGr\ \strCiGr & none \\
+EMSS$^{\ddagger}$ & \strAuthEmss & \strFpsEmss & \strBprEmss & \strNsatEmss & \strNmaxEmss\ \strCiEmss & none \\
+Wong--Lam tree, block of 4 & \strAuthWl & \strFpsWl & \strBprWl & \strNsatWl & \strNmaxWl\ \strCiWl & \sdWl \\
+a signature on every record & \strAuthSig & \strFpsSig & \strBprSig & \strNsatSig & \strNmaxSig\ \strCiSig & \strNmaxSig \\
+this design, $b = 4$ & \strAuthDesign & \strFpsDesign & \strBprDesign & \strNsatDesign & \strNmaxDesign\ \strCiDesign & \strNmaxDesign \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -224,6 +251,17 @@ third party --- and it pays
 takes $b$ records with it, and records wait for the batch to fill. And a scheme with a shorter
 frame is lost less often at a given bit error rate (\Cref{sec:e7}), which this table does not
 credit.
+
+\paragraph{The schemes run, against the deadline.} Sized from their definitions, the schemes
+could still have been favoured by what sizing leaves out. In October 2026 each was implemented
+and run on simulated links, and a record was counted only if it verified within $D_{\max}$
+(\Cref{sec:simulation-campaign}). The delivery crossings reproduce the table's within their
+intervals. Against a $100$\,ms deadline only three schemes reach $0.95$: the MAVLink~2 tag at
+\sdMav{} nodes, Wong--Lam at \sdWl, and TESLA with a disclosure delay of two intervals of at most
+$20$\,ms at \sdTeslaLo--\sdTeslaHi. Gennaro--Rohatgi, every EMSS variant and TESLA with four
+records a frame never do: a packet that waits for a later one to verify misses the deadline.
+None of the three reaches the design's \strNmaxDesign, and two of them give up
+non-repudiation.
 
 \section{Capacity, by direct search}\label{sec:capacity}
 
@@ -678,11 +716,132 @@ beside the predictions was ``a few percent''; it was the right sign and too larg
 \begin{remark}[What this does not show]
 Hidden stations. Both discs keep every pair within decoding range, so every station still
 hears every other. A swarm wider than about $370$\,m in this simulator's terms has stations
-that cannot hear each other at all; that lowers the capacity, needs a model with a sensing
-graph, and was not attempted. Nor does it show fading, mobility or an antenna pattern, or that
-the simulator's capture rule is a radio's. What it removes from the list of doubts is one
-item: that equal power was the favourable assumption. It was the unfavourable one.
+that cannot hear each other at all; that lowers the capacity, and the next subsection simulates
+it. Nor does this test show fading, mobility or an antenna pattern, or that the simulator's
+capture rule is a radio's. What it removes from the list of doubts is one item: that equal
+power was the favourable assumption. It was the unfavourable one.
 \end{remark}
+
+\subsection{A spread, moving swarm}\label{sec:spread-swarm}
+
+Hidden stations appear when a swarm is spread wider than one sensing range. The nodes were placed
+uniformly in discs of radius $100$\,m to $1$\,km, and in a grouped layout of two clusters with
+nodes between them, with log-distance path loss, Nakagami fading and the capture rule above,
+thirty seeds per point. The design keeps its advantage: the ratio of the crossings lies between
+\spRatioLo{} and \spRatioHi{} in every layout (\Cref{fig:spread}). At a radius of $1$\,km,
+\spHiddenPct\% of the nodes able to spoil a frame cannot hear its sender.
+
+What spreading changes is what a capacity counts. Counted in neighbours within reach, it falls,
+to \spNeighbours{} at $1$\,km, because a receiver contends with every node in its carrier-sensing
+range~\cite{hu2020hidden}, not only with those it counts. Counted in nodes over the area, it rises
+to \spArea. Hidden stations are a minority of the spoilers: the registered prediction that
+spreading would cost capacity \emph{because} of them overstated their part.
+
+With every node on its own Gauss--Markov path at up to $15$\,m/s~\cite{bujari2017fanet}, delivery
+changes by at most \mvDeltaV{} and the ratio stays \mvRatioLo--\mvRatioHi. The channel has no
+Doppler and no time-correlated fading, so motion changes who contends with whom and nothing
+else. A first test that moved the whole group rigidly could not tell its speeds apart --- a
+rigid translation changes no distance --- and was replaced by independent motion; both are
+registered (\Cref{tab:prereg-revision}).
+
+\begin{figure}[htbp]\centering
+\includegraphics[width=0.75\textwidth]{fig_spread.png}
+\caption{Nodes served at $95\%$ delivery as the swarm spreads over a disc (top), and the
+design's ratio to per-record signing with its $95\%$ interval (bottom). Under each radius, the
+share of spoilers hidden from the sender; hollow markers, the swarm at $1$\,km moving at $0$,
+$5$ and $15$\,m/s.}
+\label{fig:spread}
+\end{figure}
+
+\subsection{A batch chosen at run time}\label{sec:adaptive}
+
+The batch of four is fixed by the deadline at the operating point. A controller can instead
+choose $b$ at run time from the share of time the channel is busy, as the node measures it: a
+small batch while the swarm is small, for fresher records, and a larger one as it grows. One
+was built into the simulator --- $b$ moves one step a period, and only after two periods agree
+--- and tested on a swarm that grows while it flies, on two swarms that merge, and on a moving
+one, each registered (\Cref{tab:prereg-revision}).
+
+As registered, with a margin of $0.01$ on the target, it met $V \geq 0.95$ in \adRegShare\% of
+one-second windows and failed at \adRegFail{} nodes; with a margin of $0.02$ it met it in
+\adShare\% and failed at \adFail, against \adFixShare\% and \adFixFail{} with $b = 4$ fixed
+(\Cref{fig:adaptive}). It is fresher: by \adAgeSaved\,ms of peak age at the design's load, and by
+\adLowGain\,ms below thirty nodes. These ages include the instant at which the simulated source
+sends each frame, drawn over the next period (\Cref{sec:capacity}), and are on average half a
+frame period longer than those of \Cref{sec:aoi-loss}. Choosing the batch at run time buys
+freshness at the cost of reliability margin; it does not raise capacity. The moving scenario
+could not tell the controllers apart: every threshold was exceeded from its first second.
+
+\begin{figure}[htbp]\centering
+\includegraphics[width=0.75\textwidth]{fig_adaptive.png}
+\caption{A swarm growing in flight, mean of ten seeds: the batch each policy chooses, the share
+of records verified in each second, and the peak age of information.}
+\label{fig:adaptive}
+\end{figure}
+
+\subsection{Other PHYs, and a post-quantum signature}\label{sec:phys}
+
+The capacities above are of 802.11a at $6$\,Mb/s. The crossings were simulated again on 802.11a
+at $12$ and $24$\,Mb/s, on the $10$\,MHz channel of 802.11p at $3$, $6$ and $12$\,Mb/s, and with a
+post-quantum signature (\Cref{tab:phy}). The design serves \phySimRatioLo--\phySimRatioHi{} times
+the nodes of per-record signing, more at faster rates: a faster PHY shortens the payload but not
+the fixed cost of a frame, so the count of frames weighs more. The access-rule model of
+\Cref{sec:why} stays within \phyModelRest\% except at the fastest rate of each channel width,
+where it is \phyModelTopLo--\phyModelTopHi\% optimistic; the registered $\pm 3\%$ failed there.
+
+Falcon-512, with its padded signature of \pqSigBytes\,B, fits a frame. Per-record signing then
+serves \pqBase{} nodes and the design \pqDesign, \pqRatio{} times as many, as with Ed25519: the
+gain comes from sending a quarter as many frames, whatever the size of the signature, and the
+registered expectation that it would weigh more with a larger signature failed. On the board
+Falcon-512 signs in \pqSignUs\,\si{\micro\second} and verifies in
+\pqVerifyUs\,\si{\micro\second}, faster than Ed25519 verifies (\tVerEd\,\si{\micro\second}).
+An ML-DSA signature of $2\,420$\,B does not fit a frame at any batch.
+
+\begin{table}[htbp]\centering
+\caption{Nodes served at $95\%$ delivery in ns-3 on other PHYs and with a post-quantum
+signature, and the access-rule model's error (negative: optimistic; the larger of the two
+rows). Frame: the design's, on air.}
+\label{tab:phy}
+\begin{tabular}{lrrrrr}
+\toprule
+PHY and rate & frame (\si{\micro\second}) & per record & design & ratio & model (\%) \\
+\midrule
+802.11a, $6$\,Mb/s & \phyAsixUs & \phyAsixBase & \phyAsixDesign & \phyAsixRatio & \phyAsixGap \\
+802.11a, $12$\,Mb/s & \phyAtwelveUs & \phyAtwelveBase & \phyAtwelveDesign & \phyAtwelveRatio & \phyAtwelveGap \\
+802.11a, $24$\,Mb/s & \phyAtwentyUs & \phyAtwentyBase & \phyAtwentyDesign & \phyAtwentyRatio & \phyAtwentyGap \\
+802.11p, $3$\,Mb/s & \phyPthreeUs & \phyPthreeBase & \phyPthreeDesign & \phyPthreeRatio & \phyPthreeGap \\
+802.11p, $6$\,Mb/s & \phyPsixUs & \phyPsixBase & \phyPsixDesign & \phyPsixRatio & \phyPsixGap \\
+802.11p, $12$\,Mb/s & \phyPtwelveUs & \phyPtwelveBase & \phyPtwelveDesign & \phyPtwelveRatio & \phyPtwelveGap \\
+\midrule
+Falcon-512, 802.11a $6$\,Mb/s & \pqUs & \pqBase & \pqDesign & \pqRatio & \pqGap \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Flooding}\label{sec:flooding}
+
+A forged frame --- a real sender, a newer sequence number and a well-formed signature by another
+key --- costs the interpreted receiver \flForgedMs\,ms on the board, against \flHonestMs\,ms for
+an honest one, which also pays for its storage: one core takes \flForgedRate{} such frames a
+second. With \flSenders{} senders on one receiver core (\Cref{sec:hardware-method}),
+\flNoneRate{} forged frames a second push honest delivery below $0.95$, and the cheap checks of
+\Cref{sec:admission} do no better (\Cref{fig:flood}). The group tag refuses an outsider's frame in
+\flTagUs\,\si{\micro\second}, \flTagRate{} a second per core: at $3\,000$ forged frames a second,
+more than the \flChannel{} that one channel carries, honest delivery stays at \flOutsiderV.
+
+A member holding the key is stopped neither by the tag nor by a per-sender rate cap: delivery
+falls below $0.95$ from \flInsiderRate{} forged frames a second behind the tag, and from
+\flSpreadRate{} behind the cap when the forgeries name every sender. Against one forging sender
+the cap keeps delivery at \flCapOneV{} or more up to the rate one channel carries. The tag costs
+\flTagCostPct\% of capacity, eight bytes on every frame.
+
+\begin{figure}[htbp]\centering
+\includegraphics[width=0.75\textwidth]{fig_flood.png}
+\caption{Honest delivery on one Raspberry~Pi~4 receiver core with \flSenders{} senders, against
+the rate of forged frames, for each defence and attacker. The dotted vertical line is the most
+one 802.11a channel carries.}
+\label{fig:flood}
+\end{figure}
 
 \section{Freshness, with every term}
 
@@ -709,6 +868,22 @@ terms it left out: channel-access delay, which had been measured and never added
 verification time. Fill time dominates; the oldest record is verified within \frTotMax\,ms of
 being generated. A fifth record would need a fill time of $100$\,ms by itself, which is why the
 batch stops at four.
+
+\paragraph{Other rates and deadlines.} The batch of four belongs to $50$~records/s and
+$100$\,ms. \Cref{fig:map} evaluates \Cref{eq:bstar} over seven record rates and eight deadlines,
+with the capacity each batch buys from the access-rule model. At \dmCells{} cells, chosen as
+distinct roles, the ns-3 crossings lie within \dmWorst\% of the model; at $100$~records/s and
+$100$\,ms, where the deadline admits a batch of \dmBatch, the design serves \dmRatio{} times the
+nodes of per-record signing. Where $\Lambda_i D_{\max} \leq 2$ the batch is at most one record,
+and nothing is gained.
+
+\begin{figure}[htbp]\centering
+\includegraphics[width=0.75\textwidth]{fig_design_map.png}
+\caption{The design map: the batch $b^\ast$ each record rate and deadline admit, and the
+capacity it buys over per-record signing by the access-rule model. Outlined: cells simulated in
+ns-3, for per-record signing, the design or both; hatched: no batch meets the deadline.}
+\label{fig:map}
+\end{figure}
 
 \section{Certificates}
 
@@ -756,7 +931,8 @@ fitting the correction to the answer.
 \caption{Sender energy per record on a Raspberry~Pi~4: metered (median and range of five
 repetitions) against time multiplied by power. The first-format rows are of July 2026; the
 lean rows are of October, on the second board through the second sensor, where a control that
-repeats the first row gives \enCtlMeas\,\si{\micro\joule}.}
+repeats the first row gives \enCtlMeas\,\si{\micro\joule}; the compiled rows are of 22 October,
+on that board, beside a control giving \enCtlNewMeas\,\si{\micro\joule}.}
 \label{tab:energy}
 \begin{tabular}{lrrr}
 \toprule
@@ -766,6 +942,8 @@ first format, every record signed & \enBaseMeas\ \enBaseRange & \enBaseModel & \
 first format, one signature per four & \enDesignMeas\ \enDesignRange & \enDesignModel & \enDesignGap\% \\
 lean format, every record signed & \enLeanOneMeas\ \enLeanOneRange & \leanSendOneUj & \enLeanOneGap\% \\
 lean format, one signature per four & \enLeanMeas\ \enLeanRange & \leanSendUj & \enLeanGap\% \\
+compiled, every record signed & \enRustOneMeas\ \enRustOneRange & \enRustOneModel & \enRustOneGap\% \\
+compiled, one signature per four & \enRustMeas\ \enRustRange & \enRustModel & \enRustGap\% \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -802,3 +980,13 @@ how much. The absolute values still carry the sensors' gain, which no reference 
 checked; that two sensors on two boards agree within \enCtlVsJuly\% on one workload bounds
 their difference and not their common error.
 \end{remark}
+
+\paragraph{Compiled, the order follows the bytes.} The sender of \Cref{sec:compiled} was metered
+in October 2026 on the same board, with the rig check passed that day and the sensor's gain taken
+as calibrated. It spends \enRustMeas\,\si{\micro\joule} per record with four records to a frame,
+\enFirstOverRust{} times less than the first format with batching, and \enRustOneMeas{} with every
+record signed. The reversal above was the interpreter's. Against the model the meter reads
+\enRustGap{} and \enRustOneGap\%, low because a compiled loop adds \enRustPower\,W above idle where
+the model's one power is $0.749$\,W: the registered ranges, set with that power, missed low
+(\Cref{tab:prereg-revision}). A control that repeats the first row that day gives
+\enCtlNewMeas\,\si{\micro\joule}, inside the range registered for it.

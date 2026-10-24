@@ -184,6 +184,18 @@ chose; the cost of each choice is stated beside it, as for every decision in thi
 *Deferred by him and unchanged: mobility (E20) and the LoRaWAN frozen-phase artifact as a second
 short paper.*
 
+## Decided by Mohamed, 2026-10-24 — the reviewer revision in the paper and the thesis
+
+| decision | chosen | what it costs, or leaves open |
+|---|---|---|
+| **Which `main.tex`** | His uncommitted 2026-10-12 restyle (committed as his, 87bd25a) | — |
+| **A14 and the hardware items B1–B5** | Not stated in the paper or the reply, not even as future work, until the purchases | A reader sees no plan for measured capacity |
+| **5G NR sidelink (A11)** | Future work | One PHY family is simulated, 802.11 only |
+| **Generative-AI statement** | Removed from the paper and the thesis | IEEE, Elsevier and MDPI require a disclosure at submission; that statement is his to make there |
+| **The registration table the reply promises** | In the paper's appendix, not a supplement | About half a page |
+| **A figure or table for every reviewer point** | Yes, in the paper | The paper grows from 15 pages |
+| **The thesis** | Each revision result goes into the chapter it belongs to | More edits than one new chapter |
+
 > **Open items live in [`OPEN_ITEMS.md`](OPEN_ITEMS.md)** — the single tracked list of
 > everything assumed, deferred, unvalidated or accepted-as-a-limitation. Decisions live here.
 > **What each decision COST lives in [`TRADEOFFS.md`](TRADEOFFS.md)** — required reading before

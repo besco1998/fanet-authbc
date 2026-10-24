@@ -41,6 +41,36 @@ future work, until purchased.
    * unequal power with capture raises the capacities.
 
    All four are restored word for word, and the table's rows have their names back.
+6. **Mohamed, the same afternoon:**
+   * use his block diagram;
+   * remove the generative-AI statement and anything that shows AI made the paper;
+   * give every result a figure or table that answers its reviewer point;
+   * then the thesis.
+
+   The diagram was his file all along, byte for byte, but squeezed into one column; it is now
+   full width with a caption for the whole system. Five figures (`analysis/figures_revision.py`)
+   and six tables were added, and the registration table went into the appendix (his choice over
+   a supplement).
+7. **Drawing the figures found five things the text had wrong.** Each was checked against its
+   source before it was fixed.
+   * **The batch controller's peak ages.** Fixed b = 4 showed 124 ms against Age Under Loss's
+     84 ms. The capacity source sends each frame within the *next* period, so peak age is 1.5
+     periods; the text now says so (F113). The letter's "20 ms" saving was 21 ms.
+   * **The margin claim was too wide.** "Wherever p ≤ ε − 0.02, intervals included" holds at the
+     paper's ε = 0.05 only. The new generator guard (`margin_rule`) refused to run: the design
+     misses by its interval at ε = 0.1, p = 0.08 under Gilbert-8 *and* under bit errors. I had
+     found only the first.
+   * **"5 of 192 bursty cells" in three documents.** The source says 5 of 192 cells, all
+     bursty: the 192 are the four equal-loss processes.
+   * **My first description of the flood rig.** I described a sender host; it is a second process
+     on the same board.
+   * **An unsupported cause, and a false origin.** A "likely cause" for the model's fast-rate error
+     contradicted F104 ("not established"). "An external review" was written for experiments that
+     answer objections the revision plan *anticipated*: the reviews have not arrived.
+8. **The thesis carries the revision, chapter by chapter** (his choice over one new chapter). It
+   is 151 pages. The AI paragraph of the front matter is gone. Future work no longer lists the
+   hardware items (more radios, meter calibration) or what is now done (compiled receiver,
+   spread swarm).
 
 # 2026-10-22, evening — A8's energy, and why the SIH airplane dived after takeoff
 

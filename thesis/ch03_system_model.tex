@@ -4,6 +4,20 @@ This chapter fixes what the rest of the thesis reasons about: the network, the l
 traffic and its two operating points, the adversary, the design choices, and the two frame
 formats. A frame as it is sent, byte by byte, is in \Cref{sec:worked}.
 
+\Cref{fig:system} shows the system as a whole. Each UAV codes its records, chains them and
+signs them into frames, and broadcasts the frames on a shared channel; each receiver decodes,
+rebuilds, verifies and stores the frames of its neighbours; and five constraints, one per
+equation of \Cref{ch:theory} and \Cref{ch:codesign}, select the batch, the placement of the
+signature, the scheme and the keyframe interval.
+
+\begin{figure}[htbp]\centering
+\includegraphics[width=\textwidth]{block_diagram.png}
+\caption{System overview: the sender's pipeline, the four-record frame with the size of each
+field in bytes, the shared channel, the receiver's pipeline, and the five constraints that
+select the design.}
+\label{fig:system}
+\end{figure}
+
 \section{Network}
 
 $N$ UAVs share an IEEE 802.11 broadcast channel and all hear one another: one collision domain,
@@ -13,6 +27,10 @@ probability $p$, an abstraction of fading, collisions and mobility, with $p \in 
 0.10\}$ as a declared sensitivity range. Contention is modelled by the DCF (\Cref{ch:theory}) and
 validated against NS-3 (\Cref{ch:validation}). There is no ground control station in the model: the
 substrate is peer-to-peer broadcast.
+
+Every capacity in \Cref{ch:codesign} is computed under this assumption except one family:
+\Cref{sec:spread,sec:spread-swarm} place the nodes over discs of up to $1$\,km, with capture,
+fading and hidden stations, and move them, to see what the assumption hides.
 
 \subsection{Why broadcast, and why it matters}
 
@@ -37,6 +55,13 @@ Only the owner appends to its own chain --- an owned-object model --- so tamperi
 on a $(\texttt{src}, \texttt{seq})$ pair is detectable by chain verification. Finality and
 witnessing semantics are out of scope; the deliverable is \emph{authenticated dissemination}, not
 consensus.
+
+A ledger is audited from the uploads alone. One pass over the frames of a mission, with the
+public keys of the senders and nothing else, finds every equivocation and every frame that does
+not verify, and the auditor signs a Merkle root of what it accepted. For \auUavs{} UAVs over a
+flight hour, \auFrames{} frames, a planted equivocation and a planted forgery were both found,
+with no false finding, in \auMinutes{} minutes of one core. Keeping the frames costs \auKept\,B
+per record.
 
 \section{Traffic and the two arrival rates}
 
@@ -125,6 +150,11 @@ continuity & omission or re-ordering within what is held is detectable &
 non-repudiation & a sender cannot later deny a record &
   follows from a public-key signature, for whoever holds the frame; a symmetric tag would not
   give it \\
+bounded-delay freshness & while GNSS time is held, a frame whose signed timestamp is more than
+  $\Delta$ before the receiver's clock is refused & a window on the signed timestamp
+  (\Cref{sec:window}) \\
+outsiders' floods & the frame of a node outside the swarm is refused before it is decoded &
+  an $8$\,B tag under a key all members hold, checked first \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -152,6 +182,57 @@ number in the same frame was never seen. Every record of a verified frame is now
 what is held before any is stored.
 \end{remark}
 
+\subsection{Formal analysis, and the evidence for each property}\label{sec:formal}
+
+The frame protocol is modelled in the Tamarin prover~\cite{tamarin}: a sender that signs
+frames with increasing sequence numbers and a link to its previous record, a receiver that
+accepts in the order of \Cref{sec:protocol}, and an attacker that is the network. Origin and
+integrity, the rejection of replays, their combination as injective agreement, the evidence of
+an equivocation (which implies a revealed key) and the detection of a skipped frame are proven
+for unboundedly many frames in a model without the chain and the clock. Continuity is proven in
+a model with the chain. The time window is shown in a model with the clock: without it, a frame
+held back by the attacker is accepted, and with it no such trace exists.
+
+Three models, not one. A single model with the chain and the clock did not terminate within a
+gigabyte of memory per lemma. The registered model settled three of its nine lemmas; the counters
+were then keyed by a session identifier and the receiver given a start rule, and both changes
+are recorded with the registration (\Cref{app:prereg}). That the properties carry from the
+smaller models to the full protocol is an argument --- the smaller model's receiver checks less
+and so accepts a superset --- and not a proof. Canonical encoding is assumed injective.
+
+\Cref{tab:security} sets each property beside its evidence, the proofs with the simulations and
+measurements of \Cref{ch:codesign}.
+
+\begin{table}[htbp]\centering\small
+\caption{Security properties and threats, the mechanism for each, and the evidence: proofs in
+Tamarin, simulated clocks, and floods against one Raspberry~Pi~4 receiver core.}
+\label{tab:security}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{2.7cm}
+  >{\raggedright\arraybackslash}p{2.6cm} >{\raggedright\arraybackslash}p{3.6cm}
+  >{\raggedright\arraybackslash}X@{}}
+\toprule
+property or threat & mechanism & evidence & result \\
+\midrule
+origin and integrity & signature over the frame & Tamarin, model without chain and clock & proven \\
+replay & increasing sequence numbers & same model & proven \\
+both together & both & same model & injective agreement proven \\
+equivocation & both frames kept & same model & proven: it implies a revealed key \\
+a gap in a sender's frames & sequence numbers & same model & detection proven \\
+continuity & chain link per frame & Tamarin, model with the chain & proven \\
+delayed frame & GNSS-time window $\Delta$ & Tamarin, model with the clock & accepted without the
+  window, refused with it \\
+ & & simulated clocks, \rpFrames{} honest frames per setting & with $\Delta = 150$\,ms no honest
+  frame refused at clock errors up to $10$\,ms; every frame held $250$\,ms or more refused; a
+  $250$\,ms window outlasts \rpHolds\,min without GNSS \\
+flooding by outsiders & $8$\,B group tag & UDP flood, \flSenders{} senders on one core &
+  $V = \flOutsiderV$ at $3\,000$ forged frames/s; the tag costs \flTagCostPct\% of capacity \\
+flooding by a member & none & same & $V < 0.95$ from \flInsiderRate{} forged frames/s \\
+ledger audit & signed frames uploaded & \auUavs{} UAVs, one flight hour, \auFrames{} frames &
+  both planted faults found, no false finding, in \auMinutes\,min of one core \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
 \subsection{What is not claimed}
 
 Each of these is outside the design, not an oversight in it.
@@ -160,13 +241,13 @@ Each of these is outside the design, not an oversight in it.
 \item[Confidentiality.] Telemetry is broadcast in clear.
 \item[Availability.] Jamming removes frames, and nothing here recovers them: there is no
       retransmission and no coding across frames. Loss appears as the \emph{robustness} measure
-      $V$, not as a security property. A flood of forged frames costs a receiver one
-      verification each, which the CPU budget of \Cref{ch:codesign} bounds and does not prevent.
-\item[Timeliness against a delaying attacker.] Replay is rejected by sequence number, not by
-      time. An attacker who withholds a frame from a receiver and delivers it later gets it
-      accepted --- authentic, in order, and stale. Refusing that needs a clock shared with the
-      sender, which is not assumed. The record's signed timestamp lets an application apply its
-      own bound.
+      $V$, not as a security property. A flood is resisted only from outside the swarm: a member
+      holding the group key can still make a receiver verify forged frames, and at
+      \flInsiderRate{} of them a second one core no longer keeps up (\Cref{sec:flooding}).
+\item[Timeliness without GNSS time.] The window refuses a held-back frame only while sender and
+      receiver share GNSS time. A frame delayed by less than $\Delta$ is accepted, authentic and
+      in order, and so is a later one once GNSS time has been lost for longer than the window
+      allows: two clocks part by \rpDrift\,ms an hour (\Cref{sec:window}).
 \item[Truthfulness.] A UAV holding a valid key can sign false telemetry. Only
       \emph{inconsistent} falsehood --- two records for one sequence number --- is detectable.
 \item[Key distribution, revocation and admission.] Receivers are assumed to hold each sender's

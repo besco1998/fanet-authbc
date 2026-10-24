@@ -179,6 +179,39 @@ the decoding state, because that state advances only on acceptance; were it to a
 frame that merely decoded, replaying an old self-contained frame would rewind it and
 desynchronise an honest sender's stream.
 
+\section{Before the receiver: admission, and a window on time}\label{sec:admission}
+
+A forged frame that names a real sender and a newer sequence number costs a receiver a decode, a
+rebuild and a verification, as much as an honest one. Three steps can stand in front of the
+receiver, each cheaper than the next and each optional:
+\begin{description}
+\item[A group tag.] An $8$\,B truncated HMAC-SHA256 under a key every member of the swarm holds,
+      wrapped around the frame. An outsider's frame is refused at the cost of one HMAC. The
+      frame format does not change; the tag is an envelope around it.
+\item[Cheap checks.] The frame's length lies in the range a lean frame can have, its map parses
+      with the expected keys, it names a known sender, and its sequence number is newer than the
+      last accepted and not too far ahead --- all before any record is rebuilt.
+\item[A per-sender rate cap.] A token bucket at the sender's own frame rate with some slack, so
+      that an impostor can crowd out only the sender it names.
+\end{description}
+The window on GNSS time of \Cref{sec:window} is a further layer: it reads the newest record's
+timestamp before the signature is checked. \Cref{sec:flooding} measures what each step buys.
+
+\section{A compiled codec}\label{sec:compiled}
+
+The prototype is interpreted, and its receiver serves too few nodes per core for the channel to
+bind (\Cref{ch:codesign}). The lean frame was therefore written a second time, in Rust: encode,
+decode, rebuild and verify, with Ed25519 from the \texttt{ed25519-dalek} crate and its batch
+verification. On \rustIdFrames{} frames the compiled encoder emits the same bytes as the
+interpreted one, and each verifies the other's frames.
+
+The compiled receiver has a second, lazy path. A first tier checks the group tag and decodes and
+rebuilds the records, which are then usable at once; a second tier verifies their signatures in
+batches of $64$ before the records enter the ledger. Records are acted on before they are
+evidence, and the window between the two is a stated cost: a member holding the group key could
+have records acted on that are later purged. The sender has a compiled path too, which encodes,
+chains and signs back to back; the energy meter of \Cref{ch:codesign} reads it.
+
 \section{Tests}\label{sec:tests}
 
 The tests are in layers, and the layers catch different things.

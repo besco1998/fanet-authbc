@@ -107,7 +107,8 @@ rounding error and a duplicated word, which is the signal of diminishing returns
 **Two things remain, and only one of them exists yet:**
 
 1. **Submit the paper.** `paper/SUBMISSION_CHECKLIST.md` is the worklist. Venue-independent items
-   are done (data-availability, competing-interests and generative-AI statements, keywords).
+   are done (data-availability and competing-interests statements, keywords; the generative-AI
+   statement was removed by Mohamed on 2026-10-24).
    ⚠️ Blockers only Mohamed can clear: **affiliation** (a literal placeholder in `main.tex`),
    ORCID, funding statement, whether the supervisor is a co-author, and two MDPI PDFs that need a
    browser. Venue is undecided; the checklist tabulates what changes for Ad Hoc Networks /
@@ -134,7 +135,7 @@ cd fanet-authbc && git checkout p8-audit-and-corrections
 make setup && make all          # green == you have reproduced the deterministic layer
 ```
 
-`make all` = lint + mypy + 2417 fast tests + the 42-test frozen gate. NS-3 and the Pi rig are
+`make all` = lint + mypy + 2424 fast tests + the 43-test frozen gate. NS-3 and the Pi rig are
 optional (`docs/05_REPRODUCTION_GUIDE.md`). ⚠️ A fresh clone has **no NS-3 tree** — it is gitignored
 by design. Fetch it from the **GitLab** archive; `nsnam.org/releases/...` returns an HTML error page.
 

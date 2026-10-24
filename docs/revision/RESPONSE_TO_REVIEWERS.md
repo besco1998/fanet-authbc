@@ -14,8 +14,8 @@
 
 We thank the reviewers for their careful reading. The revision adds fifteen experiments. Each
 was registered, with its expected outcome and pass criterion, in a tagged commit before it ran.
-Predictions that failed are reported as failed, and a new Supplementary Table lists every
-prediction with its tag, its outcome and whether it held. The main changes are:
+Predictions that failed are reported as failed, and a new appendix table (`tab:prereg`) lists
+every registered prediction with its outcome and whether it held. The main changes are:
 
 1. the capacity result is re-established for a spread, mobile swarm with fading, capture and
    hidden terminals;
@@ -53,9 +53,10 @@ channel has log-distance path loss, Nakagami-3 fading and 4 dB capture (4 230 ns
 
 *Results:* `spatial_capacity.csv`, `spatial_motion.csv` (F88, F103).
 
-**Changes.** `sec:capacity`: a new paragraph and figure (capacity against neighbour density).
-`sec:limits`: hidden terminals, spatial reuse and relative motion are now simulated, with the
-channel's caveat.
+**Changes.** `sec:capacity`: the paragraph "A Spread, Moving Swarm" and Fig. `fig:spread` (nodes
+served and the design's ratio against disc radius, with the share of hidden spoilers under each
+radius and the moving swarm beside it). `sec:limits`: hidden terminals, spatial reuse and
+relative motion are now simulated, with the channel's caveat.
 
 ## Comment 2 — "b ≤ 4 holds only at the chosen operating point."
 
@@ -70,8 +71,9 @@ updates, the same share that V counts.
 
 *Results:* `design_map.csv`, `design_map_validation.csv`, `aoi_under_loss.csv` (F90, F100).
 
-**Changes.** The design figure becomes the map (model-computed, simulation-checked at the marked
-cells). The Freshness subsection gains the age-under-loss sentence.
+**Changes.** Fig. `fig:map`, the design map (model-computed; the cells simulated in ns-3 are
+outlined), beside the existing figure of capacity against deadline. The Freshness subsection
+gains the age-under-loss sentence.
 
 ## Comment 3 — "The design meets V ≥ 0.95 with no margin."
 
@@ -84,7 +86,9 @@ cells). The Freshness subsection gains the age-under-loss sentence.
 2. **A deployment rule:** set the loss budget ε at least 0.02 above the expected frame loss for
    the mean V. At 0.03 the 95 % interval also clears the target under bursts of four frames or
    more.
-3. **Misses:** the margin rule fails in 5 of 192 bursty cells, by its interval, and one
+3. **Misses:** the margin rule fails by its interval in 5 of 192 cells, all under bursty loss (one is the
+   design at ε = 0.1 and p = 0.08 with bursts of eight frames, where under bit errors its interval
+   also falls short; every mean meets its target), and one
    registered statement missed by 0.0002.
 
 While answering this comment we tested the paper's intervals themselves. With a known truth and
@@ -96,8 +100,9 @@ by 0.001–0.003; no estimate moves.
 *Results:* `verifiability_margin.csv`, `verifiability_margin_trace.csv`, `interval_coverage.csv`
 (F86, F98, F101).
 
-**Changes.** `sec:loss`, `sec:limits` (the "no channel trace" limitation is removed), Discussion
-(the rule), Methods (the intervals).
+**Changes.** `sec:loss` and Fig. `fig:margin` (the design's V against loss under five loss
+processes, with the region the rule admits), `sec:limits` (the "no channel trace" limitation is
+removed), Discussion (the rule), Methods (the intervals).
 
 ## Comment 4 — "The contribution is accounting, not a mechanism."
 
@@ -108,7 +113,9 @@ measured occupancy, and tested it in ns-3 on a growing swarm, a merging swarm an
 * **The registered controller fell short of its own predictions.** It held V ≥ 0.95 in 75 % of
   one-second windows and failed at 76 nodes, against 127 for fixed b = 4.
 * **With twice the margin** (0.02, from its measured scatter), the controller holds the target
-  in 93 % of windows, fails at 116 nodes, and saves 20 ms of peak age against fixed b = 4.
+  in 93 % of windows, fails at 116 nodes, and saves 21 ms of peak age against fixed b = 4.
+  These ages include the instant at which the simulated source sends each frame, drawn over the
+  next period, so they run half a frame period above ages at fill; the paper says so (F113).
 
 We present it as a trade-off between freshness and reliability margin, not as a headline
 contribution. The nearest prior work is FMAC, which adapts the contention window; its
@@ -117,7 +124,9 @@ controllers (every threshold is exceeded from the first second), and is not used
 
 *Results:* `adaptive_batching.csv`, `adaptive_batching_b.csv` (F102).
 
-**Changes.** A Results subsection or Discussion paragraph with the merge time series.
+**Changes.** `sec:capacity`: the paragraph "Choosing the Batch at Run Time" and Fig.
+`fig:adaptive` (the growing swarm, second by second: the batch each policy chooses, V per second
+and the peak age).
 
 ## Comment 5 — "Delayed replay is accepted."
 
@@ -134,7 +143,8 @@ any frame stamped more than Δ before its own clock reads, with Δ = 150–250 m
 *Results:* `replay_window.csv`.
 
 **Changes.** `sec:model`: the delaying attacker moves from "not protected" to a protected
-property (v), with its condition. `sec:limits` is updated.
+property (v), with its condition, and Table `tab:security` gives its evidence. `sec:limits` is
+updated.
 
 ## Comment 6 — "The security argument is informal."
 
@@ -150,8 +160,9 @@ did not terminate within 1 GB per lemma. In the registered model 3 of 9 lemmas s
 encodings were changed after registration (counters keyed by a session identifier, a receiver
 start rule), and both changes are disclosed. Canonical encoding is assumed injective.
 
-**Changes.** `sec:limits` ("Security Scope"): "informal" is replaced by the proven properties,
-with the three-model caveat in the same sentence.
+**Changes.** `sec:model`: Table `tab:security` lists each property with the model that proves
+it. `sec:limits` ("Security Scope"): "informal" is replaced by the proven properties, with the
+three-model caveat in the same sentence.
 
 ## Comment 7 — "Flooding is not resisted."
 
@@ -177,7 +188,10 @@ both conclusions held.
 
 *Results:* `flood_cost.authbc-pi4b.csv`, `flood_udp.authbc-pi4b.csv` (F109).
 
-**Changes.** `sec:model` (the tag in the threat model), `sec:limits` (insiders).
+**Changes.** `sec:model` (the tag in the threat model, and Table `tab:security`),
+`sec:capacity` (the paragraph "Flooding" and Fig. `fig:flood`: honest delivery against the
+forged-frame rate for each defence and attacker), `sec:limits` (insiders). The figure also shows
+that a per-sender cap holds one forging sender at V ≥ 0.96 up to the rate one channel carries.
 
 ## Comment 8 — "The receiver's CPU and the sender's energy are artifacts of an interpreted prototype."
 
@@ -209,8 +223,9 @@ leaves the comparisons unchanged.
 
 *Results:* `compiled_receiver.authbc-pi4b.csv`, `energy_runs_2026-10-22.csv` (F108, F112).
 
-**Changes.** Receiver CPU paragraph ("three cores" becomes the prototype's), Table `tab:energy`
-(two compiled rows), and the energy paragraph.
+**Changes.** Receiver CPU paragraph ("three cores" becomes the prototype's) and Table
+`tab:receiver` (interpreted, compiled, batched and lazy receivers, timed in one session), Table
+`tab:energy` (two compiled rows), and the energy paragraph.
 
 ## Comment 9 — "The 9-field telemetry is synthetic."
 
@@ -236,8 +251,9 @@ wing and a VTOL. Ten fixed-wing and ten VTOL missions were flown a second time a
 
 *Results:* `record_size.csv`, `record_size_fast.csv`, `a9_fast_speeds.csv` (F105, F107, F111).
 
-**Changes.** `sec:px4`: one paragraph on richer records and airframes. `sec:limits`: the
-simulator's limits.
+**Changes.** `sec:px4`: one paragraph on richer records and airframes, and Table
+`tab:airframes` (keyframe and per-airframe delta at 9, 15 and 25 fields, the saving and the
+ratio). `sec:limits`: the simulator's limits.
 
 ## Comment 10 — "The stream-signing comparators are only sized on paper."
 
@@ -270,7 +286,9 @@ where it is 2.9–4.6 % optimistic. **5G NR sidelink is stated as future work.**
 
 *Results:* `phy_links.csv` (F104).
 
-**Changes.** Discussion (a short table), Supplementary Note 7, Future Work (NR sidelink).
+**Changes.** `sec:capacity`: the paragraph "Other PHY Rates" and Table `tab:phy` (each PHY and
+rate: frame airtime, both capacities, the ratio and the model's error). Conclusion: the NR
+sidelink as future work.
 
 ## Comment 12 — "The receiver is CPU-bound; is there a cheaper verification path?"
 
@@ -286,7 +304,8 @@ inject records that are acted on and only later purged.
 
 *Results:* `compiled_receiver.authbc-pi4b.csv` (F108).
 
-**Changes.** Discussion (the two tiers and their trade-off).
+**Changes.** Receiver CPU paragraph (the two tiers and their trade-off) and the lazy row of Table
+`tab:receiver`.
 
 ## Comment 13 — "There is no post-quantum path."
 
@@ -303,7 +322,8 @@ matters the same. ML-DSA's 2 420 B signature still does not fit.
 
 *Results:* `pq_capacity.csv`, `pq_speed_sig.authbc-pi4b.csv` (F110).
 
-**Changes.** `sec:limits` ("Post-Quantum Signatures"), Conclusion.
+**Changes.** `sec:capacity`: the paragraph "A Post-Quantum Signature" and the Falcon-512 row of
+Table `tab:phy`. `sec:limits` ("Post-Quantum Signatures"), Conclusion.
 
 ## Comment 14 — "The blockchain framing is not supported."
 
@@ -316,7 +336,7 @@ hour for 124 neighbours.
 
 *Results:* `ledger_audit.csv`.
 
-**Changes.** `sec:model` (Ledger). ⚠️ *For Mohamed: whether the title keeps "blockchain-style
+**Changes.** `sec:model` (Ledger) and the audit row of Table `tab:security`. ⚠️ *For Mohamed: whether the title keeps "blockchain-style
 ledger" or becomes "hash-chained log" is your decision.*
 
 ## Comment 15 — "The generality claim is not examined."
@@ -336,4 +356,5 @@ they do.
 
 *Results:* `other_links.csv`.
 
-**Changes.** Discussion (a short table).
+**Changes.** Discussion: the paragraph on other broadcast systems and Table `tab:links` (records
+per frame each system admits at 100 ms, 200 ms, 300 ms and 1 s, with this design's row).

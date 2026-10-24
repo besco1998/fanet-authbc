@@ -34,6 +34,7 @@ sys.path.insert(0, str(REPO / "src"))
 sys.path.insert(0, str(REPO / "analysis"))      # nmax_airtime_line, when loaded by a test
 
 import dcf_model_check as modelcheck  # noqa: E402
+import design_map as dmap  # noqa: E402
 import nmax_airtime_line as airtime  # noqa: E402
 import source_difference as sources  # noqa: E402
 
@@ -1328,7 +1329,8 @@ def adaptive() -> dict[str, str]:
             "adShare": share(second), "adFail": f(second["failure_n"], 0),
             "adFixShare": share(fixed), "adFixFail": f(fixed["failure_n"], 0),
             "adAgeSaved": f(float(fixed["peak_age_mean_ms"])
-                            - float(second["peak_age_mean_ms"]), 0)}
+                            - float(second["peak_age_mean_ms"]), 0),
+            "adLowGain": f(float(fixed["age_n_lt_30_ms"]) - float(reg["age_n_lt_30_ms"]), 0)}
 
 
 def replay_window() -> dict[str, str]:
@@ -1359,6 +1361,25 @@ def _crossing_rate(senders: int, policy: str, attack: str, udp: list[dict[str, s
     return math.inf
 
 
+def flood_channel_limit() -> int:
+    """Frames per second one 802.11a channel carries at the design's frame plus the 8 B tag."""
+    design = one(rows(RAW / "design_ladder.csv"), format="lean", rung="batch-delta",
+                 op="adopted", scheme="ed25519")
+    return int(1 / bianchi.t_broadcast(round(float(design["frame_bytes"])) + 8))
+
+
+def _cap_one_sender(udp: list[dict[str, str]], senders: int) -> float:
+    """The lowest honest V behind a per-sender cap when one sender forges, at rates one channel
+    can carry."""
+    held = [float(r["honest_V"]) for r in udp
+            if r["senders"] == str(senders) and r["policy"] == "cap"
+            and r["attack"] == "forged-one"
+            and float(r["attack_rate_sent"]) <= flood_channel_limit()]
+    if not min(held) >= 0.95:
+        raise ValueError("the text says the cap holds one forging sender off within one channel")
+    return min(held)
+
+
 def flooding() -> dict[str, str]:
     """A7: what a forged frame costs, and the group tag (pi-B; F109)."""
     cost = {r["path"]: float(r["median_us"]) for r in rows(HW / "flood_cost.authbc-pi4b.csv")}
@@ -1379,7 +1400,10 @@ def flooding() -> dict[str, str]:
             "flNoneRate": f(_crossing_rate(senders, "none", "forged", udp), 0),
             "flInsiderRate": f(_crossing_rate(senders, "mac", "insider", udp), 0),
             "flSpreadRate": f(_crossing_rate(senders, "cap", "forged", udp), 0),
-            "flChannel": thousands(int(1 / bianchi.t_broadcast(round(frame) + 8))),
+            "flChannel": thousands(flood_channel_limit()),
+            "flCapOneV": f(_cap_one_sender(udp, senders), 2),
+            "flForgedRate": f(1e6 / cost["forged_none"], 0),
+            "flTagRate": thousands(int(round(1e6 / cost["outsider_mac"], -2))),
             "flTagCostPct": f(100 * tagged, 1)}
 
 
@@ -1547,12 +1571,136 @@ def intervals() -> dict[str, str]:
             "covFixedLo": f(min(fixed), 0), "covFixedHi": f(max(fixed), 0)}
 
 
+# ------------------------------------------------- tables of the revision (one per reviewer point)
+
+def receiver_costs() -> dict[str, str]:
+    """Table tab:receiver (A8, A13): time per four-record frame and nodes per core on pi-B."""
+    c = {(r["impl"], r["metric"]): float(r["median_ns"])
+         for r in rows(HW / "compiled_receiver.authbc-pi4b.csv")}
+    batched = (c[("rust", "decode_rebuild_ns_per_frame")]
+               + c[("rust", "batch64_verify_ns_per_frame")])
+    lazy = c[("rust", "tier1_tag_decode_ns_per_frame")] + c[("rust", "tier2_batch64_ns_per_frame")]
+    rate = 12.5                                          # frames/s: 50 records/s, four a frame
+    for t_ns, nodes in ((batched, "nodes_per_core_rust_batch64"), (lazy, "nodes_per_core_lazy")):
+        if not abs(1e9 / (rate * t_ns) - c[("derived", nodes)]) < 0.5:
+            raise ValueError("the table's time per frame and nodes per core disagree")
+    return {"rxPyUs": thousands(round(c[("python", "receive_ns_per_frame")] / 1e3)),
+            "rxPyNodes": f(c[("derived", "nodes_per_core_python")], 0),
+            "rxRustUs": f(c[("rust", "receive_ns_per_frame")] / 1e3, 0),
+            "rxBatchUs": f(batched / 1e3, 0),
+            "rxTierTwoUs": f(c[("rust", "tier2_batch64_ns_per_frame")] / 1e3, 1)}
+
+
+def airframe_table() -> dict[str, str]:
+    """Table tab:airframes (A9, A9-fast): record sizes of 30 SIH flights at their planned speeds."""
+    fast = rows(RAW / "record_size_fast.csv")
+    names = {"9": "Nine", "15": "Fifteen", "25": "TwentyFive"}
+    frames = {"quadx": "Quad", "airplane": "Wing", "vtol": "Vtol"}
+    out = {}
+    for fields, word in names.items():
+        mine = [r for r in fast if r["fields"] == fields]
+        if {r["airframe"] for r in mine} != set(frames):
+            raise ValueError("the table has a column per airframe")
+        out[f"afKey{word}"] = f(st.mean(float(r["key_mean"]) for r in mine), 1)
+        for airframe, short in frames.items():
+            out[f"afDelta{short}{word}"] = f(st.mean(float(r["delta_mean"]) for r in mine
+                                                     if r["airframe"] == airframe), 1)
+    # 15 and 25 fields: afSave*/afRatio* of airframes(), the same means
+    nine = [r for r in fast if r["fields"] == "9"]
+    return out | {"afSaveNine": f(st.mean(float(r["saving_pct"]) for r in nine), 1),
+                  "afRatioNine": f(st.mean(float(r["ratio"]) for r in nine), 2)}
+
+
+def phy_table() -> dict[str, str]:
+    """Table tab:phy (A11, A15): capacity on six 802.11 PHYs and rates, and with Falcon-512."""
+    t = rows(RAW / "phy_links.csv")
+    names = {("80211a", "6"): "Asix", ("80211a", "12"): "Atwelve", ("80211a", "24"): "Atwenty",
+             ("80211p", "3"): "Pthree", ("80211p", "6"): "Psix", ("80211p", "12"): "Ptwelve"}
+    if {(r["standard"], r["rate_mbps"]) for r in t} != set(names):
+        raise ValueError("the table has a row per simulated PHY and rate")
+    out = {}
+    for (std, rate), word in names.items():
+        base = one(t, standard=std, rate_mbps=rate, role="base")
+        design = one(t, standard=std, rate_mbps=rate, role="design")
+        worst = max((float(r["vs_model_pct"]) for r in (base, design)), key=abs)
+        out |= {f"phy{word}Us": f(design["frame_time_us"], 0),
+                f"phy{word}Base": f(base["ns3_crossing"], 1),
+                f"phy{word}Design": f(design["ns3_crossing"], 1),
+                f"phy{word}Ratio": f(design["ns3_ratio"], 2), f"phy{word}Gap": signed(worst)}
+    pq = rows(RAW / "pq_capacity.csv")
+    worst = max((float(one(pq, cell=c)["vs_model_pct"]) for c in ("PQ1", "PQ4")), key=abs)
+    return out | {"pqUs": thousands(round(float(one(pq, cell="PQ4")["frame_time_us"]))),
+                  "pqGap": signed(worst)}
+
+
+# Registered predictions the appendix quotes with a decimal: each string must appear, as written,
+# in its registration (predictions/<ID>.md), so the table cannot drift from what was registered.
+QUOTED = (("A11.md", "ratios span 1.7–4.3", {"regPhyLo": "1.7", "regPhyHi": "4.3"}),
+          ("A15.md", "ratio near 3.9", {"regPqRatio": "3.9"}),
+          ("A9.md", "ratio at 25 fields within 2.6–3.4", {"regAfLo": "2.6", "regAfHi": "3.4"}),
+          ("A16.md", "about 1.3 GB per hour", {"regAuGb": "1.3"}))
+
+
+def registered() -> dict[str, str]:
+    """Table tab:prereg: the registered bounds it quotes."""
+    out = {}
+    for name, quote, values in QUOTED:
+        if quote not in (REPO / "predictions" / name).read_text(encoding="utf-8"):
+            raise ValueError(f"predictions/{name} no longer says {quote!r}")
+        if not all(v in quote for v in values.values()):
+            raise ValueError(f"a quoted value is not in {quote!r}")
+        out |= values
+    return out
+
+
+def margin_rule() -> dict[str, str]:
+    """Fig. fig:margin (A3, F86): where the design, b = 4 and a keyframe in every frame, misses
+    the target by its interval although the rule p <= epsilon - 0.02 admits the loss."""
+    design = [r for r in rows(RAW / "verifiability_margin.csv")
+              if r["batch"] == "4" and r["ref_interval"] == "1"]
+    misses = [(r["loss_model"], r["p"], eps) for r in design for eps in ("0.05", "0.08", "0.1")
+              if float(r["p"]) <= float(eps) - 0.02 + 1e-9
+              and float(r["V_ci_lo"]) < 1.0 - float(eps)]
+    # the 192 registered cells (A3 plan 1) are the four equal-frame-loss processes; bit errors,
+    # scored separately, miss at the same point
+    if sorted(misses) != [("ber", "0.08", "0.1"), ("gilbert8", "0.08", "0.1")]:
+        raise ValueError(f"the text names two cells of the design that miss: {misses}")
+    return {"mgMissEps": "0.1", "mgMissP": "0.08"}
+
+
+def links_table() -> dict[str, str]:
+    """Table tab:links (A17): the batch each broadcast system admits at three deadlines, with this
+    design's own row computed by the same rule (Eq. 2 and the 1500 B payload)."""
+    t = rows(RAW / "other_links.csv")
+    systems = {"ADS-B 1090ES (ME field)": "Adsb", "Remote ID, Bluetooth 4 legacy": "Ridfour",
+               "Remote ID, Bluetooth 5 / Wi-Fi (Message Pack)": "Ridfive",
+               "V2X CAM at 10 Hz (802.11p, 1500 B MTU)": "Camten",
+               "V2X CAM at 1 Hz (802.11p, 1500 B MTU)": "Camone"}
+    deadlines = {"100.0": "Hundred", "200.0": "Twohundred", "300.0": "Threehundred",
+                 "1000.0": "Second"}
+    out = {}
+    for system, word in systems.items():
+        for d, dword in deadlines.items():
+            r = one(t, system=system, d_max_ms=d)
+            out[f"ol{word}{dword}"] = ("---" if r["signature_fits"] == "0" else
+                                        "none" if r["batch"] == "0" else r["batch"])
+    t_ch, t_v = dmap.budget()
+    design = one(rows(RAW / "design_map.csv"), lambda_rec_per_s="50", d_max_ms="100")
+    for d, dword in deadlines.items():
+        b = min(dmap.b_star(50.0, float(d), t_ch, t_v), int(design["mtu_records"]))
+        out[f"olDesign{dword}"] = str(b)
+    if out["olDesignHundred"] != design["b_star"]:
+        raise ValueError("the design's row and the design map disagree at 50/s, 100 ms")
+    return out
+
+
 SECTIONS = (frames, ladder, loss, stream, freshness, phy, energy, timings, flight_logs,
             validation, exclusion, low_rate, source_study, capacity_rule, capacity_model, sitl,
             energy_runs, prototype, batch_dimension, multicore, spread, platforms,
             spread_swarm, design_map, loss_trace, adaptive, replay_window, flooding, compiled,
             compiled_energy, airframes, stream_deadline, phy_simulated, post_quantum,
-            ledger_audit, other_links, intervals)
+            ledger_audit, other_links, intervals, receiver_costs, airframe_table, phy_table,
+            links_table, registered, margin_rule)
 
 
 def macros() -> dict[str, str]:

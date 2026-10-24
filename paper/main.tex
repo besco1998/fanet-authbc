@@ -1,6 +1,7 @@
 \documentclass[conference]{IEEEtran}
 \usepackage{amsmath,amssymb}
 \usepackage{booktabs}
+\usepackage{array}
 \usepackage{graphicx}
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning}
@@ -10,8 +11,8 @@
 \graphicspath{{../results/figures/}}
 \newcommand{\us}{\,\ensuremath{\mu}s}
 \newcommand{\ba}{\ensuremath{g_a}}
-% A run-in label: Title Case and a colon, the form of the author's published paper
-% (farouk2026encoding). One macro, so that the form can be changed in one place.
+% A run-in label: Title Case and a colon, as in farouk2026encoding. One macro, so that the form
+% can be changed in one place.
 \newcommand{\runin}[1]{\textit{#1:}}
 % Every measured or derived number in this paper is a macro defined in numbers.tex, which
 % analysis/paper_numbers.py writes from the artifacts in results/raw/. Do not type results here.
@@ -22,8 +23,8 @@
 \title{AUTHBC: Feasibility Boundaries for Authenticated UAV Telemetry ---
 An Exclusion Bound and a Capacity Envelope}
 
-% !! SUBMISSION BLOCKER: affiliation, email and ORCID are placeholders and must be
-% completed by Mohamed before this goes anywhere. See paper/SUBMISSION_CHECKLIST.md.
+% !! SUBMISSION BLOCKER: affiliation and ORCID are placeholders. See
+% paper/SUBMISSION_CHECKLIST.md.
 \author{\IEEEauthorblockN{Mohamed A. Farouk}
 \IEEEauthorblockA{\textit{[AFFILIATION -- TO BE COMPLETED]}\\
 \textit{[Department, Institution, City, Country]}\\
@@ -199,12 +200,17 @@ them to each authentication configuration at its own frame size and frame rate.
 
 \section{System and Threat Model}\label{sec:model}
 
-\begin{figure}[t]\centering
-\includegraphics[width=\columnwidth]{block_diagram.png}
-\caption{The lean frame to scale. Per-record signing repeats header, chain link and signature
-for every record; the design sends them once per four records.}
-\label{fig:frame}
-\end{figure}
+\begin{figure*}[t]\centering
+\includegraphics[width=444pt]{block_diagram.png}
+\caption{System overview: sender pipeline, the four-record frame with its field sizes (bytes),
+shared channel, receiver pipeline, and the five constraints that select the design.}
+\label{fig:system}
+\end{figure*}
+
+Fig.~\ref{fig:system} gives an overview. Each UAV codes, chains and signs its records into
+frames and broadcasts them on a shared channel; each receiver decodes, verifies and stores the
+frames of its neighbors; and five constraints fix the design parameters
+(Sec.~\ref{sec:constraints}).
 
 \subsection{Network and Traffic}
 $N$ UAVs share one channel and all hear one another: one collision domain, which we call a
@@ -234,11 +240,36 @@ $\mathit{prev\_hash}_{i} = \mathrm{SHA\mbox{-}256}(\mathit{rec}_{i-1})$, and sto
 records it hears from others. No consensus layer is included; the subject of this paper is
 authenticated dissemination. A ledger is audited from the uploads alone: one pass over the frames
 of a mission, with the public keys of the senders, finds every equivocation and every frame that
-does not verify. For \auUavs{} UAVs over a flight hour (\auFrames{} frames), a planted
-equivocation and a planted forgery were both found, with no false finding, in \auMinutes{}
-minutes of one core; keeping the frames costs \auKept\,B per record.
+does not verify; a planted equivocation and a planted forgery were both found, with no false
+finding (Table~\ref{tab:security}). Keeping the frames costs \auKept\,B per record.
 
 \subsection{Adversary and Security Goals}
+
+\begin{table*}[t]\centering\footnotesize
+\caption{Security properties and threats, the mechanism for each, and the evidence: proofs in
+Tamarin, simulated clocks, and floods against one Raspberry~Pi~4 receiver core.}
+\label{tab:security}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{>{\raggedright\arraybackslash}p{83pt} >{\raggedright\arraybackslash}p{88pt}
+                >{\raggedright\arraybackslash}p{139pt} >{\raggedright\arraybackslash}p{160pt}}
+\toprule
+\textbf{Property or threat} & \textbf{Mechanism} & \textbf{Evidence} & \textbf{Result} \\
+\midrule
+(i) Origin and integrity & signature over the frame & Tamarin, model without chain and clock & proven \\
+(ii) Replay & increasing sequence numbers & same model & proven \\
+(i) and (ii) together & both & same model & injective agreement proven \\
+(iii) Equivocation & both frames kept & same model & proven: it implies a revealed key \\
+Gap in a sender's frames & sequence numbers & same model & detection proven \\
+(iv) Continuity & chain link per frame & Tamarin, model with the chain & proven \\
+(v) Delayed frame & GNSS-time window $\Delta$ & Tamarin, model with the clock & accepted without the window, refused with it \\
+ & & simulated clocks, \rpFrames{} honest frames per setting & with $\Delta = 150$\,ms no honest frame refused at clock errors up to 10\,ms; every frame held 250\,ms or more refused; a 250\,ms window outlasts \rpHolds\,min without GNSS \\
+Flooding by outsiders & 8\,B group tag & UDP flood, \flSenders{} senders on one core & $V = \flOutsiderV$ at 3\,000 forged frames/s (Fig.~\ref{fig:flood}); the tag costs \flTagCostPct\% of capacity \\
+Flooding by a member & none & same & $V < 0.95$ from \flInsiderRate{} forged frames/s \\
+Ledger audit & signed frames uploaded & \auUavs{} UAVs, one flight hour, \auFrames{} frames & both planted faults found, no false finding, in \auMinutes\,min of one core \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
 \runin{Adversary} The adversary controls the radio: it reads, injects, replays, modifies,
 delays and drops frames, and may operate many radios. It holds no private key of an honest UAV.
 
@@ -267,8 +298,8 @@ senders, and the bytes of delivering certificates are charged separately
 
 \runin{Formal Analysis} Properties (i)--(iv) and the detection of gaps are proven in the Tamarin
 prover~\cite{tamarin} for unboundedly many frames, and (v) is shown to hold with the window and
-to fail without it. The proofs use three models, since one model with both the chain and the
-clock did not terminate; canonical encoding is assumed injective.
+to fail without it (Table~\ref{tab:security}). The proofs use three models, since one model with
+both the chain and the clock did not terminate; canonical encoding is assumed injective.
 
 \subsection{Verifiability Metric}
 $V$ is the probability that a record a UAV generates is received, decoded and verified by a
@@ -306,7 +337,7 @@ given neighbor. We require $V \geq 1-\epsilon$ and take $\epsilon = 0.05$ throug
 
 \subsection{Frame Structure}
 A frame is one canonical CBOR map~\cite{rfc8949} with integer keys (Table~\ref{tab:fields},
-Fig.~\ref{fig:frame});
+Fig.~\ref{fig:system});
 Appendix~\ref{app:frame} provides the complete layout. The fields \texttt{src} and
 \texttt{base\_seq} name the sender and the sequence number of the first record; \texttt{link}
 is the hash of the record before it; \texttt{recs} is the record stream and \texttt{auth} one
@@ -492,7 +523,9 @@ Student-$t$ interval, and an interval of an interpolated crossing an expanded pe
 bootstrap interval~\cite{hesterberg2015bootstrap}: with a known truth and \seeds{} seeds, the
 plain percentile interval covered \covPlainLo--\covPlainHi\% of the time and these
 \covFixedLo--\covFixedHi\%. The saturation models were validated separately
-against saturated ns-3 runs (Sec.~\ref{sec:validation}).
+against saturated ns-3 runs (Sec.~\ref{sec:validation}). The experiments of
+Table~\ref{tab:prereg} were registered before they ran, and are scored as registered,
+misses included (Appendix~\ref{app:prereg}).
 
 The main evaluation uses one collision domain of static nodes; Section~\ref{sec:capacity}
 repeats it for a swarm spread over a wider area, with hidden stations, and moving. Capacities are
@@ -708,7 +741,18 @@ costs \bprLeanDesign\,B per record, and loses only its own records when it is lo
 \runin{Loss in the Simulator} Traced at the capacity crossing, \trLinks{} neighbor links in ns-3
 lose frames independently of one another: bursts average \trBurst{} frames, against \trBurstIid{}
 for independent loss at the same rate. Eq.~\eqref{eq:v} is therefore the model of $V$ at the
-crossing, and the pessimistic one where losses are bursty.
+crossing, and the pessimistic one where losses are bursty. Fig.~\ref{fig:margin} shows the design
+under five loss processes with the same mean: with $\epsilon = 0.05$ and $p \leq \epsilon - 0.02$
+it meets the target, intervals included, under every one of them. At a looser budget the margin
+can be too small: at $\epsilon = \mgMissEps$ and $p = \mgMissP$ the design's interval falls below
+the target under bursts of eight frames and under bit errors, though its mean does not.
+
+\begin{figure}[t]\centering
+\includegraphics[width=\columnwidth]{fig_margin.png}
+\caption{Records verified by the design ($b=4$, $r=1$) against frame loss, five loss processes,
+95\% intervals; with bit errors, $p$ is one-record frame loss.}
+\label{fig:margin}
+\end{figure}
 
 \runin{Length-Dependent Loss} These values give every frame the same loss probability. At a
 fixed bit error rate a longer frame is lost more often, and a batch is a longer frame. On a
@@ -749,7 +793,14 @@ here 40~records/s: at 20~records/s with the same 100\,ms bound the batch is one 
 nothing is gained. At other rates and deadlines Eq.~\eqref{eq:fresh} admits other batches; at
 \dmCells{} cells of rate and deadline the simulated capacities lie within \dmWorst\% of the
 access-rule model, and at 100~records/s and 100\,ms, where it admits a batch of \dmBatch, the
-design serves \dmRatio{} times the nodes of per-record signing.
+design serves \dmRatio{} times the nodes of per-record signing (Fig.~\ref{fig:map}).
+
+\begin{figure}[t]\centering
+\includegraphics[width=\columnwidth]{fig_design_map.png}
+\caption{Design map: the batch $b^\ast$ the deadline admits and the capacity it buys over
+per-record signing, by the access-rule model; outlined: simulated in ns-3; hatched: none.}
+\label{fig:map}
+\end{figure}
 
 \runin{Age Under Loss} A lost frame adds one frame period, $b/\Lambda$, to the age of the next
 update. At $p = 0.05$ the mean peak age is \aoiPeakMean\,ms, within $D_{\max}$, but its 99th
@@ -885,19 +936,36 @@ in this test.
 sensing range. With nodes in discs of radius 100\,m to 1\,km, log-distance path loss, Nakagami
 fading and the same capture rule, and in a grouped and a moving layout, the design keeps its
 advantage: the ratio of the crossings lies between \spRatioLo{} and \spRatioHi{} in every
-layout. At a radius of 1\,km, \spHiddenPct\% of the nodes able to spoil a frame cannot hear its
+layout (Fig.~\ref{fig:spread}). At a radius of 1\,km, \spHiddenPct\% of the nodes able to spoil a frame cannot hear its
 sender. Counted in neighbors within reach, capacity falls, to \spNeighbours{} at 1\,km, because
 a receiver contends with every node in its carrier-sensing range~\cite{hu2020hidden}; counted in
 nodes over the area, it rises to \spArea. With every node on its own Gauss--Markov path at up to
 15\,m/s~\cite{bujari2017fanet}, delivery changes by at most \mvDeltaV{} and the ratio stays
 \mvRatioLo--\mvRatioHi; the channel model has no Doppler and no time-correlated fading.
 
+\begin{figure}[t]\centering
+\includegraphics[width=\columnwidth]{fig_spread.png}
+\caption{Nodes served at 95\% delivery as the swarm spreads (top), and the design's ratio to
+per-record signing (bottom); hollow markers: moving at 0, 5 and 15\,m/s.}
+\label{fig:spread}
+\end{figure}
+
 \runin{Choosing the Batch at Run Time} A controller that sets $b$ from the occupancy of the
 channel it measures was simulated on a swarm that grows while it flies. As registered, with a
 margin of 0.01, it met $V \geq 0.95$ in \adRegShare\% of one-second windows and failed at
 \adRegFail{} nodes; with a margin of 0.02 it met it in \adShare\% and failed at \adFail, against
-\adFixShare\% and \adFixFail{} with $b=4$ fixed, while saving \adAgeSaved\,ms of peak age. Choosing
-$b$ at run time buys freshness at the cost of reliability margin; it does not raise capacity.
+\adFixShare\% and \adFixFail{} with $b=4$ fixed, while saving \adAgeSaved\,ms of peak age
+(Fig.~\ref{fig:adaptive}). These ages include the instant at which the simulated source sends
+each frame, drawn over the next period (Sec.~\ref{sec:method}), and are on average half a frame
+period longer than those of Sec.~\ref{sec:fresh}. Choosing $b$ at run time buys freshness at
+the cost of reliability margin; it does not raise capacity.
+
+\begin{figure}[t]\centering
+\includegraphics[width=\columnwidth]{fig_adaptive.png}
+\caption{A swarm growing in flight (ten seeds): the batch each policy chooses, the share of
+records verified in each second, and the peak age of information.}
+\label{fig:adaptive}
+\end{figure}
 The nearest published mechanism adapts the contention window to a flocking
 swarm~\cite{huang2021fmac}.
 
@@ -919,13 +987,29 @@ By that time one core serves \ncpuProto{} nodes: the processor binds before the 
 one receiver process per core, one to four at once, the board serves \mcNodesOne, \mcNodesTwo,
 \mcNodesThree{} and \mcNodesFour{} nodes. Four cores give \mcScaleFour{} times one, less than we
 had written down beforehand, so \nmaxLeanDesign{} nodes need three of them. Compiled in Rust, the
-same receive path takes \rxRustMs\,ms on the Pi~4, \rxSpeedup{} times less; one core then serves
-\rxRustNodes{} nodes, and \rxBatchNodes{} with batch verification, so the channel binds again. A
-receiver that uses records once their group tag and frame are checked (\rxTierOneUs\us) and
-verifies their signatures in batches before they enter the ledger serves \rxLazyNodes{} nodes per
-core. A record is then evidence within \rxEvidenceMs\,ms by the convention of
-Eq.~\eqref{eq:fresh}; in that window a member holding the group key could have records acted on
-that are later purged.
+same receive path takes \rxRustMs\,ms on the Pi~4, \rxSpeedup{} times less, and the channel
+binds again (Table~\ref{tab:receiver}). A receiver that uses records once their group tag and
+frame are checked and verifies their signatures in batches before they enter the ledger serves
+\rxLazyNodes{} nodes per core. A record is then evidence within \rxEvidenceMs\,ms by the
+convention of Eq.~\eqref{eq:fresh}; in that window a member holding the group key could have
+records acted on that are later purged.
+
+\begin{table}[t]\centering\footnotesize
+\caption{Time to receive a four-record frame on one Raspberry~Pi~4 core, and the nodes one core
+serves; all four timed in one session.}
+\label{tab:receiver}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{l r r}
+\toprule
+\textbf{Receiver} & \textbf{$\mu$s per frame} & \textbf{Nodes per core} \\
+\midrule
+interpreted (Python) & \rxPyUs & \rxPyNodes \\
+compiled (Rust) & \rxRustUs & \rxRustNodes \\
+compiled, batches of 64 & \rxBatchUs & \rxBatchNodes \\
+lazy: tag and decode, then batches & \rxTierOneUs{} + \rxTierTwoUs & \rxLazyNodes \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \runin{Flooding} A forged frame --- a real sender, a newer sequence number and a well-formed
 signature by another key --- costs the Python receiver \flForgedMs\,ms on the Pi~4, against
@@ -935,18 +1019,49 @@ group tag refuses the frame of an outsider in \flTagUs\us: at 3000 forged frames
 more than the \flChannel{} that one channel carries, honest delivery stays at \flOutsiderV. A
 member holding the key is stopped neither by the tag nor by a per-sender rate cap: honest
 delivery falls below 0.95 from \flInsiderRate{} forged frames per second behind the tag, and from
-\flSpreadRate{} behind the cap when the forgeries name every sender. The tag costs
-\flTagCostPct\% of capacity.
+\flSpreadRate{} behind the cap when the forgeries name every sender (Fig.~\ref{fig:flood}).
+Against one forging sender the cap keeps delivery at \flCapOneV{} or more, up to the rate one
+channel carries. The tag costs \flTagCostPct\% of capacity.
+
+\begin{figure}[t]\centering
+\includegraphics[width=\columnwidth]{fig_flood.png}
+\caption{Honest delivery on one Raspberry~Pi~4 receiver core with \flSenders{} senders, against
+the rate of forged frames, for each defense and attacker.}
+\label{fig:flood}
+\end{figure}
 
 \runin{Other PHY Rates} The crossings were also simulated on 802.11a at 12 and 24\,Mb/s and on
 the 10\,MHz channel of 802.11p at 3, 6 and 12\,Mb/s. The design serves
 \phySimRatioLo--\phySimRatioHi{} times the nodes of per-record signing, more at faster rates: a faster PHY
-shortens the payload but not the fixed cost of a frame. The access-rule model stays within
-\phyModelRest\% except at the fastest rate of each channel width, where it is
-\phyModelTopLo--\phyModelTopHi\% optimistic.
+shortens the payload but not the fixed cost of a frame (Table~\ref{tab:phy}). The access-rule
+model stays within \phyModelRest\% except at the fastest rate of each channel width, where it
+is \phyModelTopLo--\phyModelTopHi\% optimistic.
+
+\begin{table}[t]\centering\footnotesize
+\caption{Nodes served at 95\% delivery in ns-3 on other PHYs and with a post-quantum
+signature, and the access-rule model's error (negative: optimistic).}
+\label{tab:phy}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{l r r r r r}
+\toprule
+ & \textbf{Frame} & \multicolumn{2}{c}{$\boldsymbol{N_{\max}}$} & & \textbf{Model} \\
+\textbf{PHY and rate} & ($\mu$s) & \textbf{per rec.} & \textbf{design} & \textbf{Ratio} & (\%) \\
+\midrule
+802.11a, 6\,Mb/s & \phyAsixUs & \phyAsixBase & \phyAsixDesign & \phyAsixRatio & \phyAsixGap \\
+802.11a, 12\,Mb/s & \phyAtwelveUs & \phyAtwelveBase & \phyAtwelveDesign & \phyAtwelveRatio & \phyAtwelveGap \\
+802.11a, 24\,Mb/s & \phyAtwentyUs & \phyAtwentyBase & \phyAtwentyDesign & \phyAtwentyRatio & \phyAtwentyGap \\
+802.11p, 3\,Mb/s & \phyPthreeUs & \phyPthreeBase & \phyPthreeDesign & \phyPthreeRatio & \phyPthreeGap \\
+802.11p, 6\,Mb/s & \phyPsixUs & \phyPsixBase & \phyPsixDesign & \phyPsixRatio & \phyPsixGap \\
+802.11p, 12\,Mb/s & \phyPtwelveUs & \phyPtwelveBase & \phyPtwelveDesign & \phyPtwelveRatio & \phyPtwelveGap \\
+\midrule
+Falcon-512, 802.11a 6\,Mb/s & \pqUs & \pqBase & \pqDesign & \pqRatio & \pqGap \\
+\bottomrule
+\multicolumn{6}{l}{Frame: the design's, on air. Model: the larger gap of the two rows.}
+\end{tabular}
+\end{table}
 
 \runin{A Post-Quantum Signature} Falcon-512, with its padded signature of \pqSigBytes\,B, fits a
-frame. Simulated as above, per-record signing serves \pqBase{} nodes and the design \pqDesign,
+frame. Simulated as above (Table~\ref{tab:phy}), per-record signing serves \pqBase{} nodes and the design \pqDesign,
 \pqRatio{} times as many, as with Ed25519: the gain comes from sending a quarter as many frames,
 whatever the size of the signature. On the Pi~4 Falcon-512 signs in \pqSignUs\us{} and verifies
 in \pqVerifyUs\us, faster than Ed25519 verifies.
@@ -1046,7 +1161,26 @@ about a byte per field on every airframe, a fixed wing \afWingExtra\,B more than
 fields, adding attitude and body rates, the design saves \afSaveFifteen\% of the bytes and serves
 \afRatioFifteen{} times the nodes; with 25, adding navigation quality, airspeed, wind, mission
 state and thrust, \afSaveTwentyFive\% and \afRatioTwentyFive{} times. The gain is set by the
-number of frames, not by the size of the record.
+number of frames, not by the size of the record (Table~\ref{tab:airframes}).
+
+\begin{table}[t]\centering\footnotesize
+\caption{Records from \afFlights{} flights of the autopilot's simulator, ten per airframe, at
+50~records/s: sizes in bytes, and what the design saves.}
+\label{tab:airframes}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{r r r r r r r}
+\toprule
+ & & \multicolumn{3}{c}{\textbf{Delta}} & & \\
+\textbf{Fields} & \textbf{Key} & \textbf{quad} & \textbf{wing} & \textbf{VTOL} & \textbf{Saved} & \textbf{Ratio} \\
+\midrule
+9 & \afKeyNine & \afDeltaQuadNine & \afDeltaWingNine & \afDeltaVtolNine & \afSaveNine\% & \afRatioNine \\
+15 & \afKeyFifteen & \afDeltaQuadFifteen & \afDeltaWingFifteen & \afDeltaVtolFifteen & \afSaveFifteen\% & \afRatioFifteen \\
+25 & \afKeyTwentyFive & \afDeltaQuadTwentyFive & \afDeltaWingTwentyFive & \afDeltaVtolTwentyFive & \afSaveTwentyFive\% & \afRatioTwentyFive \\
+\bottomrule
+\multicolumn{7}{l}{Saved: bytes on air. Ratio: nodes served, design over} \\
+\multicolumn{7}{l}{per-record signing, by the access-rule model.}
+\end{tabular}
+\end{table}
 
 \subsection{Validation of the Models}\label{sec:validation}
 \runin{Models Against the Simulator} The broadcast model~\cite{machen2008} matches saturated
@@ -1193,8 +1327,29 @@ The same accounting applies to other broadcast systems. ADS-B 1090ES and Bluetoo
 cannot carry a signature at all. Bluetooth~5 and Wi-Fi Remote~ID fit up to \olRidRecords{}
 records in a frame, but at one message a second no frame meets any deadline up to 1\,s. V2X
 CAM at 10\,Hz admits no frame at 100\,ms, \olCamTwo{} record at 200\,ms and \olCamThree{} at
-300\,ms. This is consistent with these standards signing each message; it does not explain why
-they do.
+300\,ms (Table~\ref{tab:links}). This is consistent with these standards signing each message; it
+does not explain why they do.
+
+\begin{table}[t]\centering\footnotesize
+\caption{Records per frame each broadcast system admits with one signature per frame, by
+deadline, under Eq.~\eqref{eq:fresh}; ---: no signature fits.}
+\label{tab:links}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{l r r r r r r}
+\toprule
+ & \textbf{Payload} & \textbf{Rate} & \multicolumn{4}{c}{$\boldsymbol{D_{\max}}$} \\
+\textbf{System} & (B) & (/s) & 100\,ms & 200\,ms & 300\,ms & 1\,s \\
+\midrule
+ADS-B 1090ES & 7 & 2 & \olAdsbHundred & \olAdsbTwohundred & \olAdsbThreehundred & \olAdsbSecond \\
+Remote ID, Bluetooth~4 & 25 & 1 & \olRidfourHundred & \olRidfourTwohundred & \olRidfourThreehundred & \olRidfourSecond \\
+Remote ID, Bluetooth~5 & 225 & 1 & \olRidfiveHundred & \olRidfiveTwohundred & \olRidfiveThreehundred & \olRidfiveSecond \\
+V2X CAM, 10\,Hz & 1500 & 10 & \olCamtenHundred & \olCamtenTwohundred & \olCamtenThreehundred & \olCamtenSecond \\
+V2X CAM, 1\,Hz & 1500 & 1 & \olCamoneHundred & \olCamoneTwohundred & \olCamoneThreehundred & \olCamoneSecond \\
+\midrule
+this design, 802.11a & 1500 & 50 & \olDesignHundred & \olDesignTwohundred & \olDesignThreehundred & \olDesignSecond \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \subsection{Deployment Recommendations}
 Our findings enable the following configuration guidance; the capacities behind it are
@@ -1208,7 +1363,7 @@ verifies alone cannot be carried, and Table~\ref{tab:excl} lists what each relax
 (4)~\emph{Constrained receivers}: the processor is provisioned before the channel, since the
 interpreted receiver serves \ncpuProto{} nodes per core, a compiled one \rxRustNodes, and BLS
 \ncpuBls. (5)~\emph{Loss budget}: $\epsilon$ set at least 0.02 above the expected frame loss,
-since at $\epsilon = p$ the design meets its target with no margin. (6)~\emph{Outsiders}: an
+since at $\epsilon = p$ the design meets its target with no margin (Fig.~\ref{fig:margin}). (6)~\emph{Outsiders}: an
 8\,B group tag, at \flTagCostPct\% of capacity. These recommendations are summarized in
 Table~\ref{tab:decision}.
 
@@ -1324,9 +1479,74 @@ recomputed by the receiver and never read from the frame.
 ledger records, not the record stream.
 \end{itemize}
 
-\section*{Use of Generative AI}
-An AI coding agent assisted with code, analysis and drafting under the author's direction. The
-author reviewed the work and takes responsibility for its content.
+\section{Registered Predictions}\label{app:prereg}
+Each experiment in Table~\ref{tab:prereg} was registered before it ran: its expected outcome and
+the criterion that scores it were committed first, and the outcome was scored against them as
+written. Italic entries are finer predictions added in the same registration.
+
+\begin{table*}[t]\centering\footnotesize
+\caption{Predictions registered before each experiment ran, and their outcomes; italics: finer
+predictions of the same registration.}
+\label{tab:prereg}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{>{\raggedright\arraybackslash}p{80pt} >{\raggedright\arraybackslash}p{205pt}
+                >{\raggedright\arraybackslash}p{205pt}}
+\toprule
+\textbf{Experiment} & \textbf{Registered} & \textbf{Outcome} \\
+\midrule
+Spread swarm (Fig.~\ref{fig:spread}) & design-to-baseline ratio between 3 and 4 in every layout;
+capacity counted in neighbors falls; motion moves $V$ by under 0.01; \emph{at 1\,km, 10 to 40
+neighbors at the crossing} & held, except \emph{the neighbor count}: \spNeighbours \\
+Independent motion & the same with every node moving on its own at up to 15\,m/s & held, except
+\emph{one control layout's baseline, just below its band} \\
+Design map (Fig.~\ref{fig:map}) & ratio above 5 at 100~records/s and 100\,ms; every simulated
+crossing within 5\% of the model; mean peak age within $D_{\max}$ under loss & held; the stated
+cause of the age tail, two lost frames, was wrong: one suffices \\
+Loss margin (Fig.~\ref{fig:margin}) & $\epsilon \geq p + 0.02$ meets the target, interval
+included; a tolerable loss under bit errors; traced loss between independent and bursty & the
+tolerable loss held; the rule's interval failed in 5 of 192 cells of equal frame loss, all bursty; traced loss is
+independent (bursts of \trBurst{} frames), one cell of four just below the band \\
+Batch controller (Fig.~\ref{fig:adaptive}) & about 30\,ms fresher than fixed $b=4$ at low load;
+failure within 5\% of fixed $b=4$'s; the target met while two swarms merge & the merge held;
+fresher by \adLowGain\,ms, not 30; failure at \adRegFail{} nodes, \adFail{} with margin 0.02,
+against \adFixFail \\
+Time window (Table~\ref{tab:security}) & no honest frame refused at clock errors up to 10\,ms;
+every frame held 250\,ms refused; a 250\,ms window outlasts about two hours without GNSS &
+the first two held; the window outlasted \rpHolds\,min, \emph{as we had predicted} \\
+Formal model (Table~\ref{tab:security}) & properties (i)--(iv) proven; (v) shown as an attack,
+then its fix & held across three models, two of them made after registration; the registered
+model settled 3 of its 9 lemmas \\
+Flooding (Fig.~\ref{fig:flood}) & about 700 forged frames/s saturate a core; the tag removes
+outsiders, who need over 100\,000 frames/s per core; a member remains a threat; the tag costs
+about 2\% & outsiders removed and the member's threat held; a core takes \flForgedRate{} forged
+frames/s and \flTagRate{} tagged ones; the tag costs \flTagCostPct\% \\
+Compiled code (Tables~\ref{tab:receiver},~\ref{tab:energy}) & receive within 350\,$\mu$s; at
+least 230 nodes per core; energy per record follows the bytes & held; \emph{our energy ranges
+missed low}: \enRustMeas{} and \enRustOneMeas\,$\mu$J per record \\
+Lazy verification (Table~\ref{tab:receiver}) & over 500 nodes per core; evidence within
+100--200\,ms; \emph{within 170\,ms of sampling} & held, except \emph{170\,ms, by 1\,ms} \\
+Airframes (Table~\ref{tab:airframes}) & 25 fields: delta 20--30\,B, saving 60--70\%, ratio
+\regAfLo--\regAfHi; keyframe 50--70\,B; fixed-wing delta 10--13\,B & delta, saving and ratio
+held; the keyframe (\afKeyTwentyFive\,B) and the fixed-wing delta (\afDeltaWingNine\,B)
+missed \\
+Stream schemes (Table~\ref{tab:stream}) & every capacity inside its earlier interval; schemes
+that cannot verify in time never cross & held; \emph{three of ours missed}: in-time delivery
+equal to delivery for two schemes, and crossings for TESLA with $d=1$ and EMSS with $k=4$ \\
+Other PHYs (Table~\ref{tab:phy}) & ratios spanning \regPhyLo--\regPhyHi, rising with the rate;
+every crossing within 3\% of the model & the rise held; the span is
+\phySimRatioLo--\phySimRatioHi; the model misses 3\% at the fastest rate of each width \\
+Falcon-512 (Table~\ref{tab:phy}) & crossings within 10\% of 12 and 45 nodes; a ratio near
+\regPqRatio, larger than with Ed25519 & the crossings held; the ratio is \pqRatio, as with
+Ed25519 \\
+Ledger audit (Table~\ref{tab:security}) & both planted faults found; about \regAuGb\,GB stored
+per hour for 124 neighbors; \emph{no other finding; 7 to 10 minutes of a core} & detection held,
+no false finding; less is stored, since frames are kept, not records; the audit took
+\auMinutes\,min \\
+Other broadcast systems (Table~\ref{tab:links}) & the accounting gives no reason to batch at
+their rates and deadlines & held \\
+\bottomrule
+\end{tabular}
+\end{table*}
 
 \bibliographystyle{IEEEtran}
 \bibliography{refs}

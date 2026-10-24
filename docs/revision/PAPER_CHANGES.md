@@ -8,6 +8,30 @@ below must reach the paper through `analysis/paper_numbers.py` (one macro each),
 the source CSV is named with each. Scoring and caveats are in `predictions/<ID>.md`; the one-line
 findings are F86–F112 in `docs/audits/model_provenance.md`.*
 
+## A figure or table for every reviewer point (Mohamed, 2026-10-24)
+
+"Make sure the paper has the corresponding figures, tables or proper visualization for the
+results and tests we made." Figures come from `analysis/figures_revision.py`, and table cells are
+macros of `analysis/paper_numbers.py`. `tests/test_figures_revision.py` pins what each figure's
+sentence claims.
+
+| label | kind | point | what it shows |
+|---|---|---|---|
+| `fig:system` | figure*, Mohamed's block diagram | — | now full width (it was unreadable in one column); caption covers the whole system |
+| `tab:security` | table* | 5, 6, 7, 14 | each property or threat, its mechanism, the Tamarin model or measurement, the result |
+| `fig:margin` | figure | 3 | V of the design against loss under five processes, the rule's region |
+| `fig:map` | figure | 2 | b\* and ratio over Λ × D_max; ns-3 cells outlined |
+| `fig:spread` | figure | 1 | nodes served and ratio against disc radius; hidden share; moving swarm |
+| `fig:adaptive` | figure | 4 | the growing swarm: batch, V per second, peak age (F113: ages include the send instant) |
+| `tab:receiver` | table | 8, 12 | interpreted, compiled, batched and lazy receivers |
+| `fig:flood` | figure | 7 | honest V against forged rate, six defence/attacker pairs; the channel's limit |
+| `tab:phy` | table | 11, 13 | six PHYs and Falcon-512: frame airtime, both capacities, ratio, model error |
+| `tab:airframes` | table | 9 | 9/15/25 fields: keyframe, per-airframe delta, saving, ratio |
+| `tab:links` | table | 15 | records per frame per system at 100/200/300 ms and 1 s, with this design's row |
+| `tab:prereg` | table*, Appendix B | the reply's promise | every registration and its outcome, misses included |
+
+The paper is 18 pages. Comment 10's table already had its column (`tab:stream`).
+
 ## Ready (experiment scored)
 
 ### A1 — spread swarm, fading, capture (`sec:capacity`, `sec:limits`, `sec:method`, Conclusion)

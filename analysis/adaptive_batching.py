@@ -35,8 +35,9 @@ V_TARGET = 0.95
 SKIP = 2
 
 
-def series(scenario: str, policy: str, seed: int) -> list[dict[str, float]]:
-    path = SERIES / f"{scenario}.{policy}.{seed}.csv"
+def series(scenario: str, policy: str, seed: int,
+           directory: Path | None = None) -> list[dict[str, float]]:
+    path = (directory or SERIES) / f"{scenario}.{policy}.{seed}.csv"
     with path.open(encoding="utf-8") as fh:
         rows = [{k: float(v) for k, v in r.items()} for r in csv.DictReader(fh)]
     out = []

@@ -51,15 +51,16 @@ it was and are kept only so the change is visible.*
       hash-linked records, with the stream-signing schemes placed in a table
 - [x] **Confidence intervals on every simulated capacity**, from a direct search per configuration
 - [x] **Limitations section** naming what is simulated, modelled or synthetic
-- [x] Declarations: data and code availability, competing interests, use of generative AI
+- [x] Declarations: data and code availability, competing interests
+- [ ] **Use of generative AI:** removed from the paper by Mohamed (2026-10-24); the venue's
+      disclosure, if it requires one, is his to make at submission
 
 ## DONE — venue-independent (as of 2026-08; ⚠️ SUPERSEDED where it quotes results)
 
 - [x] **Data and Code Availability** statement, naming what the gate does re-derive (16 artifacts,
       byte-identically) and what it cannot (NS-3, hardware rig) rather than claiming "all results"
 - [x] **Declaration of Competing Interests**
-- [x] **Use of Generative AI** statement — required now by IEEE, Elsevier and MDPI, and the honest
-      disclosure for how this work was produced
+- [ ] ~~**Use of Generative AI** statement~~ — removed by Mohamed, 2026-10-24 (`docs/DECISIONS.md`)
 - [x] **Keywords** broadened from 8 to 11, adding the terms a *feasibility* paper is searched by
       (feasibility analysis, LoRaWAN, ns-3, reproducibility)
 - [x] Abstract **279 words**, no undefined references, no overfull boxes, all 10 tables and 5 figures

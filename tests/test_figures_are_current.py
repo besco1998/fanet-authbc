@@ -36,6 +36,7 @@ GENERATORS = [
     "figures_ns3.py",
     "figures_nmax.py",
     "figures_frames.py",
+    "figures_revision.py",
 ]
 
 
@@ -60,6 +61,15 @@ def test_the_paper_cites_its_data_figures():
     cited = _figures_cited_by_the_paper()
     for required in ("fig_t6_exclusion.png", "fig_nmax_direct.png", "fig_bytes_vs_batch.png"):
         assert required in cited, f"{required} is generated but no longer cited by the paper"
+
+
+def test_the_paper_cites_a_figure_for_each_reviewer_point_that_has_one():
+    """The reviewer revision answers five points with a figure each (spread swarm, design map,
+    loss margin, batch controller, flooding); the reply cites them by label."""
+    cited = _figures_cited_by_the_paper()
+    for required in ("fig_spread.png", "fig_design_map.png", "fig_margin.png",
+                     "fig_adaptive.png", "fig_flood.png", "block_diagram.png"):
+        assert required in cited, f"{required} is no longer cited by the paper"
 
 
 @pytest.mark.frozen

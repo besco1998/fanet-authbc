@@ -483,13 +483,15 @@ class TestTheWorkedFrame:
 class TestTheRegistrationsOfAppendixB:
     """Every commit the table names exists and precedes the commit this test runs on."""
 
-    APPENDIX = (THESIS / "appB_preregistrations.tex").read_text()
+    WHOLE = (THESIS / "appB_preregistrations.tex").read_text()
+    # the first table (to October 2026) and the second (the experiments of October 2026)
+    APPENDIX, REVISION = WHOLE.split("\\section*{The experiments of October 2026}")
 
     def test_each_named_commit_is_in_the_history(self) -> None:
         import subprocess
 
-        named = sorted(set(re.findall(r"\\texttt\{([0-9a-f]{7})\}", self.APPENDIX)))
-        assert len(named) == 22
+        named = sorted(set(re.findall(r"\\texttt\{([0-9a-f]{7})\}", self.WHOLE)))
+        assert len(named) == 22 + 19
         shallow = subprocess.run(["git", "rev-parse", "--is-shallow-repository"], cwd=REPO,
                                  capture_output=True, text=True).stdout.strip()
         assert shallow == "false", (
@@ -508,6 +510,28 @@ class TestTheRegistrationsOfAppendixB:
         assert "Of its twenty-two entries, eight failed" in _text("ch06_methodology.tex")
         assert "Of the twenty-two registrations" in _text("ch11_reproducibility.tex")
         assert "eight failed in whole or in part" in _text("ch11_reproducibility.tex")
+
+    def test_the_second_table_names_every_registration_tag_but_a12(self) -> None:
+        """Mohamed, 2026-10-24: A12, which only prepared a hardware test, is not stated."""
+        import subprocess
+
+        tags = subprocess.run(["git", "for-each-ref", "--format=%(refname:short) %(objectname)",
+                               "refs/tags/prereg-*"], cwd=REPO, capture_output=True,
+                              text=True).stdout.split("\n")
+        tagged = {sha[:7] for line in tags if line for name, sha in [line.split()]
+                  if name != "prereg-A12"}
+        assert tagged == set(re.findall(r"\\texttt\{([0-9a-f]{7})\}", self.REVISION))
+
+    def test_the_chapter_counts_what_the_second_table_holds(self) -> None:
+        body = self.REVISION.split("\\endfoot", 1)[1].split("\\end{longtable}", 1)[0]
+        rows = [r for r in body.split("\\\\") if r.strip()]
+        assert len(rows) == 17
+        clean = [r for r in rows if not any(w in r.rsplit(" & ", 1)[1]
+                                            for w in ("missed", "failed", "except"))]
+        assert len(clean) == 2
+        methods = " ".join(_text("ch06_methodology.tex").split())
+        assert "seventeen, each registered before it ran" in methods
+        assert "In fifteen of the seventeen at least one statement missed or failed" in methods
 
 
 class TestTheLibraryIsTheSizeTheChapterSays:

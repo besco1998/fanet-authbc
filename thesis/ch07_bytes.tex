@@ -153,6 +153,34 @@ time. The loss budget $p = \varepsilon$ had no margin (\Cref{ch:theory}); under 
 the batch spends margin it does not have. The byte and capacity comparisons of
 \Cref{ch:codesign} are at equal frame loss and carry this qualification.
 
+\subsection{The loss the simulator makes, and a budget with a margin}
+
+The remark above names what E10 does not validate: the loss process. In October 2026 the
+simulator's own loss was traced, link by link, at the capacity crossing --- \trLinks{} neighbour
+links in a spread and in a moving swarm. Consecutive frames of one link are lost independently:
+bursts average \trBurst{} frames, against \trBurstIid{} for independent loss at the same rate.
+\Cref{thm:t3} for independent loss is therefore the model of $V$ at the crossing, and the
+pessimistic one wherever loss is bursty.
+
+The budget then needs a margin. \Cref{fig:margin} runs the design through five loss processes
+of one mean: independent, Gilbert with bursts of two, four and eight frames, and loss that grows
+with frame length. With $\varepsilon = 0.05$ and $p \leq \varepsilon - 0.02$ it meets the target,
+intervals included, under every one of them; the rule of \Cref{sec:margin} is that margin.
+Registered before the runs over every batch, loss rate and budget of equal frame loss, the
+rule failed by its interval in $5$ of $192$ cells, all of them bursty; every mean met its target
+(\Cref{tab:prereg-revision}). One of the five is the design itself: at
+$\varepsilon = \mgMissEps$ and $p = \mgMissP$, under bursts of eight frames, its interval falls
+below the target, and under loss that grows with length it does too at the same point. A margin
+of $0.02$ is smaller than the sampling half-width of such cells at \lossFrames{} frames.
+
+\begin{figure}[htbp]\centering
+\includegraphics[width=0.75\textwidth]{fig_margin.png}
+\caption{Records verified by the design ($b=4$, $r=1$) against frame loss under five loss
+processes, with $95\%$ intervals; for loss that grows with length, $p$ is the loss of a
+one-record frame. Shaded: the losses the margin rule admits at $\varepsilon = 0.05$.}
+\label{fig:margin}
+\end{figure}
+
 \section{E9 --- what a frame is made of}\label{sec:e6}
 
 \Cref{tab:fields} gives the byte budget of both formats. Three things in it matter for
@@ -262,6 +290,46 @@ but the prediction as written was missed, by $0.04$\,B.
 The commanded 12\,m/s was not reached either: the fast square averaged \sitlSpeedFast\,m/s.
 And the registered statistic for the stream's timing could not be scored at all, for a reason
 that has nothing to do with the autopilot (\Cref{sec:capacity}).
+\end{remark}
+
+\paragraph{Richer records and other airframes.} One quadrotor flight says little about a fixed
+wing, or about a record of more than nine fields. \afFlights{} further flights of the same
+autopilot's simulator were made at $50$\,Hz, ten each of a quadrotor, a fixed wing and a VTOL,
+the fixed wings at their planned \afSpeedLo--\afSpeedHi\,m/s, and records of $9$, $15$ and $25$
+fields were coded from each at their exact lengths (\Cref{tab:airframes}). Almost every field
+changes by less than its first byte holds, so a delta costs about a byte per field on every
+airframe, a fixed wing \afWingExtra\,B more than the quadrotor. With $25$ fields --- adding
+attitude, body rates, navigation quality, airspeed, wind, mission state and thrust --- the design
+still saves \afSaveTwentyFive\% of the bytes and serves \afRatioTwentyFive{} times the nodes of
+per-record signing. The gain is set by the number of frames, not by the size of the record.
+
+\begin{table}[htbp]\centering
+\caption{Records from \afFlights{} flights of the autopilot's simulator, ten per airframe, at
+$50$~records/s: keyframe and per-airframe delta in bytes, the bytes the design saves, and the
+nodes it serves over per-record signing by the access-rule model.}
+\label{tab:airframes}
+\begin{tabular}{rrrrrrr}
+\toprule
+ & & \multicolumn{3}{c}{delta (B)} & & \\
+\cmidrule(lr){3-5}
+fields & keyframe (B) & quadrotor & fixed wing & VTOL & saved & ratio \\
+\midrule
+9 & \afKeyNine & \afDeltaQuadNine & \afDeltaWingNine & \afDeltaVtolNine & \afSaveNine\% & \afRatioNine \\
+15 & \afKeyFifteen & \afDeltaQuadFifteen & \afDeltaWingFifteen & \afDeltaVtolFifteen & \afSaveFifteen\% & \afRatioFifteen \\
+25 & \afKeyTwentyFive & \afDeltaQuadTwentyFive & \afDeltaWingTwentyFive & \afDeltaVtolTwentyFive & \afSaveTwentyFive\% & \afRatioTwentyFive \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{remark}[What the simulator could not fly, and what that changed]
+The simulator's airplane first flew no faster than about $14$\,m/s: its model brakes the
+aircraft with an artificial linear drag term. With that term removed, and the airplane's thrust
+raised to $12$\,N, the fixed wings flew the registered missions again at their drawn speeds,
+each within $1$\,m/s. The first flights also started their altitude controller from sea level,
+which put the first leg of every airplane flight near the ground; a reset before the mission
+fixed it. Neither changed a record size by more than a fraction of a byte. The simulator also
+holds its navigation-quality fields constant, so those fields cost less than they would in
+flight.
 \end{remark}
 
 \begin{remark}[What was predicted, and what was not testable]
