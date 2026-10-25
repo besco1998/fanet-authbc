@@ -257,8 +257,8 @@ class TestWhatTheDocumentsQuote:
         assert NUMBERS["sprModelWorst"] == "0.5"
 
     def test_the_paper_says_conservative_and_says_what_was_not_tested(self) -> None:
-        for needle in ("gave \\sprModelBase{} and \\sprModelDesign{} nodes for baseline and design "
-                       "before the runs",
+        for needle in ("gave \\sprModelBase{} and \\sprModelDesign{} nodes for per-record "
+                       "signing and AUTHBC before the runs",
                        "are therefore conservative for unequal power",
                        "hidden stations, which would lower the capacity, are not in this test",
                        "Unequal power with capture was simulated separately and raises them"):

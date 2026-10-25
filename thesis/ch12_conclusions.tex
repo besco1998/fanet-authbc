@@ -42,12 +42,12 @@ which the design map gives for any record rate and deadline.
 
 \item The protocol's properties are proven in Tamarin, in three models, and two defences close
 two of the gaps the first threat model left: a window on GNSS time refuses frames an attacker
-holds back, and an $8$\,B group tag stops floods from outside the swarm. A flood from a member is
+holds back, and an $8$\,B group MAC stops floods from outside the swarm. A flood from a member is
 not stopped, and is stated (\Cref{ch:sysmodel,ch:codesign}).
 
 \item The prototype's two anomalies were the interpreter's. Compiled, one receiver core serves
 \rxRustNodes{} nodes, so the channel binds again, and the design's sender spends
-\enRustMeas\,\si{\micro\joule} per record, \enFirstOverRust{} times less than the first format.
+\enRustMeas\,\si{\micro\joule} per record, \enFirstOverRust{} times less than the record-linked format.
 \end{enumerate}
 
 \section{The research questions, answered}\label{sec:rq-answers}
@@ -118,8 +118,8 @@ against twelve public flight logs at $0.2$\,s spacing and above and, at the $20$
 operating point, against flights of an autopilot in simulation, whose navigation-quality fields
 do not vary (\Cref{tab:airframes}); no flight log recorded at $50$\,Hz was found. Only the
 sender's energy is metered, with a sensor never checked against a reference load: interpreted,
-the lean sender costs \enLeanOverFirst{} times the first format's energy per record; compiled,
-\enFirstOverRust{} times less. The first format's composed energy is a lower bound by roughly
+the frame-linked sender costs \enLeanOverFirst{} times the record-linked format's energy per record; compiled,
+\enFirstOverRust{} times less. The record-linked format's composed energy is a lower bound by roughly
 $7$--$14\%$, the residual being uncharged prototype framing overhead. The receiver-CPU ceilings
 charge cryptography only; the interpreted decoder costs several times more and the compiled one
 does not, timed without a radio or a dispatcher in the path (\Cref{ch:codesign}). Capacity was
@@ -184,7 +184,7 @@ a different question --- deployment capacity rather than per-configuration feasi
 is the question an operator would ask next.
 
 \item[The 5G NR sidelink.] Only 802.11 was simulated. The direct link between devices of the
-cellular standard has a medium access of its own, which the access-rule model does not describe;
+cellular standard has a medium access of its own, which the contention model does not describe;
 whether the frame count dominates there as it does here needs its own simulation.
 
 \item[Post-quantum signatures that do not fit one frame.] Falcon-512 fits a frame and the gain

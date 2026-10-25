@@ -26,7 +26,7 @@ import matplotlib.pyplot as plt  # noqa: E402
 REPO = Path(__file__).resolve().parents[1]
 RAW = REPO / "results" / "raw"
 FIGS = REPO / "results" / "figures"
-_SAVE = {"dpi": 110, "bbox_inches": "tight", "metadata": {"Software": None}}
+_SAVE = {"dpi": 200, "bbox_inches": "tight", "metadata": {"Software": None}}
 
 
 def _rows(name: str) -> list[dict[str, str]]:
@@ -87,7 +87,7 @@ def fig_t6_exclusion() -> None:
              for r in rows]
     colour = {"signature": "#b2182b", "excluded": "#ef8a62", "feasible": "#1b7837"}
 
-    fig, ax = plt.subplots(figsize=(7.2, 3.8))
+    fig, ax = plt.subplots(figsize=(3.5, 3.3))      # the column's own width
     ax.bar(drs, payload, color=[colour[t] for t in tiers], edgecolor="black", linewidth=0.6)
     ax.axhspan(lo, hi, color="#555555", alpha=0.18, linewidth=0,
                label=f"one-record frames of this telemetry: {lo}–{hi} B")
@@ -96,22 +96,22 @@ def fig_t6_exclusion() -> None:
     ax.axhline(sig, color="#b2182b", linestyle=":", linewidth=1.2,
                label=f"the signature alone: {sig} B")
     for dr, m in zip(drs, payload, strict=True):       # inside the bar: clear of the lines
-        ax.text(dr, m - 13, f"{m}", ha="center", fontsize=7.5, color="white",
-                fontweight="bold")
+        ax.text(dr, m - 16, f"{m}", ha="center", fontsize=6.5, color="white",
+                fontweight="bold", rotation=90, va="top")
     ax.set_xticks(drs)
-    ax.set_xticklabels([f"DR{d}" for d in drs], fontsize=8)
-    ax.set_ylabel("maximum payload $N$ (B)")
-    ax.set_title("EU863-870 data rates that cannot carry one signed, hash-chained frame",
-                 fontsize=10)
+    ax.set_xticklabels([f"{d}" for d in drs], fontsize=8)
+    ax.set_xlabel("EU863-870 data rate (DR)", fontsize=8)
+    # M, as in the payload constraint of the paper (Eq. 5); N is the number of nodes
+    ax.set_ylabel("maximum payload $M$ (B)", fontsize=8)
+    ax.tick_params(labelsize=8)
     handles = [plt.Rectangle((0, 0), 1, 1, fc=colour[k], ec="black", lw=0.6)
                for k in ("signature", "excluded", "feasible")]
     labels = [f"excluded: the signature alone overflows ({tiers.count('signature')} rates)",
-              f"excluded: header, chain link and signature fill the payload "
-              f"({tiers.count('excluded')})",
+              f"excluded: header, chain link and signature fill it ({tiers.count('excluded')})",
               f"feasible ({tiers.count('feasible')})"]
     line_h, line_l = ax.get_legend_handles_labels()
-    ax.legend(handles + line_h, labels + line_l, fontsize=7.5, loc="upper center",
-              bbox_to_anchor=(0.5, -0.12), ncol=2, frameon=False)
+    ax.legend(handles + line_h, labels + line_l, fontsize=7, loc="upper center",
+              bbox_to_anchor=(0.5, -0.17), ncol=1, frameon=False)
     ax.set_ylim(0, 290)
     ax.grid(axis="y", alpha=0.3)
     fig.savefig(FIGS / "fig_t6_exclusion.png", **_SAVE)

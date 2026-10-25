@@ -61,7 +61,7 @@ header measured on frames of a different encoding from another, and a signature 
 carrying delta records had been encoded, sent or decoded, and the receiver that would decode one
 did not exist. Each number was individually correct, so re-deriving any one of them reproduced it.
 
-\item[Its verifiability was wrong.] The byte model amortised one keyframe over four frames; the
+\item[Its verifiability was wrong.] The byte model amortised one key record over four frames; the
 verifiability model treated the four as independent. At its own loss budget the design verified
 $\lossThFour$ of its records, not $0.95$ (\Cref{thm:t3prime}).
 

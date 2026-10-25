@@ -1,5 +1,10 @@
 # Paper readability review — terminology and language, with options
 
+> **Applied 2026-10-25** (Mohamed: "do all the recommendations … except L2 and L3"): T1–T6, L1, L4–L13
+> and L15; L14 kept the title. Deviation: "analytical contention model" (T4) became **contention
+> model**, because the model is an event simulation. ⚠️ T5 and L5 reverse decisions of 2026-10-08
+> (the expansion; the exclusion first) and were put to Mohamed. The thesis carries the same names.
+
 *2026-10-25, for Mohamed, after removing Appendix B and redrawing Fig. 4. Read on the built
 paper (17 pages). Nothing below has been applied: each item gives options and a recommendation
 (**R**). Answer by item number, e.g. "T1: B, T2: A, L3: A".*

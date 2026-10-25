@@ -55,7 +55,7 @@ SPREAD = (("fixed", "one\ndomain"), ("s1-r100", "100 m"), ("s1-r300", "300 m"),
           ("s1-r600", "600 m"), ("s1-r1000", "1 km"))
 SPREAD_CONFIGS = (("base", "per-record signing", RED, "o"),
                   ("inline4", "four records, four signatures", ORANGE, "s"),
-                  ("design", "AUTHBC design", BLUE, "^"))
+                  ("design", "AUTHBC", BLUE, "^"))
 MOTION = (("gm-r1000-v0", "0"), ("gm-r1000-v5", "5"), ("gm-r1000-v15", "15"))
 
 # A3: the design (b = 4, one keyframe per frame) under each loss process
@@ -76,8 +76,8 @@ SEEDS = range(1, 11)
 FLOOD_SENDERS = "41"
 FLOODS = (("none", "forged", "no defense", RED, "-"),
           ("cheap", "forged", "header checks", ORANGE, "-"),
-          ("mac", "outsider", "group tag, outsider", BLUE, "-"),
-          ("mac", "insider", "group tag, member", BLUE, "--"),
+          ("mac", "outsider", "group MAC, outsider", BLUE, "-"),
+          ("mac", "insider", "group MAC, member", BLUE, "--"),
           ("cap", "forged-one", "rate cap, one sender", PURPLE, "-"),
           ("cap", "forged", "rate cap, every sender", PURPLE, "--"))
 
@@ -98,7 +98,7 @@ def spread_points() -> dict[str, list[tuple[float, float]]]:
 
 def fig_spread() -> None:
     sc, mv = pn.rows(RAW / "spatial_capacity.csv"), pn.rows(RAW / "spatial_motion.csv")
-    fig, (top, bottom) = plt.subplots(2, 1, figsize=(4.4, 4.0), sharex=True,
+    fig, (top, bottom) = plt.subplots(2, 1, figsize=(3.5, 3.4), sharex=True,
                                       gridspec_kw={"height_ratios": [1.5, 1]})
     moving_x = len(SPREAD) - 1 + 0.35
     for cfg, label, colour, marker in SPREAD_CONFIGS:
@@ -122,16 +122,17 @@ def fig_spread() -> None:
                     markersize=5, markerfacecolor="white", color=BLUE)
     lowest = min(float(pn.one(mv, scenario=s, config="base")["n_cross"]) for s, _ in MOTION)
     top.text(moving_x, lowest - 12, "moving,\n" + "/".join(v for _, v in MOTION) + " m/s",
-             fontsize=7, color=MUTED, ha="center", va="top")
+             fontsize=7.5, color=MUTED, ha="center", va="top")
     top.set_ylabel("nodes served\nat 95 % delivery", fontsize=8)
-    top.legend(fontsize=7, frameon=False, loc="upper left")
+    top.legend(fontsize=7.5, frameon=False, loc="upper left")
     bottom.set_ylabel("ratio to\nper-record signing", fontsize=8)
     bottom.set_ylim(0, 4.2)
     hidden = [pn.one(sc, scenario=s, config="design")["hidden_share"] for s, _ in SPREAD]
     ticks = [f"{name}\n{'' if not h else f'{100 * float(h):.0f} %'}"
              for (_, name), h in zip(SPREAD, hidden, strict=True)]
     bottom.set_xticks(range(len(SPREAD)), ticks)
-    bottom.set_xlabel("disc radius; below it, spoilers hidden from the sender", fontsize=8)
+    bottom.set_xlabel("disc radius; below it, the share of interferers\n"
+                      "that cannot hear the sender", fontsize=8)
     for ax in (top, bottom):
         _tidy(ax)
     fig.savefig(FIGS / "fig_spread.png", **_SAVE)
@@ -153,7 +154,7 @@ def validated_cells() -> set[tuple[int, int]]:
 def fig_design_map() -> None:
     rates, deadlines, cells = design_map_cells()
     checked = validated_cells()
-    fig, ax = plt.subplots(figsize=(4.4, 3.0))
+    fig, ax = plt.subplots(figsize=(3.5, 2.8))
     cmap = plt.get_cmap("Blues")
     top = max(float(c["model_ratio"]) for c in cells.values() if c["model_ratio"])
     for i, lam in enumerate(rates):
@@ -168,10 +169,10 @@ def fig_design_map() -> None:
             ax.add_patch(Rectangle((j, i), 1, 1, facecolor=cmap(shade), edgecolor="white"))
             ink = "white" if shade > 0.55 else INK
             weight = "bold" if (lam, dmax) == (50, 100) else "normal"
-            ax.text(j + 0.5, i + 0.62, f"b={c['b_star']}", ha="center", va="center",
+            ax.text(j + 0.5, i + 0.64, f"b={c['b_star']}", ha="center", va="center",
                     fontsize=6.5, color=ink, weight=weight)
             ax.text(j + 0.5, i + 0.3, f"{ratio:.1f}\u00d7", ha="center", va="center",
-                    fontsize=6, color=ink, weight=weight)
+                    fontsize=6.5, color=ink, weight=weight)
     for lam, dmax in checked:
         ax.add_patch(Rectangle((deadlines.index(dmax) + 0.04, rates.index(lam) + 0.04), 0.92,
                                0.92, fill=False, edgecolor=INK, linewidth=1.3))
@@ -242,7 +243,7 @@ def adaptive_curve(directory: Path, policy: str) -> list[tuple[float, float, flo
 
 
 def fig_adaptive() -> None:
-    fig, axes = plt.subplots(3, 1, figsize=(4.4, 4.4), sharex=True,
+    fig, axes = plt.subplots(3, 1, figsize=(3.5, 3.9), sharex=True,
                              gridspec_kw={"height_ratios": [1, 1.3, 1]})
     for directory, policy, label, colour, style in POLICIES:
         curve = adaptive_curve(directory, policy)
@@ -256,7 +257,7 @@ def fig_adaptive() -> None:
     axes[2].set_ylabel("peak age (ms)", fontsize=8)
     axes[1].set_ylim(0.9, 1.0)
     axes[2].set_xlabel("active nodes, as the swarm grows", fontsize=8)
-    axes[0].legend(fontsize=7, frameon=False, loc="lower right")
+    axes[0].legend(fontsize=7.5, frameon=False, loc="lower right")
     for ax in axes:
         _tidy(ax)
     fig.savefig(FIGS / "fig_adaptive.png", **_SAVE)
@@ -271,19 +272,19 @@ def flood_curve(policy: str, attack: str) -> list[tuple[float, float]]:
 
 
 def fig_flood() -> None:
-    fig, ax = plt.subplots(figsize=(4.4, 2.9))
+    fig, ax = plt.subplots(figsize=(3.5, 2.6))
     for policy, attack, label, colour, style in FLOODS:
         ax.plot(*zip(*flood_curve(policy, attack), strict=True), color=colour, linestyle=style,
                 marker="o", markersize=3, linewidth=1.3, label=label)
     ax.axhline(V_TARGET, color=INK, linestyle=":", linewidth=1)
     limit = pn.flood_channel_limit()
     ax.axvline(limit, color=MUTED, linestyle=":", linewidth=1)
-    ax.text(limit - 40, 0.6, "most one channel\ncarries", fontsize=7, color=MUTED, ha="right")
+    ax.text(limit - 40, 0.6, "most one\nchannel\ncarries", fontsize=7.5, color=MUTED, ha="right")
     ax.set_xlabel("forged frames per second at the receiver", fontsize=8)
     ax.set_ylabel("honest records accepted, $V$", fontsize=8)
     ax.set_ylim(0, 1.03)
-    ax.legend(fontsize=7, frameon=False, loc="upper center", bbox_to_anchor=(0.5, -0.2),
-              ncol=3)
+    ax.legend(fontsize=7.5, frameon=False, loc="upper center", bbox_to_anchor=(0.5, -0.22),
+              ncol=2)
     _tidy(ax)
     fig.savefig(FIGS / "fig_flood.png", **_SAVE)
     plt.close(fig)

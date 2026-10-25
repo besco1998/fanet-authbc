@@ -16,24 +16,24 @@ bytes on the wire (hex) & field & content & B \\
 \texttt{05 58 20} & link & key, and a byte string of 32 & 3 \\
 \texttt{ee 02 8a 23 c1 61 \ldots{} 5b fb} &  & hash of the record before the first one & 32 \\
 \texttt{06 58 22} & recs & key, and a byte string of 34 & 3 \\
-\texttt{b5 dd db 01} & keyframe: ts & $3600053$ ms & 4 \\
-\texttt{bf 9f c8 a3 02} & keyframe: lat & $-305727456$ $10^{-7}$ deg & 5 \\
-\texttt{86 8d b6 b3 02} & keyframe: lon & $322356035$ $10^{-7}$ deg & 5 \\
-\texttt{f4 9d 36} & keyframe: alt & $444282$ cm & 3 \\
-\texttt{8e 05} & keyframe: vel\_x & $327$ cm/s & 2 \\
-\texttt{b6 04} & keyframe: vel\_y & $283$ cm/s & 2 \\
-\texttt{d5 02} & keyframe: vel\_z & $-171$ cm/s & 2 \\
-\texttt{64} & keyframe: battery & $100$ \% & 1 \\
-\texttt{04} & keyframe: mode & $4$ & 1 \\
-\texttt{66} & delta: ts & $+51$ ms (now $3600104$) & 1 \\
-\texttt{24} & delta: lat & $+18$ $10^{-7}$ deg (now $-305727438$) & 1 \\
-\texttt{20} & delta: lon & $+16$ $10^{-7}$ deg (now $322356051$) & 1 \\
-\texttt{0f} & delta: alt & $-8$ cm (now $444274$) & 1 \\
-\texttt{13} & delta: vel\_x & $-10$ cm/s (now $317$) & 1 \\
-\texttt{04} & delta: vel\_y & $+2$ cm/s (now $285$) & 1 \\
-\texttt{06} & delta: vel\_z & $+3$ cm/s (now $-168$) & 1 \\
-\texttt{00} & delta: battery & $+0$ \% (now $100$) & 1 \\
-\texttt{00} & delta: mode & $+0$ (now $4$) & 1 \\
+\texttt{b5 dd db 01} & key record: ts & $3600053$ ms & 4 \\
+\texttt{bf 9f c8 a3 02} & key record: lat & $-305727456$ $10^{-7}$ deg & 5 \\
+\texttt{86 8d b6 b3 02} & key record: lon & $322356035$ $10^{-7}$ deg & 5 \\
+\texttt{f4 9d 36} & key record: alt & $444282$ cm & 3 \\
+\texttt{8e 05} & key record: vel\_x & $327$ cm/s & 2 \\
+\texttt{b6 04} & key record: vel\_y & $283$ cm/s & 2 \\
+\texttt{d5 02} & key record: vel\_z & $-171$ cm/s & 2 \\
+\texttt{64} & key record: battery & $100$ \% & 1 \\
+\texttt{04} & key record: mode & $4$ & 1 \\
+\texttt{66} & delta record: ts & $+51$ ms (now $3600104$) & 1 \\
+\texttt{24} & delta record: lat & $+18$ $10^{-7}$ deg (now $-305727438$) & 1 \\
+\texttt{20} & delta record: lon & $+16$ $10^{-7}$ deg (now $322356051$) & 1 \\
+\texttt{0f} & delta record: alt & $-8$ cm (now $444274$) & 1 \\
+\texttt{13} & delta record: vel\_x & $-10$ cm/s (now $317$) & 1 \\
+\texttt{04} & delta record: vel\_y & $+2$ cm/s (now $285$) & 1 \\
+\texttt{06} & delta record: vel\_z & $+3$ cm/s (now $-168$) & 1 \\
+\texttt{00} & delta record: battery & $+0$ \% (now $100$) & 1 \\
+\texttt{00} & delta record: mode & $+0$ (now $4$) & 1 \\
 \texttt{07 58 40} & auth & key, and a byte string of 64 & 3 \\
 \texttt{c3 d2 b6 a9 fc aa \ldots{} a5 05} &  & Ed25519 signature over the canonical records & 64 \\
 \midrule

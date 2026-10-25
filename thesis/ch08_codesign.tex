@@ -7,16 +7,16 @@ signature per frame, $b = 4$. As first reported, that configuration cost $72.0$\
 against $174.3$\,B for the compression-only baseline: a $58.7\%$ reduction.
 
 \begin{remark}[That figure belonged to a design that did not meet its own constraint]
-The $72.0$\,B frame amortised one keyframe over four frames. By \Cref{thm:t3prime} such a design
+The $72.0$\,B frame amortised one key record over four frames. By \Cref{thm:t3prime} such a design
 verifies $\lossThFour$ of its records at $p = 0.05$, not $0.95$; measured with the decoder in the
 loop, \lossVFour{} (\Cref{sec:e7}). The search had admitted it because the verifiability model it
 consulted assumed every frame decodes alone. With that assumption replaced by the theorem, the
-search returns the same placement and batch with a keyframe in every frame.
+search returns the same placement and batch with a key record in every frame.
 \end{remark}
 
 \begin{table}[h]
 \centering
-\caption{The design ladder at 50 records/s and $\Dmax = 100$\,ms. $N_{\mathrm{sat}}$: offered
+\caption{The step-by-step comparison at 50 records/s and $\Dmax = 100$\,ms. $N_{\mathrm{sat}}$: offered
 load within the saturation throughput of the broadcast model. $\Nmax$: largest neighbourhood with
 mean delivery $\geq 0.95$ in simulation, with its 95\% bootstrap interval. CPU: share of one
 receiver core spent verifying at $\Nmax$. $^\dagger$~size is a sum of measured parts; rows 5,
@@ -30,13 +30,13 @@ receiver core spent verifying at $\Nmax$. $^\dagger$~size is a sum of measured p
 \cmidrule(lr){5-6}
  & configuration & $b$ & B/record & 5 frames & \certIntervalMs\,ms & $N_{\mathrm{sat}}$ & $\Nmax$ & CPU \\
 \midrule
-\multicolumn{9}{l}{\emph{First format: text keys, a chain link in every record}$^\dagger$} \\
+\multicolumn{9}{l}{\emph{Record-linked format: text keys, a chain link in every record}$^\dagger$} \\
 1 & sign every record, one per frame & 1 & \bprFirstBase & \certFirstBase & \certTFirstBase & \nsatFirstBase & \nmaxFirstBase\ \ciFirstBase & \cpuFirstBase\% \\
 2 & sign every record, share the frame & 4 & \bprFirstInline & \certFirstInline & \certTFirstInline & \nsatFirstInline & \nmaxFirstInline\ \ciFirstInline & \cpuFirstInline\% \\
 3 & one signature per frame & 4 & \bprFirstCbor & \certFirstCbor & \certTFirstCbor & \nsatFirstCbor & \nmaxFirstCbor\ \ciFirstCbor & \cpuFirstCbor\% \\
 4 & \ldots{} and delta records & 4 & \bprFirstDesign & \certFirstDesign & \certTFirstDesign & \nsatFirstDesign & \nmaxFirstDesign\ \ciFirstDesign & \cpuFirstDesign\% \\
 \midrule
-\multicolumn{9}{l}{\emph{Lean format: integer keys, one chain link per frame}} \\
+\multicolumn{9}{l}{\emph{Frame-linked format: integer keys, one chain link per frame}} \\
 5 & sign every record, one per frame & 1 & \bprLeanBase & \certLeanBase & \certTLeanBase & \nsatLeanBase & \nmaxLeanBase\ \ciLeanBase & \cpuLeanBase\% \\
 6 & sign every record, share the frame & 4 & \bprLeanInline & \certLeanInline & \certTLeanInline & \nsatLeanInline & \nmaxLeanInline\ \ciLeanInline & \cpuLeanInline\% \\
 7 & one signature per frame, no delta$^\dagger$ & 4 & \bprLeanKeys & \certLeanKeys & \certTLeanKeys & \nsatLeanKeys & \nmaxLeanKeys\ \ciLeanKeys & \cpuLeanKeys\% \\
@@ -48,8 +48,8 @@ receiver core spent verifying at $\Nmax$. $^\dagger$~size is a sum of measured p
 
 \Cref{tab:ladder} takes the design apart. A baseline that signs every record and sends it alone
 confounds two things --- sharing a frame, and sharing a signature --- so rows~2 and~6 separate
-them. The corrected figures are \bprFirstDesign\,B per record in the first format,
-\saveFirst\% below its baseline, and \bprLeanDesign\,B in the lean format, \saveLean\% below its
+them. The corrected figures are \bprFirstDesign\,B per record in the record-linked format,
+\saveFirst\% below its baseline, and \bprLeanDesign\,B in the frame-linked format, \saveLean\% below its
 own.
 
 \begin{remark}[Report the decomposition, never the bare authentication ratio]
@@ -67,7 +67,7 @@ single-axis optimisation would not.
 \begin{itemize}
 \item \textbf{Placement and batching couple exactly}, by $\ga(1 - 1/b)$ --- hence \emph{exactly
       zero} at $b = 1$, where placements A and B are byte-identical on a single-record frame.
-\item \textbf{Encoding is separable in the first format.} Every interaction term is exactly zero,
+\item \textbf{Encoding is separable in the record-linked format.} Every interaction term is exactly zero,
       because $s$ enters additively and therefore \emph{cannot} interact.
 \item \textbf{The scheme axis is byte-degenerate} among the $64$\,B schemes: they differ only in
       CPU cost.
@@ -77,11 +77,11 @@ An earlier claim that a smaller payload increases the value of batching was a \t
 artifact}: the absolute saving is $81.0$\,B for every encoding. The four-axis co-design claim was
 overstated and is now precise.
 
-\begin{remark}[One coupling the first-format ablation could not see]
-In the lean format encoding and batching \emph{do} interact, in one specific way: a record can be
+\begin{remark}[One coupling the record-linked ablation could not see]
+In the frame-linked format encoding and batching \emph{do} interact, in one specific way: a record can be
 coded as a delta only if the record before it is in the same frame or is known to have arrived.
 Row~6 of \Cref{tab:ladder} is smaller than four copies of row~5 partly for that reason. The
-separability result above is a property of the first format, where each record is encoded alone.
+separability result above is a property of the record-linked format, where each record is encoded alone.
 \end{remark}
 
 \section{E4 --- scheme selection, and the receiver's CPU}
@@ -138,7 +138,7 @@ where a receiver can afford to wait for $64$ frames. ECDSA does not admit it.
 \begin{remark}[What $N_{\mathrm{cpu}}$ does not charge]
 The expression above counts signature verification and hashing: the work of the cryptographic
 library. It does not count decoding a frame and rebuilding its records, which in this thesis's
-prototype is interpreted Python. Timed on the Raspberry~Pi~4 as it runs, the lean receiver takes
+prototype is interpreted Python. Timed on the Raspberry~Pi~4 as it runs, the frame-linked receiver takes
 \leanRecvMs\,ms for a four-record frame, \leanRecvOverVerify{} times its one verification, and
 the sender \leanSendMs\,ms (for a frame of one record: \leanRecvOneMs\,ms and
 \leanSendOneMs\,ms). One core of the prototype therefore serves \ncpuProto{} nodes,
@@ -194,7 +194,7 @@ receiver & \si{\micro\second} per frame & nodes per core \\
 interpreted (Python) & \rxPyUs & \rxPyNodes \\
 compiled (Rust) & \rxRustUs & \rxRustNodes \\
 compiled, batches of $64$ & \rxBatchUs & \rxBatchNodes \\
-lazy: tag and decode, then batches & \rxTierOneUs{} + \rxTierTwoUs & \rxLazyNodes \\
+deferred: MAC and decode, then batches & \rxTierOneUs{} + \rxTierTwoUs & \rxLazyNodes \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -203,7 +203,7 @@ lazy: tag and decode, then batches & \rxTierOneUs{} + \rxTierTwoUs & \rxLazyNode
 
 \Cref{ch:background} describes the schemes that amortise one signature over many packets.
 \Cref{tab:stream} places each at the adopted operating point as
-\emph{the lean one-record frame with that scheme's authenticator in place of the signature} ---
+\emph{the frame-linked one-record frame with that scheme's authenticator in place of the signature} ---
 the same header, chain link and record --- with the authenticator sized from the scheme's own
 definition and this thesis's primitives ($32$\,B digests, $64$\,B signatures). Two capacities
 are given: the saturation bound $N_{\mathrm{sat}}$, and $\Nmax$ from the direct search of
@@ -275,7 +275,7 @@ crossing over ten thousand bootstrap resamples of the seeds.
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.85\textwidth]{fig_nmax_direct.png}
-\caption{Delivered fraction of frames against neighbourhood size, lean format: per-record signing
+\caption{Delivered fraction of frames against neighbourhood size, frame-linked format: per-record signing
 and the design. Mean of thirty runs; bars span the runs.}
 \label{fig:nmax}
 \end{figure}
@@ -290,27 +290,27 @@ intervals.}
  & per-record signing & design & ratio \\
 \midrule
 \multicolumn{4}{l}{\emph{50 records/s, 100\,ms (compliant with TS 22.125)}} \\
-first format & \nmaxFirstBase\ \ciFirstBase & \nmaxFirstDesign\ \ciFirstDesign & \ratioFirst$\times$ \\
-lean format & \nmaxLeanBase\ \ciLeanBase & \nmaxLeanDesign\ \ciLeanDesign & \ratioLean$\times$ \\
+record-linked format & \nmaxFirstBase\ \ciFirstBase & \nmaxFirstDesign\ \ciFirstDesign & \ratioFirst$\times$ \\
+frame-linked format & \nmaxLeanBase\ \ciLeanBase & \nmaxLeanDesign\ \ciLeanDesign & \ratioLean$\times$ \\
 \midrule
 \multicolumn{4}{l}{\emph{20 records/s, 250\,ms (relaxed)}} \\
-first format & \nmaxRelFirstBase\ \ciRelFirstBase & \nmaxRelFirstDesign\ \ciRelFirstDesign & \ratioRelFirst$\times$ \\
-lean format & \nmaxRelLeanBase\ \ciRelLeanBase & \nmaxRelLeanDesign\ \ciRelLeanDesign & \ratioRelLean$\times$ \\
+record-linked format & \nmaxRelFirstBase\ \ciRelFirstBase & \nmaxRelFirstDesign\ \ciRelFirstDesign & \ratioRelFirst$\times$ \\
+frame-linked format & \nmaxRelLeanBase\ \ciRelLeanBase & \nmaxRelLeanDesign\ \ciRelLeanDesign & \ratioRelLean$\times$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 These figures hold the \emph{mean} over runs to the $0.95$ target, which is the headline
 criterion throughout this thesis. The stricter reading --- that $95\%$ of individual runs reach it
---- gives \nrunLeanBase{} and \nrunLeanDesign{} in the lean format and \nrunFirstBase{} and
+--- gives \nrunLeanBase{} and \nrunLeanDesign{} in the frame-linked format and \nrunFirstBase{} and
 \nrunFirstDesign{} in the first: at most \nrunGap{} nodes fewer, now that a run samples the
 channel and not one phase configuration. On the low-rate arm the two readings are far apart
 (\Cref{ch:lowrate}).
 
 \begin{remark}[Do not round this to one number]
 The advantage of the design is not one number. It hardly moves with the operating point ---
-\ratioLean$\times$ and \ratioRelLean$\times$ in the lean format, \ratioFirst$\times$ and
-\ratioRelFirst$\times$ in the first --- and it depends on the format, because the first format's
+\ratioLean$\times$ and \ratioRelLean$\times$ in the frame-linked format, \ratioFirst$\times$ and
+\ratioRelFirst$\times$ in the first --- and it depends on the format, because the record-linked format's
 records each carry a chain link that no batch amortises. Quote it with its format. An earlier
 draft said ``$\approx 3\times$ holds across readings''; the four ratios it rested on came from
 the single load ceiling, ran from $1.9$ to $3.2$, and are superseded with it.
@@ -382,15 +382,15 @@ up to \lineCeilWorst\%.
 four, because both operating points have $\Lambda D_{\max} = 5$. The line and the model had
 therefore been checked across frame size and frame rate and never across the batch itself; a
 review of the paper pointed this out on 2026-10-09. Three more cells were registered before any
-of them was run (\Cref{app:prereg}): the frame the lean codec emits with two, three and eight
+of them was run (\Cref{app:prereg}): the frame the frame-linked codec emits with two, three and eight
 records at $50$ records a second, which deadlines of $60$, $80$ and $180$\,ms would admit.
 \Cref{tab:batchdim} sets what was written down beside what the simulator returned.
 
 \begin{table}[h]
 \centering
-\caption{The lean design at three other batch sizes, $50$ records/s: the crossing of $0.95$
+\caption{The frame-linked design at three other batch sizes, $50$ records/s: the crossing of $0.95$
 delivery predicted by the airtime line (slope as calibrated before, band $\pm 6\%$) and by the
-access-rule model (nothing fitted, band $\pm 3\%$), and as simulated ($30$ seeds, $95\%$
+contention model (nothing fitted, band $\pm 3\%$), and as simulated ($30$ seeds, $95\%$
 interval). All six predictions were committed before the first run.}
 \label{tab:batchdim}
 \small
@@ -408,7 +408,7 @@ records & deadline & line & model & simulated & from the line & from the model \
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.7\textwidth]{fig_capacity_vs_deadline.png}
-\caption{The neighbourhood the lean design serves at $50$ records/s, by batch size and the
+\caption{The neighbourhood the frame-linked design serves at $50$ records/s, by batch size and the
 smallest deadline that admits it: the five simulated crossings of $0.95$ delivery ($95\%$
 intervals, smaller than the markers) and the airtime line through the batch sizes that were not
 simulated. At $40$\,ms the batch is one record and nothing is gained.}
@@ -665,7 +665,7 @@ default so that the published one is invoked exactly as before; the rebuilt simu
 reproduces stored runs bit for bit. One places the nodes uniformly in a disc. The other makes
 received power fall with distance as in free space.
 
-\paragraph{The model.} The access-rule model of \Cref{sec:why}, unchanged, with one question
+\paragraph{The model.} The contention model of \Cref{sec:why}, unchanged, with one question
 added for every group of frames that start together: does a receiver that is not itself sending
 get the strongest of them at least $4$\,dB above the sum of the rest? If so it receives that
 frame, and none of the others. The $4$\,dB is not chosen. It is the simulator's default for
@@ -687,7 +687,7 @@ any run (\Cref{app:prereg}).
 
 \begin{table}[h]
 \centering
-\caption{The lean baseline (146\,B at $50$ frames/s) and the design (173\,B at $12.5$) with the
+\caption{The frame-linked baseline (146\,B at $50$ frames/s) and the design (173\,B at $12.5$) with the
 nodes uniform in a disc and free-space loss: the crossing of $0.95$ delivery as predicted and
 as simulated ($30$ seeds, each with its own placement; $95\%$ interval).}
 \label{tab:spread}
@@ -729,12 +729,12 @@ uniformly in discs of radius $100$\,m to $1$\,km, and in a grouped layout of two
 nodes between them, with log-distance path loss, Nakagami fading and the capture rule above,
 thirty seeds per point. The design keeps its advantage: the ratio of the crossings lies between
 \spRatioLo{} and \spRatioHi{} in every layout (\Cref{fig:spread}). At a radius of $1$\,km,
-\spHiddenPct\% of the nodes able to spoil a frame cannot hear its sender.
+\spHiddenPct\% of the interferers of a frame cannot hear its sender.
 
 What spreading changes is what a capacity counts. Counted in neighbours within reach, it falls,
 to \spNeighbours{} at $1$\,km, because a receiver contends with every node in its carrier-sensing
 range~\cite{hu2020hidden}, not only with those it counts. Counted in nodes over the area, it rises
-to \spArea. Hidden stations are a minority of the spoilers: the registered prediction that
+to \spArea. Hidden stations are a minority of the interferers: the registered prediction that
 spreading would cost capacity \emph{because} of them overstated their part.
 
 With every node on its own Gauss--Markov path at up to $15$\,m/s~\cite{bujari2017fanet}, delivery
@@ -748,7 +748,7 @@ registered (\Cref{tab:prereg-revision}).
 \includegraphics[width=0.75\textwidth]{fig_spread.png}
 \caption{Nodes served at $95\%$ delivery as the swarm spreads over a disc (top), and the
 design's ratio to per-record signing with its $95\%$ interval (bottom). Under each radius, the
-share of spoilers hidden from the sender; hollow markers, the swarm at $1$\,km moving at $0$,
+share of interferers hidden from the sender; hollow markers, the swarm at $1$\,km moving at $0$,
 $5$ and $15$\,m/s.}
 \label{fig:spread}
 \end{figure}
@@ -785,7 +785,7 @@ The capacities above are of 802.11a at $6$\,Mb/s. The crossings were simulated a
 at $12$ and $24$\,Mb/s, on the $10$\,MHz channel of 802.11p at $3$, $6$ and $12$\,Mb/s, and with a
 post-quantum signature (\Cref{tab:phy}). The design serves \phySimRatioLo--\phySimRatioHi{} times
 the nodes of per-record signing, more at faster rates: a faster PHY shortens the payload but not
-the fixed cost of a frame, so the count of frames weighs more. The access-rule model of
+the fixed cost of a frame, so the count of frames weighs more. The contention model of
 \Cref{sec:why} stays within \phyModelRest\% except at the fastest rate of each channel width,
 where it is \phyModelTopLo--\phyModelTopHi\% optimistic; the registered $\pm 3\%$ failed there.
 
@@ -799,7 +799,7 @@ An ML-DSA signature of $2\,420$\,B does not fit a frame at any batch.
 
 \begin{table}[htbp]\centering
 \caption{Nodes served at $95\%$ delivery in ns-3 on other PHYs and with a post-quantum
-signature, and the access-rule model's error (negative: optimistic; the larger of the two
+signature, and the contention model's error (negative: optimistic; the larger of the two
 rows). Frame: the design's, on air.}
 \label{tab:phy}
 \begin{tabular}{lrrrrr}
@@ -825,7 +825,7 @@ key --- costs the interpreted receiver \flForgedMs\,ms on the board, against \fl
 an honest one, which also pays for its storage: one core takes \flForgedRate{} such frames a
 second. With \flSenders{} senders on one receiver core (\Cref{sec:hardware-method}),
 \flNoneRate{} forged frames a second push honest delivery below $0.95$, and the cheap checks of
-\Cref{sec:admission} do no better (\Cref{fig:flood}). The group tag refuses an outsider's frame in
+\Cref{sec:admission} do no better (\Cref{fig:flood}). The group MAC refuses an outsider's frame in
 \flTagUs\,\si{\micro\second}, \flTagRate{} a second per core: at $3\,000$ forged frames a second,
 more than the \flChannel{} that one channel carries, honest delivery stays at \flOutsiderV.
 
@@ -871,7 +871,7 @@ batch stops at four.
 
 \paragraph{Other rates and deadlines.} The batch of four belongs to $50$~records/s and
 $100$\,ms. \Cref{fig:map} evaluates \Cref{eq:bstar} over seven record rates and eight deadlines,
-with the capacity each batch buys from the access-rule model. At \dmCells{} cells, chosen as
+with the capacity each batch buys from the contention model. At \dmCells{} cells, chosen as
 distinct roles, the ns-3 crossings lie within \dmWorst\% of the model; at $100$~records/s and
 $100$\,ms, where the deadline admits a batch of \dmBatch, the design serves \dmRatio{} times the
 nodes of per-record signing. Where $\Lambda_i D_{\max} \leq 2$ the batch is at most one record,
@@ -880,7 +880,7 @@ and nothing is gained.
 \begin{figure}[htbp]\centering
 \includegraphics[width=0.75\textwidth]{fig_design_map.png}
 \caption{The design map: the batch $b^\ast$ each record rate and deadline admit, and the
-capacity it buys over per-record signing by the access-rule model. Outlined: cells simulated in
+capacity it buys over per-record signing by the contention model. Outlined: cells simulated in
 ns-3, for per-record signing, the design or both; hatched: no batch meets the deadline.}
 \label{fig:map}
 \end{figure}
@@ -929,42 +929,43 @@ fitting the correction to the answer.
 \begin{table}[h]
 \centering
 \caption{Sender energy per record on a Raspberry~Pi~4: metered (median and range of five
-repetitions) against time multiplied by power. The first-format rows are of July 2026; the
-lean rows are of October, on the second board through the second sensor, where a control that
+repetitions) against time multiplied by power. The record-linked rows are of July 2026; the
+frame-linked rows are of October, on the second board through the second sensor, where a control that
 repeats the first row gives \enCtlMeas\,\si{\micro\joule}; the compiled rows are of 22 October,
 on that board, beside a control giving \enCtlNewMeas\,\si{\micro\joule}.}
 \label{tab:energy}
+\setlength{\tabcolsep}{4pt}
 \begin{tabular}{lrrr}
 \toprule
  & metered (\si{\micro\joule}) & model (\si{\micro\joule}) & gap \\
 \midrule
-first format, every record signed & \enBaseMeas\ \enBaseRange & \enBaseModel & \enBaseGap\% \\
-first format, one signature per four & \enDesignMeas\ \enDesignRange & \enDesignModel & \enDesignGap\% \\
-lean format, every record signed & \enLeanOneMeas\ \enLeanOneRange & \leanSendOneUj & \enLeanOneGap\% \\
-lean format, one signature per four & \enLeanMeas\ \enLeanRange & \leanSendUj & \enLeanGap\% \\
-compiled, every record signed & \enRustOneMeas\ \enRustOneRange & \enRustOneModel & \enRustOneGap\% \\
-compiled, one signature per four & \enRustMeas\ \enRustRange & \enRustModel & \enRustGap\% \\
+record-linked, every record signed & \enBaseMeas\ \enBaseRange & \enBaseModel & \enBaseGap\% \\
+record-linked, one signature per four & \enDesignMeas\ \enDesignRange & \enDesignModel & \enDesignGap\% \\
+frame-linked, every record signed & \enLeanOneMeas\ \enLeanOneRange & \leanSendOneUj & \enLeanOneGap\% \\
+frame-linked, one signature per four & \enLeanMeas\ \enLeanRange & \leanSendUj & \enLeanGap\% \\
+frame-linked, Rust, every record signed & \enRustOneMeas\ \enRustOneRange & \enRustOneModel & \enRustOneGap\% \\
+frame-linked, Rust, one signature per four & \enRustMeas\ \enRustRange & \enRustModel & \enRustGap\% \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The batched sender spends \enSavePct\% less energy per record in the first format and
-\enLeanSavePct\% less in the lean format. Only the sender is metered; receiver and radio energy
+The batched sender spends \enSavePct\% less energy per record in the record-linked format and
+\enLeanSavePct\% less in the frame-linked format. Only the sender is metered; receiver and radio energy
 are modelled.
 
-The two pairs of rows are compared with two different models. For the first format the model
+The two pairs of rows are compared with two different models. For the record-linked format the model
 composes separately measured times with one processor power, and that power is the median over
 the metered runs of July themselves (\Cref{sec:hardware-method}). That comparison tests the
 times, not the power: the model is \enDesignGap--\enBaseGap\% low, the gap being frame assembly
-in an interpreted prototype. For the lean format the model is the time of one whole frame on
+in an interpreted prototype. For the frame-linked format the model is the time of one whole frame on
 the board (\leanSendMs\,ms for four records) at that same power, written down before the meter
 was read; the meter is within $5\%$ of it, on the low side. One busy core adds $0.72$ to
 $0.74$\,W on the second board where the constant taken from the first is $0.749$, and with four
 records to a frame the loop that is metered runs a frame $3\%$ faster than the loop that was
 timed.
 
-\begin{remark}[What the lean rows are, and what they say]
-The lean rows were metered in October 2026 on the second board through the second sensor: the
+\begin{remark}[What the frame-linked rows are, and what they say]
+The frame-linked rows were metered in October 2026 on the second board through the second sensor: the
 first board had been re-installed since July, and the rig had first to pass a test it failed
 three times that morning (\Cref{sec:hardware-method}). A control that repeats the first row of
 the table on that rig gives \enCtlMeas\,\si{\micro\joule} \enCtlRange{} per record and
@@ -972,10 +973,10 @@ the table on that rig gives \enCtlMeas\,\si{\micro\joule} \enCtlRange{} per reco
 range written down for it, so the four rows can share a table. The range of that control is wider than the others' because the author's own
 logins to the board fell in one of its windows.
 
-\textbf{The lean sender costs \enLeanOverFirst{} times the energy per record of the first
-format's.} The lean codec was written for the size of the frame and is slower to run in this
+\textbf{The frame-linked sender costs \enLeanOverFirst{} times the energy per record of the record-linked
+format's.} The frame-linked codec was written for the size of the frame and is slower to run in this
 interpreted prototype. The saving in bytes and the capacity reported in this thesis are the
-lean format's, and so now is its energy: it is the larger of the two, and the table says by
+frame-linked format's, and so now is its energy: it is the larger of the two, and the table says by
 how much. The absolute values still carry the sensors' gain, which no reference load has
 checked; that two sensors on two boards agree within \enCtlVsJuly\% on one workload bounds
 their difference and not their common error.
@@ -984,7 +985,7 @@ their difference and not their common error.
 \paragraph{Compiled, the order follows the bytes.} The sender of \Cref{sec:compiled} was metered
 in October 2026 on the same board, with the rig check passed that day and the sensor's gain taken
 as calibrated. It spends \enRustMeas\,\si{\micro\joule} per record with four records to a frame,
-\enFirstOverRust{} times less than the first format with batching, and \enRustOneMeas{} with every
+\enFirstOverRust{} times less than the record-linked format with batching, and \enRustOneMeas{} with every
 record signed. The reversal above was the interpreter's. Against the model the meter reads
 \enRustGap{} and \enRustOneGap\%, low because a compiled loop adds \enRustPower\,W above idle where
 the model's one power is $0.749$\,W: the registered ranges, set with that power, missed low

@@ -18,7 +18,7 @@ corrected figures are in \Cref{tab:ladder}.
 \centering
 \includegraphics[width=0.7\textwidth]{fig_e5_codesign.png}
 \caption[The configuration as first reported]{Per-record cost of the configuration as first
-reported, against the two baselines (first format). Superseded by \Cref{tab:ladder}.}
+reported, against the two baselines (record-linked format). Superseded by \Cref{tab:ladder}.}
 \label{fig:e5}
 \end{figure}
 
@@ -60,8 +60,8 @@ $V \geq 0.95$ threshold by direct simulation.}
 An earlier experiment had tested half of the assumption behind that ceiling --- that it does not
 depend on frame size --- at $N = 50$ (\Cref{ch:validation}). The other half, that it does not
 depend on $N$, was predicted to hold within $\pm 10\%$ in six configurations, and the prediction
-was committed before the runs. \textbf{It failed.} The lean design crosses near $118$--$124$
-nodes where the ceiling says $142$; the first format's shared-frame configuration crosses
+was committed before the runs. \textbf{It failed.} The frame-linked design crosses near $118$--$124$
+nodes where the ceiling says $142$; the record-linked format's shared-frame configuration crosses
 \emph{above} the ceiling's value. The signs differ between configurations, so the ceiling cannot
 be re-tuned. The reason is not subtle in hindsight: $U$ divides the offered load by the
 saturation throughput of $N$ stations, which falls as $N$ grows, while the loss of a lightly
@@ -79,7 +79,7 @@ On the low-rate arm, carrying the chain link once per frame was first reported t
 sustainable record rate by a factor of $3.0$ (\Cref{fig:lorachain}). The figure sized every
 record from a delta measured with records $50$\,ms apart and carried no self-contained record.
 At the spacing the batch itself implies, and with every frame decoding alone, the factor is
-about $2.1$ in the first format (\Cref{sec:perframe}).
+about $2.1$ in the record-linked format (\Cref{sec:perframe}).
 
 \begin{figure}[h]
 \centering

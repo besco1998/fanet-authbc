@@ -474,10 +474,11 @@ class TestTheWorkedFrame:
             by_field[field.split(":")[0]] = by_field.get(field.split(":")[0], 0) + n
         header = sum(by_field[k] for k in ("(map)", "v", "t", "src", "base\\_seq", "n",
                                             "recs", "auth"))
-        assert (header, by_field["link"] + 32, by_field["delta"]) == (23, 35, 9)
+        # rows renamed on 2026-10-25 (Mohamed): "keyframe" -> "key record", and "delta record"
+        assert (header, by_field["link"] + 32, by_field["delta record"]) == (23, 35, 9)
         text = _text("ch05_implementation.tex")
         assert "$23 + 35 + 64 = 122$" in text and "takes $25$\\,B here" in text
-        assert by_field["keyframe"] == 25
+        assert by_field["key record"] == 25
 
 
 class TestTheRegistrationsOfAppendixB:

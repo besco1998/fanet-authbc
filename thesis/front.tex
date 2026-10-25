@@ -94,12 +94,12 @@ $\Lambda$   & rate at which a receiver must verify, $\Lambda_i (N-1)$ & derived 
 $\Dmax$    & freshness bound on the oldest record of a frame & 100\,ms, 250\,ms \\
 $D(b)$     & delay of the oldest record in a batch of $b$ & $\leq \Dmax$ \\
 $b$        & records per frame (batch) & decision variable \\
-$r$        & reference interval: one frame in $r$ decodes alone & 1 in the design \\
-$s$        & bytes of one encoded record (first format: with its chain link) & measured \\
-$s_k$, $s_\delta$ & record that decodes alone (keyframe); record coded against its predecessor & measured \\
+$r$        & key-record interval: one frame in $r$ decodes alone & 1 in the design \\
+$s$        & bytes of one encoded record (record-linked: with its chain link) & measured \\
+$s_k$, $s_\delta$ & record that decodes alone (key record); record coded against its predecessor & measured \\
 $\ga$      & bytes of the authentication object & 64, 64, 96 \\
-$\Hf$      & bytes of the frame header & 44 first format, 23 lean \\
-$L$        & bytes of the chain link carried once per frame (lean format) & 35 \\
+$\Hf$      & bytes of the frame header (record-linked; frame-linked) & 44; 23 \\
+$L$        & bytes of the chain link, once per frame (frame-linked) & 35 \\
 $M$        & largest payload the link carries in one frame & 1500 (802.11) \\
 $\smax$    & largest record a single frame admits, $M - \Hf - L - \ga$ & derived \\
 $p$        & probability that a frame is lost & 0.02, 0.05, 0.10 \\

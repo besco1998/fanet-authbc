@@ -42,11 +42,11 @@ FIGS = REPO / "results" / "figures"
 _SAVE = {"dpi": 200, "bbox_inches": "tight", "metadata": {"Software": None}}
 # (format, item in frame_components.csv, legend text, colour, marker, where its value is written)
 CURVES = (
-    ("first", "self-batch (byte model)", "first format: a link in every record", "#b2182b", "o",
+    ("first", "self-batch (byte model)", "record-linked format", "#b2182b", "o",
      {"xytext": (5, 5), "ha": "left"}),
     ("first", "self-batch; one link per frame (byte model)",
-     "first format: one link per frame", "#e08214", "s", {"xytext": (5, 5), "ha": "left"}),
-    ("lean", "self-batch", "lean format: one link per frame", "#2166ac", "^",
+     "record-linked, link moved to the frame", "#e08214", "s", {"xytext": (5, 5), "ha": "left"}),
+    ("lean", "self-batch", "frame-linked format", "#2166ac", "^",
      {"xytext": (-5, -12), "ha": "right"}),
 )
 
@@ -74,7 +74,7 @@ def _adopted_batch() -> int:
 
 def fig_bytes_vs_batch() -> None:
     adopted = _adopted_batch()
-    fig, ax = plt.subplots(figsize=(4.4, 2.9))
+    fig, ax = plt.subplots(figsize=(3.5, 2.6))      # the column's own width: 8 pt prints at 8 pt
     ax.axvline(adopted, color="0.45", linestyle=":", linewidth=1)
     for fmt, item, label, colour, marker, where in CURVES:
         curve = _curve(fmt, item)
@@ -83,14 +83,15 @@ def fig_bytes_vs_batch() -> None:
                 markersize=4.5, linewidth=1.5, label=label)
         ax.annotate(_one_decimal(curve[adopted]), (adopted, curve[adopted]),
                     textcoords="offset points", fontsize=8, color="black", **where)
-    ax.annotate(f"$b$ = {adopted}, the batch freshness allows", (adopted, 9), xytext=(5, 0),
-                textcoords="offset points", fontsize=8, color="0.25", va="center")
-    ax.set_xlabel("records per frame $b$")
-    ax.set_ylabel("bytes per record")
+    ax.annotate(f"$b$ = {adopted}: the batch\nthe deadline allows", (adopted, 14), xytext=(5, 0),
+                textcoords="offset points", fontsize=7.5, color="0.25", va="center")
+    ax.set_xlabel("records per frame $b$", fontsize=8)
+    ax.set_ylabel("bytes per record", fontsize=8)
+    ax.tick_params(labelsize=8)
     ax.set_xticks(sorted(_curve(*CURVES[0][:2])))
     ax.set_ylim(0, 180)
     ax.grid(alpha=0.3)
-    ax.legend(fontsize=8, frameon=False, loc="upper right")
+    ax.legend(fontsize=7.5, frameon=False, loc="upper right")
     for side in ("top", "right"):
         ax.spines[side].set_visible(False)
     fig.savefig(FIGS / "fig_bytes_vs_batch.png", **_SAVE)
@@ -126,10 +127,10 @@ def deadline_ms(batch: int) -> float:
 def fig_capacity_vs_deadline() -> None:
     measured, line = simulated_crossings(), line_capacities()
     adopted = _adopted_batch()
-    fig, ax = plt.subplots(figsize=(4.4, 2.9))
+    fig, ax = plt.subplots(figsize=(3.5, 2.7))
     ax.axvline(adopted, color="0.45", linestyle=":", linewidth=1)
     ax.plot(list(line), list(line.values()), color="0.35", linewidth=1.2,
-            label="airtime line (one fitted constant)")
+            label="airtime capacity law (one fitted constant)")
     batches = list(measured)
     values = [measured[b][0] for b in batches]
     ax.errorbar(batches, values,
@@ -139,18 +140,19 @@ def fig_capacity_vs_deadline() -> None:
                 label="simulated in ns-3 (95 % interval)")
     for b in batches:
         ax.annotate(_one_decimal(measured[b][0]), (b, measured[b][0]), xytext=(5, -10),
-                    textcoords="offset points", fontsize=8, color="black")
-    ax.annotate("100 ms: the design", (adopted, 20), xytext=(5, 0), textcoords="offset points",
-                fontsize=8, color="0.25", va="center")
+                    textcoords="offset points", fontsize=7.5, color="black")
+    ax.annotate("100 ms: AUTHBC", (adopted, 20), xytext=(5, 0), textcoords="offset points",
+                fontsize=7.5, color="0.25", va="center")
     ticks = [b for b in line if b in (1, 2, 3, 4, 6, 8, 10, 12)]
     ax.set_xticks(ticks)
     ax.set_xticklabels([f"{b}\n{deadline_ms(b):.0f}" for b in ticks], fontsize=8)
-    ax.set_xlabel("records per frame $b$, and below it the smallest deadline\n"
-                  "that admits it (ms)", fontsize=8)
-    ax.set_ylabel("nodes served at 95 % delivery")
+    ax.set_xlabel("records per frame $b$; below it, the smallest\n"
+                  "deadline that admits it (ms)", fontsize=8)
+    ax.set_ylabel("nodes served at 95 % delivery", fontsize=8)
+    ax.tick_params(labelsize=8)
     ax.set_ylim(0, 320)
     ax.grid(alpha=0.3)
-    ax.legend(fontsize=8, frameon=False, loc="upper left")
+    ax.legend(fontsize=7.5, frameon=False, loc="upper left")
     for side in ("top", "right"):
         ax.spines[side].set_visible(False)
     fig.savefig(FIGS / "fig_capacity_vs_deadline.png", **_SAVE)

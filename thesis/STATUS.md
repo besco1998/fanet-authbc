@@ -12,6 +12,11 @@ Every chapter is written and was read end to end in the built PDF on 2026-10-08.
 are yours:** the declaration and the acknowledgements — with the degree and the department on the
 title page. The statement on generative AI was removed on your decision of 2026-10-24.
 
+⚠️ **On 2026-10-25 the names changed throughout** (your decision): record-linked and
+frame-linked format (were first and lean), key record (was keyframe), contention model,
+group MAC, deferred batch verification. Figures are redrawn at print size. Nothing else in the
+chapters changed that day.
+
 ⚠️ **On 2026-10-24 the experiments of October 2026 were written into the chapters they belong to,
 and you have not read them.** Each result sits where its subject is:
 

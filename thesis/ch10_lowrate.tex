@@ -38,12 +38,12 @@ all}, not against the frames one telemetry stream happened to produce.
 
 \subsection{The floor of the format}
 
-Take the lean format of \Cref{ch:sysmodel} with sender~0, sequence number~0 and one record in which
+Take the frame-linked format of \Cref{ch:sysmodel} with sender~0, sequence number~0 and one record in which
 every field is zero. Every integer then occupies its minimum width:
 \[ \underbrace{\exFloorHdr}_{\Hf} + \underbrace{\linkField}_{L} + \underbrace{64}_{\ga}
    + \underbrace{\exFloorRec}_{s_k} = \exFloor \text{ bytes.} \]
 That frame was emitted, signed and verified; it is not an estimate. \textbf{Header, link and
-signature alone are \exFloorNoRec\,B.} The first format's floor is higher still, because its
+signature alone are \exFloorNoRec\,B.} The record-linked format's floor is higher still, because its
 record carries its own $32$\,B link and its keys are text.
 
 \subsection{All twelve data rates}
@@ -72,7 +72,7 @@ DR4, DR5, DR6, DR7       & 222 or 242\,B & feasible & --- \\
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.8\textwidth]{fig_t6_exclusion.png}
-\caption{Payload limit of each data rate against the floor of the lean format and the frames this
+\caption{Payload limit of each data rate against the floor of the frame-linked format and the frames this
 telemetry produces.}
 \label{fig:t6}
 \end{figure}
@@ -125,9 +125,9 @@ and each is necessary.
 \item \textbf{The frame is this thesis's format.} \exclSigCountCap{} of the \exclCount{} rates
       are excluded by the signature alone and would be in any format. The other
       \exclFmtCount{} are not. A $115$\,B payload less a $64$\,B signature and a $32$\,B hash
-      leaves \exRoomAfterCrypto\,B, and the lean header at its floor with the framing of the
+      leaves \exRoomAfterCrypto\,B, and the frame-linked header at its floor with the framing of the
       link field is exactly that many. A hand-packed layout would leave part of those bytes for
-      a record: fewer than the \keyLean\,B this telemetry's keyframe averages, so the three
+      a record: fewer than the \keyLean\,B this telemetry's key record averages, so the three
       rates stay out of reach for this telemetry, but no longer whatever the telemetry. This
       condition was added after a review of the paper on 2026-10-09. Until then the count was
       stated as if it belonged to the problem, where three eighths of it belong to the format.
@@ -137,7 +137,7 @@ and each is necessary.
 
 \begin{table}[h]
 \centering
-\caption{The lean format under four authentication choices. \emph{Floor}: every field zero.
+\caption{The frame-linked format under four authentication choices. \emph{Floor}: every field zero.
 \emph{Range}: frames of this telemetry over a flight.}
 \label{tab:t6relax}
 \begin{tabular}{lrrlll}
@@ -194,7 +194,7 @@ verifies alone must actually carry. Two things had never been charged in either 
       out of each record and into the frame, where it still has to travel. The test had
       subtracted it from the record and added it nowhere.
 \item a \textbf{record that decodes alone}. $13$\,B was the \emph{mean delta} record less its
-      link. A frame that verifies without its predecessor starts with a keyframe.
+      link. A frame that verifies without its predecessor starts with a key record.
 \end{itemize}
 
 With both charged, the ``$29$\,B of room'' is $29 - 35 < 0$. DR3 is excluded under either header,
@@ -206,7 +206,7 @@ The first correction ended with the sentence: \emph{a register that stores facts
 not compose them; only re-derivation does.} Re-derivation was not enough either. Every number in
 the first correction was re-derived and every one was right. What was wrong was that no frame of
 the proposed kind had ever been \emph{built}: the design was a sum of sizes measured in three
-places. The lean format now exists as code (\Cref{ch:sysmodel}), the floor above is the length of a
+places. The frame-linked format now exists as code (\Cref{ch:sysmodel}), the floor above is the length of a
 frame it emitted, and the question ``does it fit'' is answered by trying.
 \end{remark}
 
@@ -230,12 +230,12 @@ sustains, records are seconds apart, and a difference grows with the time it spa
 \toprule
 spacing & 50\,ms & 0.1\,s & 1\,s & 5.5\,s & 16.5\,s \\
 \midrule
-lean delta record (B) & \deltaLean & \deltaLeanTenth & \deltaLeanOne & \deltaLeanFar & \deltaLeanSlow \\
+frame-linked delta record (B) & \deltaLean & \deltaLeanTenth & \deltaLeanOne & \deltaLeanFar & \deltaLeanSlow \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-The first figures also carried no keyframe, so no frame decoded without the one before it. Sized
+The first figures also carried no key record, so no frame decoded without the one before it. Sized
 at the spacing the batch itself implies, with every frame self-contained, DR5 at $242$\,B gives:
 
 \begin{center}
@@ -244,20 +244,20 @@ at the spacing the batch itself implies, with every frame self-contained, DR5 at
  & records per frame & frame (B) & records/s per node \\
 \midrule
 as first reported & \loraRecsPub & \loraFrmPub & \loraRatePub \\
-first format, corrected & \loraRecsFirst & \loraFrmFirst & \loraRateFirst \\
-lean format & \loraRecsLean & \loraFrmLean & \loraRateLean \\
+record-linked format, corrected & \loraRecsFirst & \loraFrmFirst & \loraRateFirst \\
+frame-linked format & \loraRecsLean & \loraFrmLean & \loraRateLean \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-Per-frame chaining is worth about $2.1\times$ in the first format, not $3.0\times$; the lean
+Per-frame chaining is worth about $2.1\times$ in the record-linked format, not $3.0\times$; the frame-linked
 format recovers the larger figure because it also shortens the header and the record. The
 decision to chain per frame on this arm is unaffected: its argument is that the payload limit
 binds, and that has not changed.
 \end{remark}
 
-In the first format the 802.11 arm keeps a link in every record, because freshness binds there
-and the same change buys no extra records. The lean format carries one link per frame on both
+In the record-linked format the 802.11 arm keeps a link in every record, because freshness binds there
+and the same change buys no extra records. The frame-linked format carries one link per frame on both
 arms. What that gives up is stated in \Cref{ch:sysmodel}: inside a frame, order and content rest on
 the frame signature alone instead of on a signature and an independent hash.
 
@@ -316,7 +316,7 @@ retracted; the artifact that produced it is retained, renamed and superseded.
 
 The capacity runs sent a $218$\,B frame of six records on the $222$\,B payload table, which is the
 table the simulator enforces. The corrected frames on that table are $214.0$\,B (lean, six
-records) and $221.7$\,B (first format, four records), within $2\%$ of it in size and airtime, so
+records) and $221.7$\,B (record-linked format, four records), within $2\%$ of it in size and airtime, so
 the runs were not repeated.
 
 \subsection{Why DR5 and not DR6}
@@ -486,7 +486,7 @@ page. Every bibliography entry is now compared with its registry record by a scr
 
 The exclusion is an inequality about a payload and a frame, and nothing in it belongs to LoRa. It
 was applied in October 2026 to three broadcast systems that aircraft and vehicles already use,
-each with its payload and message rate taken from its standard, and with this thesis's lean
+each with its payload and message rate taken from its standard, and with this thesis's frame-linked
 frame as the record (\Cref{tab:links}). ADS-B~1090ES leaves $56$ bits of each message for data
 and Bluetooth~4 Remote~ID $25$\,B: neither can carry a $64$\,B signature at all, the case of
 the five signature-bound LoRaWAN rates. Bluetooth~5 and Wi-Fi Remote~ID fit up to

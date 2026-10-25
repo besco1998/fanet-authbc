@@ -16,13 +16,14 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import yaml  # noqa: E402
+from matplotlib.ticker import MaxNLocator  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[1]
 RAW = REPO / "results" / "raw"
 FIGS = REPO / "results" / "figures"
-_SAVE = {"dpi": 110, "bbox_inches": "tight", "metadata": {"Software": None}}
+_SAVE = {"dpi": 200, "bbox_inches": "tight", "metadata": {"Software": None}}
 PANELS = (("lean/inline-1", "per-record signing", "#b2182b"),
-          ("lean/batch-delta", "AUTHBC, four records per frame", "#1b7837"))
+          ("lean/batch-delta", "AUTHBC, four records per frame", "#2166ac"))
 V_TARGET = 0.95
 
 
@@ -43,7 +44,8 @@ def fig_nmax_direct() -> None:
                 and float(r["jitter_ms"]) == float(f"{want:g}"))    # as the driver writes it
 
     mine = [r for r in _rows() if designated(r)]
-    fig, axes = plt.subplots(1, 2, figsize=(7.2, 2.9), sharey=True)
+    # the column's own width (Mohamed, 2026-10-25: figures must read at print size)
+    fig, axes = plt.subplots(1, 2, figsize=(3.5, 2.5), sharey=True)
     for ax, (config, title, colour) in zip(axes, PANELS, strict=True):
         pts = sorted((r for r in mine if r["config"] == config and r["n_nodes"] != "CROSSING"),
                      key=lambda r: int(r["n_nodes"]))
@@ -57,10 +59,12 @@ def fig_nmax_direct() -> None:
         ax.axhline(V_TARGET, color="black", linestyle="--", linewidth=1)
         n_max = int(cross["n_max_mean"])
         ax.axvline(n_max, color=colour, linestyle=":", linewidth=1)
-        ax.set_title(f"{title}\n$N_{{max}}$ = {n_max}", fontsize=9)
-        ax.set_xlabel("neighbourhood size $N$")
+        ax.set_title(f"{title}\n$N_{{max}}$ = {n_max}", fontsize=7.5)
+        ax.set_xlabel("nodes $N$", fontsize=8)
+        ax.tick_params(labelsize=7.5)
+        ax.xaxis.set_major_locator(MaxNLocator(integer=True, nbins=4))     # nodes are whole
         ax.grid(alpha=0.3)
-    axes[0].set_ylabel("delivered fraction of frames")
+    axes[0].set_ylabel("delivered fraction of frames", fontsize=8)
     fig.savefig(FIGS / "fig_nmax_direct.png", **_SAVE)
     plt.close(fig)
 

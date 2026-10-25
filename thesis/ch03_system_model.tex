@@ -8,7 +8,7 @@ formats. A frame as it is sent, byte by byte, is in \Cref{sec:worked}.
 signs them into frames, and broadcasts the frames on a shared channel; each receiver decodes,
 rebuilds, verifies and stores the frames of its neighbours; and five constraints, one per
 equation of \Cref{ch:theory} and \Cref{ch:codesign}, select the batch, the placement of the
-signature, the scheme and the keyframe interval.
+signature, the scheme and the key-record interval.
 
 \begin{figure}[htbp]\centering
 \includegraphics[width=\textwidth]{block_diagram.png}
@@ -93,7 +93,7 @@ the frame is the same.
 
 \begin{table}[t]
 \centering
-\caption{The two operating points, lean format. Bytes are identical; the neighbourhood is not.
+\caption{The two operating points, frame-linked format. Bytes are identical; the neighbourhood is not.
 $\Nmax$ is the largest neighbourhood with mean delivery $\geq 0.95$, found by direct simulation
 (\Cref{ch:codesign}).}
 \label{tab:operating}
@@ -173,7 +173,7 @@ verifies under the sender's public key with nothing else, the other says whether
 frames give one sequence number two different records. Neither reads any state of the receiver.
 The cost is storage: a frame's length on air for every $b$ records held, \bprLeanDesign\,B per
 record in the design, beside the record itself. A frame that is coded against its predecessor
-cannot be shown alone; the design sends a keyframe in every frame, so every frame can.
+cannot be shown alone; the design sends a key record in every frame, so every frame can.
 
 Fixing this found a second defect. The receiver offered a frame's records to the store in order
 and let the first refusal decide the frame. A frame whose first record repeated one already
@@ -224,7 +224,7 @@ delayed frame & GNSS-time window $\Delta$ & Tamarin, model with the clock & acce
  & & simulated clocks, \rpFrames{} honest frames per setting & with $\Delta = 150$\,ms no honest
   frame refused at clock errors up to $10$\,ms; every frame held $250$\,ms or more refused; a
   $250$\,ms window outlasts \rpHolds\,min without GNSS \\
-flooding by outsiders & $8$\,B group tag & UDP flood, \flSenders{} senders on one core &
+flooding by outsiders & $8$\,B group MAC & UDP flood, \flSenders{} senders on one core &
   $V = \flOutsiderV$ at $3\,000$ forged frames/s; the tag costs \flTagCostPct\% of capacity \\
 flooding by a member & none & same & $V < 0.95$ from \flInsiderRate{} forged frames/s \\
 ledger audit & signed frames uploaded & \auUavs{} UAVs, one flight hour, \auFrames{} frames &
@@ -294,9 +294,9 @@ The BLS object is $96$\,B, not the $48$\,B minimum-signature variant originally 
 available library ships only the minimum-pubkey scheme. That deviation is recorded and applied
 consistently, and it makes BLS lose the byte comparison outside multi-signer aggregation.
 
-Encodings are JSON (baseline), canonical CBOR, MessagePack, and delta-CBOR. In the first format
-the delta encoder emits a keyframe every $K = 16$ records, a value that was fixed and never
-optimised. The lean format makes the interval a parameter --- one self-contained frame in every
+Encodings are JSON (baseline), canonical CBOR, MessagePack, and delta-CBOR. In the record-linked format
+the delta encoder emits a key record every $K = 16$ records, a value that was fixed and never
+optimised. The frame-linked format makes the interval a parameter --- one self-contained frame in every
 $r$ --- and \Cref{sec:e7} evaluates it; the design uses $r = 1$.
 
 \section{Two frame formats}\label{sec:formats}
@@ -307,9 +307,9 @@ own chain link, sender identifier and sequence number. It is frozen, and every a
 chapters~\ref{ch:bytes}--\ref{ch:validation} that predates October 2026 was produced with it. The
 \emph{lean} format was built after an external review pointed out that the design the results
 headlined --- delta records under one signature in a short header --- had never existed as one
-object: it was a sum of sizes measured in three places (\Cref{ch:reproducibility}). The lean
+object: it was a sum of sizes measured in three places (\Cref{ch:reproducibility}). The frame-linked
 format is that design as code, with a sender and a receiver. The sizes reported for its design
-and its baselines are lengths of frames that were emitted, decoded and verified; the one lean
+and its baselines are lengths of frames that were emitted, decoded and verified; the one frame-linked
 size that is a sum of measured parts (the design without delta coding) is marked in
 \Cref{tab:ladder}.
 
@@ -333,14 +333,14 @@ field & content & first & lean \\
 \multicolumn{2}{l}{\textbf{header} $\Hf$} & \textbf{\hdrFirst} (\hdrFirstLo) & \textbf{\hdrLean} (\hdrLeanLo) \\
 \multicolumn{2}{l}{chain link} & 32 per record & \linkField{} per frame \\
 \multicolumn{2}{l}{signature $\ga$ (Ed25519, ECDSA)} & 64 & 64 \\
-\multicolumn{2}{l}{record that decodes alone (keyframe)} & \keyFirst$^\ast$ & \keyLean \\
+\multicolumn{2}{l}{record that decodes alone (key record)} & \keyFirst$^\ast$ & \keyLean \\
 \multicolumn{2}{l}{record coded against its predecessor, 50\,ms apart} & \deltaFirst$^\ast$ & \deltaLean \\
 \bottomrule
 \multicolumn{4}{l}{$^\ast$ includes that record's own 32\,B chain link.}
 \end{tabular}
 \end{table}
 
-\subsection{The lean frame}
+\subsection{The frame-linked frame}
 
 \input{fig_frame}
 
@@ -348,23 +348,23 @@ field & content & first & lean \\
 sender and the sequence number of the first record; \texttt{link} is the hash of the record
 before it; \texttt{recs} is the record stream and \texttt{auth} one signature. A record in the
 stream is nine variable-length integers --- timestamp, position, velocity, battery, mode. The
-first record of a frame is a \emph{keyframe} carrying absolute values; each later one is a
+first record of a frame is a \emph{key record} carrying absolute values; each later one is a
 \emph{delta} from the record before it. Sender and sequence number are not repeated per record.
 
 \textbf{What is signed is not the stream.} It is the canonical ledger records, each with its own
-\texttt{prev\_hash}, exactly as in the first format. The receiver rebuilds them --- the first
+\texttt{prev\_hash}, exactly as in the record-linked format. The receiver rebuilds them --- the first
 \texttt{prev\_hash} is \texttt{link}, each later one the hash of the record just rebuilt --- and
 only then checks the signature. A frame that cannot be decoded therefore cannot be verified, and
 \Cref{thm:t3prime} counts that. The state against which a later frame would be decoded advances
 only after a frame has been verified \emph{and} stored, so a replayed frame cannot desynchronise
 a stream.
 
-\textbf{What one link per frame gives up.} In the first format every record carries its own
-\texttt{prev\_hash}; in the lean format only the first record of a frame does, and the rest are
-derived. Inside a frame, order and content then rest on the frame signature alone, where the first
+\textbf{What one link per frame gives up.} In the record-linked format every record carries its own
+\texttt{prev\_hash}; in the frame-linked format only the first record of a frame does, and the rest are
+derived. Inside a frame, order and content then rest on the frame signature alone, where the record-linked
 format has a signature and an independent hash. A frame is signed and accepted as a unit, so no
 strength is lost --- but one mechanism remains where there were two. The decision of July 2026
-had scoped per-frame chaining to the low-rate arm; the lean format extends it to both, and that
+had scoped per-frame chaining to the low-rate arm; the frame-linked format extends it to both, and that
 extension is recorded as a decision, not presented as a neutral encoding choice.
 
 \section{The frame header, which is a range}
@@ -374,7 +374,7 @@ the energy model. It is measured from the implemented wire formats:
 \[
 \Hf = \operatorname{len}(\text{frame}) - \operatorname{len}(\text{records}) - \operatorname{len}(\text{link field}) - \operatorname{len}(\text{signature}),
 \]
-the link term being zero in the first format, where the link lives inside each record.
+the link term being zero in the record-linked format, where the link lives inside each record.
 
 \begin{table}[t]
 \centering
@@ -383,7 +383,7 @@ $\geq 65536$ in five, so the measured header moves with field magnitude.}
 \label{tab:hf}
 \begin{tabular}{rrrr}
 \toprule
-\texttt{src} & \texttt{base\_seq} & first format & lean format \\
+\texttt{src} & \texttt{base\_seq} & record-linked format & frame-linked format \\
 \midrule
 0      & 0       & \textbf{38\,B} & \textbf{17\,B} \\
 24     & 24      & 40\,B & 19\,B \\

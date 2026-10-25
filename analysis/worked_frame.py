@@ -64,7 +64,7 @@ def _stream_rows(stream: bytes, frame: wire_v2.FrameV2) -> list[tuple[bytes, str
     """One row per varint of the record stream: its bytes, the field, the value it carries."""
     rows, pos = [], 0
     for i, rec in enumerate(frame.recs):
-        kind = "keyframe" if i == 0 else "delta"
+        kind = "key record" if i == 0 else "delta record"
         prev = wire_v2._values(frame.recs[i - 1]) if i else None
         for j, name in enumerate(wire_v2.STREAM_FIELDS):
             unsigned = i == 0 and name in wire_v2._UNSIGNED

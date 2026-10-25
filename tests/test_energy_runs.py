@@ -197,17 +197,21 @@ class TestWhatTheDocumentsQuote:
         assert NUMBERS["enCtlPower"] == f"{power:.3f}"
 
     def test_both_tables_carry_the_four_rows_and_say_where_the_lean_ones_come_from(self) -> None:
-        for text in (self.PAPER, self.CODESIGN):
-            for needle in ("first format, every record signed", "lean format, every record signed",
-                           "\\enLeanMeas\\ \\enLeanRange", "\\enLeanOneMeas\\ \\enLeanOneRange",
-                           "\\enCtlMeas"):
+        # the formats were renamed on 2026-10-25 (Mohamed): record-linked, frame-linked
+        rows = {self.PAPER: ("record-linked, every record signed",
+                             "frame-linked, every record signed"),
+                self.CODESIGN: ("record-linked, every record signed",
+                                "frame-linked, every record signed")}
+        for text, names in rows.items():
+            for needle in (*names, "\\enLeanMeas\\ \\enLeanRange",
+                           "\\enLeanOneMeas\\ \\enLeanOneRange", "\\enCtlMeas"):
                 assert needle in text, needle
-        assert "Lean rows: second board and sensor." in self.PAPER
+        assert "Frame-linked rows: second board and sensor." in self.PAPER
         assert "Its rows were metered on a second board and sensor" in self.PAPER
         assert "on the second board through the second sensor" in self.CODESIGN
 
     def test_the_thesis_says_which_is_the_dearer_format_and_what_is_still_unchecked(self) -> None:
-        assert "The lean sender costs \\enLeanOverFirst{} times the energy per record" \
+        assert "The frame-linked sender costs \\enLeanOverFirst{} times the energy per record" \
             in self.CODESIGN
         assert "bounds their difference and not their common error" in self.CODESIGN
         assert "three times that morning" in self.CODESIGN

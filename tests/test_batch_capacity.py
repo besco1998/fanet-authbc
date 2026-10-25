@@ -256,7 +256,9 @@ class TestWhatTheDocumentsQuote:
 
     def test_the_paper_says_they_were_predicted_first_and_what_they_are_not(self) -> None:
         assert "were predicted before they were simulated" in self.PAPER
-        assert "within \\batLineWorst\\% of the rule and \\batModelWorst\\% of the access-rule " \
+        # "the rule" and "the access-rule model" were renamed on 2026-10-25 (Mohamed): the airtime
+        # capacity law and the contention model
+        assert "within \\batLineWorst\\% of the law and \\batModelWorst\\% of the contention " \
                "model" in self.PAPER
         assert "nothing else here is evaluated at them" in self.PAPER
         assert "for batches of one and four records only" not in self.PAPER

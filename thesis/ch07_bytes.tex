@@ -29,7 +29,7 @@ encodings, $64$ hexadecimal characters in JSON. The delta record is $13$\,B of t
 $32$\,B of link, so the link is $71\%$ of what the table calls the record. Counted with the
 signature, authentication material is $96$ of $109$\,B, $88\%$, not $58.7\%$: $\varphi$ as
 defined understates the point it was introduced to make. An external review made this
-observation, and it is what the lean format acts on (\Cref{sec:e6}): the link is carried once
+observation, and it is what the frame-linked format acts on (\Cref{sec:e6}): the link is carried once
 per frame.
 \end{remark}
 
@@ -95,10 +95,10 @@ a rate the constraint does not permit.}
 
 E3 compares one-frame placements with a block that spans frames. It does not exercise the case
 \Cref{thm:t3prime} describes, because in E3 every frame of placement B is assumed to verify alone.
-With delta coding that is true only of a frame that starts with a keyframe.
+With delta coding that is true only of a frame that starts with a key record.
 
-E10 removes the assumption by removing the model: records go through the lean sender, a loss
-process, and the lean receiver, and $V$ is the fraction of generated records that the receiver
+E10 removes the assumption by removing the model: records go through the frame-linked sender, a loss
+process, and the frame-linked receiver, and $V$ is the fraction of generated records that the receiver
 decoded, verified and stored. Thirty seeds of \lossFrames{} frames per cell in all.
 
 \begin{table}[h]
@@ -142,7 +142,7 @@ p(L) = 1 - (1 - p_{\mathrm{ref}})^{(L+o)/(L_{\mathrm{ref}}+o)} ,
 \]
 and a batch, being a longer frame, is lost more often than the one-record frame it replaces.
 E10 has a third loss process for this: the bit error rate is set so that the \emph{one-record}
-frame of the lean format is lost with probability $p$, and each frame is then lost by its own
+frame of the frame-linked format is lost with probability $p$, and each frame is then lost by its own
 length.
 
 On a channel that loses $5\%$ of one-record frames, the design's frame is lost with probability
@@ -194,7 +194,7 @@ grows with the time it spans:
 \toprule
 spacing between records & 50\,ms & 0.1\,s & 1\,s & 5.5\,s & 16.5\,s \\
 \midrule
-lean delta record (B) & \deltaLean & \deltaLeanTenth & \deltaLeanOne & \deltaLeanFar & \deltaLeanSlow \\
+frame-linked delta record (B) & \deltaLean & \deltaLeanTenth & \deltaLeanOne & \deltaLeanFar & \deltaLeanSlow \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -208,19 +208,19 @@ seconds apart, and using the 50\,ms figure there overstated what a frame could c
 (\Cref{sec:perframe}).
 
 \paragraph{Where the chain link sits decides the floor.} \Cref{fig:curve} draws bytes per record
-against batch size for three layouts. With a link in every record, the first format cannot fall
+against batch size for three layouts. With a link in every record, the record-linked format cannot fall
 below its delta record however large the batch: at \curveMaxBatch{} records per frame it still
 costs \bprFirstTwelve\,B each. Moving that link to the frame saves $32\,(1-1/b)$\,B per
 record, \linkMoveSave\,B at $b = 4$, and gives \bprFirstLinkFrame\,B --- less than a
-per-record link reaches at any batch drawn. The lean format's shorter header and record coding
-account for the remaining \leanHeaderSave\,B, to \bprLeanDesign\,B. The two first-format
-curves are sums of measured parts; the lean curve is emitted frames.
+per-record link reaches at any batch drawn. The frame-linked format's shorter header and record coding
+account for the remaining \leanHeaderSave\,B, to \bprLeanDesign\,B. The two record-linked
+curves are sums of measured parts; the frame-linked curve is emitted frames.
 
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.7\textwidth]{fig_bytes_vs_batch.png}
 \caption{Bytes per record against batch size, by where the chain link sits. Records are
-delta-coded in all three and a frame starts with a keyframe, so at $b = 1$ the first-format curves
+delta-coded in all three and a frame starts with a key record, so at $b = 1$ the record-linked curves
 start below row~1 of \Cref{tab:ladder}, whose records are plain CBOR. The dotted line is the
 batch that freshness allows at the adopted operating point.}
 \label{fig:curve}
@@ -240,7 +240,7 @@ carry position at 5\,Hz, so nothing finer than 0.2\,s can be measured from them.
 \label{tab:px4}
 \begin{tabular}{lrrrr}
 \toprule
- & keyframe & delta, 0.2\,s apart & B/record at $b{=}4$ & saving \\
+ & key record & delta, 0.2\,s apart & B/record at $b{=}4$ & saving \\
 \midrule
 twelve flight logs (mean) & \pxKey & \pxDelta & \pxBpr & \pxSave\% \\
 generator & \pxKeyGen & \pxDeltaGen & \pxBprGen & \pxSaveGen\% \\
@@ -262,9 +262,10 @@ before it was flown: a climb, a 150\,m square at a commanded 5\,m/s, the same sq
 12\,m/s, a minute of position hold, a landing.
 
 \begin{center}
+\setlength{\tabcolsep}{4pt}
 \begin{tabular}{lrrrr}
 \toprule
- & records & keyframe (B) & delta (B) & B/record at $b{=}4$ \\
+ & records & key record (B) & delta (B) & B/record at $b{=}4$ \\
 \midrule
 PX4 in simulation, 20\,ms grid & \sitlRecords & \sitlKey & \deltaLean & \sitlBpr \\
 generator, as used throughout & & \keyLean & \deltaLean & \bprLeanDesign \\
@@ -273,7 +274,7 @@ generator, as used throughout & & \keyLean & \deltaLean & \bprLeanDesign \\
 \end{center}
 
 Every one of the delta records is at the format's floor: over 20\,ms nothing in a record changes
-by more than one byte's worth, at \sitlSpeedFast\,m/s as at rest. The keyframe is three bytes
+by more than one byte's worth, at \sitlSpeedFast\,m/s as at rest. The key record is three bytes
 smaller than the generator's, so with real autopilot records the design costs \sitlBpr\,B per
 record, \sitlGenPct\% \emph{less} than the figure this thesis reports. At the operating point
 the generator is slightly pessimistic, where at 0.2\,s it was slightly optimistic.
@@ -305,14 +306,14 @@ per-record signing. The gain is set by the number of frames, not by the size of 
 
 \begin{table}[htbp]\centering
 \caption{Records from \afFlights{} flights of the autopilot's simulator, ten per airframe, at
-$50$~records/s: keyframe and per-airframe delta in bytes, the bytes the design saves, and the
-nodes it serves over per-record signing by the access-rule model.}
+$50$~records/s: key record and per-airframe delta in bytes, the bytes the design saves, and the
+nodes it serves over per-record signing by the contention model.}
 \label{tab:airframes}
 \begin{tabular}{rrrrrrr}
 \toprule
  & & \multicolumn{3}{c}{delta (B)} & & \\
 \cmidrule(lr){3-5}
-fields & keyframe (B) & quadrotor & fixed wing & VTOL & saved & ratio \\
+fields & key record (B) & quadrotor & fixed wing & VTOL & saved & ratio \\
 \midrule
 9 & \afKeyNine & \afDeltaQuadNine & \afDeltaWingNine & \afDeltaVtolNine & \afSaveNine\% & \afRatioNine \\
 15 & \afKeyFifteen & \afDeltaQuadFifteen & \afDeltaWingFifteen & \afDeltaVtolFifteen & \afSaveFifteen\% & \afRatioFifteen \\
@@ -337,6 +338,6 @@ The prediction committed in advance was a mean delta of at most $13$\,B and a sa
 $68\%$, \emph{at 0.1\,s spacing}. The logs turned out to carry position at 5\,Hz, so the
 prediction was applied, unchanged in its numbers, at 0.2\,s --- the stricter reading, since a
 difference over a longer interval is never smaller --- and holds there. The 0.1\,s prediction
-itself is recorded as untested. One predicted range was missed: the keyframe, predicted at
+itself is recorded as untested. One predicted range was missed: the key record, predicted at
 22--25\,B, measures \pxKey\,B, because multicopters fly slowly enough for one-byte velocities.
 \end{remark}

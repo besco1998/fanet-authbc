@@ -33,7 +33,7 @@ Predictions that failed are reported as failed. The main changes are:
 **Response.** The swarm was spread over discs of radius up to 1 km and over a grouped layout. The
 channel has log-distance path loss, Nakagami-3 fading and 4 dB capture (4 230 ns-3 runs).
 
-* **The design keeps its advantage** in every layout: the ratio of the design's capacity to the
+* **AUTHBC keeps its advantage** in every layout: the ratio of AUTHBC's capacity to the
   baseline's lies between 3.46 and 3.58.
 * **At R = 1 km**, 11 % of the nodes able to spoil a frame cannot hear its sender. Capacity
   counted in neighbours falls (8.7 within 215 m), because a receiver contends with every node in
@@ -52,8 +52,8 @@ channel has log-distance path loss, Nakagami-3 fading and 4 dB capture (4 230 ns
 
 *Results:* `spatial_capacity.csv`, `spatial_motion.csv` (F88, F103).
 
-**Changes.** `sec:capacity`: the paragraph "A Spread, Moving Swarm" and Fig. `fig:spread` (nodes
-served and the design's ratio against disc radius, with the share of hidden spoilers under each
+**Changes.** `sec:spread` (Robustness): the paragraph "A Spread, Moving Swarm" and Fig. `fig:spread` (nodes
+served and AUTHBC's ratio against disc radius, with the share of hidden interferers under each
 radius and the moving swarm beside it). `sec:limits`: hidden terminals, spatial reuse and
 relative motion are now simulated, with the channel's caveat.
 
@@ -99,7 +99,7 @@ by 0.001–0.003; no estimate moves.
 *Results:* `verifiability_margin.csv`, `verifiability_margin_trace.csv`, `interval_coverage.csv`
 (F86, F98, F101).
 
-**Changes.** `sec:loss` and Fig. `fig:margin` (the design's V against loss under five loss
+**Changes.** `sec:loss` and Fig. `fig:margin` (AUTHBC's V against loss under five loss
 processes, with the region the rule admits), `sec:limits` (the "no channel trace" limitation is
 removed), Discussion (the rule), Methods (the intervals).
 
@@ -123,7 +123,7 @@ controllers (every threshold is exceeded from the first second), and is not used
 
 *Results:* `adaptive_batching.csv`, `adaptive_batching_b.csv` (F102).
 
-**Changes.** `sec:capacity`: the paragraph "Choosing the Batch at Run Time" and Fig.
+**Changes.** `sec:adaptive` (Robustness): "Choosing the Batch at Run Time" and Fig.
 `fig:adaptive` (the growing swarm, second by second: the batch each policy chooses, V per second
 and the peak age).
 
@@ -142,7 +142,8 @@ any frame stamped more than Δ before its own clock reads, with Δ = 150–250 m
 *Results:* `replay_window.csv`.
 
 **Changes.** `sec:model`: the delaying attacker moves from "not protected" to a protected
-property (v), with its condition, and Table `tab:security` gives its evidence. `sec:limits` is
+property (v), with its condition, and Table `tab:security` gives its evidence; `sec:delay`
+(Security Evaluation) reports the window's measurements. `sec:limits` is
 updated.
 
 ## Comment 6 — "The security argument is informal."
@@ -170,7 +171,7 @@ three-model caveat in the same sentence.
 | frame | cost |
 |---|---|
 | forged (a real sender, a newer sequence number, a well-formed signature by another key) | 1.08 ms in the Python receiver |
-| outsider's frame, refused by an 8-byte group tag | 22.5 µs |
+| outsider's frame, refused by an 8-byte group MAC | 22.5 µs |
 
 In a UDP flood against one receiver core carrying 41 senders:
 
@@ -187,8 +188,8 @@ both conclusions held.
 
 *Results:* `flood_cost.authbc-pi4b.csv`, `flood_udp.authbc-pi4b.csv` (F109).
 
-**Changes.** `sec:model` (the tag in the threat model, and Table `tab:security`),
-`sec:capacity` (the paragraph "Flooding" and Fig. `fig:flood`: honest delivery against the
+**Changes.** `sec:model` (the group MAC in the threat model, and Table `tab:security`),
+`sec:flooding` (Security Evaluation, with Fig. `fig:flood`: honest delivery against the
 forged-frame rate for each defence and attacker), `sec:limits` (insiders). The figure also shows
 that a per-sender cap holds one forging sender at V ≥ 0.96 up to the rate one channel carries.
 
@@ -211,9 +212,9 @@ limit.
 
 | sender | µJ per record (4 records a frame) |
 |---|---|
-| compiled lean format | **17.1** |
-| first format | 58.4 |
-| Python lean format | 155.4 |
+| frame-linked format, Rust | **17.1** |
+| record-linked format | 58.4 |
+| frame-linked format, Python | 155.4 |
 
 The reversed order in the prototype was the interpreter's. Our registered energy ranges missed
 low: compiled code draws 0.65 W of added power, against the 0.75 W measured for Python. The
@@ -223,7 +224,7 @@ leaves the comparisons unchanged.
 *Results:* `compiled_receiver.authbc-pi4b.csv`, `energy_runs_2026-10-22.csv` (F108, F112).
 
 **Changes.** Receiver CPU paragraph ("three cores" becomes the prototype's) and Table
-`tab:receiver` (interpreted, compiled, batched and lazy receivers, timed in one session), Table
+`tab:receiver` (Python, Rust, batched and deferred receivers, timed in one session), Table
 `tab:energy` (two compiled rows), and the energy paragraph.
 
 ## Comment 9 — "The 9-field telemetry is synthetic."
@@ -234,11 +235,11 @@ wing and a VTOL. Ten fixed-wing and ten VTOL missions were flown a second time a
 
 * At 50 Hz each field costs one byte per delta on every airframe.
 * At the planned speeds, fixed-wing records cost the quadrotor's plus 0.2 B.
-* With 25 fields the design still saves 63.3 % of the bytes and serves 3.04 times the nodes
+* With 25 fields AUTHBC still saves 63.3 % of the bytes and serves 3.04 times the nodes
   (9 fields: 70 % and 3.5×). The advantage stays above 2× until a record's delta reaches
   159–282 B.
 
-**Misses:** our registered keyframe (about 60 B) and fixed-wing delta (10–13 B) missed; they are
+**Misses:** our registered key record (about 60 B) and fixed-wing delta (10–13 B) missed; they are
 45 B and 9.2 B.
 
 **Limitations of the simulator, disclosed with measured effects:**
@@ -251,7 +252,7 @@ wing and a VTOL. Ten fixed-wing and ten VTOL missions were flown a second time a
 *Results:* `record_size.csv`, `record_size_fast.csv`, `a9_fast_speeds.csv` (F105, F107, F111).
 
 **Changes.** `sec:px4`: one paragraph on richer records and airframes, and Table
-`tab:airframes` (keyframe and per-airframe delta at 9, 15 and 25 fields, the saving and the
+`tab:airframes` (key record and per-airframe delta at 9, 15 and 25 fields, the saving and the
 ratio). `sec:limits`: the simulator's limits.
 
 ## Comment 10 — "The stream-signing comparators are only sized on paper."
@@ -278,22 +279,22 @@ bound" and the limitation "none is implemented" are removed.
 ## Comment 11 — "Only one physical layer."
 
 **Response.** The capacity crossings were simulated on six 802.11 physical layers: 802.11a at 6,
-12 and 24 Mb/s, and 802.11p (10 MHz) at 3, 6 and 12 Mb/s (2 520 runs). The design's capacity is
+12 and 24 Mb/s, and 802.11p (10 MHz) at 3, 6 and 12 Mb/s (2 520 runs). AUTHBC's capacity is
 3.39–3.80 times the baseline's, rising slightly with the rate; the plan's estimate was 1.7–4.3.
-Our access-rule model is within 1.5 % at every rate but the fastest of each channel width,
+Our contention model is within 1.5 % at every rate but the fastest of each channel width,
 where it is 2.9–4.6 % optimistic. **5G NR sidelink is stated as future work.**
 
 *Results:* `phy_links.csv` (F104).
 
-**Changes.** `sec:capacity`: the paragraph "Other PHY Rates" and Table `tab:phy` (each PHY and
+**Changes.** `sec:phy` (Robustness) and Table `tab:phy` (each PHY and
 rate: frame airtime, both capacities, the ratio and the model's error). Conclusion: the NR
 sidelink as future work.
 
 ## Comment 12 — "The receiver is CPU-bound; is there a cheaper verification path?"
 
-**Response.** Lazy verification, with two tiers:
+**Response.** Deferred batch verification, with two tiers:
 
-* records are usable at once, after the group tag and decoding (10.2 µs per frame);
+* records are usable at once, after the group MAC and decoding (10.2 µs per frame);
 * signatures are verified in batches of 64 before records enter the ledger (117.2 µs per frame).
 
 One Raspberry Pi 4 core then serves 628 neighbours. A record becomes signed evidence within
@@ -303,7 +304,7 @@ inject records that are acted on and only later purged.
 
 *Results:* `compiled_receiver.authbc-pi4b.csv` (F108).
 
-**Changes.** Receiver CPU paragraph (the two tiers and their trade-off) and the lazy row of Table
+**Changes.** `sec:cpu` (the two tiers and their trade-off) and the deferred row of Table
 `tab:receiver`.
 
 ## Comment 13 — "There is no post-quantum path."
@@ -321,7 +322,7 @@ matters the same. ML-DSA's 2 420 B signature still does not fit.
 
 *Results:* `pq_capacity.csv`, `pq_speed_sig.authbc-pi4b.csv` (F110).
 
-**Changes.** `sec:capacity`: the paragraph "A Post-Quantum Signature" and the Falcon-512 row of
+**Changes.** `sec:phy` (Robustness) and the Falcon-512 row of
 Table `tab:phy`. `sec:limits` ("Post-Quantum Signatures"), Conclusion.
 
 ## Comment 14 — "The blockchain framing is not supported."

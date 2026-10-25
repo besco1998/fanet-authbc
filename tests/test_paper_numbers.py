@@ -142,9 +142,11 @@ class TestWhatTheReviewFoundIsNotInTheText:
         assert len(words) <= 200, len(words)
 
     def test_authbc_is_defined_where_it_is_first_used_in_the_body(self) -> None:
+        """The expansion changed on 2026-10-25 (Mohamed, review item T5): it now spells out the
+        letters; it was "authenticated telemetry for a blockchain-style, hash-chained ledger"."""
         intro = _section("Introduction")
         first = intro.index("AUTHBC")
-        assert "hash-chained ledger" in intro[first:first + 160]
+        assert "AUTHenticated telemetry for BlockChain-style ledgers" in intro[first:first + 160]
 
 
 class TestWhatTheReviewAskedForIsInTheText:
@@ -159,9 +161,11 @@ class TestWhatTheReviewAskedForIsInTheText:
         for needle in ("Adversary", "What is protected", "What is not", "Replay", "Equivocation"):
             assert needle.lower() in model, needle
 
-    def test_the_exclusion_is_the_first_result(self) -> None:
-        """The review asked for it first; an earlier rewrite of this paper put it after 802.11."""
-        assert BODY.index("\\section{Low-Rate Links") < BODY.index("\\section{Results on 802.11}")
+    def test_the_exclusion_is_the_first_result_of_the_abstract(self) -> None:
+        """The review of 2026-10 asked for the exclusion first. On 2026-10-25 Mohamed moved the
+        low-rate section after the 802.11 results (review item L5), so the main result comes first
+        in the body; the abstract still names the exclusion first."""
+        assert BODY.index("\\section{Results on 802.11}") < BODY.index("\\section{Low-Rate Links")
         abstract = BODY[BODY.index("\\begin{abstract}"):BODY.index("\\end{abstract}")]
         assert abstract.index("\\exclCount") < abstract.index("\\nmaxLeanDesign")
 
@@ -239,8 +243,9 @@ class TestWhatTheReviewAskedForIsInTheText:
                   if r["op"] == "adopted" and r["scheme"] == "ed25519"}
         start = BODY.index("\\label{tab:ladder}")
         table = BODY[start:BODY.index("\\end{table*}", start)]
-        first_header = table[table.index("First format"):table.index("\\\\", table.index(
-            "First format"))]
+        # "first format" was renamed "record-linked format" on 2026-10-25 (Mohamed)
+        first_header = table[table.index("Record-linked format"):table.index("\\\\", table.index(
+            "Record-linked format"))]
         assert "$^\\dagger$" in first_header
         assert all(ladder["first", r] != "emitted frames"
                    for r in ("inline-1", "inline-b", "batch-cbor", "batch-delta"))

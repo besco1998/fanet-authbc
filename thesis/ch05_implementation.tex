@@ -61,8 +61,8 @@ the telemetry generator.}
 
 \begin{description}
 \item[\texttt{encodings/}] The $e$ axis: JSON, canonical CBOR (RFC 8949, Section~4.2), MessagePack, and
-delta-CBOR with keyframes every $K = 16$. Delta encoders are \emph{stateful}; a fresh instance per
-record emits all keyframes and silently inflates sizes --- a trap that cost real time.
+delta-CBOR with key records every $K = 16$. Delta encoders are \emph{stateful}; a fresh instance per
+record emits all key records and silently inflates sizes --- a trap that cost real time.
 
 \item[\texttt{crypto/}] The $\sigma$ axis: Ed25519 and ECDSA-P256 (both $64$\,B), BLS12-381
 ($96$\,B). Known-answer tests from RFC 8032, NIST CAVP and the IETF BLS draft are vendored and must
@@ -74,9 +74,9 @@ chain, persistence, and verification with replay and equivocation detection.
 \item[\texttt{placement/}] The placement axis. \texttt{wire.py} is the first frame format and the
 one place that decides \emph{what bytes a signature covers} --- the audit boundary; it is frozen.
 \texttt{framer.py} holds its header constant and the batch bounds. \texttt{wire\_v2.py} is the
-lean format of \Cref{sec:formats}: integer keys, one chain link per frame, a variable-length
-record stream, and the same signed bytes as the first format. \texttt{session\_v2.py} is the
-protocol around it --- a sender that emits one self-contained frame per reference interval, and a
+frame-linked format of \Cref{sec:formats}: integer keys, one chain link per frame, a variable-length
+record stream, and the same signed bytes as the record-linked format. \texttt{session\_v2.py} is the
+protocol around it --- a sender that emits one self-contained frame per key-record interval, and a
 receiver that decodes, verifies, stores and reports what it did with each frame (accepted,
 desynchronised, malformed, unknown sender, bad signature, replay, equivocation, tampered).
 
@@ -109,7 +109,7 @@ configuration. The telemetry generator of \Cref{sec:telemetry} and the timing ru
 \text{Frame} := \{v, t, \texttt{src}, \texttt{base\_seq}, n, \texttt{recs}[\,], \texttt{auth}\}
 \]
 in canonical CBOR, with the authentication block shaped by placement. The signature input is the
-canonical bytes of the covered region, and test vectors are frozen. The lean format keeps that
+canonical bytes of the covered region, and test vectors are frozen. The frame-linked format keeps that
 signature input and changes only how the records travel; its field table is \Cref{tab:fields}.
 
 \subsection{One frame, byte by byte}\label{sec:worked}
@@ -122,7 +122,7 @@ typed.
 \begingroup
 \renewcommand{\arraystretch}{0.92}
 \input{tab_worked_frame}
-\captionof{table}[A lean frame of two records, byte by byte]{A lean frame of two records, byte
+\captionof{table}[A frame-linked frame of two records, byte by byte]{A frame-linked frame of two records, byte
 by byte. The link and the signature are abbreviated to their first six and last two bytes.}
 \label{tab:worked}
 \endgroup
@@ -130,7 +130,7 @@ by byte. The link and the signature are abbreviated to their first six and last 
 Reading it against \Cref{tab:fields}: the map header, the five scalar fields and the two
 three-byte prefixes of the record stream and the signature are the $23$\,B header; the link and
 its prefix are $35$\,B; the signature is $64$\,B. The first record carries absolute values and
-takes $25$\,B here --- five bytes each for latitude and longitude, which is where a keyframe's
+takes $25$\,B here --- five bytes each for latitude and longitude, which is where a key record's
 size goes --- and the second carries nine differences in nine bytes. A third and a fourth record
 would add nine bytes each, which is the whole of the design's saving: $23 + 35 + 64 = 122$\,B
 of the frame are paid once however many records follow.
@@ -142,7 +142,7 @@ is nine integers, and the count $n$ says how many records there are.
 \section{Sender and receiver}\label{sec:protocol}
 
 The sender takes its own records in order, $b$ at a time, and emits one frame per batch. One
-frame in every $r$ starts with a keyframe and decodes alone; with $r > 1$ the others start with
+frame in every $r$ starts with a key record and decodes alone; with $r > 1$ the others start with
 a delta against the last record of the frame before. The design uses $r = 1$.
 
 The receiver does five things to a frame, in an order that matters. It reads the sender
@@ -185,10 +185,10 @@ A forged frame that names a real sender and a newer sequence number costs a rece
 rebuild and a verification, as much as an honest one. Three steps can stand in front of the
 receiver, each cheaper than the next and each optional:
 \begin{description}
-\item[A group tag.] An $8$\,B truncated HMAC-SHA256 under a key every member of the swarm holds,
+\item[A group MAC.] An $8$\,B truncated HMAC-SHA256 under a key every member of the swarm holds,
       wrapped around the frame. An outsider's frame is refused at the cost of one HMAC. The
       frame format does not change; the tag is an envelope around it.
-\item[Cheap checks.] The frame's length lies in the range a lean frame can have, its map parses
+\item[Cheap checks.] The frame's length lies in the range a frame-linked frame can have, its map parses
       with the expected keys, it names a known sender, and its sequence number is newer than the
       last accepted and not too far ahead --- all before any record is rebuilt.
 \item[A per-sender rate cap.] A token bucket at the sender's own frame rate with some slack, so
@@ -200,12 +200,12 @@ timestamp before the signature is checked. \Cref{sec:flooding} measures what eac
 \section{A compiled codec}\label{sec:compiled}
 
 The prototype is interpreted, and its receiver serves too few nodes per core for the channel to
-bind (\Cref{ch:codesign}). The lean frame was therefore written a second time, in Rust: encode,
+bind (\Cref{ch:codesign}). The frame-linked frame was therefore written a second time, in Rust: encode,
 decode, rebuild and verify, with Ed25519 from the \texttt{ed25519-dalek} crate and its batch
 verification. On \rustIdFrames{} frames the compiled encoder emits the same bytes as the
 interpreted one, and each verifies the other's frames.
 
-The compiled receiver has a second, lazy path. A first tier checks the group tag and decodes and
+The compiled receiver has a second, deferred path. A first tier checks the group MAC and decodes and
 rebuilds the records, which are then usable at once; a second tier verifies their signatures in
 batches of $64$ before the records enter the ledger. Records are acted on before they are
 evidence, and the window between the two is a stated cost: a member holding the group key could

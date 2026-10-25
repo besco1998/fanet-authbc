@@ -12,6 +12,45 @@ where the durable record lives. If you want the conclusion only, follow the poin
 
 ---
 
+# 2026-10-25 — readability: names, figures at print size, a copy-edited paper
+
+Mohamed:
+* remove Appendix B;
+* Fig. 4 is hard to read;
+* use scientific, readable names ("I don't know what the first and lean formats are");
+* review every page and give options;
+* then do all the recommendations except L2 and L3, in the thesis as well, with the same names in
+  every graph and table.
+
+1. **Names.**
+   * "first format" → **record-linked format**; "lean format" → **frame-linked format**. The
+     names say where the chain link travels, which is what moves the bytes (Fig. 3).
+   * "keyframe" → **key record**: "frame" already means the radio frame.
+   * The configuration is **AUTHBC**; the baseline is **per-record signing**.
+   * Smaller terms are in `docs/DECISIONS.md`.
+   * Code identifiers and data columns keep `lean`/`first`, so no artifact changes.
+2. **Figures at print size.** Most were drawn 4.4–7.2 in wide and shrunk into a 3.5 in column, so
+   their 8 pt text printed at 4–6 pt. All are now drawn at 3.5 in.
+   * The exclusion figure's axis said "payload N" where the paper's payload is M.
+   * Fig. 6 drew AUTHBC green where every other figure draws it blue.
+   * Fig. 4 became a grouped dot plot with a colour-blind-safe palette.
+   * Lesson: chaining `ruff && redraw` silently skipped the redraw twice when lint failed. I
+     caught it only by looking at the images.
+3. **The copy-edit** was assembled from a prose template plus the float blocks extracted from the
+   file, so no number macro could be retyped into a wrong cell. Section VIII was split into
+   Results, Robustness and Security Evaluation; the capacity derivation moved to Appendix B; the
+   peak-age remark became a footnote; the paper gained a notation table and the sentence that
+   explains "registered".
+4. **Two of my recommendations reversed earlier decisions of Mohamed's**, and the review did not
+   say so:
+   * T5, the expansion of AUTHBC (2026-10-08);
+   * L5, the exclusion as the first result.
+
+   The tests that encode them failed and showed it. Both are applied, as instructed; both were put
+   to him, and the tests now record the new decisions.
+5. **One recommended term was wrong:** "analytical contention model". The model is an event
+   simulation, so the paper says "contention model".
+
 # 2026-10-24 — the revision written into Mohamed's 2026-10-12 paper
 
 Mohamed: "edit the latest uncommitted main.tex"; hardware items not to be stated, not even as

@@ -293,5 +293,5 @@ class TestTheClosedFormIsQuotedFromTheGeneratedNumbers:
                                   (REPO / "paper" / "numbers.tex").read_text(encoding="utf-8")))
         assert (numbers["closedWorst"], numbers["closedMean"]) == ("5.5", "2.3")
         assert "with the detection term and nothing fitted, solving it for 5\\% gives the " \
-               "\\modelCells{} crossings within \\closedWorst\\% (mean \\closedMean\\%)" in paper
+               "\\modelCells{} capacities within \\closedWorst\\% (mean \\closedMean\\%)" in paper
         assert "$\\rho\\,[1-(1-1/W)^{\\rho/(1-\\rho)}]$" in paper

@@ -13,7 +13,7 @@ telemetry either: they are the hash that links the record to its predecessor. Th
 $13$\,B.
 
 Those are the sizes of the first frame format this work built, in which every record carries its
-own chain link, and they are where the argument starts. The lean format of \Cref{ch:sysmodel}
+own chain link, and they are where the argument starts. The frame-linked format of \Cref{ch:sysmodel}
 carries the link once per frame and codes the same record in \keyLean\,B standing alone and
 \deltaLean\,B as a difference from its predecessor; the results of this thesis are stated for
 both formats, and the inequality holds in each.
@@ -126,13 +126,13 @@ stated it wrongly.
 
 \item \textbf{A formal model and two defences.} The protocol's properties are proven in the
       Tamarin prover, in three models; a window on GNSS time refuses frames an attacker holds
-      back; and an $8$\,B group tag stops a flood from outside the swarm, while a flood from a
+      back; and an $8$\,B group MAC stops a flood from outside the swarm, while a flood from a
       member is shown not to be stopped (\Cref{ch:sysmodel,ch:codesign}).
 
 \item \textbf{The prototype's anomalies traced to the interpreter.} Receiver and sender
       rewritten in a compiled language, byte-identical on \rustIdFrames{} frames: one core of the
       board then serves \rxRustNodes{} nodes, so the channel binds again, and the design's
-      sender spends \enRustMeas\,\si{\micro\joule} per record against the first format's
+      sender spends \enRustMeas\,\si{\micro\joule} per record against the record-linked format's
       \enDesignMeas{} (\Cref{ch:implementation,ch:codesign}).
 
 \item \textbf{An ablation that narrows our own claim}, showing that in the byte model only
