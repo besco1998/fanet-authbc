@@ -14,7 +14,7 @@ it was and are kept only so the change is visible.*
 | 1 | **Affiliation** | **Done 2026-10-25:** Dept. of Communication Engineering, Military Technical College, Cairo, Egypt, for all four authors. |
 | 2 | **ORCID** | Required by Elsevier and MDPI, optional for IEEE. Register at orcid.org if you do not have one. |
 | 3 | **Funding statement** | If the work was funded, every venue requires the grant number. If unfunded, say so explicitly — silence is not accepted. |
-| 4 | **Supervisor / co-authors** | **Changed 2026-10-25: four authors** — Mohamed A. Farouk, Mahmoud abdelaziz, Ahmed F. Darwesh, Ashraf D. Elbayoumy (as Mohamed gave them). The 2026-10-08 decision (single author, the supervisor thanked) is superseded; the paper has no acknowledgement section. |
+| 4 | **Supervisor / co-authors** | **Changed 2026-10-25: four authors** — Mohamed A. Farouk, Mahmoud Abdelaziz, Ahmed F. Darwesh, Ashraf D. Elbayoumy (as Mohamed gave them). The 2026-10-08 decision (single author, the supervisor thanked) is superseded; the paper has no acknowledgement section. |
 | 5 | **Two citations** | **Both settled** (2026-10-07 and 2026-10-08): one read and cited, one read and not needed. See below. |
 
 ### The two citations that had been open

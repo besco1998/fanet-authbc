@@ -195,7 +195,7 @@ short paper.*
 | **The registration table the reply promises** | In the paper's appendix, not a supplement | About half a page |
 | **A figure or table for every reviewer point** | Yes, in the paper | The paper grows from 15 pages |
 | **The thesis** | Each revision result goes into the chapter it belongs to | More edits than one new chapter |
-| **Authors (2026-10-25)** | Mohamed A. Farouk, Mahmoud abdelaziz, Ahmed F. Darwesh, Ashraf D. Elbayoumy, all Dept. of Communication Engineering, Military Technical College, Cairo | ORCID iDs and a funding statement are still to be supplied |
+| **Authors (2026-10-25)** | Mohamed A. Farouk, Mahmoud Abdelaziz, Ahmed F. Darwesh, Ashraf D. Elbayoumy, all Dept. of Communication Engineering, Military Technical College, Cairo | ORCID iDs and a funding statement are still to be supplied |
 
 > **Open items live in [`OPEN_ITEMS.md`](OPEN_ITEMS.md)** — the single tracked list of
 > everything assumed, deferred, unvalidated or accepted-as-a-limitation. Decisions live here.
