@@ -165,7 +165,7 @@ chose; the cost of each choice is stated beside it, as for every decision in thi
 | **One chain link per frame on 802.11 as well as LoRa** (was `OPEN_ITEMS` G5) | **Yes.** The lean format carries one link per frame on both arms | Inside a frame, order rests on the frame signature alone. The stored ledger is unchanged: the receiver rebuilds every record's link and the signature covers it. The 2026-07-28 decision still governs the first format |
 | **What "AUTHBC" stands for** (G1) | *"authenticated telemetry for a blockchain-style, hash-chained ledger"* stays | "blockchain-style" appears once; there is no consensus layer and the text says so |
 | **Paper title** (G1b) | *"AUTHBC: Feasibility Boundaries for Authenticated UAV Telemetry — An Exclusion Bound and a Capacity Envelope"* stays | The design-first alternative is dropped |
-| **Authors** | Mohamed alone; the supervisor is thanked | ⚠️ The acknowledgement carries a placeholder for the name. Affiliation, ORCID and a funding statement are still his to supply |
+| **Authors** | ~~Mohamed alone; the supervisor is thanked~~ — **superseded 2026-10-25: four authors** (below) | ⚠️ The acknowledgement carries a placeholder for the name. Affiliation, ORCID and a funding statement are still his to supply |
 | **Venue (R17)** | A networking journal without page charges, **after** contention has been measured on radios | Submission now waits on hardware he has yet to find. The class changes from `conference` at that point; the exact journal is chosen then |
 | **The analysis of the review (R18)** | **Stays private.** This repository refers to the review and never quotes it | — |
 | **Sending the response to the supervisor** | After the bench session | The response will then report the bench results as well |
@@ -195,6 +195,7 @@ short paper.*
 | **The registration table the reply promises** | In the paper's appendix, not a supplement | About half a page |
 | **A figure or table for every reviewer point** | Yes, in the paper | The paper grows from 15 pages |
 | **The thesis** | Each revision result goes into the chapter it belongs to | More edits than one new chapter |
+| **Authors (2026-10-25)** | Mohamed A. Farouk, Mahmoud abdelaziz, Ahmed F. Darwesh, Ashraf D. Elbayoumy, all Dept. of Communication Engineering, Military Technical College, Cairo | ORCID iDs and a funding statement are still to be supplied |
 
 > **Open items live in [`OPEN_ITEMS.md`](OPEN_ITEMS.md)** — the single tracked list of
 > everything assumed, deferred, unvalidated or accepted-as-a-limitation. Decisions live here.

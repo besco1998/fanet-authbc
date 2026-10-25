@@ -14,6 +14,11 @@
 % A run-in label: Title Case and a colon, as in farouk2026encoding. One macro, so that the form
 % can be changed in one place.
 \newcommand{\runin}[1]{\textit{#1:}}
+% Starts a new, centred row of authors (IEEEtran places three to a row).
+\makeatletter
+\newcommand{\linebreakand}{\end{@IEEEauthorhalign}\hfill\mbox{}\par
+  \mbox{}\hfill\begin{@IEEEauthorhalign}}
+\makeatother
 % Every measured or derived number in this paper is a macro defined in numbers.tex, which
 % analysis/paper_numbers.py writes from the artifacts in results/raw/. Do not type results here.
 \input{numbers}
@@ -23,12 +28,31 @@
 \title{AUTHBC: Feasibility Boundaries for Authenticated UAV Telemetry ---
 An Exclusion Bound and a Capacity Envelope}
 
-% !! SUBMISSION BLOCKER: affiliation and ORCID are placeholders. See
-% paper/SUBMISSION_CHECKLIST.md.
+% Authors as given by Mohamed A. Farouk, 2026-10-25. ORCID iDs are not given.
 \author{\IEEEauthorblockN{Mohamed A. Farouk}
-\IEEEauthorblockA{\textit{[AFFILIATION -- TO BE COMPLETED]}\\
-\textit{[Department, Institution, City, Country]}\\
-mohamed.besco1998@gmail.com}}
+\IEEEauthorblockA{\textit{Dept. of Communication Engineering}\\
+\textit{Military Technical College}\\
+Cairo, Egypt\\
+farouk.m.ashraf@gmail.com}
+\and
+\IEEEauthorblockN{Mahmoud abdelaziz}
+\IEEEauthorblockA{\textit{Dept. of Communication Engineering}\\
+\textit{Military Technical College}\\
+Cairo, Egypt\\
+mkaremm@ieee.org}
+\linebreakand
+\IEEEauthorblockN{Ahmed F. Darwesh}
+\IEEEauthorblockA{\textit{Dept. of Communication Engineering}\\
+\textit{Military Technical College}\\
+Cairo, Egypt\\
+ahmed.darwesh@alumni.ucalgary.ca}
+\and
+\IEEEauthorblockN{Ashraf D. Elbayoumy}
+\IEEEauthorblockA{\textit{Dept. of Communication Engineering}\\
+\textit{Military Technical College}\\
+Cairo, Egypt\\
+adiaa@mtc.edu.eg}
+}
 
 \maketitle
 
