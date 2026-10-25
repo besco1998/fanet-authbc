@@ -14,8 +14,7 @@
 
 We thank the reviewers for their careful reading. The revision adds fifteen experiments. Each
 was registered, with its expected outcome and pass criterion, in a tagged commit before it ran.
-Predictions that failed are reported as failed, and a new appendix table (`tab:prereg`) lists
-every registered prediction with its outcome and whether it held. The main changes are:
+Predictions that failed are reported as failed. The main changes are:
 
 1. the capacity result is re-established for a spread, mobile swarm with fading, capture and
    hidden terminals;

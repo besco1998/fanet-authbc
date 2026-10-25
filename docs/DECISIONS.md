@@ -192,7 +192,7 @@ short paper.*
 | **A14 and the hardware items B1–B5** | Not stated in the paper or the reply, not even as future work, until the purchases | A reader sees no plan for measured capacity |
 | **5G NR sidelink (A11)** | Future work | One PHY family is simulated, 802.11 only |
 | **Generative-AI statement** | Removed from the paper and the thesis | IEEE, Elsevier and MDPI require a disclosure at submission; that statement is his to make there |
-| **The registration table the reply promises** | In the paper's appendix, not a supplement | About half a page |
+| **The registration table the reply promises** | ~~In the paper's appendix~~ — **removed 2026-10-25**; the reply no longer promises it | The paper does not show its registrations; the thesis's Appendix B does |
 | **A figure or table for every reviewer point** | Yes, in the paper | The paper grows from 15 pages |
 | **The thesis** | Each revision result goes into the chapter it belongs to | More edits than one new chapter |
 | **Authors (2026-10-25)** | Mohamed A. Farouk, Mahmoud Abdelaziz, Ahmed F. Darwesh, Ashraf D. Elbayoumy, all Dept. of Communication Engineering, Military Technical College, Cairo | ORCID iDs and a funding statement are still to be supplied |

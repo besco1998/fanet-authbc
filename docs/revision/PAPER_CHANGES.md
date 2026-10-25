@@ -28,9 +28,9 @@ sentence claims.
 | `tab:phy` | table | 11, 13 | six PHYs and Falcon-512: frame airtime, both capacities, ratio, model error |
 | `tab:airframes` | table | 9 | 9/15/25 fields: keyframe, per-airframe delta, saving, ratio |
 | `tab:links` | table | 15 | records per frame per system at 100/200/300 ms and 1 s, with this design's row |
-| `tab:prereg` | table*, Appendix B | the reply's promise | every registration and its outcome, misses included |
+| ~~`tab:prereg`~~ | removed 2026-10-25 (Mohamed) | — | the registrations stay in `predictions/` and in the thesis's Appendix B |
 
-The paper is 18 pages. Comment 10's table already had its column (`tab:stream`).
+The paper is 17 pages (18 with the registration appendix, removed 2026-10-25). Comment 10's table already had its column (`tab:stream`).
 
 ## Ready (experiment scored)
 

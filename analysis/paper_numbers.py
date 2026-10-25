@@ -1633,26 +1633,6 @@ def phy_table() -> dict[str, str]:
                   "pqGap": signed(worst)}
 
 
-# Registered predictions the appendix quotes with a decimal: each string must appear, as written,
-# in its registration (predictions/<ID>.md), so the table cannot drift from what was registered.
-QUOTED = (("A11.md", "ratios span 1.7–4.3", {"regPhyLo": "1.7", "regPhyHi": "4.3"}),
-          ("A15.md", "ratio near 3.9", {"regPqRatio": "3.9"}),
-          ("A9.md", "ratio at 25 fields within 2.6–3.4", {"regAfLo": "2.6", "regAfHi": "3.4"}),
-          ("A16.md", "about 1.3 GB per hour", {"regAuGb": "1.3"}))
-
-
-def registered() -> dict[str, str]:
-    """Table tab:prereg: the registered bounds it quotes."""
-    out = {}
-    for name, quote, values in QUOTED:
-        if quote not in (REPO / "predictions" / name).read_text(encoding="utf-8"):
-            raise ValueError(f"predictions/{name} no longer says {quote!r}")
-        if not all(v in quote for v in values.values()):
-            raise ValueError(f"a quoted value is not in {quote!r}")
-        out |= values
-    return out
-
-
 def margin_rule() -> dict[str, str]:
     """Fig. fig:margin (A3, F86): where the design, b = 4 and a keyframe in every frame, misses
     the target by its interval although the rule p <= epsilon - 0.02 admits the loss."""
@@ -1700,7 +1680,7 @@ SECTIONS = (frames, ladder, loss, stream, freshness, phy, energy, timings, fligh
             spread_swarm, design_map, loss_trace, adaptive, replay_window, flooding, compiled,
             compiled_energy, airframes, stream_deadline, phy_simulated, post_quantum,
             ledger_audit, other_links, intervals, receiver_costs, airframe_table, phy_table,
-            links_table, registered, margin_rule)
+            links_table, margin_rule)
 
 
 def macros() -> dict[str, str]:

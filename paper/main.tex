@@ -547,9 +547,7 @@ Student-$t$ interval, and an interval of an interpolated crossing an expanded pe
 bootstrap interval~\cite{hesterberg2015bootstrap}: with a known truth and \seeds{} seeds, the
 plain percentile interval covered \covPlainLo--\covPlainHi\% of the time and these
 \covFixedLo--\covFixedHi\%. The saturation models were validated separately
-against saturated ns-3 runs (Sec.~\ref{sec:validation}). The experiments of
-Table~\ref{tab:prereg} were registered before they ran, and are scored as registered,
-misses included (Appendix~\ref{app:prereg}).
+against saturated ns-3 runs (Sec.~\ref{sec:validation}).
 
 The main evaluation uses one collision domain of static nodes; Section~\ref{sec:capacity}
 repeats it for a swarm spread over a wider area, with hidden stations, and moving. Capacities are
@@ -1502,75 +1500,6 @@ recomputed by the receiver and never read from the frame.
 \item \emph{Signed Bytes:} A signature covers the canonical CBOR encoding of the rebuilt
 ledger records, not the record stream.
 \end{itemize}
-
-\section{Registered Predictions}\label{app:prereg}
-Each experiment in Table~\ref{tab:prereg} was registered before it ran: its expected outcome and
-the criterion that scores it were committed first, and the outcome was scored against them as
-written. Italic entries are finer predictions added in the same registration.
-
-\begin{table*}[t]\centering\footnotesize
-\caption{Predictions registered before each experiment ran, and their outcomes; italics: finer
-predictions of the same registration.}
-\label{tab:prereg}
-\setlength{\tabcolsep}{3pt}
-\begin{tabular}{>{\raggedright\arraybackslash}p{80pt} >{\raggedright\arraybackslash}p{205pt}
-                >{\raggedright\arraybackslash}p{205pt}}
-\toprule
-\textbf{Experiment} & \textbf{Registered} & \textbf{Outcome} \\
-\midrule
-Spread swarm (Fig.~\ref{fig:spread}) & design-to-baseline ratio between 3 and 4 in every layout;
-capacity counted in neighbors falls; motion moves $V$ by under 0.01; \emph{at 1\,km, 10 to 40
-neighbors at the crossing} & held, except \emph{the neighbor count}: \spNeighbours \\
-Independent motion & the same with every node moving on its own at up to 15\,m/s & held, except
-\emph{one control layout's baseline, just below its band} \\
-Design map (Fig.~\ref{fig:map}) & ratio above 5 at 100~records/s and 100\,ms; every simulated
-crossing within 5\% of the model; mean peak age within $D_{\max}$ under loss & held; the stated
-cause of the age tail, two lost frames, was wrong: one suffices \\
-Loss margin (Fig.~\ref{fig:margin}) & $\epsilon \geq p + 0.02$ meets the target, interval
-included; a tolerable loss under bit errors; traced loss between independent and bursty & the
-tolerable loss held; the rule's interval failed in 5 of 192 cells of equal frame loss, all bursty; traced loss is
-independent (bursts of \trBurst{} frames), one cell of four just below the band \\
-Batch controller (Fig.~\ref{fig:adaptive}) & about 30\,ms fresher than fixed $b=4$ at low load;
-failure within 5\% of fixed $b=4$'s; the target met while two swarms merge & the merge held;
-fresher by \adLowGain\,ms, not 30; failure at \adRegFail{} nodes, \adFail{} with margin 0.02,
-against \adFixFail \\
-Time window (Table~\ref{tab:security}) & no honest frame refused at clock errors up to 10\,ms;
-every frame held 250\,ms refused; a 250\,ms window outlasts about two hours without GNSS &
-the first two held; the window outlasted \rpHolds\,min, \emph{as we had predicted} \\
-Formal model (Table~\ref{tab:security}) & properties (i)--(iv) proven; (v) shown as an attack,
-then its fix & held across three models, two of them made after registration; the registered
-model settled 3 of its 9 lemmas \\
-Flooding (Fig.~\ref{fig:flood}) & about 700 forged frames/s saturate a core; the tag removes
-outsiders, who need over 100\,000 frames/s per core; a member remains a threat; the tag costs
-about 2\% & outsiders removed and the member's threat held; a core takes \flForgedRate{} forged
-frames/s and \flTagRate{} tagged ones; the tag costs \flTagCostPct\% \\
-Compiled code (Tables~\ref{tab:receiver},~\ref{tab:energy}) & receive within 350\,$\mu$s; at
-least 230 nodes per core; energy per record follows the bytes & held; \emph{our energy ranges
-missed low}: \enRustMeas{} and \enRustOneMeas\,$\mu$J per record \\
-Lazy verification (Table~\ref{tab:receiver}) & over 500 nodes per core; evidence within
-100--200\,ms; \emph{within 170\,ms of sampling} & held, except \emph{170\,ms, by 1\,ms} \\
-Airframes (Table~\ref{tab:airframes}) & 25 fields: delta 20--30\,B, saving 60--70\%, ratio
-\regAfLo--\regAfHi; keyframe 50--70\,B; fixed-wing delta 10--13\,B & delta, saving and ratio
-held; the keyframe (\afKeyTwentyFive\,B) and the fixed-wing delta (\afDeltaWingNine\,B)
-missed \\
-Stream schemes (Table~\ref{tab:stream}) & every capacity inside its earlier interval; schemes
-that cannot verify in time never cross & held; \emph{three of ours missed}: in-time delivery
-equal to delivery for two schemes, and crossings for TESLA with $d=1$ and EMSS with $k=4$ \\
-Other PHYs (Table~\ref{tab:phy}) & ratios spanning \regPhyLo--\regPhyHi, rising with the rate;
-every crossing within 3\% of the model & the rise held; the span is
-\phySimRatioLo--\phySimRatioHi; the model misses 3\% at the fastest rate of each width \\
-Falcon-512 (Table~\ref{tab:phy}) & crossings within 10\% of 12 and 45 nodes; a ratio near
-\regPqRatio, larger than with Ed25519 & the crossings held; the ratio is \pqRatio, as with
-Ed25519 \\
-Ledger audit (Table~\ref{tab:security}) & both planted faults found; about \regAuGb\,GB stored
-per hour for 124 neighbors; \emph{no other finding; 7 to 10 minutes of a core} & detection held,
-no false finding; less is stored, since frames are kept, not records; the audit took
-\auMinutes\,min \\
-Other broadcast systems (Table~\ref{tab:links}) & the accounting gives no reason to batch at
-their rates and deadlines & held \\
-\bottomrule
-\end{tabular}
-\end{table*}
 
 \bibliographystyle{IEEEtran}
 \bibliography{refs}

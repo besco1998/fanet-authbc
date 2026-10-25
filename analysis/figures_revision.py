@@ -60,9 +60,9 @@ MOTION = (("gm-r1000-v0", "0"), ("gm-r1000-v5", "5"), ("gm-r1000-v15", "15"))
 
 # A3: the design (b = 4, one keyframe per frame) under each loss process
 LOSS_MODELS = (("iid", "independent", BLUE, "o"),
-               ("gilbert2", "bursts of 2", "#9e6bb0", "v"),
-               ("gilbert4", "bursts of 4", PURPLE, "D"),
-               ("gilbert8", "bursts of 8", "#40114a", "s"),
+               ("gilbert2", "bursts of 2", ORANGE, "v"),
+               ("gilbert4", "bursts of 4", "#1baf7a", "D"),
+               ("gilbert8", "bursts of 8", PURPLE, "s"),
                ("ber", "bit errors", RED, "^"))
 RULE_MARGIN = 0.02          # the deployment rule: loss budget at least 0.02 above the loss
 
@@ -196,25 +196,35 @@ def margin_points(model: str) -> list[tuple[float, float, float, float]]:
 
 
 def fig_margin() -> None:
-    fig, ax = plt.subplots(figsize=(4.4, 2.8))
-    admitted = 1 - V_TARGET - RULE_MARGIN
-    ax.axvspan(0, admitted + 0.004, color="0.9", linewidth=0)
-    ax.text(0.003, 0.893, "the rule admits\n$p \\leq \\epsilon - 0.02$", fontsize=7, color=MUTED)
+    """Drawn at the column's own width (3.5 in), so 8 pt text prints at 8 pt. The loss rates are
+    evenly spaced categories and the five processes sit side by side in each, unjoined: lines
+    between them crossed and their intervals overlapped (Mohamed, 2026-10-25: hard to read)."""
+    losses = [p for p, *_ in margin_points(LOSS_MODELS[0][0])]
+    fig, ax = plt.subplots(figsize=(3.5, 2.7))
+    admitted = [i for i, p in enumerate(losses) if p <= 1 - V_TARGET - RULE_MARGIN + 1e-9]
+    ax.axvspan(-0.5, admitted[-1] + 0.5, color="0.92", linewidth=0)
+    ax.text(admitted[-1] / 2, 0.892, "the rule admits\nthese losses at $\\epsilon = 0.05$",
+            fontsize=7.5, color=MUTED, ha="center")
     ax.axhline(V_TARGET, color=INK, linestyle="--", linewidth=1)
-    offsets = (-0.0016, -0.0008, 0.0, 0.0008, 0.0016)
-    for (model, label, colour, marker), dx in zip(LOSS_MODELS, offsets, strict=True):
+    ax.text(len(losses) - 0.55, V_TARGET + 0.002, "target", fontsize=7.5, color=INK, ha="right")
+    width = 0.15
+    for k, (model, label, colour, marker) in enumerate(LOSS_MODELS):
         pts = margin_points(model)
-        x = [p + dx for p, *_ in pts]
+        assert [p for p, *_ in pts] == losses, model
+        x = [i + (k - 2) * width for i in range(len(pts))]
         v = [q for _, q, _, _ in pts]
         err = [[q - lo for _, q, lo, _ in pts], [hi - q for _, q, _, hi in pts]]
-        ax.errorbar(x, v, yerr=err, color=colour, marker=marker, markersize=4, linewidth=1,
-                    capsize=1.5, elinewidth=0.7, label=label)
+        ax.errorbar(x, v, yerr=err, color=colour, marker=marker, markersize=4.5, linestyle="none",
+                    capsize=1.8, elinewidth=1.0, label=label)
+    ax.set_xticks(range(len(losses)), [f"{p:g}" for p in losses])
+    ax.set_xlim(-0.5, len(losses) - 0.5)
+    ax.set_ylim(0.885, 1.0)
     ax.set_xlabel("frame loss $p$", fontsize=8)
     ax.set_ylabel("records verified, $V$", fontsize=8)
-    ax.set_xlim(0, 0.088)
-    ax.set_ylim(0.89, 1.0)
-    ax.legend(fontsize=7, frameon=False, loc="upper right")
+    ax.legend(fontsize=7.5, frameon=False, loc="lower center", bbox_to_anchor=(0.5, 1.0),
+              ncol=3, handletextpad=0.3, columnspacing=0.9)
     _tidy(ax)
+    ax.grid(axis="x", visible=False)
     fig.savefig(FIGS / "fig_margin.png", **_SAVE)
     plt.close(fig)
 
