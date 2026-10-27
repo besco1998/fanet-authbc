@@ -165,3 +165,29 @@ def test_no_figure_embeds_the_plotting_library_version():
     names the library version cannot be."""
     tagged = sorted(p.name for p in FIGDIR.glob("*.png") if "Software" in _png_text_keys(p))
     assert not tagged, f"figures that embed the plotting library's version: {tagged}"
+
+
+def _png_width_in(path: Path) -> float:
+    """Printed width of a PNG: its pixel width over the density in its pHYs chunk."""
+    data = path.read_bytes()
+    width = struct.unpack(">I", data[16:20])[0]
+    at = data.index(b"pHYs")
+    per_metre, _, unit = struct.unpack(">IIB", data[at + 4:at + 13])
+    assert unit == 1, f"{path.name} does not state its density in pixels per metre"
+    return width / (per_metre * 0.0254)
+
+
+def test_every_data_figure_the_paper_prints_is_drawn_at_the_paper_width():
+    """⚠️ Added 2026-10-27 (review L-34). The paper sets its figures at 4.5 in, so each is drawn
+    at that width and 9 pt prints at 9 pt. A tight crop had made them 4.13 to 4.47 in wide:
+    scaled up to 4.5 in, their text printed up to 9 % large. The block diagram is drawn
+    separately."""
+    sys.path.insert(0, str(REPO / "analysis"))
+    import figstyle
+
+    data_figures = _figures_cited_by_the_paper() - {"block_diagram.png"}
+    assert data_figures
+    # pHYs holds whole pixels per metre: 200 dpi is stored as 7874, so 900 px read 4.50001 in
+    off = {f: round(_png_width_in(FIGDIR / f), 3) for f in sorted(data_figures)
+           if abs(_png_width_in(FIGDIR / f) - figstyle.WIDTH) > 0.005}
+    assert not off, f"paper figures not drawn at {figstyle.WIDTH} in: {off}"

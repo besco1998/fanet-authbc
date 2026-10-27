@@ -3,7 +3,8 @@
 One figure, `fig_nmax_direct.png`: the lean baseline and the lean design, each with its 30-seed
 mean, the spread of its runs, and the 0.95 line it has to stay above. Everything drawn is read
 from `results/raw/ns3_nmax_direct.csv`; the traffic source is the one the design ladder's config
-names, so the figure and the tables cannot be about different runs.
+names, so the figure and the tables cannot be about different runs. Drawn in the paper's style
+(`figstyle`).
 """
 
 from __future__ import annotations
@@ -14,6 +15,7 @@ from pathlib import Path
 import matplotlib
 
 matplotlib.use("Agg")
+import figstyle  # noqa: E402
 import matplotlib.pyplot as plt  # noqa: E402
 import yaml  # noqa: E402
 from matplotlib.ticker import MaxNLocator  # noqa: E402
@@ -21,7 +23,6 @@ from matplotlib.ticker import MaxNLocator  # noqa: E402
 REPO = Path(__file__).resolve().parents[1]
 RAW = REPO / "results" / "raw"
 FIGS = REPO / "results" / "figures"
-_SAVE = {"dpi": 200, "bbox_inches": "tight", "metadata": {"Software": None}}
 PANELS = (("lean/inline-1", "per-record signing", "#b2182b"),
           ("lean/batch-delta", "AUTHBC, four records per frame", "#2166ac"))
 V_TARGET = 0.95
@@ -32,6 +33,7 @@ def _rows() -> list[dict[str, str]]:
                                if not ln.startswith("#")))
 
 
+@figstyle.paper_figure
 def fig_nmax_direct() -> None:
     cfg = yaml.safe_load((REPO / "experiments" / "design-ladder" / "config.yaml").read_text())
     lam = float(cfg["operating_points"][0][1])
@@ -44,8 +46,7 @@ def fig_nmax_direct() -> None:
                 and float(r["jitter_ms"]) == float(f"{want:g}"))    # as the driver writes it
 
     mine = [r for r in _rows() if designated(r)]
-    # the column's own width (Mohamed, 2026-10-25: figures must read at print size)
-    fig, axes = plt.subplots(1, 2, figsize=(3.5, 2.5), sharey=True)
+    fig, axes = plt.subplots(1, 2, figsize=(figstyle.WIDTH, 3.1), sharey=True)
     for ax, (config, title, colour) in zip(axes, PANELS, strict=True):
         pts = sorted((r for r in mine if r["config"] == config and r["n_nodes"] != "CROSSING"),
                      key=lambda r: int(r["n_nodes"]))
@@ -59,13 +60,12 @@ def fig_nmax_direct() -> None:
         ax.axhline(V_TARGET, color="black", linestyle="--", linewidth=1)
         n_max = int(cross["n_max_mean"])
         ax.axvline(n_max, color=colour, linestyle=":", linewidth=1)
-        ax.set_title(f"{title}\n$N_{{max}}$ = {n_max}", fontsize=7.5)
-        ax.set_xlabel("nodes $N$", fontsize=8)
-        ax.tick_params(labelsize=7.5)
+        ax.set_title(f"{title}\n$N_{{\\max}}$ = {n_max}")      # as the paper sets it
+        ax.set_xlabel("nodes $N$")
         ax.xaxis.set_major_locator(MaxNLocator(integer=True, nbins=4))     # nodes are whole
         ax.grid(alpha=0.3)
-    axes[0].set_ylabel("delivered fraction of frames", fontsize=8)
-    fig.savefig(FIGS / "fig_nmax_direct.png", **_SAVE)
+    axes[0].set_ylabel("delivered fraction of frames")
+    fig.savefig(FIGS / "fig_nmax_direct.png", **figstyle.SAVE)
     plt.close(fig)
 
 

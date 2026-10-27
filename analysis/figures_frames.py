@@ -12,7 +12,7 @@ returns in `design_ladder.csv`, so the figure and the tables cannot be about dif
 
 The three colours were checked for colour-vision deficiency before use (worst pair ΔE 20.8 under
 deuteranopia). Orange has low contrast on white, so every curve is also told apart by its marker
-and by a label at the marked batch.
+and by a label at the marked batch. Both figures are drawn in the paper's style (`figstyle`).
 """
 
 from __future__ import annotations
@@ -32,6 +32,7 @@ sys.path.insert(0, str(REPO / "src"))
 sys.path.insert(0, str(REPO / "ns3"))
 sys.path.insert(0, str(REPO / "analysis"))
 
+import figstyle  # noqa: E402
 import nmax_airtime_line as airtime  # noqa: E402
 
 from authbc.models import bianchi  # noqa: E402
@@ -39,7 +40,6 @@ from authbc.models import bianchi  # noqa: E402
 RAW = REPO / "results" / "raw"
 RATE = 50.0                         # records/s: the adopted operating point
 FIGS = REPO / "results" / "figures"
-_SAVE = {"dpi": 200, "bbox_inches": "tight", "metadata": {"Software": None}}
 # (format, item in frame_components.csv, legend text, colour, marker, where its value is written)
 CURVES = (
     ("first", "self-batch (byte model)", "record-linked format", "#b2182b", "o",
@@ -72,9 +72,12 @@ def _adopted_batch() -> int:
     return int(best["batch"])
 
 
+@figstyle.paper_figure
 def fig_bytes_vs_batch() -> None:
+    """The note on the adopted batch sits at the top of its line, above every curve: between the
+    curves it crowded the values (review L-29)."""
     adopted = _adopted_batch()
-    fig, ax = plt.subplots(figsize=(3.5, 2.6))      # the column's own width: 8 pt prints at 8 pt
+    fig, ax = plt.subplots(figsize=(figstyle.WIDTH, 3.0))
     ax.axvline(adopted, color="0.45", linestyle=":", linewidth=1)
     for fmt, item, label, colour, marker, where in CURVES:
         curve = _curve(fmt, item)
@@ -82,19 +85,18 @@ def fig_bytes_vs_batch() -> None:
         ax.plot(batches, [curve[b] for b in batches], color=colour, marker=marker,
                 markersize=4.5, linewidth=1.5, label=label)
         ax.annotate(_one_decimal(curve[adopted]), (adopted, curve[adopted]),
-                    textcoords="offset points", fontsize=8, color="black", **where)
-    ax.annotate(f"$b$ = {adopted}: the batch\nthe deadline allows", (adopted, 14), xytext=(5, 0),
-                textcoords="offset points", fontsize=7.5, color="0.25", va="center")
-    ax.set_xlabel("records per frame $b$", fontsize=8)
-    ax.set_ylabel("bytes per record", fontsize=8)
-    ax.tick_params(labelsize=8)
+                    textcoords="offset points", fontsize=figstyle.NOTE, color="black", **where)
+    ax.annotate(f"$b$ = {adopted}: the batch the deadline allows", (adopted, 176), xytext=(4, 0),
+                textcoords="offset points", fontsize=figstyle.NOTE, color="0.25", va="top")
+    ax.set_xlabel("records per frame $b$")
+    ax.set_ylabel("bytes per record")
     ax.set_xticks(sorted(_curve(*CURVES[0][:2])))
     ax.set_ylim(0, 180)
     ax.grid(alpha=0.3)
-    ax.legend(fontsize=7.5, frameon=False, loc="upper right")
+    ax.legend(frameon=False, loc="upper right", bbox_to_anchor=(1.0, 0.9))
     for side in ("top", "right"):
         ax.spines[side].set_visible(False)
-    fig.savefig(FIGS / "fig_bytes_vs_batch.png", **_SAVE)
+    fig.savefig(FIGS / "fig_bytes_vs_batch.png", **figstyle.SAVE)
     plt.close(fig)
 
 
@@ -124,10 +126,11 @@ def deadline_ms(batch: int) -> float:
     return 1000.0 * (batch + 1) / RATE
 
 
+@figstyle.paper_figure
 def fig_capacity_vs_deadline() -> None:
     measured, line = simulated_crossings(), line_capacities()
     adopted = _adopted_batch()
-    fig, ax = plt.subplots(figsize=(3.5, 2.7))
+    fig, ax = plt.subplots(figsize=(figstyle.WIDTH, 3.3))
     ax.axvline(adopted, color="0.45", linestyle=":", linewidth=1)
     ax.plot(list(line), list(line.values()), color="0.35", linewidth=1.2,
             label="airtime capacity law (one fitted constant)")
@@ -140,22 +143,21 @@ def fig_capacity_vs_deadline() -> None:
                 label="simulated in ns-3 (95 % interval)")
     for b in batches:
         ax.annotate(_one_decimal(measured[b][0]), (b, measured[b][0]), xytext=(5, -10),
-                    textcoords="offset points", fontsize=7.5, color="black")
+                    textcoords="offset points", fontsize=figstyle.NOTE, color="black")
     ax.annotate("100 ms: AUTHBC", (adopted, 20), xytext=(5, 0), textcoords="offset points",
-                fontsize=7.5, color="0.25", va="center")
+                fontsize=figstyle.NOTE, color="0.25", va="center")
     ticks = [b for b in line if b in (1, 2, 3, 4, 6, 8, 10, 12)]
     ax.set_xticks(ticks)
-    ax.set_xticklabels([f"{b}\n{deadline_ms(b):.0f}" for b in ticks], fontsize=8)
+    ax.set_xticklabels([f"{b}\n{deadline_ms(b):.0f}" for b in ticks])
     ax.set_xlabel("records per frame $b$; below it, the smallest\n"
-                  "deadline that admits it (ms)", fontsize=8)
-    ax.set_ylabel("nodes served at 95 % delivery", fontsize=8)
-    ax.tick_params(labelsize=8)
+                  "deadline that admits it (ms)")
+    ax.set_ylabel("nodes served at 95 % delivery")
     ax.set_ylim(0, 320)
     ax.grid(alpha=0.3)
-    ax.legend(fontsize=7.5, frameon=False, loc="upper left")
+    ax.legend(frameon=False, loc="upper left")
     for side in ("top", "right"):
         ax.spines[side].set_visible(False)
-    fig.savefig(FIGS / "fig_capacity_vs_deadline.png", **_SAVE)
+    fig.savefig(FIGS / "fig_capacity_vs_deadline.png", **figstyle.SAVE)
     plt.close(fig)
 
 
