@@ -205,7 +205,7 @@ short paper.*
 
 | decision | chosen | what it costs, or leaves open |
 |---|---|---|
-| **Format (L-01)** | The Springer Nature template of his earlier Communications Engineering submission: `sn-jnl` with `lineno, pdflatex, sn-mathphys-num`; Introduction / Methods / Results / Discussion / Declarations, appendices; **no cuts until he decides** | 38 pages in this layout. Communications Engineering charges an article processing charge, which conflicts with the 2026-10-08 entry "a networking journal without page charges": his to settle |
+| **Format (L-01)** | The Springer Nature template of his earlier Communications Engineering submission: `sn-jnl` with `lineno, pdflatex, sn-mathphys-num`; Introduction / Methods / Results / Discussion / Declarations, appendices; **no cuts until he decides** | 40 pages in this layout. Communications Engineering charges an article processing charge, which conflicts with the 2026-10-08 entry "a networking journal without page charges": his to settle |
 | **Order (L-02)** | The 802.11 result first everywhere: abstract, contributions, body, conclusion | Supersedes the abstract's exclusion-first order (2026-10-26 entry above) |
 | **Capacity at the margin (S-01)** | New ns-3 runs at 97 % delivery, registered first (`prereg-S01`, 3149f70) | 420 runs; both crossings held their predictions (`predictions/S01.md`) |
 | **Traffic source and the deadline (S-02)** | Argued from existing data: the strictly periodic (send-at-fill) source gives the same mean capacity; a $D_{\max}$ line and a caption note on Fig. 8 | No new runs with a send-at-fill source |

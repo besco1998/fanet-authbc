@@ -243,7 +243,9 @@ domain, which we call a neighborhood of $N$ nodes. Each UAV produces $\Lambda$ t
 per second and broadcasts them, without acknowledgments or retransmissions. The primary
 operating point is $\Lambda = 50$~records/s with a freshness bound $D_{\max} = 100$\,ms. This rate
 is the companion-computer stream rate of PX4~\cite{px4_mavlink_streams}.
-% review S21: text to come
+The pair lies within the 3GPP requirements for direct UAV-to-UAV broadcast: at least
+10 messages per second and an end-to-end latency of at most 100\,ms (TS~22.125, R-5.2.2-010 and
+R-5.2.2-011~\cite{3gpp_ts22125}).
 A relaxed point of 20~records/s and 250\,ms is reported for comparison.
 
 \runin{Telemetry Record} Each record carries nine fields, all fixed-point integers:
@@ -529,7 +531,11 @@ depends on the frame rate and length, not on where in its period a frame is sent
 therefore simulated with the randomized source and freshness is evaluated with send-at-fill
 timing; the ages of the randomized source run half a period longer
 (Section~\ref{sec:adaptive}).
-% review S14: text to come
+Table~\ref{tab:ladder} gives $N_{\max}$ as the largest simulated neighborhood whose
+mean delivery over \seeds{} seeds is at least 0.95, with its bootstrap interval. The figures and
+Tables~\ref{tab:phy} and~\ref{tab:stream} give the crossing of 0.95, interpolated between the two
+simulated sizes around it, from the same runs: \crossDesign{} \crossCiDesign{} for AUTHBC and
+\crossSig{} \crossCiSig{} for per-record signing.
 
 \subsection{Statistical analysis}\label{sec:stats}
 A run lasts 20\,s, and each point comprises \seeds{} runs. $N_{\max}$ is the largest simulated $N$
@@ -822,7 +828,8 @@ We call Eq.~\eqref{eq:line} the airtime capacity law; it is the capacity envelop
 It was fitted to six rows of Table~\ref{tab:ladder} (1, 2, 4, 5, 6 and 8), which it then
 reproduces within \lineFitWorst\%. Twelve further configurations were predicted from the law
 before they were simulated. Seven of our own all lie within \lineWorst\% of it.
-% review S28: text to come
+The other five, the one-record frames of the stream-signing schemes in
+Table~\ref{tab:stream}, lie \lineStreamLeast--\lineStreamWorst\% above the law's prediction.
 A single utilization ceiling, measured at one point and applied to all, misses the first thirteen
 (six fitted, seven predicted) by up to \lineCeilWorst\%, in both directions.
 Equation~\eqref{eq:line} is a fit at one loss level and one PHY rate, checked for frames of
@@ -890,19 +897,22 @@ Decoding, not cryptography, limits the full Python receiver. A four-record frame
 serves \ncpuProto{} nodes and the processor binds before the channel. Run as one receiver process
 per core, one to four at once, the board serves \mcNodesOne, \mcNodesTwo, \mcNodesThree{} and
 \mcNodesFour{} nodes.
-% review S23: text to come
-That is less than we had written down beforehand, so \nmaxLeanDesign{} nodes need three of them.
+Four cores receive \mcScaleFour{} times the frames of one, less than we had written down
+beforehand, so \nmaxLeanDesign{} nodes need three of them.
 In Rust, the same receive path is \rxSpeedup{} times faster, and the channel binds again
 (Table~\ref{tab:receiver}). A receiver can also use records as soon as their group MAC and frame
 are checked, and verify their signatures in batches before they enter the ledger. This deferred
 batch verification serves \rxLazyNodes{} nodes per core. A record is then evidence within
 \rxEvidenceMs\,ms by the convention of Eq.~\eqref{eq:fresh}; within that window, a member holding
 the group key could have records acted on that are later purged.
-% review S10: text to come
+The Python receiver was timed in three sessions on the same board, at
+\pyRecvLo--\pyRecvHi\,ms per frame (within \pyRecvSpreadPct\%); each table and paragraph quotes
+the session it reports, and Section~\ref{sec:flooding} adds the admission layer.
 
 \begin{table}[t]\centering
-\caption{Time to receive a four-record frame on one Raspberry~Pi~4 core, and the nodes one
-core serves. All four receivers were timed in one session.}
+\caption{Time to receive a four-record frame on one Raspberry~Pi~4 core, and the nodes
+one core serves, $1/((\Lambda/b)\,t)$ for a receive time $t$. All four receivers were timed in
+one session.}
 \label{tab:receiver}
 \setlength{\tabcolsep}{4pt}
 \begin{tabular}{l r r}
@@ -1004,14 +1014,23 @@ sensing range. We placed the nodes in discs of radius 100\,m to 1\,km, with log-
 loss, Nakagami fading and the same capture rule, and also in a grouped and a moving layout.
 Across the spread and moving layouts, the capacity ratio of AUTHBC to per-record signing stays
 between \spRatioLo{} and \mvRatioHi{} (Fig.~\ref{fig:spread}).
-% review S03: text to come
+At a radius of 1\,km, \spHiddenPct\% of the interferers of a frame cannot hear its
+sender. Spread over that disc, the channel carries more nodes, \spArea{} with AUTHBC and
+\spAreaBase{} with per-record signing, but each node has fewer neighbors within reach:
+\spNeighbours{} and \spNeighboursBase, against \nmaxLeanDesign{} and \nmaxLeanBase{} nodes in one
+collision domain, because a receiver contends with every node in its carrier-sensing
+range~\cite{hu2020hidden}. A node's neighbors within reach are the other nodes within
+\spReach\,m of it, the largest distance at which an isolated link delivers at least 99\% of
+frames; they are counted for every frame sent and read at the 95\% delivery crossing.
 With every node on its own Gauss--Markov path at up to 15\,m/s~\cite{bujari2017fanet}, delivery
 changes by at most \mvDeltaV{}. The channel model has no Doppler and no time-correlated fading.
 
 \begin{figure}[t]\centering
 \includegraphics{fig_spread.png}
-\caption{Nodes served at 95\% delivery as the swarm spreads (top), and AUTHBC's ratio to
-per-record signing (bottom). Hollow markers: moving at 0, 5 and 15\,m/s.}
+\caption{As the swarm spreads: nodes in the disc at 95\% delivery (top), neighbors
+within \spReach\,m of a receiver there (middle, log scale), and AUTHBC's ratio to per-record
+signing (bottom). Hollow markers: moving at 0, 5 and 15\,m/s. Neighbors in reach fall; the ratio
+holds.}
 \label{fig:spread}
 \end{figure}
 
@@ -1045,7 +1064,10 @@ each channel width, where it is \phyModelTopLo--\phyModelTopHi\% optimistic. Fal
 padded signature of \pqSigBytes\,B, fits a frame. Simulated in the same way, per-record signing
 serves \pqBase{} nodes and AUTHBC \pqDesign, \pqRatio{} times as many, as with Ed25519: the gain
 comes from sending a quarter as many frames, whatever the size of the signature.
-% review S29: text to come
+Its frames, of \pqFrameBase{} and \pqFrameDesign\,B, lie outside the range on which
+the airtime capacity law was checked, so they were checked against the contention model. It
+predicted \pqModelBase{} and \pqModelDesign{} nodes, within \pqModelWorst\% of the simulated
+capacities; the law misses them by up to \pqLineWorst\%.
 On the Pi~4, Falcon-512 signs in \pqSignUs\us{} and verifies in \pqVerifyUs\us, faster than
 Ed25519 verifies.
 
@@ -1067,9 +1089,11 @@ the contention model (negative values: the model is optimistic).}
 802.11p, 12\,Mb/s & \phyPtwelveUs & \phyPtwelveBase & \phyPtwelveDesign & \phyPtwelveRatio & \phyPtwelveGap \\
 \midrule
 Falcon-512, 802.11a 6\,Mb/s & \pqUs & \pqBase & \pqDesign & \pqRatio & \pqGap \\
-\bottomrule
-\multicolumn{6}{l}{Frame: AUTHBC's, on air. Model: the larger gap of the two rows.}
+\botrule
 \end{tabular}
+\footnotetext{Frame: AUTHBC's, on air. Model: the larger gap of the two rows. The 802.11a
+6\,Mb/s row reads the runs of Table~\ref{tab:ladder} on this study's grid of
+\phyGridStep-node steps.}
 \end{table}
 
 \runin{Representativeness of the Synthetic Telemetry}\label{sec:px4} Every size above comes from
@@ -1154,9 +1178,12 @@ Section~\ref{sec:model}, and the measurements below.
 finds every equivocation and every frame that does not verify. For \auUavs{} UAVs over a flight
 hour, a planted equivocation and a planted forgery were both found, with no false finding, in
 \auMinutes{} minutes of one core.
-% review S07: text to come
+The audit covers the \auSent{} frames they sent and the \auHeld{} verified copies they
+kept of each other's frames over links losing \auLossPct\%, \auFrames{} frames in all.
 Keeping the frames costs \auKept\,B per record.
-% review S06: text to come
+That is slightly less than the \bprLeanDesign\,B of Table~\ref{tab:ladder}: the
+mission's sender identifiers and sequence numbers are smaller than the table's sizing convention
+assumes and take fewer CBOR bytes, which outweighs the longer key records later in the hour.
 
 \runin{Delayed Frames}\label{sec:delay} The timestamp acceptance window refuses a frame whose
 newest record is more than $\Delta$ older than the receiver's clock. With $\Delta = 150$\,ms, in
@@ -1164,12 +1191,19 @@ newest record is more than $\Delta$ older than the receiver's clock. With $\Delt
 frame held back by 250\,ms or more was refused. In a GNSS outage, two clocks drift apart by
 \rpDrift\,ms per hour. A fixed window of 250\,ms then holds for \rpHolds{} minutes, and a window
 widened by that drift keeps working, its bound growing at the same rate.
-% review S20: text to come
+The window is held against a frame's newest record, taken as the frame leaves, so an
+honest frame arrives \rpAfterMs\,ms old (channel and one verification), and \rpBudgetMs\,ms of a
+250\,ms window remain for clock drift and the errors of the two clocks (\rpApartMs\,ms apart, one
+standard deviation). After \rpHolds\,min without GNSS the drift is \rpDriftHold\,ms and the
+margin \rpMarginMs\,ms, \rpMarginSd{} standard deviations: \rpHoldRefused{} of \rpFrames{} honest
+frames was refused. After \rpNextMin\,min (\rpNextDrift\,ms of drift), \rpNextPct\% were.
 
 \runin{Flooding}\label{sec:flooding} A forged frame --- with a real sender, a newer sequence
 number and a well-formed signature under another key --- costs the Python receiver \flForgedMs\,ms
 on the Pi~4, against \flHonestMs\,ms for an honest one, which also pays for its storage.
-% review S19: text to come
+The flood uses \flSenders{} senders, one core's share of the \nmaxLeanDesign{} nodes
+for which the Python receiver needs \flCores{} cores (Section~\ref{sec:cpu}). Unattacked, they take \flQuietSharePct\% of the core and every honest frame is accepted,
+whereas all \nmaxLeanDesign{} senders on one core leave $V = \flAllV$.
 With \flSenders{} senders on one receiver core, \flNoneRate{} such frames per second push honest
 delivery below 0.95 (Fig.~\ref{fig:flood}). In the Python receiver, the 8\,B group MAC is checked
 before the frame is decoded and refuses an outsider's frame in \flTagUs\us. At 3\,000 forged
@@ -1225,7 +1259,9 @@ record. The smallest such frame that the frame-linked format can produce at all 
 sequence 0, every field zero --- is $\exFloorHdr + \linkField + 64 + \exFloorRec = \exFloor$\,B;
 this frame was produced, signed and verified. Header, link and signature alone occupy
 \exFloorNoRec\,B.
-% review S08: text to come
+The header of this floor frame is \exFloorHdr\,B, one byte less than in
+Table~\ref{tab:fields}: its record stream is a single \exFloorRec\,B record, and CBOR writes the
+length of a byte string shorter than \exStreamLongAt\,B in its type byte.
 
 Fig.~\ref{fig:excl} compares that floor with the payload limits. Three things follow:
 \begin{enumerate}
@@ -1255,7 +1291,10 @@ than the \keyLean\,B that our key record averages.
 Taking the chain link off the air frees the three 115\,B rates: they are excluded by the link, not
 by the signature. The smallest standardized signature, 48\,B BLS12-381~\cite{cfrg_bls}, fits a
 51\,B payload with 3\,B to spare.
-% review S15: text to come
+All BLS timings in this paper are of the 96\,B variant of blspy; the 48\,B variant was
+not timed. It verifies with the same two pairings, and to leave the channel as the binding limit
+at \nmaxLeanDesign{} nodes it would have to verify in \blsVerNeedMs\,ms, \blsSpeedup{} times
+faster than the \tVerBls\,ms measured.
 At 115\,B, a frame whose fields are all zero would fit (\exFloorBls\,B), but the smallest frame of
 our telemetry is \exLoBls\,B, a three-byte shortfall that is not counted as an exclusion. A 13\,B
 symmetric tag, as in MAVLink~2, fits the 115\,B rates. At 50 or 51\,B, however, header and link
@@ -1264,10 +1303,10 @@ authenticator.
 
 \runin{What the Feasible Rates Carry} At DR5 under the 1\% duty cycle, a 242\,B frame holds
 \loraRecsLean{} records and sustains \loraRateLean~records/s per node (\loraRecsFirst{} records and
-\loraRateFirst{} in the record-linked format). The batch must be sized at the record spacing it
-implies: a delta record that spans \loraSpacing\,s costs \deltaLeanFar\,B, not the \deltaLean\,B it
-costs at 50\,ms.
-% review S16: text to come
+\loraRateFirst{} in the record-linked format). The batch must be sized at the record spacing it implies. At this rate the records of a frame
+are \loraSpacingLean\,s apart (\loraSimSpacing\,s in the simulated frame below); their delta
+records were sized at the nearest spacing measured, \loraSpacing\,s, where one costs
+\deltaLeanFar\,B, not the \deltaLean\,B it costs at 50\,ms.
 The ns-3 LoRaWAN module carries at most 222\,B, where a frame holds \loraSimRecs{} records.
 Simulated with a \loraSimBytes\,B payload every \loraSimPeriod\,s (\loraSimRate~records/s per
 node), on one channel with one demodulator and no capture, the largest neighborhood with mean
@@ -1313,17 +1352,20 @@ AUTHBC (row~8), with certificates & \certLeanDesign \\
  & \multicolumn{1}{c}{\textbf{Auth.}} & \multicolumn{1}{c}{\textbf{Total}} & & & \textbf{In} \\
 \textbf{Scheme} & \textbf{B/rec.} & \textbf{B/rec.} & $\boldsymbol{N_{\mathrm{sat}}}$ & $\boldsymbol{N_{\max}}$ & \textbf{time} \\
 \midrule
-MAVLink~2 tag$^{\dagger}$ & \strAuthMav & \strBprMav & \strNsatMav & \strNmaxMav\ \strCiMav & \sdMav \\
-TESLA$^{\dagger\ddagger}$ & \strAuthTesla & \strBprTesla & \strNsatTesla & \strNmaxTesla\ \strCiTesla & \sdTeslaLo--\sdTeslaHi$^\S$ \\
-Gennaro--Rohatgi$^{\ddagger}$ & \strAuthGr & \strBprGr & \strNsatGr & \strNmaxGr\ \strCiGr & none \\
-EMSS$^{\ddagger}$ & \strAuthEmss & \strBprEmss & \strNsatEmss & \strNmaxEmss\ \strCiEmss & none \\
-Wong--Lam, block of 4 & \strAuthWl & \strBprWl & \strNsatWl & \strNmaxWl\ \strCiWl & \sdWl \\
-signature per record & \strAuthSig & \strBprSig & \strNsatSig & \strNmaxSig\ \strCiSig & \strNmaxSig \\
-AUTHBC & \strAuthDesign & \strBprDesign & \strNsatDesign & \strNmaxDesign\ \strCiDesign & \strNmaxDesign \\
-\bottomrule
-\multicolumn{6}{l}{$^\dagger$ no non-repudiation. $^\ddagger$ a packet does not verify alone.} \\
-\multicolumn{6}{l}{$^\S$ disclosure delay of two intervals of at most 20\,ms.}
+MAVLink~2 tag\footnotemark[1] & \strAuthMav & \strBprMav & \strNsatMav & \crossMav\ \crossCiMav & \sdMav \\
+TESLA\footnotemark[1]$^,$\footnotemark[2] & \strAuthTesla & \strBprTesla & \strNsatTesla & \crossTesla\ \crossCiTesla & \sdTeslaLo--\sdTeslaHi\footnotemark[3] \\
+Gennaro--Rohatgi\footnotemark[2] & \strAuthGr & \strBprGr & \strNsatGr & \crossGr\ \crossCiGr & none \\
+EMSS\footnotemark[2] & \strAuthEmss & \strBprEmss & \strNsatEmss & \crossEmss\ \crossCiEmss & none \\
+Wong--Lam, block of 4 & \strAuthWl & \strBprWl & \strNsatWl & \crossWl\ \crossCiWl & \sdWl \\
+per-record signing & \strAuthSig & \strBprSig & \strNsatSig & \crossSig\ \crossCiSig & \crossSig \\
+AUTHBC & \strAuthDesign & \strBprDesign & \strNsatDesign & \crossDesign\ \crossCiDesign & \crossDesign \\
+\botrule
 \end{tabular}
+\footnotetext{$N_{\max}$ and in time: crossings of 0.95, interpolated between the two simulated
+sizes around it (Section~\ref{sec:clas}).}
+\footnotetext[1]{No non-repudiation.}
+\footnotetext[2]{A packet does not verify alone.}
+\footnotetext[3]{Disclosure delay of two intervals of at most 20\,ms.}
 \end{table}
 
 \runin{Stream Signing} Table~\ref{tab:stream} places the schemes of Section~\ref{sec:related} at
@@ -1332,14 +1374,18 @@ with its own authenticator in place of the signature. All of them send a frame p
 \strFpsSig~frames/s per node (\strFpsEmss{} for EMSS, with its signature packets), where AUTHBC
 sends \strFpsDesign{} --- so the fixed channel time of a frame is paid for every record, whatever
 the size of the authenticator. A 13\,B tag in place of a 64\,B signature raises $N_{\max}$ from
-\strNmaxSig{} to \strNmaxMav{} nodes but gives up non-repudiation; four records in a frame raise it
-to \strNmaxDesign. When a record counts only if it verifies within the 100\,ms deadline, only
+\crossSig{} to \crossMav{} nodes but gives up non-repudiation; four records in a frame raise it
+to \crossDesign. When a record counts only if it verifies within the 100\,ms deadline, only
 MAVLink~2, Wong--Lam and TESLA with a short disclosure delay reach 95\%. Gennaro--Rohatgi and
 every variant of EMSS never do, because a record waits for packets sent after it. Tree chaining
 is the one scheme that keeps what a ledger requires --- every packet verifies alone, and its
 origin can be shown to a third party --- and it pays \strAuthWl\,B per packet for it. These schemes
 amortize the cost of signing; on a contended channel, the cost that binds is the frame.
-% review S13: text to come
+Both capacity columns of Table~\ref{tab:stream} are crossings of 0.95, interpolated
+between the two simulated sizes around it. In-time delivery is counted on the 20 sender--receiver
+pairs traced in each run and delivery on all pairs, so the in-time crossing of Wong--Lam
+(\sdWl) lies above its delivery crossing (\crossWl) by sampling alone, inside the interval
+\crossCiWl.
 
 \runin{Aggregate Signatures} The nearest published comparators are certificateless aggregate
 signature schemes for vehicular broadcast. Table~\ref{tab:clas} lists what one signer sends per
@@ -1500,8 +1546,9 @@ four records cut the bytes per record by \saveLean\% and let one 802.11a collisi
 freshness, not by the MTU, and every frame starts with a key record. Where it does not fit,
 \exclCount{} of the twelve EU863-870 LoRaWAN data rates cannot carry one self-verifying frame at
 any batch size. The capacities are simulated; in a spread or moving swarm fewer neighbors are in
-reach, but the gain stays \spRatioLo--\mvRatioHi-fold. On hardware, contention was measured
-between two radios only. In Rust, the frame-linked sender spends \enRustMeas\,$\mu$J per record,
+reach (at 1\,km, \spNeighbours{} with AUTHBC and \spNeighboursBase{} with per-record signing),
+but the gain stays \spRatioLo--\mvRatioHi-fold. On hardware, contention was measured between two
+radios only. In Rust, the frame-linked sender spends \enRustMeas\,$\mu$J per record,
 a factor of \enFirstOverRust{} lower than the record-linked format with batching.
 
 This accounting should carry over to other broadcast systems whose records are small beside

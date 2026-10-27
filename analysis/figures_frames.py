@@ -35,6 +35,7 @@ sys.path.insert(0, str(REPO / "analysis"))
 import figstyle  # noqa: E402
 import nmax_airtime_line as airtime  # noqa: E402
 
+from authbc.bench.stats import interpolated_crossing  # noqa: E402
 from authbc.models import bianchi  # noqa: E402
 
 RAW = REPO / "results" / "raw"
@@ -100,11 +101,25 @@ def fig_bytes_vs_batch() -> None:
     plt.close(fig)
 
 
+def _crossing_from_runs(row: dict[str, str]) -> float:
+    """A cell's 0.95 crossing computed from its runs: the summary holds it to 0.01, and rounding
+    that again for the label turned 124.549 into 124.6 (review of 2026-10-27, S-14)."""
+    per_n: dict[int, list[float]] = {}
+    for r in _rows("ns3_nmax_direct_runs.csv"):
+        if (r["cell"], r["jitter_ms"], r["skew_ppm"]) == (row["cell"], row["jitter_ms"], "0"):
+            per_n.setdefault(int(r["n_nodes"]), []).append(float(r["delivered_frac"]))
+    means = {n: sum(v) / len(v) for n, v in per_n.items() if len(v) == int(row["seeds"])}
+    x = interpolated_crossing(means, 0.95)
+    if x is None or abs(x - float(row["n_cross_interp"])) > 0.005 + 1e-9:
+        raise ValueError(f"cell {row['cell']}: the runs do not give the summary's crossing")
+    return x
+
+
 def simulated_crossings() -> dict[int, tuple[float, float, float]]:
     """Batch size -> (crossing of 0.95 delivery, lower, upper) for the lean design at 50
     records/s: cells C and D of the direct search, and the three cells of follow-up F6."""
     direct = airtime.crossings("period")
-    out = {b: (float(direct[cell]["n_cross_interp"]), float(direct[cell]["n_cross_interp_lo"]),
+    out = {b: (_crossing_from_runs(direct[cell]), float(direct[cell]["n_cross_interp_lo"]),
                float(direct[cell]["n_cross_interp_hi"])) for b, cell in ((1, "C"), (4, "D"))}
     for r in _rows("batch_capacity.csv"):
         out[int(r["batch"])] = (float(r["ns3_crossing"]), float(r["ns3_lo"]), float(r["ns3_hi"]))

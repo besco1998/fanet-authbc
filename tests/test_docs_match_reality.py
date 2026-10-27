@@ -79,8 +79,9 @@ def _highest_finding() -> int:
 
 def _abstract_words() -> int:
     tex = (REPO / "paper" / "main.tex").read_text()
-    i, j = tex.index(r"\begin{abstract}"), tex.index(r"\end{abstract}")
-    stripped = re.sub(r"\\[a-zA-Z]+\*?(\[[^]]*\])?({[^}]*})?", " ", tex[i:j])
+    # sn-jnl (2026-10-27): \abstract{...} ends where \keywords{ begins
+    i, j = tex.index(r"\abstract{") + len(r"\abstract{"), tex.index(r"\keywords{")
+    stripped = re.sub(r"\\[a-zA-Z]+\*?(\[[^]]*\])?({[^}]*})?", " ", tex[i:j].rstrip().rstrip("}"))
     return len(stripped.split())
 
 

@@ -12,6 +12,44 @@ where the durable record lives. If you want the conclusion only, follow the poin
 
 ---
 
+# 2026-10-27 — the review of the 18-page paper, in the Springer Nature layout
+
+**Doing:** applying `docs/review 27-10-2026/` (S-01…S-36, L-01…L-38) after Mohamed's decisions
+(`DECISIONS.md`, 2026-10-27). The record of each item is
+`docs/review 27-10-2026/CHANGE_LOG.md`; the sourced answers are in
+`docs/revision/REVIEW_2026-10-27_FACTS.md`.
+
+**How:** five workstreams in parallel. Four ran as forked agents in their own git worktrees
+(`~/.cache/authbc-wt/{figs,fig1,refs,facts}`), each owning disjoint files and committing on its
+own branch. I converted the paper in the main tree and merged their branches. All four hit the
+session limit mid-task and were resumed from their transcripts after the reset; none lost work.
+`main.tex` was assembled from a new body (`sn-jnl`, IMRaD) and the floats of the IEEE version,
+followed by a script of edits.
+
+**S-01, registered and run:** 420 ns-3 runs at 97 % delivery. Both crossings fell inside the
+contention model's ±3 % bands (C 27.56 against 27.53, D 97.30 against 97.89), and all 90 repeated
+runs were bit-identical. Outcome in `predictions/S01.md`.
+
+**Found while doing it:**
+* Fig. 6 printed 124.6 for a crossing of 124.549, rounded twice (summary to 0.01, then label to
+  0.1). It now computes the crossing from the runs (workstream E found it).
+* sn-jnl sets `\footnotesize` to 7 pt and `\scriptsize` to 9 pt. Tables now use the class's 8 bp
+  table font, and the TikZ figure fixes its own sizes (workstream C).
+* The "broken diacritics" of L-17 came from the class's OT1 encoding, not from the bib (D).
+* S-11: both receivers check the group MAC before decoding (read in the code). Only a table note
+  was ambiguous.
+
+**Wrong turns, for next time:**
+* A caption-rewriting regex, `\caption\{(.*?)\}\s*\\label\{X\}` with DOTALL, matched from the
+  *first* caption in the file to X's label and deleted everything between. `main.tex` fell
+  from 97 KB to 36 KB. It was rebuilt from the assembly plus a replayable edit script. Captions
+  are now found backwards from the label and matched by braces.
+* `scripts/capped.sh` returns as soon as systemd has the job: its exit 0 means "started". I
+  took it twice for a green suite; the first run had stopped on a real failure (the status
+  board's reference count).
+
+---
+
 # 2026-10-25 — readability: names, figures at print size, a copy-edited paper
 
 Mohamed:

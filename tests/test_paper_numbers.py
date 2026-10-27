@@ -100,13 +100,16 @@ class TestNumbersAreGenerated:
 class TestNoTypedResults:
     # Parameters, thresholds and names of standards. Anything else with a decimal point is a
     # result and must be a macro.
-    ALLOWED = {"0.05", "0.95", "0.02", "0.01", "0.2", "2.5", "97.5", "802.11", "802.15", "3.48"}
+    ALLOWED = {"0.05", "0.95", "0.02", "0.01", "0.2", "2.5", "97.5", "802.11", "802.15", "3.48",
+               "22.125"}                       # 3GPP TS 22.125 (review of 2026-10-27, S-21)
 
     def test_every_decimal_in_the_text_is_a_parameter(self) -> None:
         # in the figure source a length ("1.10cm") or a coordinate ("(0,1.62)") places a box
         drawing = re.sub(r"\(\s*[\d.]+\s*,\s*[\d.]+\s*\)", "", FIG)
+        # a requirement of a standard is named by its clause, "R-5.2.2-010"; that form only
+        text = re.sub(r"\bR-\d+\.\d+\.\d+-\d{3}\b", "", BODY)
         found = {m.group(0) for m in
-                 re.finditer(r"(?<![A-Za-z])\d+\.\d+(?!\d*(?:cm|pt|em))", BODY + drawing)}
+                 re.finditer(r"(?<![A-Za-z])\d+\.\d+(?!\d*(?:cm|pt|em))", text + drawing)}
         assert not sorted(found - self.ALLOWED), (
             "typed results in the paper; define them in analysis/paper_numbers.py instead")
 
