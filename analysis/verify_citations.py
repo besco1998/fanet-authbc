@@ -106,7 +106,9 @@ def people(author_field: str) -> list[tuple[str, str]]:
     """Normalised (family, given) pairs of a BibTeX author list (`Family, Given and …`)."""
     out = []
     for person in _split_authors(author_field):
-        if person.startswith("{"):                 # a braced corporate author has no given name
+        # A wholly braced corporate author has no given name; `{de Souza}, José` is a person whose
+        # family name is braced so that a style printing only BibTeX's last part keeps the particle.
+        if person.startswith("{") and person.endswith("}"):
             out.append((_norm(person), ""))
             continue
         family, _, given = person.partition(",")
