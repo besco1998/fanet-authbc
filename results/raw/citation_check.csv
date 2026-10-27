@@ -1,5 +1,5 @@
 # run=citation_check
-# checked=2026-10-24
+# checked=2026-10-27
 # bib=paper/refs.bib
 key,kind,identifier,registry,authors_bib,authors_registry,authors_match,title_match,year_bib,years_registry,year_match,status,fingerprint
 bianchi2000,doi,10.1109/49.840210,crossref,bianchi,G. Bianchi,1,1.00,2000,2000,1,ok,c1cc699a34bca9c9
@@ -27,6 +27,7 @@ etsi_ts103097,document,docs/literature/etsi_ts103097_its_security_header.pdf,,et
 arxiv2510pqsib1,arxiv,2510.23457,arxiv,darzi; rahman; karim; behnia; yavuz; bertino,Saleh Darzi; Mirza Masfiqur Rahman; Imtiaz Karim; Rouzbeh Behnia; Attila A Yavuz; Elisa Bertino,1,1.00,2025,2025/2026,1,ok,4a07c46f252ee571
 almajmaie2026pqfanet,arxiv,2604.18819,arxiv,al majmaie; ghajari; bhatta; amsaad,Sufian Al majmaie; Ghazal Ghajari; Niraj Prasad Bhatta; Fathi Amsaad,1,1.00,2026,2026,1,ok,151b3fef06e1b7dd
 ma2009dsrc,doi,10.1155/2009/969164,crossref,ma; chen; refai,Xiaomin Ma; Xianbo Chen; Hazem H Refai,1,1.00,2009,2009,1,ok,21b66eb654480ed2
+kleinrock1975csma,doi,10.1109/TCOM.1975.1092768,crossref,kleinrock; tobagi,L. Kleinrock; F. Tobagi,1,1.00,1975,1975,1,ok,8b29c8e71841155f
 xu2020clas,doi,10.1155/2020/5276813,crossref,xu; he; kumar; choo,Zhiyan Xu; Debiao He; Neeraj Kumar; Kim-Kwang Raymond Choo,1,1.00,2020,2020,1,ok,ad4ff0f8b20595f0
 liang2023clas,doi,10.1109/JSYST.2022.3180221,crossref,liang; liu,Yangfan Liang; Yining Liu,1,1.00,2023,2023,1,ok,30a74a19bc979e4e
 cahyadi2022clas,doi,10.1177/15501329221080658,crossref,cahyadi; su; yang; hwang,Eko Fajar Cahyadi; Tzu-Wei Su; Chou-Chen Yang; Min-Shiang Hwang,1,1.00,2022,2022,1,ok,f41aeafb276febad
@@ -81,4 +82,4 @@ bujari2017fanet,doi,10.1177/1550147717738192,crossref,bujari; calafate; cano; ma
 hesterberg2015bootstrap,doi,10.1080/00031305.2015.1089789,crossref,hesterberg,Tim C. Hesterberg,1,1.00,2015,2015,1,ok,4dc159aacf26ab8e
 huang2021fmac,doi,10.1109/JIOT.2020.3007071,crossref,huang; liu; zhou; yu; wang; shen,Xinquan Huang; Aijun Liu; Haibo Zhou; Kai Yu; Wei Wang; Xuemin Shen,1,0.93,2021,2021,1,ok,6a44a66da366b394
 yang2025gmg,arxiv,2503.16834,arxiv,yang; zhao; wang; dong; ju,Shaoshi Yang; Wei Zhao; Chu-Meng Wang; Wen-Yu Dong; Xiaojie Ju,1,1.00,2025,2025,1,ok,5a63b78ac2e1a519
-tamarin,document,"software: tamarin-prover 1.12.0 binary release, run for the proofs in formal/ (2026-10-20)",,basin; cremers; dreier; meier; sasse; schmidt,,,,2023,,,document,b108505a2a574df1
+tamarin,document,"software: tamarin-prover 1.12.0 binary release, run for the proofs in formal/ (2026-10-20)",,basin; cremers; dreier; meier; sasse; schmidt,,,,2026,,,document,8322e3509fcfc5fd

@@ -85,13 +85,14 @@ class TestWhatCannotBeCheckedSaysSo:
 
 class TestWhatIsHeldButNotRedistributed:
     """Eleven PDFs were kept out of the public repository on 2026-10-07; more, read on
-    2026-10-08 and 2026-10-09, joined them — the last four for the related-work gaps a review
-    of the paper named (audit F83). "Held and read" must
+    2026-10-08 and 2026-10-09, joined them — four for the related-work gaps a review of the
+    paper named (audit F83), and Kleinrock & Tobagi for the review of 2026-10-27. "Held and
+    read" must
     still be checkable: the manifest gives each file's SHA-256, and wherever the file is present
     it has to be that file."""
 
     def test_the_manifest_is_well_formed(self) -> None:
-        assert len(HELD_LOCALLY) == 28
+        assert len(HELD_LOCALLY) == 29
         for name, row in HELD_LOCALLY.items():
             assert name.endswith(".pdf") and re.fullmatch(r"[0-9a-f]{64}", row["sha256"]), name
             assert int(row["bytes"]) > 0 and row["obtain_from"] and row["document"], name
@@ -295,3 +296,56 @@ class TestTheClosedFormIsQuotedFromTheGeneratedNumbers:
         assert "with the detection term and nothing fitted, solving it for 5\\% gives the " \
                "\\modelCells{} capacities within \\closedWorst\\% (mean \\closedMean\\%)" in paper
         assert "$\\rho\\,[1-(1-1/W)^{\\rho/(1-\\rho)}]$" in paper
+
+
+class TestTheReviewOfTheTwentySeventhOfOctober:
+    """Review of 2026-10-27, items S-12, S-30 and S-31 (`docs/review 27-10-2026/`)."""
+
+    BIB = (REPO / "paper" / "refs.bib").read_text(encoding="utf-8")
+    REGISTER = (LITERATURE / "README.md").read_text(encoding="utf-8")
+
+    def _entry(self, key: str) -> str:
+        return next(b for b in re.split(r"\n(?=@)", self.BIB)
+                    if re.match(r"@\w+\{" + re.escape(key) + ",", b))
+
+    def test_the_vulnerable_period_is_credited_to_the_paper_that_defined_it(self) -> None:
+        """S-12: the detection-window loss is Kleinrock and Tobagi's vulnerable period with the
+        detection time in place of the propagation delay; it is held, read and quoted."""
+        entry = ENTRIES["kleinrock1975csma"]
+        assert entry["doi"] == "10.1109/TCOM.1975.1092768"
+        assert Path(entry["held"]).name in HELD_LOCALLY
+        assert 'during these a seconds (the "vulnerable" period), then the first packet will ' \
+               'be successful" (p. 1404)' in self.REGISTER
+        assert "⚠️ **The paper must not call the mechanism new.**" in self.REGISTER
+
+    def test_the_etsi_entry_names_the_edition_that_was_read(self) -> None:
+        """S-30: the held file's first page reads "ETSI TS 103 097 V1.2.1 (2015-06)"."""
+        entry = self._entry("etsi_ts103097")
+        assert "V1.2.1" in entry and ENTRIES["etsi_ts103097"]["year"] == "2015"
+
+    def test_the_tamarin_entry_names_the_release_that_made_the_proofs(self) -> None:
+        """S-31: the entry said 2023; release 1.12.0 is dated 2026-03-07 on GitHub."""
+        log = (REPO / "formal" / "proofs" / "authbc_counters.out").read_text(encoding="utf-8")
+        ran = re.search(r"Tamarin version (\S+)", log)
+        assert ran and ran.group(1) == "1.12.0"
+        assert f"Version {ran.group(1)}," in self._entry("tamarin")
+        assert ENTRIES["tamarin"]["year"] == "2026"
+
+    def test_no_family_name_loses_its_particle(self) -> None:
+        """sn-mathphys-num prints only BibTeX's last part: unbraced, `Van den Abeele` came out as
+        "Abeele" and `de Souza` as "Souza". A lowercase word before the last makes a particle."""
+        for key, entry in ENTRIES.items():
+            for person in vc._split_authors(entry["author"]):
+                family = person.partition(",")[0]
+                if not family.startswith("{"):
+                    assert not any(w[0].islower() for w in family.split()[:-1]), (key, person)
+
+    def test_a_braced_family_name_is_still_a_person(self) -> None:
+        assert vc.people("{de Souza}, Jos{\\'e} Anderson") == [("de souza", "jose anderson")]
+        assert vc.people("{LoRa Alliance}") == [("lora alliance", "")]
+
+    def test_no_publisher_is_printed_without_its_place(self) -> None:
+        """sn-mathphys-num prints a publisher without an address as "Springer, ???"."""
+        for block in re.split(r"\n(?=@)", self.BIB):
+            if re.search(r"(?<![\w-])publisher\s*=", block):
+                assert re.search(r"(?<![\w-])address\s*=", block), block.split(",")[0]
