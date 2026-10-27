@@ -1648,6 +1648,23 @@ def margin_rule() -> dict[str, str]:
     return {"mgMissEps": "0.1", "mgMissP": "0.08"}
 
 
+def capacity_with_margin() -> dict[str, str]:
+    """S-01 (review 2026-10-27; predictions/S01.md): capacity at 97 % delivery, the 3 % loss that
+    the margin rule requires at epsilon = 0.05, interpolated in ns-3 as registered."""
+    scored = {r["cell"]: r for r in rows(RAW / "capacity_97.csv")}
+    if set(scored) != {"C", "D"}:
+        MISSING.append("the ns-3 crossings at 97 % delivery (S-01)")
+        return dict.fromkeys(("nmaxTightC", "nmaxTightD", "ratioTight", "tightPredWorst"), "??")
+    if not all(r["within_band"] == "1" for r in scored.values()):
+        raise ValueError("the text says the model predicted both crossings at 97 % delivery")
+    c, d = (float(scored[k]["ns3_crossing"]) for k in ("C", "D"))
+    # registered S01-1: the ratio at 97 % stays within 3.3-3.8, as at 95 %
+    if not 3.3 <= d / c <= 3.8:
+        raise ValueError(f"the text says the ratio holds at 97 % delivery: {d / c:.2f}")
+    return {"nmaxTightC": f(c, 1), "nmaxTightD": f(d, 1), "ratioTight": f(d / c, 1),
+            "tightPredWorst": f(max(abs(float(r["error_pct"])) for r in scored.values()), 1)}
+
+
 def links_table() -> dict[str, str]:
     """Table tab:links (A17): the batch each broadcast system admits at three deadlines, with this
     design's own row computed by the same rule (Eq. 2 and the 1500 B payload)."""
@@ -1680,7 +1697,7 @@ SECTIONS = (frames, ladder, loss, stream, freshness, phy, energy, timings, fligh
             spread_swarm, design_map, loss_trace, adaptive, replay_window, flooding, compiled,
             compiled_energy, airframes, stream_deadline, phy_simulated, post_quantum,
             ledger_audit, other_links, intervals, receiver_costs, airframe_table, phy_table,
-            links_table, margin_rule)
+            links_table, margin_rule, capacity_with_margin)
 
 
 def macros() -> dict[str, str]:

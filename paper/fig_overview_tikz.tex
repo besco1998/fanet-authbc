@@ -2,6 +2,9 @@
 % 2026-10-25 (review 2026-10-27, L-15/L-33). Numbers are macros of numbers.tex; equations are
 % referenced by label. Natural width about 370 pt, inside the sn-jnl text width of 372 pt: no
 % scaling. Needs \usetikzlibrary{arrows.meta,positioning,fit,backgrounds}.
+% Each constraint box names where its equation is; the thesis, whose equations carry other
+% labels, defines \figoverviewref before it inputs this file (`make thesis` copies it there).
+\providecommand{\figoverviewref}[1]{Eq.~\eqref{eq:#1}}
 \begin{tikzpicture}[
   font=\figmain, >={Stealth[length=4pt]},
   box/.style={draw, rounded corners=1.5pt, fill=white, align=flush center, text width=2.68cm,
@@ -94,7 +97,7 @@
     9.10/Receiver CPU/cpu/{$N_{\mathrm{cpu}}$ per core\\[1pt]$\Rightarrow$ BLS excluded},
     11.69/Payload/excl/{$M \ge H_f + L$\\${} + \ba + s_k$\\[1pt]%
       $\Rightarrow$ \exclCount{} of 12\\LoRaWAN rates\\excluded}}
-  \node[cons] (c\k) at (\x, -8.75) {\textbf{\name}\\Eq.~\eqref{eq:\eq}\\[1pt]\body\endgraf};
+  \node[cons] (c\k) at (\x, -8.75) {\textbf{\name}\\\figoverviewref{\eq}\\[1pt]\body\endgraf};
 \begin{scope}[on background layer]
   \node[panel, inner sep=3pt, fit=(c1) (c5)] (cpanel) {};
 \end{scope}

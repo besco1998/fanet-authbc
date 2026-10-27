@@ -149,6 +149,7 @@ thesis:  ## build thesis/main.pdf  (see thesis/STATUS.md — this is a DRAFT ske
 	@cp -f results/figures/*.png thesis/ 2>/dev/null || true
 	@cp -f paper/refs.bib thesis/refs.bib
 	@cp -f paper/numbers.tex thesis/numbers.tex
+	@cp -f paper/fig_overview_tikz.tex thesis/fig_overview_tikz.tex
 	@sed -e 's/\\begin{figure}\[t\]/\\begin{figure}[h]/' -e 's/\\label{fig:system}/\\label{fig:frame}/' \
 	  paper/fig_system.tex > thesis/fig_frame.tex
 	cd thesis && pdflatex -interaction=nonstopmode main.tex >/dev/null \

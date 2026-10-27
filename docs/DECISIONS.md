@@ -201,6 +201,20 @@ short paper.*
 | **Section order (L5)** | The low-rate section now follows the 802.11 results — supersedes the 2026-10 decision that the exclusion is the paper's first result in the body; the abstract still states it first | **Confirmed by Mohamed 2026-10-26**, knowing it reverses the October order |
 | **Authors (2026-10-25)** | Mohamed A. Farouk, Mahmoud Abdelaziz, Ahmed F. Darwesh, Ashraf D. Elbayoumy, all Dept. of Communication Engineering, Military Technical College, Cairo | ORCID iDs and a funding statement are still to be supplied |
 
+## Decided by Mohamed, 2026-10-27 — the review of the 18-page paper (`docs/review 27-10-2026/`)
+
+| decision | chosen | what it costs, or leaves open |
+|---|---|---|
+| **Format (L-01)** | The Springer Nature template of his earlier Communications Engineering submission: `sn-jnl` with `lineno, pdflatex, sn-mathphys-num`; Introduction / Methods / Results / Discussion / Declarations, appendices; **no cuts until he decides** | 38 pages in this layout. Communications Engineering charges an article processing charge, which conflicts with the 2026-10-08 entry "a networking journal without page charges": his to settle |
+| **Order (L-02)** | The 802.11 result first everywhere: abstract, contributions, body, conclusion | Supersedes the abstract's exclusion-first order (2026-10-26 entry above) |
+| **Capacity at the margin (S-01)** | New ns-3 runs at 97 % delivery, registered first (`prereg-S01`, 3149f70) | 420 runs; both crossings held their predictions (`predictions/S01.md`) |
+| **Traffic source and the deadline (S-02)** | Argued from existing data: the strictly periodic (send-at-fill) source gives the same mean capacity; a $D_{\max}$ line and a caption note on Fig. 8 | No new runs with a send-at-fill source |
+| **Fig. 1** | Redrawn in TikZ with the agreed names | — |
+| **Title (L-21)** | Kept | — |
+| **Corresponding author (L-26)** | Mahmoud Abdelaziz, mkaremm@mtc.edu.eg | — |
+| **Data and code availability (S-36)** | Not mentioned, nothing done, for now | A journal will ask for the statement at submission |
+| **AUTHBC's expansion (L-22)** | Unchanged, as confirmed 2026-10-26 | — |
+
 > **Open items live in [`OPEN_ITEMS.md`](OPEN_ITEMS.md)** — the single tracked list of
 > everything assumed, deferred, unvalidated or accepted-as-a-limitation. Decisions live here.
 > **What each decision COST lives in [`TRADEOFFS.md`](TRADEOFFS.md)** — required reading before

@@ -10,8 +10,17 @@ rebuilds, verifies and stores the frames of its neighbours; and five constraints
 equation of \Cref{ch:theory} and \Cref{ch:codesign}, select the batch, the placement of the
 signature, the scheme and the key-record interval.
 
+% Fig. 1 of the paper, in TikZ with the names of 2026-10-25; each constraint box points to the
+% place in this thesis where its equation is derived.
+\providecommand{\ba}{\ensuremath{g_a}}
+\newcommand{\figoverviewref}[1]{\csname figoverviewref#1\endcsname}
+\newcommand{\figoverviewreffresh}{\Cref{sec:freshness-convention}}
+\newcommand{\figoverviewrefv}{\Cref{thm:t3prime}}
+\newcommand{\figoverviewrefline}{Eq.~\eqref{eq:line}}
+\newcommand{\figoverviewrefcpu}{\Cref{sec:e4}}
+\newcommand{\figoverviewrefexcl}{\Cref{thm:t6}}
 \begin{figure}[htbp]\centering
-\includegraphics[width=\textwidth]{block_diagram.png}
+\input{fig_overview_tikz}
 \caption{System overview: the sender's pipeline, the four-record frame with the size of each
 field in bytes, the shared channel, the receiver's pipeline, and the five constraints that
 select the design.}

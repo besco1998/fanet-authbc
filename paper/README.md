@@ -5,7 +5,9 @@
 | `main.tex` | **The results paper.** The AUTHBC frame, the design ladder, loss, capacity, the low-rate exclusion, comparison with published schemes | `make paper` |
 | `methods.tex` | **The methods paper.** Nine ways this study produced a wrong number, with the guard that caught each — six found by self-audit, three by an outside reader | `make paper-methods` |
 | `numbers.tex` | ⚠️ **Generated — do not edit.** Every result either paper prints | written by `analysis/paper_numbers.py` |
-| `fig_system.tex` | The frame, drawn to scale (TikZ) | included by `main.tex` |
+| `fig_system.tex` | The frame, drawn to scale (TikZ) | copied by `make thesis` as `thesis/fig_frame.tex` |
+| `fig_overview_tikz.tex` | Fig. 1, the system overview (TikZ); the thesis inputs a copy | included by `main.tex` |
+| `sn-jnl.cls`, `sn-mathphys-num.bst` | ⚠️ **Not in git.** The Springer Nature LaTeX template (December 2024 release): download it from Springer Nature and put these two files here before `make paper` | — |
 | `refs.bib` | The bibliography, shared with the thesis | checked by `make verify-citations` |
 | `SUBMISSION_CHECKLIST.md` | What must be true before either is sent anywhere | — |
 

@@ -50,9 +50,18 @@ def _ci_index(text: str, needle: str) -> int:
 
 
 def _section(title: str) -> str:
-    start = BODY.index(f"\\section{{{title}}}")
-    nxt = BODY.find("\\section", start + 10)
-    return BODY[start:nxt if nxt > 0 else len(BODY)]
+    """The text of the section or subsection `title`, ignoring case, up to the next heading of
+    either level. Since the Springer Nature layout (2026-10-27) most units of the old paper are
+    subsections, with sentence-case titles."""
+    start = BODY.lower().index(f"section{{{title.lower()}}}")
+    nxt = min((i for i in (BODY.find("\\section", start + 10), BODY.find("\\subsection",
+                                                                          start + 10)) if i > 0),
+              default=len(BODY))
+    return BODY[start:nxt]
+
+
+def _abstract() -> str:
+    return BODY[BODY.index("\\abstract{"):BODY.index("\\keywords{")]
 
 
 class TestNumbersAreGenerated:
@@ -137,7 +146,7 @@ class TestWhatTheReviewFoundIsNotInTheText:
         assert BODY.count("rather than") <= 3
 
     def test_the_abstract_is_short(self) -> None:
-        abstract = BODY[BODY.index("\\begin{abstract}"):BODY.index("\\end{abstract}")]
+        abstract = _abstract()
         words = re.sub(r"\\[a-zA-Z]+(\{[^}]*\})?", " w ", abstract).split()
         assert len(words) <= 200, len(words)
 
@@ -151,27 +160,28 @@ class TestWhatTheReviewFoundIsNotInTheText:
 
 class TestWhatTheReviewAskedForIsInTheText:
     def test_related_work_covers_stream_signing_and_per_message_practice(self) -> None:
-        related = _section("Background and Related Work")
+        related = _section("Related work")
         for key in ("mavlink2signing", "wong1999flows", "gennaro1997streams", "perrig2000emss",
                     "haber1991timestamp", "etsi_ts103097"):
             assert key in related, key
 
     def test_there_is_a_threat_model_that_says_what_is_not_protected(self) -> None:
-        model = _section("System and Threat Model").lower()
+        model = _section("System and threat model").lower()
         for needle in ("Adversary", "What is protected", "What is not", "Replay", "Equivocation"):
             assert needle.lower() in model, needle
 
-    def test_the_exclusion_is_the_first_result_of_the_abstract(self) -> None:
+    def test_the_802_11_result_comes_first_everywhere(self) -> None:
         """The review of 2026-10 asked for the exclusion first. On 2026-10-25 Mohamed moved the
-        low-rate section after the 802.11 results (review item L5), so the main result comes first
-        in the body; the abstract still names the exclusion first."""
-        assert BODY.index("\\section{Results on 802.11}") < BODY.index("\\section{Low-Rate Links")
-        abstract = BODY[BODY.index("\\begin{abstract}"):BODY.index("\\end{abstract}")]
-        assert abstract.index("\\exclCount") < abstract.index("\\nmaxLeanDesign")
+        low-rate section after the 802.11 results (review item L5); on 2026-10-27 he decided the
+        802.11 result comes first everywhere (review of 2026-10-27, L-02): abstract,
+        contributions, body and conclusion."""
+        assert BODY.index("\\label{sec:bytes}") < BODY.index("\\label{sec:lowrate}")
+        for text in (_abstract(), _section("Introduction"), _section("Conclusion")):
+            assert text.index("\\nmaxLeanDesign") < text.index("\\exclCount"), text[:60]
 
     def test_the_title_keeps_its_framing_and_drops_only_the_validation_it_did_not_hold(
             self) -> None:
-        title = BODY[BODY.index("\\title{"):BODY.index("\\author{")]
+        title = BODY[BODY.index("\\title["):BODY.index("\\author")]
         assert "Feasibility Boundaries for Authenticated UAV Telemetry" in title
         assert "An Exclusion Bound and a Capacity Envelope" in " ".join(title.split())
 
@@ -183,13 +193,15 @@ class TestWhatTheReviewAskedForIsInTheText:
 
     def test_the_one_line_message_does_not_overclaim_about_signature_schemes(self) -> None:
         """'No signature scheme changes that' was the over-claim: a 48 B or 13 B authenticator
-        changes the exclusion, and BLS is excluded by CPU. The claim is about 64 B schemes."""
-        intro = _section("Introduction")
-        assert "decide what can run" in intro
-        assert "64\\,B" in intro[intro.index("decide what can run"):][:160]
+        changes the exclusion, and BLS is excluded by CPU. The claim is about 64 B schemes. Since
+        2026-10-27 the introduction leads with the frame-not-authenticator insight (review L-35)
+        and the scheme claim lives where the ladder shows it."""
+        assert "no signature scheme" not in BODY.lower()
+        scheme = BODY[_ci_index(BODY, "\\runin{Signature Scheme}"):][:200]
+        assert "Among the 64\\,B schemes" in scheme
 
     def test_the_exclusion_states_its_four_scope_conditions(self) -> None:
-        low = _section("Low-Rate Links: Where No Batch Helps")
+        low = _section("Low-rate links: where no batch helps")
         assert all(f"({roman})" in low for roman in ("i", "ii", "iii", "iv"))
         assert "255" in low                       # the LoRa PHY itself is not excluded
 
@@ -216,23 +228,25 @@ class TestWhatTheReviewAskedForIsInTheText:
     def test_the_abstract_is_about_180_words(self) -> None:
         """The review asked for about 180; the looser bound above let it stand at about 200 as
         printed. This counter gives 179 for the abstract that prints as about 180 words."""
-        abstract = BODY[BODY.index("\\begin{abstract}"):BODY.index("\\end{abstract}")]
-        plain = re.sub(r"\\[a-zA-Z]+", "w", abstract.replace("\\begin{abstract}", ""))
+        abstract = _abstract()
+        plain = re.sub(r"\\[a-zA-Z]+", "w", abstract.replace("\\abstract{", "", 1))
         assert len(re.sub(r"[{}$~]", " ", plain).split()) <= 185
 
     def test_captions_are_one_or_two_lines(self) -> None:
         """The review asked for captions of one or two lines. A column holds about eleven words
-        a line; the one full-width table holds about twenty-three."""
+        a line; the one full-width table holds about twenty-three. The review of 2026-10-27
+        (L-24) asked each figure caption to end with its finding, and the Springer Nature layout
+        holds about fifteen words a line, so a caption may now take three lines."""
         too_long = {}
         for caption, label in re.findall(r"\\caption\{(.*?)\}\s*\\label\{([^}]+)\}", BODY, re.S):
             plain = re.sub(r"\\cite\{[^}]*\}", "", caption)
             words = len(re.sub(r"[{}$~]", " ", re.sub(r"\\[a-zA-Z]+", "w", plain)).split())
-            if words > (46 if label == "tab:ladder" else 27):
+            if words > 46:
                 too_long[label] = words
         assert not too_long, too_long
 
     def test_the_hash_chain_is_not_credited_to_the_bitcoin_paper(self) -> None:
-        related = _section("Background and Related Work")
+        related = _section("Related work")
         assert "haber1991timestamp" in related and "nakamoto2008" not in BODY
 
     def test_the_ladder_marks_every_size_that_is_not_an_emitted_frame(self) -> None:
@@ -242,23 +256,23 @@ class TestWhatTheReviewAskedForIsInTheText:
                   for r in gen.rows(gen.RAW / "design_ladder.csv")
                   if r["op"] == "adopted" and r["scheme"] == "ed25519"}
         start = BODY.index("\\label{tab:ladder}")
-        table = BODY[start:BODY.index("\\end{table*}", start)]
+        table = BODY[start:BODY.index("\\end{table}", start)]
         # "first format" was renamed "record-linked format" on 2026-10-25 (Mohamed)
         first_header = table[table.index("Record-linked format"):table.index("\\\\", table.index(
             "Record-linked format"))]
-        assert "$^\\dagger$" in first_header
+        assert "\\footnotemark[1]" in first_header
         assert all(ladder["first", r] != "emitted frames"
                    for r in ("inline-1", "inline-b", "batch-cbor", "batch-delta"))
         marked = {"batch-keys": True, "inline-1": False, "inline-b": False, "batch-delta": False}
         rows_by_rung = dict(zip(("inline-1", "inline-b", "batch-keys", "batch-delta"),
                                 re.findall(r"^[5-8] & (.*?) & [14] &", table, re.M), strict=True))
         for rung, is_marked in marked.items():
-            assert ("dagger" in rows_by_rung[rung]) is is_marked, rung
+            assert ("footnotemark[1]" in rows_by_rung[rung]) is is_marked, rung
             assert (ladder["lean", rung] != "emitted frames") is is_marked, rung
 
     def test_the_twelve_data_rates_are_named_by_modulation(self) -> None:
         """The review asked for a note on DR7, which is FSK and not LoRa."""
-        low = _section("Low-Rate Links: Where No Batch Helps")
+        low = _section("Low-rate links: where no batch helps")
         assert "seven LoRa (DR0--DR6), one FSK (DR7) and four LR-FHSS (DR8--DR11)" in low
         kind = {r["dr"]: r["modulation"].strip('"').split()[0]
                 for r in gen.rows(gen.RAW / "exclusion_matrix.csv")}
@@ -270,7 +284,7 @@ class TestWhatTheReviewAskedForIsInTheText:
     def test_the_lora_capacity_names_the_configuration_that_was_simulated(self) -> None:
         """The paragraph gave the 242 B frame's rate and the 222 B simulation's total, the same
         kind of mismatch the review listed under inconsistencies."""
-        low = _section("Low-Rate Links: Where No Batch Helps")
+        low = _section("Low-rate links: where no batch helps")
         carry = low[_ci_index(low, "What the feasible rates carry"):]
         for macro in ("\\loraSimBytes", "\\loraSimRecs", "\\loraSimRate", "222"):
             assert macro in carry, macro

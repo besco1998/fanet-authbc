@@ -42,7 +42,8 @@ GENERATORS = [
 
 def _figures_cited_by_the_paper() -> set[str]:
     tex = (REPO / "paper" / "main.tex").read_text()
-    return set(re.findall(r"\\includegraphics\[[^]]*\]\{([^}]+)\}", tex))
+    # since the sn-jnl layout (2026-10-27) figures are placed at their natural size, no options
+    return set(re.findall(r"\\includegraphics(?:\[[^]]*\])?\{([^}]+)\}", tex))
 
 
 def test_every_figure_the_paper_cites_exists():
@@ -68,8 +69,10 @@ def test_the_paper_cites_a_figure_for_each_reviewer_point_that_has_one():
     loss margin, batch controller, flooding); the reply cites them by label."""
     cited = _figures_cited_by_the_paper()
     for required in ("fig_spread.png", "fig_design_map.png", "fig_margin.png",
-                     "fig_adaptive.png", "fig_flood.png", "block_diagram.png"):
+                     "fig_adaptive.png", "fig_flood.png"):
         assert required in cited, f"{required} is no longer cited by the paper"
+    # Mohamed's block diagram, redrawn in TikZ with the agreed names (review of 2026-10-27)
+    assert "\\input{fig_overview_tikz}" in (REPO / "paper" / "main.tex").read_text()
 
 
 @pytest.mark.frozen

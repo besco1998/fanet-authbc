@@ -84,7 +84,7 @@ Row~6 of \Cref{tab:ladder} is smaller than four copies of row~5 partly for that 
 separability result above is a property of the record-linked format, where each record is encoded alone.
 \end{remark}
 
-\section{E4 --- scheme selection, and the receiver's CPU}
+\section{E4 --- scheme selection, and the receiver's CPU}\label{sec:e4}
 
 On ARM --- the deployment platform --- Ed25519 verification is $33.2\times$ cheaper than a BLS
 pairing, which keeps Ed25519 optimal for self-batching at any plausible radio/CPU power ratio. The
@@ -306,6 +306,13 @@ criterion throughout this thesis. The stricter reading --- that $95\%$ of indivi
 \nrunFirstDesign{} in the first: at most \nrunGap{} nodes fewer, now that a run samples the
 channel and not one phase configuration. On the low-rate arm the two readings are far apart
 (\Cref{ch:lowrate}).
+
+Both readings put the capacity at $5\%$ frame loss, where $V$ meets $1-\varepsilon$ with no
+margin. The margin rule of \Cref{sec:e7} asks for $\varepsilon \geq p + 0.02$, so at
+$\varepsilon = 0.05$ a deployment runs at $3\%$ loss. Simulated there
+on a grid registered before any run, the crossings of $97\%$ mean delivery are \nmaxTightC{} nodes
+for per-record signing and \nmaxTightD{} for the design, a ratio of \ratioTight; the contention
+model had predicted both within \tightPredWorst\% (\Cref{tab:prereg-revision}).
 
 \begin{remark}[Do not round this to one number]
 The advantage of the design is not one number. It hardly moves with the operating point ---

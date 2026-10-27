@@ -266,6 +266,15 @@ class TestCopiesAreCurrent:
         assert (REPO / copy).read_bytes() == (REPO / source).read_bytes(), (
             f"{copy} is stale — run `make thesis`")
 
+    def test_the_overview_figure_is_the_papers(self) -> None:
+        """Fig. 1 in TikZ (review of 2026-10-27, L-33): the thesis inputs the paper's file and
+        maps its equation references to its own sections."""
+        paper = (REPO / "paper" / "fig_overview_tikz.tex").read_text(encoding="utf-8")
+        assert (THESIS / "fig_overview_tikz.tex").read_text(encoding="utf-8") == paper, (
+            "thesis/fig_overview_tikz.tex is stale — run `make thesis`")
+        assert "\\input{fig_overview_tikz}" in _text("ch03_system_model.tex")
+        assert "block_diagram" not in _text("ch03_system_model.tex")
+
     def test_the_frame_figure_is_the_papers_with_its_float_and_label_changed(self) -> None:
         paper = (REPO / "paper" / "fig_system.tex").read_text(encoding="utf-8")
         expected = paper.replace("\\begin{figure}[t]", "\\begin{figure}[h]") \
@@ -492,7 +501,7 @@ class TestTheRegistrationsOfAppendixB:
         import subprocess
 
         named = sorted(set(re.findall(r"\\texttt\{([0-9a-f]{7})\}", self.WHOLE)))
-        assert len(named) == 22 + 19
+        assert len(named) == 22 + 20          # S01 (capacity at 97 %) added 2026-10-27
         shallow = subprocess.run(["git", "rev-parse", "--is-shallow-repository"], cwd=REPO,
                                  capture_output=True, text=True).stdout.strip()
         assert shallow == "false", (
@@ -526,13 +535,13 @@ class TestTheRegistrationsOfAppendixB:
     def test_the_chapter_counts_what_the_second_table_holds(self) -> None:
         body = self.REVISION.split("\\endfoot", 1)[1].split("\\end{longtable}", 1)[0]
         rows = [r for r in body.split("\\\\") if r.strip()]
-        assert len(rows) == 17
+        assert len(rows) == 18
         clean = [r for r in rows if not any(w in r.rsplit(" & ", 1)[1]
                                             for w in ("missed", "failed", "except"))]
-        assert len(clean) == 2
+        assert len(clean) == 3                 # S01 held in full
         methods = " ".join(_text("ch06_methodology.tex").split())
-        assert "seventeen, each registered before it ran" in methods
-        assert "In fifteen of the seventeen at least one statement missed or failed" in methods
+        assert "eighteen, each registered before it ran" in methods
+        assert "In fifteen of the eighteen at least one statement missed or failed" in methods
 
 
 class TestTheLibraryIsTheSizeTheChapterSays:
