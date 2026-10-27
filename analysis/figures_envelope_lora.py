@@ -7,7 +7,9 @@ metadata) so the frozen-figure discipline holds:
   co-design claim that needs all four axes *and* the channel model (audit F13/A1), so it deserves a
   figure more than the auth-byte ratio does.
 * **fig_t6_exclusion.png** — T6' across all twelve EU863-870 data rates: what fits, what is
-  excluded by the signature alone, and what is excluded by what a frame must contain.
+  excluded by the signature alone, and what is excluded by what a frame must contain. The paper
+  prints it, so it alone is drawn in the paper's style (`figstyle`); the other two are thesis
+  figures and keep their look.
 * **fig_lora_chain.png** — the F5 decision on the LoRa arm: per-frame chaining against the 802.11
   per-record format, in the currency LoRa actually rations (sustainable records/s).
 """
@@ -21,6 +23,7 @@ from pathlib import Path
 import matplotlib
 
 matplotlib.use("Agg")
+import figstyle  # noqa: E402
 import matplotlib.pyplot as plt  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[1]
@@ -69,6 +72,7 @@ def fig_envelope() -> None:
     plt.close(fig)
 
 
+@figstyle.paper_figure
 def fig_t6_exclusion() -> None:
     """T6': the payload each EU863-870 data rate allows against the smallest frame it must carry.
 
@@ -87,34 +91,34 @@ def fig_t6_exclusion() -> None:
              for r in rows]
     colour = {"signature": "#b2182b", "excluded": "#ef8a62", "feasible": "#1b7837"}
 
-    fig, ax = plt.subplots(figsize=(3.5, 3.3))      # the column's own width
+    fig, ax = plt.subplots(figsize=(figstyle.WIDTH, 3.9))
     ax.bar(drs, payload, color=[colour[t] for t in tiers], edgecolor="black", linewidth=0.6)
     ax.axhspan(lo, hi, color="#555555", alpha=0.18, linewidth=0,
-               label=f"one-record frames of this telemetry: {lo}–{hi} B")
+               label=f"one-record frames of this telemetry: {lo} to {hi} B")
     ax.axhline(floor, color="black", linestyle="--", linewidth=1.2,
                label=f"smallest frame the format can emit: {floor} B")
     ax.axhline(sig, color="#b2182b", linestyle=":", linewidth=1.2,
                label=f"the signature alone: {sig} B")
     for dr, m in zip(drs, payload, strict=True):       # inside the bar: clear of the lines
-        ax.text(dr, m - 16, f"{m}", ha="center", fontsize=6.5, color="white",
-                fontweight="bold", rotation=90, va="top")
+        # bold through the math set: cmr10 has no bold face
+        ax.text(dr, m - 16, rf"$\mathbf{{{m}}}$", ha="center", fontsize=figstyle.NOTE,
+                color="white", rotation=90, va="top")
     ax.set_xticks(drs)
-    ax.set_xticklabels([f"{d}" for d in drs], fontsize=8)
-    ax.set_xlabel("EU863-870 data rate (DR)", fontsize=8)
+    ax.set_xticklabels([f"{d}" for d in drs])
+    ax.set_xlabel("EU863-870 data rate (DR)")
     # M, as in the payload constraint of the paper (Eq. 5); N is the number of nodes
-    ax.set_ylabel("maximum payload $M$ (B)", fontsize=8)
-    ax.tick_params(labelsize=8)
+    ax.set_ylabel("maximum payload $M$ (B)")
     handles = [plt.Rectangle((0, 0), 1, 1, fc=colour[k], ec="black", lw=0.6)
                for k in ("signature", "excluded", "feasible")]
     labels = [f"excluded: the signature alone overflows ({tiers.count('signature')} rates)",
               f"excluded: header, chain link and signature fill it ({tiers.count('excluded')})",
               f"feasible ({tiers.count('feasible')})"]
     line_h, line_l = ax.get_legend_handles_labels()
-    ax.legend(handles + line_h, labels + line_l, fontsize=7, loc="upper center",
+    ax.legend(handles + line_h, labels + line_l, loc="upper center",
               bbox_to_anchor=(0.5, -0.17), ncol=1, frameon=False)
     ax.set_ylim(0, 290)
     ax.grid(axis="y", alpha=0.3)
-    fig.savefig(FIGS / "fig_t6_exclusion.png", **_SAVE)
+    fig.savefig(FIGS / "fig_t6_exclusion.png", **figstyle.SAVE)
     plt.close(fig)
 
 

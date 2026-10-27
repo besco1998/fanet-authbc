@@ -71,3 +71,25 @@ def test_the_controller_ages_are_half_a_period_longer_than_sent_at_fill() -> Non
     assert all(b == 4 for _, b, _, _ in curve)
     light = [age for n, _, _, age in curve if n < 60]
     assert 1.5 * 80 <= sum(light) / len(light) <= 1.5 * 80 + 6
+
+
+def test_the_spread_figure_counts_neighbours_no_node_can_exceed() -> None:
+    """Review S-03: the middle panel is the capacity a node can hear, the nodes within d_ref of a
+    receiver at the 95 % crossing. No count exceeds the nodes in the disc, and AUTHBC serves
+    more neighbours than per-record signing at every radius."""
+    nodes, near = fr.spread_points(), fr.neighbour_points()
+    for cfg in nodes:
+        assert all(k <= n for (_, n), (_, k) in zip(nodes[cfg], near[cfg], strict=True)), cfg
+    assert all(d > b for (_, b), (_, d) in zip(near["base"], near["design"], strict=True))
+    assert fr.reach_m() > 0
+
+
+def test_the_controller_figure_draws_the_adopted_deadline() -> None:
+    """Review L-32, S-02: the dashed line is D_max of the adopted operating point, the 100 ms the
+    paper's operating point names. With b = 4 fixed the plotted ages sit above it only because
+    they include the send instant: at fill, half a period earlier (F113), every one is within it."""
+    deadline = fr.deadline_ms()
+    assert deadline == 100.0
+    half_period = 0.5 * 1000.0 * 4 / 50.0
+    curve = fr.adaptive_curve(fr.RAW / "ns3_adaptive_ts", "fixed4")
+    assert all(age - half_period <= deadline for _, _, _, age in curve)
