@@ -23,6 +23,14 @@ He took every recommendation: see `DECISIONS.md`, 2026-10-28. Two changed what i
   under deuteranopia (ΔE 7.5) and aqua passes every pair (10.2). Red is kept for per-record
   signing, as in every other figure.
 
+**Then the tracking documents were brought up to date** (OPEN_ITEMS G35/G36/H9 closed and a new
+section I, NEXT_STEPS's current top, thesis/STATUS). **And the built PDF was read end to end as a
+reviewer would:** twelve fixes, all wording or layout, listed in the change log. The one
+substantive one: §2.3 still said "five constraints" over a list of six, with bytes, the
+objective, counted as a constraint. That is the inconsistency S-04 was about, reintroduced by the
+rewrite. A text dump of a PDF drops the cells that hold only digits, so the tables were checked
+on the rendered pages.
+
 ---
 
 # 2026-10-27 — the review of the 18-page paper, in the Springer Nature layout
