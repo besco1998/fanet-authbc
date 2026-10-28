@@ -1,16 +1,45 @@
 \chapter{System Model and Threat Model}\label{ch:sysmodel}
 
-\needswork{STATUS: DRAFTED from \texttt{docs/01}. Needs a figure of the frame layout and one
-worked example of a frame on the wire.}
+This chapter fixes what the rest of the thesis reasons about: the network, the ledger, the
+traffic and its two operating points, the adversary, the design choices, and the two frame
+formats. A frame as it is sent, byte by byte, is in \Cref{sec:worked}.
+
+\Cref{fig:system} shows the system as a whole. Each UAV codes its records, chains them and
+signs them into frames, and broadcasts the frames on a shared channel; each receiver decodes,
+rebuilds, verifies and stores the frames of its neighbours; and five constraints, one per
+equation of \Cref{ch:theory} and \Cref{ch:codesign}, select the batch, the placement of the
+signature, the scheme and the key-record interval.
+
+% Fig. 1 of the paper, in TikZ with the names of 2026-10-25; each constraint box points to the
+% place in this thesis where its equation is derived.
+\providecommand{\ba}{\ensuremath{g_a}}
+\newcommand{\figoverviewref}[1]{\csname figoverviewref#1\endcsname}
+\newcommand{\figoverviewreffresh}{\Cref{sec:freshness-convention}}
+\newcommand{\figoverviewrefv}{\Cref{thm:t3prime}}
+\newcommand{\figoverviewrefline}{Eq.~\eqref{eq:line}}
+\newcommand{\figoverviewrefcpu}{\Cref{sec:e4}}
+\newcommand{\figoverviewrefexcl}{\Cref{thm:t6}}
+\begin{figure}[htbp]\centering
+\input{fig_overview_tikz}
+\caption{System overview: the sender's pipeline, the four-record frame with the size of each
+field in bytes, the shared channel, the receiver's pipeline, and the five constraints that
+select the design.}
+\label{fig:system}
+\end{figure}
 
 \section{Network}
 
-$N$ UAVs share an IEEE 802.11 broadcast channel (OFDM, base rate $R = \SI{6}{\mega\bit\per\second}$
+$N$ UAVs share an IEEE 802.11 broadcast channel and all hear one another: one collision domain,
+called here a \emph{neighbourhood} of $N$ nodes, in which each node has $N-1$ neighbours. (OFDM, base rate $R = \SI{6}{\mega\bit\per\second}$
 for robustness; application MTU budget $M = 1500$\,B). Frames are lost independently with
 probability $p$, an abstraction of fading, collisions and mobility, with $p \in \{0.02, 0.05,
 0.10\}$ as a declared sensitivity range. Contention is modelled by the DCF (\Cref{ch:theory}) and
 validated against NS-3 (\Cref{ch:validation}). There is no ground control station in the model: the
 substrate is peer-to-peer broadcast.
+
+Every capacity in \Cref{ch:codesign} is computed under this assumption except one family:
+\Cref{sec:spread,sec:spread-swarm} place the nodes over discs of up to $1$\,km, with capture,
+fading and hidden stations, and move them, to see what the assumption hides.
 
 \subsection{Why broadcast, and why it matters}
 
@@ -27,19 +56,26 @@ the acknowledgement removed under-predicts simulation by $16\times$.
 
 Each UAV maintains an append-only hash chain of its own telemetry records and stores verified
 records overheard from others. A record is
-\[
-\texttt{rec} = \{\texttt{src}, \texttt{seq}, \texttt{ts}, \texttt{prev\_hash}, \texttt{payload}\},
-\qquad \texttt{prev\_hash} = \mathrm{SHA\text{-}256}(\text{previous record bytes}).
-\]
+\begin{gather*}
+\texttt{rec} = \{\texttt{src}, \texttt{seq}, \texttt{ts}, \texttt{prev\_hash}, \texttt{payload}\}, \\
+\texttt{prev\_hash} = \mathrm{SHA\text{-}256}(\text{previous record bytes}).
+\end{gather*}
 Only the owner appends to its own chain --- an owned-object model --- so tampering or equivocation
 on a $(\texttt{src}, \texttt{seq})$ pair is detectable by chain verification. Finality and
 witnessing semantics are out of scope; the deliverable is \emph{authenticated dissemination}, not
 consensus.
 
+A ledger is audited from the uploads alone. One pass over the frames of a mission, with the
+public keys of the senders and nothing else, finds every equivocation and every frame that does
+not verify, and the auditor signs a Merkle root of what it accepted. For \auUavs{} UAVs over a
+flight hour, \auFrames{} frames, a planted equivocation and a planted forgery were both found,
+with no false finding, in \auMinutes{} minutes of one core. Keeping the frames costs \auKept\,B
+per record.
+
 \section{Traffic and the two arrival rates}
 
-Records are generated at rate $\Lambda_i$ per UAV. The aggregate neighbourhood arrival rate is
-$\Lambda = \Lambda_i \cdot N_{\text{local}}$ --- the rate a \emph{receiver} must verify.
+Records are generated at rate $\Lambda_i$ per UAV. The aggregate arrival rate in a neighbourhood
+of $N$ nodes is $\Lambda = \Lambda_i\,(N-1)$ --- the rate a \emph{receiver} must verify.
 
 \begin{remark}
 These are different quantities and conflating them is a real defect, recorded as such. A node
@@ -53,52 +89,196 @@ receiver cannot keep up.
 
 $\Lambda_i = 50$\,rec/s at $\Dmax = \SI{100}{\milli\second}$ is adopted. It is PX4's
 \texttt{MAVLINK\_MODE\_ONBOARD} companion-computer rate, read from autopilot source rather than
-from a secondary summary, and it is fully compliant with 3GPP TS~22.125 S5.2.2, which specifies at
+from a secondary summary, and it is fully compliant with 3GPP TS~22.125, clause~5.2.2, which specifies at
 least $10$ messages per second and at most $\SI{100}{\milli\second}$ end-to-end latency for direct
 UAV-to-UAV local broadcast.
 
 The alternative $(20\,\text{rec/s}, \SI{250}{\milli\second})$ point is retained and reported
-because it gives \emph{identical bytes} --- batching obeys $b \leq \Lambda_i \Dmax$, so only the
-product matters, and both give $\Lambda_i \Dmax = 5$, hence $b = 4$ and $72.0$\,B per record.
+because it gives \emph{identical bytes}. The batch is bounded by the fill time, $b/\Lambda_i \leq
+\Dmax$, so only the product $\Lambda_i \Dmax$ matters, and it is $5$ at both points. Five records
+would fill in exactly $\Dmax$ and leave no time for the channel or for verification, so the
+largest batch that meets the deadline is $b = 4$ at both (\Cref{sec:freshness-convention}), and
+the frame is the same.
 
 \begin{table}[t]
 \centering
-\caption{The operating region, with costs stated. Compliance costs swarm size and nothing in bytes.}
+\caption{The two operating points, frame-linked format. Bytes are identical; the neighbourhood is not.
+$\Nmax$ is the largest neighbourhood with mean delivery $\geq 0.95$, found by direct simulation
+(\Cref{ch:codesign}).}
 \label{tab:operating}
+\begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{lrrrrrrc}
 \toprule
-& $\Lambda_i$ & $\Dmax$ & $b$ & B/rec & $\Nmax$ ($U{<}1$) & $\Nmax$ ($V{\geq}0.95$) & TS 22.125 \\
+& $\Lambda_i$ & $\Dmax$ & $b$ & B/rec & $\Nmax$, per-record signing & $\Nmax$, design & TS 22.125 \\
 \midrule
-\textbf{adopted}    & 50 & 100\,ms & 4 & \textbf{72.0} & 35  & \textbf{100} & yes \\
-alternative         & 20 & 250\,ms & 4 & 72.0          & 103 & 213          & no \\
----                 & 20 & 100\,ms & 1 & 153.0         & 34  & 98           & yes, no batching \\
----                 & 10 & 100\,ms & 1 & 153.0         & 78  & 180          & yes, no batching \\
+\textbf{adopted} & 50 & 100\,ms & 4 & \textbf{\bprLeanDesign} & \nmaxLeanBase & \textbf{\nmaxLeanDesign} & yes \\
+alternative      & 20 & 250\,ms & 4 & \bprLeanDesign & \nmaxRelLeanBase & \nmaxRelLeanDesign & no \\
 \bottomrule
 \end{tabular}
+\end{adjustbox}
 \end{table}
 
 \subsection{The floor of the region, which is a real constraint on the application}
 
-Holding $b \geq 4$ under a $\SI{100}{\milli\second}$ deadline requires $\Lambda_i \geq 40$\,Hz. At
-$20$ or $10$\,Hz the same deadline forces $b = 1$ and the saving collapses from $58.7\%$ to
-$12.2\%$. \textbf{The batching benefit is not available at every compliant operating point}: it
+Holding $b \geq 4$ under a $\SI{100}{\milli\second}$ deadline requires $\Lambda_i > 40$\,Hz. At
+$20$ or $10$\,Hz the same deadline forces $b = 1$ and nothing is left of the saving but the
+choice of encoding. \textbf{The batching benefit is not available at every compliant operating
+point}: it
 requires a telemetry rate fast enough to fill a batch inside the deadline. More structurally, any
-batching at all needs $\Lambda_i \geq 1/\Dmax$ --- at the standard's $\SI{100}{\milli\second}$
-bound, exactly the standard's own minimum message rate. At an ArduPilot Copter default of $0$\,Hz,
+batching at all ($b \geq 2$) needs $\Lambda_i > 2/\Dmax$ --- at the standard's
+$\SI{100}{\milli\second}$ bound, twice the standard's own minimum message rate. At an ArduPilot Copter default of $0$\,Hz,
 where streams are requested by a ground station rather than pushed, this thesis's mechanism does
 not apply at all.
 
-\section{Threat model}
+\section{Threat model}\label{sec:threat}
 
-The adversary may inject, replay, modify or forge frames, but does not hold any honest UAV's
-private key; key compromise is out of scope by charter. The security requirements are existential
-unforgeability under chosen-message attack at the 128-bit level, replay rejection via monotonic
-$(\texttt{src}, \texttt{seq})$ per chain, and integrity via the hash chain.
+\subsection{The adversary}
+
+The adversary controls the radio. It can read, inject, replay, modify, delay and drop frames, and
+may operate any number of radios of its own. It does not hold any honest UAV's private key; key
+compromise is out of scope by charter.
+
+\subsection{What is claimed, and where each property is enforced}
+
+\begin{center}
+\begin{tabular}{p{3.0cm}p{5.6cm}p{5.0cm}}
+\toprule
+property & meaning & mechanism \\
+\midrule
+origin authentication & a stored record was produced by the UAV named in \texttt{src} &
+  public-key signature over the canonical records, checked before anything is stored \\
+integrity & no field of a stored record was altered in transit &
+  the same signature: every one of \bitflips{} single-bit flips of a design frame is refused \\
+replay rejection & a frame delivered twice is stored once &
+  \texttt{seq} strictly increasing per sender \\
+equivocation evidence & two validly signed records for one $(\texttt{src}, \texttt{seq})$ are
+  detected and the two frames that carried them are kept & each frame verifies alone under the
+  sender's public key, so the pair is proof to a third party \\
+continuity & omission or re-ordering within what is held is detectable &
+  each record's \texttt{prev\_hash}; one link per frame commits to the record before it \\
+non-repudiation & a sender cannot later deny a record &
+  follows from a public-key signature, for whoever holds the frame; a symmetric tag would not
+  give it \\
+bounded-delay freshness & while GNSS time is held, a frame whose signed timestamp is more than
+  $\Delta$ before the receiver's clock is refused & a window on the signed timestamp
+  (\Cref{sec:window}) \\
+outsiders' floods & the frame of a node outside the swarm is refused before it is decoded &
+  an $8$\,B tag under a key all members hold, checked first \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{remark}[What the receiver keeps, and what it did not]
+The last two rows are properties of the frame on air. They become evidence only where the frame
+is kept: one signature covers a frame, so a record cannot be checked without the other records
+of its frame and the signature. Until 2026-10-09 the receiver of this prototype kept verified
+records and discarded the frame; the pair it retained on an equivocation was a pair of records,
+and nothing it held could be checked by anyone else. A review of the paper found it, and a test
+that had passed throughout: it counted the pairs and never asked whether one could be checked.
+
+The receiver now keeps every accepted frame as it arrived, and both frames of an equivocation.
+Two functions are what a third party runs: one returns the records of a frame that decodes and
+verifies under the sender's public key with nothing else, the other says whether two such
+frames give one sequence number two different records. Neither reads any state of the receiver.
+The cost is storage: a frame's length on air for every $b$ records held, \bprLeanDesign\,B per
+record in the design, beside the record itself. A frame that is coded against its predecessor
+cannot be shown alone; the design sends a key record in every frame, so every frame can.
+
+Fixing this found a second defect. The receiver offered a frame's records to the store in order
+and let the first refusal decide the frame. A frame whose first record repeated one already
+held was therefore refused as a replay, and a different record signed for a later sequence
+number in the same frame was never seen. Every record of a verified frame is now compared with
+what is held before any is stored.
+\end{remark}
+
+\subsection{Formal analysis, and the evidence for each property}\label{sec:formal}
+
+The frame protocol is modelled in the Tamarin prover~\cite{tamarin}: a sender that signs
+frames with increasing sequence numbers and a link to its previous record, a receiver that
+accepts in the order of \Cref{sec:protocol}, and an attacker that is the network. Origin and
+integrity, the rejection of replays, their combination as injective agreement, the evidence of
+an equivocation (which implies a revealed key) and the detection of a skipped frame are proven
+for unboundedly many frames in a model without the chain and the clock. Continuity is proven in
+a model with the chain. The time window is shown in a model with the clock: without it, a frame
+held back by the attacker is accepted, and with it no such trace exists.
+
+Three models, not one. A single model with the chain and the clock did not terminate within a
+gigabyte of memory per lemma. The registered model settled three of its nine lemmas; the counters
+were then keyed by a session identifier and the receiver given a start rule, and both changes
+are recorded with the registration (\Cref{app:prereg}). That the properties carry from the
+smaller models to the full protocol is an argument --- the smaller model's receiver checks less
+and so accepts a superset --- and not a proof. Canonical encoding is assumed injective.
+
+\Cref{tab:security} sets each property beside its evidence, the proofs with the simulations and
+measurements of \Cref{ch:codesign}.
+
+\begin{table}[htbp]\centering\small
+\caption{Security properties and threats, the mechanism for each, and the evidence: proofs in
+Tamarin, simulated clocks, and floods against one Raspberry~Pi~4 receiver core.}
+\label{tab:security}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{2.7cm}
+  >{\raggedright\arraybackslash}p{2.6cm} >{\raggedright\arraybackslash}p{3.6cm}
+  >{\raggedright\arraybackslash}X@{}}
+\toprule
+property or threat & mechanism & evidence & result \\
+\midrule
+origin and integrity & signature over the frame & Tamarin, model without chain and clock & proven \\
+replay & increasing sequence numbers & same model & proven \\
+both together & both & same model & injective agreement proven \\
+equivocation & both frames kept & same model & proven: it implies a revealed key \\
+a gap in a sender's frames & sequence numbers & same model & detection proven \\
+continuity & chain link per frame & Tamarin, model with the chain & proven \\
+delayed frame & GNSS-time window $\Delta$ & Tamarin, model with the clock & accepted without the
+  window, refused with it \\
+ & & simulated clocks, \rpFrames{} honest frames per setting & with $\Delta = 150$\,ms no honest
+  frame refused at clock errors up to $10$\,ms; every frame held $250$\,ms or more refused; a
+  $250$\,ms window outlasts \rpHolds\,min without GNSS \\
+flooding by outsiders & $8$\,B group MAC & UDP flood, \flSenders{} senders on one core &
+  $V = \flOutsiderV$ at $3\,000$ forged frames/s; the tag costs \flTagCostPct\% of capacity \\
+flooding by a member & none & same & $V < 0.95$ from \flInsiderRate{} forged frames/s \\
+ledger audit & signed frames uploaded & \auUavs{} UAVs, one flight hour, \auFrames{} frames &
+  both planted faults found, no false finding, in \auMinutes\,min of one core \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{What is not claimed}
+
+Each of these is outside the design, not an oversight in it.
+
+\begin{description}
+\item[Confidentiality.] Telemetry is broadcast in clear.
+\item[Availability.] Jamming removes frames, and nothing here recovers them: there is no
+      retransmission and no coding across frames. Loss appears as the \emph{robustness} measure
+      $V$, not as a security property. A flood is resisted only from outside the swarm: a member
+      holding the group key can still make a receiver verify forged frames, and at
+      \flInsiderRate{} of them a second one core no longer keeps up (\Cref{sec:flooding}).
+\item[Timeliness without GNSS time.] The window refuses a held-back frame only while sender and
+      receiver share GNSS time. A frame delayed by less than $\Delta$ is accepted, authentic and
+      in order, and so is a later one once GNSS time has been lost for longer than the window
+      allows: two clocks part by \rpDrift\,ms an hour (\Cref{sec:window}).
+\item[Truthfulness.] A UAV holding a valid key can sign false telemetry. Only
+      \emph{inconsistent} falsehood --- two records for one sequence number --- is detectable.
+\item[Key distribution, revocation and admission.] Receivers are assumed to hold each sender's
+      public key. The on-air cost of delivering certificates is charged separately
+      (\Cref{ch:codesign}); who may join and how a key is withdrawn is out of scope, and so is
+      Sybil resistance.
+\item[Privacy.] Senders carry a stable identifier. The certificateless aggregate schemes of the
+      vehicular literature buy conditional privacy that this design does not offer.
+\end{description}
+
+\subsection{Behaviour under loss}
+
+Every frame of the design decodes alone (\Cref{thm:t3prime}), so a lost frame costs its own
+records and nothing else. The receiver then holds a chain with a gap: the next frame's link
+commits to a record it does not have, which it records and cannot check. Continuity across the
+gap is therefore \emph{provable later}, if the missing records are ever obtained, and
+\emph{unknown until then} --- neither violated nor verified.
 
 \begin{remark}
 Availability under loss is a \emph{robustness} metric in this thesis, not a security claim. The
 quantity $V$, the probability that a record is verifiable at a receiver, is treated throughout as a
-design constraint rather than as a guarantee against an adversary who controls the channel.
+design constraint, not as a guarantee against an adversary who controls the channel.
 \end{remark}
 
 \section{The decision space}
@@ -123,48 +303,112 @@ The BLS object is $96$\,B, not the $48$\,B minimum-signature variant originally 
 available library ships only the minimum-pubkey scheme. That deviation is recorded and applied
 consistently, and it makes BLS lose the byte comparison outside multi-signer aggregation.
 
-Encodings are JSON (baseline), canonical CBOR, MessagePack, and delta-CBOR with keyframes every
-$K = 16$ records. $K$ is fixed and not optimised --- a real design variable left on the table, and
-declared as such.
+Encodings are JSON (baseline), canonical CBOR, MessagePack, and delta-CBOR. In the record-linked format
+the delta encoder emits a key record every $K = 16$ records, a value that was fixed and never
+optimised. The frame-linked format makes the interval a parameter --- one self-contained frame in every
+$r$ --- and \Cref{sec:e7} evaluates it; the design uses $r = 1$.
+
+\section{Two frame formats}\label{sec:formats}
+
+The thesis reports two formats side by side, and the reason is historical. The \emph{first}
+format is the one implemented at the start: canonical CBOR with text keys, and in every record its
+own chain link, sender identifier and sequence number. It is frozen, and every artifact of
+chapters~\ref{ch:bytes}--\ref{ch:validation} that predates October 2026 was produced with it. The
+\emph{lean} format was built after an external review pointed out that the design the results
+headlined --- delta records under one signature in a short header --- had never existed as one
+object: it was a sum of sizes measured in three places (\Cref{ch:reproducibility}). The frame-linked
+format is that design as code, with a sender and a receiver. The sizes reported for its design
+and its baselines are lengths of frames that were emitted, decoded and verified; the one frame-linked
+size that is a sum of measured parts (the design without delta coding) is marked in
+\Cref{tab:ladder}.
+
+\begin{table}[t]
+\centering
+\caption{Byte budget of a frame, field by field, for a sender with a five-digit identifier one
+hour into a 50\,Hz flight (smaller values earlier in a flight in parentheses).}
+\label{tab:fields}
+\begin{tabular}{llrr}
+\toprule
+field & content & first & lean \\
+\midrule
+(map) & CBOR map header & \fldFirstMap & \fldLeanMap \\
+\texttt{v}, \texttt{t} & version; frame type & \fldFirstVT & \fldLeanVT \\
+\texttt{src} & sender identifier, 16 bit & \fldFirstSrc & \fldLeanSrc \\
+\texttt{base\_seq} & sequence number of the first record & \fldFirstSeq & \fldLeanSeq \\
+\texttt{n} & records in the frame & \fldFirstN & \fldLeanN \\
+\texttt{recs} & key and length of the records & \fldFirstRecs & \fldLeanRecs \\
+\texttt{auth} & key and length of the signature & \fldFirstAuth & \fldLeanAuth \\
+\midrule
+\multicolumn{2}{l}{\textbf{header} $\Hf$} & \textbf{\hdrFirst} (\hdrFirstLo) & \textbf{\hdrLean} (\hdrLeanLo) \\
+\multicolumn{2}{l}{chain link} & 32 per record & \linkField{} per frame \\
+\multicolumn{2}{l}{signature $\ga$ (Ed25519, ECDSA)} & 64 & 64 \\
+\multicolumn{2}{l}{record that decodes alone (key record)} & \keyFirst$^\ast$ & \keyLean \\
+\multicolumn{2}{l}{record coded against its predecessor, 50\,ms apart} & \deltaFirst$^\ast$ & \deltaLean \\
+\bottomrule
+\multicolumn{4}{l}{$^\ast$ includes that record's own 32\,B chain link.}
+\end{tabular}
+\end{table}
+
+\subsection{The frame-linked frame}
+
+\input{fig_frame}
+
+\Cref{fig:frame} draws the frame to scale. A frame is one canonical CBOR map with integer keys. \texttt{src} and \texttt{base\_seq} name the
+sender and the sequence number of the first record; \texttt{link} is the hash of the record
+before it; \texttt{recs} is the record stream and \texttt{auth} one signature. A record in the
+stream is nine variable-length integers --- timestamp, position, velocity, battery, mode. The
+first record of a frame is a \emph{key record} carrying absolute values; each later one is a
+\emph{delta} from the record before it. Sender and sequence number are not repeated per record.
+
+\textbf{What is signed is not the stream.} It is the canonical ledger records, each with its own
+\texttt{prev\_hash}, exactly as in the record-linked format. The receiver rebuilds them --- the first
+\texttt{prev\_hash} is \texttt{link}, each later one the hash of the record just rebuilt --- and
+only then checks the signature. A frame that cannot be decoded therefore cannot be verified, and
+\Cref{thm:t3prime} counts that. The state against which a later frame would be decoded advances
+only after a frame has been verified \emph{and} stored, so a replayed frame cannot desynchronise
+a stream.
+
+\textbf{What one link per frame gives up.} In the record-linked format every record carries its own
+\texttt{prev\_hash}; in the frame-linked format only the first record of a frame does, and the rest are
+derived. Inside a frame, order and content then rest on the frame signature alone, where the record-linked
+format has a signature and an independent hash. A frame is signed and accepted as a unit, so no
+strength is lost --- but one mechanism remains where there were two. The decision of July 2026
+had scoped per-frame chaining to the low-rate arm; the frame-linked format extends it to both, and that
+extension is recorded as a decision, not presented as a neutral encoding choice.
 
 \section{The frame header, which is a range}
 
-$\Hf$ feeds the batching theory, the exclusion bound, the batch bounds, the channel-utilisation
-constraint and the energy model. It is measured directly from the implemented wire format:
+$\Hf$ feeds the batching theory, the exclusion bound, the batch bounds, the channel constraint and
+the energy model. It is measured from the implemented wire formats:
 \[
-\Hf = \operatorname{len}(\texttt{encode\_frame}(F)) - \textstyle\sum \operatorname{len}(\text{record canonical bytes}) - \operatorname{len}(\text{auth}).
+\Hf = \operatorname{len}(\text{frame}) - \operatorname{len}(\text{records}) - \operatorname{len}(\text{link field}) - \operatorname{len}(\text{signature}),
 \]
+the link term being zero in the record-linked format, where the link lives inside each record.
 
 \begin{table}[t]
 \centering
 \caption{$\Hf$ is not a constant. Canonical CBOR encodes integers 0--23 in one byte and those
 $\geq 65536$ in five, so the measured header moves with field magnitude.}
 \label{tab:hf}
-\begin{tabular}{rrl}
+\begin{tabular}{rrrr}
 \toprule
-\texttt{src} & \texttt{base\_seq} & $\Hf$ \\
+\texttt{src} & \texttt{base\_seq} & record-linked format & frame-linked format \\
 \midrule
-0      & 0       & \textbf{38\,B} --- first records of a flight, low node id \\
-24     & 24      & 39\,B \\
-256    & 256     & 40\,B \\
-40\,000 & 180\,000 & \textbf{44\,B} --- one hour into flight at 50\,Hz \\
+0      & 0       & \textbf{38\,B} & \textbf{17\,B} \\
+24     & 24      & 40\,B & 19\,B \\
+256    & 256     & 42\,B & 21\,B \\
+40\,000 & 180\,000 & \textbf{44\,B} & \textbf{23\,B} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The value $44$\,B is used throughout, and it is the steady-state value for any realistic flight. It
-is also the \emph{top} of the measured range, and \Cref{ch:lowrate} shows that this matters: the
-exclusion bound is $\smax = M - \Hf - \ga$, so a larger header makes exclusion \emph{more} likely.
-Using the top of a measured range is the choice most favourable to that result, and the thesis says
-so where the result is stated.
+The values $44$ and $23$\,B are used throughout; they are the steady-state values for any
+realistic flight and the conservative end for every byte comparison.
 
-\begin{remark}[Known headroom, not claimed]
-The empty frame skeleton is $43$\,B, of which $29$\,B are CBOR \emph{text key names}. An
-integer-keyed profile costs $7$\,B for the same seven keys, giving $\Hf = 22$\,B. Additionally,
-every record carries \texttt{src} and \texttt{seq} while the frame already carries \texttt{src} and
-\texttt{base\_seq}; in placement B all records share a sender and have consecutive sequence
-numbers, so both fields are derivable --- a further $10$\,B per record. Neither optimisation is
-adopted, because the wire format is frozen for reproducibility. Both are \emph{measured} rather
-than merely admitted, which makes every byte figure in this thesis an upper bound on an untuned
-design. \Cref{ch:lowrate} shows that one of the thesis's own results turns on this.
+\begin{remark}[A claim this section used to make]
+Earlier versions said the range decides the exclusion bound of \Cref{ch:lowrate}: that one data
+rate was excluded only because the top of the range was used. That was withdrawn in October 2026.
+The bound it rested on charged neither the chain link nor a record that decodes alone, and with
+both charged the rate is excluded at every header size, including zero
+(\Cref{sec:excl-history}).
 \end{remark}

@@ -1,0 +1,23 @@
+# python=3.12.3
+# platform=Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=contention_hw_windows
+# config_hash=f547873387674985
+window,nodes,rate_fps_per_node,sent,received,delivered_frac,achieved_fps_min,late_frames,tx_dropped,duplicates
+00_C_124fps,2,124,5456,5438,0.996701,124.03,0,0,0
+01_C_124fps,2,124,5456,5445,0.997984,124.03,0,0,0
+02_C_124fps,2,124,5456,5441,0.997251,124.0,0,0,0
+03_C_124fps,2,124,5456,5436,0.996334,124.03,0,0,0
+04_C_174fps,2,174,7656,7612,0.994253,174.02,0,0,0
+05_C_174fps,2,174,7656,7625,0.995951,174.03,0,0,0
+06_C_174fps,2,174,7656,7607,0.9936,174.01,0,0,0
+07_C_174fps,2,174,7656,7623,0.99569,174.02,0,0,0
+08_C_211fps,2,211,9283,9221,0.993321,210.95,0,0,0
+09_C_211fps,2,211,9284,9219,0.992999,211.02,0,0,0
+10_C_211fps,2,211,9284,9232,0.994399,211.01,0,0,0
+11_C_211fps,2,211,9284,9225,0.993645,211.01,0,0,0

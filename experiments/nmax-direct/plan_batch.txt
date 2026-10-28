@@ -1,0 +1,6 @@
+# Follow-up F6 (docs/NMAX_DIRECT_EXPECTATIONS.md): the lean design with two, three and eight
+# records to a frame at 50 records/s, send time redrawn each period.
+#   python ns3/run_nmax_direct.py --plan <this file> --out-stem ns3_batch --no-summary
+B2 period 60 62 64 66 68 70 72
+B3 period 87 90 93 96 99 102 105
+B8 period 205 212 219 226 233 240 247

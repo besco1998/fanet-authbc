@@ -1,14 +1,14 @@
 # host=authbc-pi4a
-# run_utc=20260729T0640Z
-# platform=Linux-rpi4
-# python=3.11.2
+# run_utc=20260729T035720Z
+# platform=Linux-6.12.93+rpt-rpi-v8-aarch64-with-glibc2.36
+# python=3.12.13
 # gpio_backend=gpiod
 # duration_s=60.0
 # reps=5
 # manifest=manifest_d1_reduced.json
 # samples=samples_d1.csv
 # channel=P1
-# reduced_utc=2026-07-29T04:03:09.529892+00:00
+# reduced_utc=2026-10-09T04:52:39.140672+00:00
 op,rep,p_idle_w,p_loop_w,delta_p_w,t_loop_s,n_ops,energy_per_op_j,energy_per_op_uj
 e2e_frame_pipeline,1,1.90204,2.62983,0.72779,60.000218984998355,187035,0.00023347340662257618,233.473407
 e2e_frame_pipeline,2,1.90197,2.6338,0.73183,60.00043415699838,188025,0.00023353288427856132,233.532884

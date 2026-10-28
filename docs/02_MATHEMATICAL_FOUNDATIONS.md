@@ -89,6 +89,72 @@ Quantified by Gilbert–Elliott simulation at matched mean p=0.05: V_D(n=2) rise
 (independent) to 0.9447 at a mean burst of 10 frames and 0.9498 at 160 — asymptotically 1−p, never
 past it, and never reaching the 0.95 feasibility threshold.
 
+### T3′ — a frame coded against its predecessor is not self-verifiable (2026-10-06, audit F46) ⚠️
+
+*Implemented: `models/frame.py` (`verifiability`, `verifiability_gilbert`, `max_ref_interval`);
+measured with the decoder in the loop: `results/raw/e3_codec_loss.csv`.*
+
+T3 says V_B = 1 − p because "each frame is self-verifiable". **That premise fails for a delta
+encoding whose keyframes are rarer than its frames**, and the design this document headlined was
+one: keyframe every K = 16 records, batch b = 4, so only one frame in r = K/b = 4 can be decoded
+without the frame before it. A receiver cannot verify what it cannot rebuild — the signature is
+over the records, not over the bytes on air — so a lost frame takes every later frame with it
+until the next self-contained one.
+
+**Statement.** Let one frame in r be self-contained (r = 1: every frame is). Frame j of a group
+(j = 1…r) verifies iff it and the j − 1 before it in the group all arrive, so under independent
+loss
+
+        V(r, p) = (1/r) · Σ_{j=1..r} (1 − p)^j                                   (T3′)
+
+V(1, p) = 1 − p is T3. V(4, 0.05) = **0.8811**: the published design missed V ≥ 0.95 at the
+p = 0.05 it was specified for. The byte model had amortised the keyframe over frames that T3
+treated as independent; the two had never been evaluated on one object (F45).
+
+**Corollary — at ε ≤ p every frame must decode alone.** V(r, p) < 1 − p for all r > 1, so the
+target V ≥ 1 − ε with ε ≤ p admits r = 1 only. This is claim (i) of T3 applied to a second kind
+of multi-frame unit. A cleaner link buys a longer interval — r = 4 at p = 0.02 (V = 0.951),
+r = 8 at p = 0.01 — and what it buys is small: 43.25 B per record at r = 1 against 39.73 at
+r = 16.
+
+**Burst loss.** For a two-state (Gilbert) process with mean loss p̄ and mean burst length B
+frames, let a = p̄ / (B·(1 − p̄)) be the good-to-bad transition probability. Then
+
+        V = (1 − p̄)/r · Σ_{j=1..r} (1 − a)^{j−1}
+
+which is T3′ at B = 1/(1 − p̄) (memoryless) and is **larger** for longer bursts: losses that
+arrive together waste fewer good frames. At p̄ = 0.05, r = 4: 0.881 independent, 0.931 at B = 4.
+Bursts never rescue a dependent design at ε ≤ p̄, since V ≤ 1 − p̄ with equality only at r = 1 —
+the same joint-versus-marginal argument as claim (iii).
+
+**Length note — p is not the same number for a short frame and a long one.** T3 and T3′ give
+every frame one loss probability. At a fixed bit error rate β a frame of L bytes with o bytes of
+MAC overhead survives with probability (1 − β)^{8(L+o)}, so two frames on one channel satisfy
+
+        p(L) = 1 − (1 − p_ref)^{(L + o)/(L_ref + o)}          (`frame.length_scaled_loss`)
+
+and a batch, being a longer frame, is lost more often than the one-record frame it replaces. E10
+runs this as a third loss process (`ber`): β is set so that the **one-record** lean frame
+(145.8 B) is lost with probability p, and each frame is lost by its own length. At p = 0.05 the
+design's 173 B frame is lost with probability **0.0573** and **V = 0.9427** — ⚠️ **below the
+0.95 it meets at equal frame loss** (measured 0.947, 95 % CI [0.941, 0.952]). It reaches 0.95
+only while one-record frames are lost at most **4.4 %** of the time. The budget p = ε had zero
+margin (O2); read this way, the batch spends margin it does not have. Every byte and capacity
+comparison in this project is at equal *frame* loss and carries this qualification.
+
+**What changed in the design.** r = 1: every frame carries one keyframe and b − 1 deltas. The
+first format then costs 74.96 B per record instead of 71.99 (−56.98 % instead of −58.68 %); the
+lean format costs 43.25 (−70.33 %).
+
+**Where the chain link sits decides the floor** (`frame_components.csv`, the two `byte model`
+frame rows of the first format; drawn in `fig_bytes_vs_batch.png` by `analysis/figures_frames.py`).
+With a link in every record, a record of the first format cannot cost less than its delta record,
+44 B, at any batch: at b = 12 it still costs **54.32 B**. Moving that link to the frame saves
+32·(1 − 1/b) B per record — 24 B at b = 4, which gives **50.96 B** — and the lean header and
+record coding take the remaining 7.71 B, to 43.25 B. So of the 31.71 B between the two designs at
+b = 4, three quarters is the placement of the link. ⚠️ The two first-format curves are sums of
+measured parts; only the lean curve is emitted frames.
+
 ## T4 — Scheme selection: Ed25519 self-batch vs BLS cross-signer aggregation
 **Own records (self-batch).** One ordinary signature covers b own records, so for
 byte-cost Ed25519 and BLS are near-equivalent (64 vs 48 B amortized over b). Ed25519's
@@ -126,71 +192,104 @@ MTU binds. **Validate:** E5 end-to-end vs baselines {A+JSON, A+CBOR, D-overagg}.
 > workaround the literature proposes is foreclosed whenever ε ≤ p. The EU868 partition is
 > application of a known bound to a link nobody had applied it to. This check was run *before*
 > publication precisely because F9 was not.
-*Implemented: `models/optimizer.py` (`max_fragments`, `max_record_bytes`, `exclusion_tier`);
-pinned: `tests/unit/models/test_exclusion_t6.py`.*
+*Implemented: `models/frame.py` (`FlatLayout.exclusion`) and `models/optimizer.py`
+(`max_fragments`); pinned: `tests/unit/models/test_exclusion_t6.py`; evaluated over every data
+rate: `results/raw/exclusion_matrix.csv`.*
+
+> ⚠️ **CORRECTED 2026-10-06 (audit F47). What this section said until then, kept visible.**
+> The statement was `s_max(M) = M − H_f − g_a ≥ s_min` with s_min = 13 B, applied to seven data
+> rates: DR0–2 excluded by the signature, DR3 excluded "by six bytes" (7 B of room for a 13 B
+> record) and — after F44 — *feasible* under an integer-keyed header (29 B of room). Two things a
+> frame must carry were never charged: **the chain link**, which per-frame chaining (§9b) moves
+> out of the records and into the frame, and **a record that decodes alone** (13 B was the mean
+> *delta* record less its link; T3′ requires a keyframe). And the standard defines twelve data
+> rates, not seven. F44's conclusion is withdrawn. The DR0–2 result was right and stands.
 
 T1–T5 ask what a saved byte **buys**. T6 asks the prior question: **whether the link admits
-authenticated telemetry at all.** It is a closed form, needs no simulation, and is link-agnostic —
-LoRa is just where it bites.
+authenticated, hash-chained telemetry at all.** It is a closed form, needs no simulation, and is
+link-agnostic — LoRaWAN is just where it bites.
 
-**Statement.** A frame that is independently verifiable must carry the frame header H_f, the
-authentication object g_a, and at least one record s. So a link of maximum payload M admits
-authenticated telemetry **iff**
+**Statement (T6′).** A frame that verifies alone carries a header H_f, one chain link L, an
+authentication object g_a, and at least one record that decodes alone, s_key. A link of maximum
+payload M admits such a frame **iff**
 
-        s_max(M) = M − H_f − g_a  ≥  s_min                                        (T6)
+        M  ≥  H_f + L + g_a + s_key                                              (T6′)
 
-and no choice of batch size, chain placement, or aggregation changes this: those decide only how
-the space *above* the floor is used.
+and no choice of batch size, encoding of later records, or aggregation changes this: those decide
+only how the space above the floor is used. Each term is evaluated at its smallest — a claim of
+exclusion is made against the smallest frame the format can emit **at all**, not against the
+frames one telemetry stream happened to produce.
 
-**Fragmentation does not escape it.** The obvious objection is to split an oversized signature
-across frames. T3 forecloses that: a unit spanning n frames verifies with probability (1−p)^n, so
-V ≥ 1−ε requires n ≤ ⌊ln(1−ε)/ln(1−p)⌋. **At ε ≤ p this is exactly n = 1** — the entire
-verifiability budget is spent on the first frame. At the study's ε = p = 0.05, fragmenting is
-already a constraint violation, so (T6) is evaluated at n = 1 and is an exclusion, not an
-inconvenience.
+**Scope — five conditions, each necessary** (four until 2026-10-09; the fifth is audit F80).
+1. *The payload limit is the link's.* The limits below are LoRaWAN's regional parameters. The raw
+   LoRa PHY carries 255 B at every spreading factor and is not excluded by them.
+2. *One public-key signature in every frame.* A symmetric tag is smaller and authenticates a
+   link, not an originator; schemes that sign once per several frames trade this bound for the
+   one in T3′.
+3. *No loss recovery.* Retransmission or coding across frames changes what "arrives" means.
+4. *ε ≤ p.* This is what closes fragmentation: a unit spanning n frames verifies with probability
+   (1 − p)^n, so V ≥ 1 − ε requires n ≤ ⌊ln(1 − ε)/ln(1 − p)⌋, which is 1 exactly when ε ≤ p.
+   At p = 0.01 and ε = 0.05 a unit may span five frames and a signature *can* be split.
+5. *The frame is this format.* The signature tier holds in any format: 64 B does not fit 51 B.
+   The 115 B rates are different. A signature and a SHA-256 value are 96 B and leave **19 B**;
+   the lean header at its floor (16 B) and the framing of the link field (3 B) are exactly 19.
+   A hand-packed layout would leave part of those bytes for a record — fewer than the 24.0 B
+   this telemetry's keyframe averages, so the rates stay out of reach *for this telemetry*, but
+   not "whatever the telemetry". Of the eight exclusions, five are the problem's and three are
+   the format's (`paper_numbers.exclusion` holds 19 = 16 + 3 with a guard).
 
-**Three tiers, because each one names a different escape route** (`exclusion_tier`):
+**Four nested tiers, each naming what a redesign would have to change** (`FlatLayout.exclusion`):
 
-| tier | condition | what could fix it | what cannot |
+| tier | condition | what could fix it |
+|---|---|---|
+| **signature** | M < g_a | a smaller authentication object only |
+| **header** | g_a ≤ M < g_a + H_f | a leaner header |
+| **chain link** | … < g_a + H_f + L | taking the link off the air |
+| **record** | … < g_a + H_f + L + s_key | a smaller self-contained record |
+
+**The floor of the lean format.** Node 0, sequence 0, one record of zeros — every integer at its
+minimum width: H_f = 16 B, L = 35 B (32 B and its field), g_a = 64 B, s_key = 9 B. The frame is
+**124 B**, and it was emitted, signed and verified, not computed. Note 16 + 35 + 64 = **115**:
+header, link and signature alone are a whole 115 B payload. The first format's floor is 146 B.
+
+**Applied to EU863-870** (RP002-1.0.3 Tables 12 and 13; all twelve data rates; 64 B signature):
+
+| payload M | data rates | verdict | tier at the floor |
 |---|---|---|---|
-| **signature** | M < g_a | a smaller signature scheme only | header design, *any* encoding, batching, chaining |
-| **framing** | g_a ≤ M < H_f + g_a | a leaner frame header | the encoding |
-| **encoding** | H_f + g_a ≤ M < H_f + g_a + s_min | a smaller record encoding — **and here T2a's A applies** | — |
+| 50 / 51 B | DR0, DR1, DR2, DR8, DR10 | **excluded** | signature — 64 B does not fit |
+| 115 B | DR3, DR9, DR11 | **excluded** | record — nothing is left after header, link and signature |
+| 222 / 242 B | DR4, DR5, DR6, DR7 | feasible | |
+| *802.11* | 1500 B | feasible | |
 
-**Applied to EU868** (H_f = 44 B **measured**, docs/01 §2a; g_a = 64 B for Ed25519/ECDSA; s_min =
-13 B, the delta record under the adopted per-frame chaining of §9b):
+**Eight of twelve are excluded, in both formats and under both payload tables**, and none of the
+eight depends on the telemetry: each is against the format's floor. **Five are excluded in any
+format; three depend on this one** (condition 5). Quote the count with that split.
 
-| DR | M (RP002 T.13) | s_max | tier | note |
-|---|---|---|---|---|
-| 0, 1, 2 | 51 B | −57 | **signature** | 64 B signature alone overflows a 51 B payload |
-| 3 | 115 B | **7 B** | **encoding** | misses by **6 bytes** — 7 B of room, 13 B record |
-| 4, 5, 6 | 242 B | 134 B | — feasible | |
-| *802.11* | 1500 B | 1392 B | — feasible | |
+**What each relaxation buys** (same artifact):
 
-⚠️ **DR3's exclusion is conditional on H_f ≥ 39 B (2026-08-28).** H_f is a measured *range*,
-38–44 B (docs/01 §2a), and `s_max = M − H_f − g_a` means a larger header makes exclusion more
-likely — so the 44 B used here is the end of the range most favourable to this claim. At H_f = 38 B
-the DR3 budget is exactly 13 B, s_min is exactly 13 B, and **DR3 becomes feasible**. Three
-independent levers each flip it: H_f (38 vs 44), the payload column (115 vs Klimiashvili's 123 B),
-and s_min (13 B is this design's smallest record, and per-frame elision of `seq`/`ts` — the same
-argument that justified per-frame chaining in §9b — would go below it). **Report DR3 as excluded
-*under the stated constants*, not as arithmetic that cannot move.**
+| relaxation | 50 / 51 B rates | 115 B rates |
+|---|---|---|
+| none | excluded | excluded |
+| chain link not sent on air (floor 89 B; 99–112 B measured) | excluded | **feasible** |
+| 48 B signature, the smallest standardised (floor 108 B; 118–131 B measured) | excluded (header) | ⚠️ *excluded for this telemetry only* |
+| 13 B symmetric tag (floor 72 B; 82–95 B measured) | excluded | feasible |
+| 13 B tag **and** no on-air link (floor 37 B; 47–60 B measured) | marginal | feasible |
 
-**The tier-1 result is the strong one, and it is the one that genuinely cannot move.**
-DR0/DR1/DR2 stay excluded *with a zero-byte header and a zero-byte record*: it is the signature
-alone that does not fit. The only escape is a smaller
-authentication object, and the smallest standardised one is **48 B** — a compressed BLS12-381 G1
-point in the `minimal-signature-size` variant of draft-irtf-cfrg-bls-signature-05, which the draft
-states targets **126-bit security** (not 128 — corrected 2026-07-29, item A5). The same draft records
-ECDSA at 64 B, so 48 B is genuinely the short end of the standardised range. It *does* fit 51 B, but
-leaves **3 bytes** for the header and the record together. So the
-exclusion is not an artifact of this design: **the four longest-range LoRa modes cannot carry
-per-frame-verifiable telemetry at 128-bit security, period.**
+Three readings of that table:
+* The 115 B rates are excluded **by the chain link**, not by the signature: remove the link and
+  they fit with 64 B signatures.
+* ⚠️ A 48 B signature misses 115 B by **three bytes** for this telemetry (118 B) while a frame of
+  zeros would fit (108 B). That is not an exclusion and is not counted as one.
+* At 50 / 51 B header and link are 51–58 B before any tag or record: **a hash-chained frame does
+  not fit under any authenticator.** The exclusion there is two independent facts, not one.
 
-**Why this matters to the thesis.** It converts the LoRa arm from a table of numbers into a
-*negative result with a proof*: co-design has a domain of validity, and T6 is its boundary. It also
-locates exactly where compression is worth pursuing — tier 3 (DR3) is the only regime an encoder can
-attack, and T2a says that is precisely where the amplification A is operative.
+48 B is a compressed BLS12-381 G1 point in the `minimal-signature-size` variant of
+draft-irtf-cfrg-bls-signature-05, which the draft states targets **126-bit security** (not 128 —
+corrected 2026-07-29, item A5); the same draft records ECDSA at 64 B.
+
+**Why this matters to the thesis.** It converts the low-rate arm from a table of numbers into a
+negative result with a stated domain: co-design has a boundary, T6′ is that boundary, and the
+table of relaxations says what each way across it costs.
 
 ## ~~T7 — Medium-exclusion threshold~~ — **WITHDRAWN 2026-07-29, same day it was written** ⚠️
 *Retracted by its own validation experiment (D3, `results/raw/ns3_delay.csv`). Kept visible rather
@@ -378,6 +477,270 @@ more for symbol rounding). The **auth-byte headline is byte-based and did not mo
 frame-size dependent (±5 % on ~43 µs). E4 is left on the continuous form: the verdict has ~90×
 margin (min κ\* = 31.64 vs plausible κ = 0.34), so no conclusion is sensitive to it.
 
+### 6c. Two constraints the envelope did not show (2026-10-06)
+
+**The receiver's CPU.** A receiver verifies every frame of every neighbour and hashes every
+record to check the chain. One neighbour sending Λ rec/s in batches of b, with k signatures per
+frame, costs
+
+    c = (Λ/b)·k·t_verify + Λ·t_hash        seconds of CPU per second
+
+and one core is exhausted at **N_cpu = 1 + ⌊1/c⌋** (`frame_experiments.cpu_seconds_per_neighbour`;
+the receiver's own sending is not charged — signing is b times rarer than verifying a
+neighbourhood). With the timings measured on the Raspberry Pi 4 (`p1_crypto.authbc-pi4a.csv`,
+t_hash = 2.7455 µs) at Λ = 50, b = 4, `design_ladder.csv` column `n_cpu_one_core` reads:
+
+| configuration | N_cpu | binds before the channel? |
+|---|---|---|
+| Ed25519, one signature per frame | **296** | no |
+| Ed25519, a signature on every record (k = b, or b = 1) | **77** | see `binds_at_v95` per configuration |
+| ECDSA P-256, one signature per frame | **237** | no |
+| BLS (96 B, pairing verification), one signature per frame | **10** | **yes** — below even N_sat |
+
+So batching buys CPU as well as bytes (÷ b on the dominant term), and **BLS at this rate is
+excluded by the receiver, not by the radio** — a statement about per-frame verification of
+independent signers at 50 rec/s, not about BLS aggregation, which T4 treats.
+⚠️ One core, one board, no batch-verification API and no parallelism: N_cpu is an order of
+magnitude, not a design figure.
+
+**The PHY as a parameter** (`models/phy.py`, `results/raw/phy_sweep.csv`, E15). Every capacity
+above is at 802.11a, 6 Mb/s, 20 MHz, because that is where the broadcast model was validated.
+Whether 6 Mb/s is a special case is answered by the same closed form with other timing
+constants — ⚠️ **a model prediction at every rate but one**; the artifact carries a `validated`
+column and only the 6 Mb/s rows set it.
+
+What the sweep shows is a mechanism, not a set of capacities. A frame costs a fixed channel time
+before it carries a payload byte — preamble + SIGNAL, MAC/LLC overhead, SERVICE and TAIL bits,
+DIFS and the mean backoff (`OfdmPhy.fixed_cost_s`): **173 µs at 6 Mb/s**, and it falls far more
+slowly than the payload time as the rate rises (134 µs at 24 Mb/s). Batching divides exactly that
+fixed term by b. So the **N_sat ratio of design to per-record baseline grows with the PHY rate**
+(lean format: 2.6 at 6 Mb/s → 4.3 at 24 Mb/s on 20 MHz; 2.0 → 3.4 on the 10 MHz channel of
+802.11p): a faster PHY makes batching matter more, not less. The ratios are of N_sat, the only
+capacity the model defines; the V ≥ 0.95 capacity is simulated (§6e) and at 6 Mb/s only.
+
+### 6d. What certificates cost (2026-10-06; the term itself dates from F34)
+
+A receiver can only verify a signature if it holds the signer's public key, bound to an identity.
+The byte model charged nothing for that. `optimizer.bytes_per_record(…, cert_bytes, cert_period)`
+has carried the term since the CLAS comparison (added **before** those figures were fetched —
+see the method rule in `CLAUDE.md`), with defaults 0/1 so that frozen artifacts are bit-identical.
+E11 charges the policy the deployed V2X standards use: a full certificate in one message of
+every five and an 8-octet digest of it in the other four (ETSI TS 103 097 `HashedId8`; sizes as
+measured in NDSS 2024):
+
+    cert per frame = (162 + 4·8) / 5 = 38.8 B           charged per FRAME, not per record
+
+so a batch of b divides it by b like any other per-frame cost — **9.7 B/record at b = 4 against
+38.8 B/record for a frame per record**. `design_ladder.csv` carries both `bytes_per_rec` and
+`bytes_per_rec_with_cert`, and the paper's table prints both columns (revision decision R13, `DECISIONS.md`) so that
+neither accounting is hidden behind the other.
+
+⚠️ **Two limits.** (i) The charge is an upper bound for this design: implicit (ECQV) certificates
+of IEEE 1609.2 are smaller and were never priced (`docs/OPEN_ITEMS.md`). (ii) Capacities are
+simulated **without** the certificate bytes: one frame in five would be 162 B longer, and no
+simulation here sends such a frame. The certificate columns are byte accounting only.
+
+### 6e. The V ≥ 0.95 capacity is SIMULATED per configuration, not derived (2026-10-06) ⚠️
+
+Until October 2026 every "N_max at V ≥ 0.95" in this project was `n_max(…, u_ceiling = 2.435)`:
+one utilisation ceiling, measured in ns-3 at N = 50 with a 288 B frame, applied to every frame
+size and rate. That assumed the ceiling does not depend on N or on the frame. **It does.** The
+prediction that direct simulation would agree within ±10 % was committed before the runs and
+failed (−23.2 % for the lean design); the utilisation at the simulated crossing ranges over
+U\* = 1.98–2.61. The whole record — pre-registration, outcome, three follow-ups and which of
+their predictions failed — is `docs/NMAX_DIRECT_EXPECTATIONS.md`; it is not repeated here.
+
+**The definition now in force.** For a configuration (frame bytes L, batch b, rate Λ):
+
+    V̄(N)   = mean over seeds of (frames received by a node) / (frames sent to it),  ns-3, 20 s
+    N_max  = the largest N on the simulated grid with V̄(N) ≥ 0.95        (`stats.crossing_point`)
+    CI     = percentile bootstrap over seeds of that same statistic       (`threshold_crossing_ci`)
+    N_x    = the N at which the piecewise-linear V̄ crosses 0.95           (`interpolated_crossing`)
+
+`ns3/run_nmax_direct.py` runs it (30 seeds per N) and writes `results/raw/ns3_nmax_direct.csv`;
+`design_ladder.csv` reads its `n_max_v95` from there and keeps the old figure in
+`n_max_load_ceiling` beside `load_ceiling_error_pct` — as the approximation it was, never as the
+value. A configuration that was not simulated has **no** V ≥ 0.95 capacity in any artifact.
+
+**The traffic source is part of the definition.** `authbc-delay.cc`'s default sources are
+strictly periodic, so nodes keep their relative phases for a whole run; ns-3.48 raises CCA-busy
+only at the end of a 4 µs preamble-detection period, and two nodes whose phases fall inside it
+collide in every period. A run is then one phase configuration: in the worst seed at N = 29, four
+nodes deliver nothing and 22 lose nothing. Follow-ups F1 and F1b established, with predictions
+registered first, that this inflates the **per-run spread** (sd 0.034 frozen → 0.0016 with phases
+redrawn every period) and moves the mean by less than the 0.005 registered (measured: +0.003 over
+the 14 points run under both, with crossings 1–9 % higher — a difference the shared seeds cannot
+yet separate from sampling error). By the rule registered in F1b, every
+reported capacity uses a send time drawn uniformly within each sending period
+(`--txJitterMs` = one period; config key `nmax_source: period`). ⚠️ Two of the follow-ups'
+predictions failed and are recorded as failures there.
+
+**A closed form that survived a held-out test (F54).** At the 5 % level, loss is a line in
+airtime. With f = Λ/b the frames per second a node sends and T = `bianchi.t_broadcast(L)`,
+
+    0.05 = N·f·(a·T + c)   ⇒   N_max ≈ 0.05 / ( f·(a·T + c) ),      a = 0.0710,  c = 8 µs
+
+c is fixed at twice ns-3's preamble-detection period; a is the mean of the six slopes implied by
+the calibration cells (`analysis/nmax_airtime_line.py`). Seven configurations it was not fitted
+to were predicted before they were simulated: all seven fell within **3.4 %** (registered
+tolerance 6 %), where the single ceiling misses the thirteen by up to **15.3 %**.
+⚠️ **Domain, and it is narrow:** one collision domain, 802.11a at 6 Mb/s, the 5 % level only,
+frames of 146–565 B, 5–50 frames/s, 32–308 nodes, in ns-3. The residuals are ordered by frame
+rate (+3.6 % at 50 /s to −2.4 % at 5 /s) — do not extrapolate. **The line is for interpolating
+and for understanding; a quoted capacity is always a simulated value.**
+
+### 6f. Where the classical stream-signing schemes stand (2026-10-06, E17) — sizes MODELLED, capacity SIMULATED (F3, 2026-10-07)
+
+Amortising one signature over many packets is a classical problem, and the review asked where
+this work stands against it. `models/stream_auth.py` works each scheme's per-packet cost from
+the paper that defined it; `results/raw/stream_baselines.csv` (`make exp-frames`) places each at
+the adopted point as **the lean one-record frame with that authenticator in place of the
+signature** — same header, same chain link, same record. ⚠️ None is implemented;
+digest and signature sizes are this project's (SHA-256 32 B, Ed25519 64 B), not the papers'
+(MD5, SHA-1, RSA, 80-bit truncations). Two capacities are given: the saturation bound N_sat of
+§6a, and **N_max from the direct ns-3 search of §6e on a frame of that size at that rate**
+(five more cells; their crossings were predicted with the airtime line and committed before
+the runs — `docs/NMAX_DIRECT_EXPECTATIONS.md`, follow-up F3; all five held). ⚠️ For a scheme
+whose packets do not verify alone, N_max counts frames *delivered* and is an upper bound on
+records *verified*.
+
+| scheme | authenticator per packet | frames/s per node | B/record | N_sat | N_max [95 %] | verifies alone | non-repudiation |
+|---|---|---|---|---|---|---|---|
+| MAVLink 2 signing | 1 + 6 + 6 = **13 B** | 50 | 93.8 | **23** | **42** [41, 42] | yes | no — any holder of the shared key can sign |
+| TESLA (Perrig et al. 2000, prototype) | MAC 10 + key 10 + index 4 = **24 B** | 50 | 105.8 | 22 | 40 [40, 40] ⚠️ upper bound | no — after the key is disclosed | no — the MAC key is disclosed |
+| Gennaro–Rohatgi 1997 | digest of the next packet, **32 B** | 50 | 113.8 | 21 | 39 [39, 39] ⚠️ upper bound | no — needs every earlier packet | yes |
+| EMSS (two digests, signature packet per 100) | **64 B** (+128 B per 100) | 50.5 | 147.3 | 20 | 34 [34, 34] ⚠️ upper bound | no — after the next signature packet | yes |
+| Wong–Lam tree, block of 4 | 64 + 2·32 + 1 = **129 B** | 50 | 210.8 | 17 | 28 [28, 29] | yes | yes |
+| a signature on every record | **64 B** | 50 | 145.8 | 20 | 35 [35, 35] | yes | yes |
+| **this design**, b = 4 | 64 B per frame = 16 B/record | **12.5** | **43.25** | **52** | **124** [124, 125] | yes (per frame) | yes |
+
+**What the table shows.** Every one of these schemes spreads *one authenticator across packets*
+and still sends **a frame per record**. On a contended channel a frame costs 173 µs before its
+first payload byte (§6c), so the authenticator's size hardly matters: replacing a 64 B signature
+by a 13 B tag — giving up non-repudiation — moves N_sat from 20 to **23** and the simulated N_max
+from 35 to **42**. Putting four records in a frame moves them to **52** and **124**. The stream-signing literature amortises the signing *cost*; the cost
+that binds here is the *frame*, and only batching divides it.
+
+**What it does not show.** (i) Tree chaining is the one classical scheme that keeps both
+properties the ledger needs — each packet verifies alone and its origin can be shown to a third
+party — and it pays for
+them in bytes (129 B per packet at a block of four, growing with log₂ of the block).
+(ii) Batching has a cost none of the per-packet schemes has: a lost frame takes b records, and
+the records wait for the batch to fill. TESLA and EMSS delay *verification* at the receiver;
+this design delays *transmission* at the sender. (iii) A scheme with a much smaller frame is
+also lost less often at a given bit error rate (T3′, length note) — an advantage this table
+does not credit.
+
+### 6g. Why the crossing is where it is — two mechanisms, nothing fitted (2026-10-08, F58)
+
+§6e simulates each capacity and the airtime line of F54 fits them with one constant. Neither
+says *why* loss reaches 5 % where it does. This section does, from the access rule alone.
+
+**The scenario, as the rule sees it.** N stations, one collision domain, broadcast: no
+acknowledgement, no retransmission, a contention window that never grows (W = 16 slots). Each
+station sends one frame per period 1/f at an instant drawn uniformly in the period. A frame
+holds the medium for T = airtime + DIFS (`bianchi.t_broadcast`). A frame that arrives while the
+medium is held **defers**: it draws a counter from {0 … W−1}, counts idle slots after DIFS and
+sends at zero. A frame that arrives with the medium idle for DIFS is sent at once.
+
+**A frame is lost in exactly two ways.**
+
+1. **A tie.** Two deferring stations whose counters reach zero in the same slot send together.
+   Any two stations that are waiting at the same moment tie with probability **1/W** — whether
+   both drew fresh, or one holds a counter frozen from an earlier round (a frozen counter is
+   ≥ 1, the other's fresh draw is uniform, and they are equal with probability 1/W either way).
+2. **The detection window.** A station cannot sense a transmission in its first δ = 4 µs
+   (the simulator's preamble-detection time). Whoever decides to send inside that window —
+   an arrival that finds the medium apparently idle, or a counter that runs out — sends too.
+
+**A closed form, with nothing fitted.** Let ρ = (N−1)·f·T, the share of time the others hold
+the medium. A frame defers with probability ρ. In a queue of such frames a deferring frame
+meets ρ/(2(1−ρ)) others already waiting and as many again arrive while it waits (M/D/1), so it
+shares its wait with K = ρ/(1−ρ) others and ties with probability 1 − (1−1/W)^K. The window
+adds a collision whenever another station starts within ±δ:
+
+    loss(N) ≈ ρ · [ 1 − (1 − 1/W)^(ρ/(1−ρ)) ]  +  (N−1) · f · 2δ
+
+Solved for loss = 0.05 this puts the eighteen simulated crossings within **5.5 %** (mean 2.3 %),
+its error ordered by frame length — short frames are flattered, because the time counters take
+to run down, which the queue ignores, is a larger share of a short frame.
+
+**What the fitted slope was.** To first order the tie term is ρ²/(W(1−ρ)), so the line's
+a·T·N·f is a·ρ with **a = ρ / (W·(1−ρ))**. The eighteen configurations reach 5 % loss at
+occupancies of 0.48–0.60, 0.53 on average, where that expression runs from 0.058 to 0.092 and
+is **0.071** at the average — the value the fit found. One constant served because the
+occupancy at the crossing varies little; it served only to a few percent because it does vary. It sat
+near 1/W = 0.0625 because ρ/(1−ρ) happens to be near 1 there, not because the slope *is* 1/W.
+Its constant c = 8 µs is 2δ exactly, as it was registered. ⚠️ So the line is the tangent of a curve at one loss level:
+at 2 % or 10 % loss, or with another window, it has no reason to hold, and §F5 shows the three
+readings part there.
+
+**The exact version** is `src/authbc/sim/dcf_unsaturated.py`: an event simulator of the rule
+above — arrival times, carrier sense, counters, post-transmission backoff — with no PHY, no
+channel, no packets, and no code of ns-3's. Its constants are the standard's (slot 9 µs,
+DIFS 34 µs, W = 16) and the simulator's δ. Against every point ns-3 has run at the designated
+source (`results/raw/dcf_model_vs_ns3.csv`, `python analysis/dcf_model_check.py --compare`):
+
+| | this model | the fitted line | the single ceiling |
+|---|---|---|---|
+| crossings compared | 18 | 18 | 13 |
+| worst error | **1.2 %** | 4.0 % | 15.3 % |
+| mean absolute error | **0.5 %** | 2.6 % | — |
+| delivered fraction, worst of 153 points | **0.0023** | — | — |
+
+Ties are 51–85 % of the loss, more for long frames; the window is the rest.
+
+⚠️ **This is a comparison, not a prediction.** The model was written beside one of those
+eighteen cells, and an omission in it — half of the window, the case of an arrival just
+*before* a counter runs out — was found from that cell's numbers. Its predictions are for
+conditions no run had been made at: the window doubled, and the 2 % and 10 % loss levels
+(`results/raw/dcf_model_predictions.csv`), committed before their runs. The registration and
+its outcome are follow-up F5 of `docs/NMAX_DIRECT_EXPECTATIONS.md`: **all six ns-3 crossings
+fell within 1.73 % of the model's** (band ±3 %). With the window doubled the per-record cell
+goes from 35.3 to **39.2** neighbours (model 39.1) — an eighth more, not twice, because a
+longer countdown keeps more stations waiting together.
+
+⚠️ **What it does not show.** The model and ns-3 implement one standard. Their agreement says
+the capacities of §6e follow from that rule and a 4 µs detection time; it does not say a radio
+behaves so. Capture, hidden terminals and a real preamble detector are outside both
+(`OPEN_ITEMS` G4).
+
+### 6h. Unequal received power and capture — the same access rule, one more question (2026-10-09, F85)
+
+§6g and every capacity of this work put all stations at one point: equal received power, so a
+frame that overlaps another is lost at every receiver. A review named that scenario as the
+weakest point of the paper (audit F80). `authbc.sim.dcf_capture` keeps the access rule of §6g
+— it calls the same simulator and changes nothing in it — and places the stations uniformly
+in a disc of radius R with received power falling as d⁻² (free space; distances under the
+simulator's reference metre count as one metre). For each group of frames that start together,
+and each station r that is not itself sending:
+
+    r receives the strongest frame i of the group  iff  P(i→r) ≥ θ · Σ_{j ≠ i} P(j→r),   θ = 4 dB
+
+and receives none of the others. A frame sent alone reaches every other station. The delivered
+fraction is receptions over frames sent times (N − 1).
+
+**Where θ comes from — read in the simulator's source, not chosen.** In ns-3.48 each arriving
+preamble opens a 4 µs detection period; at its end `PhyEntity::EndPreambleDetectionPeriod`
+keeps the strongest of the preambles then present and asks
+`ThresholdPreambleDetectionModel::IsPreambleDetected`, whose defaults are a signal-to-
+interference-and-noise ratio of **4 dB** and a level of −82 dBm. Frames that start together
+are exactly what the access rule produces when it fails: a tie, or a decision inside the
+detection time.
+
+**What the model does not have.** (i) Carrier sensing is perfect, as in §6g. That holds while
+every pair is within energy-detection range (−62 dBm: 37 m at the simulator's 16 dBm
+transmit power and its reference loss of 46.68 dB at one metre; the 15 m disc is 30 m across).
+Beyond it a station senses others by their preamble, and a
+station that can lock onto neither of two colliding frames may take the medium for idle and
+send over them. (ii) Noise: negligible at the radii used (the weakest signal at 200 m is
+17 dB above the floor). (iii) Hidden stations: every pair is within decoding range at both
+radii registered.
+
+**Scale.** With d⁻² the ratios of received powers do not change when the disc is scaled, so the
+model gives the same answer at every radius above a few metres; only the simulator can say
+whether 100 m differs from 15 m, and by (i) it may.
+
 ## 9. LoRa arm — EU868, its OWN parameter set (2026-07-28) ⚠️
 **The 802.11 arm's numbers do not transfer.** They differ by two to three orders of magnitude and
 the binding constraint is different *in kind*: a regulatory airtime quota, not a frame size or a
@@ -505,6 +868,24 @@ because the regional payload limit binds — so smaller records convert into *mo
 
 **≈3.0× the sustainable telemetry rate for the same regulatory budget**, versus a 26 % airtime
 saving and *no* extra records on 802.11 (where freshness, not size, is the wall).
+
+> ⚠️ **CORRECTED 2026-10-06 (audit F48, F46). The per-frame rows above are overstated.** They size
+> every record at 33 B/record from a 13 B record body, which is the delta record measured with
+> records **50 ms apart**; at 0.18 records/s they are **5.5 s apart**, where a difference costs
+> 13.6–17.9 B. They also carry no keyframe, so no frame decodes without the one before it (T3′).
+> Sized at the spacing the batch itself implies, with every frame self-contained
+> (`results/raw/lora_budget.csv`, 242 B payload):
+>
+> | DR | as above | first format, corrected | lean format (`wire_v2`) |
+> |---|---|---|---|
+> | 4 | b = 7, 0.1035 rec/s | b = 4, **0.060** | b = 7, **0.1005** |
+> | 5 | b = 7, 0.1822 rec/s | b = 5, **0.127** | b = 8, **0.200** |
+> | 6 | b = 7, 0.3643 rec/s | b = 5, **0.254** | b = 8, **0.406** |
+>
+> So per-frame chaining is worth about **2.1×** in the first format at DR5 (0.127 against 0.0601), not
+> 3.0×, and the 3× figure is recovered — slightly exceeded — only by the lean format, which also
+> shortens the header and the record. The decision below stands: its argument is that the payload
+> limit binds, and that is unchanged. The frozen LoRa artifacts keep the published frames (D6).
 
 *Two corrections landed here on 2026-07-29, both raising the benefit.* The measured H_f = 44 B
 (docs/01 §2a) tightened every batch, and the batch grid was **sparse** — it listed

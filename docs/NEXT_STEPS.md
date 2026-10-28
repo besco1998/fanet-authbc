@@ -1,5 +1,141 @@
 # What to do next — pick-up guide
 
+## ⚠️⚠️⚠️ STATE AS OF 2026-10-28 — read this section; everything below it is history
+
+**Where the work is.** Branch `p11-reviewer-revision`, PR #2 (a draft until Mohamed has read the
+thesis passages listed in `thesis/STATUS.md`). It contains `p9-supervisor-revision` (PR #1, his to
+merge first). The status board in `CLAUDE.md` holds the counts; `docs/DECISIONS.md` the decisions.
+
+**What is done.**
+* The reviewer revision A1–A17 is in the paper and the thesis (`docs/revision/STATUS.md`).
+* The review of the 18-page paper (2026-10-27, S-01…S-36, L-01…L-38) is applied, every item
+  traced in `docs/review 27-10-2026/CHANGE_LOG.md`:
+  * the paper is in the Springer Nature `sn-jnl` layout, 40 pages, the 802.11 result first;
+  * S-01 was registered and run (capacity at 97 % delivery, 27.6 and 97.3 nodes);
+  * Fig. 1 is TikZ, shared with the thesis.
+* Mohamed's choices on its options are recorded (2026-10-28).
+
+**How to edit the paper now.** Edit `paper/main.tex` directly. It was assembled once by scripts
+that no longer exist. Every number is still a macro from `analysis/paper_numbers.py`. The
+Springer template files are git-ignored: download them before `make paper` (`paper/README.md`).
+
+**Waiting on Mohamed — do not start these.**
+* The journal (`OPEN_ITEMS` I1), then the cuts to its limit.
+* Author details (I2), data availability (I3), the review folder in git (I6).
+* Reading the new thesis passages; merging PR #1.
+* Radios for a measured capacity (H3, G4).
+* Mobility (E20) and Direction C, deferred by him: plans written, not to be started unprompted.
+
+**What an agent may do unprompted.** All of these are optional, and no claim depends on them:
+* G27 — candidate rules for the radio's own queue, tested in the event model against the 36
+  measured windows;
+* G6 (a) — the rate-offset source's spread;
+* G15 — crypto timing on the Pi 3B+ and BeagleBone;
+* G37 — why four cores give 3.36 times one.
+
+Each new experiment is registered first (`predictions/<ID>.md`, tag `prereg-<ID>`).
+
+---
+
+## (History) STATE CHANGED 2026-10-07: the paper was revised after the supervisor's review
+
+**Read the October section at the top of `CLAUDE.md`'s status board before anything below.**
+Everything under the later headings of this file describes the project as of August 2026 and is
+superseded wherever the two disagree — in particular the framing section's "four of seven", the
+58.7 % and the 1.9–3.2×.
+
+**What happened.** The supervisor reviewed the paper. Checking the review exposed that the
+headline design had never been built as a frame. It was built (`wire_v2`, sender, receiver), every
+result was recomputed from it, the paper was rewritten around it, and the thesis chapters were
+brought into line. Findings F45–F71; the method and the wrong turns are in `LOGBOOK.md`.
+
+**Then it was audited again (2026-10-07).** Mohamed asked for the revised paper and thesis to be
+checked against the review once more. Looking each request up in the built PDF found eleven
+places where the paper did less than the response claimed, and four places in the thesis that
+still carried an over-claim the paper had lost. All fixed (F55); a figure, a simulation of the
+stream-signing baselines (follow-up F3) and one more source were added (F56, F57). The top entry
+of `LOGBOOK.md` is that pass.
+
+**What is waiting, in the order it should be done:**
+
+000. ⚠️ **2026-10-09, night — four weak points of that review were worked** (F84, F85):
+   * **Unequal power and capture raise the capacities by about an eighth** (four registered
+     predictions, all held). **What remains is hidden stations (`OPEN_ITEMS` G35)**: a swarm
+     wider than its carrier-sense range. It needs a model with a sensing graph; no hardware.
+   * **The board needs three of its four cores for 124 nodes**, measured; "2.2" was arithmetic.
+   * The abstract says where the design gains nothing; a figure shows capacity against
+     deadline; the introduction leads with the capacity rule (G36 is Mohamed's to settle).
+00. ⚠️ **2026-10-09, afternoon — the paper was reviewed as a supervisor would review it, and
+   Mohamed's five decisions on the review were carried out** (findings F80–F82; branch
+   `p10-followups`). What changed that a new session must know:
+   * **The receiver keeps frames** (F81). Before, nothing it held could be checked by a third
+     party. Receive time on the Pi is **1.43 ms** per four-record frame; **57 nodes per core
+     stands by 0.18 %**. A test holds the hashes of the three source files as timed: change one
+     and the time must be measured again on the board.
+   * **The exclusion is "eight: five in any format, three in ours"**, under five conditions.
+   * **Two certificate columns**: per five frames, and per 500 ms (159.93 / 51.41 B per record).
+   * **Batches of two, three and eight records were simulated** (F82), six predictions
+     registered first, all held. The rule and the model now hold across the batch.
+   * **Nothing from the review is open** (F83): four sources for the related-work gaps were
+     obtained from open copies, read and cited (frame aggregation, erasure-coded stream
+     authentication, ADS-B, age of information), and the no-fit closed form (5.5 %) is quoted.
+     The paper is 11 pages. Two papers are still wanted and closed access: Kaul et al. 2012
+     and Park et al. 2003 (`docs/literature/README.md`).
+   * **What the review said is still weakest, and no decision of that day removes:** every
+     capacity is of one idealised collision domain, and hardware supports the access rule at
+     saturation only (G4, three to five radios).
+0. ⚠️ **2026-10-09, night — read this before the items below.** The boards were on. **Contention
+   was measured between two radios** (findings F73–F76): the standard's rule holds within 6 %
+   for two saturated senders; a registered prediction below saturation held at two loads and
+   failed at the third; an August "airtime" figure is withdrawn. **The lean codec is timed on
+   the Pi** (F77): the prototype's receiver serves 57 nodes per core, not 296. What that leaves:
+   * **Mohamed — one decision:** does submission still wait for three to five radios, or go
+     with what two showed (`OPEN_ITEMS` G2)?
+   * **The rig passes and the energy steps are done (F78, F79):** after a loose ground and a
+     weak branch were found by test, Mohamed swapped the supplies; pi-B is on meter channel 2.
+     The lean sender is metered (155.4 µJ per record; 2.7 times the first format's), the JSON
+     row re-metered, a control ties the rig to July's within 2.2 %. **What is left at the
+     bench: a 10 Ω resistor for the calibration nobody has ever done (G22), and the smaller
+     boards (G15).**
+   * **No hardware needed (G27):** find which rule for a radio's own queued frames reproduces
+     the 36 windows on disk, in the event model. Register before fitting.
+1. **Mohamed's decisions — ALL TAKEN on 2026-10-08** (`DECISIONS.md`, "Decided by Mohamed,
+   2026-10-08"). What they leave for him: read and merge the pull request from
+   `p9-supervisor-revision`; supply the supervisor's name, an affiliation, an ORCID and a
+   funding statement; find one or two more 5 GHz radios (G4).
+2. **The response to the supervisor goes out after the bench session** (decided 2026-10-08). It
+   is written, point by point, at `~/authbc_package/docs/SUPERVISOR_RESPONSE_2026-10.md` —
+   outside this repository, and it stays there (R18). The audit it is built from is beside it.
+   ⚠️ The bench session is half done (steps 1 and 5); whether the response waits for the rest
+   is Mohamed's call.
+3. **Contention among three to five radios** (`OPEN_ITEMS` G4) — each station sending rarely
+   enough to hold one frame, which two boards cannot do and the capacities assume. The
+   predictions are registered (`456a4e7`). Two Pi 4 and a Pi 3B+ make three.
+4. **Still open from the bench session:** crypto timing on the Pi 3B+ (G15); calibrate the
+   meter (G22). G9 and G11 closed on 2026-10-09.
+   **Needs no hardware:** PX4 software-in-the-loop for records at 50 Hz and the real stream's
+   timing (G7, G12).
+5. **Open questions about the simulator** (G6): why two traffic sources differ by 0.003 in mean
+   delivery, and why a rate offset leaves more spread than predicted. Neither touches a reported
+   number.
+6. **The thesis.** It builds (`make thesis`), ch. 3, 4, 7, 8, 10, 11 carry the October corrections,
+   and `thesis/STATUS.md` is still right that ch. 2 is the largest gap.
+
+**Decided in October — do not re-litigate without new evidence:** the lean format lives beside
+the frozen first format (D6 holds); every frame starts with a full record (r = 1); capacities are
+simulated per configuration with the send time redrawn each period; N_max is the grid crossing of
+the mean, with the interpolated crossing beside it; every number in the paper is generated.
+
+```bash
+git clone https://github.com/besco1998/fanet-authbc.git
+cd fanet-authbc && git checkout p9-supervisor-revision
+make setup && make all          # green == you have reproduced the deterministic layer
+make paper thesis               # numbers.tex from results/, then both PDFs
+```
+
+---
+
+
 ## ⚠️ STATE CHANGED 2026-08-08: the research is done; the calendar is the constraint
 
 Charter phases **P0–P8 are all delivered**. Six audit passes on the paper; the last three found a
@@ -8,7 +144,8 @@ rounding error and a duplicated word, which is the signal of diminishing returns
 **Two things remain, and only one of them exists yet:**
 
 1. **Submit the paper.** `paper/SUBMISSION_CHECKLIST.md` is the worklist. Venue-independent items
-   are done (data-availability, competing-interests and generative-AI statements, keywords).
+   are done (data-availability and competing-interests statements, keywords; the generative-AI
+   statement was removed by Mohamed on 2026-10-24).
    ⚠️ Blockers only Mohamed can clear: **affiliation** (a literal placeholder in `main.tex`),
    ORCID, funding statement, whether the supervisor is a co-author, and two MDPI PDFs that need a
    browser. Venue is undecided; the checklist tabulates what changes for Ad Hoc Networks /
@@ -35,7 +172,7 @@ cd fanet-authbc && git checkout p8-audit-and-corrections
 make setup && make all          # green == you have reproduced the deterministic layer
 ```
 
-`make all` = lint + mypy + 1296 fast tests + the 24-test frozen gate. NS-3 and the Pi rig are
+`make all` = lint + mypy + 2438 fast tests + the 43-test frozen gate. NS-3 and the Pi rig are
 optional (`docs/05_REPRODUCTION_GUIDE.md`). ⚠️ A fresh clone has **no NS-3 tree** — it is gitignored
 by design. Fetch it from the **GitLab** archive; `nsnam.org/releases/...` returns an HTML error page.
 
@@ -152,7 +289,7 @@ audit spent its time removing.
 | # | work | why | effort |
 |---|---|---|---|
 | ~~6~~ | ~~PQC extension section~~ | **DONE** — Limitations §, backed by `results/raw/pqc_projection.csv` | — |
-| 7 | References **46** → 45–60 | 29→39 done from held+read sources; the rest needs sourcing **and reading** | 1 wk |
+| 7 | References **51** rendered in the revised paper (81 in the shared bibliography; **46** before the October rewrite) → 45–60 | 29→39 done from held+read sources; the rest needs sourcing **and reading** | 1 wk |
 | ~~S9~~ | ~~Re-state or drop the pre-registration claim~~ | **DONE (F40)** — withdrawn, not reconstructed | — |
 
 ### Optional

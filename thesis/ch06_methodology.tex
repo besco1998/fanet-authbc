@@ -1,16 +1,19 @@
 \chapter{Experimental Methodology}\label{ch:methodology}
 
-\needswork{STATUS: DRAFTED from \texttt{docs/04}. The statistical rules below are binding on every
-result in \Cref{ch:bytes}--\Cref{ch:lowrate}.}
+This chapter states how every result of \Cref{ch:bytes}--\Cref{ch:lowrate} was obtained: the
+statistical rules, the telemetry the measurements run on, the two simulation scenarios, and the
+hardware with its uncertainty.
 
-\section{Binding statistical rules}
+\section{Binding statistical rules}\label{sec:rules}
 
 Every experiment obeys the following, and where a result predates a rule that is recorded rather
 than retrofitted:
 
 \begin{itemize}
 \item At least $30$ seeded repetitions per configuration, with seeds logged in the artifact.
-\item Report median and bootstrap $95\%$ confidence interval over $10^4$ resamples.
+\item Report a $95\%$ interval with every estimate: a Student-$t$ interval for a mean over seeds,
+      and an expanded percentile bootstrap interval over $10^4$ resamples for an interpolated
+      crossing (\Cref{sec:coverage}).
 \item Microbenchmarks: $\geq 10^4$ iterations after $10^3$ warm-up, garbage collection disabled,
       runs spanning a suspend discarded.
 \item Comparisons state effect size; never bare means.
@@ -34,6 +37,15 @@ catalogues instances of each, several found in this project's own work \emph{aft
 rule was in force.
 \end{remark}
 
+\subsection{Intervals that cover what they say}\label{sec:coverage}
+
+Until October 2026 every interval in this thesis was a plain percentile bootstrap. A test with a
+known truth and thirty seeds found that it covered \covPlainLo--\covPlainHi\% of the time, not
+$95\%$: with thirty values the bootstrap distribution is too narrow. An interval of a mean is now
+a Student-$t$ interval, and an interval of a crossing an expanded percentile bootstrap
+interval~\cite{hesterberg2015bootstrap}; in the same test both covered
+\covFixedLo--\covFixedHi\%. The printed intervals widened slightly and no estimate moved.
+
 \subsection{Thresholds must be applied to distributions}
 
 A criterion of the form $V \geq 0.95$ is a \emph{reliability} requirement. Applying it to a mean
@@ -50,16 +62,22 @@ data exist}, as its own commit, so the ordering is third-party checkable in the 
 This practice is enforced rather than aspirational, and it has cost the project a claim: one
 pre-registration assertion was \emph{withdrawn} rather than reconstructed, because writing an
 expectations file after results are known manufactures evidence. It has also exposed a subtler
-defect in this author's own practice, recorded in \Cref{ch:validation}: a pre-registered
+defect in this work's own practice, recorded in \Cref{ch:validation}: a pre-registered
 \emph{directional} prediction that the experiment had no statistical power to resolve.
 
-\needswork{TO ADD: a table of every pre-registration in the project with its commit hash, the
-prediction, and the outcome. The material exists in \texttt{docs/}; the table does not.}
+\Cref{app:prereg} lists every registration with its commit, what it predicted and what
+happened. Of its twenty-two entries, eight failed in whole or in part, one could not be scored and
+one was met by a criterion that could not have failed; one has been run with two boards of the
+two to five it covers. They are in the table with the rest. The experiments added in October
+2026 are in a second table of their own (\Cref{tab:prereg-revision}): eighteen, each registered
+before it ran, with the plan's statements and finer ones added in the same registration. In
+fifteen of the eighteen at least one statement missed or failed, and each is reported as it
+came out.
 
 \section{Experiment matrix}
 
-\begin{center}
-\begin{tabular}{lll}
+{\small
+\noindent\begin{tabularx}{\textwidth}{@{}l Y Y@{}}
 \toprule
 Exp & Question & Primary output \\
 \midrule
@@ -69,19 +87,79 @@ E3 & loss frontier (T3) & measured $V$ vs $(1-p)^n$; goodput; Pareto plot \\
 E4 & scheme selection (T4) & energy/record, verification wall, crossover \\
 E5 & co-design end-to-end (T5) & bytes/energy/goodput vs baselines \\
 E6--E7 & low-rate arm and its co-design & feasibility partition, Pareto front \\
-E8 & capacity envelope & channel utilisation, $\Nmax$ \\
+E8 & capacity envelope from one load ceiling (superseded) & channel utilisation \\
+\midrule
+\multicolumn{3}{l}{\emph{Added October 2026, on the frame built as one object}} \\
+E9 & what a frame is made of & field-level byte budget, both formats \\
+E10 & loss with the decoder in the loop (T3\textquotesingle) & measured $V$ against key-record interval, three loss processes \\
+E11 & the step-by-step comparison & bytes, $\Nmax$, receiver CPU, energy per rung \\
+E12 & which link carries a signed, chained frame (T6) & exclusion matrix, twelve data rates \\
+E13 & freshness with every term & fill, channel, verification against $\Dmax$ \\
+E14 & the low-rate batch at its own record spacing & records per frame, sustainable rate \\
+E15 & other PHY rates (model only) & saturation bound against rate \\
+E16 & sender energy, metered against modelled & \si{\micro\joule} per record \\
+E17 & classical stream-signing schemes (model only) & authenticator bytes, frames/s, saturation bound \\
+--- & direct search for $\Nmax$ (simulation) & delivery against $N$, bootstrap interval \\
+--- & record sizes on public flight logs & key record and delta sizes against the generator \\
 \bottomrule
-\end{tabular}
-\end{center}
+\end{tabularx}
+}
 
-Baselines throughout are A+JSON (naive), A+CBOR (compression-only) and D over-aggregated.
+Baselines in E1--E8 are A+JSON (naive), A+CBOR (compression-only) and D over-aggregated. From E11
+on the comparison is step by step: each row changes one thing, because A+CBOR signs every
+record \emph{and} sends one record per frame and so confounds two effects.
 
-\section{Simulation campaign}
+\section{Telemetry}\label{sec:telemetry}
 
-The simulation scenario uses IEEE 802.11a ad-hoc at $\SI{6}{\mega\bit\per\second}$, RTS/CTS off,
-with $N$ saturated senders in \emph{both} unicast and broadcast modes, frame sizes taken from the
-real framer output. Transport is a packet socket rather than a flow monitor, because MAC-level
+A record holds nine integers: a millisecond timestamp; latitude and longitude in units of
+$10^{-7}$ degree; altitude in centimetres; three velocity components in centimetres per second;
+battery level in percent; and a flight mode. Integers and not floating point, because a
+canonical encoding must give the same bytes on every platform.
+
+Records come from a seeded generator. A vehicle starts at a random position with a horizontal
+speed of up to $5$\,m/s in each axis; at every step its velocity changes by at most
+$0.1$\,m/s per axis, its position integrates that velocity with a jitter of two units, its
+battery falls by one percent with probability $0.02$ and its mode changes with probability
+$0.01$; the timestamp advances by $50 \pm 3$\,ms. Every size in this thesis that is not
+marked otherwise is measured over thirty seeds of one thousand such records.
+
+Two properties of the generator limit what its sizes mean, and both are checked.
+\emph{Its records are $50$\,ms apart}, the spacing of the $20$~records/s operating point it
+was written for, while the adopted point is $50$~records/s. For the frame-linked format that changes
+nothing: the delta record is already at the floor of the format at $50$\,ms, nine bytes for
+nine fields, and it is the same nine bytes when the generator is run at $20$\,ms
+(\Cref{sec:e6}). \emph{It is synthetic.} \Cref{sec:e6} sets it against twelve public flight
+logs at the spacing those logs allow, and against an autopilot run in simulation at $20$\,ms.
+
+\section{Simulation campaign}\label{sec:simulation-campaign}
+
+Two scenarios are used, for two different questions. The \emph{saturation} scenario validates the
+channel models: IEEE 802.11a ad-hoc at $\SI{6}{\mega\bit\per\second}$, RTS/CTS off, with $N$
+saturated senders in \emph{both} unicast and broadcast modes, frame sizes taken from the real
+framer output. The \emph{delivery} scenario measures capacity: the same channel with each node
+offering one frame per period, so the network runs at a chosen load and the delivered fraction is
+read at the receivers. The capacities of \Cref{ch:codesign} come from the second, with the send
+instant redrawn in every period for the reasons given in \Cref{sec:capacity}. Transport is a packet socket rather than a flow monitor, because MAC-level
 goodput with no addressing artifacts is what the models predict.
+
+Five further scenarios were added in October 2026, each a separate program so that the
+published runs stay as they were. Nodes spread over discs and squares of up to $1$\,km with
+log-distance path loss, Nakagami fading and capture, still or moving on independent
+Gauss--Markov paths (\Cref{sec:spread-swarm}); a swarm that grows or merges while a controller
+chooses its batch (\Cref{sec:adaptive}); the design map's cells at other record rates and
+deadlines (\Cref{sec:design-map}); 802.11a at 12 and 24\,Mb/s and the 10\,MHz channel of
+802.11p; and the stream-signing schemes of \Cref{sec:stream}, each record counted only if it
+verifies in time. Collision loss was also traced link by link at the capacity crossing
+(\Cref{sec:e7}).
+
+\paragraph{How a capacity is read.} A configuration is a frame size and a frame rate per node.
+It is simulated over a grid of neighbourhood sizes $N$, thirty seeds per point, twenty seconds
+per run, and the delivered fraction of a run is the number of frames received over the number
+sent times $N-1$. $\Nmax$ is the largest simulated $N$ whose mean delivered fraction is at
+least $0.95$ with every smaller simulated $N$ also passing. Its interval is the $2.5$--$97.5$
+percentile of that quantity over ten thousand bootstrap resamples of the seeds. A second reading
+is given beside it wherever the two differ: the largest $N$ at which at least $95\%$ of the
+individual runs reach $0.95$.
 
 \begin{remark}[The comparison rule]
 Each mode is compared \emph{only} to its matching analytic variant: unicast to the acknowledged DCF
@@ -89,14 +167,147 @@ model, broadcast to the published broadcast model. Mixing them is the single mos
 fabricate a model gap, and this project did exactly that for several phases before catching it.
 \end{remark}
 
-\section{Hardware campaign}
+\section{Hardware campaign}\label{sec:hardware-method}
 
-Two Raspberry Pi 4 units, headless with the performance governor pinned. Timings are re-run from
-the microbenchmark suite; energy uses external current sensors on a separate measurement host with
-a GPIO synchronisation line, so the benchmarked device is not instrumented by itself.
+\subsection{Boards and timing}
 
-The energy harness prints its \emph{predicted} value before reading the meter, deliberately, so a
+The measured platform is the Raspberry~Pi~4 (Cortex-A72), run headless with its frequency
+governor pinned to \texttt{performance}. Each primitive is timed by the rules of
+\Cref{sec:rules}; \Cref{tab:timings} gives the medians used throughout. The ordering of the two
+$64$\,B schemes differs between this board and a desktop processor, which is why the timings
+of the deployment platform are the ones used.
+
+\begin{table}[h]
+\centering
+\caption{Primitive timings on the Raspberry~Pi~4, medians.}
+\label{tab:timings}
+\begin{tabular}{lrr}
+\toprule
+ & sign & verify \\
+\midrule
+Ed25519 & \tSignEd\,\si{\micro\second} & \tVerEd\,\si{\micro\second} \\
+ECDSA P-256 & \tSignEc\,\si{\micro\second} & \tVerEc\,\si{\micro\second} \\
+BLS12-381 & \tSignBls\,ms & \tVerBls\,ms \\
+\midrule
+SHA-256 of one record & \multicolumn{2}{r}{\tHash\,\si{\micro\second}} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{The energy rig}
+
+Energy is measured outside the board. An INA219 current and voltage sensor with a
+$0.1\,\Omega$ shunt sits in the board's $5$\,V supply and is read fifty times a second by a
+microcontroller, which has no operating system to perturb the schedule and adds no load to the
+device under test. Each reading is one conversion of about half a millisecond --- a sample, not
+an average --- so the mean over a window is the mean power only if the load does not repeat in
+step with the sampling; a loop that runs back to back does not. The board marks the start and end of each measurement window on a GPIO line
+that the microcontroller records with every sample, so the samples that belong to a window are
+known without aligning two clocks.
+
+A measurement is a pair of sixty-second windows: one idle, one in which the board runs the
+operation in a tight loop and counts its completions $n$. With $\bar P$ the mean power of a
+window,
+\[
+E_{\mathrm{op}} = \frac{(\bar P_{\mathrm{load}} - \bar P_{\mathrm{idle}})\; t_{\mathrm{load}}}{n} .
+\]
+Each configuration is measured five times and the median is reported with the range. The board
+is checked for throttling before and after every window --- by the firmware's flags and, since
+October 2026, by the kernel's count of under-voltage events, which still moves once the flags
+are set --- and a flagged window is not used. Before a session the rig itself is put through a
+fixed sequence (\texttt{hw/rig\_check.py}): the voltage reading must not move with the state of
+the marking line, the supply must hold with every core busy, and the board must log no
+under-voltage. The captures of July pass the meter's part of that test; a rig that fails is not
+measured on. The harness prints the value it \emph{expects} before it reads the meter, so that a
 measurement cannot be quietly fitted to expectation.
 
-\needswork{TO ADD: the measurement uncertainty budget for the energy rig. The residual model gap is
-stated in \Cref{ch:validation} but its error bars are not derived.}
+\subsection{The compiled sender, and floods against one core}
+
+In October 2026 the board metered the compiled sender of \Cref{sec:compiled}, as one process
+running back to back for each sixty-second window, beside a control that repeats a row of the
+record-linked format; the rig check passed the same day. The sensor's gain was taken as calibrated.
+The same board received floods, with no radio in the path. A receiver process pinned to one
+core reads a local UDP socket; a sender process on another core offers the honest load of
+\flSenders{} senders, each at $12.5$ frames/s --- one core's share of the design's neighbourhood
+--- and forged frames at a set rate. With each admission step of \Cref{sec:admission} switched on
+or off, honest $V$ is the honest frames accepted over those sent; frames the kernel drops at a
+full socket count as lost, as they are for an overloaded receiver.
+
+\subsection{The model the meter is compared with}
+
+The model composes separately measured times with two measured powers: $P_c = 0.749$\,W, the
+incremental power of the processor while it computes, and $P_r = 0.218$\,W, that of the radio
+while it receives. Per record, for one signature over a frame of $b$ records,
+\[
+E = \underbrace{P_c\Bigl(t_{\mathrm{enc}} + t_h + \frac{t_{\mathrm{sg}}}{b}\Bigr)}_{\text{sender}}
+  + \underbrace{P_c\Bigl(\frac{t_v}{b} + t_h\Bigr) + P_r\,\frac{T_{\mathrm{air}}}{b}}_{\text{receiver}} ,
+\]
+with $t_{\mathrm{enc}}$ the time to encode a record, $t_h$ to hash it, $t_{\mathrm{sg}}$ and
+$t_v$ to sign and verify, and $T_{\mathrm{air}}$ the airtime of the frame. Only the sender's
+term is metered (\Cref{tab:energy}). The model reached this form through two corrections that
+the meter forced. It had no hashing term, although every record is hashed once by the sender to
+extend the chain and once by the receiver to check it. And its processor power had been taken
+as the median over isolated primitives, $0.634$\,W; metered on four composed pipelines the
+power is $0.749$\,W, the four agreeing within $3.8\%$, so one constant is adequate; the
+composed value is $18\%$ above the earlier one. Two of those four pipelines are the rows of
+\Cref{tab:energy}. The power in the model is thus the median of the very runs it is set beside:
+what that table tests is the composition of the times, and it cannot test the power.
+
+The radio's power is the weakest of the model's inputs and enters only the figures that are
+labelled as modelled. $P_r$ is the power the \emph{receiving board} added while a saturated
+unicast stream arrived on the $2.4$\,GHz band: two repetitions of thirty seconds, $0.205$ and
+$0.231$\,W. It therefore includes the processor's share of receiving and the acknowledgements
+that radio sent, and it is applied here to broadcast frames on $5$\,GHz, which are not
+acknowledged. It has not been measured in the configuration it is used for.
+
+\subsection{Uncertainty of the energy figures}\label{sec:energy-uncertainty}
+
+{\small
+\noindent\begin{tabularx}{\textwidth}{@{}p{3.4cm} Y >{\raggedright\arraybackslash}p{4.6cm}@{}}
+\toprule
+source & how it enters & size \\
+\midrule
+sensor gain (shunt, converter) & multiplies every power reading & not calibrated against a
+reference load; cancels in every ratio \\
+sensor offset & adds to every power reading & cancels in
+$\bar P_{\mathrm{load}} - \bar P_{\mathrm{idle}}$ \\
+idle drift & the idle window is not simultaneous with the load window & idle power moved by
+$5$--$9$\,mW across a session, about $1\%$ of the difference \\
+repeatability & five repetitions per configuration & half-range $0.6\%$ and $1.1\%$ \\
+sampling & three thousand samples per window & small against the two above \\
+time and count & a monotonic clock and an exact count & negligible \\
+\bottomrule
+\end{tabularx}
+}
+
+\vspace{0.5em}
+\noindent Three consequences follow. The \emph{ratios} this thesis reports --- the batched
+sender against the per-record one, and the meter against the model --- do not depend on the
+sensor's gain, because the model's power constant was measured with the same sensor: they carry
+about one percent, from drift and repeatability. The gap between meter and model, $7.5$ to
+$12.3\%$, is therefore several times the uncertainty of its measurement and is a property of the
+prototype (\Cref{ch:codesign}). The \emph{absolute} values in microjoules carry the sensor's
+gain error in addition, and that was not measured: the calibration against a known load that
+the procedure prescribes was not recorded for these runs. They should be read as accurate to
+the sensor's factory tolerance and no better. One partial check exists. In October 2026 the
+baseline row was metered again on the second board through the second sensor and came out
+\enCtlVsJuly\% from July's figure (\Cref{tab:energy}). Two sensors with a gross error in one of
+them would not agree so; two sensors sharing an error --- the same nominal shunt, the same
+calibration word --- would, and this does not exclude it. The row that could not be reported in
+July, with JSON records, was metered again there with ten repetitions and no window disturbed:
+\enJsonMeas\,\si{\micro\joule} \enJsonRange{} per record.
+
+One configuration is not reported. In three of its five repetitions the idle window read up to
+$0.5$\,W above the others --- a background process on the board --- which makes the difference
+meaningless. It is listed as unusable and is to be measured again.
+
+\subsection{Two radios}
+
+Two boards in ad hoc mode on a $5$\,GHz channel. With one sending broadcast frames and one
+counting them, they measure the loss of a link with no contention, and the time from one frame
+of a saturated sender to its next, which the receiver reads from the sequence numbers it spans
+and its own clock. With both sending and both counting they measure the loss among stations
+that contend, at a set load or saturated; each sender then draws its send instant within every
+period, as the simulations do. The chip's frame-burst mode is read from the firmware and logged
+before and after every session. \Cref{sec:hardware} reports what these experiments do and do
+not support.

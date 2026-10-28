@@ -1,0 +1,10 @@
+# E13 — end-to-end delay of the oldest record against D_max (docs/02 §7; review comment 4.9).
+experiment: freshness-budget
+operating_points:
+  - ["adopted", 50, 0.100]
+  - ["relaxed", 20, 0.250]
+batch: 4
+u_v95: 2.435                          # use the most loaded measured point not above this
+delay_csv: ns3_delay_ci.csv           # NS-3, 30 seeds, N = 50, 288 B frames (frozen)
+crypto_csv: p1_crypto.authbc-pi4a.csv
+schemes: [ed25519, ecdsa_p256, bls]

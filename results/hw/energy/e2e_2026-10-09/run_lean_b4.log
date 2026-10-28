@@ -1,0 +1,28 @@
+========================================================================
+D1 end-to-end energy validation — EXPECTED VALUE, stated before measurement
+========================================================================
+  configuration     : lean + ed25519 + placement B, b=4, H_f=44 B
+  model inputs      : p_cpu=0.749 W, t_enc=47.76 µs, t_sign=88.12 µs
+  scope             : SENDER side (encode+chain+sign). Verify excluded from both the pipeline and the prediction.
+  PREDICTED CPU     : 162.551 µJ/record
+  acceptance        : |measured - predicted| / predicted <= 10 %
+                      a larger gap is a FINDING to explain in writing (Law 7),
+                      never a tolerance to widen (Law 3).
+
+  sync: _open_v2 unavailable (ModuleNotFoundError: No module named 'gpiod')
+  sync: _open_v1 unavailable (ModuleNotFoundError: No module named 'gpiod')
+  rep1 idle                 frames=0        records/s=      0.0
+  rep1 e2e_frame_pipeline   frames=70743    records/s=   4716.1
+  rep2 idle                 frames=0        records/s=      0.0
+  rep2 e2e_frame_pipeline   frames=71424    records/s=   4761.5
+  rep3 idle                 frames=0        records/s=      0.0
+  rep3 e2e_frame_pipeline   frames=71241    records/s=   4749.3
+  rep4 idle                 frames=0        records/s=      0.0
+  rep4 e2e_frame_pipeline   frames=71243    records/s=   4749.4
+  rep5 idle                 frames=0        records/s=      0.0
+  rep5 e2e_frame_pipeline   frames=71402    records/s=   4760.0
+
+  manifest -> /home/pi/e2e_runs/lean_b4/manifest_1791524218.json
+  NEXT: reduce the INA219 samples against this manifest, then record measured vs
+        predicted (162.551 µJ/record) in docs/audits/ and close D1.
+RUN_EXIT=0

@@ -17,8 +17,10 @@ from pathlib import Path
 
 import pytest
 
+from authbc.bench import leanframes
 from authbc.models import bianchi, broadcast_dcf, energy, lora, optimizer
 from authbc.models.energy import EnergyConfig, Placement
+from authbc.models.frame import FlatLayout
 from authbc.placement import framer
 
 REPO = Path(__file__).resolve().parents[1]
@@ -163,26 +165,30 @@ class TestFrameHeaderIsARange:
         assert framer.measure_frame_header_bytes(23) == 44
         assert framer.measure_frame_header_bytes(24) == 46
 
-    def test_dr3_exclusion_is_conditional_on_h_f_at_least_39(self) -> None:
-        """⚠️ THE headline: 'four of seven EU868 rates excluded' holds only for H_f ≥ 39 B.
+    def test_dr3_exclusion_does_not_turn_on_h_f_after_all(self) -> None:
+        """⚠️ Retraction (audit F47). This test used to hold that DR3 is excluded only for H_f ≥ 39.
 
-        DR0–DR2 are unconditional (64 B signature will not fit a 51 B payload at ANY header
-        size). DR3 turns on the header, and H_f = 44 is the TOP of the measured 38–44 range —
-        i.e. the value most favourable to the exclusion, since s_max = M − H_f − g_a.
+        That came from s_max = M − H_f − g_a against a 13 B record, which charged neither the
+        chain link nor a record that decodes alone. With a self-contained record — the smallest
+        the first format's delta encoder emitted over 30 000 records is 56 B, its 32 B link
+        included — the signature and that record are 120 B before any header: DR3 is excluded at
+        EVERY header size in the measured range, and at zero.
         """
-        m, g_a, s_min = lora.EU868_DATA_RATES[3].max_app_payload, 64.0, 13.0
-        assert m == 115
-        for h_f in (36, 37, 38):
-            assert optimizer.exclusion_tier(m, g_a, h_f, s_min) is None, (
-                f"at H_f={h_f} DR3 is FEASIBLE and the headline is three of seven, not four")
-        for h_f in (39, 40, 44):
-            assert optimizer.exclusion_tier(m, g_a, h_f, s_min) == "encoding"
+        m, g_a = lora.EU868_DATA_RATES[3].max_app_payload, 64.0
+        key, delta = leanframes.v1_delta_record_sizes()
+        assert m == 115 and key.lo == 56 and g_a + key.lo == 120 > m
+        for h_f in (0, 36, 38, 39, 44):
+            layout = FlatLayout("first", header_bytes=h_f, link_bytes=0,
+                                key_record_bytes=key.lo, delta_record_bytes=delta.lo)
+            assert layout.exclusion(g_a, m) == "record"
 
     def test_dr0_to_dr2_are_unconditional_at_every_header_size(self) -> None:
         for h_f in (0, 38, 44, 200):
+            layout = FlatLayout("any", header_bytes=h_f, link_bytes=0, key_record_bytes=13,
+                                delta_record_bytes=13)
             for dr in (0, 1, 2):
                 m = lora.EU868_DATA_RATES[dr].max_app_payload
-                assert optimizer.exclusion_tier(m, 64.0, h_f, 13.0) == "signature"
+                assert layout.exclusion(64.0, m) == "signature"
 
 
 # ===================================================================== A4 — s depends on run length
@@ -295,27 +301,27 @@ class TestNmaxSearchIsSound:
         assert all(y > x for x, y in zip(us, us[1:], strict=False))
 
 
-# ===================================================================== Bor comparison
-class TestBorComparisonIsQuotedHonestly:
+# ====================================================== Haxhibeqiri et al. comparison
+class TestHaxhibeqiriComparisonIsQuotedHonestly:
     def test_their_n_max_sits_inside_their_own_fits_unreliable_region(self) -> None:
-        assert lora.bor2017_n_max(0.95) == 4
-        assert lora.bor2017_loss_pct(0.0) == pytest.approx(1.7833, abs=1e-3)
-        assert lora.bor2017_intercept_share(4) > 0.35
+        assert lora.haxhibeqiri2017_n_max(0.95) == 4
+        assert lora.haxhibeqiri2017_loss_pct(0.0) == pytest.approx(1.7833, abs=1e-3)
+        assert lora.haxhibeqiri2017_intercept_share(4) > 0.35
 
     def test_removing_the_intercept_widens_the_gap_rather_than_closing_it(self) -> None:
         """Conservative direction: the honest correction favours THEM, so quoting 4 is safe."""
-        b0 = lora.bor2017_loss_pct(0.0)
-        assert lora.bor2017_loss_pct(5) - b0 < 5.0
+        b0 = lora.haxhibeqiri2017_loss_pct(0.0)
+        assert lora.haxhibeqiri2017_loss_pct(5) - b0 < 5.0
 
     def test_the_pessimism_ratio_changes_sign_and_must_not_be_quoted_as_one_number(self) -> None:
         """⚠️ At N=2 WE are the more optimistic model — in the region deciding N_max."""
         art = {r["n_devices"]: r for r in _rows("lora_external_check.csv")
                if r["n_devices"].isdigit()}
-        r2 = lora.bor2017_pessimism_ratio(float(art["2"]["authbc_ns3_loss_pct"]), 2)
-        r50 = lora.bor2017_pessimism_ratio(float(art["50"]["authbc_ns3_loss_pct"]), 50)
+        r2 = lora.haxhibeqiri2017_pessimism_ratio(float(art["2"]["authbc_ns3_loss_pct"]), 2)
+        r50 = lora.haxhibeqiri2017_pessimism_ratio(float(art["50"]["authbc_ns3_loss_pct"]), 50)
         assert r2 < 1.0 < r50
         assert art["2"]["who_is_optimistic"] == "AUTHBC"
-        assert art["50"]["who_is_optimistic"] == "Bor2017"
+        assert art["50"]["who_is_optimistic"] == "Haxhibeqiri2017"
 
 
 # ===================================================================== M4 — U ceiling invariance

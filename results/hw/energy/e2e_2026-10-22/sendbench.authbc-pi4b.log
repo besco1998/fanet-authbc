@@ -1,0 +1,20 @@
+# host authbc-pi4b 2026-10-22T20:04:23+03:00 throttled=0x0 temp=51.1'C frequency(48)=1800404352 load 0.43 0.29 0.11 2/174 2060 rustc rustc 1.99.1 (58cf8f9c3 2026-10-13)
+## b 4 run 1
+send_ns_per_frame,103390
+frames,1000
+## b 4 run 2
+send_ns_per_frame,103425
+frames,1000
+## b 4 run 3
+send_ns_per_frame,103376
+frames,1000
+## b 1 run 1
+send_ns_per_frame,93932
+frames,4000
+## b 1 run 2
+send_ns_per_frame,93769
+frames,4000
+## b 1 run 3
+send_ns_per_frame,93777
+frames,4000
+# end 2026-10-22T20:04:52+03:00 throttled=0x0 temp=53.0'C

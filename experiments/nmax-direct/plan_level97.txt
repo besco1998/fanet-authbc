@@ -1,0 +1,5 @@
+# Review 2026-10-27, item S-01 (predictions/S01.md): capacity at 97 % delivery, cells C and D,
+# the standard window, the designated source (one period).
+#   python ns3/run_nmax_direct.py --plan <this file> --out-stem ns3_level97 --no-summary
+C period 25 26 27 28 29 30 31
+D period 86 89 92 95 98 101 104

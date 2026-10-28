@@ -1,0 +1,76 @@
+theory AUTHBC_Frames_Time
+begin
+
+/*
+ * Revision A6, lemma 5, after registration (predictions/A6.md, outcome). The smallest model in
+ * which a held-back frame can be told from a fresh one: a clock of natural numbers that only
+ * advances; a sender stamps a signed frame with the tick current when it sends; a receiver
+ * reads the tick current when it accepts. Ticks are persistent facts (!Time) and the reads are
+ * held to the latest tick by a restriction — in the registered model one linear clock was
+ * threaded through every rule, and the search did not end. Without -D=TIME the receiver
+ * accepts whatever verifies (the published receiver); with it, only a frame stamped at most one
+ * tick before (the A5 window, abstracted).
+ */
+
+builtins: signing, natural-numbers
+
+rule Register_key:
+    [ Fr(~sk) ] --[ OnlyOnce(<'key', $S>) ]-> [ !Ltk($S, ~sk), !Pk($S, pk(~sk)), Out(pk(~sk)) ]
+
+rule Reveal_key:
+    [ !Ltk($S, sk) ] --[ Reveal($S) ]-> [ Out(sk) ]
+
+rule Clock_start:
+    [ ] --[ OnlyOnce('clock'), Tick(%1) ]-> [ Clock(%1), !Time(%1) ]
+
+rule Clock_tick:
+    [ Clock(%t) ] --[ Tick(%t %+ %1) ]-> [ Clock(%t %+ %1), !Time(%t %+ %1) ]
+
+rule Send:
+    let frame = <'authbc', $S, ~data, %t>
+    in
+    [ !Ltk($S, sk), Fr(~data), !Time(%t) ]
+  --[ Sent($S, ~data, %t), Latest(%t) ]->
+    [ Out(<frame, sign(frame, sk)>) ]
+
+rule Accept:
+    let frame = <'authbc', $S, data, %t>
+    in
+    [ In(<frame, sig>), !Pk($S, pkS), !Time(%now) ]
+  --[ Eq(verify(sig, frame, pkS), true), Latest(%now), Fresh(%t, %now),
+      Accept($S, data, %t, %now) ]->
+    [ ]
+
+restriction Equality: "All x y #i. Eq(x, y) @ #i ==> x = y"
+restriction Only_once: "All x #i #j. OnlyOnce(x) @ #i & OnlyOnce(x) @ #j ==> #i = #j"
+
+// A read of the clock is its current value: no later tick has happened yet.
+restriction Latest_tick:
+  "All %t %u #i #j. Latest(%t) @ #i & Tick(%u) @ #j & #j < #i ==> not (%t << %u)"
+
+#ifdef TIME
+restriction Fresh_window:
+  "All %t %now #i. Fresh(%t, %now) @ #i ==> (%now = %t) | (%now = %t %+ %1)"
+#endif
+
+lemma executable:
+  exists-trace "Ex S d t n #i. Accept(S, d, t, n) @ #i & not (Ex X #r. Reveal(X) @ #r)"
+
+// A frame accepted two or more ticks after it was stamped, no key revealed: exists without the
+// window (the attack), must not exist with it.
+lemma delayed_frame_accepted:
+  exists-trace
+  "Ex S d %t %now #i. Accept(S, d, %t, %now) @ #i
+    & (%t %+ %1 %+ %1 = %now | %t %+ %1 %+ %1 << %now)
+    & not (Ex X #r. Reveal(X) @ #r)"
+
+#ifdef TIME
+// With the window: whatever is accepted was sent, at most one tick earlier, by its sender.
+lemma bounded_delay_freshness:
+  "All S d %t %now #i.
+      Accept(S, d, %t, %now) @ #i
+    ==> ( (Ex #j. Sent(S, d, %t) @ #j & #j < #i) & ((%now = %t) | (%now = %t %+ %1)) )
+      | (Ex #r. Reveal(S) @ #r & #r < #i)"
+#endif
+
+end

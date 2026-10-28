@@ -1,0 +1,29 @@
+# python=3.12.3
+# platform=Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=freshness_budget
+# config_hash=b62de6bfd7b5b0c0
+op,lambda_rec_per_s,d_max_ms,batch,scheme,channel_stat,channel_util_measured_at,fill_ms,channel_ms,verify_ms,total_ms,margin_ms,meets_d_max
+adopted,50,100.0,4,ed25519,delay_mean_ms,2.2299,80.0,0.756,0.2595,81.015,18.985,1
+adopted,50,100.0,4,ed25519,delay_p99_ms,2.2299,80.0,2.3977,0.2595,82.657,17.343,1
+adopted,50,100.0,4,ed25519,delay_max_ms,2.2299,80.0,3.4907,0.2595,83.75,16.25,1
+adopted,50,100.0,4,ecdsa_p256,delay_mean_ms,2.2299,80.0,0.756,0.3269,81.083,18.917,1
+adopted,50,100.0,4,ecdsa_p256,delay_p99_ms,2.2299,80.0,2.3977,0.3269,82.725,17.275,1
+adopted,50,100.0,4,ecdsa_p256,delay_max_ms,2.2299,80.0,3.4907,0.3269,83.818,16.182,1
+adopted,50,100.0,4,bls,delay_mean_ms,2.2299,80.0,0.756,8.6118,89.368,10.632,1
+adopted,50,100.0,4,bls,delay_p99_ms,2.2299,80.0,2.3977,8.6118,91.009,8.991,1
+adopted,50,100.0,4,bls,delay_max_ms,2.2299,80.0,3.4907,8.6118,92.102,7.898,1
+relaxed,20,250.0,4,ed25519,delay_mean_ms,2.2299,200.0,0.756,0.2595,201.015,48.985,1
+relaxed,20,250.0,4,ed25519,delay_p99_ms,2.2299,200.0,2.3977,0.2595,202.657,47.343,1
+relaxed,20,250.0,4,ed25519,delay_max_ms,2.2299,200.0,3.4907,0.2595,203.75,46.25,1
+relaxed,20,250.0,4,ecdsa_p256,delay_mean_ms,2.2299,200.0,0.756,0.3269,201.083,48.917,1
+relaxed,20,250.0,4,ecdsa_p256,delay_p99_ms,2.2299,200.0,2.3977,0.3269,202.725,47.275,1
+relaxed,20,250.0,4,ecdsa_p256,delay_max_ms,2.2299,200.0,3.4907,0.3269,203.818,46.182,1
+relaxed,20,250.0,4,bls,delay_mean_ms,2.2299,200.0,0.756,8.6118,209.368,40.632,1
+relaxed,20,250.0,4,bls,delay_p99_ms,2.2299,200.0,2.3977,8.6118,211.009,38.991,1
+relaxed,20,250.0,4,bls,delay_max_ms,2.2299,200.0,3.4907,8.6118,212.102,37.898,1

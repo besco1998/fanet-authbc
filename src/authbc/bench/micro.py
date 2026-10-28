@@ -4,6 +4,8 @@ Writes tidy CSVs to results/raw/ with a commented env-block header (provenance, 
   - p1_sizes.csv  : per-encoding mean±CI + max bytes, and φ=g/(s+g) at g=64.
   - p1_crypto.csv : per-scheme sign/verify median±CI (ns) on 200 B msgs; BLS aggregate /
                     aggregate_verify for b∈{2,4,8,16,32}.
+  - p1_lean.csv   : the lean format's sender and receiver as they run, per frame, for b∈{1,4}
+                    (`--lean`; docs/OPEN_ITEMS.md G9).
 
 Determinism: telemetry is seeded; the delta encoder is reused as ONE stateful instance across
 the stream (a fresh-per-record encoder would emit all keyframes — the Law-6 pitfall caught in
@@ -16,17 +18,19 @@ import argparse
 import csv
 import hashlib
 import random
+from collections.abc import Callable
 from pathlib import Path
 from statistics import mean
 
 import numpy as np
 
-from authbc.bench import provenance
+from authbc.bench import leanframes, provenance
 from authbc.bench.stats import bootstrap_ci, summarize
 from authbc.bench.timers import time_op
 from authbc.crypto.base import AggregateScheme
 from authbc.crypto.registry import all_schemes, get_scheme
 from authbc.encodings.registry import new_encoder
+from authbc.placement.session_v2 import LeanReceiver, LeanSender, Receipt
 
 RESULTS = Path(__file__).resolve().parents[3] / "results" / "raw"
 G_INLINE = 64  # inline per-record signature bytes for φ (Ed25519/ECDSA), docs/02 T1
@@ -133,11 +137,83 @@ def measure_crypto(seed: int) -> list[dict]:
     return rows
 
 
+LEAN_BATCHES = (1, 4)
+LEAN_RECORDS = 4000                 # chained records per stream: 1000 distinct frames at b = 4
+
+
+class _ReceiveStream:
+    """Feeds a real stream of frames to a receiver, one per call, replacing the receiver when
+    the stream wraps: it refuses a sequence number it has already stored."""
+
+    def __init__(self, frames: list[bytes], src: int, pk: object) -> None:
+        self._frames, self._keys = frames, {src: pk}
+        self._i, self._rx = 0, LeanReceiver(self._keys)
+
+    def __call__(self) -> int:
+        if self._i == len(self._frames):
+            self._i, self._rx = 0, LeanReceiver(self._keys)
+        got = self._rx.receive(self._frames[self._i])
+        self._i += 1
+        if got.receipt is not Receipt.ACCEPTED:
+            raise RuntimeError(f"a valid frame was not accepted: {got.receipt}")
+        return len(got.records)
+
+
+def lean_ops(seed: int, records: int = LEAN_RECORDS
+             ) -> dict[tuple[str, int], tuple[Callable[[], int], int]]:
+    """(operation, b) -> (a call that handles ONE frame, that frame's mean size in bytes).
+
+    `frame_send` is `LeanSender.frame` on chained ledger records: the SHA-256 link of each
+    record, delta coding, one Ed25519 signature and the CBOR framing — what a sender does per
+    frame once it holds the records. `frame_receive` is `LeanReceiver.receive`: decode, rebuild
+    the records and their links, verify, store. Each call takes the next frame of a real stream;
+    a receiver refuses a sequence number it has seen, so it is replaced when the stream wraps.
+    """
+    scheme = get_scheme("ed25519")
+    sk, pk = scheme.keygen(seed=_seed32(seed, "lean"))
+    recs = leanframes.chained_records(seed, records)
+    ops: dict[tuple[str, int], tuple[Callable[[], int], int]] = {}
+    for b in LEAN_BATCHES:
+        groups = [recs[i:i + b] for i in range(0, len(recs) - b + 1, b)]
+        frames = [LeanSender(sk).frame(g) for g in groups]
+        size = round(mean(len(f) for f in frames))
+        sender = LeanSender(sk)
+        send_at = {"i": 0}
+
+        def send(groups: list = groups, sender: LeanSender = sender,
+                 at: dict[str, int] = send_at) -> int:
+            at["i"] = (at["i"] + 1) % len(groups)
+            return len(sender.frame(groups[at["i"]]))
+
+        receive = _ReceiveStream(frames, recs[0].src, pk)
+
+        ops[("frame_send", b)] = (send, size)
+        ops[("frame_receive", b)] = (receive, size)
+    return ops
+
+
+def measure_lean(seed: int) -> list[dict]:
+    return [_time_row("lean", op, fn, agg_b=str(b), expensive=False, msg_bytes=size)
+            for (op, b), (fn, size) in lean_ops(seed).items()]
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description="P1 microbenchmarks → results/raw/p1_*.csv")
     ap.add_argument("--seed", type=int, default=1)
     ap.add_argument("--n", type=int, default=10_000)
+    ap.add_argument("--lean", action="store_true",
+                    help="time the lean sender and receiver only -> results/raw/p1_lean.csv")
     args = ap.parse_args()
+    if args.lean:
+        meta = {**provenance.env_block(), "run": "p1_lean", "seed": args.seed,
+                "config_hash": provenance.config_hash({"seed": args.seed,
+                                                       "records": LEAN_RECORDS})}
+        print("measuring the lean sender and receiver …")
+        _write_csv(RESULTS / "p1_lean.csv", meta,
+                   ["scheme", "op", "agg_b", "msg_bytes", "median_ns", "ci_lo_ns", "ci_hi_ns",
+                    "n_ops", "checksum"], measure_lean(args.seed))
+        print(f"wrote {RESULTS / 'p1_lean.csv'}")
+        return
 
     env = provenance.env_block()
     size_meta = {**env, "run": "p1_sizes", "seed": args.seed, "n": args.n,

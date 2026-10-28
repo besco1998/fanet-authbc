@@ -1,0 +1,5 @@
+[2026-10-09T04:21:08+03:00] frameburst before the windows: 1 (asked: keep)
+[2026-10-09T04:27:45+03:00] frameburst after the windows: 1
+[2026-10-09T04:28:03+03:00] reverted OK, both deadmen disarmed
+authbc-pi4b timers_left 0 throttled throttled=0x50000
+udp_after: Udp: 358290 26 0 138099 0 0 0 120 0

@@ -1,0 +1,109 @@
+% System overview (Fig. 1), redrawn in TikZ from Mohamed's block diagram with the names of
+% 2026-10-25 (review 2026-10-27, L-15/L-33). Numbers are macros of numbers.tex; equations are
+% referenced by label. Natural width about 370 pt, inside the sn-jnl text width of 372 pt: no
+% scaling. Needs \usetikzlibrary{arrows.meta,positioning,fit,backgrounds}.
+% Each constraint box names where its equation is; the thesis, whose equations carry other
+% labels, defines \figoverviewref before it inputs this file (`make thesis` copies it there).
+\providecommand{\figoverviewref}[1]{Eq.~\eqref{eq:#1}}
+\begin{tikzpicture}[
+  font=\figmain, >={Stealth[length=4pt]},
+  box/.style={draw, rounded corners=1.5pt, fill=white, align=flush center, text width=2.68cm,
+              minimum height=1.0cm, inner sep=2pt},
+  panel/.style={draw=gray!70, dashed, rounded corners=4pt, inner sep=5pt},
+  field/.style={draw, minimum height=0.46cm, inner sep=0pt, anchor=west},
+  cons/.style={draw, rounded corners=1.5pt, fill=gray!10, align=flush center, text width=2.30cm,
+               minimum height=2.2cm, inner sep=2pt, font=\figsmall},
+  link/.style={->, thick},
+  hint/.style={->, dashed, gray!70!black, thick}]
+% Fixed sizes, because sn-jnl redefines \footnotesize as 7 pt and \scriptsize as 9 pt. A node
+% that changes size ends with \endgraf (a \par that \foreach bodies can hold), so that its last
+% line takes the small baselineskip.
+\def\figmain{\fontsize{8}{9.5}\selectfont}
+\def\figsmall{\fontsize{7}{8}\selectfont}
+
+% ---------------------------------------------------------------- sender
+\foreach \i/\name/\what [count=\k from 0] in {
+    src/{Telemetry source}/{$\Lambda$ records/s, 9 fields},
+    bat/{Batcher}/{$b$ records per frame},
+    cod/{Record coder}/{key record + $(b{-}1)$\\delta records},
+    led/{Ledger records}/{\texttt{prev\_hash} = SHA-256},
+    sig/{Sign the frame}/{one signature, 64\,B\\Ed25519 / ECDSA}}
+  \node[box] (s\i) at (1.59, -0.95 - 1.35*\k) {\name\\\figsmall\what\endgraf};
+\foreach \a/\b in {src/bat, bat/cod, cod/led, led/sig}
+  \draw[link] (s\a) -- (s\b);
+\begin{scope}[on background layer]
+  \node[panel, fill=blue!5, fit=(ssrc) (ssig)] (spanel) {};
+\end{scope}
+\node[anchor=south west, font=\figmain\bfseries, inner sep=1pt] at (spanel.north west)
+  {Sender UAV};
+
+% ---------------------------------------------------------------- receiver
+\foreach \i/\name/\what [count=\k from 0] in {
+    dec/{Decode frame}/{key record +\\delta records},
+    reb/{Rebuild records}/{recompute \texttt{prev\_hash}},
+    ver/{Verify signature}/{one per frame},
+    sto/{Ledger store}/{seq.\ no., equivocation},
+    los/{Loss handling}/{gap shown,\\next frame verifies}}
+  \node[box] (r\i) at (11.43, -0.95 - 1.35*\k) {\name\\\figsmall\what\endgraf};
+\foreach \a/\b in {dec/reb, reb/ver, ver/sto, sto/los}
+  \draw[link] (r\a) -- (r\b);
+\begin{scope}[on background layer]
+  \node[panel, fill=green!5, fit=(rdec) (rlos)] (rpanel) {};
+\end{scope}
+\node[anchor=south east, font=\figmain\bfseries, inner sep=1pt] at (rpanel.north east)
+  {Receiver UAV ($\times\,N{-}1$)};
+
+% ---------------------------------------------------------------- the frame, to scale
+% 0.0312 cm per byte: H_f 23, link 35, key record 24, three delta records of 9, signature 64
+\node[font=\figsmall] at (6.51, -1.15) {self-verifying frame, $b = 4$: \frmLeanDesign\,B};
+\node[field, fill=gray!25, minimum width=0.72cm]  (fh)  at (3.81, -1.65) {$H_f$};
+\node[field, fill=orange!30, minimum width=1.09cm] (fl)  at (fh.east)   {link};
+\node[field, fill=green!25, minimum width=0.75cm]  (fk)  at (fl.east)   {key};
+\node[field, fill=green!12, minimum width=0.28cm]  (fd1) at (fk.east)   {$\delta$};
+\node[field, fill=green!12, minimum width=0.28cm]  (fd2) at (fd1.east)  {$\delta$};
+\node[field, fill=green!12, minimum width=0.28cm]  (fd3) at (fd2.east)  {$\delta$};
+\node[field, fill=red!22, minimum width=2.00cm]   (fs)  at (fd3.east)  {signature};
+\foreach \fld/\val in {fh/\hdrLean, fl/\linkField, fs/64}
+  \node[font=\figsmall, below=1pt of \fld] {\val};
+\node[font=\figsmall, below=1pt of fd1] {\keyLean${}+3{\times}$\deltaLean};
+
+% ---------------------------------------------------------------- channel
+\node[draw, rounded corners=3pt, fill=yellow!12, align=flush center, text width=4.8cm,
+      inner sep=3pt] (chan) at (6.51, -3.85)
+  {\textbf{Shared broadcast channel}\\[1pt]\figsmall
+   IEEE 802.11a DCF: $N$ nodes,\\
+   one collision domain, no ACK\\
+   frame rate $f = \Lambda/b$\\
+   fixed cost $\approx$\,\fixedCost\,$\mu$s per frame\\
+   LoRaWAN EU863-870:\\
+   payload limit $M$ per data rate\endgraf};
+\draw[link] (6.51, -2.27) -- (chan.north);
+% right of centre, to clear the sender's riser
+\node[align=center, font=\figsmall] (sum) at (6.60, -5.55)
+  {per-record signing: \bprLeanBase\,B/record, $N_{\max} = \nmaxLeanBase$\\
+   AUTHBC: \textbf{\bprLeanDesign\,B/record}, $\boldsymbol{N_{\max} = \nmaxLeanDesign}$ (ns-3)};
+
+% sender -> frame -> channel -> receiver
+\draw[link] (ssig.east) -- ++(0.32, 0) |- (fh.west);
+\draw[link] (chan.east) -- ++(0.42, 0) |- (rdec.west);
+
+% ---------------------------------------------------------------- constraints
+\foreach \x/\name/\eq/\body [count=\k] in {
+    1.33/Freshness/fresh/{$b/\Lambda + T_{ch} + t_v$\\$\le D_{\max}$\\[1pt]$\Rightarrow b \le 4$},
+    3.92/Verifiability/v/{$V(r,p) \ge 1 - \epsilon$\\[1pt]$\Rightarrow r = 1$:\\%
+      a key record\\in every frame},
+    6.51/Channel/line/{$N_{\max} \approx \dfrac{0.05}{f(aT{+}c)}$\\[1pt]%
+      fewer frames\\$\Rightarrow$ more nodes},
+    9.10/Receiver CPU/cpu/{$N_{\mathrm{cpu}}$ per core\\[1pt]$\Rightarrow$ BLS excluded},
+    11.69/Payload/excl/{$M \ge H_f + L$\\${} + \ba + s_k$\\[1pt]%
+      $\Rightarrow$ \exclCount{} of 12\\LoRaWAN rates\\excluded}}
+  \node[cons] (c\k) at (\x, -8.75) {\textbf{\name}\\\figoverviewref{\eq}\\[1pt]\body\endgraf};
+\begin{scope}[on background layer]
+  \node[panel, inner sep=3pt, fit=(c1) (c5)] (cpanel) {};
+\end{scope}
+\node[font=\figmain\bfseries, below=2pt of cpanel.south]
+  {Five constraints for the joint selection of $(b,$ signature placement, scheme, $r)$};
+\draw[hint] (cpanel.north -| spanel.south) -- (spanel.south);
+\draw[hint] (cpanel.north -| sum.south) -- (sum.south);
+\draw[hint] (cpanel.north -| rpanel.south) -- (rpanel.south);
+\end{tikzpicture}%

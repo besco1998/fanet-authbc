@@ -1,0 +1,17 @@
+# run=ed25519_batch
+# device_model=Raspberry Pi 4 Model B Rev 1.4
+# device_host=authbc-pi4b
+# device_governor=performance
+# machine=aarch64
+# compiler=gcc (Debian 12.2.0-14+deb12u1) 12.2.0
+# library=ed25519-donna@8757bd4cd209cb032853ece0ce413f122eef212c
+# sha512=openssl
+# message_bytes=200 signatures=64 repetitions=300
+# run_utc=20261009T031521Z
+batch,median_ns_per_sig,min_ns,max_ns,reps
+1,253438.8,253387.8,254304.5,300
+4,215134.1,213844.5,219686.8,300
+8,168646.3,167843.1,178547.4,300
+16,143850.1,142921.9,147998.2,300
+32,127877.9,127195.9,130096.1,300
+64,116481.8,115853.0,117550.4,300

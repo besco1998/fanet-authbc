@@ -1,8 +1,5 @@
 \chapter{Results I --- Bytes, Placement and Loss}\label{ch:bytes}
 
-\needswork{STATUS: DRAFTED. Every number here is reproduced from a committed artifact by an
-automated gate; figures are regenerated from frozen data.}
-
 \section{E1 --- authentication dominates after compression}
 
 Thirty seeds of one thousand seeded telemetry records per encoding, inline placement, $\ga = 64$\,B.
@@ -18,13 +15,23 @@ encoding & mean bytes & $\varphi$ at $\ga{=}64$ & role \\
 JSON        & 191.09 & 25.1\% & naive baseline \\
 CBOR        & 66.25  & 49.1\% & compression-only baseline \\
 MessagePack & 65.16  & 49.6\% & --- \\
-\textbf{delta-CBOR} & \textbf{45.00} & \textbf{58.7\%} & the co-design optimum \\
+\textbf{delta-CBOR} & \textbf{45.00} & \textbf{58.7\%} & smallest; the encoding the design uses \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 This is \Cref{thm:t1} instantiated: at delta encoding the signature is \emph{larger} than the record
 it signs. The motivating claim of the thesis is a measurement, not a conjecture.
+
+\begin{remark}[What $s$ contains]
+Every size in \Cref{tab:e1} includes the record's own chain link: $32$\,B in the binary
+encodings, $64$ hexadecimal characters in JSON. The delta record is $13$\,B of telemetry and
+$32$\,B of link, so the link is $71\%$ of what the table calls the record. Counted with the
+signature, authentication material is $96$ of $109$\,B, $88\%$, not $58.7\%$: $\varphi$ as
+defined understates the point it was introduced to make. An external review made this
+observation, and it is what the frame-linked format acts on (\Cref{sec:e6}): the link is carried once
+per frame.
+\end{remark}
 
 \begin{figure}[h]
 \centering
@@ -48,8 +55,9 @@ the baseline and leaves the optimum alone, so the reported saving is the pessimi
 
 Sweeping placement A against B across encodings and MTU budgets confirms \Cref{prop:t2}
 qualitatively and \Cref{thm:t2a} quantitatively. At $M = 256$ the MTU binds and amplification is
-operative; at $M = 576$ and $M = 1500$ freshness binds and the marginal value of compression is
-$1.0000$ to twelve decimal places.
+operative. At $M = 1500$ freshness binds for every encoding, and at $M = 576$ for the three
+binary ones (JSON at $191$\,B is still limited by the frame there); where freshness binds the
+marginal value of compression is $1.0000$ to twelve decimal places.
 
 \textbf{The practical consequence.} On 802.11 the amplification law that motivates aggressive
 compression is never operative. Compression still pays --- it pays exactly $1\times$.
@@ -82,3 +90,254 @@ simulation at matched mean rate showing $V_D$ approaching but never reaching $1-
 a rate the constraint does not permit.}
 \label{fig:e3}
 \end{figure}
+
+\section{E10 --- loss with the decoder in the loop}\label{sec:e7}
+
+E3 compares one-frame placements with a block that spans frames. It does not exercise the case
+\Cref{thm:t3prime} describes, because in E3 every frame of placement B is assumed to verify alone.
+With delta coding that is true only of a frame that starts with a key record.
+
+E10 removes the assumption by removing the model: records go through the frame-linked sender, a loss
+process, and the frame-linked receiver, and $V$ is the fraction of generated records that the receiver
+decoded, verified and stored. Thirty seeds of \lossFrames{} frames per cell in all.
+
+\begin{table}[h]
+\centering
+\caption{Verifiability at frame loss $p = 0.05$ with one self-contained frame in $r$ ($b = 4$).
+Mean and 95\% bootstrap interval over thirty seeds, against \Cref{thm:t3prime}.}
+\label{tab:e7}
+\begin{tabular}{rrlrc}
+\toprule
+$r$ & B/record & $V$ measured & theorem & $V \geq 0.95$ \\
+\midrule
+1 & \lossBprOne & \lossVOne\ \lossCiOne & \lossThOne & yes \\
+2 & \lossBprTwo & \lossVTwo\ \lossCiTwo & \lossThTwo & no \\
+4 & \lossBprFour & \lossVFour\ \lossCiFour & \lossThFour & no \\
+16 & \lossBprSixteen & \lossVSixteen\ \lossCiSixteen & \lossThSixteen & no \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The design as first published is the $r = 4$ row: \lossVFour, not $0.95$. The theorem predicts
+the measurement in every row, and at every other loss rate tried ($p$ from $2.3\times10^{-4}$ to
+$0.10$). With bursty loss of the same mean --- a Gilbert process with bursts of four frames ---
+the $r = 4$ design verifies \lossVFourBurst: better, and still short.
+
+\begin{remark}[What this experiment validates, and what it does not]
+Unlike E3, agreement here is not a tautology: the closed form counts frames, while the experiment
+runs a codec and a receiver that know nothing of the formula, and they agree. What it does not
+validate is the loss process itself, which is synthetic at the frame level in both.
+\end{remark}
+
+The corrected design uses $r = 1$. It costs \lossPrize\,B per record more than $r = 16$ would,
+and it is the only interval that meets the target at the design's own loss rate.
+
+\subsection{When loss grows with frame length}
+
+Everything above gives every frame the same loss probability. At a fixed bit error rate a frame
+of $L$ bytes with $o$ bytes of MAC overhead survives with probability $(1-\beta)^{8(L+o)}$, so
+two frames on one channel are related by
+\[
+p(L) = 1 - (1 - p_{\mathrm{ref}})^{(L+o)/(L_{\mathrm{ref}}+o)} ,
+\]
+and a batch, being a longer frame, is lost more often than the one-record frame it replaces.
+E10 has a third loss process for this: the bit error rate is set so that the \emph{one-record}
+frame of the frame-linked format is lost with probability $p$, and each frame is then lost by its own
+length.
+
+On a channel that loses $5\%$ of one-record frames, the design's frame is lost with probability
+\lossBerP, and \lossBerTh{} of its records are expected to verify. \textbf{That is below the target the
+design meets at equal frame loss}; the measurement, \lossBerV~\lossBerCi, agrees with the
+expectation and does not by itself separate it from the target. It reaches $0.95$ only while one-record frames are lost at most \lossBerPmax{} of the
+time. The loss budget $p = \varepsilon$ had no margin (\Cref{ch:theory}); under this reading
+the batch spends margin it does not have. The byte and capacity comparisons of
+\Cref{ch:codesign} are at equal frame loss and carry this qualification.
+
+\subsection{The loss the simulator makes, and a budget with a margin}
+
+The remark above names what E10 does not validate: the loss process. In October 2026 the
+simulator's own loss was traced, link by link, at the capacity crossing --- \trLinks{} neighbour
+links in a spread and in a moving swarm. Consecutive frames of one link are lost independently:
+bursts average \trBurst{} frames, against \trBurstIid{} for independent loss at the same rate.
+\Cref{thm:t3} for independent loss is therefore the model of $V$ at the crossing, and the
+pessimistic one wherever loss is bursty.
+
+The budget then needs a margin. \Cref{fig:margin} runs the design through five loss processes
+of one mean: independent, Gilbert with bursts of two, four and eight frames, and loss that grows
+with frame length. With $\varepsilon = 0.05$ and $p \leq \varepsilon - 0.02$ it meets the target,
+intervals included, under every one of them; the rule of \Cref{sec:margin} is that margin.
+Registered before the runs over every batch, loss rate and budget of equal frame loss, the
+rule failed by its interval in $5$ of $192$ cells, all of them bursty; every mean met its target
+(\Cref{tab:prereg-revision}). One of the five is the design itself: at
+$\varepsilon = \mgMissEps$ and $p = \mgMissP$, under bursts of eight frames, its interval falls
+below the target, and under loss that grows with length it does too at the same point. A margin
+of $0.02$ is smaller than the sampling half-width of such cells at \lossFrames{} frames.
+
+\begin{figure}[htbp]\centering
+\includegraphics[width=0.75\textwidth]{fig_margin.png}
+\caption{Records verified by the design ($b=4$, $r=1$) against frame loss under five loss
+processes, with $95\%$ intervals; for loss that grows with length, $p$ is the loss of a
+one-record frame. Shaded: the losses the margin rule admits at $\varepsilon = 0.05$.}
+\label{fig:margin}
+\end{figure}
+
+\section{E9 --- what a frame is made of}\label{sec:e6}
+
+\Cref{tab:fields} gives the byte budget of both formats. Three things in it matter for
+everything downstream, and none was visible while sizes were quoted as single numbers.
+
+\paragraph{A delta is not a constant of the encoder.} It encodes a difference, and a difference
+grows with the time it spans:
+
+\begin{center}
+\begin{tabular}{lrrrrr}
+\toprule
+spacing between records & 50\,ms & 0.1\,s & 1\,s & 5.5\,s & 16.5\,s \\
+\midrule
+frame-linked delta record (B) & \deltaLean & \deltaLeanTenth & \deltaLeanOne & \deltaLeanFar & \deltaLeanSlow \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The generator's records are 50\,ms apart, the spacing of the 20~records/s point it was written
+for. At the 20\,ms of the adopted 50~records/s point the delta record is the same \deltaLean\,B
+--- it is already at the floor of the format, one byte per field, and a test in the repository
+runs the generator at 20\,ms to confirm it --- so the smallest value applies on the 802.11 arm.
+On the low-rate arm records are
+seconds apart, and using the 50\,ms figure there overstated what a frame could carry
+(\Cref{sec:perframe}).
+
+\paragraph{Where the chain link sits decides the floor.} \Cref{fig:curve} draws bytes per record
+against batch size for three layouts. With a link in every record, the record-linked format cannot fall
+below its delta record however large the batch: at \curveMaxBatch{} records per frame it still
+costs \bprFirstTwelve\,B each. Moving that link to the frame saves $32\,(1-1/b)$\,B per
+record, \linkMoveSave\,B at $b = 4$, and gives \bprFirstLinkFrame\,B --- less than a
+per-record link reaches at any batch drawn. The frame-linked format's shorter header and record coding
+account for the remaining \leanHeaderSave\,B, to \bprLeanDesign\,B. The two record-linked
+curves are sums of measured parts; the frame-linked curve is emitted frames.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.7\textwidth]{fig_bytes_vs_batch.png}
+\caption{Bytes per record against batch size, by where the chain link sits. Records are
+delta-coded in all three and a frame starts with a key record, so at $b = 1$ the record-linked curves
+start below row~1 of \Cref{tab:ladder}, whose records are plain CBOR. The dotted line is the
+batch that freshness allows at the adopted operating point.}
+\label{fig:curve}
+\end{figure}
+
+\paragraph{The generator's delta is the floor of the format.} Every one of 29\,970 delta records
+at 50\,ms spacing is exactly \deltaLean\,B: nine fields, one byte each. That looks synthetic,
+and it is. To find out whether it matters, the same encoder was run over
+twelve public PX4 flight logs --- four quadrotors, two hexa- or octorotors, three fixed wings and
+three VTOLs, \pxRecords{} in-flight records --- chosen by a rule committed before any log was
+opened.
+
+\begin{table}[h]
+\centering
+\caption{Record sizes on real flight logs against the generator, at matched spacing. The logs
+carry position at 5\,Hz, so nothing finer than 0.2\,s can be measured from them.}
+\label{tab:px4}
+\begin{tabular}{lrrrr}
+\toprule
+ & key record & delta, 0.2\,s apart & B/record at $b{=}4$ & saving \\
+\midrule
+twelve flight logs (mean) & \pxKey & \pxDelta & \pxBpr & \pxSave\% \\
+generator & \pxKeyGen & \pxDeltaGen & \pxBprGen & \pxSaveGen\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+At matched spacing the generator is within a quarter of a byte of real telemetry. The spread is
+by speed: the six multicopters, mostly hovering, average \pxDeltaSlow\,B per delta, and the three
+fixed wings up to \pxDeltaFast\,B, for which the saving is \pxSaveWorst\%. So the mean flatters a
+fast swarm by about a percentage point, and the 50\,Hz spacing of the adopted operating point is
+not covered by any public log found.
+
+\paragraph{At the operating rate: the autopilot in simulation.} Because no public log reaches
+50\,Hz, PX4 v1.17.0 was run in software-in-the-loop --- its own estimator, controllers, logger
+and MAVLink module, flying a simulated quadrotor --- with the logger writing position every
+20\,ms, and the log was put through the same code as the public ones. The flight was fixed
+before it was flown: a climb, a 150\,m square at a commanded 5\,m/s, the same square at
+12\,m/s, a minute of position hold, a landing.
+
+\begin{center}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lrrrr}
+\toprule
+ & records & key record (B) & delta (B) & B/record at $b{=}4$ \\
+\midrule
+PX4 in simulation, 20\,ms grid & \sitlRecords & \sitlKey & \deltaLean & \sitlBpr \\
+generator, as used throughout & & \keyLean & \deltaLean & \bprLeanDesign \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Every one of the delta records is at the format's floor: over 20\,ms nothing in a record changes
+by more than one byte's worth, at \sitlSpeedFast\,m/s as at rest. The key record is three bytes
+smaller than the generator's, so with real autopilot records the design costs \sitlBpr\,B per
+record, \sitlGenPct\% \emph{less} than the figure this thesis reports. At the operating point
+the generator is slightly pessimistic, where at 0.2\,s it was slightly optimistic.
+
+\begin{remark}[Two predictions of this measurement that did not hold as written]
+Five ranges were committed before the flight. Four held. The fifth was a consistency check:
+resampled at 0.2\,s, the simulated flight was predicted to fall among the six real multicopter
+logs, \pxDeltaSlow\,B per delta; it gives \sitlCompare\,B. By phase it is $10.0$\,B in the
+climb, the hold and the descent and $11.0$--$11.2$\,B on the two squares: the real logs are
+mostly hover, and this flight spends two thirds of its time translating. That reading was made
+after the number was seen. It is the harder case for the 20\,ms result and not the easier one,
+but the prediction as written was missed, by $0.04$\,B.
+
+The commanded 12\,m/s was not reached either: the fast square averaged \sitlSpeedFast\,m/s.
+And the registered statistic for the stream's timing could not be scored at all, for a reason
+that has nothing to do with the autopilot (\Cref{sec:capacity}).
+\end{remark}
+
+\paragraph{Richer records and other airframes.} One quadrotor flight says little about a fixed
+wing, or about a record of more than nine fields. \afFlights{} further flights of the same
+autopilot's simulator were made at $50$\,Hz, ten each of a quadrotor, a fixed wing and a VTOL,
+the fixed wings at their planned \afSpeedLo--\afSpeedHi\,m/s, and records of $9$, $15$ and $25$
+fields were coded from each at their exact lengths (\Cref{tab:airframes}). Almost every field
+changes by less than its first byte holds, so a delta costs about a byte per field on every
+airframe, a fixed wing \afWingExtra\,B more than the quadrotor. With $25$ fields --- adding
+attitude, body rates, navigation quality, airspeed, wind, mission state and thrust --- the design
+still saves \afSaveTwentyFive\% of the bytes and serves \afRatioTwentyFive{} times the nodes of
+per-record signing. The gain is set by the number of frames, not by the size of the record.
+
+\begin{table}[htbp]\centering
+\caption{Records from \afFlights{} flights of the autopilot's simulator, ten per airframe, at
+$50$~records/s: key record and per-airframe delta in bytes, the bytes the design saves, and the
+nodes it serves over per-record signing by the contention model.}
+\label{tab:airframes}
+\begin{tabular}{rrrrrrr}
+\toprule
+ & & \multicolumn{3}{c}{delta (B)} & & \\
+\cmidrule(lr){3-5}
+fields & key record (B) & quadrotor & fixed wing & VTOL & saved & ratio \\
+\midrule
+9 & \afKeyNine & \afDeltaQuadNine & \afDeltaWingNine & \afDeltaVtolNine & \afSaveNine\% & \afRatioNine \\
+15 & \afKeyFifteen & \afDeltaQuadFifteen & \afDeltaWingFifteen & \afDeltaVtolFifteen & \afSaveFifteen\% & \afRatioFifteen \\
+25 & \afKeyTwentyFive & \afDeltaQuadTwentyFive & \afDeltaWingTwentyFive & \afDeltaVtolTwentyFive & \afSaveTwentyFive\% & \afRatioTwentyFive \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{remark}[What the simulator could not fly, and what that changed]
+The simulator's airplane first flew no faster than about $14$\,m/s: its model brakes the
+aircraft with an artificial linear drag term. With that term removed, and the airplane's thrust
+raised to $12$\,N, the fixed wings flew the registered missions again at their drawn speeds,
+each within $1$\,m/s. The first flights also started their altitude controller from sea level,
+which put the first leg of every airplane flight near the ground; a reset before the mission
+fixed it. Neither changed a record size by more than a fraction of a byte. The simulator also
+holds its navigation-quality fields constant, so those fields cost less than they would in
+flight.
+\end{remark}
+
+\begin{remark}[What was predicted, and what was not testable]
+The prediction committed in advance was a mean delta of at most $13$\,B and a saving of at least
+$68\%$, \emph{at 0.1\,s spacing}. The logs turned out to carry position at 5\,Hz, so the
+prediction was applied, unchanged in its numbers, at 0.2\,s --- the stricter reading, since a
+difference over a longer interval is never smaller --- and holds there. The 0.1\,s prediction
+itself is recorded as untested. One predicted range was missed: the key record, predicted at
+22--25\,B, measures \pxKey\,B, because multicopters fly slowly enough for one-byte velocities.
+\end{remark}

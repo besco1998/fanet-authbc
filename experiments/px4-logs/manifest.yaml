@@ -1,0 +1,141 @@
+# Flight logs measured by analysis/px4_log_sizes.py — written by `--select`, then kept.
+# Rule: docs/PX4_LOGS_EXPECTATIONS.md. The logs are public uploads to the PX4 Flight
+# Review service and are not redistributed; each is pinned here by id and SHA-256.
+index_url: https://review.px4.io/dbinfo
+index_entries: 473088
+index_sha256: 24349e417903f7be8189f072170acd907c55c1d9d08e7a132d9b7af6da835adc
+eligible: 21044
+logs:
+- log_id: 000089a8-14bf-4ea6-9b5b-4ad35bbde9e3
+  stratum: quadrotor
+  mav_type: Quadrotor
+  release: v1.16.0
+  hardware: PX4_FMU_V6X
+  duration_s: 329
+  log_date: '2025-10-27'
+  url: https://cdn.logs.px4.io/000089a8-14bf-4ea6-9b5b-4ad35bbde9e3.ulg
+  sha256: 522bd2d9406ebc83d632b358b1ceca1d15dc675ffe117637c9dd55c7c978e70b
+- log_id: 00139d58-c051-4734-a138-14cf8a4f1eed
+  stratum: quadrotor
+  mav_type: Quadrotor
+  release: v1.16.0
+  hardware: PX4_FMU_V6C
+  duration_s: 362
+  log_date: '2025-06-12'
+  url: https://cdn.logs.px4.io/00139d58-c051-4734-a138-14cf8a4f1eed.ulg
+  sha256: e2d951f481f731bdcf86de3bbbc7e96fc193168fee26eb1ed85cbdfacfc7185c
+- log_id: 0014d5e3-00e5-4af6-bdfd-208bcfa60fdb
+  stratum: quadrotor
+  mav_type: Quadrotor
+  release: v1.14.0
+  hardware: PX4_FMU_V5
+  duration_s: 526
+  log_date: '2024-04-25'
+  url: https://cdn.logs.px4.io/0014d5e3-00e5-4af6-bdfd-208bcfa60fdb.ulg
+  sha256: 465b9a2b868b0eb51dc07571d45e6395db57d111bc41e1ebc70dd3c01e40b361
+- log_id: 001b0386-afd4-4339-9189-8768e604a86a
+  stratum: quadrotor
+  mav_type: Quadrotor
+  release: v1.14.3
+  hardware: PX4_FMU_V6X
+  duration_s: 509
+  log_date: '2025-07-14'
+  url: https://cdn.logs.px4.io/001b0386-afd4-4339-9189-8768e604a86a.ulg
+  sha256: d08915dc299c3e85b6564590fbfbea14f4991365f57173d1257b6546eae50be5
+- log_id: 003fcc93-d1eb-4746-9396-95c2f62ac145
+  stratum: hexa/octorotor
+  mav_type: Octorotor
+  release: v1.16.1
+  hardware: PX4_FMU_V6X
+  duration_s: 313
+  log_date: '2026-06-10'
+  url: https://cdn.logs.px4.io/003fcc93-d1eb-4746-9396-95c2f62ac145.ulg
+  sha256: a15f9bc21b44113e57b2097614e1442a01ab993233524ad2e552ff1c5a6f98e2
+- log_id: 0050ea4f-64c5-4322-a8e9-3527539000d7
+  stratum: hexa/octorotor
+  mav_type: Octorotor
+  release: v1.14.3
+  hardware: CUAV_X7PRO
+  duration_s: 555
+  log_date: '2025-09-07'
+  url: https://cdn.logs.px4.io/0050ea4f-64c5-4322-a8e9-3527539000d7.ulg
+  sha256: 7467cdda7a9b9917f6daf6f16327ceee8b91724a90a2e2ef19ed343bc548150b
+- log_id: 00003ade-ba96-4f19-bfad-7c731d7a8f7b
+  stratum: fixed wing
+  mav_type: Fixed Wing
+  release: v1.16.0
+  hardware: PX4_FMU_V5
+  duration_s: 785
+  log_date: '2026-05-29'
+  url: https://cdn.logs.px4.io/00003ade-ba96-4f19-bfad-7c731d7a8f7b.ulg
+  sha256: b051e771abbebebd021230477ca801cf8ee1b6823ca6ef0eed0304a609362b78
+- log_id: 0026d1f6-789c-436d-842f-3dc43395d9db
+  stratum: fixed wing
+  mav_type: Fixed Wing
+  release: v1.14.3
+  hardware: THEPEACH_M0
+  duration_s: 414
+  log_date: '2024-08-30'
+  url: https://cdn.logs.px4.io/0026d1f6-789c-436d-842f-3dc43395d9db.ulg
+  sha256: 9abe526640e294b5ecd99ba026874c6fc3a7f45325c3a06c20fd6d6bd1967c83
+- log_id: 00588688-3f14-44af-b72e-9f5cd7ceee7d
+  stratum: fixed wing
+  mav_type: Fixed Wing
+  release: v1.16.1
+  hardware: CUBEPILOT_CUBEORANGEPLUS
+  duration_s: 553
+  log_date: '2026-04-02'
+  url: https://cdn.logs.px4.io/00588688-3f14-44af-b72e-9f5cd7ceee7d.ulg
+  sha256: f5439fc021fb0444cf0f3e0fd98a3ba6a1a75720d4c5b8b022b7fbbcd6d69015
+- log_id: 00440730-032e-4bb6-8a1f-09fd588b56f5
+  stratum: vtol
+  mav_type: Tiltrotor VTOL
+  release: v1.14.0
+  hardware: PX4_FMU_V6C
+  duration_s: 499
+  log_date: '2024-04-22'
+  url: https://cdn.logs.px4.io/00440730-032e-4bb6-8a1f-09fd588b56f5.ulg
+  sha256: 2a8fc6ab0501d313b7dabdfbe0adba6ab804d5c82cb89d120bb21385f9c39de5
+- log_id: 00bbc11f-f93e-4959-b459-512c6e8cfa64
+  stratum: vtol
+  mav_type: VTOL Standard
+  release: v1.14.3
+  hardware: PX4_FMU_V5
+  duration_s: 423
+  log_date: '2025-11-29'
+  url: https://cdn.logs.px4.io/00bbc11f-f93e-4959-b459-512c6e8cfa64.ulg
+  sha256: 55efe2a81fff136e78cf78452bd9ac3c3c2a7c3360d407f2a41cd474029066cc
+- log_id: 00d05864-1530-405f-87d6-1ff407c41166
+  stratum: vtol
+  mav_type: Tiltrotor VTOL
+  release: v1.14.0
+  hardware: PX4_FMU_V6C
+  duration_s: 702
+  log_date: '2025-09-25'
+  url: https://cdn.logs.px4.io/00d05864-1530-405f-87d6-1ff407c41166.ulg
+  sha256: 1f78b7aa84820608eea9a6b1d9ec55c864f28582a8264bb221fd64545ae18a8a
+skipped:
+- log_id: 0007e5ac-7ed0-40c5-84b4-b59fba65ebb6
+  stratum: quadrotor
+  reason: battery_status.remaining is never valid
+- log_id: 000980fe-cc2d-4256-bb50-86c6ab850d5e
+  stratum: quadrotor
+  reason: over the size limit
+- log_id: 0011d51e-d4ca-48ea-a3be-5fe21d355c6f
+  stratum: quadrotor
+  reason: over the size limit
+- log_id: 00193bc5-db70-4c9f-9d78-af490aae7e06
+  stratum: quadrotor
+  reason: no topic vehicle_global_position
+- log_id: 0015f3f7-8567-4d02-8b1b-0051162d3091
+  stratum: hexa/octorotor
+  reason: no topic vehicle_global_position, battery_status
+- log_id: 0032e1c8-ebdf-4558-bde3-c961c5912dca
+  stratum: fixed wing
+  reason: no topic vehicle_global_position, battery_status
+- log_id: 00097113-b7ac-4f24-8e0c-d1d3d4bf9609
+  stratum: vtol
+  reason: over the size limit
+- log_id: 0014d818-2df9-4483-9e07-c4deb0fc528c
+  stratum: vtol
+  reason: over the size limit

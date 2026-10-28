@@ -1,0 +1,198 @@
+\chapter{Predictions Registered Before Their Data}\label{app:prereg}
+
+Where a run tests a prediction, the prediction was committed to the repository before the data
+existed, as a commit of its own. The table lists every such registration, including one whose experiment has not yet been run: the commit that holds
+it, what it said, and what happened. Commits are those of the public repository history; each
+registration is an ancestor of the commit that holds its data, which a reader can check with
+\texttt{git log}.
+
+{\small
+\begin{longtable}{@{}p{2.0cm} >{\raggedright\arraybackslash}p{5.8cm} >{\raggedright\arraybackslash}p{6.0cm}@{}}
+\toprule
+commit, date & what was registered & outcome \\
+\midrule
+\endfirsthead
+\toprule
+commit, date & what was registered & outcome \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{3354ec1} 3~Jul & success criterion: at least $40\%$ fewer authentication bytes than
+the compression-only baseline at $V \geq 0.95$ & met ($75\%$) --- and it could not have failed:
+the quantity is $1 - 1/b$ (\Cref{ch:reproducibility}) \\
+\texttt{eb3eda5} 7~Aug & survey protocol: fewer than $25\%$ of ns-3 LoRa papers report
+replication information & $21.7\%$, interval $[7.5, 43.7]\%$ at $n = 23$: contains the
+threshold; no claim made \\
+\texttt{ca8fd1c} 7~Aug & at DR6: six records per frame, half the airtime, $\Nmax$ unchanged at
+three & batch and airtime confirmed; $\Nmax$ derived, not simulated --- the simulator has no
+bandwidth dimension --- and not claimed as confirmed \\
+\texttt{84adb92} 28~Aug & the utilisation crossing at a $174$\,B frame lies in $2.1$--$2.8$; it
+drifts higher than at $288$\,B & $2.367$: held. Direction: lower, at $0.45\sigma$ --- the run had
+no power to resolve a sign (\Cref{ch:validation}) \\
+\texttt{6f82599} 6~Oct & directly simulated $\Nmax$ within $\pm 10\%$ of the single ceiling, six
+configurations & \textbf{failed}: $-16.7\%$ and $+11.7\%$ in two of six \\
+\texttt{47ebbbb} 6~Oct & freezing the senders' phases moves the mean by less than $0.005$;
+a jitter of $1$\,ms halves the spread between runs & mean: held. Spread: halved at two test
+points of four --- \textbf{failed} \\
+\texttt{47ebbbb} 6~Oct & seven configurations not yet simulated lie within $\pm 6\%$ of the
+airtime line (slope fixed in \texttt{fad28e0}, before any of the seven was run) & held: all
+within $\lineWorst\%$ \\
+\texttt{fbcb646} 6~Oct & sweeping every pair of nodes through all phases gives the same mean and
+a spread under $0.004$ & mean: held. Spread $0.003$--$0.006$ --- \textbf{failed} \\
+\texttt{e4e3cdf} 6~Oct & on public flight logs chosen by a fixed rule: mean delta record at most
+$13$\,B and saving at least $68\%$ at $0.1$\,s; key record $22$--$25$\,B & the logs carry $5$\,Hz:
+applied at $0.2$\,s, held ($\pxDelta$\,B, $\pxSave\%$); untested at $0.1$\,s; key record
+$21.98$\,B, under by $0.02$\,B \\
+\texttt{f72db7f} 7~Oct & five one-record frames of the stream-signing schemes within $\pm 6\%$ of
+the line & held: $\lineStreamLeast$--$\lineStreamWorst\%$ above it \\
+\texttt{a65ad6c} 8~Oct & on unused seeds the difference between the two traffic sources does not
+replicate ($z < 2$) & held: $\srcFreshD \pm \srcFreshSe$. A second claim registered with it ---
+that the crossing rule reads low on a noisy curve --- was \textbf{refuted} \\
+\texttt{dbe4ee9} 8~Oct & one simulated PX4 flight: five ranges for record sizes; mean and standard
+deviation of the 50\,Hz stream's period & four ranges held; the $0.2$\,s range missed by
+$0.04$\,B; mean period held; standard deviation \textbf{not scored} (the host's clock was
+stepped) \\
+\texttt{9e9c096} 8~Oct & six crossings in conditions never simulated --- contention window
+doubled; $2\%$ and $10\%$ loss --- within $\pm 3\%$ of the contention model & held: all
+\modelPredCases, worst $\modelPredWorst\%$ \\
+\texttt{b69e08e} 8~Oct & on the Raspberry~Pi~4, per four-record frame: frame-linked sender
+$1.0$--$2.5$\,ms, frame-linked receiver $2$--$5$\,ms; Ed25519 in a batch of $64$ at $0.45$--$0.60$ of
+the cost of one at a time & both times \textbf{failed}, on the fast side (\leanSendMs{} and
+\leanRecvMs\,ms): the desktop figure they were scaled from was three to four times too high.
+The batch held (\edBatchRatio) \\
+\texttt{456a4e7} 9~Oct & contention on real radios: loss among two to five boards at three
+loads; with two boards, within $0.6$--$1.4$ times the contention model's & run with two
+boards: held at two loads, \textbf{failed} at the third ($\hwContHighRatio$ times the model's
+loss). Three to five boards: not run (\Cref{sec:contention-hw}) \\
+\texttt{06f1bfa} 9~Oct & a vendor mode of the radio explains that miss: with frame burst off,
+one sender takes $2.070$--$2.095$\,ms per frame, two boards fall inside the bands and lose at
+least $1.5$ times what they lose with it on, and a repeat with it on agrees with the first run &
+all four \textbf{failed}, two of them at the highest load only: \hwCycleOff\,ms per frame; the highest load still under its
+band; the repeat gave \hwRepHigh\% where the first run gave \hwContHigh. No effect of frame
+burst on the loss is shown \\
+\texttt{9a85afa} 9~Oct & two saturated radios lose $11.8\%$ of the frames they put on air, band
+$7.1$--$16.5\%$; the author's expectation, recorded with it, was about $7\%$ & held:
+\hwSatOff\% with frame burst off, \hwSatOn\% with it on. The expectation was wrong \\
+\texttt{a38994f} 9~Oct & four energy runs on the second board and sensor, in
+\si{\micro\joule} per record: a control repeating July's baseline row at $113$--$125$; the frame-linked
+sender within $10\%$ of its timed frame at the metered power, with four records and with one;
+the JSON row at $115$--$127$ & held, all four: \enCtlMeas; \enLeanMeas{} and \enLeanOneMeas;
+\enJsonMeas{} (\Cref{tab:energy}) \\
+\texttt{64322fc} 9~Oct & the frame-linked design with two, three and eight records to a frame: each
+crossing within $6\%$ of the airtime line, slope unchanged, and within $3\%$ of the contention
+model & held, all six: \batNsTwo, \batNsThree{} and \batNsEight{} nodes, at most
+\batLineWorst\% from the line and \batModelWorst\% from the model (\Cref{tab:batchdim}) \\
+\texttt{61a4b4f} 9~Oct & the receiver, once it keeps every frame, timed on the board against a
+control of the receiver as it was: the control within $2\%$ of the morning's figure, the new
+receiver between $1.00$ and $1.02$ times the control & held: \leanRecvKeepPct\% more,
+\leanRecvKeepUs\,\si{\micro\second} on a four-record frame \\
+\texttt{eb2751b} 9~Oct & the receiver on one to four cores of the board at once: one core
+$680$--$708$ frames/s; two, three and four cores $1.90$--$2.00$, $2.75$--$3.00$ and
+$3.50$--$4.00$ times one; two cores below \nmaxLeanDesign{} nodes and three at or above &
+one and two cores held (\mcOneFps{} frames/s; \mcScaleTwo); three and four \textbf{failed}, low
+(\mcScaleThree{} and \mcScaleFour); the line on nodes held (\mcNodesTwo{} and \mcNodesThree) \\
+\texttt{db0bca1} 9~Oct & baseline and design with the nodes spread over a disc and capture at
+work: at $15$\,m within $5\%$ of the contention model with the simulator's capture rule; at
+$100$\,m between the equal-power crossing and that model's band & held, all four:
+\sprNearBase{} and \sprNearDesign{} at $15$\,m, \sprFarBase{} and \sprFarDesign{} at $100$\,m, within
+\sprModelWorst\% of the model (\Cref{tab:spread}) \\
+\end{longtable}
+}
+
+\section*{The experiments of October 2026}
+
+The experiments added in October 2026 test the objections a revision plan expected reviewers to
+raise. Each was registered as above, with the plan's expected outcomes quoted and finer
+predictions added in the same commit (in italics below); each registration is tagged in the repository as
+\texttt{prereg-} followed by its name. \Cref{tab:prereg-revision} lists them in the order of the
+chapters that report them.
+
+{\small
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{2.0cm} >{\raggedright\arraybackslash}p{5.8cm}
+  >{\raggedright\arraybackslash}p{6.0cm}@{}}
+\caption{Registrations of October 2026 and their outcomes.}\label{tab:prereg-revision}\\
+\toprule
+commit, date & what was registered & outcome \\
+\midrule
+\endfirsthead
+\toprule
+commit, date & what was registered & outcome \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{d4bf273} 19~Oct, \texttt{c7f05c7} 20~Oct & spread swarm: ratio $3$--$4$ in every layout;
+capacity counted in neighbours falls at $1$\,km; motion moves $V$ by under $0.01$; \emph{at
+$1$\,km, $10$--$40$ neighbours at the crossing; hidden share rising with radius} & held, except
+\emph{the neighbour count}, \spNeighbours; the group's speed proved untestable in that scenario
+(a rigid translation) \\
+\texttt{13c406e} 21~Oct & every node moving on its own at $0$, $5$ and $15$\,m/s: $|\Delta V| <
+0.01$, ratio $3$--$4$; \emph{a square layout's control $0$--$5\%$ above the disc's} & held, except
+\emph{the square's baseline}, just below its band with overlapping intervals \\
+\texttt{b2b6ae6} 19~Oct & design map: ratio non-decreasing in $b^\ast$; above $5$ at $100$/s and
+$100$\,ms; every simulated role within $5\%$ of the model; mean peak age within $D_{\max}$ at
+$p = 0.05$, its 99th percentile above & all held (\dmRatio; within \dmWorst\%); the stated cause
+of the age tail, two lost frames, was wrong: one suffices \\
+\texttt{527ba59} 19~Oct & loss margin: $\varepsilon \geq p + 0.02$ meets $1-\varepsilon$, interval
+included; a tolerable loss under bit errors; traced $V$ between independent and Gilbert-8 loss;
+\emph{theory inside every interval} & tolerable loss held; the rule failed by its interval in $5$
+of $192$ cells, all bursty; traced $V$ below the band in one of four, by $0.0002$; \emph{theory
+outside $5$ of $100$ intervals}, what $95\%$ intervals give by chance \\
+\texttt{3149f70} 27~Oct & capacity at $97\%$ delivery, the loss the margin rule allows at
+$\varepsilon = 0.05$: ns-3 crossings within $\pm 3\%$ of the contention model's $27.5$ and
+$97.9$ nodes; ratio $3.3$--$3.8$; repeated runs identical & all held (\nmaxTightC{} and
+\nmaxTightD{} nodes, within \tightPredWorst\%; ratio \ratioTight) \\
+\texttt{1469c2b} 20~Oct & batch controller: about $30$\,ms fresher than fixed $b = 4$ at low load;
+failure within $5\%$ of fixed $b = 4$'s; the target met while two swarms merge & merge and low-load
+age held; fresher by \adLowGain\,ms, not $30$; failure at \adRegFail{} nodes against
+\adFixFail{} --- \textbf{failed} \\
+\texttt{a36489a} 21~Oct & two further controllers: with a margin of $0.02$, failure at $115$
+nodes or more and the target in $95\%$ of windows; with a predicted load, failure at $105$ or
+more & both failure points held on the mean (\adFail); windows \textbf{missed} (\adShare\%);
+neither within $5\%$ of fixed $b = 4$ \\
+\texttt{04658f3} 20~Oct & time window: no honest frame refused at clock errors up to $10$\,ms;
+every frame held $250$\,ms refused; a $250$\,ms window survives about two hours without GNSS;
+\emph{it survives $75$\,min} & the first two held; about two hours \textbf{failed}
+(\rpHolds\,min), \emph{as the finer prediction said} \\
+\texttt{3b17a90} 20~Oct & formal model: properties (i)--(iv) proven; (v) shown as an attack, then
+its fix & held across three models, two made after registration; the registered model settled
+$3$ of its $9$ lemmas: \emph{$15$ of $19$ predicted verdicts missed}, the lemmas not settling \\
+\texttt{6dc683f} 20~Oct & flooding: about $700$ forged frames/s saturate a core; an outsider needs
+over $100\,000$ a second and is removed by the tag; a member remains a threat; the tag costs
+about $2\%$ & the outsider removed and the member's threat held; the rates \textbf{missed}
+(\flForgedRate{} and \flTagRate); the tag costs \flTagCostPct\% \\
+\texttt{3a9e85a} 20~Oct, \texttt{26f6f08} 22~Oct & compiled code: receive within $0.35$\,ms;
+at least $230$ nodes per core; energy per record follows the bytes & held (\rxRustUs\,\si{\micro\second},
+\rxRustNodes{} nodes, \enRustMeas\,\si{\micro\joule}); \emph{the energy ranges missed low} \\
+\texttt{3b06582} 20~Oct & deferred batch verification: over $500$ nodes per core; evidence within
+$100$--$200$\,ms; \emph{within $170$\,ms of sampling} & held (\rxLazyNodes); \emph{$170$\,ms
+missed by $1$\,ms} \\
+\texttt{aa3b86d} 20~Oct, \texttt{89cfd6f} 22~Oct & airframes, $25$ fields: delta $20$--$30$\,B,
+saving $60$--$70\%$, ratio $2.6$--$3.4$; key record $50$--$70$\,B; fixed-wing delta $10$--$13$\,B &
+delta, saving and ratio held; key record (\afKeyTwentyFive\,B) and fixed-wing delta
+(\afDeltaWingNine\,B) \textbf{missed}, the latter at the planned speeds as well \\
+\texttt{b7e1ae3} 20~Oct & stream schemes run against the deadline: every delivery capacity inside
+its earlier interval; schemes that cannot verify in time never cross & held; \emph{three finer
+predictions missed}: in-time delivery equal to delivery for two schemes, and crossings for TESLA
+with $d = 1$ and EMSS with $k = 4$ \\
+\texttt{b7e1ae3} 20~Oct & other PHYs: ratios spanning $1.7$--$4.3$, rising with the rate; every
+crossing within $\pm 3\%$ of the model & the rise held; the span \textbf{failed}
+(\phySimRatioLo--\phySimRatioHi); $\pm 3\%$ \textbf{failed} at the fastest rate of each width \\
+\texttt{50e715b} 20~Oct & Falcon-512: crossings within $10\%$ of $12$ and $45$ nodes; a ratio near
+$3.9$, larger than with Ed25519 & the crossings held; the ratio \textbf{failed}: \pqRatio, as with
+Ed25519 \\
+\texttt{baeb1d2} 20~Oct & ledger audit: both planted faults found; about $1.3$\,GB stored per hour
+for $124$ neighbours; \emph{no other finding; $7$--$10$ minutes of a core} & detection held, no
+false finding; the storage figure failed, less being stored, since frames are kept, not records;
+\emph{the time failed, faster}: \auMinutes\,min \\
+\texttt{fd128fd} 20~Oct & other broadcast systems: the accounting gives no reason to batch at
+their rates and deadlines & held \\
+\end{longtable}
+}
+
+\noindent All dates are 2026. Two entries of the project's history are absent on purpose. A
+prediction for the first hardware loss measurement was stated before the measurement and is
+what exposed the basic-rate artifact of \Cref{ch:validation}, but it was not a commit of its
+own. And one early assertion that a result had been pre-registered was withdrawn, not
+reconstructed, because its expectation had been written after the data.

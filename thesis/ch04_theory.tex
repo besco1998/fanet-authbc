@@ -1,8 +1,5 @@
 \chapter{Theoretical Framework}\label{ch:theory}
 
-\needswork{STATUS: DRAFTED from \texttt{docs/02}. Proofs are complete for T1--T3 and T6; T5 is
-stated honestly as an empirical separability result rather than a theorem, which is what it is.}
-
 This chapter develops the closed-form results. Each carries its empirical validation hook, and
 where a result is \emph{applied} rather than novel, that is stated at the point of statement rather
 than buried in related work.
@@ -22,7 +19,8 @@ $\varphi \geq \alpha \iff \ga \geq \alpha(s + \ga) \iff \ga(1-\alpha) \geq \alph
 The threshold is trivial; its \emph{instantiation} is the motivating result. At $\ga = 64$\,B and
 measured record sizes, JSON at $191$\,B gives $\varphi = 25.1\%$, CBOR at $66$\,B gives $49.1\%$,
 and delta-CBOR at $45$\,B gives $58.7\%$. Compression moved the bottleneck from data to
-cryptography. Validated by E1 (\Cref{ch:bytes}).
+cryptography. Validated by E1 (\Cref{ch:bytes}), where a remark states what these record sizes
+contain: $s$ includes the record's own $32$\,B chain link, so $\varphi$ understates the point.
 
 \section{T2 --- frame-level batching and the amplification law}
 
@@ -39,6 +37,15 @@ $C(s) = s \cdot A$ with amplification $A = M/(M - \Hf - \ga) \geq 1$.
 $\omega'(b) < 0$ gives the first claim. For the second, substitute $b = (M - \Hf - \ga)/s$ into
 $s + \omega(b)$ and factor.
 \end{proof}
+
+\paragraph{Worked example.} Take the delta encoding of the record-linked format, $s = 45$\,B, with
+$\Hf = 44$\,B, $\ga = 64$\,B and $M = 1500$\,B. A frame holds
+$\bmaxx = \lfloor 1392/45 \rfloor = 30$ records, the overhead is $108/30 = 3.6$\,B per record,
+and a record costs $48.6$\,B on air. The amplification is $A = 1500/1392 = 1.078$: a byte
+saved by the encoder saves $1.078$\,B on air, because a smaller record also lets more records
+share the fixed $108$\,B. Under the deadline of the next section the batch is $4$ and not
+$30$; the overhead is then $108/4 = 27$\,B per record, the cost $72.0$\,B, and a byte saved by
+the encoder saves exactly one.
 
 So every payload byte saved by compression saves $A$ on-air bytes --- \emph{in the MTU-limited
 regime}. This is MTU-efficiency algebra, not a new law, and \Cref{thm:t2a} shows the regime is
@@ -65,14 +72,23 @@ Differentiate $C$ in each regime; in the second, $b$ is constant in $s$.
 \end{proof}
 
 The consequence is sharp and negative for the 802.11 arm. At $M = 1500$, $\Hf = 44$, $\ga = 64$,
-$\Lambda_i \Dmax = 5$, the boundary is $s < 232.7$\,B. Every encoding studied lies below it ---
-delta $45$, MessagePack $65$, CBOR $66$, JSON $191$ --- so \textbf{freshness binds for all of them
-and $A$ is never operative on 802.11}. Compression pays exactly $1\times$, and the residual
-authentication cost is a floor $(\ga + \Hf)/(\Lambda_i \Dmax)$ that compression cannot touch.
+$\Lambda_i \Dmax = 5$, the boundary is $s < 1392/6 = 232.0$\,B. Every encoding studied lies below
+it --- delta $45$, MessagePack $65$, CBOR $66$, JSON $191$ --- so \textbf{freshness binds for all
+of them and $A$ is never operative on 802.11}. Compression pays exactly $1\times$, and the
+residual authentication cost is a floor $(\ga + \Hf)/b^\star$ that compression cannot touch.
 
-On a low-rate link ($M = 242$) the boundary falls to $s < 29.7$\,B, so the MTU binds and $A$ is
-operative. \textbf{The leverage that motivates compression is exclusive to the low-rate arm}, which
-strengthens rather than weakens that chapter's motivation.
+One refinement matters for every number that follows. $\lfloor \Lambda_i \Dmax \rfloor$ bounds
+the batch by its fill time alone. When $\Lambda_i \Dmax$ is an integer, a batch of that size fills
+in exactly $\Dmax$ and leaves nothing for channel access, airtime and verification, so the largest
+batch that meets the deadline is one less. Both operating points of this thesis are of that kind,
+with $\Lambda_i \Dmax = 5$: the design uses $b = 4$ (\Cref{sec:freshness-convention} gives the
+convention behind the fill time). With $b_{\mathrm{fresh}} = 4$ the boundary rises to
+$1392/5 = 278.4$\,B and the conclusion is unchanged.
+
+On a low-rate link ($M = 242$) the same boundary falls to $s < 134/6 = 22.3$\,B, below every
+encoding studied, so there the frame size binds and $A = 242/134 = 1.81$ is operative.
+\textbf{The leverage that motivates compression is exclusive to the low-rate arm}, which
+strengthens that chapter's motivation.
 
 \section{T3 --- the loss-robustness frontier}
 
@@ -96,7 +112,8 @@ For \emph{any} stationary loss process of mean rate $p$, whatever its correlatio
 \[
 V_D(n) = P(\text{all } n \text{ frames arrive}) \leq P(\text{one given frame arrives}) = 1-p = V_B,
 \]
-with equality only at $n = 1$.
+with equality at $n = 1$ and, for $n > 1$, only in the degenerate case in which the $n$ frames
+are lost together or not at all.
 \end{theorem}
 
 \begin{proof}
@@ -106,12 +123,55 @@ A joint probability cannot exceed a marginal.
 This matters more than it first appears. The $(1-p)^n$ form assumes independent loss, which the
 emulator also implements --- so agreement between measured and theoretical $V$ is a
 \emph{consistency check, not a validation}. \Cref{thm:t3c} rescues the ordering without the
-assumption: independence is the \emph{worst case} for D, and correlation narrows the gap but cannot
-invert it. Gilbert--Elliott simulation at matched mean $p = 0.05$ confirms it: $V_D(n{=}2)$ rises
+assumption: whatever the correlation, D cannot overtake B. Among bursty processes, in which a
+lost frame makes the next loss more likely, independence is the worst case for D, and
+correlation narrows the gap without inverting it. Gilbert--Elliott simulation at matched mean $p = 0.05$ confirms it: $V_D(n{=}2)$ rises
 from $0.9025$ (independent) to $0.9498$ at a mean burst of 160 frames --- asymptotically $1-p$,
 never past it, and never reaching the feasibility threshold.
 
-\section{T4 --- scheme selection}
+\section{T3\textquotesingle{} --- a frame coded against its predecessor is not self-verifiable}
+
+\Cref{thm:t3} rests on the premise that each frame verifies alone. \textbf{That premise fails
+for a delta encoding whose key records are rarer than its frames}, and the design this thesis first
+headlined was one: a key record every $K = 16$ records with $b = 4$, so that only one frame in four
+could be decoded without the frame before it. A receiver cannot verify what it cannot rebuild ---
+the signature is over the records, not over the bytes on air --- so a lost frame takes every later
+frame with it until the next self-contained one.
+
+\begin{theorem}[Verifiability with dependent frames]\label{thm:t3prime}
+Let one frame in $r$ be self-contained. Frame $j$ of a group ($j = 1, \dots, r$) verifies iff it
+and the $j-1$ frames before it in the group all arrive, so under independent frame loss $p$
+\[
+V(r, p) = \frac{1}{r} \sum_{j=1}^{r} (1-p)^j .
+\]
+$V(1, p) = 1 - p$, and $V(r, p) < 1 - p$ for every $r > 1$.
+\end{theorem}
+
+\begin{corollary}
+If $\varepsilon \leq p$, the requirement $V \geq 1 - \varepsilon$ admits $r = 1$ only: every
+frame must decode alone.
+\end{corollary}
+
+$V(4, 0.05) = \lossThFour$. The design as first published therefore missed $V \geq 0.95$ at the
+loss rate it was specified for. Its byte figure had amortised one key record over four frames; its
+verifiability figure had treated the four as independent; and the two had never been evaluated
+on one object, because no such frame had been built (\Cref{ch:reproducibility}). Measured with
+the encoder and decoder in the loop, $r = 4$ verifies \lossVFour{} of records
+(\Cref{ch:bytes}).
+
+For bursty loss the same counting gives, for a two-state process with mean loss $\bar{p}$ and
+mean burst length $B$ frames,
+\[
+V = \frac{1 - \bar{p}}{r} \sum_{j=1}^{r} (1 - a)^{j-1}, \qquad a = \frac{\bar{p}}{B\,(1 - \bar{p})},
+\]
+which reduces to \Cref{thm:t3prime} for memoryless loss and is \emph{larger} for longer bursts:
+losses that arrive together waste fewer good frames. It never exceeds $1 - \bar{p}$, with
+equality only at $r = 1$, so bursts soften the penalty of a dependent design and never remove it.
+
+The corrected design uses $r = 1$. What a longer interval would buy is small --- \lossPrize\,B
+per record between $r = 1$ and $r = 16$ --- and a cleaner link would be needed to afford it.
+
+\section{T4 --- scheme selection}\label{sec:t4}
 
 For a UAV's \emph{own} records under self-batching, one ordinary signature covers $b$ records, so
 Ed25519 and BLS are near-equivalent in bytes while Ed25519's verification is far cheaper than a
@@ -129,7 +189,16 @@ against a CPU side of $P_c \cdot (1\text{--}3)\,\si{\milli\second}$, so \textbf{
 802.11 and BLS's regime is low-rate links and attestation compression} --- a falsifiable,
 regime-dependent rule.
 
-\section{T5 --- the co-design result, stated as what it is}
+\paragraph{Worked example.} Four relayed records share a frame, each from a different signer.
+Ed25519 carries their four signatures, $256$\,B; BLS carries one aggregate of $96$\,B, so
+$\Delta = 64 - 96/4 = 40$\,B per record, which at $6$\,Mb/s is $\SI{53}{\micro\second}$ of
+airtime. On the measured board, verifying the aggregate costs $3.7$\,ms more processor time
+per record than verifying an Ed25519 signature. BLS is the cheaper in energy only if
+$\SI{53}{\micro\second} \cdot P_r > 3.7\,\mathrm{ms} \cdot P_c$, that is if the radio draws
+more than $69$ times the power of the processor. Measured, the ratio is $0.29$
+(\Cref{ch:codesign}).
+
+\section{T5 --- an empirical separability result}
 
 \begin{remark}[Not a theorem]
 T5 is often written as a co-design theorem. It is not one. The joint optimum is \emph{empirically
@@ -140,11 +209,15 @@ been found had one existed; none was. That is evidence, not proof, and the disti
 
 The recipe: pick the smallest deterministic encoding $e^\star$, placement B for own traffic or C
 for relay, batch $b^\star = \min(\bmaxx(s), \lfloor \Lambda_i \Dmax \rfloor)$ --- on 802.11 the
-second term binds --- and scheme per T4.
+second term binds, less one when $\Lambda_i \Dmax$ is an integer (\Cref{thm:t2a}) --- and scheme
+per T4.
 
 A factorial ablation (\Cref{ch:codesign}) narrows this further, and against the project's own
 earlier claim: only placement and batching genuinely interact, by exactly $\ga(1 - 1/b)$, hence not
-at all at $b = 1$. Encoding is perfectly separable and the scheme axis is byte-degenerate here.
+at all at $b = 1$. Encoding is perfectly separable \emph{in that byte model}, where a record's
+size does not depend on its neighbours, and the scheme axis is byte-degenerate. In the frame as
+built the delta saving is $(1 - 1/b)(k - \delta)$ per record for a key record of $k$ and a delta of
+$\delta$ bytes --- conditional on batching in the same way (\Cref{ch:codesign}).
 
 \section{T6 --- the authentication-exclusion threshold}
 
@@ -160,38 +233,56 @@ project was not.
 \end{remark}
 
 \begin{theorem}[Exclusion]\label{thm:t6}
-A frame that is independently verifiable must carry the header, the authentication object and at
-least one record. A link of maximum payload $M$ therefore admits authenticated telemetry iff
+A frame that verifies alone must carry a header $\Hf$, one chain link $L$, an authentication
+object $\ga$ and at least one record that decodes alone, $s_k$. A link of maximum payload $M$
+therefore admits authenticated, hash-chained telemetry iff
 \[
-\smax(M) = M - \Hf - \ga \geq \smin,
+M \;\geq\; \Hf + L + \ga + s_k ,
 \]
-and no choice of batch size, chain placement or aggregation changes this: those decide only how the
-space \emph{above} the floor is used.
+each term taken at its smallest, and no choice of batch size, encoding of later records or
+aggregation changes this: those decide only how the space \emph{above} the floor is used.
 \end{theorem}
 
 Fragmentation does not escape it, by \Cref{thm:t3}: at $\varepsilon \leq p$ the entire
-verifiability budget is spent on the first frame, so fragmenting is already a constraint violation
-and T6 is evaluated at $n = 1$.
+verifiability budget is spent on the first frame, so a signed unit may not span two.
 
-\subsection{Three tiers, because each names a different escape route}
+\begin{remark}[The statement this replaces]
+Until October 2026 the theorem read $\smax(M) = M - \Hf - \ga \geq \smin$, with $\smin$ the
+smallest record. It charged neither the chain link, which per-frame chaining moves into the frame,
+nor the requirement of \Cref{thm:t3prime} that the record decode alone; $\smin$ had been taken as
+a mean delta record less its link. The consequences, including a claim this thesis had to
+withdraw twice, are in \Cref{sec:excl-history}.
+\end{remark}
+
+\subsection{Four tiers, because each names a different escape route}
 
 \begin{center}
+\begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{lll}
 \toprule
 tier & condition & what could fix it \\
 \midrule
-\textbf{signature} & $M < \ga$ & a smaller signature scheme \emph{only} \\
-\textbf{framing}   & $\ga \leq M < \Hf + \ga$ & a leaner frame header \\
-\textbf{encoding}  & $\Hf + \ga \leq M < \Hf + \ga + \smin$ & a smaller record encoding \\
+\textbf{signature}  & $M < \ga$ & a smaller authentication object \emph{only} \\
+\textbf{header}     & $\ga \leq M < \ga + \Hf$ & a leaner frame header \\
+\textbf{chain link} & $\ga + \Hf \leq M < \ga + \Hf + L$ & taking the link off the air \\
+\textbf{record}     & $\ga + \Hf + L \leq M < \ga + \Hf + L + s_k$ & a smaller self-contained record \\
 \bottomrule
 \end{tabular}
+\end{adjustbox}
 \end{center}
 
-The tier structure is not decoration: it is what makes the bound \emph{constructive}, and
-\Cref{ch:lowrate} shows the encoding tier being attacked successfully --- at the cost of one of
-this thesis's own claims.
+The tier structure is what makes the bound \emph{constructive}: \Cref{ch:lowrate} evaluates it
+for all twelve EU863-870 data rates and tabulates what each relaxation buys.
 
-\section{A withdrawn theorem, kept visible}
+\subsection{Scope}
+
+The theorem is conditional, and \Cref{ch:lowrate} states its four conditions in full: the payload
+limit is that of the link layer in use; every frame carries a public-key signature; there is no
+loss recovery; and $\varepsilon \leq p$. A fifth belongs to the instantiation and not to the
+theorem: how many data rates it excludes depends on the header of the frame format, for
+\exclFmtCount{} of the \exclCount.
+
+\section{A withdrawn theorem}
 
 An earlier version of this framework contained a seventh result, T7, claiming that channel capacity
 excludes configurations at $U \geq 1$, where $U$ is offered load over \emph{saturation} throughput.
@@ -210,9 +301,9 @@ argument here must be made in $V$, not in $D$.}
 
 What survives is a cost rather than an exclusion: because $b \leq \lfloor \Lambda_i \Dmax \rfloor$,
 tightening the freshness deadline shrinks the batch and raises the frame rate the medium must
-carry. Meeting the standard's deadline costs roughly a factor of two in supportable swarm size and
-\emph{nothing} in bytes. That is the honest, measured statement, and it is a better result than the
-theorem it replaces.
+carry. Meeting the standard's deadline costs swarm size --- \nmaxLeanDesign{} nodes where the
+relaxed point carries \nmaxRelLeanDesign{} --- and \emph{nothing} in bytes. That is the measured
+statement, and it is a better result than the theorem it replaces.
 
 \begin{remark}[The lesson, recorded]
 T7 was written from a model quantity treated as a physical limit, and published into the
@@ -220,7 +311,7 @@ documentation before the experiment that tested it existed --- an experiment alr
 Running it first would have prevented the claim.
 \end{remark}
 
-\section{Freshness, and a convention that had to be derived}
+\section{Freshness, and a convention that had to be derived}\label{sec:freshness-convention}
 
 The freshness of the oldest record in a batch is modelled as
 $D(b) = b/\Lambda_i + T_{\mathrm{air}} + W_q$ and enforced as a hard constraint.
@@ -234,7 +325,72 @@ deterministic and Poisson arrivals. The formulation above names the second and c
 It is retained as the \emph{worst case}, and it is exactly that: a record timestamped at its sample
 instant may describe state up to $1/\Lambda_i$ older, and $(b-1)/\Lambda_i + 1/\Lambda_i =
 b/\Lambda_i$. So it bounds end-to-end latency including sampling quantisation. The cost of the
-choice is stated rather than hidden: the tight reading admits $b = 5$ at both operating points
-($66.6$\,B/record, $-61.8\%$) where the worst case admits $b = 4$ ($72.0$\,B, $-58.7\%$).
-\textbf{This thesis under-reports its own saving by about three percentage points.}
+choice is stated: the tight reading admits $b = 5$ at both operating points
+(\bprLeanFive\,B per record, $-\saveLeanFive\%$) where the worst case admits $b = 4$
+(\bprLeanDesign\,B, $-\saveLean\%$). \textbf{This thesis under-reports its own saving by about
+\saveFiveGain{} percentage points.}
+
+The retained quantity has a name in the literature on timeliness. The \emph{age of
+information} at a receiver is the time since the newest update it holds was generated, and its
+\emph{peak}, reached the instant before the next update arrives, is the delay of the previous
+update plus the interval between deliveries~\cite{yates2021aoi}. With one frame every
+$b/\Lambda_i$ and a frame's newest record delayed by $T_{\mathrm{air}} + W_q$, that peak is
+$b/\Lambda_i + T_{\mathrm{air}} + W_q$: the $D(b)$ above, exactly, when no frame is lost. The
+constraint of this thesis is therefore a bound on peak age, where that literature mostly
+minimises an average; the survey lists the probability that the peak age exceeds a threshold as
+a metric of its own. This reading was found on 2026-10-09, after the convention had been
+chosen. It does not change the convention; it says what the convention bounds.
 \end{remark}
+
+\subsection{The peak age under loss}\label{sec:aoi-loss}
+
+The bound holds for a frame that arrives. A lost frame adds one frame period, $P = b/\Lambda_i$,
+to the age of the update after it: after $k$ consecutive losses the peak age is $(k+1)P$ plus the
+delay of the frame that does arrive. With independent loss $p$ the number of periods between
+deliveries is geometric, and the mean peak age is $P/(1-p) + T_{\mathrm{air}} + W_q$. At the
+design's $b = 4$ and $50$~records/s, simulated frame by frame through the codec at $p = 0.05$,
+the mean peak age is \aoiPeakMean\,ms, within $D_{\max}$, but its 99th percentile is
+\aoiPeakPnn\,ms: one lost frame is enough to break the deadline, and \aoiOverPct\% of updates do,
+the share of frames lost. The deadline therefore holds for a share $1-p$ of updates, the same
+share that $V$ counts.
+
+\subsection{A window on GNSS time}\label{sec:window}
+
+A sequence number refuses a frame delivered twice and accepts a frame delivered late. Every
+record carries its sampling time, signed with it, and every UAV keeps GNSS time, so a receiver
+can refuse a frame whose newest record is too old:
+\begin{equation}
+  t_{\mathrm{local}} - t_{\mathrm{newest}} \;\leq\; \Delta =
+  \frac{b}{\Lambda_i} + T_{\mathrm{air}} + W_q + t_v + 2\sigma_{\mathrm{clk}} + g,
+  \label{eq:window}
+\end{equation}
+with $\sigma_{\mathrm{clk}}$ the clock error between the two nodes and $g$ a guard. The check
+reads the timestamp before the signature; a frame whose timestamp was altered to look fresh then
+fails its signature, and one altered to look stale does what dropping it would. A stale frame
+therefore costs a receiver a decode, not a verification, and the rule costs no byte on air.
+
+While GNSS time is lost each node's crystal drifts, by up to $20$ parts per million, so two
+clocks part by up to \rpDrift\,ms an hour. A window widened by that drift keeps working, its
+bound growing at the same rate; a fixed window of $250$\,ms outlasts \rpHolds\,min of outage
+(\Cref{tab:security}). Beyond a set limit the receiver stops applying the rule and marks what it
+accepts as unverified in time, falling back on sequence numbers alone.
+
+\subsection{A loss budget with a margin}\label{sec:margin}
+
+With one self-contained frame in every frame, $V = 1-p$, so a target $V \geq 1-\epsilon$ is met
+with no margin at $\epsilon = p$: half of all runs fall below it by chance. The deployment rule
+of this thesis sets the budget at least $0.02$ above the expected loss, $\epsilon \geq p + 0.02$.
+\Cref{fig:margin} tests it under five loss processes of one mean.
+
+\subsection{The design map}\label{sec:design-map}
+
+The operating point fixes $\Lambda_i$ and $D_{\max}$; the freshness bound then fixes the batch.
+Over any pair, the largest batch the deadline admits is
+\begin{equation}
+  b^\ast(\Lambda_i, D_{\max}) = \max\,\{\, b : b/\Lambda_i + T_{\mathrm{air}} + W_q + t_v \leq
+  D_{\max} \,\},
+  \label{eq:bstar}
+\end{equation}
+and none where even one record misses the deadline. \Cref{fig:map} evaluates it over seven
+record rates and eight deadlines, with the capacity it buys over per-record signing from the
+contention model of \Cref{sec:why}.

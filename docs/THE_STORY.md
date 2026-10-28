@@ -1,5 +1,20 @@
 # The AUTHBC story — a plain-language account
 
+> ⚠️ **Written before the October 2026 revision, and superseded in four places.** An external
+> review showed that the design this document describes had been a *sum of sizes* and never one
+> frame (findings F45–F53 in [`audits/model_provenance.md`](audits/model_provenance.md)). Read
+> what follows as the account of the work *up to August 2026*:
+>
+> | this document says | what is true now |
+> |---|---|
+> | 72.0 B per record, **−58.7 %** | that design verified 0.881 of its records at 5 % loss, not 0.95. With a full record in every frame: 74.96 B (−57.0 %) in the first format, **43.25 B (−70.3 %)** in the lean format that was then built |
+> | "three" (or "four") "of seven" LoRa data rates excluded | **eight of twelve**, under four stated conditions |
+> | capacities 31 → 100, 88 → 213, "1.9–3.2×" from one load ceiling U = 2.435 | the ceiling is not invariant; capacities are **simulated per configuration** — `results/raw/design_ladder.csv` |
+> | "Bor et al." | Haxhibeqiri, Van den Abeele, Moerman & Hoebeke |
+>
+> The current account is the top entry of [`LOGBOOK.md`](LOGBOOK.md), the paper, and the
+> repository README. This file is kept because it records how the work was understood then.
+
 *Written 2026-08-30 at Mohamed's request: "a document that describes what we did in detail with
 simple language and terms for me to understand." Readable rendering published as an artifact; **this
 file is canonical**. Every number here comes from a committed artifact and is guarded by a test that

@@ -1,0 +1,23 @@
+# device_model=Raspberry Pi 4 Model B Rev 1.4
+# device_host=authbc-pi4b
+# device_governor=performance
+# device_cores=4
+# run_utc=20261009T163436Z
+# python=3.12.13
+# platform=Linux-6.12.93+rpt-rpi-v8-aarch64-with-glibc2.36
+# cpu=unknown
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.3
+# run=multicore_receive
+# seed=1
+# batch=4
+# frames_per_node_s=12.5
+# pause_s=20.0
+workers,seconds,frames,frames_per_s,worker_min_fps,worker_max_fps,nodes_served,temp_before,temp_after,throttled_before,throttled_after,times_one_core
+1,30.0,20774,692.45,692.45,692.45,56,temp=50.6'C,temp=55.0'C,throttled=0x0,throttled=0x0,1.0
+2,30.0,39536,1317.86,658.83,659.03,106,temp=52.1'C,temp=60.3'C,throttled=0x0,throttled=0x0,1.903
+3,30.0,56020,1867.27,622.14,622.58,150,temp=53.0'C,temp=66.2'C,throttled=0x0,throttled=0x0,2.697
+4,30.0,69886,2329.45,582.21,582.48,187,temp=55.5'C,temp=70.6'C,throttled=0x0,throttled=0x0,3.364

@@ -1,0 +1,2059 @@
+#!/usr/bin/env python3
+"""Every number the paper prints, generated from the artifacts → `paper/numbers.tex`.
+
+**Why this exists.** A number typed into LaTeX is a copy, and copies drift: this project has
+shipped a figure plotting a superseded constant, a table one audit behind its CSV, and a count of
+"four of seven" that the artifacts had stopped supporting. The paper therefore contains no typed
+results. Each is a macro, each macro is defined here from a file in `results/`, and
+`tests/test_paper_numbers.py` fails if `numbers.tex` is not what this script writes or if the
+paper uses a macro this script does not define.
+
+    python analysis/paper_numbers.py           # write paper/numbers.tex
+    python analysis/paper_numbers.py --check   # exit 1 if the file on disk is stale
+
+A value that an artifact does not yet hold stops the script and names itself. `--allow-missing`
+writes `??` in its place so a draft can be typeset; the check, and therefore the test suite,
+refuses a file that contains one.
+"""
+from __future__ import annotations
+
+import argparse
+import csv
+import math
+import re
+import statistics as st
+import sys
+from collections import defaultdict
+from decimal import ROUND_HALF_UP, Decimal
+from pathlib import Path
+
+import yaml
+
+REPO = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO / "src"))
+sys.path.insert(0, str(REPO / "analysis"))      # nmax_airtime_line, when loaded by a test
+
+import dcf_model_check as modelcheck  # noqa: E402
+import design_map as dmap  # noqa: E402
+import nmax_airtime_line as airtime  # noqa: E402
+import source_difference as sources  # noqa: E402
+
+from authbc.models import bianchi, broadcast_dcf, lora  # noqa: E402
+from authbc.models import frame as frame_model  # noqa: E402
+
+RAW = REPO / "results" / "raw"
+HW = REPO / "results" / "hw"
+OUT = REPO / "paper" / "numbers.tex"
+
+WORDS = ("zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten",
+         "eleven", "twelve")
+
+
+def rows(path: Path) -> list[dict[str, str]]:
+    return list(csv.DictReader(ln for ln in path.read_text(encoding="utf-8").splitlines()
+                               if not ln.startswith("#")))
+
+
+def one(table: list[dict[str, str]], **want: str) -> dict[str, str]:
+    hits = [r for r in table if all(r[k] == v for k, v in want.items())]
+    if len(hits) != 1:
+        raise LookupError(f"expected one row for {want}, found {len(hits)}")
+    return hits[0]
+
+
+def header(path: Path) -> dict[str, str]:
+    """The `# key=value` provenance lines a result file opens with."""
+    pairs = (ln[1:].strip().split("=", 1) for ln in path.read_text(encoding="utf-8").splitlines()
+             if ln.startswith("#") and "=" in ln)
+    return {k.strip(): v.strip() for k, v in pairs}
+
+
+MISSING: list[str] = []          # values an artifact does not hold yet (see --allow-missing)
+
+
+def f(value: float | str, digits: int) -> str:
+    if value == "":
+        MISSING.append(f"a {digits}-decimal value")
+        return "??"
+    # Decimal, half up: `f"{145.765:.2f}"` is 145.76, because the float is 145.76499…
+    quantum = Decimal(1).scaleb(-digits)
+    return str(Decimal(str(value)).quantize(quantum, rounding=ROUND_HALF_UP))
+
+
+def whole(value: str, what: str) -> str:
+    """An integer cell of an artifact, or `??` (recorded) if the cell is still empty."""
+    if value == "":
+        MISSING.append(what)
+        return "??"
+    return str(int(float(value)))
+
+
+def thousands(n: int) -> str:
+    """12345 -> 12\\,345 (a thin space, as the paper's tables use)."""
+    return f"{n:,}".replace(",", "\\,")
+
+
+def interval(lo: str, hi: str, what: str) -> str:
+    if "" in (lo, hi):
+        MISSING.append(what)
+        return "[??]"
+    return f"[{int(float(lo))},\\,{int(float(hi))}]"
+
+
+# ============================================================================== frames
+def frames() -> dict[str, str]:
+    comp = rows(RAW / "frame_components.csv")
+    at = "sender 40000 / one hour at 50 Hz"
+    low = "sender 0 / record 0"
+    m: dict[str, str] = {
+        "hdrFirst": one(comp, kind="header", format="first", item=at)["mean_bytes"],
+        "hdrFirstLo": one(comp, kind="header", format="first", item=low)["mean_bytes"],
+        "hdrLean": one(comp, kind="header", format="lean", item=at)["mean_bytes"],
+        "hdrLeanLo": one(comp, kind="header", format="lean", item=low)["mean_bytes"],
+        "linkField": one(comp, kind="link", format="lean", item="per frame (its own field)")
+        ["mean_bytes"],
+    }
+    for fmt, tag in (("first", "First"), ("lean", "Lean")):
+        fld = {r["item"]: r for r in comp if r["kind"] == "header_field" and r["format"] == fmt}
+
+        def span(*names: str, fld: dict = fld) -> str:
+            hi = sum(int(fld[n]["mean_bytes"]) for n in names)
+            lo = sum(int(fld[n]["min_bytes"]) for n in names)
+            return str(hi) if lo == hi else f"{hi} ({lo})"
+
+        m |= {f"fld{tag}Map": span("map"), f"fld{tag}VT": span("v", "t"),
+              f"fld{tag}Src": span("src"), f"fld{tag}Seq": span("base_seq"),
+              f"fld{tag}N": span("n"), f"fld{tag}Recs": span("recs"),
+              f"fld{tag}Auth": span("auth")}
+        key = one(comp, kind="record", format=fmt, item="keyframe", stride="1")
+        delta = one(comp, kind="record", format=fmt, item="delta", stride="1")
+        m |= {f"key{tag}": f(key["mean_bytes"], 1), f"delta{tag}": f(delta["mean_bytes"], 1)}
+    # key names of the first header: one byte of CBOR text header plus the name, seven keys
+    m["keyNamesFirst"] = str(sum(1 + len(k) for k in
+                                 ("v", "t", "src", "base_seq", "n", "recs", "auth")))
+    tamper = {r["item"]: int(r["n"]) for r in comp if r["kind"] == "tamper"}
+    if tamper["accepted_altered"] or tamper["accepted_unchanged"]:
+        raise ValueError("the paper says every single-bit flip is refused; the artifact disagrees")
+    m["bitflips"] = thousands(tamper["flips"])
+    far = one(comp, kind="record", format="lean", item="delta", stride="110")
+    m |= {"deltaLeanFar": f(far["mean_bytes"], 1), "loraSpacing": f(far["spacing_s"], 1)}
+    for name, stride in (("Tenth", "2"), ("One", "20"), ("Slow", "330")):   # 0.1 s, 1 s, 16.5 s
+        row = one(comp, kind="record", format="lean", item="delta", stride=stride)
+        m[f"deltaLean{name}"] = f(row["mean_bytes"], 1)
+    # The batch the tight reading of freshness would admit (thesis ch. 4): five records.
+    base = one(comp, kind="frame", format="lean", item="self-batch", batch="1", ref_interval="1")
+    four = one(comp, kind="frame", format="lean", item="self-batch", batch="4", ref_interval="1")
+    five = one(comp, kind="frame", format="lean", item="self-batch", batch="5", ref_interval="1")
+
+    def saving(row: dict[str, str]) -> float:
+        return 100 * (1 - float(row["bytes_per_rec"]) / float(base["bytes_per_rec"]))
+
+    m |= {"bprLeanFive": f(five["bytes_per_rec"], 1), "saveLeanFive": f(saving(five), 1),
+          "saveFiveGain": f(saving(five) - saving(four), 1)}
+    return m | _records_within_the_mtu(comp) | _where_the_link_sits(comp)
+
+
+def _where_the_link_sits(comp: list[dict[str, str]]) -> dict[str, str]:
+    """The three curves of fig_bytes_vs_batch at the adopted batch, and what separates them.
+
+    The text says the first format with one link per frame lands between the two formats at
+    every batch above one, and that a link in every record leaves a floor no batch removes.
+    """
+    def curve(fmt: str, item: str) -> dict[int, float]:
+        return {int(r["batch"]): float(r["bytes_per_rec"]) for r in comp
+                if (r["kind"], r["format"], r["item"], r["ref_interval"])
+                == ("frame", fmt, item, "1")}
+
+    per_record = curve("first", "self-batch (byte model)")
+    per_frame = curve("first", "self-batch; one link per frame (byte model)")
+    lean = curve("lean", "self-batch")
+    if not all(per_record[b] > per_frame[b] > lean[b] for b in lean if b > 1):
+        raise ValueError("the text orders the three link placements; the artifact disagrees")
+    if not min(per_record.values()) > per_frame[4]:
+        raise ValueError("the text says no batch up to twelve brings a per-record link below "
+                         "what one link per frame reaches at four records")
+    return {"bprFirstLinkFrame": f(per_frame[4], 1),
+            "linkMoveSave": f(per_record[4] - per_frame[4], 0),
+            "leanHeaderSave": f(per_frame[4] - lean[4], 1),
+            "bprFirstTwelve": f(per_record[max(per_record)], 1),
+            "curveMaxBatch": str(max(per_record))}
+
+
+def _records_within_the_mtu(comp: list[dict[str, str]], mtu: int = 1500) -> dict[str, str]:
+    """How many records one MTU-sized frame would hold: the ceiling freshness never reaches."""
+    out = {}
+    for fmt, tag, link in (("first", "First", 0.0), ("lean", "Lean", None)):
+        header = float(one(comp, kind="header", format=fmt,
+                           item="sender 40000 / one hour at 50 Hz")["mean_bytes"])
+        if link is None:
+            link = float(one(comp, kind="link", format=fmt,
+                             item="per frame (its own field)")["mean_bytes"])
+        key = float(one(comp, kind="record", format=fmt, item="keyframe", stride="1")["mean_bytes"])
+        delta = float(one(comp, kind="record", format=fmt, item="delta", stride="1")["mean_bytes"])
+        layout = frame_model.FlatLayout(fmt, header, link, key, delta)
+        b = 1
+        while layout.frame_bytes(64, b + 1) <= mtu:
+            b += 1
+        out[f"mtuRecs{tag}"] = str(b)
+    if not int(out["mtuRecsFirst"]) > 4 < int(out["mtuRecsLean"]):
+        raise ValueError("the text says freshness, not the MTU, caps the batch at four")
+    return out
+
+
+# ============================================================================== ladder
+RUNGS = {  # macro suffix -> (format, rung)
+    "FirstBase": ("first", "inline-1"), "FirstInline": ("first", "inline-b"),
+    "FirstCbor": ("first", "batch-cbor"), "FirstDesign": ("first", "batch-delta"),
+    "LeanBase": ("lean", "inline-1"), "LeanInline": ("lean", "inline-b"),
+    "LeanKeys": ("lean", "batch-keys"), "LeanDesign": ("lean", "batch-delta"),
+}
+
+
+def ladder() -> dict[str, str]:
+    lad = rows(RAW / "design_ladder.csv")
+    cfg = yaml.safe_load((REPO / "experiments" / "design-ladder" / "config.yaml").read_text())
+    m: dict[str, str] = {}
+    bpr: dict[str, float] = {}
+    for tag, (fmt, rung) in RUNGS.items():
+        r = one(lad, op="adopted", format=fmt, rung=rung, scheme="ed25519")
+        bpr[tag] = float(r["bytes_per_rec"])
+        what = f"N_max of {fmt}/{rung} at the adopted point"
+        m |= {f"frm{tag}": f(r["frame_bytes"], 1), f"bpr{tag}": f(r["bytes_per_rec"], 2),
+              f"cert{tag}": f(r["bytes_per_rec_with_cert"], 2),
+              f"certT{tag}": f(r["bytes_per_rec_with_cert_timed"], 2),
+              f"nsat{tag}": r["n_max_u_lt_1"],
+              f"nmax{tag}": whole(r["n_max_v95"], what),
+              f"ci{tag}": interval(r["n_max_v95_ci_lo"], r["n_max_v95_ci_hi"], what),
+              f"cpu{tag}": f(r["cpu_pct_at_n_v95"], 0)}
+    m |= {"saveLean": f(100 * (1 - bpr["LeanDesign"] / bpr["LeanBase"]), 1),
+          "saveFirst": f(100 * (1 - bpr["FirstDesign"] / bpr["FirstBase"]), 1),
+          "leanVsFirstPct": f(100 * (1 - bpr["LeanDesign"] / bpr["FirstDesign"]), 0)}
+    ratios: dict[str, tuple[float, float]] = {}
+    for tag, fmt in (("First", "first"), ("Lean", "lean")):
+        for op, rel in (("adopted", ""), ("relaxed", "Rel")):
+            base = one(lad, op=op, format=fmt, rung="inline-1", scheme="ed25519")
+            design = one(lad, op=op, format=fmt, rung="batch-delta", scheme="ed25519")
+            what = f"N_max of the {fmt} baseline and design at the {op} point"
+            if "" in (base["n_max_v95"], design["n_max_v95"]):
+                MISSING.append(what)
+                m[f"ratio{rel}{tag}"] = "??"
+            else:
+                m[f"ratio{rel}{tag}"] = f(int(design["n_max_v95"]) / int(base["n_max_v95"]), 1)
+            if rel:
+                m |= {f"nmaxRel{tag}Base": whole(base["n_max_v95"], what),
+                      f"nmaxRel{tag}Design": whole(design["n_max_v95"], what),
+                      f"ciRel{tag}Base": interval(base["n_max_v95_ci_lo"],
+                                                  base["n_max_v95_ci_hi"], what),
+                      f"ciRel{tag}Design": interval(design["n_max_v95_ci_lo"],
+                                                    design["n_max_v95_ci_hi"], what)}
+        if "??" not in (m[f"ratio{tag}"], m[f"ratioRel{tag}"]):
+            ratios[tag] = (float(m[f"ratio{tag}"]), float(m[f"ratioRel{tag}"]))
+        # the search must return the rung the paper calls the design, or the paper is wrong
+        best = one(lad, op="adopted", format=fmt, rung="SEARCH_OPTIMUM")
+        if (best["placement"], best["batch"], best["ref_interval"]) != ("B", "4", "1"):
+            raise ValueError(f"the {fmt} search optimum is no longer the reported design")
+    if len(ratios) == 2:
+        # "nearly the same at both operating points, and larger in the lean format"
+        if max(abs(a - b) for a, b in ratios.values()) > 0.2:
+            raise ValueError("the text says the ratio hardly changes between operating points")
+        if not min(ratios["Lean"]) > max(ratios["First"]):
+            raise ValueError("the text says the ratio is larger in the lean format at both points")
+    design = one(lad, op="adopted", format="lean", rung="batch-delta", scheme="ed25519")
+    inline = one(lad, op="adopted", format="lean", rung="inline-b", scheme="ed25519")
+    bls = one(lad, op="adopted", format="lean", rung="batch-delta", scheme="bls")
+    base = one(lad, op="adopted", format="lean", rung="inline-1", scheme="ed25519")
+    m |= _capacity_steps(base, inline, design)
+    m |= _per_run_reading(lad)
+    # "Charged per frame … favours the design": per time, the unbatched baseline's charge must
+    # fall by more than the design's, and no row at this record rate may rise (audit F80, G30)
+    drop = {k: float(r["bytes_per_rec_with_cert"]) - float(r["bytes_per_rec_with_cert_timed"])
+            for k, r in (("base", base), ("design", design))}
+    if not drop["base"] > drop["design"] >= 0.0:
+        raise ValueError("the text says the per-frame certificate charge favours the design")
+    m |= {"ncpuBatch": design["n_cpu_one_core"], "ncpuInline": inline["n_cpu_one_core"],
+          "ncpuBls": bls["n_cpu_one_core"],
+          "certIntervalMs": f(1e3 * cfg["cert_interval_s"], 0),
+          "certBytes": str(cfg["cert_bytes"]),
+          "certPerFrame": f((cfg["cert_bytes"] + (cfg["cert_period"] - 1)
+                             * cfg["cert_digest_bytes"]) / cfg["cert_period"], 1),
+          "seeds": "30"}
+    return m
+
+
+def _capacity_steps(base: dict[str, str], inline: dict[str, str],
+                    design: dict[str, str]) -> dict[str, str]:
+    """The two steps of the lean ladder, and the sentences the paper hangs on them."""
+    if "" in (base["n_max_v95"], inline["n_max_v95"], design["n_max_v95"]):
+        MISSING.append("N_max of the lean baseline, inline and design rungs")
+        return {"stepShareLean": "??", "stepSignLean": "??"}
+    share = int(inline["n_max_v95"]) / int(base["n_max_v95"])
+    sign = int(design["n_max_v95"]) / int(inline["n_max_v95"])
+    if not share > sign:
+        raise ValueError("the text calls sharing the frame the larger step; the ladder disagrees")
+    if design["binds_at_v95"] != "channel":
+        raise ValueError("the text says the channel binds before the CPU for the design")
+    if not 90.0 <= float(inline["cpu_pct_at_n_v95"]) <= 100.0:
+        raise ValueError("the text says row 6 reaches its channel limit with almost no CPU to "
+                         "spare; the ladder disagrees")
+    return {"stepShareLean": f(share, 1), "stepSignLean": f(sign, 1)}
+
+
+def _per_run_reading(lad: list[dict[str, str]]) -> dict[str, str]:
+    """N_max if 95 % of individual runs, not their mean, must reach the target (both criteria are
+    reported and the mean is the headline: decision of 2026-08-06)."""
+    out: dict[str, str] = {}
+    gaps = []
+    for tag, fmt in (("First", "first"), ("Lean", "lean")):
+        for kind, rung in (("Base", "inline-1"), ("Design", "batch-delta")):
+            r = one(lad, op="adopted", format=fmt, rung=rung, scheme="ed25519")
+            what = f"per-run N_max of {fmt}/{rung} at the adopted point"
+            out[f"nrun{tag}{kind}"] = whole(r["n_max_v95_per_run"], what)
+            if r["n_max_v95"] and r["n_max_v95_per_run"]:
+                gaps.append(int(r["n_max_v95"]) - int(r["n_max_v95_per_run"]))
+    if len(gaps) < 4:
+        return out | {"nrunGap": "??"}
+    if min(gaps) < 0:
+        raise ValueError("the per-run reading is the stricter one; the ladder disagrees")
+    return out | {"nrunGap": WORDS[max(gaps)]}
+
+
+# ============================================================================== loss
+def loss() -> dict[str, str]:
+    table = rows(RAW / "e3_codec_loss.csv")
+    m: dict[str, str] = {}
+    for word, ref in (("One", "1"), ("Two", "2"), ("Four", "4"), ("Sixteen", "16")):
+        r = one(table, loss_model="iid", p="0.05", ref_interval=ref)
+        expect_pass = "1" if ref == "1" else "0"
+        if r["meets_target"] != expect_pass:
+            raise ValueError(f"the loss table says R={ref} "
+                             f"{'meets' if expect_pass == '1' else 'misses'} V; the artifact "
+                             "disagrees")
+        m |= {f"lossBpr{word}": f(r["bytes_per_rec"], 2), f"lossV{word}": f(r["V_meas"], 3),
+              f"lossCi{word}": f"[{f(r['V_ci_lo'], 3)},\\,{f(r['V_ci_hi'], 3)}]",
+              f"lossTh{word}": f(r["V_theory"], 3)}
+        m["lossFrames"] = thousands(int(r["frames_sent"]))
+    burst = one(table, loss_model="gilbert", p="0.05", ref_interval="4")
+    first = one(table, loss_model="iid", p="0.05", ref_interval="1")
+    last = one(table, loss_model="iid", p="0.05", ref_interval="16")
+    m |= {"lossVFourBurst": f(burst["V_meas"], 3),
+          "lossPrize": f(float(first["bytes_per_rec"]) - float(last["bytes_per_rec"]), 1)}
+    # the two cleaner-link statements in the text
+    for p, ref in (("0.02", 4), ("0.01", 8)):
+        if frame_model.max_ref_interval(float(p), 0.05, (1, 2, 4, 8, 16)) != ref:
+            raise ValueError(f"the text says R={ref} is the longest interval at p={p}")
+    return m | _length_dependent_loss(table) | _at_the_measured_loss(table)
+
+
+def _at_the_measured_loss(table: list[dict[str, str]]) -> dict[str, str]:
+    """At the loss measured on the bench every reference interval meets the target.
+
+    The text says so, to show that the keyframe in every frame is bought by the specified loss
+    budget (p = ε) and not by the link that was measured.
+    """
+    clean = [r for r in table if r["loss_model"] == "iid" and r["p"] == "0.00023"]
+    if not clean or any(r["meets_target"] != "1" for r in clean):
+        raise ValueError("the text says every interval meets V at the measured loss rate")
+    longest = max(clean, key=lambda r: int(r["ref_interval"]))
+    return {"lossCleanR": longest["ref_interval"], "lossCleanV": f(longest["V_theory"], 3)}
+
+
+def _length_dependent_loss(table: list[dict[str, str]]) -> dict[str, str]:
+    """Loss at one bit error rate: the text says the design then misses 0.95 at p = 0.05."""
+    at5 = one(table, loss_model="ber", p="0.05", ref_interval="1")
+    at2 = one(table, loss_model="ber", p="0.02", ref_interval="1")
+    if (at5["meets_target"], at2["meets_target"]) != ("0", "1"):
+        raise ValueError("the text says the design misses V at p=0.05 and meets it at p=0.02 "
+                         "under length-dependent loss; the artifact disagrees")
+    base = float(one(rows(RAW / "design_ladder.csv"), op="adopted", format="lean",
+                     rung="inline-1", scheme="ed25519")["frame_bytes"])
+    stretch = (float(at5["frame_bytes"]) + bianchi.MAC_OVH_BYTES) / (base + bianchi.MAC_OVH_BYTES)
+    p_max = 1.0 - 0.95 ** (1.0 / stretch)     # reference loss at which the design is at 0.95
+    return {"lossBerP": f(at5["p_frame"], 3), "lossBerV": f(at5["V_meas"], 3),
+            "lossBerTh": f(at5["V_theory"], 3),
+            "lossBerCi": f"[{f(at5['V_ci_lo'], 3)},\\,{f(at5['V_ci_hi'], 3)}]",
+            "lossBerPmax": f(p_max, 3)}
+
+
+# ============================================================================== stream schemes
+def stream() -> dict[str, str]:
+    table = {r["scheme"]: r for r in rows(RAW / "stream_baselines.csv")}
+    tags = {"mavlink2": "Mav", "tesla": "Tesla", "gennaro-rohatgi": "Gr", "emss": "Emss",
+            "wong-lam-tree": "Wl", "per-record signature": "Sig", "authbc": "Design"}
+    if set(table) != set(tags):
+        raise ValueError("the stream-scheme table does not list the schemes the paper names")
+    m: dict[str, str] = {}
+    for scheme, tag in tags.items():
+        r = table[scheme]
+        what = f"simulated N_max of the {scheme} frame"
+        m |= {f"strAuth{tag}": f(r["auth_bytes_per_record"], 0),
+              f"strBpr{tag}": f(r["bytes_per_rec"], 1),
+              f"strFps{tag}": f(r["frames_per_s"], 1), f"strNsat{tag}": r["n_sat"],
+              f"strNmax{tag}": whole(r["n_max_v95"], what),
+              f"strCi{tag}": interval(r["n_max_v95_ci_lo"], r["n_max_v95_ci_hi"], what)}
+    # the two sentences of the text, held for the saturation bound and for the simulated capacity
+    for column, name in (("n_sat", "saturation"), ("n_max_v95", "simulated")):
+        if any(r[column] == "" for r in table.values()):
+            continue                                  # recorded as missing by `whole` above
+        best = max(int(r[column]) for s, r in table.items() if s != "authbc")
+        if not best < int(table["authbc"][column]) / 2:
+            raise ValueError("the text says no frame-per-record scheme reaches half the "
+                             f"design's {name} capacity; the artifact disagrees")
+        if best != int(table["mavlink2"][column]):
+            raise ValueError(f"the text names the 13 B tag as the best frame-per-record scheme "
+                             f"({name})")
+    return m
+
+
+# ============================================================================== freshness
+def freshness() -> dict[str, str]:
+    table = rows(RAW / "freshness_budget.csv")
+
+    def row(scheme: str, stat: str) -> dict[str, str]:
+        return one(table, op="adopted", scheme=scheme, channel_stat=stat)
+
+    mean, pnn, worst = (row("ed25519", s) for s in
+                        ("delay_mean_ms", "delay_p99_ms", "delay_max_ms"))
+    bls = row("bls", "delay_max_ms")
+    if not all(r["meets_d_max"] == "1" for r in (mean, pnn, worst, bls)):
+        raise ValueError("the freshness table reports every row inside D_max")
+
+    def margin(r: dict[str, str]) -> str:
+        """What is left of the budget after the total AS PRINTED, so the two columns add up.
+
+        The artifact stores both to three decimals; rounding each to one printed 83.8 and 16.3
+        for a budget of 100 (83.750 and 16.250, each rounded up)."""
+        return f(Decimal(r["d_max_ms"]) - Decimal(f(r["total_ms"], 1)), 1)
+
+    return {
+        "frFill": f(mean["fill_ms"], 0),
+        "frChMean": f(mean["channel_ms"], 2), "frChPnn": f(pnn["channel_ms"], 2),
+        "frChMax": f(worst["channel_ms"], 2),
+        "frVerEd": f(mean["verify_ms"], 2), "frVerBls": f(bls["verify_ms"], 2),
+        "frTotMean": f(mean["total_ms"], 1), "frTotPnn": f(pnn["total_ms"], 1),
+        "frTotMax": f(worst["total_ms"], 1), "frTotBls": f(bls["total_ms"], 1),
+        "frMarMean": margin(mean), "frMarPnn": margin(pnn),
+        "frMarMax": margin(worst), "frMarBls": margin(bls),
+    }
+
+
+# ============================================================================== phy, energy
+def phy() -> dict[str, str]:
+    # the saturation ratios of the other PHYs (phyRatioLo/Hi) gave way to simulated crossings
+    # (phy_simulated, revision A11)
+    table = rows(RAW / "phy_sweep.csv")
+    lean = one(table, channel="20MHz", rate_mbps="6", format="lean")
+    return {"fixedCost": f(lean["fixed_cost_us"], 0),
+            "fixedSharePct": f(lean["fixed_share_of_baseline_pct"], 0)}
+
+
+def energy() -> dict[str, str]:
+    table = rows(RAW / "energy_table.csv")
+    design = one(table, encoding="delta", batch="4")
+    base = one(table, encoding="cbor", batch="1")
+    if not (design["reportable"] == base["reportable"] == "1"):
+        raise ValueError("an energy row the paper quotes is not marked reportable")
+    m: dict[str, str] = {}
+    for tag, r in (("Design", design), ("Base", base)):
+        m |= {f"en{tag}Meas": f(r["sender_uj_per_rec_median"], 1),
+              f"en{tag}Range": f"[{f(r['sender_uj_per_rec_min'], 1)},\\,"
+                               f"{f(r['sender_uj_per_rec_max'], 1)}]",
+              f"en{tag}Model": f(r["sender_model_uj_per_rec"], 1),
+              f"en{tag}Gap": f(r["sender_residual_pct"], 1),
+              f"en{tag}EndToEnd": f(r["end_to_end_model_uj_per_rec"], 1)}
+    m["enSavePct"] = f(100 * (1 - float(design["sender_uj_per_rec_median"])
+                              / float(base["sender_uj_per_rec_median"])), 0)
+    return m
+
+
+def timings() -> dict[str, str]:
+    crypto = {(r["scheme"], r["op"]): float(r["median_ns"])
+              for r in rows(HW / "p1_crypto.authbc-pi4a.csv") if not r["agg_b"]}
+    cfg = yaml.safe_load((REPO / "experiments" / "design-ladder" / "config.yaml").read_text())
+    return {"tSignEd": f(crypto[("ed25519", "sign")] / 1e3, 0),
+            "tVerEd": f(crypto[("ed25519", "verify")] / 1e3, 0),
+            "tSignEc": f(crypto[("ecdsa_p256", "sign")] / 1e3, 0),
+            "tVerEc": f(crypto[("ecdsa_p256", "verify")] / 1e3, 0),
+            "tSignBls": f(crypto[("bls", "sign")] / 1e6, 2),
+            "tVerBls": f(crypto[("bls", "verify")] / 1e6, 2),
+            "tHash": f(cfg["t_hash_ns"] / 1e3, 2)}
+
+
+# ============================================================================== flight logs
+def flight_logs() -> dict[str, str]:
+    table = rows(RAW / "px4_log_sizes.csv")
+    real = one(table, row="real logs", spacing_ms="200")
+    gen = one(table, row="generator", spacing_ms="200")
+    logs = [r for r in table if r["row"] == "log" and r["spacing_ms"] == "200"]
+    if len(logs) != 12 or any(r["measured"] != "1" for r in logs):
+        raise ValueError("the paper says twelve logs were measured at 0.2 s")
+    slow = [float(r["lean_delta_mean"]) for r in logs
+            if r["stratum"] in ("quadrotor", "hexa/octorotor")]
+    fast = [float(r["lean_delta_mean"]) for r in logs if r["stratum"] == "fixed wing"]
+    return {"pxRecords": thousands(int(real["records"])),
+            "pxDelta": f(real["lean_delta_mean"], 1), "pxDeltaGen": f(gen["lean_delta_mean"], 1),
+            "pxKey": f(real["lean_key_mean"], 1), "pxKeyGen": f(gen["lean_key_mean"], 1),
+            "pxDeltaSlow": f"{f(min(slow), 1)}--{f(max(slow), 1)}",
+            "pxDeltaFast": f(max(fast), 1),
+            "pxBpr": f(real["bytes_per_rec"], 1), "pxBprGen": f(gen["bytes_per_rec"], 1),
+            "pxSave": f(real["saving_pct"], 1), "pxSaveGen": f(gen["saving_pct"], 1),
+            "pxSaveWorst": f(min(float(r["saving_pct"]) for r in logs), 1)}
+
+
+# ============================================================================== validation
+def validation() -> dict[str, str]:
+    """Model-vs-ns-3 saturation bands (as tests/test_validation_bands.py) and the hardware check."""
+    grouped: dict[tuple[int, str], list[float]] = defaultdict(list)
+    for r in rows(RAW / "ns3_matrix.csv"):
+        grouped[(int(r["N"]), r["mode"])].append(float(r["goodput_mbps"]))
+    dev: dict[str, list[float]] = {"unicast": [], "broadcast": []}
+    for (n, mode), values in grouped.items():
+        model = (bianchi.solve(n, 1400).throughput_bps if mode == "unicast" else
+                 broadcast_dcf.solve(n, 1400, bianchi.t_broadcast(1400), w0=bianchi.W,
+                                     slot_s=bianchi.SLOT).throughput_bps) / 1e6
+        dev[mode].append(100.0 * (st.mean(values) - model) / model)
+    hw = rows(HW / "channel" / "adhoc_sweep_5ghz.csv")
+    held = [r for r in hw if r["phase"] == "A"]
+    sent = sum(int(r["sent_app"]) for r in held)
+    got = sum(int(r["received_unique"]) for r in held)
+    exponent = math.floor(math.log10((sent - got) / sent))
+    return {"valUniHi": f(max(dev["unicast"]), 2), "valUniLo": f(-min(dev["unicast"]), 2),
+            "valBcast": f(max(abs(d) for d in dev["broadcast"]), 2),
+            "hwLossFrames": str(sent - got), "hwSentFrames": thousands(sent),
+            "hwLoss": f"{(sent - got) / sent / 10 ** exponent:.1f}\\times10^{{{exponent}}}",
+            **radios()}
+
+
+def radios() -> dict[str, str]:
+    """The two-radio measurements of 2026-10-09 (docs/audits/model_provenance.md F73–F76).
+
+    ⚠️ Until that day this block printed an "airtime" of 1.995 ms against 1.988 ms predicted.
+    Both figures were wrong and nearly cancelled (F74): the first was the sender's own rate, the
+    second left the frame's headers out. What is printed now is read at the receiver.
+    """
+    channel = HW / "channel"
+    spacing = rows(channel / "frame_spacing.csv")
+    on = [float(r["cycle_us"]) for r in spacing if r["frame_burst"].startswith("on")]
+    off = [float(r["cycle_us"]) for r in spacing if r["frame_burst"].startswith("off")]
+    ppdu, standard = float(spacing[0]["ppdu_us"]), float(spacing[0]["standard_cycle_us"])
+    # the registered session, then the three sessions of that night window by window
+    scored = {int(r["rate_fps_per_node"]): r for r in rows(channel / "contention_2nodes.csv")}
+    pooled: dict[int, list[float]] = defaultdict(list)
+    for name in ("contention_2nodes_windows.csv", "contention_2nodes_fb_off_windows.csv",
+                 "contention_2nodes_fb_on_repeat_windows.csv"):
+        for r in rows(channel / name):
+            pooled[int(r["rate_fps_per_node"])].append(1.0 - float(r["delivered_frac"]))
+    low, mid, high = sorted(scored)
+    if [scored[k]["inside_band"] for k in (low, mid, high)] != ["True", "True", "False"]:
+        raise ValueError("the paper says the registered prediction held at two loads of three")
+
+    def over_model(rate: int) -> float:
+        return st.mean(pooled[rate]) / float(scored[rate]["predicted_loss"])
+
+    # the two later sessions on their own, as the thesis tabulates them
+    later = {tag: {int(r["rate_fps_per_node"]): f(100 * float(r["measured_loss"]), 2)
+                   for r in rows(channel / f"contention_2nodes_{tag}.csv")}
+             for tag in ("fb_off", "fb_on_repeat")}
+    saturated = {tag: rows(channel / f"saturated_2nodes_{tag}.csv") for tag in ("fb_off", "fb_on")}
+    # Two saturated stations, a window that never doubles: each attempts in a slot with
+    # probability 2/(W+1); a collision costs both frames.
+    tau = 2.0 / (bianchi.W + 1)
+    collision = tau * tau / (1.0 - (1.0 - tau) ** 2)
+    standard_loss = 2 * collision / (1 + collision)
+    return {
+        "hwCycleOn": f(st.median(on) / 1e3, 3), "hwCycleOff": f(st.mean(off) / 1e3, 3),
+        "hwCycleStd": f(standard / 1e3, 3),
+        "hwGapOn": f(st.median(on) - ppdu, 0), "hwGapOff": f(st.mean(off) - ppdu, 0),
+        "hwGapStd": f(standard - ppdu, 1),
+        "hwContLow": f(100 * float(scored[low]["measured_loss"]), 2),
+        "hwContMid": f(100 * float(scored[mid]["measured_loss"]), 2),
+        "hwContHigh": f(100 * float(scored[high]["measured_loss"]), 2),
+        "hwContHighRatio": f(float(scored[high]["measured_loss"])
+                             / float(scored[high]["predicted_loss"]), 2),
+        "hwPoolWindows": str(sum(len(v) for v in pooled.values())),
+        "hwPoolLow": f(100 * st.mean(pooled[low]), 2),
+        "hwPoolMid": f(100 * st.mean(pooled[mid]), 2),
+        "hwPoolHigh": f(100 * st.mean(pooled[high]), 2),
+        "hwPoolLowRatio": f(over_model(low), 2), "hwPoolMidRatio": f(over_model(mid), 2),
+        "hwPoolHighRatio": f(over_model(high), 2),
+        "hwOffLow": later["fb_off"][low], "hwOffMid": later["fb_off"][mid],
+        "hwOffHigh": later["fb_off"][high],
+        "hwRepLow": later["fb_on_repeat"][low], "hwRepMid": later["fb_on_repeat"][mid],
+        "hwRepHigh": later["fb_on_repeat"][high],
+        "hwPoolSdHigh": f(100 * st.stdev(pooled[high]), 2),
+        "hwSatStd": f(100 * standard_loss, 1),
+        # frames on air per sender: one transmission event lasts the idle slots before it, the
+        # frame and DIFS, and carries one frame or, in a collision, two
+        "hwSatRateStd": f((1 + collision) / 2
+                          / ((1 - tau) ** 2 / (1 - (1 - tau) ** 2) * bianchi.SLOT
+                             + bianchi.t_broadcast(1428)), 0),
+        "hwSatOff": f(100 * st.mean(float(r["loss"]) for r in saturated["fb_off"]), 1),
+        "hwSatOn": f(100 * st.mean(float(r["loss"]) for r in saturated["fb_on"]), 1),
+        "hwSatRateOff": f(st.mean(float(r["air_fps"]) for r in saturated["fb_off"]), 0),
+        "hwSatRateOn": f(st.mean(float(r["air_fps"]) for r in saturated["fb_on"]), 0),
+    }
+
+
+# ============================================================================== exclusion, LoRa
+def exclusion() -> dict[str, str]:
+    table = rows(RAW / "exclusion_matrix.csv")
+
+    def cell(auth: str, design: str, dr: str = "3") -> dict[str, str]:
+        return one(table, auth_bytes=auth, design=design, dr=dr)
+
+    sig, nolink = cell("64", "lean"), cell("64", "lean without on-air chain link")
+    bls, tag = cell("48", "lean"), cell("13", "lean")
+    verdicts = {int(r["dr"]): r["verdict"] for r in table
+                if r["auth_bytes"] == "64" and r["design"] == "lean"}
+    excluded = sorted(d for d, v in verdicts.items() if v == "excluded")
+    alone = sorted(int(r["dr"]) for r in table if r["auth_bytes"] == "64"
+                   and r["design"] == "lean" and r["signature_alone_overflows"] == "1")
+    # the paper's sentences name these sets and these table cells; hold them to the artifact
+    if (excluded, alone) != ([0, 1, 2, 3, 8, 9, 10, 11], [0, 1, 2, 8, 10]):
+        raise ValueError("the excluded data rates are not the ones the paper names")
+    expect = {("64", "lean"): ("excluded", "excluded", "feasible"),
+              ("64", "lean without on-air chain link"): ("excluded", "feasible", "feasible"),
+              ("48", "lean"): ("excluded", "excluded for this telemetry", "feasible"),
+              ("13", "lean"): ("excluded", "feasible", "feasible")}
+    for (auth, design), want in expect.items():
+        got = tuple(cell(auth, design, dr)["verdict"] for dr in ("0", "3", "4"))
+        if got != want:
+            raise ValueError(f"Table 'excl' row ({auth} B, {design}) says {want}; artifact {got}")
+    floor = int(sig["frame_floor_bytes"])
+    link = frame_model.LINK_FIELD_BYTES
+    floor_hdr = frame_model.lean_header_bytes(src=0, base_seq=0, n=1, stream_bytes=9)
+    floor_rec = floor - floor_hdr - link - 64
+    # What a 115 B payload leaves once the two cryptographic fields are in it: a signature and
+    # a SHA-256 value, in any format. The lean header and the link's own framing are exactly
+    # that, which is why three of the eight exclusions are this format's (audit F80, G29).
+    hash_bytes = 32
+    room = int(sig["payload_not_repeater"]) - int(sig["auth_bytes"]) - hash_bytes
+    if floor_hdr + (link - hash_bytes) != room:
+        raise ValueError("the text says the lean header and framing fill the 115 B payload "
+                         "exactly, after a signature and a hash")
+    hdr_hi = frame_model.lean_header_bytes(src=40_000, base_seq=180_000, n=1, stream_bytes=25)
+    return {
+        "exclCount": WORDS[len(excluded)], "exclCountCap": WORDS[len(excluded)].capitalize(),
+        "exclSigCount": WORDS[len(alone)], "exclSigCountCap": WORDS[len(alone)].capitalize(),
+        "exclFmtCount": WORDS[len(excluded) - len(alone)],
+        "exRoomAfterCrypto": str(room),
+        "exFloor": str(floor), "exLo": sig["frame_min_bytes"], "exHi": sig["frame_max_bytes"],
+        "exFloorHdr": str(floor_hdr), "exFloorRec": str(floor_rec),
+        "exFloorNoRec": str(floor - floor_rec),
+        "exFloorNoLink": nolink["frame_floor_bytes"], "exLoNoLink": nolink["frame_min_bytes"],
+        "exHiNoLink": nolink["frame_max_bytes"],
+        "exFloorBls": bls["frame_floor_bytes"], "exLoBls": bls["frame_min_bytes"],
+        "exHiBls": bls["frame_max_bytes"],
+        "exFloorTag": tag["frame_floor_bytes"], "exLoTag": tag["frame_min_bytes"],
+        "exHiTag": tag["frame_max_bytes"],
+        "exHdrLinkLo": str(floor_hdr + link), "exHdrLinkHi": str(hdr_hi + link),
+    }
+
+
+def low_rate() -> dict[str, str]:
+    budget = rows(RAW / "lora_budget.csv")
+    lean = one(budget, dr="5", payload_limit="242", design="lean; frames decode alone")
+    first = one(budget, dr="5", payload_limit="242",
+                design="first; link per frame; frames decode alone")
+    cap = rows(RAW / "lora_capacity.csv")
+    passing = [int(r["n_devices"]) for r in cap if r["meets_v"] == "1"]
+    n_max = 0
+    for n in sorted(int(r["n_devices"]) for r in cap):     # first-failure rule, as everywhere
+        if n not in passing:
+            break
+        n_max = n
+    theirs = 0
+    while lora.haxhibeqiri2017_loss_pct(theirs + 1) <= 5.0:
+        theirs += 1
+    at_limit = one(cap, n_devices=str(n_max))
+    design = one(rows(RAW / "design_ladder.csv"), op="adopted", format="lean",
+                 rung="batch-delta", scheme="ed25519")
+    if design["n_max_v95"] == "":
+        MISSING.append("N_max of the lean design at the adopted point")
+        wifi = "??"
+    else:      # records per second a whole neighbourhood offers, to two significant figures
+        total = float(design["lambda_rec_per_s"]) * int(design["n_max_v95"])
+        wifi = thousands(int(round(total, -2)))
+    published = one(budget, dr="5", payload_limit="242", design=(
+        "first; link per frame; AS PUBLISHED (13 B bodies and no keyframe)"))
+    # The simulator's module carries 222 B at most, so the capacity was simulated at that
+    # payload table; the text says the lean frame holds as many records there as were simulated.
+    fits_module = one(budget, dr="5", payload_limit="222", design="lean; frames decode alone")
+    if fits_module["batch"] != at_limit["batch"]:
+        raise ValueError("the simulated LoRa batch is not the lean frame's batch at 222 B")
+    if abs(float(fits_module["toa_ms"]) / (float(at_limit["app_period_s"]) * 10) - 1) > 0.02:
+        raise ValueError("the simulated LoRa frame's airtime is not the lean frame's within 2%")
+    return {"loraSimRecs": WORDS[int(at_limit["batch"])], "loraSimBytes": at_limit["payload_bytes"],
+            # one decimal: at "36 s" a reader divides six records by 36 and gets 0.167, not 0.165
+            "loraSimPeriod": f(at_limit["app_period_s"], 1),
+            "loraSimRate": f(at_limit["lambda_rec_per_s"], 3),
+            "loraRecsLean": lean["batch"], "loraRateLean": f(lean["lambda_rec_per_s"], 2),
+            "loraRecsFirst": first["batch"], "loraRateFirst": f(first["lambda_rec_per_s"], 2),
+            "loraFrmLean": f(lean["frame_bytes"], 0), "loraFrmFirst": f(first["frame_bytes"], 0),
+            "loraRecsPub": published["batch"], "loraFrmPub": f(published["frame_bytes"], 0),
+            "loraRatePub": f(published["lambda_rec_per_s"], 3),
+            "loraNmax": WORDS[n_max], "loraNmaxExt": WORDS[theirs],
+            "loraAgg": f(at_limit["aggregate_rec_per_s"], 1), "wifiAgg": wifi,
+            **_lora_capacity_readings(n_max)}
+
+
+def _lora_capacity_readings(n_max: int) -> dict[str, str]:
+    """The interval on the LoRa capacity and its per-run reading, from the artifact's header.
+
+    Both criteria are reported and the mean is the headline (decision of 2026-08-06): at the
+    capacity the mean certifies, nine runs of thirty fail the criterion being certified.
+    """
+    head = dict(ln[2:].split("=", 1) for ln in
+                (RAW / "lora_capacity_ci.csv").read_text(encoding="utf-8").splitlines()
+                if ln.startswith("# ") and "=" in ln)
+    lo, hi = (int(x) for x in head["n_max_ci95"].strip("[]").split(","))
+    if int(head["n_max_mean_criterion"]) != n_max or not lo <= n_max <= hi:
+        raise ValueError("lora_capacity_ci.csv and lora_capacity.csv disagree on N_max")
+    return {"loraNmaxCi": f"[{lo},\\,{hi}]",
+            "loraNmaxRun": WORDS[int(head["n_max_strict_criterion"])]}
+
+
+# ============================================================================== traffic source
+def source_study() -> dict[str, str]:
+    """What freezing the senders' phases does to one cell (thesis ch. 8 and 11)."""
+    direct = rows(RAW / "ns3_nmax_direct.csv")
+    frozen = one(direct, cell="A", n_nodes="29", jitter_ms="0", skew_ppm="0")
+    redrawn = one(direct, cell="A", n_nodes="29", jitter_ms="20", skew_ppm="0")
+    nodes = [float(r["node_delivered_frac"])
+             for r in rows(RAW / "ns3_phase_lock_diagnostic.csv")
+             if (r["seed"], r["jitter_ms"], r["skew_ppm"], r["n_nodes"]) == ("6", "0", "0", "29")]
+    if len(nodes) != 29:
+        raise ValueError("the per-node diagnostic no longer holds the run the thesis describes")
+    return {"phaseSdFrozen": f(frozen["delivered_stdev"], 3),
+            "phaseSdRedrawn": f(redrawn["delivered_stdev"], 4),
+            "phaseNodes": str(len(nodes)),
+            "phaseSilentNodes": WORDS[sum(x == 0.0 for x in nodes)],
+            "phaseCleanNodes": str(sum(x == 1.0 for x in nodes))} | _source_difference(direct)
+
+
+def _source_difference(direct: list[dict[str, str]]) -> dict[str, str]:
+    """Mean delivery under the redrawn source minus the strictly periodic one, where both ran.
+
+    The text says the two agree within the 0.005 registered in follow-up F1 and that every
+    crossing is higher under the redrawn source; both are checked here.
+    """
+    by_point: dict[tuple[str, str], dict[str, float]] = defaultdict(dict)
+    crossing: dict[str, dict[str, float]] = defaultdict(dict)
+    for r in direct:
+        if r["skew_ppm"] != "0":
+            continue
+        period_ms = 1000.0 * float(r["batch"]) / float(r["lambda_rec_per_s"])
+        source = {0.0: "frozen", period_ms: "redrawn"}.get(float(r["jitter_ms"]))
+        if source is None:
+            continue
+        if r["n_nodes"] == "CROSSING":
+            if r["n_cross_interp"]:
+                crossing[r["cell"]][source] = float(r["n_cross_interp"])
+        else:
+            by_point[(r["cell"], r["n_nodes"])][source] = float(r["delivered_mean"])
+    diffs = [v["redrawn"] - v["frozen"] for v in by_point.values() if len(v) == 2]
+    shifts = [100.0 * (v["redrawn"] / v["frozen"] - 1.0) for v in crossing.values() if len(v) == 2]
+    if len(diffs) < 14 or len(shifts) < 6:
+        raise ValueError("fewer points were run under both traffic sources than the text says")
+    if abs(st.mean(diffs)) > 0.005:
+        raise ValueError("the two traffic sources differ by more than the 0.005 the text states")
+    if min(shifts) <= 0.0:
+        raise ValueError("the text says every crossing is higher under the redrawn source")
+    return {"srcPoints": str(len(diffs)), "srcMeanDiff": f(st.mean(diffs), 3),
+            "srcShiftLo": f(min(shifts), 0), "srcShiftHi": f(max(shifts), 0)} | _fresh_seeds()
+
+
+def _fresh_seeds() -> dict[str, str]:
+    """Follow-up F4: the same comparison on seeds never used (docs/NMAX_DIRECT_EXPECTATIONS.md).
+
+    The text says the difference seen in the first sample did not replicate, and that strictly
+    periodic senders vary far more from run to run. Both are checked.
+    """
+    samples = sources.by_source(sources.read(sources.FRESH))
+    fresh = sources.difference(samples, sources.FRESH_SEEDS)
+    first = sources.difference(sources.by_source(sources.read(sources.FIRST)),
+                               sources.FIRST_SEEDS)
+    if fresh.points != first.points:
+        raise ValueError("the fresh-seed sample does not cover the points of the first one")
+    if fresh.z >= 1.0:
+        raise ValueError("the text says the traffic-source difference did not replicate; "
+                         f"z = {fresh.z:.2f} on the fresh seeds")
+    ratios = [st.stdev(s["periodic"].values()) / st.stdev(s["redrawn"].values())
+              for s in samples.values()]
+    if min(ratios) < 3.0:
+        raise ValueError("the text says strictly periodic senders vary several times more "
+                         "between runs at every point")
+    runs = sum(len(v) for s in samples.values() for v in s.values())
+    return {"srcFreshD": f(fresh.d, 4), "srcFreshSe": f(fresh.se, 4), "srcFreshZ": f(fresh.z, 1),
+            "srcFirstZ": f(first.z, 1), "srcFreshRuns": thousands(runs),
+            "srcSpreadLo": f(min(ratios), 0), "srcSpreadHi": f(max(ratios), 0)}
+
+
+# ============================================================================== capacity rule
+def capacity_rule() -> dict[str, str]:
+    """The airtime line, calibrated on six cells and scored on the seven it never saw (F2).
+
+    The text says the registered prediction held: every held-out crossing within the tolerance of
+    the line, and closer to the line than to the single load ceiling wherever the two differ by
+    more than a tenth. If the runs stop saying so, this stops.
+    """
+    import run_nmax_direct as drv  # ns3/ is put on the path by nmax_airtime_line
+    measured = airtime.crossings("period")
+    slope, _ = airtime.calibrate(measured)
+    predicted = airtime.predictions(slope)
+    scored = airtime.held_out_crossings()          # on the grids the test was registered on
+    missing = [c for c in airtime.HELD_OUT if c not in scored]
+    if missing:
+        MISSING.append(f"held-out crossings of cells {', '.join(missing)}")
+        names = ["lineA", "lineWorst", "lineFitWorst", "lineCeilWorst", "lineNlo", "lineNhi"]
+        names += [f"line{kind}{c}" for c in airtime.HELD_OUT for kind in "PMDC"]
+        return dict.fromkeys(names, "??")
+    got = {c: float(measured[c]["n_cross_interp"]) for c in airtime.CALIBRATION} \
+        | {c: scored[c][0] for c in airtime.HELD_OUT}
+    vs_line = {c: 100.0 * (got[c] - predicted[c]) / predicted[c] for c in airtime.HELD_OUT}
+    vs_ceiling = {c: 100.0 * (got[c] - drv.CELLS[c].model_n) / drv.CELLS[c].model_n
+                  for c in got}
+    if max(abs(v) for v in vs_line.values()) > 100.0 * airtime.TOLERANCE:
+        raise ValueError("the text says every held-out cell is within the registered tolerance "
+                         f"of the airtime line; the runs say {vs_line}")
+    if any(abs(vs_line[c]) >= abs(vs_ceiling[c]) for c in airtime.DIAGNOSTIC):
+        raise ValueError("the text says the line beats the single ceiling in every diagnostic "
+                         "cell; the runs disagree")
+    fit = [100.0 * (got[c] / airtime.n_line(
+        slope, drv.CELLS[c].fps, bianchi.t_broadcast(drv.CELLS[c].frame_bytes)) - 1.0)
+        for c in airtime.CALIBRATION]
+    per_cell = {}
+    for c in airtime.HELD_OUT:          # prediction, measured, and the two deviations, signed
+        per_cell |= {f"lineP{c}": f(predicted[c], 1), f"lineM{c}": f(got[c], 1),
+                     f"lineD{c}": signed(vs_line[c]), f"lineC{c}": signed(vs_ceiling[c])}
+    stream_cells = _stream_cells_against_the_line()
+    tested = list(airtime.CALIBRATION + airtime.HELD_OUT + airtime.STREAM)
+    # the neighbourhood sizes the rule was checked at, as the tables print them (N_max, not the
+    # interpolated crossing: 28 and 306, where the interpolation gives 29.0 and 308.0)
+    n_max = [int(measured[c]["n_max_mean"]) for c in tested if c in measured]
+    return per_cell | stream_cells | {
+            "lineA": f(slope, 3),
+            "lineWorst": f(max(abs(v) for v in vs_line.values()), 1),
+            "lineFitWorst": f(max(abs(v) for v in fit), 1),
+            "lineCeilWorst": f(max(abs(v) for v in vs_ceiling.values()), 0),
+            "lineNlo": str(min(n_max)),
+            "lineNhi": str(max(n_max)),
+            "lineFrameLo": str(min(drv.CELLS[c].frame_bytes for c in tested)),
+            "lineFrameHi": str(max(drv.CELLS[c].frame_bytes for c in tested)),
+            "lineFpsLo": f"{min(drv.CELLS[c].fps for c in tested):g}",
+            "lineFpsHi": f"{max(drv.CELLS[c].fps for c in tested):g}"}
+
+
+def _stream_cells_against_the_line() -> dict[str, str]:
+    """Follow-up F3: the five stream-scheme frames, predicted with the same slope, then run.
+
+    The text says all five fell inside the registered tolerance and above the line.
+    """
+    scores = airtime.stream_scores()
+    names = [f"line{kind}{c}" for c in airtime.STREAM for kind in "PMD"]
+    if set(scores) != set(airtime.STREAM):
+        MISSING.append("the crossings of the five stream-scheme cells")
+        return dict.fromkeys([*names, "lineStreamWorst", "lineStreamLeast"], "??")
+    if not all(s["within_band"] for s in scores.values()):
+        raise ValueError("the text says every stream cell is within the registered tolerance")
+    if min(s["vs_line_pct"] for s in scores.values()) <= 0:
+        raise ValueError("the text says all five stream cells cross above the line")
+    out = {}
+    for c, s in scores.items():
+        out |= {f"lineP{c}": f(s["line"], 1), f"lineM{c}": f(s["measured"], 1),
+                f"lineD{c}": signed(s["vs_line_pct"])}
+    deviations = [s["vs_line_pct"] for s in scores.values()]
+    return out | {"lineStreamWorst": f(max(deviations), 1),
+                  "lineStreamLeast": f(min(deviations), 1)}
+
+
+def capacity_model() -> dict[str, str]:
+    """The access-rule model against ns-3 (docs/02 §6g; `results/raw/dcf_model_vs_ns3.csv`).
+
+    The text says an event simulation of the access rule, with nothing fitted, reproduces every
+    simulated crossing, and that the slope the airtime line fitted is the tie term at the
+    occupancy where loss reaches 5 %. Both are checked here.
+    """
+    import run_nmax_direct as drv
+    table = rows(RAW / "dcf_model_vs_ns3.csv")
+    crossings = [r for r in table if r["n_nodes"] == "CROSSING"]
+    points = [r for r in table if r["n_nodes"] != "CROSSING"]
+    errors = [abs(float(r["crossing_error_pct"])) for r in crossings]
+    if {r["cell"] for r in crossings} != set(airtime.crossings("period")):
+        raise ValueError("the model comparison does not cover every simulated configuration")
+    if max(errors) > 2.0:
+        raise ValueError("the text says the access-rule model reproduces every crossing closely")
+    occupancy = [(float(r["ns3_crossing"]) - 1) * drv.CELLS[r["cell"]].fps
+                 * bianchi.t_broadcast(drv.CELLS[r["cell"]].frame_bytes) for r in crossings]
+    rho = st.mean(occupancy)
+    slope = rho / (16 * (1 - rho))
+    fitted, _ = airtime.calibrate(airtime.crossings("period"))
+    if abs(slope - fitted) > 0.002:
+        raise ValueError("the text says the fitted slope is the tie term at the mean occupancy "
+                         f"of the crossings; {slope:.4f} against {fitted:.4f}")
+    ties = [float(r["model_tie_share"]) for r in points]
+    # The closed form of docs/02 §6g, solved for 5 % loss with nothing fitted, against the same
+    # crossings. In the documents since F5; quoted in the paper since the review of F80 (G33).
+    import dcf_model_check as rule
+    closed = [100.0 * abs(rule.closed_form_crossing(
+        drv.CELLS[r["cell"]].fps, bianchi.t_broadcast(drv.CELLS[r["cell"]].frame_bytes))
+        / float(r["ns3_crossing"]) - 1.0) for r in crossings]
+    if max(closed) > 6.0:
+        raise ValueError("the text says the closed form is within a few percent of every crossing")
+    return _model_predictions() | {
+            "closedWorst": f(max(closed), 1), "closedMean": f(st.mean(closed), 1),
+            "modelCells": str(len(crossings)), "modelPoints": str(len(points)),
+            "modelWorst": f(max(errors), 1), "modelMean": f(st.mean(errors), 1),
+            "modelMaxDiff": f(max(abs(float(r["difference"])) for r in points), 3),
+            "modelTieLo": f(100 * min(ties), 0), "modelTieHi": f(100 * max(ties), 0),
+            "modelRho": f(rho, 2), "modelRhoLo": f(min(occupancy), 2),
+            "modelRhoHi": f(max(occupancy), 2), "modelSlope": f(slope, 3)}
+
+
+def _model_predictions() -> dict[str, str]:
+    """Follow-up F5: the model's crossings for conditions ns-3 had not been run at.
+
+    The text says every one of the registered predictions fell inside its band. A case whose
+    runs are not complete is recorded as missing, so the sentence cannot be printed early.
+    """
+    scored = {r["case"]: r for r in modelcheck.score()}
+    names = ["modelPredCases", "modelPredWorst", "modelPredWindowC", "modelNsWindowC",
+             "modelPredWindowD", "modelNsWindowD", "modelBaseC", "modelGainC", "modelGainD"]
+    if set(scored) != {c.name for c in modelcheck.CASES}:
+        MISSING.append("ns-3 runs for every registered prediction of the access-rule model")
+        return dict.fromkeys(names, "??")
+    outside = [name for name, r in scored.items() if not r["within_band"]]
+    if outside:
+        raise ValueError(f"the text says every registered prediction held; outside: {outside}")
+    c, d = scored["C, window doubled"], scored["D, window doubled"]
+    # the same two configurations at the standard window, read the same way (interpolated)
+    base = {r["cell"]: float(r["ns3_crossing"]) for r in rows(RAW / "dcf_model_vs_ns3.csv")
+            if r["n_nodes"] == "CROSSING"}
+    gain = {cell: 100.0 * (r["ns3"] / base[cell] - 1.0) for cell, r in (("C", c), ("D", d))}
+    if not all(5.0 < g < 20.0 for g in gain.values()):
+        raise ValueError("the text says doubling the window buys about an eighth more capacity")
+    return {"modelBaseC": f(base["C"], 1), "modelGainC": f(gain["C"], 0),
+            "modelGainD": f(gain["D"], 0), "modelPredCases": WORDS[len(scored)],
+            "modelPredWorst": f(max(abs(r["error_pct"]) for r in scored.values()), 1),
+            "modelPredWindowC": f(c["predicted"], 1), "modelNsWindowC": f(c["ns3"], 1),
+            "modelPredWindowD": f(d["predicted"], 1), "modelNsWindowD": f(d["ns3"], 1)}
+
+
+def sitl() -> dict[str, str]:
+    """Records at the operating rate and the stream's timing, from PX4 run in simulation.
+
+    The text says every delta record at 20 ms is at the format's floor, that the design costs
+    less with these records than with the generator's, and that the stream holds its period far
+    more tightly than a send time redrawn each period. Each is checked.
+    """
+    sizes = {(r["part"], r["spacing_ms"]): r for r in rows(RAW / "px4_sitl_sizes.csv")}
+    timing = {r["quantity"]: r for r in rows(RAW / "px4_sitl_stream_timing.csv")}
+    whole, compare = sizes[("whole flight", "20")], sizes[("whole flight", "200")]
+    floor = one(rows(RAW / "frame_components.csv"), kind="record", format="lean", item="delta",
+                stride="1")
+    if any((r["lean_delta_min"], r["lean_delta_max"]) != (floor["min_bytes"], floor["max_bytes"])
+           for (_, spacing), r in sizes.items() if spacing == "20"):
+        raise ValueError("the text says every delta record at 20 ms is at the format's floor")
+    design = one(rows(RAW / "design_ladder.csv"), op="adopted", format="lean",
+                 rung="batch-delta", scheme="ed25519")
+    if not float(whole["bytes_per_rec"]) < float(design["bytes_per_rec"]):
+        raise ValueError("the text says the design costs less with the simulated flight's records")
+    flight = timing["flight: received, wall clock, clock steps removed"]
+    ground = timing["ground: received, monotonic clock"]
+    spread = [float(flight["half_p16_p84_ms"]), float(ground["half_p16_p84_ms"])]
+    if max(spread) - min(spread) > 0.05 or max(spread) > 1.0:
+        raise ValueError("the text gives one spread for the stream's timing, well under 1 ms")
+    period = float(timing["flight: stamped (time_boot_ms)"]["mean_ms"])
+    if abs(period - 20.0) > 0.05:
+        raise ValueError("the text says the stream's period is 20.0 ms on the autopilot's clock")
+    fast = sizes[("square_12mps", "20")]
+    return {"sitlRecords": thousands(int(whole["records"])),
+            "sitlKey": f(whole["lean_key_mean"], 1), "sitlBpr": f(whole["bytes_per_rec"], 2),
+            "sitlSpeedMax": f(fast["max_speed_mps"], 0),
+            "sitlSpeedFast": f(fast["mean_speed_mps"], 1),
+            "sitlCompare": f(compare["lean_delta_mean"], 2),
+            "sitlJitter": f(st.mean(spread), 1), "sitlJitterTwo": f(st.mean(spread), 2),
+            "sitlSd": f(ground["sd_ms"], 1), "sitlPeriod": f(period, 1),
+            "sitlGenPct": f(100 * (1 - float(whole["bytes_per_rec"])
+                                   / float(design["bytes_per_rec"])), 1)}
+
+
+def signed(percent: float) -> str:
+    """A deviation with its sign, one decimal, for a table cell."""
+    return ("+" if percent >= 0 else "$-$") + f(abs(percent), 1)
+
+
+def energy_runs() -> dict[str, str]:
+    """The energy runs of 2026-10-09 (finding F79), on the second board through the second sensor.
+
+    Four runs registered before the first (hw/BENCH_SESSION.md, commit a38994f): a control that
+    repeats July's baseline row, the lean sender with four records to a frame and with one,
+    and the JSON row with ten repetitions. The documents say every range held; if one stops
+    holding, this refuses to print.
+    """
+    table = {r["run"]: r for r in rows(RAW / "energy_runs.csv")}
+    for name, r in table.items():
+        if not r["reportable"] == r["inside_registered"] == r["power_inside_registered"] == "1":
+            raise ValueError(f"the documents say every registered range held; {name} does not")
+    control, lean4, lean1, json10 = (table[k] for k in
+                                     ("control_cbor", "lean_b4", "lean_b1", "ajson_r10"))
+    july = rows(RAW / "energy_table.csv")
+    july_base = float(one(july, encoding="cbor", batch="1")["sender_uj_per_rec_median"])
+    july_design = float(one(july, encoding="delta", batch="4")["sender_uj_per_rec_median"])
+
+    def med(r: dict[str, str]) -> float:
+        return float(r["uj_per_record_median"])
+
+    def span(r: dict[str, str]) -> str:
+        return f"[{f(r['uj_per_record_min'], 1)},\\,{f(r['uj_per_record_max'], 1)}]"
+
+    def gap(r: dict[str, str]) -> str:
+        """Metered over the script's prediction, in percent, with its sign."""
+        g = 100.0 * (float(r["metered_over_predicted"]) - 1.0)
+        return ("$-$" if g < 0 else "") + f(abs(g), 1)
+
+    return {
+        "enCtlMeas": f(med(control), 1), "enCtlRange": span(control),
+        "enCtlVsJuly": f(100.0 * abs(med(control) / july_base - 1.0), 1),
+        "enCtlPower": f(control["added_power_w_median"], 3),
+        "enLeanMeas": f(med(lean4), 1), "enLeanRange": span(lean4), "enLeanGap": gap(lean4),
+        "enLeanOneMeas": f(med(lean1), 1), "enLeanOneRange": span(lean1),
+        "enLeanOneGap": gap(lean1),
+        "enLeanSavePct": f(100.0 * (1.0 - med(lean4) / med(lean1)), 0),
+        "enLeanOverFirst": f(med(lean4) / july_design, 1),
+        "enJsonMeas": f(med(json10), 1), "enJsonRange": span(json10),
+    }
+
+
+def prototype() -> dict[str, str]:
+    """The lean sender and receiver as they run on the Pi 4, and Ed25519 in batches (F77).
+
+    Measured on `authbc-pi4b` on 2026-10-09: the board that still held the reference software.
+    Its signature timings in the same session are within 0.4 % of the other board's, which
+    `timings()` uses. The receive time is the whole path — decode, rebuild, hash, verify, and
+    since F81 keeping the frame — and the node count it gives is the prototype's, beside
+    Eq. (cpu)'s cryptography-only ceiling.
+
+    Two sessions of that day enter. The SENDER's times are the morning's: its code has not
+    changed, and the energy runs were registered against exactly those figures (F79). The
+    RECEIVER's times are the afternoon's, of the receiver that keeps frames (F81), set beside a
+    control of the old receiver in the same session (`hw/BENCH_SESSION.md`).
+    """
+    lean = {(r["op"], int(r["agg_b"])): float(r["median_ns"]) * 1e-9
+            for r in rows(HW / "p1_lean.authbc-pi4b.csv")}
+    kept = {(r["op"], int(r["agg_b"])): float(r["median_ns"]) * 1e-9
+            for r in rows(HW / "p1_lean.authbc-pi4b.frames-kept.csv")}
+    lean |= {k: v for k, v in kept.items() if k[0] == "frame_receive"}
+    control = {(r["op"], int(r["agg_b"])): float(r["median_ns"]) * 1e-9
+               for r in rows(HW / "p1_lean.authbc-pi4b.control-20261009.csv")}
+    # what was written down for the re-timing, before it (hw/BENCH_SESSION.md, commit 61a4b4f)
+    for b in (1, 4):
+        ratio = kept[("frame_receive", b)] / control[("frame_receive", b)]
+        if not 1.00 <= ratio <= 1.02:
+            raise ValueError(f"keeping frames was registered to cost at most 2 %; b = {b} "
+                             f"gives {ratio:.4f} of the control")
+    keep_cost = kept[("frame_receive", 4)] - control[("frame_receive", 4)]
+    same_session = {(r["scheme"], r["op"]): float(r["median_ns"]) * 1e-9
+                    for r in rows(HW / "p1_crypto.authbc-pi4b.frames-kept.csv")
+                    if not r["agg_b"]}
+    reference = {(r["scheme"], r["op"]): float(r["median_ns"]) * 1e-9
+                 for r in rows(HW / "p1_crypto.authbc-pi4a.csv") if not r["agg_b"]}
+    drift = max(abs(same_session[k] / reference[k] - 1) for k in reference if k in same_session)
+    if drift > 0.01:
+        raise ValueError("the two boards' primitive timings differ by more than 1 %: the lean "
+                         "timings may not be quoted beside the reference board's")
+    cfg = yaml.safe_load((REPO / "experiments" / "design-ladder" / "config.yaml").read_text())
+    (rate,) = [float(lam) for label, lam, _d in cfg["operating_points"] if label == "adopted"]
+    batch = 4
+    per_neighbour = rate / batch * lean[("frame_receive", batch)]      # seconds of CPU per second
+    design = one(rows(RAW / "design_ladder.csv"), op="adopted", format="lean",
+                 rung="batch-delta", scheme="ed25519")
+    batches = {int(r["batch"]): float(r["median_ns_per_sig"])
+               for r in rows(HW / "ed25519_batch.authbc-pi4b.csv")}
+    # The MODEL column of the lean rows of the energy table: the lean sender's timed frame
+    # times the processor power metered on the other board of the same model. It was printed
+    # as an estimate until the sender was metered (F79); the meter now stands beside it.
+    power = yaml.safe_load((REPO / "experiments" / "energy-table" / "config.yaml").read_text())
+    estimate = {b: power["p_cpu_w"] * lean[("frame_send", b)] / b * 1e6 for b in (1, batch)}
+    return {
+        "leanSendUj": f(estimate[batch], 0), "leanSendOneUj": f(estimate[1], 0),
+        "leanSendMs": f(1e3 * lean[("frame_send", batch)], 2),
+        "leanRecvMs": f(1e3 * lean[("frame_receive", batch)], 2),
+        "leanSendOneMs": f(1e3 * lean[("frame_send", 1)], 2),
+        "leanRecvOneMs": f(1e3 * lean[("frame_receive", 1)], 2),
+        "leanRecvOverVerify": f(lean[("frame_receive", batch)]
+                                / same_session[("ed25519", "verify")], 1),
+        "leanRecvKeepUs": f(1e6 * keep_cost, 0),
+        "leanRecvKeepPct": f(100 * keep_cost / control[("frame_receive", 4)], 1),
+        "ncpuProto": str(1 + math.floor(1.0 / per_neighbour)),
+        "cpuProtoCores": f((int(design["n_max_v95"]) - 1) * per_neighbour, 1),
+        "edBatchOneUs": f(batches[1] / 1e3, 0), "edBatchManyUs": f(batches[64] / 1e3, 0),
+        "edBatchRatio": f(batches[64] / batches[1], 2),
+        "edBatchFourRatio": f(batches[4] / batches[1], 2),
+    }
+
+
+def spread() -> dict[str, str]:
+    """Nodes spread over a disc, and capture (docs/NMAX_DIRECT_EXPECTATIONS.md F7; audit F85).
+
+    Four crossings registered in db0bca1 before any run: the lean baseline and the design at
+    15 m (inside ±5 % of the capture model) and at 100 m (between the published equal-power
+    crossing and the model's band). The text says all four held, that the published capacities
+    are conservative by about an eighth, and that the ratio of design to baseline does not
+    move; each is checked before a macro is written.
+    """
+    table = {r["case"]: r for r in rows(RAW / "spread_capacity.csv")}
+    names = {"C, 15 m": "NearBase", "D, 15 m": "NearDesign",
+             "C, 100 m": "FarBase", "D, 100 m": "FarDesign"}
+    if set(table) != set(names):
+        raise ValueError(f"follow-up F7 registered {sorted(names)}; scored {sorted(table)}")
+    if any(r["within_prediction"] != "1" for r in table.values()):
+        raise ValueError("the text says every spread-node crossing is inside its prediction")
+    x = {tag: float(table[case]["ns3_crossing"]) for case, tag in names.items()}
+    gains = [float(r["vs_equal_power_pct"]) for r in table.values()]
+    if not 10.0 <= min(gains) <= max(gains) <= 15.0:
+        raise ValueError("the text says the capacities rise by about an eighth")
+    published = {r["cell"]: float(r["equal_power_crossing"]) for r in table.values()}
+    ratios = {"equal": published["D"] / published["C"], "near": x["NearDesign"] / x["NearBase"],
+              "far": x["FarDesign"] / x["FarBase"]}
+    if max(ratios.values()) - min(ratios.values()) > 0.05:
+        raise ValueError("the text says the ratio of design to baseline does not move")
+    if not (x["FarBase"] < x["NearBase"] and x["FarDesign"] < x["NearDesign"]):
+        raise ValueError("the text says the 100 m crossings sit just below the 15 m ones")
+    model = {r["cell"]: float(r["model_crossing"]) for r in table.values()}
+    per_case: dict[str, str] = {}
+    for case, tag in names.items():            # the thesis tabulates each case
+        r = table[case]
+        per_case |= {f"sprCi{tag}": f"[{f(r['ns3_lo'], 1)},\\,{f(r['ns3_hi'], 1)}]",
+                     f"sprDm{tag}": signed(float(r["vs_model_pct"])),
+                     f"sprGe{tag}": signed(float(r["vs_equal_power_pct"]))}
+    return per_case | {f"spr{tag}": f(v, 1) for tag, v in x.items()} | {
+        "sprModelBase": f(model["C"], 1), "sprModelDesign": f(model["D"], 1),
+        "sprModelWorst": f(max(abs(float(r["vs_model_pct"])) for r in table.values()), 1),
+        "sprGainLo": f(min(gains), 0), "sprGainHi": f(max(gains), 0),
+        "sprFarBelowPct": f(100 * max(1 - x["FarBase"] / x["NearBase"],
+                                      1 - x["FarDesign"] / x["NearDesign"]), 1),
+        "sprRatioNear": f(ratios["near"], 1), "sprRatioFar": f(ratios["far"], 1),
+    }
+
+
+def multicore() -> dict[str, str]:
+    """The receiver on one to four cores of the Pi 4 at once (hw/BENCH_SESSION.md; audit F84).
+
+    Registered in eb2751b before the run. One worker and two landed inside their ranges; three
+    and four cores scale below theirs (2.70 and 3.36 times one, where 2.75 and 3.50 at least
+    were written down). The text reports the cores as measured and says the two ranges were
+    missed; the outcome of each line is held here so that a re-run cannot change it silently.
+    """
+    table = {int(r["workers"]): r for r in rows(HW / "multicore_receive.authbc-pi4b.csv")}
+    if set(table) != {1, 2, 3, 4}:
+        raise ValueError("the multi-core measurement was registered for one to four workers")
+    if any(r["throttled_before"] != "throttled=0x0" or r["throttled_after"] != "throttled=0x0"
+           for r in table.values()):
+        raise ValueError("a run of the multi-core measurement was throttled: not reportable")
+    one = float(table[1]["frames_per_s"])
+    scale = {k: float(r["frames_per_s"]) / one for k, r in table.items()}
+    nodes = {k: int(r["nodes_served"]) for k, r in table.items()}
+    held = {"one": 680.0 <= one <= 708.0, "two": 1.90 <= scale[2] <= 2.00,
+            "three": 2.75 <= scale[3] <= 3.00, "four": 3.50 <= scale[4] <= 4.00}
+    if held != {"one": True, "two": True, "three": False, "four": False}:
+        raise ValueError(f"the text says which registered ranges held; the file says {held}")
+    design = int(one_design_nmax())
+    if not nodes[2] < design <= nodes[3]:
+        raise ValueError("the text says the design's neighbourhood needs three cores")
+    return {
+        "mcOneFps": f(one, 0),
+        "mcNodesOne": str(nodes[1]), "mcNodesTwo": str(nodes[2]),
+        "mcNodesThree": str(nodes[3]), "mcNodesFour": str(nodes[4]),
+        "mcScaleTwo": f(scale[2], 2), "mcScaleThree": f(scale[3], 2),
+        "mcScaleFour": f(scale[4], 2),
+        "mcSlowFourPct": f(100 * (1 - float(table[4]["worker_min_fps"]) / one), 0),
+    }
+
+
+def one_design_nmax() -> str:
+    """N_max of the lean design at the adopted point, as the ladder holds it."""
+    return one(rows(RAW / "design_ladder.csv"), op="adopted", format="lean",
+               rung="batch-delta", scheme="ed25519")["n_max_v95"]
+
+
+def batch_dimension() -> dict[str, str]:
+    """The lean design at other batch sizes (docs/NMAX_DIRECT_EXPECTATIONS.md F6; audit F82).
+
+    Three cells registered in 64322fc before any run: two, three and eight records to a frame
+    at 50 records/s. The text says each simulated crossing is inside both of its registered
+    bands, the airtime line's and the access-rule model's; that is checked before a macro is
+    written, so a re-run that moved one outside would stop the build instead of the text.
+    """
+    table = {r["cell"]: r for r in rows(RAW / "batch_capacity.csv")}
+    names = {"B2": "Two", "B3": "Three", "B8": "Eight"}
+    if set(table) != set(names):
+        raise ValueError(f"follow-up F6 registered {sorted(names)}; scored {sorted(table)}")
+    m: dict[str, str] = {}
+    for cell, tag in names.items():
+        r = table[cell]
+        if (r["line_within_band"], r["model_within_band"]) != ("1", "1"):
+            raise ValueError(f"the text says every batch-size crossing is inside both registered "
+                             f"bands; {cell} is not")
+        m |= {f"batNs{tag}": f(r["ns3_crossing"], 1),
+              f"batCi{tag}": f"[{f(r['ns3_lo'], 1)},\\,{f(r['ns3_hi'], 1)}]",
+              f"batLine{tag}": f(r["line_crossing"], 1),
+              f"batModel{tag}": f(r["model_crossing"], 1),
+              f"batDl{tag}": signed(float(r["vs_line_pct"])),
+              f"batDm{tag}": signed(float(r["vs_model_pct"]))}
+    return m | {
+        "batLineWorst": f(max(abs(float(r["vs_line_pct"])) for r in table.values()), 1),
+        "batModelWorst": f(max(abs(float(r["vs_model_pct"])) for r in table.values()), 1)}
+
+
+def _libc(platform: str) -> str:
+    """'…-with-glibc2.39' -> 'glibc 2.39'."""
+    match = re.search(r"-with-([a-z]+)([\d.]+)$", platform)
+    if match is None:
+        raise ValueError(f"no C library in the platform string {platform!r}")
+    return f"{match.group(1)} {match.group(2)}"
+
+
+def _keyed(text: str, sep: str) -> dict[str, str]:
+    """Lines of 'key<sep>value' as a mapping (lscpu output, os-release)."""
+    pairs = (ln.split(sep, 1) for ln in text.splitlines() if sep in ln)
+    return {k.strip(): v.strip().strip('"') for k, v in pairs}
+
+
+def platforms() -> dict[str, str]:
+    """The two machines and the libraries, as the result files recorded them (paper Table II).
+
+    Nothing here is typed. The simulation host is the header of the design ladder; the board is
+    the header of the receiver timing the paper quotes, with the `lscpu` and `os-release` output
+    the same run stored beside it. A table of platforms copied by hand is the kind of statement
+    that outlives a re-install: one of the two boards was re-installed on 2026-10-09.
+    """
+    host = header(RAW / "design_ladder.csv")
+    if header(RAW / "ns3_nmax_direct_runs.csv")["cpu"] != host["cpu"]:
+        raise ValueError("the ladder and the capacity runs name different simulation hosts")
+    board = header(HW / "p1_lean.authbc-pi4b.frames-kept.csv")
+    if header(HW / "multicore_receive.authbc-pi4b.csv")["device_model"] != board["device_model"]:
+        raise ValueError("the receiver timing and the multi-core run name different boards")
+    meta = HW / "meta" / f"{board['device_host']}-{board['run_utc']}"
+    cpu = _keyed((meta / "lscpu.txt").read_text(encoding="utf-8"), ":")
+    release = _keyed((meta / "os-release.txt").read_text(encoding="utf-8"), "=")
+    libraries = ("cbor2", "cryptography", "blspy")
+    if any(host[name] != board[name] for name in libraries):
+        raise ValueError("host and board ran different versions of a library the text names once")
+    return {
+        "pfHostCpu": host["cpu"].replace("(R)", "").replace("(TM)", ""),
+        "pfHostOs": "Linux (WSL2)" if "WSL2" in host["platform"] else "Linux",
+        "pfHostLibc": _libc(host["platform"]), "pfHostPython": host["python"],
+        "pfPiModel": board["device_model"], "pfPiCpu": cpu["Model name"],
+        "pfPiCores": cpu["CPU(s)"], "pfPiGhz": f(float(cpu["CPU max MHz"]) / 1000, 1),
+        "pfPiOs": f"{release['ID'].capitalize()} {release['VERSION_ID']} "
+                  f"({release['VERSION_CODENAME']})",
+        "pfPiLibc": _libc(board["platform"]), "pfPiPython": board["python"],
+        "pfPiGovernor": board["device_governor"],
+        "verCbor": host["cbor2"], "verCryptography": host["cryptography"],
+        "verBlspy": host["blspy"],
+    }
+
+
+# ============================================================================ the reviewer revision
+# docs/AUTHBC Revision Plan.md, items A1-A17, each registered in predictions/<ID>.md before it ran
+# (tag prereg-<ID>). One function per item; each refuses to run where its artifact stops saying
+# what the text says in words.
+
+def _v_at_grid(cell: str) -> dict[int, float]:
+    return {int(n): float(v) for n, v in (pair.split(":") for pair in cell.split())}
+
+
+def spread_swarm() -> dict[str, str]:
+    """A1: the swarm spread over discs, grouped and moving (F88, F103)."""
+    sc = rows(RAW / "spatial_capacity.csv")
+    layouts = [r for r in sc if r["config"] == "design" and r["scenario"] != "fixed"]
+    ratios = [float(r["ratio_to_base"]) for r in layouts]
+    far = one(sc, scenario="s1-r1000", config="design")
+    mv = rows(RAW / "spatial_motion.csv")
+    dv = 0.0
+    for config in ("base", "design"):
+        still = _v_at_grid(one(mv, scenario="gm-r1000-v0", config=config)["v_at_grid"])
+        for speed in ("gm-r1000-v5", "gm-r1000-v15"):
+            moving = _v_at_grid(one(mv, scenario=speed, config=config)["v_at_grid"])
+            dv = max(dv, max(abs(moving[n] - still[n]) for n in still))
+    moving_ratios = [float(r["ratio_to_base"]) for r in mv if r["config"] == "design"]
+    return {"spRatioLo": f(min(ratios), 2), "spRatioHi": f(max(ratios), 2),
+            "spHiddenPct": f(100 * float(far["hidden_share"]), 0),
+            "spNeighbours": f(far["neighbours_at_cross"], 1), "spArea": f(far["n_cross"], 0),
+            "mvDeltaV": f(dv, 4), "mvRatioLo": f(min(moving_ratios), 2),
+            "mvRatioHi": f(max(moving_ratios), 2)}
+
+
+def design_map() -> dict[str, str]:
+    """A2: the batch the deadline admits over rate x deadline, checked in ns-3 (F100), and the
+    age of information under loss (F90)."""
+    t = rows(RAW / "design_map_validation.csv")
+    if not all(r["within_band"] == "1" for r in t):
+        raise ValueError("the text says every simulated cell lies in the model's band")
+    base = one(t, ns3_cell="MB100")
+    design = one(t, ns3_cell="MD100-100")
+    age = one(rows(RAW / "aoi_under_loss.csv"), lambda_rec_per_s="50", batch="4", p="0.05")
+    return {"dmCells": str(len(t)),
+            "dmWorst": f(max(abs(float(r["vs_model_pct"])) for r in t), 2),
+            "dmRatio": f(float(design["ns3_crossing"]) / float(base["ns3_crossing"]), 2),
+            "dmBatch": design["batch"],
+            "aoiPeakMean": f(age["peak_mean_ms"], 1), "aoiPeakPnn": f(age["peak_p99_ms"], 1),
+            "aoiOverPct": f(100 * float(age["share_peak_over_dmax"]), 1)}
+
+
+def loss_trace() -> dict[str, str]:
+    """A3: collision loss in ns-3 traced link by link (F98)."""
+    # one row per (group, batch, reference interval) over the same traced links: count each
+    # group of links once
+    t = [r for r in rows(RAW / "verifiability_margin_trace.csv")
+         if r["batch"] == "1" and r["ref_interval"] == "1"]
+    p_hat = st.mean(float(r["p_hat"]) for r in t)
+    burst = max(float(r["mean_burst"]) for r in t)
+    if not burst < 1.1:
+        raise ValueError("the text calls the traced loss independent from frame to frame")
+    return {"trLinks": thousands(sum(int(r["links"]) for r in t)), "trBurst": f(burst, 2),
+            "trBurstIid": f(1.0 / (1.0 - p_hat), 3)}
+
+
+def adaptive() -> dict[str, str]:
+    """A4/A4b: the batch chosen at run time on a growing swarm (F102)."""
+    a, b = rows(RAW / "adaptive_batching.csv"), rows(RAW / "adaptive_batching_b.csv")
+    reg = one(a, scenario="ramp", policy="adaptive")
+    fixed = one(a, scenario="ramp", policy="fixed4")
+    second = one(b, scenario="ramp", policy="adaptive-m20")
+
+    def share(r: dict[str, str]) -> str:
+        return f(100 * float(r["frac_v95_n_le_115"]), 0)
+
+    return {"adRegShare": share(reg), "adRegFail": f(reg["failure_n"], 0),
+            "adShare": share(second), "adFail": f(second["failure_n"], 0),
+            "adFixShare": share(fixed), "adFixFail": f(fixed["failure_n"], 0),
+            "adAgeSaved": f(float(fixed["peak_age_mean_ms"])
+                            - float(second["peak_age_mean_ms"]), 0),
+            "adLowGain": f(float(fixed["age_n_lt_30_ms"]) - float(reg["age_n_lt_30_ms"]), 0)}
+
+
+def replay_window() -> dict[str, str]:
+    """A5: a GNSS-time window against the delaying attacker."""
+    t = rows(RAW / "replay_window.csv")
+    for sigma in ("1.0", "10.0"):
+        if one(t, study="honest", policy="fixed150", sigma_ms=sigma)["honest_refused"] != "0":
+            raise ValueError("the text says no honest frame is refused at sigma <= 10 ms")
+        if float(one(t, study="delay", policy="fixed150", sigma_ms=sigma,
+                     delay_ms="250.0")["detection"]) != 1.0:
+            raise ValueError("the text says every frame held back 250 ms is refused")
+    honest = one(t, study="honest", policy="fixed150", sigma_ms="10.0")
+    outage = [r for r in t if r["study"] == "outage" and r["policy"] == "fixed250"]
+    hour = one(outage, outage_min="60.0")
+    holds = max(float(r["outage_min"]) for r in outage if float(r["false_rejection"]) < 1e-4)
+    return {"rpFrames": thousands(int(honest["honest_frames"])),
+            "rpDrift": f(hour["clock_apart_ms"], 0), "rpHolds": f(holds, 0)}
+
+
+def _crossing_rate(senders: int, policy: str, attack: str, udp: list[dict[str, str]]) -> float:
+    """The forged-frame rate at which honest V first falls below 0.95, interpolated."""
+    pts = sorted((float(r["rate_offered"]), float(r["honest_V"])) for r in udp
+                 if r["senders"] == str(senders) and r["policy"] == policy
+                 and r["attack"] == attack)
+    for (r0, v0), (r1, v1) in zip(pts, pts[1:], strict=False):
+        if v1 < 0.95 <= v0:
+            return r0 + (r1 - r0) * (v0 - 0.95) / (v0 - v1)
+    return math.inf
+
+
+def flood_channel_limit() -> int:
+    """Frames per second one 802.11a channel carries at the design's frame plus the 8 B tag."""
+    design = one(rows(RAW / "design_ladder.csv"), format="lean", rung="batch-delta",
+                 op="adopted", scheme="ed25519")
+    return int(1 / bianchi.t_broadcast(round(float(design["frame_bytes"])) + 8))
+
+
+def _cap_one_sender(udp: list[dict[str, str]], senders: int) -> float:
+    """The lowest honest V behind a per-sender cap when one sender forges, at rates one channel
+    can carry."""
+    held = [float(r["honest_V"]) for r in udp
+            if r["senders"] == str(senders) and r["policy"] == "cap"
+            and r["attack"] == "forged-one"
+            and float(r["attack_rate_sent"]) <= flood_channel_limit()]
+    if not min(held) >= 0.95:
+        raise ValueError("the text says the cap holds one forging sender off within one channel")
+    return min(held)
+
+
+def flooding() -> dict[str, str]:
+    """A7: what a forged frame costs, and the group tag (pi-B; F109)."""
+    cost = {r["path"]: float(r["median_us"]) for r in rows(HW / "flood_cost.authbc-pi4b.csv")}
+    udp = rows(HW / "flood_udp.authbc-pi4b.csv")
+    senders = 41
+    outsider = one(udp, senders=str(senders), policy="mac", attack="outsider",
+                   rate_offered="3000")
+    if not math.isinf(_crossing_rate(senders, "mac", "outsider", udp)):
+        raise ValueError("the text says outsiders never push honest V below 0.95")
+    design = one(rows(RAW / "design_ladder.csv"), format="lean", rung="batch-delta",
+                 op="adopted", scheme="ed25519")
+    frame = float(design["frame_bytes"])
+    tagged = 1 - (modelcheck.closed_form_crossing(12.5, bianchi.t_broadcast(frame + 8))
+                  / modelcheck.closed_form_crossing(12.5, bianchi.t_broadcast(frame)))
+    return {"flForgedMs": f(cost["forged_none"] / 1e3, 2),
+            "flHonestMs": f(cost["honest_none"] / 1e3, 2), "flTagUs": f(cost["outsider_mac"], 1),
+            "flSenders": str(senders), "flOutsiderV": f(outsider["honest_V"], 3),
+            "flNoneRate": f(_crossing_rate(senders, "none", "forged", udp), 0),
+            "flInsiderRate": f(_crossing_rate(senders, "mac", "insider", udp), 0),
+            "flSpreadRate": f(_crossing_rate(senders, "cap", "forged", udp), 0),
+            "flChannel": thousands(flood_channel_limit()),
+            "flCapOneV": f(_cap_one_sender(udp, senders), 2),
+            "flForgedRate": f(1e6 / cost["forged_none"], 0),
+            "flTagRate": thousands(int(round(1e6 / cost["outsider_mac"], -2))),
+            "flTagCostPct": f(100 * tagged, 1)}
+
+
+def nodes_by_eq4(per_core: float) -> str:
+    """Eq. (cpu) with a measured receive time t in place of its cryptographic terms:
+    1 + floor(1/((Lambda/b) t)), the receiver itself included. The raw file holds the bracket,
+    1/((Lambda/b) t), unrounded; until 2026-10-28 the paper printed it rounded, one node fewer for
+    Rust and the deferred receiver (review of 2026-10-27, S-24; Mohamed chose Eq. (cpu))."""
+    return str(1 + math.floor(per_core))
+
+
+def compiled() -> dict[str, str]:
+    """A8/A13: the receiver in Rust on pi-B (F108)."""
+    c = {(r["impl"], r["metric"]): float(r["median_ns"])
+         for r in rows(HW / "compiled_receiver.authbc-pi4b.csv")}
+    ident = rows(RAW / "rust_identity.csv")[0]
+    if not ident["frames"] == ident["identical"] == ident["rust_verifies_python"]:
+        raise ValueError("the text says the two codecs are byte-identical")
+    tier2 = c[("rust", "tier2_batch64_ns_per_frame")] / 1e6
+    fresh = one(rows(RAW / "freshness_budget.csv"), op="adopted", scheme="ed25519",
+                channel_stat="delay_max_ms")
+    evidence = float(fresh["fill_ms"]) + float(fresh["channel_ms"]) + 100.0 + 64 * tier2
+    return {"rxRustMs": f(c[("rust", "receive_ns_per_frame")] / 1e6, 3),
+            "rxSpeedup": f(c[("derived", "python_over_rust_receive")], 1),
+            "rxRustNodes": nodes_by_eq4(c[("derived", "nodes_per_core_rust")]),
+            "rxBatchNodes": nodes_by_eq4(c[("derived", "nodes_per_core_rust_batch64")]),
+            "rxLazyNodes": nodes_by_eq4(c[("derived", "nodes_per_core_lazy")]),
+            "rxTierOneUs": f(c[("rust", "tier1_tag_decode_ns_per_frame")] / 1e3, 1),
+            "rxEvidenceMs": f(evidence, 0), "rustIdFrames": thousands(int(ident["frames"]))}
+
+
+def compiled_energy() -> dict[str, str]:
+    """A8: the compiled sender metered on pi-B (F112); the gain of the sensor is assumed."""
+    t = {r["run"]: r for r in rows(RAW / "energy_runs_2026-10-22.csv")}
+    if t["control_cbor"]["inside_registered"] != "1":
+        raise ValueError("the text sets these rows beside October's on the strength of the control")
+
+    def gap(r: dict[str, str]) -> str:
+        g = 100.0 * (float(r["metered_over_predicted"]) - 1.0)
+        return ("$-$" if g < 0 else "") + f(abs(g), 1)
+
+    def span(r: dict[str, str]) -> str:
+        return f"[{f(r['uj_per_record_min'], 1)},\\,{f(r['uj_per_record_max'], 1)}]"
+
+    b4, b1 = t["rust_b4"], t["rust_b1"]
+    july = rows(RAW / "energy_table.csv")
+    first4 = float(one(july, encoding="delta", batch="4")["sender_uj_per_rec_median"])
+    return {"enRustMeas": f(b4["uj_per_record_median"], 1), "enRustRange": span(b4),
+            "enRustModel": f(b4["script_predicted_uj_per_record"], 1), "enRustGap": gap(b4),
+            "enRustOneMeas": f(b1["uj_per_record_median"], 1), "enRustOneRange": span(b1),
+            "enRustOneModel": f(b1["script_predicted_uj_per_record"], 1),
+            "enRustOneGap": gap(b1),
+            "enRustPower": f(b4["added_power_w_median"], 2),
+            "enFirstOverRust": f(first4 / float(b4["uj_per_record_median"]), 1),
+            "enCtlNewMeas": f(t["control_cbor"]["uj_per_record_median"], 1)}
+
+
+def airframes() -> dict[str, str]:
+    """A9 and A9-fast: records of 9, 15 and 25 fields from SIH flights of three airframes
+    (F105, F111)."""
+    reg, fast = rows(RAW / "record_size.csv"), rows(RAW / "record_size_fast.csv")
+    # the records the text quotes: A9's quadrotor and the fixed wings at their planned speeds
+    flights = {(r["airframe"], r["mission"]) for r in fast}
+    if not {r["airframe"] for r in reg} == {r["airframe"] for r in fast}:
+        raise ValueError("the text names the same three airframes as A9")
+
+    def at(fields: str, key: str, airframe: str | None = None) -> float:
+        return st.mean(float(r[key]) for r in fast
+                       if r["fields"] == fields and (airframe is None or r["airframe"] == airframe))
+
+    for fields, n in (("9", 9), ("15", 15), ("25", 25)):
+        if not n <= at(fields, "delta_mean") < n + 1.5:
+            raise ValueError("the text says a delta costs about a byte per field")
+    wing = [r for r in fast if r["airframe"] != "quadx" and r["fields"] == "9"]
+    return {"afFlights": str(len(flights)),
+            "afSaveFifteen": f(at("15", "saving_pct"), 1),
+            "afRatioFifteen": f(at("15", "ratio"), 2),
+            "afSaveTwentyFive": f(at("25", "saving_pct"), 1),
+            "afRatioTwentyFive": f(at("25", "ratio"), 2),
+            "afWingExtra": f(at("9", "delta_mean", "airplane") - at("9", "delta_mean", "quadx"), 1),
+            "afSpeedLo": f(min(float(r["speed_mps"]) for r in wing), 0),
+            "afSpeedHi": f(max(float(r["speed_mps"]) for r in wing), 0)}
+
+
+def stream_deadline() -> dict[str, str]:
+    """A10: the stream schemes run in ns-3, a record counted only if it verifies in time (F99)."""
+    t = rows(RAW / "stream_deadline.csv")
+    for variant in ("gennaro-rohatgi", "tesla-batch4", "emss-k4", "emss-k8", "emss-k16",
+                    "emss-k100"):
+        if one(t, variant=variant)["in_time_crossing"] != "":
+            raise ValueError(f"the text says {variant} never reaches 0.95 in time")
+    tesla = [float(one(t, variant=v)["in_time_crossing"]) for v in ("tesla-I10-d2",
+                                                                     "tesla-I20-d2")]
+    return {"sdMav": f(one(t, variant="mavlink2")["in_time_crossing"], 1),
+            "sdWl": f(one(t, variant="wong-lam")["in_time_crossing"], 1),
+            "sdTeslaLo": f(min(tesla), 1), "sdTeslaHi": f(max(tesla), 1)}
+
+
+def phy_simulated() -> dict[str, str]:
+    """A11: capacity simulated on six 802.11 PHYs and rates (F104)."""
+    t = rows(RAW / "phy_links.csv")
+    ratios = [float(r["ns3_ratio"]) for r in t]
+    fastest = {std: max(int(r["rate_mbps"]) for r in t if r["standard"] == std)
+               for std in {r["standard"] for r in t}}
+    gap = [(abs(float(r["vs_model_pct"])), int(r["rate_mbps"]) == fastest[r["standard"]])
+           for r in t]
+    top = [g for g, is_top in gap if is_top]
+    rest = [g for g, is_top in gap if not is_top]
+    # F104 first said "within 1.5 % at frames of 178 us and longer": 802.11p at 12 Mb/s has
+    # 226 us frames and is 2.9 % off. What holds is by rate (corrected 2026-10-24).
+    if not max(rest) <= 1.5 < min(top):
+        raise ValueError("the text says only the fastest rate of each width leaves 1.5 %")
+    return {"phySimRatioLo": f(min(ratios), 2), "phySimRatioHi": f(max(ratios), 2),
+            "phyModelRest": f(max(rest), 1), "phyModelTopLo": f(min(top), 1),
+            "phyModelTopHi": f(max(top), 1)}
+
+
+def post_quantum() -> dict[str, str]:
+    """A15: Falcon-512 in the frame (capacity in ns-3; timing on pi-B; F110)."""
+    pq = rows(RAW / "pq_capacity.csv")
+    one_rec, four = one(pq, cell="PQ1"), one(pq, cell="PQ4")
+    timing = {(r["alg"], r["op"]): float(r["median_us"])
+              for r in rows(HW / "pq_speed_sig.authbc-pi4b.csv")}
+    log = (HW / "pq_speed_sig.authbc-pi4b.log").read_text(encoding="utf-8")
+    sig = re.search(r"signature bytes: (\d+)", log)
+    if sig is None:
+        raise ValueError("liboqs no longer states the signature length")
+    return {"pqSigBytes": sig.group(1), "pqBase": f(one_rec["ns3_crossing"], 1),
+            "pqDesign": f(four["ns3_crossing"], 1),
+            "pqRatio": f(float(four["ns3_crossing"]) / float(one_rec["ns3_crossing"]), 1),
+            "pqSignUs": f(timing[("Falcon-padded-512", "sign")], 0),
+            "pqVerifyUs": f(timing[("Falcon-padded-512", "verify")], 0)}
+
+
+def ledger_audit() -> dict[str, str]:
+    """A16: the ledger audited from the uploads alone."""
+    r = rows(RAW / "ledger_audit.csv")[0]
+    found = r["equivocation_detected"] == r["forgery_detected"] == "1"
+    if not (found and r["false_findings"] == "0"):
+        raise ValueError("the text says both planted faults were found and nothing else")
+    return {"auUavs": WORDS[int(r["uavs"])], "auFrames": thousands(int(r["frames_audited"])),
+            "auMinutes": f(float(r["audit_s"]) / 60, 1),
+            "auKept": f(r["kept_bytes_per_record"], 1)}
+
+
+def other_links() -> dict[str, str]:
+    """A17: the same accounting for ADS-B, Remote ID and V2X CAM."""
+    t = rows(RAW / "other_links.csv")
+    for system in ("ADS-B 1090ES (ME field)", "Remote ID, Bluetooth 4 legacy"):
+        if any(r["signature_fits"] != "0" for r in t if r["system"] == system):
+            raise ValueError("the text says these cannot carry a signature")
+    rid = [r for r in t if r["system"].startswith("Remote ID, Bluetooth 5")]
+    if any(r["fresh_batch"] != "0" for r in rid if float(r["d_max_ms"]) <= 1000):
+        raise ValueError("the text says no Remote ID frame meets a deadline up to 1 s")
+    cam = {float(r["d_max_ms"]): r for r in t if r["system"].startswith("V2X CAM at 10 Hz")}
+    if cam[100.0]["fresh_batch"] != "0":
+        raise ValueError("the text says CAM at 10 Hz admits no frame at 100 ms")
+    return {"olRidRecords": WORDS[int(rid[0]["payload_batch"])],
+            "olCamTwo": WORDS[int(cam[200.0]["fresh_batch"])],
+            "olCamThree": WORDS[int(cam[300.0]["fresh_batch"])]}
+
+
+def intervals() -> dict[str, str]:
+    """H2: how often the intervals contain the truth (F86, F101)."""
+    t = rows(RAW / "interval_coverage.csv")
+
+    def cov(method: str) -> list[float]:
+        return [100 * float(r["coverage"]) for r in t if r["method"] == method]
+
+    plain = cov("v_mean_bootstrap") + cov("crossing_bootstrap")
+    fixed = cov("v_mean_t") + cov("crossing_expanded_bootstrap")
+    return {"covPlainLo": f(min(plain), 0), "covPlainHi": f(max(plain), 0),
+            "covFixedLo": f(min(fixed), 0), "covFixedHi": f(max(fixed), 0)}
+
+
+# ============================================================================ the review of 27-10
+# docs/review 27-10-2026/02_scientific_review_inconsistencies.md: the items whose answer the
+# artifacts hold (docs/revision/REVIEW_2026-10-27_FACTS.md). One function per item, each holding
+# the cause it names to the artifact, as above.
+
+def _direct(cell: str, runs: list[dict[str, str]]) -> tuple[dict[str, str], dict[int, list[float]]]:
+    """A cell's crossing row in `ns3_nmax_direct.csv` under the paper's traffic source (a send
+    jitter of one sending period, as `source_study` reads it), and the runs of each N behind it."""
+    hits = [r for r in rows(RAW / "ns3_nmax_direct.csv")
+            if r["cell"] == cell and r["n_nodes"] == "CROSSING" and r["skew_ppm"] == "0"
+            and abs(float(r["jitter_ms"]) - 1000.0 * float(r["batch"])
+                    / float(r["lambda_rec_per_s"])) < 1e-3]
+    if len(hits) != 1:
+        raise LookupError(f"expected one crossing of cell {cell} under the paper's source")
+    row = hits[0]
+    per_n: dict[int, list[float]] = defaultdict(list)
+    for r in runs:
+        if (r["cell"], r["jitter_ms"], r["skew_ppm"]) == (cell, row["jitter_ms"], "0"):
+            per_n[int(r["n_nodes"])].append(float(r["delivered_frac"]))
+    per_n = {n: v for n, v in per_n.items() if len(v) == int(row["seeds"])}
+    if sorted(per_n) != [int(n) for n in row["grid"].split()]:
+        raise ValueError(f"the runs of cell {cell} are not the grid its crossing was read on")
+    return row, per_n
+
+
+def review_crossings() -> dict[str, str]:
+    """S-13, S-14: N_max as the interpolated crossing, for every row of the stream table.
+
+    Table V prints the largest simulated N whose mean delivery reaches 0.95, with its bootstrap
+    interval; the figures and the PHY table print the crossing interpolated between the two grid
+    points around 0.95. These are the interpolated crossings of the same runs, with the expanded
+    interval the paper prints (H2). They are computed from the runs, not read from the summary:
+    it holds them to 0.01, and rounding that again turns 124.549 into 124.6 and 42.145 into 42.2.
+    """
+    import run_nmax_direct as drv  # ns3/ is put on the path by nmax_airtime_line
+
+    from authbc.bench.stats import interpolated_crossing, interpolated_crossing_ci
+    runs = rows(RAW / "ns3_nmax_direct_runs.csv")
+    grid_nmax = {r["scheme"]: r["n_max_v95"] for r in rows(RAW / "stream_baselines.csv")}
+    deadline = rows(RAW / "stream_deadline.csv")
+    # tag: (direct cell, row of the stream table, cell of the deadline runs)
+    cells = {"Mav": ("SM", "mavlink2", "LSM"), "Tesla": ("ST", "tesla", "LST"),
+             "Gr": ("SG", "gennaro-rohatgi", "LSG"), "Emss": ("SE", "emss", "LSE"),
+             "Wl": ("SW", "wong-lam-tree", "LSW"), "Sig": ("C", "per-record signature", ""),
+             "Design": ("D", "authbc", "")}
+    m: dict[str, str] = {}
+    cross: dict[str, tuple[float, float, float]] = {}
+    for tag, (cell, scheme, links) in cells.items():
+        row, per_n = _direct(cell, runs)
+        x = interpolated_crossing({n: st.mean(v) for n, v in per_n.items()}, 0.95)
+        plain = interpolated_crossing_ci(per_n, threshold=0.95, seed=drv.BOOTSTRAP_SEED)
+        ci = interpolated_crossing_ci(per_n, threshold=0.95, seed=drv.BOOTSTRAP_SEED,
+                                      expanded=True)
+        if x is None or plain is None or ci is None or ci[2] < 0.99:
+            raise ValueError(f"cell {cell}: the grid does not bracket the 0.95 crossing")
+        held = (row["n_cross_interp"], row["n_cross_interp_lo"], row["n_cross_interp_hi"])
+        if max(abs(a - float(b)) for a, b in zip((x, plain[0], plain[1]), held,
+                                                   strict=True)) > 0.005 + 1e-9:
+            raise ValueError(f"cell {cell}: the runs no longer give the crossing the summary holds")
+        # the integer N_max of Tables V and XV is the grid point just below the crossing
+        if math.floor(x) != int(grid_nmax[scheme]):
+            raise ValueError(f"cell {cell}: N_max {grid_nmax[scheme]} is not the grid point "
+                             f"below the interpolated crossing {x:.2f}")
+        if links:      # the deadline study re-ran the same frames: the same runs, the same crossing
+            for r in deadline:
+                if r["cell"] == links and abs(float(r["delivery_crossing"]) - x) > 0.005 + 1e-9:
+                    raise ValueError(f"the deadline study's {links} crossing is not cell {cell}'s")
+        cross[tag] = (x, ci[0], ci[1])
+        m |= {f"cross{tag}": f(x, 1), f"crossCi{tag}": f"[{f(ci[0], 1)},\\,{f(ci[1], 1)}]"}
+    # S-13: verified in time cannot exceed delivered. Where the in-time crossing is the higher, it
+    # is the sample's: in-time counts the 20 traced pairs of a run, delivery every pair.
+    for variant, tag in (("mavlink2", "Mav"), ("wong-lam", "Wl"), ("tesla-I10-d2", "Tesla"),
+                         ("tesla-I20-d2", "Tesla")):
+        x, lo, hi = cross[tag]
+        in_time = float(one(deadline, variant=variant)["in_time_crossing"])
+        if in_time > x and not lo <= in_time <= hi:
+            raise ValueError(f"{variant}: in time above delivered, outside delivery's interval")
+    # S-14: Table XI's 6 Mb/s row is cell D's runs, read across a coarser grid
+    phy = {(r["n_nodes"], r["seed"]): float(r["delivered_frac"])
+           for r in rows(RAW / "ns3_links_phy_runs.csv") if r["cell"] == "Pa6D"}
+    mine = {(r["n_nodes"], r["seed"]): float(r["delivered_frac"]) for r in runs
+            if (r["cell"], r["jitter_ms"], r["skew_ppm"]) == ("D", "80", "0")}
+    shared = set(phy) & set(mine)
+    if not shared or any(abs(phy[k] - mine[k]) > 1e-9 for k in shared):
+        raise ValueError("the PHY study's 802.11a 6 Mb/s runs are not cell D's runs")
+    grid = [int(n) for n in one(rows(RAW / "phy_links.csv"), cell="Pa6D")["ns3_grid"].split()]
+    steps = {b - a for a, b in zip(grid, grid[1:], strict=False)}
+    if len(steps) != 1 or math.floor(cross["Design"][0]) + 1 in grid:
+        raise ValueError("the text says the PHY grid steps evenly and skips the point above "
+                         "the crossing")
+    return m | {"phyGridStep": str(steps.pop())}
+
+
+def review_spread() -> dict[str, str]:
+    """S-03: neighbours within reach, defined, and given for both schemes at 1 km."""
+    dref = rows(RAW / "spatial_dref.csv")
+    reach = {float(r["d_ref_m"]) for r in dref}
+    if len(reach) != 1:
+        raise ValueError("the rows of spatial_dref.csv name different reach distances")
+    d_ref = reach.pop()
+    if not all(r["meets_link_target"] == "1" for r in dref if float(r["distance_m"]) <= d_ref):
+        raise ValueError("an isolated link misses 99 % delivery inside the reach distance")
+    beyond = min(float(r["distance_m"]) for r in dref if float(r["distance_m"]) > d_ref)
+    if all(r["meets_link_target"] == "1" for r in dref if float(r["distance_m"]) == beyond):
+        raise ValueError("the reach is not the largest distance every frame meets 99 % at")
+    sc = rows(RAW / "spatial_capacity.csv")
+    base = one(sc, scenario="s1-r1000", config="base")
+    design = one(sc, scenario="s1-r1000", config="design")
+    # in one collision domain every other node is within reach: the count is N - 1
+    fixed = one(sc, scenario="fixed", config="design")
+    if abs(float(fixed["n_cross"]) - float(fixed["neighbours_at_cross"]) - 1.0) > 0.005:
+        raise ValueError("neighbours within reach no longer exclude the receiver itself")
+    if not float(base["neighbours_at_cross"]) < float(design["neighbours_at_cross"]):
+        raise ValueError("the text says AUTHBC keeps more neighbours within reach at 1 km")
+    return {"spReach": f(d_ref, 0), "spNeighboursBase": f(base["neighbours_at_cross"], 1),
+            "spAreaBase": f(base["n_cross"], 0)}
+
+
+def review_audit() -> dict[str, str]:
+    """S-07: what the audit's frame count counts (analysis/ledger_audit.py)."""
+    r = rows(RAW / "ledger_audit.csv")[0]
+    uavs, per_uav = int(r["uavs"]), int(r["frames_per_uav"])
+    if per_uav != int(r["mission_s"]) * int(r["lambda"]) // int(r["batch"]):
+        raise ValueError("a UAV's frames are not one hour at the record rate, four a frame")
+    sent = uavs * per_uav
+    planted_forgeries = 1             # the gap-fill UAV 3 adds in UAV 1's name, refused
+    held = int(r["frames_held"]) - planted_forgeries
+    if sent + held != int(r["frames_audited"]):
+        raise ValueError("the text says the audit covers each UAV's own frames and the verified "
+                         "copies of the others' frames it kept")
+    heard = sent * (uavs - 1) * (1 - float(r["loss"]))
+    if abs(held / heard - 1) > 0.005:
+        raise ValueError("the copies held are not what the loss leaves of the others' frames")
+    return {"auSent": thousands(sent), "auHeld": thousands(held),
+            "auLossPct": f(100 * float(r["loss"]), 0)}
+
+
+def review_header() -> dict[str, str]:
+    """S-08: the floor frame's header is one byte shorter than Table II's, and why.
+
+    The record stream is a CBOR byte string: under 24 B its length sits in the type byte, from
+    24 B it takes a byte of its own. The floor frame's stream is one 9 B record; Table II's is
+    four records.
+    """
+    comp = rows(RAW / "frame_components.csv")
+    table = int(one(comp, kind="header", format="lean", item="sender 0 / record 0")["mean_bytes"])
+
+    def hdr(n: int, stream: int) -> int:
+        return frame_model.lean_header_bytes(src=0, base_seq=0, n=n, stream_bytes=stream)
+
+    long_at = next(s for s in range(1, 256) if hdr(1, s) > hdr(1, 1))
+    floor = int(one(rows(RAW / "exclusion_matrix.csv"), auth_bytes="64", design="lean",
+                    dr="3")["frame_floor_bytes"])
+    floor_stream = floor - hdr(1, 9) - frame_model.LINK_FIELD_BYTES - 64
+    # the shortest four-record stream: four records, none shorter than the shortest delta
+    shortest = int(one(comp, kind="record", format="lean", item="delta", stride="1")["min_bytes"])
+    if not (floor_stream < long_at <= 4 * shortest
+            and table == hdr(4, long_at) == hdr(4, long_at - 1) + 1 == hdr(1, floor_stream) + 1):
+        raise ValueError("the text says the one byte is the length of the record stream")
+    return {"exStreamLongAt": str(long_at)}
+
+
+def review_receive() -> dict[str, str]:
+    """S-10: the Python receiver timed in three sessions on pi-B, and how far they agree."""
+    kept = {(r["op"], int(r["agg_b"])): float(r["median_ns"])
+            for r in rows(HW / "p1_lean.authbc-pi4b.frames-kept.csv")}
+    comp = {(r["impl"], r["metric"]): float(r["median_ns"])
+            for r in rows(HW / "compiled_receiver.authbc-pi4b.csv")}
+    cost = {r["path"]: float(r["median_us"]) for r in rows(HW / "flood_cost.authbc-pi4b.csv")
+            if r["median_us"]}
+    ms = {"timing harness, 2026-10-09": kept[("frame_receive", 4)] / 1e6,
+          "against Rust, 2026-10-22": comp[("python", "receive_ns_per_frame")] / 1e6,
+          "flood harness, receiver alone": cost["receiver_only"] / 1e3,
+          "flood harness, admission layer": cost["honest_none"] / 1e3}
+    spread = max(ms.values()) / min(ms.values()) - 1
+    if spread > 0.03:
+        raise ValueError(f"the text says the sessions agree within 3 %; they differ by {spread}")
+    return {"pyRecvLo": f(min(ms.values()), 2), "pyRecvHi": f(max(ms.values()), 2),
+            "pyRecvSpreadPct": f(100 * spread, 0)}
+
+
+def review_bls() -> dict[str, str]:
+    """S-15: how much faster a BLS verification would have to be for the channel to bind.
+
+    Only blspy's variant (96 B signature) was timed. Both variants verify with two pairings
+    (draft-irtf-cfrg-bls-signature-05, CoreVerify): the 48 B one is not timed here.
+    """
+    cfg = yaml.safe_load((REPO / "experiments" / "design-ladder" / "config.yaml").read_text())
+    lad = rows(RAW / "design_ladder.csv")
+    design = one(lad, op="adopted", format="lean", rung="batch-delta", scheme="ed25519")
+    bls = one(lad, op="adopted", format="lean", rung="batch-delta", scheme="bls")
+    lam, batch = float(design["lambda_rec_per_s"]), int(design["batch"])
+    t_hash = cfg["t_hash_ns"] * 1e-9
+    t_ver = {(r["scheme"], r["op"]): float(r["median_ns"]) * 1e-9
+             for r in rows(HW / "p1_crypto.authbc-pi4a.csv") if not r["agg_b"]}[("bls", "verify")]
+
+    def per_neighbour(t_v: float) -> float:              # Eq. (cpu), one signature a frame
+        return lam / batch * t_v + lam * t_hash
+
+    if 1 + math.floor(1.0 / per_neighbour(t_ver)) != int(bls["n_cpu_one_core"]):
+        raise ValueError("Eq. (cpu) with the timed BLS verification is not the table's count")
+    nodes = int(design["n_max_v95"])
+    needed = (1.0 / (nodes - 1) - lam * t_hash) / (lam / batch)
+    return {"blsVerNeedMs": f(1e3 * needed, 2), "blsSpeedup": f(t_ver / needed, 0)}
+
+
+def review_lora() -> dict[str, str]:
+    """S-16: the record spacing at DR5, and the spacing its delta records were sized at.
+
+    `_lora_fit` sizes delta records at the measured stride nearest the spacing the frame
+    implies; the strides measured are 0.05, 0.1, 1, 5.5 and 16.5 s.
+    """
+    lean = one(rows(RAW / "lora_budget.csv"), dr="5", payload_limit="242",
+               design="lean; frames decode alone")
+    deltas = [r for r in rows(RAW / "frame_components.csv")
+              if (r["kind"], r["format"], r["item"]) == ("record", "lean", "delta")]
+    spacing = float(lean["record_spacing_s"])
+    nearest = min(deltas, key=lambda r: abs(float(r["spacing_s"]) - spacing))
+    if (float(nearest["spacing_s"]) != float(lean["delta_measured_at_s"])
+            or abs(float(nearest["mean_bytes"]) - float(lean["delta_bytes"])) > 0.005
+            or nearest["stride"] != "110"):
+        raise ValueError("the DR5 frame's deltas are not the ones measured at 5.5 s")
+    sim = {(float(r["app_period_s"]), int(r["batch"])) for r in rows(RAW / "lora_capacity.csv")}
+    if len(sim) != 1:
+        raise ValueError("the LoRa capacity runs do not share one frame and period")
+    period, recs = sim.pop()
+    return {"loraSpacingLean": f(spacing, 1), "loraSimSpacing": f(period / recs, 1)}
+
+
+def review_flood() -> dict[str, str]:
+    """S-19: why 41 senders: one core's share of the design's neighbourhood (F84)."""
+    udp = rows(HW / "flood_udp.authbc-pi4b.csv")
+    quiet = {int(r["senders"]): r for r in udp
+             if (r["policy"], r["attack"], r["rate_offered"]) == ("none", "forged", "0")}
+    kept = {(r["op"], int(r["agg_b"])): float(r["median_ns"]) * 1e-9
+            for r in rows(HW / "p1_lean.authbc-pi4b.frames-kept.csv")}
+    design = one(rows(RAW / "design_ladder.csv"), op="adopted", format="lean",
+                 rung="batch-delta", scheme="ed25519")
+    nodes, fps = int(design["n_max_v95"]), float(design["lambda_rec_per_s"]) / 4
+    cores = math.ceil((nodes - 1) * fps * kept[("frame_receive", 4)])
+    few, all_ = min(quiet), max(quiet)
+    if (all_, few) != (nodes, nodes // cores):
+        raise ValueError("the flood loads are not the design's neighbourhood and one core's share")
+    if float(quiet[few]["honest_V"]) != 1.0 or not float(quiet[all_]["honest_V"]) < 0.95:
+        raise ValueError("the text says one core keeps up with its share and not with all")
+    return {"flCores": WORDS[cores], "flQuietSharePct": f(100 * float(quiet[few]["core_share"]), 0),
+            "flAllV": f(quiet[all_]["honest_V"], 2)}
+
+
+def review_window() -> dict[str, str]:
+    """S-20: what fills the fixed 250 ms window, and what is left for drift when it holds.
+
+    The window is held against a frame's NEWEST record (`TimedReceiver`), taken as the frame
+    leaves; the fill time of the batch does not count against it. An honest frame arrives
+    T_ch + t_v after it leaves, and the two clocks' reading errors differ by sigma * sqrt(2).
+    """
+    t = rows(RAW / "replay_window.csv")
+    outage = sorted((r for r in t if r["study"] == "outage" and r["policy"] == "fixed250"),
+                    key=lambda r: float(r["outage_min"]))
+    if len({(r["window_ms"], r["sigma_ms"], r["honest_frames"]) for r in outage}) != 1:
+        raise ValueError("the outage rows do not share one window, clock error and frame count")
+    holds = [r for r in outage if float(r["false_rejection"]) < 1e-4]
+    hold, after_hold = holds[-1], outage[len(holds)]
+    if holds != outage[:len(holds)]:
+        raise ValueError("the window stops holding and then holds again")
+    honest = one(t, study="honest", policy="fixed150", sigma_ms="10.0")
+    if hold["honest_frames"] != honest["honest_frames"] or hold["sigma_ms"] != "10.0":
+        raise ValueError("the outage study is not the honest study's frames and clocks")
+    after = sum(dmap.budget())
+    window, drift = float(hold["window_ms"]), float(hold["clock_apart_ms"])
+    apart = float(hold["sigma_ms"]) * math.sqrt(2)
+    margin = window - after - drift
+    return {"rpAfterMs": f(after, 2), "rpBudgetMs": f(window - after, 0),
+            "rpDriftHold": f(drift, 0), "rpMarginMs": f(margin, 0),
+            "rpApartMs": f(apart, 0), "rpMarginSd": f(margin / apart, 1),
+            "rpHoldRefused": WORDS[int(hold["honest_refused"])],
+            "rpNextMin": f(after_hold["outage_min"], 0),
+            "rpNextDrift": f(after_hold["clock_apart_ms"], 0),
+            "rpNextPct": f(100 * float(after_hold["false_rejection"]), 1)}
+
+
+def review_pq() -> dict[str, str]:
+    """S-29: Falcon's frames lie outside the range the airtime law was checked on; the contention
+    model was checked there instead (pq_capacity.csv)."""
+    import run_nmax_direct as drv  # ns3/ is put on the path by nmax_airtime_line
+    pq = {r["cell"]: r for r in rows(RAW / "pq_capacity.csv")}
+    checked = max(drv.CELLS[c].frame_bytes
+                  for c in airtime.CALIBRATION + airtime.HELD_OUT + airtime.STREAM)
+    if not all(r["in_model_band"] == "1" and int(r["frame_bytes"]) > checked for r in pq.values()):
+        raise ValueError("the text says both Falcon frames are beyond the law's range and inside "
+                         "the contention model's band")
+    one_rec, four = pq["PQ1"], pq["PQ4"]
+    return {"pqFrameBase": one_rec["frame_bytes"], "pqFrameDesign": four["frame_bytes"],
+            "pqModelBase": f(one_rec["model_crossing"], 1),
+            "pqModelDesign": f(four["model_crossing"], 1),
+            "pqModelWorst": f(max(abs(float(r["vs_model_pct"])) for r in pq.values()), 1),
+            "pqLineWorst": f(max(abs(float(r["vs_line_pct"])) for r in pq.values()), 0)}
+
+
+REVIEW_SECTIONS = (review_crossings, review_spread, review_audit, review_header, review_receive,
+                   review_bls, review_lora, review_flood, review_window, review_pq)
+# S-24: the receiver table's nodes per core follow Eq. (cpu) since 2026-10-28 (`nodes_by_eq4`).
+
+
+# ------------------------------------------------- tables of the revision (one per reviewer point)
+
+def receiver_costs() -> dict[str, str]:
+    """Table tab:receiver (A8, A13): time per four-record frame and nodes per core on pi-B."""
+    c = {(r["impl"], r["metric"]): float(r["median_ns"])
+         for r in rows(HW / "compiled_receiver.authbc-pi4b.csv")}
+    batched = (c[("rust", "decode_rebuild_ns_per_frame")]
+               + c[("rust", "batch64_verify_ns_per_frame")])
+    lazy = c[("rust", "tier1_tag_decode_ns_per_frame")] + c[("rust", "tier2_batch64_ns_per_frame")]
+    rate = 12.5                                          # frames/s: 50 records/s, four a frame
+    for t_ns, nodes in ((batched, "nodes_per_core_rust_batch64"), (lazy, "nodes_per_core_lazy")):
+        if not abs(1e9 / (rate * t_ns) - c[("derived", nodes)]) < 0.5:
+            raise ValueError("the table's time per frame and nodes per core disagree")
+    return {"rxPyUs": thousands(round(c[("python", "receive_ns_per_frame")] / 1e3)),
+            "rxPyNodes": nodes_by_eq4(c[("derived", "nodes_per_core_python")]),
+            "rxRustUs": f(c[("rust", "receive_ns_per_frame")] / 1e3, 0),
+            # one decimal: 124 us gives 646 nodes by Eq. (cpu), the unrounded 124.4 gives 643
+            "rxBatchUs": f(batched / 1e3, 1),
+            "rxTierTwoUs": f(c[("rust", "tier2_batch64_ns_per_frame")] / 1e3, 1)}
+
+
+def airframe_table() -> dict[str, str]:
+    """Table tab:airframes (A9, A9-fast): record sizes of 30 SIH flights at their planned speeds."""
+    fast = rows(RAW / "record_size_fast.csv")
+    names = {"9": "Nine", "15": "Fifteen", "25": "TwentyFive"}
+    frames = {"quadx": "Quad", "airplane": "Wing", "vtol": "Vtol"}
+    out = {}
+    for fields, word in names.items():
+        mine = [r for r in fast if r["fields"] == fields]
+        if {r["airframe"] for r in mine} != set(frames):
+            raise ValueError("the table has a column per airframe")
+        out[f"afKey{word}"] = f(st.mean(float(r["key_mean"]) for r in mine), 1)
+        for airframe, short in frames.items():
+            out[f"afDelta{short}{word}"] = f(st.mean(float(r["delta_mean"]) for r in mine
+                                                     if r["airframe"] == airframe), 1)
+    # 15 and 25 fields: afSave*/afRatio* of airframes(), the same means
+    nine = [r for r in fast if r["fields"] == "9"]
+    return out | {"afSaveNine": f(st.mean(float(r["saving_pct"]) for r in nine), 1),
+                  "afRatioNine": f(st.mean(float(r["ratio"]) for r in nine), 2)}
+
+
+def phy_table() -> dict[str, str]:
+    """Table tab:phy (A11, A15): capacity on six 802.11 PHYs and rates, and with Falcon-512."""
+    t = rows(RAW / "phy_links.csv")
+    names = {("80211a", "6"): "Asix", ("80211a", "12"): "Atwelve", ("80211a", "24"): "Atwenty",
+             ("80211p", "3"): "Pthree", ("80211p", "6"): "Psix", ("80211p", "12"): "Ptwelve"}
+    if {(r["standard"], r["rate_mbps"]) for r in t} != set(names):
+        raise ValueError("the table has a row per simulated PHY and rate")
+    out = {}
+    for (std, rate), word in names.items():
+        base = one(t, standard=std, rate_mbps=rate, role="base")
+        design = one(t, standard=std, rate_mbps=rate, role="design")
+        worst = max((float(r["vs_model_pct"]) for r in (base, design)), key=abs)
+        out |= {f"phy{word}Us": f(design["frame_time_us"], 0),
+                f"phy{word}Base": f(base["ns3_crossing"], 1),
+                f"phy{word}Design": f(design["ns3_crossing"], 1),
+                f"phy{word}Ratio": f(design["ns3_ratio"], 2), f"phy{word}Gap": signed(worst)}
+    pq = rows(RAW / "pq_capacity.csv")
+    worst = max((float(one(pq, cell=c)["vs_model_pct"]) for c in ("PQ1", "PQ4")), key=abs)
+    return out | {"pqUs": thousands(round(float(one(pq, cell="PQ4")["frame_time_us"]))),
+                  "pqGap": signed(worst)}
+
+
+def margin_rule() -> dict[str, str]:
+    """Fig. fig:margin (A3, F86): where the design, b = 4 and a keyframe in every frame, misses
+    the target by its interval although the rule p <= epsilon - 0.02 admits the loss."""
+    design = [r for r in rows(RAW / "verifiability_margin.csv")
+              if r["batch"] == "4" and r["ref_interval"] == "1"]
+    misses = [(r["loss_model"], r["p"], eps) for r in design for eps in ("0.05", "0.08", "0.1")
+              if float(r["p"]) <= float(eps) - 0.02 + 1e-9
+              and float(r["V_ci_lo"]) < 1.0 - float(eps)]
+    # the 192 registered cells (A3 plan 1) are the four equal-frame-loss processes; bit errors,
+    # scored separately, miss at the same point
+    if sorted(misses) != [("ber", "0.08", "0.1"), ("gilbert8", "0.08", "0.1")]:
+        raise ValueError(f"the text names two cells of the design that miss: {misses}")
+    return {"mgMissEps": "0.1", "mgMissP": "0.08"}
+
+
+def capacity_with_margin() -> dict[str, str]:
+    """S-01 (review 2026-10-27; predictions/S01.md): capacity at 97 % delivery, the 3 % loss that
+    the margin rule requires at epsilon = 0.05, interpolated in ns-3 as registered."""
+    scored = {r["cell"]: r for r in rows(RAW / "capacity_97.csv")}
+    if set(scored) != {"C", "D"}:
+        MISSING.append("the ns-3 crossings at 97 % delivery (S-01)")
+        return dict.fromkeys(("nmaxTightC", "nmaxTightD", "ratioTight", "tightPredWorst"), "??")
+    if not all(r["within_band"] == "1" for r in scored.values()):
+        raise ValueError("the text says the model predicted both crossings at 97 % delivery")
+    c, d = (float(scored[k]["ns3_crossing"]) for k in ("C", "D"))
+    # registered S01-1: the ratio at 97 % stays within 3.3-3.8, as at 95 %
+    if not 3.3 <= d / c <= 3.8:
+        raise ValueError(f"the text says the ratio holds at 97 % delivery: {d / c:.2f}")
+    return {"nmaxTightC": f(c, 1), "nmaxTightD": f(d, 1), "ratioTight": f(d / c, 1),
+            "tightPredWorst": f(max(abs(float(r["error_pct"])) for r in scored.values()), 1)}
+
+
+def links_table() -> dict[str, str]:
+    """Table tab:links (A17): the batch each broadcast system admits at three deadlines, with this
+    design's own row computed by the same rule (Eq. 2 and the 1500 B payload)."""
+    t = rows(RAW / "other_links.csv")
+    systems = {"ADS-B 1090ES (ME field)": "Adsb", "Remote ID, Bluetooth 4 legacy": "Ridfour",
+               "Remote ID, Bluetooth 5 / Wi-Fi (Message Pack)": "Ridfive",
+               "V2X CAM at 10 Hz (802.11p, 1500 B MTU)": "Camten",
+               "V2X CAM at 1 Hz (802.11p, 1500 B MTU)": "Camone"}
+    deadlines = {"100.0": "Hundred", "200.0": "Twohundred", "300.0": "Threehundred",
+                 "1000.0": "Second"}
+    out = {}
+    for system, word in systems.items():
+        for d, dword in deadlines.items():
+            r = one(t, system=system, d_max_ms=d)
+            out[f"ol{word}{dword}"] = ("---" if r["signature_fits"] == "0" else
+                                        "none" if r["batch"] == "0" else r["batch"])
+    t_ch, t_v = dmap.budget()
+    design = one(rows(RAW / "design_map.csv"), lambda_rec_per_s="50", d_max_ms="100")
+    for d, dword in deadlines.items():
+        b = min(dmap.b_star(50.0, float(d), t_ch, t_v), int(design["mtu_records"]))
+        out[f"olDesign{dword}"] = str(b)
+    if out["olDesignHundred"] != design["b_star"]:
+        raise ValueError("the design's row and the design map disagree at 50/s, 100 ms")
+    return out
+
+
+SECTIONS = (frames, ladder, loss, stream, freshness, phy, energy, timings, flight_logs,
+            validation, exclusion, low_rate, source_study, capacity_rule, capacity_model, sitl,
+            energy_runs, prototype, batch_dimension, multicore, spread, platforms,
+            spread_swarm, design_map, loss_trace, adaptive, replay_window, flooding, compiled,
+            compiled_energy, airframes, stream_deadline, phy_simulated, post_quantum,
+            ledger_audit, other_links, intervals, receiver_costs, airframe_table, phy_table,
+            links_table, margin_rule, capacity_with_margin)
+
+
+def macros() -> dict[str, str]:
+    out: dict[str, str] = {}
+    for section in SECTIONS + REVIEW_SECTIONS:
+        new = section()
+        clash = set(out) & set(new)
+        if clash:
+            raise ValueError(f"macro defined twice: {sorted(clash)}")
+        out |= new
+    bad = [name for name in out if not name.isalpha()]
+    if bad:
+        raise ValueError(f"LaTeX macro names are letters only: {bad}")
+    return out
+
+
+def render() -> str:
+    lines = ["% GENERATED by analysis/paper_numbers.py from results/ — do not edit.",
+             "% `make paper` rewrites it; tests/test_paper_numbers.py fails if it is stale."]
+    lines += [f"\\newcommand{{\\{name}}}{{{value}}}" for name, value in sorted(macros().items())]
+    return "\n".join(lines) + "\n"
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser(description=__doc__,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--check", action="store_true", help="exit 1 if numbers.tex is stale")
+    ap.add_argument("--allow-missing", action="store_true",
+                    help="write ?? for values no artifact holds yet (drafts only)")
+    args = ap.parse_args()
+    text = render()
+    if MISSING and not (args.allow_missing and not args.check):
+        raise SystemExit("no artifact holds these yet:\n  " + "\n  ".join(dict.fromkeys(MISSING)))
+    if MISSING:
+        print(f"⚠️ DRAFT: {len(set(MISSING))} values written as ??", file=sys.stderr)
+    if args.check:
+        if not OUT.exists() or OUT.read_text(encoding="utf-8") != text:
+            raise SystemExit(f"{OUT.relative_to(REPO)} is stale: run analysis/paper_numbers.py")
+        print(f"{OUT.relative_to(REPO)} is current ({text.count('newcommand')} macros)")
+        return
+    OUT.write_text(text, encoding="utf-8")
+    print(f"wrote {OUT.relative_to(REPO)} ({text.count('newcommand')} macros)")
+
+
+if __name__ == "__main__":
+    main()

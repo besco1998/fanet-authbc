@@ -12,6 +12,11 @@ log() { echo "[$(date -Is)] revert: $*" >>"$LOG"; }
 
 log "starting"
 
+# A session may have switched the chip's frame-burst mode off (frameburst.sh). Put it back to
+# what the driver sets, here, so that every way out of a session — normal end, early revert,
+# deadman — leaves the board as it was found.
+[ -x "$OUT/frameburst.sh" ] && "$OUT/frameburst.sh" set 1 >/dev/null 2>&1
+
 # Leave the cell before changing type: `iw set type` fails while the interface is joined.
 /usr/sbin/iw dev wlan0 ibss leave 2>/dev/null
 ip addr flush dev wlan0 2>/dev/null
@@ -25,7 +30,10 @@ ip link set wlan0 up 2>/dev/null
 systemctl start wpa_supplicant 2>/dev/null
 nmcli dev set wlan0 managed yes 2>/dev/null
 sleep 3
-nmcli con up preconfigured 2>/dev/null
+# The profile is called `preconfigured` on an image written by Raspberry Pi Imager for Debian 12
+# and `netplan-wlan0-<SSID>` on Debian 13. Where the first name does not exist, ask for whichever
+# profile the interface has; on a board where it does exist nothing changes.
+nmcli con up preconfigured 2>/dev/null || nmcli dev connect wlan0 2>/dev/null
 sleep 5
 
 log "finished, wlan0 = $(ip -4 -o addr show wlan0 | grep -oE 'inet [0-9.]+' || echo NONE)"

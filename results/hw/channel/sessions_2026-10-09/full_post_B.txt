@@ -1,0 +1,5 @@
+[2026-10-09T03:45:20+03:00] revert: finished, wlan0 = inet 192.168.1.20
+[2026-10-09T03:45:25+03:00] reverted OK, both deadmen disarmed
+authbc-pi4b 2026-10-09T03:45:44+03:00 timers_left 0 temp temp=53.5'C throttled throttled=0x50000 load 0.05 0.06 0.01
+udp_after: Udp: 95055 26 0 48416 0 0 0 74 0
+36

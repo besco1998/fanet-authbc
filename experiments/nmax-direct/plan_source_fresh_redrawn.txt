@@ -1,0 +1,10 @@
+# Follow-up F4 (docs/NMAX_DIRECT_EXPECTATIONS.md): the same fourteen points, send time redrawn
+# in every period, FRESH seeds 31-60.
+#   python ns3/run_nmax_direct.py --plan <this file> --first-seed 31 --seeds 30 \
+#       --out-stem ns3_source_fresh --no-summary
+A period 29 31 33 35
+B period 89
+C period 31 34 37
+D period 109 120 131
+E period 53 57
+F period 74

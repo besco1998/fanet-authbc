@@ -666,7 +666,7 @@ dict (`prev_hash` becomes a hex string).
 
 ## ~~F18 — the LoRa capacity result corroborated against published measurements~~ ⚠️ **RETRACTED 2026-07-30, same day, by Mohamed**
 
-**The claim was: "our simulation is slightly more optimistic than Bor et al.'s measurement-based
+**The claim was: "our simulation is slightly more optimistic than Haxhibeqiri et al.'s measurement-based
 model, so N_max = 5 is not an artifact." That is false, and it was false in the direction that
 flattered us.** Superseded by F19. Kept visible because the *way* it went wrong matters more than
 the finding did.
@@ -697,7 +697,7 @@ and LoRaWAN scalability papers routinely quote node counts in the hundreds to th
 who knows that literature will read `5` as evidence of a broken simulation. Until now the number
 rested on our own NS-3 runs alone.
 
-**What we checked it against.** Bor, Roedig, Voigt & Alonso, *LoRa Scalability: A Simulation Model
+**What we checked it against.** Haxhibeqiri, Van den Abeele, Moerman & Hoebeke, *LoRa Scalability: A Simulation Model
 Based on Interference Measurements*, Sensors 17(6), 2017 — a model built on measured interference
 rather than an analytical idealisation, i.e. an independent and unfavourable comparison.
 
@@ -710,7 +710,7 @@ result. **Quote the PDF, never the summary** — the same discipline as F9 and F
 **The reconciliation.** Normalising both studies to per-node channel occupancy, computed with our
 own `lora.frame_time_on_air_s`:
 
-| | Bor et al. | AUTHBC |
+| | Haxhibeqiri et al. | AUTHBC |
 |---|---|---|
 | payload / ToA | 20 B / 71.9 ms | **218 B / 363.8 ms** (5.1×) |
 | send interval | 180 s at their 1000-node point | **36.4 s** (the 1 % duty-cycle maximum) |
@@ -740,10 +740,10 @@ stated in the low-rate chapter.
 ## F19 — what our LoRa simulation actually models, and why `N_max = 5` is a worst case (2026-07-30)
 
 **Supersedes the retracted F18.** Prompted by Mohamed asking two questions I could not answer from
-the documentation: *"Bor said 90 % is pure ALOHA and 32 % is LoRaWAN — what is our actual model, and
+the documentation: *"Haxhibeqiri et al. said 90 % is pure ALOHA and 32 % is LoRaWAN — what is our actual model, and
 did we use pure ALOHA or LoRaWAN?"* Both answers required reading source, not notes.
 
-### What Bor et al. report, by figure
+### What Haxhibeqiri et al. report, by figure
 
 | figure | configuration | access | loss @ 1000 nodes |
 |---|---|---|---|
@@ -769,7 +769,7 @@ preset: one channel, one demodulator, one forced spreading factor.**
 
 ### The like-for-like comparison, which does not flatter us
 
-Both studies transmit at the 1 % duty-cycle ceiling (Bor: *"packets were transmitted as soon as
+Both studies transmit at the 1 % duty-cycle ceiling (Haxhibeqiri et al.: *"packets were transmitted as soon as
 possible, just after the waiting time imposed by the radio duty cycle mechanism"*), so per-node
 occupancy is 1 % in both and offered load scales identically as `G = N × 0.01`. **The 25× per-node
 load ratio asserted in F18 was an artifact of assuming their traffic was sparse; it is not.**
@@ -808,14 +808,14 @@ Extend the rule: when a comparison rests on a source's operating point, state an
 
 ## F20 — the LoRa arm now has an external baseline, and it agrees (2026-07-30)
 
-**Prompted by Mohamed:** *"why didn't we use Bor et al.'s model and test it with our optimizer and
+**Prompted by Mohamed:** *"why didn't we use Haxhibeqiri et al.'s model and test it with our optimizer and
 add them as a comparison?"* There was no good reason. I read the paper *after* the LoRa result
 existed and treated it as a yardstick to quote rather than a model to run. It is stated in closed
 form and was implementable all along.
 
 ### What was implemented
 
-`lora.bor2017_loss_pct()` and `lora.bor2017_n_max()` implement their **Eq. (8)** — a degree-5
+`lora.haxhibeqiri2017_loss_pct()` and `lora.haxhibeqiri2017_n_max()` implement their **Eq. (8)** — a degree-5
 polynomial fitted at R² = 0.997 to *total* packet loss (collisions **plus** wrong-payload-CRC),
 measured on real SX1301 hardware — together with the scaling laws Eqs. (9)–(11) that generalise it
 by the number of non-interfering logical channels.
@@ -836,11 +836,11 @@ This is the same normalisation that F19 established; here it is load-bearing rat
 
 Three land within ~3 points. The fourth looks 5 points high until you read the quantity that
 sentence names: Fig. 8's 75 % is **collisions only**, while Eq. (8) fits the *total*, so the model
-*must* come out above it. Asserted as such in `tests/test_bor2017_external_model.py`.
+*must* come out above it. Asserted as such in `tests/test_haxhibeqiri2017_external_model.py`.
 
 ### The result
 
-| | AUTHBC ns-3 | Bor et al. 2017 |
+| | AUTHBC ns-3 | Haxhibeqiri et al. 2017 |
 |---|---|---|
 | **N_max at V ≥ 0.95** | **5** | **4** |
 
@@ -858,7 +858,7 @@ independently; it is not a precision result.
 
 There is a **crossover at N ≈ 8**:
 
-| N | AUTHBC loss | Bor loss | |
+| N | AUTHBC loss | Haxhibeqiri et al. loss | |
 |---|---|---|---|
 | 5 | 0.0 % | 5.1 % | we are **more optimistic** |
 | 8 | 13.4 % | 7.0 % | we are 1.9× more pessimistic |
@@ -1164,7 +1164,7 @@ would have cost more later.
 
 ### 1. E9 — the gateway preset: N_max = 8, and my prediction was wrong
 
-**Predicted N_max ≥ 14**, from Bor et al. Eq. (10) (3 channels ≈ 3× nodes) plus the removal of the
+**Predicted N_max ≥ 14**, from Haxhibeqiri et al. Eq. (10) (3 channels ≈ 3× nodes) plus the removal of the
 single-demodulator bottleneck. **Measured: 8.**
 
 | N | `aloha` (1 ch, 1 path) | `EU` (3 ch, 8 paths) | ratio |
@@ -1471,7 +1471,7 @@ should track. Correcting it brings the two into agreement across the whole sweep
 |---|---|
 | our corrected NS-3 simulation | **3** |
 | closed-form periodic ALOHA | **3** |
-| Bor et al. 2017, measurement-fitted | **4** |
+| Haxhibeqiri et al. 2017, measurement-fitted | **4** |
 
 Stronger corroboration than the retracted F18 ever claimed, and obtained by fixing our own defect
 rather than by reinterpreting someone else's figure.
@@ -2306,7 +2306,7 @@ not the discovery. ⚠️ Any draft claiming the phenomenon is unreported must b
 Applying §2 strictly (simulation results **for LoRa**, simulator **is ns-3**, machine-readable,
 non-duplicate) to every held PDF, only **4** qualify. The pilot's nine had counted:
 
-* **Bor et al. 2017** — used **LoRaSim**, not ns-3. Its single ns-3 mention is future work:
+* **Haxhibeqiri et al. 2017** — used **their own simulator**, not ns-3. Its single ns-3 mention is future work:
   *"Implementation of modules in system level simulator, like ns-3, … will further be studied."*
 * **Mehta et al. 2020** — a **survey**; its ns-3 mentions describe other people's work in a table.
 * **Bhatt et al. 2025** — ns-3, but **802.11ah, not LoRa**.
@@ -2421,7 +2421,7 @@ Direction is conservative: a longer flight inflates the CBOR *baseline* and leav
 *optimum* alone, so the reported saving is the pessimistic end (58.68 % at n=1000 vs 59.3 % at
 n=10 000). E1 samples the **first ~50 s of each flight**; that is now stated in docs/04 §1.
 
-### F43e — Bor's N_max = 4 sits inside his own fit's unreliable region
+### F43e — Haxhibeqiri et al.'s N_max = 4 sits inside their own fit's unreliable region
 
 `lora.py` already documents that Eq. (8) does not pass through the origin and predicts 1.783 %
 loss at N=0, and that "below N ~ 5 the intercept dominates". Their N_max = 4 is decided at N=4
@@ -2436,7 +2436,7 @@ which *widens* the gap against our 3. So quoting 4 is the safe choice — it sim
 (**we are the more optimistic model there**), 1.07× at N=3, 2.09–2.17× from N=10 up — and the
 crossover sits in exactly the N ≤ 3 region where N_max is decided. F18 was retracted for a sign
 error on this same comparison; a single-number summary is how that happens.
-`bor2017_pessimism_ratio` now refuses to be quoted as one number.
+`haxhibeqiri2017_pessimism_ratio` now refuses to be quoted as one number.
 
 ### M4 CLOSED by measurement (2026-08-28)
 
@@ -2557,3 +2557,2212 @@ shape. **A register that stores facts separately does not compose them; only re-
 The audit that found this was authorised in full knowledge that it might cost a headline. It did,
 and the honest version is stronger — which is the argument for running such audits before a
 reviewer does, not after.
+
+---
+
+# 2026-10 — findings from an external review of the paper (F45–)
+
+*`paper/main.tex` was reviewed externally. The comments were audited one statement at a time
+against the code and the artifacts. Most were right. The five findings below are the ones that
+were **errors in the work**, not in its presentation; each was reproduced before anything was
+changed, and each retraction is kept visible where the claim used to live.*
+
+*What they have in common is in F45, and it is the same shape as F44's own closing paragraph —
+which is uncomfortable, because F44 is one of the casualties.*
+
+## F45 — the headline design was a sum of sizes; no such frame had ever been built (2026-10-06)
+
+**What was claimed.** The paper's design — delta records, one signature per four records — at
+71.99 B per record, −58.68 % against the baseline.
+
+**What it was.** Three numbers measured in three places and added: a delta record size from
+`encodings/delta_enc.py`, a header measured on canonical-CBOR frames by `placement/wire.py`, and a
+signature length. **No frame carrying delta records was ever encoded, sent or decoded.** The
+receiver that would have to decode one did not exist.
+
+That is why three composition errors survived two audits and 1296 green tests: each number was
+individually correct, so re-deriving any one of them reproduced it. They are F46, F47 and F48.
+
+**What was done.** The design was built as one object. `placement/wire_v2.py` is a frame format
+(integer keys, one chain link per frame, a varint record stream, the same signed bytes as v1);
+`placement/session_v2.py` is a sender and a receiver that chain, verify, store and refuse replays.
+Every size the lean design now reports is the length of a byte string that was emitted, decoded
+and verified. The first format (`wire.py`) is untouched and its artifacts are bit-identical (D6).
+
+Measured (`results/raw/frame_components.csv`, 30 seeds × 1000 records):
+
+| | first format | lean format |
+|---|---|---|
+| header `H_f` | 44 B (38–44 over a flight) | **23 B** (17–23) |
+| chain link | 32 B in **every record** | 35 B **once per frame** |
+| self-contained record | 59.85 B (56–61), link included | **24.0 B** (21–25) |
+| delta record, 50 ms apart | 44.0 B, link included | **9.0 B** |
+| one-record signed frame | 174.25 B (byte model) | **145.77 B** (emitted) |
+| design frame, 4 records, decodes alone | 299.85 B = 74.96 B/rec (byte model) | **173.0 B = 43.25 B/rec** (emitted) |
+
+**What the headline becomes** (`results/raw/design_ladder.csv`, adopted point):
+
+| | bytes per record | saving against its own one-record baseline |
+|---|---|---|
+| first format, as published (one keyframe per four frames) | 71.99 | 58.68 % — ⚠️ **does not meet V ≥ 0.95, see F46** |
+| first format, every frame decodes alone | 74.96 | **56.98 %** |
+| lean format, every frame decodes alone | 43.25 | **70.33 %** |
+
+The decomposition claim (placement × batching carries most of it, the scheme is byte-neutral among
+64 B signatures) is unchanged in kind and is re-measured in the same artifact.
+
+**Guards.** `tests/unit/placement/test_wire_v2.py` (57), `test_session_v2.py` (19),
+`tests/unit/models/test_frame.py`, `tests/unit/bench/test_leanframes.py`; every one of 1328
+single-bit flips of a frame fails verification; the lean frame arithmetic is held equal to emitted
+frames over sender, sequence number and batch.
+
+**The transferable point.** F44 ended: *"A register that stores facts separately does not compose
+them; only re-derivation does."* Re-derivation was not enough either. What composes facts is
+**building the object they describe** and making it run.
+
+## F46 — delta coding across frames makes frames depend on each other; the published design missed its own target (2026-10-06)
+
+**What was claimed.** Verifiability V = 1 − p for one-frame placements (T3), so the design meets
+V ≥ 0.95 at the p = 0.05 it is specified for.
+
+**What is true.** The published design keyframes every K = 16 records and batches b = 4, so only
+one frame in r = 4 decodes without its predecessor. A lost frame takes every later frame with it
+until the next self-contained one. With r the number of frames per self-contained frame:
+
+    V = (1/r) · Σ_{j=1..r} (1 − p)^j
+
+At r = 4, p = 0.05: **V = 0.8811**, not 0.95. The byte model had amortised a keyframe over frames
+that the verifiability model treated as independent. The two models had never met in one object.
+
+**Measured with the decoder in the loop** (`results/raw/e3_codec_loss.csv`: 30 seeds × 240 frames
+per cell through `LeanSender` → loss → `LeanReceiver`):
+
+| frames per self-contained frame | V at p = 0.05, independent loss | closed form | bytes per record |
+|---|---|---|---|
+| **1** | **0.9518** [0.9469, 0.9565] | 0.9500 | 43.25 |
+| 2 | 0.9213 [0.9163, 0.9268] | 0.9263 | 41.38 |
+| 4 (as published) | 0.8764 [0.8635, 0.8894] | 0.8811 | 40.44 |
+| 16 | 0.6546 [0.6185, 0.6904] | 0.6649 | 39.73 |
+
+Only r = 1 meets the target at p = 0.05. A cleaner link admits a longer interval — by the
+closed form r = 4 at p = 0.02 (V = 0.951, barely) and r = 8 at p = 0.01 — but **the whole prize is
+3.5 B per record** (43.25 → 39.73), so the design simply uses r = 1: every frame carries a
+keyframe and decodes alone.
+
+Burst loss (Gilbert, mean burst four frames, same mean loss) costs a dependent design *less* —
+0.929 at r = 4 against 0.876 — because losses that arrive together waste fewer good frames. It
+never rescues it. The closed form for the burst case was cross-checked against an independent
+three-million-frame simulation.
+
+**Consequence.** The −58.68 % headline belonged to a design that did not meet its constraint. The
+corrected first-format figure is 56.98 % (F45). T3 is restated as T3′ in `docs/02`.
+
+**Guards.** `models/frame.py::verifiability`, `verifiability_gilbert`, `max_ref_interval`;
+`tests/test_frame_artifacts.py::TestVerifiabilityWithTheCodecInTheLoop`.
+
+⚠️ **A defect of the same kind in a frozen artifact, found on the way and not changed.**
+`run_e3` reports the *mean* V with a bootstrap interval of the *median* (`bootstrap_ci` defaults
+to the median), so `e3_loss.csv` has intervals that need not contain their own point. The new
+runner passes `statistic=np.mean`. The frozen file is left as it is (D6) and listed in
+`docs/OPEN_ITEMS.md`.
+
+## F47 — the exclusion test charged neither the chain link nor a record that decodes alone. ⚠️ F44 is WITHDRAWN (2026-10-06)
+
+**What was claimed.** T6: a link admits authenticated telemetry iff `s_max = M − H_f − g_a ≥ s_min`,
+with s_min = 13 B. Hence DR3 (115 B) "misses by six bytes" under the 44 B header — and, in **F44**,
+that an integer-keyed header "rescues" it, taking the count from four excluded rates to three. The
+abstract of the paper said so.
+
+**What is true.** Two things a frame must carry were never charged:
+
+* the **chain link**. Per-frame chaining (adopted on the LoRa arm, F5) moves the 32 B link out of
+  the records and into the frame — where it still has to travel. The test subtracted it from the
+  record and added it nowhere.
+* a **record that decodes alone**. 13 B was the *mean delta* record less its link. A frame that
+  verifies without its predecessor needs a keyframe: 19–25 B in the lean format.
+
+Charged, the smallest lean frame the format can emit at all — node 0, sequence 0, one record of
+zeros — is
+
+    16 (header) + 35 (link) + 64 (signature) + 9 (record) = 124 B
+
+and **header + link + signature alone are 115 B: the whole DR3 payload, before any record.**
+DR3 is excluded under either header, whatever the telemetry. F44's "29 B of room" was 29 − 35 < 0.
+
+**The count was also wrong for a second reason.** RP002-1.0.3 defines **twelve** EU863-870 data
+rates, not seven: DR7 (FSK) and DR8–DR11 (LR-FHSS) were never considered.
+
+`results/raw/exclusion_matrix.csv`, 64 B signature, both formats:
+
+| payload limit | data rates | verdict | why |
+|---|---|---|---|
+| 50 / 51 B | DR0, DR1, DR2, DR8, DR10 | **excluded** | the signature alone overflows |
+| 115 B | DR3, DR9, DR11 | **excluded** | header + link + signature fill the payload |
+| 222 / 242 B | DR4, DR5, DR6, DR7 | feasible | |
+
+**Eight of twelve excluded; four feasible** — in both formats, under both payload tables.
+
+What each relaxation buys, from the same file:
+
+* **Take the chain link off the air** (arithmetic, not an implemented format): the three 115 B
+  rates become feasible (99–112 B frames). The five 50/51 B rates do not.
+* **A 48 B signature** (BLS12-381, minimal signature size): the signature now fits 51 B and leaves
+  3 B. On the 115 B rates a frame of zeros would fit (108 B) but this telemetry's smallest frame
+  is 118 B. ⚠️ **A three-byte miss is not an exclusion** and the artifact grades it separately
+  (`excluded for this telemetry`).
+* **A 13 B symmetric tag** (the MAVLink 2 signing trailer — which authenticates a link, not an
+  originator): fits the 115 B rates. At 50/51 B header + link are already 51–58 B, so **a
+  hash-chained frame does not fit there under any authenticator.**
+
+**Scope, stated because the review asked and it is right.** The result holds for (i) LoRaWAN's
+regional payload limits — the raw LoRa PHY carries 255 B and is not excluded; (ii) one public-key
+signature in every frame; (iii) no loss recovery; (iv) ε ≤ p, which is what stops a signature
+being fragmented across frames (`optimizer.max_fragments`). At p = 0.01 and ε = 0.05 a unit may
+span five frames and the exclusion no longer holds as stated.
+
+**What was removed.** `placement/wire_profile.py` and `tests/test_wire_profile.py`, which measured
+the "alternative profile" F44 rested on: the lean format now exists for real and says the
+opposite. `optimizer.exclusion_tier` and `max_record_bytes`: the size half of T6 is now
+`models/frame.py::FlatLayout.exclusion`, one definition shared with the byte and verifiability
+results. `tests/unit/models/test_exclusion_t6.py::TestTheWithdrawnArithmetic` pins the old numbers
+(7, 29, 13) beside the emitted frames that contradict them.
+
+**Still true from F44:** key names are 29 of the first header's 44 B and 7 of the lean header's
+23 B, and DR0–DR2 are excluded at a zero-byte header.
+
+## F48 — the LoRa record size was measured at 50 ms spacing and used at 5.5 s (2026-10-06)
+
+**What was claimed.** On DR5 a 231 B frame carries b = 7 records of 13 B each (plus header, link
+and signature), sustaining 0.182 records/s under the 1 % duty cycle.
+
+**What is true.** 13 B is the delta record measured with records 50 ms apart. At 0.182 records/s
+they are **5.5 s apart**, and a difference grows with the time it spans
+(`frame_components.csv`, lean format):
+
+| spacing | 50 ms | 0.1 s | 1 s | 5.5 s | 16.5 s |
+|---|---|---|---|---|---|
+| delta record | 9.0 B | 10.1 B | 12.5 B | 13.6 B | 16.2 B |
+
+and the frame also needs one keyframe to decode alone (F46). Sized at the spacing the batch itself
+implies (`results/raw/lora_budget.csv`, DR5, 242 B payload):
+
+| | records per frame | frame | sustained rate |
+|---|---|---|---|
+| as published | 7 | 231 B | 0.182 rec/s |
+| first format, corrected | **5** | 239.6 B | **0.127 rec/s** |
+| lean format | **8** | 241.2 B | **0.200 rec/s** |
+
+The frozen LoRa artifacts (`lora_codesign.csv`, the `lora_capacity*` files) were produced with the
+published frames and are left as they are (D6). The capacity simulation sent a 218 B frame on the
+222 B payload table; the corrected frames on that table are 214.0 B (lean, six records) and
+221.7 B (first format, four records), within 2 % of it in size and airtime. So the capacity result
+— `N_max = 3`, within ≈ 500 m — is not re-run; what changes is how many *records* each of those
+frames carries, which is the table above.
+
+## F49 — four bibliography entries had wrong metadata; one paper was cited under another paper's authors for two months (2026-10-06)
+
+**What was wrong** (`paper/refs.bib`):
+
+| entry | was | is |
+|---|---|---|
+| the LoRa scalability model (F20, F43e) | "Bor et al." | **Haxhibeqiri, Van den Abeele, Moerman, Hoebeke**, *Sensors* 17(6):1193, 2017 |
+| the CLAS comparison source (F34) | attributed to authors of two of the schemes it compares | **Li et al.**, *PLOS ONE*, 2025 |
+| Tito-Lara et al. | given names wrong | corrected from the registry record |
+| the NDSS 2024 certificate-policy source | shortened title | full title and DOI |
+
+The first is the serious one. The name was in the paper, the thesis, the code
+(`lora.bor2017_loss_pct`), eight documents and a test file name. Each of these sources had been
+read, each was recorded as verified in `A3_CITATION_VERIFICATION.md`, **and the paper carried a
+paragraph saying so.** The verification had checked that the DOI resolved and the claim was in the
+PDF. It had not compared the author list.
+
+**What was done.** Everything renamed (`haxhibeqiri2017_*`), with a dated correction note at the
+definition. `analysis/verify_citations.py` (`make verify-citations`) compares **every** entry with
+its Crossref / DataCite / arXiv record — family names in order, given-name initials, title, year —
+and writes `results/raw/citation_check.csv`; entries with no registry record must name the held
+file they were checked against. 58 entries: 45 verified against a registry, 13 against held
+documents, 0 failing. `tests/test_citations.py` holds that the recorded check covers every entry
+and is not stale. The paper's "citation integrity" paragraph is deleted: a claim like that belongs
+in a check that runs, not in prose.
+
+⚠️ F18's lesson was *"quoting the PDF is not enough: quote the figure."* This one is narrower and
+more embarrassing: **check the title page.**
+
+## F50 — the load ceiling U = 2.435 is not N-invariant; a pre-registered prediction failed (2026-10-06)
+
+**What was claimed.** Every "N_max at V ≥ 0.95" on the 802.11 arm — 31, 100, 55/88, 213, and the
+1.9–3.3× range built on them — was `n_max(…, u_ceiling = 2.435)`: one utilisation ceiling,
+measured in ns-3 at **N = 50 with a 288 B frame** (D3), applied to every configuration. The
+status board called the ratios "protected by construction". Nothing had ever simulated a
+configuration at its own claimed capacity.
+
+**What was done.** `docs/NMAX_DIRECT_EXPECTATIONS.md` was committed data-free (`6f82599`) with the
+prediction that a direct search would land within ±10 % of the ceiling's figure in each of six
+cells. 1080 runs later it **failed**: the lean design crosses at 109 on the grid (118.3
+interpolated) against 142 — −23.2 % / −16.7 %, the whole interval below the band — while the
+long-frame cell E crosses *above* its figure (+8.2 % / +11.7 %). The utilisation at the simulated
+crossing ranges over U\* = 1.98–2.61. The signs differ, so this is not a constant to re-tune.
+
+**Consequences.** (1) A V ≥ 0.95 capacity is now a simulated quantity, per configuration, with a
+bootstrap interval (docs/02 §6e); the ceiling's figure survives only in the column
+`n_max_load_ceiling`, beside its error. (2) Every capacity and ratio on the status board that
+came from the ceiling is superseded by `design_ladder.csv`; the paper's and thesis's are
+generated from it. (3) A configuration that was not simulated has no V ≥ 0.95 capacity anywhere.
+
+**Three defects in the measurement itself**, each found before a number was quoted, are in the
+outcome section of that document: the driver printed the bootstrap median as the estimate; the
+interpolated crossing was added after the data; the power estimate was optimistic.
+
+⚠️ **Defect class C5** (a claim wider than its experiment): a ceiling measured at one (N, frame)
+applied at all. It is the same error as E8's "U is a feasibility boundary", one level up — and
+T7's withdrawal, F12 and the D3 note on E8 had each walked past it.
+
+## F51 — strictly periodic senders freeze their phases on 802.11 too: the spread is an artifact; the mean moves by under 0.005 (2026-10-06)
+
+**Observed.** In stage 1 of F50 the per-run criterion failed at *every* node count: even well
+below the crossing, two to five of 30 runs delivered under 0.95. Per-node data
+(`ns3/run_phase_lock_diagnostic.py`, `ns3_phase_lock_diagnostic.csv`, 580 rows) show why: in the
+worst seed at N = 29, **four nodes deliver nothing and 22 lose nothing**.
+
+**Mechanism.** `authbc-delay.cc`'s default OnOff sources are strictly periodic with a random
+start, so relative phases are fixed for a run. ns-3.48 raises CCA-busy only at the **end of a
+4 µs preamble-detection period**; two nodes whose phases fall within it never hear each other
+start, and collide in every period. A run is one phase configuration, not a sample of the
+channel. This is the 802.11 counterpart of the LoRaWAN frozen-phase artifact (F42), softened by
+carrier sense and not removed by it.
+
+**Tested, with predictions registered before each run** (follow-ups F1 and F1b in
+`docs/NMAX_DIRECT_EXPECTATIONS.md`; new scenario options `--txJitterMs`, `--txSkewPpm`,
+`--perNode`; the published path is bit-identical with all three at zero):
+
+| prediction | outcome |
+|---|---|
+| the source does not change the **mean** delivery | **holds** — every \|z\| < 2.5, mean difference +0.0027 |
+| a 1 ms send jitter at least halves the per-run spread | **fails** — ratios 0.33 / 0.60 / 0.67 / 0.45 |
+| a ±5000 ppm rate offset brings the spread under 0.004 | **fails** — 0.0052 / 0.0040 / 0.0029 / 0.0057 |
+| the offset source and the redraw-every-period source agree in the mean | **holds** — within 0.0011 |
+| per-node: no node silent, none loss-free, once phases move | **holds** (both) |
+
+Redrawing the send time within every period brings the per-run sd to 0.05–0.11 of the frozen
+value. By the rule registered in F1b, **every reported capacity uses that source**
+(`nmax_source: period`). The two failures are recorded as failures; the residual spread of the
+rate-offset source is unexplained and is an open item.
+
+⚠️ **"Holds" in the first row means "within the tolerance registered", not "zero".** With all six
+cells run under both sources: mean delivery is **+0.0031** higher with redrawn phases over 14
+common points (10 positive, none beyond 1.81 standard errors), and all six interpolated crossings
+are higher, by 1–9 %. The points are close to independent — per-seed delivery is uncorrelated
+between node counts (mean correlation +0.01 over 30 pairs), because ns-3 assigns random streams
+in creation order — so the average has a standard error of 0.0014: **about two standard errors.
+Weak evidence of a real difference, not established.** Stated in the paper as a measured
+difference, not as "the same mean"; more strictly periodic runs would decide it (`OPEN_ITEMS`
+G6).
+
+⚠️ **A wrong explanation was written first, and committed** (`fad28e0`): that the 30 seeds are
+the same 30 phase draws in every cell, so the common sign was one sample agreeing with itself.
+That was inferred from reading the scenario and is false — the draws are shared only between
+cells at the *same* node count (A and C at N = 31 correlate at 0.98). Corrected in the
+pre-registration document with the wrong paragraph left visible. It is defect class C2 in
+miniature: a mechanism asserted from the code and not checked against the data that was already
+on disk.
+
+⚠️ **Defect class C8** (a simulated source more regular than any real one; classes as numbered in
+`paper/methods.tex`). Seeds do not remove
+it — each seed is one more frozen configuration — and averaged over 30 seeds it reads as noise
+about a mean. **Scope of the damage:** the saturation validation (F30: unicast and broadcast
+goodput) is unaffected, because a saturated sender has no period. The D3 delay sweep and its
+U = 2.435 crossing did use the strictly periodic source: by the first row above its mean is not
+biased, but its seed-to-seed spread includes this artifact.
+
+## F52 — record sizes checked against twelve public PX4 flight logs (2026-10-06)
+
+Every record size in the project comes from a synthetic generator (`bench/telemetry.py`). A
+reviewer asked whether real telemetry compresses the same way. `docs/PX4_LOGS_EXPECTATIONS.md`
+fixes the selection rule and the prediction, committed data-free (`e4e3cdf`); the logs are pinned
+by SHA-256 in `experiments/px4-logs/manifest.yaml`.
+
+| | real (12 logs, 29 092 records) | generator, same spacing |
+|---|---|---|
+| delta record at 0.2 s | **11.06 B** (10.00–13.21 across logs) | 10.83 B |
+| keyframe | 21.98 B | 24.0 B |
+| saving of the design over per-record signing | **69.08 %** | 69.38 % |
+
+**The load-bearing prediction holds** (delta ≤ 13 B, saving ≥ 68 %). One range prediction
+**missed**: keyframe 21.98 B against a predicted 22–25.
+
+⚠️ **Three limits, all stated in the paper.** (i) The public logs carry position at **5 Hz**, so
+the prediction was amended — before any size was computed (`c2080fd`) — to 0.2 s; the delta
+record at the 20 ms of the adopted point is **untested** against real data and lies between the
+9 B floor of the format and the 0.2 s value. (ii) The mean flatters a fast swarm: five of six
+multicopter logs are mostly hover; fixed wings need up to 13.2 B (saving 68.2 %). (iii) One
+autopilot's public archive, default logging profile.
+
+## F53 — eight small defects found while building the above (2026-10-06)
+
+1. **`e3_loss.csv` reports a mean with the bootstrap interval of the median.** `run_e3` takes
+   `mean(V by seed)` and calls `bootstrap_ci`, whose default statistic is the median. Checked
+   against the frozen artifact: the interval contains the reported mean in **all 120 rows** (the
+   mean sits up to 0.78 half-widths from its centre), and no paper or thesis number reads those
+   interval columns. **Left unchanged** — the artifact is frozen (D6) and no conclusion moves —
+   and recorded here so the columns are not quoted as the interval of the mean. The new loss
+   experiment (E10, `e3_codec_loss.csv`) passes `statistic=np.mean` and adds `V_se`.
+2. **Two rows of the header-size table were wrong** in docs/01 and in a `framer.py` comment: H_f
+   for 24/24-bit and 256/256-value fields is **40 B and 42 B**, not 39 and 40. The endpoints
+   (38, 44) were right, so F43b's range stands. Now derived by `frame.first_header_fields` and
+   held by a test.
+3. **The ns-3 scenario was rebuilt** (system headers had changed; all 1007 translation units
+   recompiled). Eight stored runs reproduce exactly with the old and the new binary. The
+   LoRaWAN library was rebuilt in the same pass; `run_lora_capacity.py` re-run at N = 2, 3 and 5
+   (90 runs) reproduces the stored rows of `lora_capacity.csv` in every cell.
+4. **A symbol was used twice:** R for the PHY rate and for the keyframe interval. The interval is
+   now r everywhere (paper, thesis, docs/02, F46).
+5. **The Semtech datasheet cited is not the revision the constants name.** `models/lora.py` says
+   its constants were transcribed from Rev. 7 (May 2020); the copy held, and the one the
+   bibliography cites, is Rev. 4 (March 2015). Checked value by value against the held copy: the
+   symbol-rate and time-on-air formulas and all seven sensitivity figures the model uses are
+   identical. No number moves. Recorded at the definition and in the literature register.
+6. **The methods paper quoted a survey that was never held** (Kurkowski et al. 2005): its years
+   given as 2000–2004 (the publisher's abstract says 2000–2005), a "fewer than 15 %" figure
+   attributed to "follow-up work" (the held follow-up, Cavalcanti et al. 2018, attributes it to
+   Kurkowski et al. themselves), and "none of 84 papers referenced public code", which nothing
+   held supports. Rewritten to what Cavalcanti et al. report, with that attribution. The PDF is
+   still not held — open item G8. This is F49's class in the document written to describe it.
+7. **"LoRaWAN Class A devices are required to randomise transmission timing" had no source** —
+   in the thesis, in F28's text, and in three scenario comments. It is true, and now cited:
+   TS001-1.0.4 (held) lists as a transmission rule that an end-device "pseudo-randomly changes its
+   transmit periodicity to prevent systematic synchronization of populations of end-device
+   transmissions". The standard names the artifact F28, F42 and F51 measured.
+8. **`models/broadcast_dcf.py` still quoted "all agree to ≤ 0.36 %"**, the figure docs/02 had
+   corrected on 2026-07-29 (idle slots reach 0.75 % on ns-3.41; the current bound is ±0.51 % on
+   goodput at 30 seeds). A correction that never reached a docstring: class C6.
+
+## F54 — a line in airtime predicts the V ≥ 0.95 capacity of configurations it was not fitted to (2026-10-07)
+
+**The question F50 left.** One utilisation ceiling does not give the capacity of every
+configuration. Is there any closed form that does, or only a table of simulated values?
+
+**The hypothesis**, found by looking at the six stage-1 crossings and therefore treated as a
+hypothesis: at the 5 % level, loss is a line in airtime,
+
+    0.05 = N·f·(a·T + c)        f = Λ/b frames per second per node,  T = airtime + DIFS,
+                                 c = 8 µs fixed (twice ns-3's preamble-detection period)
+
+with one fitted constant a. N·f·T is the fraction of time the neighbourhood's frames occupy the
+medium; c·N·f is the chance that another frame starts inside the window in which a station cannot
+yet hear it.
+
+**The test** (follow-up F2 in `docs/NMAX_DIRECT_EXPECTATIONS.md`). Seven configurations that had
+not been simulated were named; the line's value for each was written down with a tolerance of
+±6 %, and a second condition — closer to the line than to the single ceiling in the five cells
+where the two differ by more than a tenth; both were committed before any of the seven was run
+(`47ebbbb`, amended in `2b58082`, recalibrated predictions in `fad28e0`). a = 0.0710 is the mean of
+the six calibration cells' slopes.
+
+**Outcome: it holds** (`ebd316c`). Simulated against predicted: G −2.7 %, H −1.3 %, I −2.3 %,
+RA +0.3 %, RB −3.4 %, RC +0.7 %, RD −1.4 %; the single ceiling misses the same seven by −3.5 to
+−15.3 % and +5.7 to +14.5 %. It holds equally with the slope as first registered (0.0749; all
+within 4.7 %), so it does not rest on the recalibration.
+
+**What it licenses.** The paper may state the line as the closed form for this threshold, with
+its domain, in place of the ceiling. It may not quote the line *as* a capacity: every N_max in
+the tables is a simulated value (`design_ladder.csv`).
+
+⚠️ **What it does not.** (i) The residuals are ordered by frame rate — +3.6 % at 50 /s, +0.5 %
+at 20 /s, −2.0 % at 12.5 /s, −2.4 % at 5 /s — so the slope is not quite constant and the line
+must not be extrapolated beyond 5–50 frames/s. That pattern was written down before the test.
+(ii) One loss level: loss is convex in load. (iii) One PHY rate, one collision domain. (iv) A fit
+to a simulator; c is ns-3's detection latency, not a radio's. (v) A slope of 0.071 is close to
+1/W₀ = 0.0625, the chance that two deferring stations draw the same backoff slot. That is an
+observation and **not** a derivation; it is recorded here so that nobody presents it as one
+without doing the work.
+
+This is the third pre-registered prediction of the capacity study to be scored, and the first to
+hold. The two that failed (the ±10 % of F50, and two spread predictions of F51) are what made
+this one worth testing properly.
+
+
+---
+
+## F55 — re-auditing the revision against the review: eleven places where "done" was not yet true (2026-10-07)
+
+**How it was found.** Mohamed asked for the revised paper and thesis to be audited again against
+the review. The review was re-read in full and each of its requests was looked up in the built
+PDF, not in the response that had been written about it. Every one of the items below had been
+recorded as done.
+
+| # | what the review asked | what the text actually did | now |
+|---|---|---|---|
+| 1 | one LoRa batch and rate (its list of inconsistencies) | the paragraph gave the 242 B frame's batch and rate (eight records, 0.20 rec/s), then the capacity and the neighbourhood total of a simulation run at 222 B (six records, 0.165 rec/s) — **the same kind of mismatch, re-created** | the simulated configuration is named and generated (`\loraSim*`); the generator refuses to run unless the lean frame at 222 B holds the simulated batch and is within 2 % of its airtime |
+| 2 | (its root concern: sizes that are sums) | the ladder caption, the thesis caption, the checklist and the first contribution said every lean size is an emitted frame. **Row 7 is not** — the codec always delta-codes, so "no delta coding" is sized from measured parts — and neither is any first-format row | † on every such row in both tables; the contribution claims emitted frames for the design and its baseline only; a test compares the marks with `sized_from` |
+| 3 | a curve of bytes against batch size with the chain link per record and per frame | no curve; the response said the lean format *was* the answer | `fig_bytes_vs_batch.png` (`analysis/figures_frames.py`), three curves from `frame_components.csv`. **Of the 31.71 B between the two designs at b = 4, 24 B is where the link sits.** With a link in every record, twelve records per frame (54.32 B) still cost more than one link per frame at four (50.96 B) |
+| 4 | captions of one or two lines | six ran to three or four lines | cut; a test bounds every caption |
+| 5 | the hash chain cited to Haber–Stornetta *instead of* the Bitcoin paper | both were cited | the paper cites the first only; the thesis credits the construction to it and Bitcoin with the blockchain |
+| 6 | an abstract of about 180 words | about 200 as printed (the test allowed 200 by its own, looser count) | **about 180 as printed** — 186 tokens, 179 when a unit is counted with its number; the test bound is tightened to match |
+| 7 | a note that DR7 is FSK | all twelve rates were counted, none named | "seven LoRa (DR0–DR6), one FSK (DR7) and four LR-FHSS (DR8–DR11)"; a test checks it against the matrix |
+| 8 | a loss budget equal to the target leaves the design no margin, by construction | the length-dependent loss was added, the margin at the *measured* loss was not | one sentence: at the 2.3 × 10⁻⁴ measured between two radios every interval meets the target (V = 0.998 at r = 16). The keyframe per frame is bought by the specified budget, not by the measured link |
+| 9 | intervals on the 802.11 capacities | in the ladder, not in the two-point capacity table | both tables |
+| 10 | 802.11p | a "10 MHz channel" was modelled and not named | named (`phy.ofdm_10mhz` uses its timing: 13 µs slot, 32 µs SIFS); still a model, and said so |
+| 11 | the hash is 71 % of the delta record | fixed in the design, **never stated in the thesis**: chapters 1, 4 and 7 still called 45 B "the record" and computed φ = 58.7 % on it | a remark in ch. 7: 13 B of telemetry and 32 B of link; signature and link are 96 of 109 B, **88 %**. φ as defined understated its own point |
+
+Also aligned: the body now uses the two nouns of the title (*exclusion bound*, *capacity
+envelope*), which until now appeared in the title only.
+
+**Lesson.** A response to a review is a second document that can drift from the text, exactly as
+a paper drifts from its artifacts. Items 1, 2 and 4–6 were written as done from memory of the
+edit, not from the built PDF. **Audit the deliverable, not the description of it** — the same rule
+as "check the figure, not the quotation", one level up.
+
+## F56 — the stream-signing baselines simulated as frames: a second prediction that held, and a defect its scoring caught (2026-10-07)
+
+**Why.** The comparison with Wong–Lam, Gennaro–Rohatgi, EMSS, TESLA and MAVLink 2 signing gave
+each scheme a saturation bound only, beside a design whose capacity is simulated. A baseline
+measured with a weaker instrument than the design is still a weak baseline.
+
+**What was done** (follow-up F3 of `docs/NMAX_DIRECT_EXPECTATIONS.md`, registered in `f72db7f`
+before any run). Five cells — each scheme's frame at its rate — through the same direct search as
+the ladder: 30 seeds, seven node counts at unit steps, 1,050 runs. The airtime line's crossing
+for each was committed first, with the slope calibrated before F2 and nothing re-fitted.
+
+**Outcome.** All five inside the ±6 % band, points and intervals:
+
+| scheme | frame | line | simulated | N_max [95 %] | vs line |
+|---|---|---|---|---|---|
+| MAVLink 2 tag | 94 B | 40.6 | 42.15 | 42 [41, 42] | +3.8 % |
+| TESLA | 106 B | 38.8 | 40.44 | 40 [40, 40] | +4.2 % |
+| Gennaro–Rohatgi | 114 B | 38.0 | 39.44 | 39 [39, 39] | +3.8 % |
+| EMSS | 146 B, 50.5 /s | 33.6 | 34.81 | 34 [34, 34] | +3.5 % |
+| Wong–Lam tree | 211 B | 28.0 | 29.00 | 28 [28, 29] | +3.5 % |
+
+So the finding the saturation bound gave survives simulation, and with the same instrument on
+both sides: **replacing a 64 B signature by a 13 B tag moves N_max from 35 to 42; putting four
+records in a frame moves it to 124.** These schemes amortise the cost of signing; what binds is
+the frame.
+
+All five sit 3.5–4.2 % *above* the line. That was written down beforehand as an expectation
+(the two calibration cells at 50 frames/s sat 3.4 and 3.8 % above it): the residual ordered by
+frame rate of F54 is repeatable, a bias and not noise.
+
+⚠️ **What it does not license.** A simulated delivery is an **upper bound** on what TESLA, EMSS
+and Gennaro–Rohatgi verify — their packets wait for a later key, a later signature packet, or
+every earlier packet. The table marks those three. No scheme is implemented.
+
+**The defect.** The first scored table had **four** rows, not five. `ns3_nmax_direct.csv`
+stores the send jitter with six significant figures (`f"{jitter:g}"`), and three readers looked a
+cell up by the *exact* period: the scorer, the builder of `stream_baselines.csv`, and the plan
+writer. Every period until now was 20, 50, 80 or 200 ms. EMSS sends 50.5 frames/s; its period,
+19.80198… ms, is stored as 19.802. The cell was silently absent from all three — in the artifact
+it would have been an empty capacity, and a resumed campaign would have re-run it whole.
+
+* **Why it was caught:** the scorer returns only bracketed cells and its caller compared the set
+  of cells with the registered five. A scorer that printed "what it found" would have shown four
+  plausible rows.
+* **Root cause, not symptom:** one function, `provenance.as_written`, now says what a number is
+  once a result file holds it, and the driver, the artifact builder, the analysis, the figure and
+  the tests all compare through it. No tolerance was introduced.
+* **Regression tests:** a 19.802 ms run is recovered by the plan as `period`; every cell summarised
+  at about one period is matched as one; the scored set is exactly the five.
+
+**Lesson.** The same shape as the waiter that matched its own command line (`docs/06` §10): *a lookup that can miss must be
+checked against the list of what it was supposed to find.* Silence from a filter is not a result.
+
+## F57 — a FANET batch-authentication source obtained, read and cited; it supports the axis finding (2026-10-07)
+
+The submission checklist had listed Rajasekaran et al. (Drones 6(1):14, 2022) since August as a
+missing comparator that "needs a browser". The publisher's article page answers a script with 403;
+its static file server does not. The PDF (CC BY 4.0) is in `docs/literature/`, was read in full,
+and its bibliography entry was checked against Crossref — which shows **five** authors where the
+checklist had four.
+
+What it supports is what F34 found for CLAS: in its Table 5 the communication cost of n
+authentications is **n times the cost of one** (1184·n bits). Batch authentication shares the
+verifier's work; the bytes stay linear. One sentence in the paper's related work and one in the
+thesis say that and no more: the scheme authenticates drones to a user, it is not broadcast
+telemetry, and no size of ours is compared with it.
+
+---
+
+## F58 — the crossing derived: two loss mechanisms and no fitted constant reproduce every simulated capacity (2026-10-08)
+
+**The question** (`OPEN_ITEMS` G18). F54's airtime line has one fitted constant and a residual
+ordered by frame rate; its slope was "close to 1/W₀" and nobody had said why. Mohamed chose to
+derive it.
+
+**The derivation** (docs/02 §6g). In this scenario a frame is lost in two ways and no others:
+two deferring stations' backoff counters reach zero in the same slot (probability 1/W for any
+two that wait together), or a station decides to send inside the 4 µs in which it cannot yet
+sense another's transmission. Counting the first with an M/D/1 queue and the second directly:
+
+    loss ≈ ρ·[1 − (1 − 1/W)^(ρ/(1−ρ))] + (N−1)·f·8 µs,      ρ = (N−1)·f·T
+
+Nothing is fitted. It puts the eighteen simulated crossings within 5.5 % (mean 2.3 %).
+
+**What the fitted slope was.** a = ρ/(W(1−ρ)). The crossings sit at occupancies of 0.48–0.60,
+mean 0.53, where that is 0.058–0.092 and **0.071 at the mean** — the fitted value. The line is
+the tangent of a curve at one loss level. It sat near 1/W because ρ/(1−ρ) ≈ 1 there.
+
+**The exact version, and the comparison.** `src/authbc/sim/dcf_unsaturated.py` simulates the
+access rule and nothing else. Against every point ns-3 has run at the designated source
+(`results/raw/dcf_model_vs_ns3.csv`):
+
+| | worst crossing error | mean | worst delivered-fraction difference |
+|---|---|---|---|
+| **event model, nothing fitted** | **1.2 %** | 0.5 % | 0.0023 over 153 points |
+| closed form, nothing fitted | 5.5 % | 2.3 % | — |
+| airtime line, one fitted constant | 4.0 % | 2.6 % | — |
+| single load ceiling | 15.3 % (13 cells) | — | — |
+
+Ties are 51–85 % of the loss; the detection window is the rest. So the capacities of §6e are
+not a property of ns-3's internals: a second implementation that shares no code with it and
+knows only the standard's constants and one detection time lands on them.
+
+⚠️ **How this must be read.**
+1. **It is a comparison.** The model was completed beside one of those cells: the first version
+   was 0.005 high in delivered fraction everywhere, and the cause — a frame arriving within 4 µs
+   *before* a counter runs out collides too, not only one arriving after — was found from that
+   cell. A model adjusted while looking at data has not predicted that data.
+2. **The predictions are F5**: six crossings where no run had been made (window doubled;
+   2 % and 10 % loss), committed in `9e9c096` before their runs. There the three readings part
+   widely (for cell C with the window doubled: 53, 43 and 39 neighbours).
+3. **An earlier sentence of mine claimed too much** and was corrected before any F5 run: that
+   the fit had found the slope "to three figures". The match is at the *mean* occupancy; cell by
+   cell the tie term's slope varies by ±25 %. The registration carries a dated clarification.
+4. ⚠️ **Two implementations of one standard agreeing says nothing about radios** (G4).
+
+**Why the residual of F54 was ordered by frame rate.** It was not the frame rate. The closed
+form's error is ordered by frame *length*: the time counters take to run down is a larger share
+of a short frame, and the short frames were the ones sent 50 times a second.
+
+## F59 — the receiver-CPU ceiling charges cryptography only; the prototype's decoder costs several times more (2026-10-08)
+
+**How it was found.** Preparing the bench session, `micro --lean` timed the lean receiver as it
+runs. On the development machine, under load (so indicative only): about 0.9 ms to receive one
+four-record frame, of which the Ed25519 verification is about 0.1 ms.
+
+**What it changes.** `N_cpu = 1 + ⌊1/((Λ/b)·k·t_v + Λ·t_h)⌋` (docs/02 §6c) counts verification
+and hashing. It never counted decoding the frame and rebuilding its records, which in the
+prototype is interpreted Python and is the larger part. The paper said the design "uses 42 % of
+a core at N_max, so the channel binds first". For a compiled receiver that may be true; for the
+prototype on one Pi core it is not: at the desktop's ratio, a receiver would fall behind at a
+few tens of neighbours, not 124.
+
+**What was done.** The paper's CPU column is now labelled as verification and hashing; the
+receiver-CPU paragraph and the limitations say that decoding is not charged and that these are
+ceilings for a compiled receiver; thesis ch. 8 has a remark with the indicative ratio. The Pi
+figure is step 1 of `hw/BENCH_SESSION.md` (G9), with its expected range written beforehand.
+
+**Why three audits missed it.** Each checked that the formula was evaluated correctly with the
+measured timings. None asked what the formula left out, because the quantity it computes —
+signatures per second — was the one the review had asked about. Same class as C7: every part
+was right, and the composite (a receiver that runs) had never been timed.
+
+## F60 — records at the operating rate, and the regularity of a real autopilot's stream, from PX4 in simulation (2026-10-08)
+
+**Why.** Two limitations the paper stated: nothing was measured at 50 Hz (the public logs stop
+at 5 Hz, F52), and how regular a real autopilot's stream is was unknown (the capacities assume
+a send time redrawn each period, F51). Mohamed chose PX4 software-in-the-loop for both.
+
+**What was done.** PX4 v1.17.0, built for `px4_sitl`, flown in its built-in simulator
+(`sihsim_quadx`) on a mission fixed beforehand; the logger writing position every 20 ms; the log
+through the same code as the public logs; the companion-computer MAVLink stream received with a
+timestamp per message. Ranges for seven quantities were committed before the flight
+(`dbe4ee9`). Verified at source while building: `MAVLINK_MODE_ONBOARD` streams
+`GLOBAL_POSITION_INT` at 50 Hz in that release (`mavlink_main.cpp`).
+
+**Sizes — held.** 14,317 in-flight records at 20 ms. **Every delta record is 9 B**, the floor,
+at up to 10 m/s. Keyframe 20.9 B (generator 24.0). The design costs **42.47 B per record
+against the generator's 43.25**: the generator is 1.8 % pessimistic at the operating rate. No
+reported number moves.
+
+**Two predictions did not hold as written.**
+1. Resampled at 0.2 s the flight gives 10.64 B per delta against a predicted 10.0–10.6 (the
+   range of the six real multicopter logs). By phase: 10.0 hovering, 11.0–11.2 on the squares.
+   The real logs are mostly hover; this flight is two-thirds translation. Read after the fact;
+   recorded as a miss of 0.04 B.
+2. The registered timing statistic — the standard deviation of receive intervals — came out at
+   54 ms **because the measuring host's wall clock was stepped back eight times by about 2.3 s
+   during the flight** and ran about 6 % fast in between. It is recorded as *not scored*.
+
+**Timing — what can be said.** Period 20.00 ms on the autopilot's clock. Central 68 % of
+intervals within **±0.37 ms**, the same in the flight and in a second capture on a monotonic
+clock; standard deviation 1.2–1.3 ms, dominated by the 1 % of messages more than 4 ms late on a
+loaded desktop. (The timestamps *inside* consecutive messages alternate 16 and 24 ms: the
+estimator publishes every 8 ms and a 20 ms stream takes the latest sample. That is sample age,
+not send time.)
+
+**What it means for the capacity results.** A PX4 stream is nearer to strictly periodic senders
+than to the redrawn source. The mean delivery — what every capacity is read from — is the same
+under both (F51, F61). The spread between runs is not: the reported intervals are the redrawn
+source's and are the tightest case. A jitter of 0.4 ms is a hundred times the 4 µs within which
+frozen senders collide every period, so the pathological runs of F51 do not arise.
+
+⚠️ One autopilot, one airframe, in simulation, on a loaded desktop; no radio, no serial link.
+The commanded 12 m/s was not reached (9.1 m/s mean on the fast square).
+
+**Lesson.** A timing measurement was given one clock, and it was the clock an operating system
+is allowed to step. The recorder now reads a monotonic clock as well; the analysis reports an
+interquantile spread beside the standard deviation.
+
+## F61 — the difference between the two traffic sources did not replicate; and an explanation I registered with it was wrong (2026-10-08)
+
+**The open item** (G6b). Over seeds 1–30 the redrawn source delivered 0.0031 more on average
+than the strictly periodic one (z = 2.2), and all six crossings read 1–9 % lower under the
+periodic source. Noticed in the data, not predicted; no mechanism known.
+
+**The test** (follow-up F4, registered in `a65ad6c`). The same fourteen points on seeds never
+used — sixty for the periodic source, which carries the noise, thirty for the redrawn — with
+the statistic and the reading of each outcome fixed first. 1,260 runs.
+
+**Outcome.** D = **+0.00043 ± 0.00086, z = 0.50**. Five of fourteen differences positive,
+against ten before. By the registered reading, the first result was sampling and the item is
+closed. Two sources with uniform phases have the same mean delivery.
+
+**The second claim was refuted.** I had registered an explanation for the lower crossings: that
+the first-failure rule reads low on a noisier curve. Checked by resampling the periodic source's
+scatter around a common mean (`analysis/crossing_rule_check.py`,
+`results/raw/crossing_rule_check.csv`): the rule's **median sits on the true crossing** in all
+six cells. Noise widens a crossing read from thirty periodic runs to 4–13 %; it does not shift
+it. The six low crossings were one fluctuation counted six times — the same thirty seeds.
+
+**What changed.**
+* The paper no longer says capacities read from strictly periodic senders "are 1–9 % lower". It
+  says what the data support: the same mean delivery, and a spread between runs 6–23 times
+  wider.
+* Thesis ch. 8 keeps the first observation, adds the test, and withdraws the statement.
+* `OPEN_ITEMS` G6b closed. G6a (the rate-offset source's spread) is unchanged.
+
+**Why this is worth a finding.** It is the fourth registered prediction of the capacity study to
+be scored and the third to hold — but the lesson is in the one that did not. An explanation
+that sounds right, written into a registration, was false; it was caught because the
+registration said how it would be checked. In October the same kind of sentence went into a
+commit *without* a check and stood for a day.
+
+## F62 — the derivation's six predictions held: capacities, and how they move, follow from the access rule (2026-10-08)
+
+**The test** (follow-up F5, registered in `9e9c096`). F58's event model had been completed
+beside one of the configurations it was compared with, so its agreement with the eighteen was
+not evidence. It was asked for six crossings where no run had ever been made — the contention
+window doubled, and the 2 % and 10 % loss levels, each for a per-record and a batched
+configuration — and those were committed with a ±3 % band. Then 1,080 ns-3 runs.
+
+**Outcome.** All six inside; the worst 1.73 %.
+
+| case | model | ns-3 | |
+|---|---|---|---|
+| per-record frame, window doubled | 39.09 | 39.18 | +0.23 % |
+| design frame, window doubled | 139.03 | 139.61 | +0.42 % |
+| per-record frame, 10 % loss | 46.77 | 47.36 | +1.26 % |
+| design frame, 10 % loss | 165.30 | 166.79 | +0.90 % |
+| per-record frame, 2 % loss | 22.49 | 22.40 | −0.39 % |
+| design frame, 2 % loss | 79.65 | 78.27 | −1.73 % |
+
+**Why these conditions.** They are where the three readings of the same data disagree. With the
+window doubled the fitted line (read as slope = 1/W) says 53 neighbours, the closed form 43,
+the event model 39; ns-3 says 39.2. At 10 % loss the line says 68, at 2 % it says 14; ns-3 says
+47 and 22.
+
+**What follows.**
+* The reported capacities are not an artefact of one simulator's internals, and not a fit: a
+  second implementation that knows only the standard's constants and one detection time lands
+  on them *and on how they move*.
+* **Doubling the contention window buys 11–12 %, not a doubling.** A longer countdown keeps
+  more stations waiting together. That is a design statement the fitted line could not make.
+* The airtime line stays in the paper as what it is — the tangent at the 5 % level — and the
+  paper now says why it has the slope it has.
+
+⚠️ **The scenario was rebuilt for this** (`--cwMin`, absent by default). Before any new run,
+nine stored runs of every kind were repeated with the new binary and reproduced bit for bit,
+and `--cwMin=15` returned what no option returns. A rebuilt simulator is a different
+instrument until that has been shown.
+
+⚠️ **Scope.** One collision domain, one PHY rate, static nodes, no capture, and two
+implementations of the same standard. The remaining gap is to radios (G4), not to theory.
+
+---
+
+## F63 — the built paper, read whole as an examiner would: twelve defects of presentation (2026-10-08)
+
+*Mohamed: "audit the paper and the thesis and make sure they are strong and complete". Both were
+read from the built PDFs, start to finish, against the kinds of comment the supervisor's review
+had made. This entry is the paper; F64–F67 are the thesis.*
+
+No result of the paper moved. What was found:
+
+| # | defect | fix |
+|---|---|---|
+| 1 | **Four references printed with no identifier** — arXiv preprints rendered as "title, year" (IEEEtran ignores `eprint`) | `howpublished = {arXiv:…}` on every arXiv entry; seven entries in the shared bibliography |
+| 2 | **Table V did not add up:** worst row, total 83.8 ms and margin 16.3 ms of a 100 ms budget. The artifact stores 83.750 and 16.250; each was rounded up | the margin is printed as the budget less the *printed* total (16.2) |
+| 3 | **The generator's records are 50 ms apart and the operating point is 20 ms**, said in two places and explained in none | one sentence in Method; a `step_ms` parameter on the generator (default stream bit-identical, digest pinned) and a test that every lean delta is 9 B at 20 ms as at 50 ms |
+| 4 | **"N neighbours" for N nodes.** The simulation's N is the number of nodes in the collision domain, each hearing N−1; the abstract said "from 124 neighbours" and the CPU ceiling "296 neighbours" (it is 295) | a neighbourhood of N nodes is defined once; counts say "nodes" |
+| 5 | "a 218 B payload every 36 s (0.165 records/s)" — six records in 36 s is 0.167 | the period is printed as 36.4 s |
+| 6 | Table I caption: "(earlier in a flight in parentheses)", but the sender identifier shrinks in the parentheses too | "(sender 0, first frame of a flight, in parentheses)" |
+| 7 | The conclusion said "eight of twelve LoRaWAN data rates" without the band | "of the twelve EU863-870" |
+| 8 | "0.943 … (measured: 0.947 [0.941, 0.952]) — below the target": the interval contains 0.95 | the *expectation* is below the target; the measurement agrees with the expectation |
+| 9 | "occupancy ρ = N f T" where the derivation uses the other N−1 stations | "≈" |
+| 10 | **No prior work was cited for the loss mechanism** of "Why the crossing is there" | F65 |
+| 11 | **The nearest standard was absent** from related work | RFC 9575 (DRIP), one sentence: it pages a 64-octet signature over 25-octet frames with a parity page — the spreading and recovery the scope excludes |
+| 12 | PX4 source cited without a release | "release v1.17.0" |
+
+⚠️ **Left to Mohamed:** the affiliation and the supervisor's name are placeholders; a journal of
+the Elsevier kind will want the AI tool *named* in the declaration; the data-availability
+statement should give a tag (and, at submission, a DOI).
+
+## F64 — the built thesis: statements that were wrong, and statements that had gone stale (2026-10-08)
+
+**Wrong.**
+
+* **T2a's boundary was computed with a 40 B header and printed beside "H_f = 44".** 232.7 B is
+  (1500 − 40 − 64)/6; with the measured header it is 232.0. The low-rate figure, "29.7 B at
+  M = 242", corresponds to no parameters of the thesis: it is 22.3 B. Neither changes a
+  conclusion — every encoding is on the same side of both — but both were typed, and no test
+  held them. They are held now (`TestTheBindingConstraintFigures`).
+* **"Λ_i D_max = 5, hence b = 4"** was never explained. The fill-time ceiling is 5; five records
+  fill in exactly D_max and leave nothing for the channel, so the search admits 4. One paragraph
+  in ch. 4, and ch. 3 now says so where it first uses the number.
+* **"Any batching at all needs Λ_i ≥ 1/D_max"** — it needs more than 2/D_max. At 100 ms that is
+  more than 20 Hz, not 10 (`operating_region.csv`: b = 1 at 10 and 20 Hz, b = 2 at 21).
+* **Theorem "robustness to correlated loss": "with equality only at n = 1".** False for a
+  process that loses the n frames together or not at all. Restated; and "independence is the
+  worst case for D" is now said of bursty processes, of which it is true.
+* **"At M = 576 and M = 1500 freshness binds"** — at 576 B JSON is limited by the frame
+  (`e2_batching.csv`).
+* **"Every reported size is the length of an emitted frame"** (contribution 4, and §3.6): false
+  for the first-format rows and for lean row 7, which the tables themselves mark.
+
+**Stale** — true when written, contradicted by a later chapter of the same thesis.
+
+* ch. 12 limitations: "the keyframe interval is fixed and unoptimised" (ch. 7 varies it);
+  "checked against nothing at the 50 Hz of the operating point" (ch. 7 reports the simulated
+  flight). Future work: "the delta record at 20 ms rests on the generator alone"; "the freshness
+  constraint omits the dominant delay term at high load" (Table 8.6 measures it at under a
+  millisecond on average).
+* ch. 11: the difference between the two traffic sources "is not yet explained" (ch. 8 and the
+  same chapter, two pages on: it did not replicate).
+* ch. 3: "K is fixed and not optimised", of a format that makes it a parameter.
+* ch. 9: the broadcast model as "the load-bearing input to the capacity envelope".
+
+**Cited and nowhere reported.** The conclusions said mobility "was tested and found null". No
+chapter contained the test. It is now §10.4.6, from `lora_mobility.csv` (F37), with every figure
+of its table held by a test.
+
+**Why the paper's gates did not catch these.** The thesis's corrected results are macros; what
+it types was held only where someone had thought to write a guard. A chapter that is corrected
+does not correct the chapters that summarise it — the same class as C6, inside one document.
+
+## F65 — the derivation of F58 had prior work, and nobody had looked (2026-10-08)
+
+The paper and the thesis presented the two loss mechanisms of `docs/02` §6g with no citation.
+A search made for the audit found Cao, Yin, Hu and Zhang (arXiv:2102.07023, 2021): a
+fixed-point model of *periodic* IEEE 802.11p broadcast in a fully connected network with a
+perfect physical layer, in which a packet that finds the medium idle is sent at once, one that
+finds it busy backs off in a fixed window, and collisions arise only among packets that backed
+off. **That is the first mechanism, in this setting.** Read in full; held locally.
+
+What it does not have: the detection window, which is 15–49 % of the loss at our crossings; a
+comparison with a packet-level simulator (theirs is a Monte Carlo simulation of the same
+assumptions); predictions registered in advance. What we do not have: an evaluation of their
+fixed point at our configurations — it uses the mean number of packets in a collision, for which
+the paper gives no expression, so it could not be implemented without a guess.
+
+Both documents now say whose analysis the first mechanism is and what is added.
+
+⚠️ **This is F9 again.** F9 cost the project a novelty claim in July because the broadcast
+model had been rediscovered without a search, and the rule written then was to search before
+deriving. On 2026-10-08 the derivation was written, registered, tested and put into the paper
+in one day, and the search was not made. **A rule that depends on remembering it is not a
+rule.** ⚠️ Not obtained: the earlier analyses that paper cites, and Ma, Chen and Refai (2009) by
+the authors of the broadcast model, who name non-saturated traffic as future work in the 2008
+paper we hold. The publisher's site refuses scripted access. Open item G23.
+
+## F66 — the energy figures: ratios are sound, absolute values were never calibrated (2026-10-08)
+
+Writing the uncertainty budget the thesis had listed as "to add" meant looking for the
+calibration that `hw/RIG.md` and `hw/SETUP.md` prescribe before any measurement. **No
+calibration against a reference load is on file** — not in a result header, not in the logbook.
+
+| source | effect |
+|---|---|
+| sensor gain (shunt, converter) | unquantified; **cancels in every ratio**, including meter-against-model, because the model's power constant was measured with the same sensor |
+| sensor offset | cancels in P_load − P_idle |
+| idle drift between the paired windows | 5–9 mW across a session, about 1 % of the difference |
+| repeatability, five repetitions | half-range 0.6 % and 1.1 % |
+
+So the 51 % saving and the 7.5–12.3 % gap between meter and model stand, the gap being several
+times its uncertainty. The values in microjoules are accurate to the sensor's factory tolerance
+and no better, and the thesis now says that. Open item G22; step 0 of the bench session.
+
+## F67 — the thesis as a document: what was missing, what was added, what still is (2026-10-08)
+
+The thesis built to 100 pages with 21 red markers. Eleven were "STATUS: DRAFTED" boxes at the
+head of chapters; seven were things to add; three are the candidate's.
+
+**Added** (117 pages, 52 references, no layout warning — there had been 17 tables or lines
+running past the margin, two of them clipped):
+
+* ch. 5: a figure of the packages, drawn from the imports; **one lean frame, byte by byte**,
+  cut from an emitted frame by `analysis/worked_frame.py`; what the receiver does to a frame and
+  its eight outcomes; the layers of tests.
+* ch. 6: the telemetry generator; how a capacity is read; primitive timings; the energy rig,
+  the model it is compared with, and the uncertainty of F66.
+* ch. 8: the scheme crossover with its numbers — the answer to RQ3, which had none.
+* ch. 10: mobility (F64).
+* ch. 11: how citations are checked (moved out of the background chapter, where it led);
+  where the chapter sits in the literature on simulation credibility.
+* ch. 12: the five research questions, answered one by one.
+* Appendix A, reproducing the results; **Appendix B, every prediction registered before its
+  data**: thirteen, with commit, prediction and outcome — three failed, one refuted, one not
+  scored, one met by a criterion that could not fail.
+* Front matter: a nomenclature that no longer points at a repository file; abbreviations.
+* The name AUTHBC is defined (it was not — the review's point 6.1, again, in the thesis).
+
+**Still missing, and not something an agent can supply.**
+
+* Degree, department, declaration, the statement on generative AI, acknowledgements.
+* ⚠️ **Two gaps of reading remain in ch. 2**, now stated in ordinary prose and not in red: the
+  four aggregate-signature schemes are known through one paper's table, and no general FANET
+  survey is held beyond the swarm-communication review. Fifty-two references is still few for a
+  thesis; every one was read.
+* Kurkowski et al. 2005 is cited in the methods paper through another paper and is not cited in
+  the thesis.
+* Superseded figures (the first-reported configuration, the old envelope, the first per-frame
+  chaining figure) are in the results chapters with captions that say so. Whether they belong
+  in an appendix is a choice of style for Mohamed and his supervisor.
+
+---
+
+## F68 — "the cost of n messages is n times the cost of one" was true of one link only (2026-10-09)
+
+*Mohamed: "solve all the issues and contradictions". One of the open items was that four
+aggregate-signature schemes were known only through another paper's table. One of the four was
+obtainable (Wang et al., IEEE Access 2022) and was read; reading it corrected a claim.*
+
+Both documents said of the certificateless aggregate schemes that the cost of n messages is n
+times the cost of one, and that aggregation "compresses the verifier's work, not the wire".
+In Wang et al. a vehicle signs, a roadside unit aggregates and a traffic management centre
+verifies; a single signature is three 128 B group elements and a 4 B timestamp, **388 B**, and
+the aggregate of n is 3 × 128 + 4n, **784 B for a hundred**. So:
+
+| link | what it carries for n messages |
+|---|---|
+| each signer to the aggregator | n full messages, each with its own identity, key and signature components — the 583–859 B per message of Li et al.'s table |
+| the aggregator onward | one compact aggregate |
+
+The claim holds on the first link and not on the second. It was written from a table that
+counts the first, and stated as if it covered both. The paper and the thesis now say which
+link each mechanism acts on — which is the thesis's own distinction between placements B
+(a sender batches its own records) and C (an intermediary aggregates across senders). A FANET
+in which each node broadcasts its own state has the first link and no aggregator on it, so the
+comparison the paper draws is unchanged; the sentence that stated it was too wide.
+
+⚠️ Li et al.'s 859 B for this scheme is *their* accounting of a whole message with a 67 B
+payload. Wang et al. do not state that number. The paper's table footnote now says "total per
+message as reported in" and no longer says the schemes were not read at source without saying
+which.
+
+## F69 — one period of jitter, as the driver passed it, could exceed one period (2026-10-09)
+
+The ns-3 scenario refuses a send jitter above one period, comparing `txJitterMs * 1e-3` with
+`1.0 / framesPerSec`. The driver passed 1000/fps. At 116 frames per second the two sides round
+differently and the jitter exceeds the period by one unit in the last place: ns-3 aborted with
+SIGABRT on the first run of a cross-check. No stored result is affected — the guard stops a
+run, it does not alter one, and every rate used before passes it unchanged (a test holds that
+for each registered cell). `run_nmax_direct.one_period_ms` now steps the value down until the
+guard accepts it.
+
+*Why it had never happened:* 5, 12.5, 20, 50 and 50.5 frames per second all pass by chance of
+representation. The first rate chosen for another reason found it.
+
+## F70 — contention on radios: registered, cross-checked, and not runnable from here (2026-10-09)
+
+Every capacity is simulated (G4). No board and no meter was reachable on 2026-10-09, so the
+measurement could not be made. What could be done was to leave nothing but the measurement:
+
+* **The experiment is registered** in its own commit, `456a4e7`, with no data:
+  `docs/CONTENTION_HW_EXPECTATIONS.md`. N boards in one ad-hoc cell, every one sending and
+  receiving, one 1400 B frame per period at a redrawn instant, three loads. Twelve predictions
+  from the access-rule model for two to five boards.
+* **The two-board case is the sharp one.** The only receiver is the other transmitter, so no
+  third radio can capture one of two colliding frames: it tests the access rule and nothing
+  else. Band 0.6–1.4 times the model's loss; 0.3–1.4 with more boards.
+* **The model was cross-checked where it had never been run.** It had been compared with ns-3
+  at 28 nodes and above. At three to five nodes the two agree within 5 %. ⚠️ **At two nodes the
+  model is 9–18 % above ns-3** — a small bias of the event model at the smallest network. It is
+  inside the registered band and is stated in the registration.
+* **The kit:** `bcast_tx.py --redraw`, `bcast_rx.py` counting per sender,
+  `run_adhoc_contention.sh` (the proven sweep script with every node doing both jobs; ⚠️ not
+  run on hardware, it has a probe mode), `analysis/contention_hw.py` to predict, print the
+  commands, reduce and score.
+
+Why redrawn send instants on hardware too: two boards' clocks differ by parts per million, so
+strictly periodic senders would hold nearly one relative phase for a whole 25 s window — F51,
+on a bench.
+
+## F71 — what "solve all the issues" closed, and what it could not (2026-10-09)
+
+| item from the audit of 2026-10-08 | state |
+|---|---|
+| superseded figures among the current results | **closed** — thesis Appendix C holds the three figures and the old envelope table, with what was wrong with each; the chapters point to it |
+| no general FANET survey held (G24) | **closed** — Gupta, Jain & Vaszkun (IEEE COMST 2016) read in the parts that bear on this work and cited in ch. 2; the register says which parts |
+| four aggregate-signature schemes known through one table (G24) | **one of four read at source** (F68). Two more are open access and their publishers refuse scripted download; one is closed access |
+| older analyses of non-saturated broadcast (G23) | **not obtained.** Ma, Chen & Refai 2009 is CC BY but served only behind a script challenge by its publisher and by the public aggregator; two others are closed access. Not worked around |
+| Kurkowski et al. 2005 (G8) | **not obtained** — closed access, no open copy indexed |
+| worked examples for the theory chapter | **closed** — T2 and T4, each a row of an artifact, held by tests |
+| contention on radios (G4) | **prepared, not measured** (F70) |
+| sensor calibration (G22); lean codec and receiver timing on the board (G9) | **not done** — need the boards and the meter |
+| 52 references | 54, every one read at source |
+
+⚠️ What is left needs either a browser (four papers) or the boards switched on and reachable.
+
+## F72 — five papers that needed a browser: what each said when read (2026-10-09)
+
+F71 ended with four papers that no script could fetch. Mohamed downloaded five; each was read
+before anything was written from it. They are on his machine and are not redistributed
+(`docs/literature/HELD_LOCALLY.csv`, 19 rows).
+
+| paper | what was claimed of it before | what it says | what changed |
+|---|---|---|---|
+| Ma, Chen & Refai, EURASIP JWCN 2009 | not cited — not obtained (F65, G23) | Non-saturated safety broadcast: random arrivals, a queue per vehicle, hidden terminals, fading, mobility; checked against the authors' own event simulation. **It has the loss by simultaneous transmission. It has no term for a transmission that cannot yet be sensed** | credited beside Cao et al. 2021 for the first mechanism, in the paper and in thesis ch. 2 and ch. 8. The second mechanism is still, as far as was found, ours |
+| Kurkowski, Camp & Colagrosso, MC2R 2005 | quoted through Cavalcanti et al. 2018 (G8) | 151 papers, 114 with simulation; 0 of 114 with code available; 98 of 112 with plots show no confidence intervals (87.5 %); "less than 15 %" repeatable | cited directly in the methods paper and in thesis ch. 2 and ch. 11. **The two figures quoted through Cavalcanti et al. were the survey's own** |
+| Cahyadi, Su, Yang & Hwang, IJDSN 2022 | 583 B per message, from Li et al.'s table | states 583 B for one message and **583n for n** itself | the linearity in n is now the authors' statement, not our reading of a table |
+| Xu, He, Kumar & Choo, SCN 2020 | 596 B per message, from Li et al.'s table | evaluates computation; **states no size in bytes** | the thesis says the figure is Li et al.'s count |
+| Liang & Liu, IEEE Systems Journal 2023 | 735 B per message, from Li et al.'s table | 128 B group elements, as Wang et al.; its table of sizes did not survive text extraction | the figure stays Li et al.'s and the thesis says so |
+
+Nothing read here overturned a claim. Two things became firmer: the credit for the tie
+mechanism has two independent sources, and the linear cost of aggregate schemes on the sender's
+link is stated by one of the schemes' own authors.
+
+⚠️ **Read in part, and the register says which part** for the three aggregate-signature papers:
+their comparison of communication cost and the roles of the parties; not their algebra or their
+security proofs. That is what this work quotes them for.
+
+G8 and G24 are closed. G23 is mostly closed: Hassan, Vu & Sakurai (IEEE TVT 2011) and Chen,
+Refai & Ma (GLOBECOM 2007) are closed access and still not held; the thesis says so.
+
+## F73 — contention on two radios: the registered prediction held at two loads and failed at the third (2026-10-09)
+
+The experiment of F70 was run the day it was registered (`456a4e7`): two Raspberry Pi 4, one
+ad-hoc cell on channel 36, each board sending one 1400 B broadcast per period at a redrawn
+instant and counting the other's. A one-window probe first; then twelve windows, all usable
+(nothing dropped before the air, every sender at its rate, none late, no receiver-buffer loss).
+
+| frames/s per board | occupancy | measured | predicted | registered band | |
+|---|---|---|---|---|---|
+| 124 | 0.50 | 0.293 % | 0.293 % | 0.185–0.401 % | inside, 1.00× |
+| 174 | 0.70 | 0.513 % | 0.641 % | 0.394–0.888 % | inside, 0.80× |
+| 211 | 0.85 | 0.641 % | 1.397 % | 0.848–1.947 % | **outside, 0.46×** |
+
+**The load-bearing prediction failed at the highest load, on the side of fewer losses.** Loss
+rises with load, as predicted. The two directions lose nearly the same number of frames in
+every window — 30 and 34, 79 and 78, 112 and 126 over the three loads — which is what a
+collision between two half-duplex radios does, and what a lossy link does not.
+
+The same session was run twice more that night (F75), once with a vendor mode switched off and
+once as a plain repeat. ⚠️ **The three sessions agree with one another better than I had
+assumed they would, and worse than independent losses would:** the standard deviation between
+windows at the highest load is 0.20 percentage points where frames lost in independent pairs
+would give 0.13. Pooled, twelve windows per load (`results/hw/channel/contention_2nodes*.csv`):
+
+| occupancy | measured, 36 windows in all | over the model | over ns-3 |
+|---|---|---|---|
+| 0.50 | 0.330 % (±0.046) | 1.13 | 1.34 |
+| 0.70 | 0.504 % (±0.066) | 0.79 | 0.93 |
+| 0.85 | 0.778 % (±0.130) | **0.56** | **0.61** |
+
+(± is 2.2 standard errors of the mean of twelve windows.) **The radios' loss rises more slowly
+with load than either simulation's:** above them where the medium is half full, 40 % below them
+where it is 85 % full. One board (pi-A) had been re-installed with a newer operating system
+since August; the radio firmware is the same on both (BCM4345/6, 7.45.265).
+
+What the control showed: with one sender at 100 frames/s, 17 600 of 17 600 frames were
+delivered (17 596 in August). Link loss is not the cause.
+
+⚠️ **A weakness of the design, seen only afterwards.** Two boards can fill the medium only if
+each sends often: at occupancy 0.85 each board sends a frame every 4.7 ms and its frame lasts
+2 ms, so a board frequently holds two frames of its own. How a radio sends *its own* queued
+frames then matters as much as how two radios contend. At the paper's operating point —
+124 stations, 12.5 frames/s each — a station almost never holds two. The two-board experiment
+below saturation therefore mixes two things, of which the capacities depend on one. F76
+separates them.
+
+## F74 — August's "airtime within 0.36 %" was two errors that cancelled (2026-10-09)
+
+**Retracted:** "the airtime of a 1400 B broadcast frame measures 1.995 ms against a predicted
+1.988 ms (0.36 %)", in the paper, in thesis ch. 9 and ch. 12, and in
+`results/hw/channel/RESULTS.md` since August.
+
+* **The measured figure was the sender's, not the air's.** 1.995 ms is the reciprocal of the
+  rate at which `sendto` accepted frames. That rate counts the frames still queued in the
+  kernel and the firmware when the sender stops. The receiver's own clock — the sequence
+  numbers it spans, over the time from the first frame heard to the last — gives **2.019 ms**
+  per frame in August's own files (2018.6 and 2019.1 µs) and in today's control (2018.9 µs).
+* **The predicted figure left out the headers and assumed the standard's backoff.** It was
+  20 µs of preamble, 34 µs of DIFS, 67.5 µs of mean backoff and 1400 B at 6 Mb/s. The frame on
+  air is 1464 B with its IP, UDP, LLC and MAC headers and its check sequence: **1976 µs**, as
+  the channel model itself computes. With DIFS and the mean backoff the standard's cycle is
+  **2077.5 µs**.
+
+Two errors of 1.2 % and 4.3 % in opposite senses left 0.36 %. `analysis/frame_spacing_hw.py`
+now computes the spacing from the receiver's side; `tests/test_frame_spacing_hw.py` holds
+both the corrected figure and the size of the old error.
+
+**What is true instead.** One saturated sender on this chip spaces its frames by 2.019 ms with
+the driver's settings and by 2.050 ms with the vendor's frame-burst mode off. The standard
+gives 2.078 ms. The frame's own duration is not measured separately by any of this; what the
+measurement bounds is the gap between frames — about 43 µs and 74 µs, where the standard's
+rule gives 101.5 µs on average. **This radio does not keep the standard's rule between its own
+consecutive frames, in either state.**
+
+How it went unseen for two months: the comparison was made once, against a prediction written
+the same day, and a 0.36 % agreement does not invite a second look. It is the third way a
+plausible wrong number has entered this project — after small samples (F-pattern of the audit)
+and an unverified constant: **two errors of opposite sign.** The check that would have caught
+it is the one Law 6 asks for and I did not do: derive the predicted value a second way. The
+channel model's own function, already in the repository, gives 2.010 ms without backoff.
+
+Prior work, found by searching *after* the anomaly and before writing this: Bianchi, Di
+Stefano, Giaconia, Scalia, Terrazzino & Tinnirello, *Experimental assessment of the backoff
+behavior of commercial IEEE 802.11b network cards*, INFOCOM 2007. They measured this quantity
+on six cards, with an instrument built for it, and found that none of the six kept to the
+standard. It is cited where the thesis reports the spacing.
+
+## F75 — frame burst: a follow-up in which all four predictions failed, and a repeat that prevented a false claim (2026-10-09)
+
+Looking for why F73's highest load fell short: the Linux driver sets the chip's frame-burst
+mode on whenever it configures it (`brcmf_config_dongle`, kernel commit `a3bdc6d` of
+2018-12-13, "enable frameburst mode in default firmware setting"). Read from the firmware of
+both boards: 1. A radio that sends its queued frames one behind another without contending
+again would explain a model that is right at low load and too high at high load.
+
+Registered before any run with it off (`06f1bfa`,
+`docs/CONTENTION_HW_FRAMEBURST_EXPECTATIONS.md`), with a switch for it
+(`hw/channel/frameburst.sh`) whose reported value is logged before and after every session:
+
+| | prediction | measured | |
+|---|---|---|---|
+| P1 | one saturated sender, frame burst off: 2.070–2.095 ms per frame | 2.050 ms | **failed** |
+| P2 | two boards, off: the original bands | 0.321 %, 0.516 %, **0.837 %** (band from 0.848 %) | held, held, **failed** by 0.011 |
+| P3 | the repeat with it on agrees with the first run | 0.376 %, 0.483 %, **0.856 %** (band to 0.81 %) | held, held, **failed** |
+| P4 | at the highest load, off loses at least 1.5 times what on loses | 1.31 times against the first run; 0.98 against the repeat | **failed** |
+
+**Frame burst is real and changes one sender's spacing (2.019 → 2.050 ms). It has no
+demonstrated effect on the loss between two boards.** After the run with it off I was ready to
+write that it explained a third of the gap: 0.64 % had become 0.84 %. The repeat with it on,
+registered for exactly this purpose, gave 0.86 %. The difference I would have reported was the
+scatter between sessions.
+
+⚠️ The lesson is F-pattern again, at one remove: I had sized the repeat's band on losses being
+independent pairs, and they scatter more than that. P3's failure is a failure of my estimate of
+the noise, and it is the reason the pooled table of F73 quotes the scatter it found.
+
+## F76 — two saturated senders: the standard's rule, within 6 % (2026-10-09)
+
+F73 mixes two things: how two radios contend, and how one radio sends its own queued frames.
+The second is not the standard's on this chip (F74). The case that isolates the first is the
+one every textbook starts from: both stations always have a frame. Registered before its runs
+(`9a85afa`, `docs/CONTENTION_HW_SATURATED_EXPECTATIONS.md`): each board offered 400 frames/s,
+800 where the medium carries about 490; four windows with frame burst off, four with it on.
+Frames on air are read at the receiver, from the sequence numbers it spans.
+
+| | the standard's rule | frame burst off | frame burst on |
+|---|---|---|---|
+| frames on air that are lost | **11.8 %** (two stations, window 16: each attempts in a slot with probability 2/17); 11.9 % in the event model | **12.40 %** (8 values, sd 0.70) | **12.14 %** (8 values, sd 0.42) |
+| frames/s on air, per sender | 260 | 262.7 | 264.8 |
+| largest difference between the two senders | none | 2.4 % | 5.4 % |
+
+**S-P1 held: 12.4 % in a band of 7.1–16.5 %, 5.4 % above the figure itself** (3.2 % above with
+frame burst on). S-P3 held.
+S-P2 (on loses less than off) holds in sign and is inside the scatter: no effect of frame burst
+here either.
+
+⚠️ **I had written, in the registration, that I thought about 7 % the likelier outcome** —
+that the shortfall of F73 belonged to the contention. It does not. The registered reading of
+this outcome stands: *in contention this radio follows the standard; the shortfall at occupancy
+0.85 comes from how a radio sends its own queued frames.*
+
+**This is the first measurement in the project of the contention mechanism on hardware, and it
+agrees with the rule the simulated capacities use.** What it does not do:
+
+* It is two stations, saturated — the opposite corner from 124 stations at 12.5 frames/s.
+  It locates the difference of F73; it does not measure a capacity.
+* The 0.5 percentage points above the standard are of the size a single saturated sender
+  already loses with nobody to collide with (0.5–0.9 % of the frames its receiver spans, in the one-sender sessions). That is an
+  observation and nothing was registered about it.
+* Why the unsaturated loss is *above* the simulations at occupancy 0.50 is not explained.
+* One chip family, one room.
+
+What the paper may now say: with two radios the standard's contention rule was observed within
+6 % where it can be isolated; below saturation the same radios depart from the simulations by
++13 % to −44 %, because they do not space their own frames as the standard does; every
+capacity remains simulated.
+
+## F77 — the lean codec timed on the Pi 4, batch verification, and what the boards were found to be (2026-10-09)
+
+**The boards as found.** Two Raspberry Pi 4 were switched on for the night's work.
+
+* **pi-A, the board every July timing came from, had been re-installed**: Debian 13 with a
+  desktop, Python 3.13, no project environment, a new host key, `sudo` with a password. Its
+  radio firmware is the same. It was used for the radio sessions only (the session is started
+  as root through `systemd-run`; nothing was installed on it and its `sudoers` was not
+  touched).
+* **pi-B still holds July's reference software** (Debian 12, Python 3.12.13, `performance`
+  governor) and was used for the timings. Its supply sags when it boots: the kernel logs one
+  under-voltage event between 10 s and 17 s after power-up, and the firmware's flag then reads
+  `0x50000` until the next boot, both of its bits being of the kind that stay set. The bench
+  script's test for throttling *during* a run compares those bits before and after, so on this
+  board it is blind. **Validity therefore rests on two other things, both in the repository:**
+  the kernel's log, which dates the only event to the boot, 250 s before the benchmark began;
+  and the same session's signature timings, which are within 0.4 % of July's on both boards.
+* **The meter** was wired and reads plausibly on one channel. On pi-B's channel the voltage
+  read 5.03–5.08 V early in the night and 4.6–4.96 V three hours later at a similar current,
+  with the board itself reporting no under-voltage. **The sync wire from a board's GPIO17 to
+  the Arduino is not connected to either board**: both pins were pulsed and the meter's window
+  flag did not move. No energy was measured.
+
+**Step 1 of the bench session — the lean sender and receiver as they run** (`authbc-pi4b`,
+`results/hw/p1_lean.authbc-pi4b.csv`, 10 000 operations each):
+
+| | written down on 8 October | measured | |
+|---|---|---|---|
+| sender, one four-record frame | 1.0–2.5 ms | **0.868 ms** | under the range |
+| receiver, one four-record frame | 2–5 ms | **1.411 ms** | under the range |
+| nodes one core decodes and verifies for, design | 15–40 neighbours | **57 nodes** | above the range |
+| batch of 64 against one at a time, per signature | 0.45–0.60 | **0.46** (253 → 116 µs) | inside |
+
+**Two ranges were missed, on the fast side, and the reason is a baseline that was wrong.** The
+ranges were scaled from 0.42 ms and 0.90 ms "on a loaded x86 desktop". Run again on the same
+desktop with nothing else running, the same code takes 0.121 ms and 0.229 ms
+(`results/raw/p1_lean.x86-desktop.20261009.csv`; the checksums of the four operations are those
+of the board's run). The baseline was three to four times too high. The other half of the
+expectation — that interpreted code loses more on the board than a signature does — was right,
+and by more than assumed: the board is six to seven times slower than the desktop on this code
+and three times slower on an Ed25519 verification. ⚠️ Two errors again, of opposite sign; this
+time they did not cancel and the miss showed.
+
+**What it changes.** The receiver takes 5.4 times its one verification. One core of the
+interpreted prototype serves **57 nodes, not the 296** that Eq. (cpu) gives for cryptography
+alone, and the design's 124 nodes need 2.2 of the board's four cores. The paper said the
+prototype's decoding "costs several times the verification"; it now gives the number. *The
+channel binds first* is true of a compiled receiver. For the prototype on one core the
+processor binds first, and the paper and thesis ch. 8 say so.
+
+**Not done, and why:** step 0 (a reference resistor on the meter) and steps 2–3 (metering the
+lean sender; re-metering one row) need the sync wire, a decision on which board is now the
+device under test, and hands at the bench. Step 4 needs the smaller boards, which were not
+switched on.
+
+## F78 — the hardware side audited: July's energy figures reproduce from their raw captures; today's rig was faulty twice; six things corrected (2026-10-09)
+
+Asked: *make sure the hardware implementation and validation is correct, uses the correct
+implementation and tools, and is honest.* The sync wire had just been attached to pi-B and the
+sensor confirmed as an INA219 with a 0.1 Ω shunt. What was checked, and what each check found.
+
+**1. The published energy figures are reproducible from their raw captures — verified, and now
+a test.** The paper's energy table is built from `results/hw/energy/e2e/energy_*.csv`. Those
+are reductions of a capture of the meter and a manifest the board wrote. Re-running
+`hw/ina219_capture.py --reduce` on the five stored pairs of July gives the five stored files
+**row for row**; one repetition recomputed without the reducer agrees to nine digits. ⚠️ Until
+today **no test ran any of the three energy scripts**: a change to the reducer, or a stored
+file edited by hand, would have gone unseen. `tests/test_energy_reduction.py` now does.
+
+**2. July's rig was sound, by the quantities that show a bad one.** From the raw captures:
+voltage steady to 1 mV within a run; no dependence on the sync line (−1 to −4 mV); a real sag
+of 67–75 mV for +150 mA, 0.45–0.49 Ω of source resistance; the chip's power register equal to
+voltage × current to 0.2 mW; sixty-second windows the same by the meter's clock and the
+board's to 0.02 %; firmware flag `0x0` and governor `performance` in every window of the two
+reported rows.
+
+**3. The sensor is configured for the shunt it has.** The sketch calls the library's
+`setCalibration_32V_2A`, whose calibration word 4096 is `0.04096 / (100 µA × 0.1 Ω)`: it is
+correct for a 0.1 Ω shunt and for no other. Each reading is one 12-bit conversion of 532 µs —
+a sample, not an average — which is unbiased for a loop that runs back to back, and the thesis
+now says so. ⚠️ None of this is a calibration: the gain has never been checked against a known
+load (G22).
+
+**4. Today's rig was not sound, twice, and neither fault shows in an energy run.**
+
+* *A loose ground.* With the sync wire on pi-B, the voltage reading of pi-B's channel fell by
+  0.29 V whenever the sync line was high, at unchanged current — five cycles of five, ±10 mV —
+  and wandered by 50–110 mV when idle. The meter's ground and the board's were joined through
+  about a kilohm. Power is voltage × current: every energy figure would have been wrong by an
+  amount depending on the load. Re-seated by Mohamed; the shift is now +5 mV.
+* *A weak feed.* With the ground sound, four busy cores draw 1.17 A, the supply falls to 4.73 V
+  at the sensor, and 40 ms later the board has throttled itself to 0.56 A; the kernel logs the
+  under-voltage at that second. With one core busy it holds 4.97 V. Three tries of three.
+  **Not fixed as of this writing.**
+* *Where the weakness is.* The other board, fed through the other sensor, was given the same
+  four busy cores: 5.01 V at 1.07 A, no under-voltage. **The board sees 0.19 Ω through sensor 2
+  and 0.47 Ω through sensor 1.** It is the sensor-1 branch — its leads, its connectors or its
+  supply port — and not the board on it. ⚠️ July's captures were made on that branch and show
+  the same 0.45–0.49 Ω. July's windows loaded one core and none was throttled, so the published
+  figures stand; but the rig that produced them would, on this evidence, also have failed the
+  four-core line of today's check, which nobody ran then.
+
+**No energy was measured.** `hw/rig_check.py` — written today, before the second fault was
+seen — requires no under-voltage in any phase, and the rig failed it. The rule was not relaxed
+for a single-core measurement on the morning it first fired. ⚠️ **That is a choice with a cost,
+and it is Mohamed's to revisit:** every energy window loads one core, each window is guarded on
+its own by the board's log, and by every meter-side number today's rig equals July's. A rule
+that asked only for a clean idle phase and a clean one-core phase would pass it. It would also
+be a rule changed after seeing what it blocked. The clean way out is physical: feed the board
+through the branch that holds.
+
+**5. Six things corrected.**
+
+| what | was | is |
+|---|---|---|
+| the manifest of the design row's run (`manifest_d1_reduced.json`) | the run wrote no host, interpreter or time; they were added by hand in July, and two were wrong: Python **3.11.2**, and a local time labelled UTC | Python 3.12.13 and the time in the original file's name, with a note in the file saying what was entered by hand and why it is now believed. **Evidence:** the same pipeline on pi-B under 3.12.13 runs at 98.9 % of that run's frame rate (and the control row at 99.6 %); pi-B's system Python 3.11.2 cannot import the crypto library. No measured value changed — a test compares every window with the file the run wrote |
+| "the model composed from separately measured times **and powers**" (paper, thesis ch. 8) | read as an independent check of the model | the power in the model is the **median of the same metered runs**; the comparison tests the composition of the times and cannot test the power. Both documents say so |
+| "the lean codec has not been timed on the board" (paper, thesis ch. 8) | stale since this morning (F77) — two sentences the pass of that morning missed | timed, 0.87 ms; not metered |
+| `validate_energy_e2e.py` | described itself as running "at a fixed record rate"; had a `--no-verify` flag that could not be switched off | a tight loop, as it always was; the flag and an unused argument removed |
+| the radio's power, 0.218 W (thesis ch. 6; the paper's modelled end-to-end figures) | "that of the radio while it receives", with nothing about how it was got | what `results/hw/energy/p_radio_w.md` records: the *receiving board's* added power under a saturated **unicast** stream on **2.4 GHz**, **two** repetitions (0.205 and 0.231 W) — so it includes the processor's share of receiving and the acknowledgements sent, and is applied to unacknowledged broadcast on 5 GHz. Stated in both documents; it enters only figures labelled as modelled |
+| the lean sender's energy | absent: the energy table is of the first format and the text did not say what the reported design costs | printed as an estimate — time on one board × power metered on the other: **about 163 µJ per record against the table's 58**, 284 against 119 unbatched. A remark in thesis ch. 8 says no row of the thesis has both the lean format's bytes and a metered energy |
+
+Finding F14 of July says the mismatch between manifest and reducer was "fixed at source rather
+than by hand-editing the artifact". That is true of the script and of the three later runs.
+The first run's manifest *was* completed by hand, and the original is kept beside it.
+
+**6. Two tools added, so that the next session cannot repeat today.**
+
+* `hw/rig_selftest.py` on the board and `hw/rig_check.py` on the host: a 25-second sequence —
+  idle, one core, every core, each with the sync line high — and nine pass/fail limits taken
+  from July's captures. `tests/test_rig_check.py` runs it on captures made up to have exactly
+  one fault each. `hw/RIG.md` makes it a condition of every session.
+* The window validity test now counts the kernel's under-voltage events as well as reading
+  the firmware's flags. On a board whose supply dips at boot the flags are set for good and
+  could not see a later dip; the count can.
+
+**7. Checked and found sound, with nothing to change:** the timing harness (warm-up outside the
+timed region, garbage collection off, a checksum that defeats elision, a monotonic clock); the
+lean receiver's timing, which raises if any frame is not fully accepted, so a rejection path
+cannot be what is timed; the radio kit's counting, which reads loss at the receiver and frames
+on air from the sequence numbers spanned.
+
+**Later the same morning: the rig passes.** Mohamed swapped the two boards' supplies and
+sensors, which puts pi-B on the branch that holds. The check of 05:12 UTC passes every line:
+1 mV of movement with the sync line, full power with every core busy (+3.49 W at 5.07 V), no
+under-voltage since boot, 0.18 Ω, and one busy core adding 0.757 W where July's constant is
+0.749 W. The same capture judged as the other channel fails the line that identifies the board,
+as it should. (On the way: on a board just booted the script's fallback for driving the sync
+pin gave up a fraction of a second before the system made the pin writable. It now waits.)
+The energy runs follow, with what is expected of each written in `hw/BENCH_SESSION.md` and
+committed before the first of them.
+
+**What is still not established:** the sensor's gain (G22).
+
+*Added the same day, after F79.* Two more things of the same kind, both in what a file says
+about the machine that made it. **Every results file made on a board carried the header line
+`governor=WSL, governor uncontrolled`, and `cpu=unknown`** — the development machine's note,
+written by a constant, beside the true values the board's script prepends as `device_governor`
+and `device_model`. The timings in those files were made under `performance`, as their
+`device_` lines say; the false line is in `p1_crypto.authbc-pi4a.csv` and the files of
+2026-10-09, which are left as they were made. The header now reads the governor and the board's
+model where the system exposes them, and is unchanged where it does not. And the C program
+behind the batch-verification figure was read: 64 distinct keys, messages and signatures,
+every result checked in every repetition, a failure aborts — and a ratio of 0.46 can only come
+from the batch path, since the library's fallback costs more than verifying singly.
+
+## F79 — the lean sender metered, on a rig that had passed its check: four runs, four ranges held (2026-10-09)
+
+The first energy measurement since July, and the first of the format the paper reports.
+Expectations in `hw/BENCH_SESSION.md`, committed in `a38994f` with no run in existence. Board
+`authbc-pi4b` (July's software), meter channel 2, the rig check passed 2½ minutes before the
+first run (F78). Sixty-second windows, idle then loaded, the sync line high in both.
+`results/hw/energy/e2e_2026-10-09/`, `results/raw/energy_runs.csv`.
+
+| run | metered, µJ per record | registered | added power | |
+|---|---|---|---|---|
+| **control** — July's baseline row again (first format, CBOR, every record signed) | **116.2** [114.8, 120.7] | 113–125 | 0.737 W | held |
+| lean sender, four records to a frame | **155.4** [155.1, 155.8] | 146–179 | 0.738 W | held |
+| lean sender, one record to a frame | **273.1** [270.6, 276.9] | 256–313 | 0.723 W | held |
+| first format, JSON, every record signed — ten repetitions | **120.9** [120.5, 122.5] | 115–127 | 0.740 W | held |
+
+Every window clean by the firmware's flags (`0x0` throughout: this boot had no under-voltage
+at all) and by the kernel's count; every idle window within 34 mW of the others in its run;
+each window sixty seconds by the meter's clock as by the board's.
+
+**What the four say.**
+
+* **The two rigs agree.** The control is 2.2 % below July's 118.8 µJ, from the other board
+  through the other sensor, and its added power 2.4 % below July's 0.755 W. Today's figures
+  can stand beside July's. ⚠️ That bounds the *difference* between two sensors and two boards.
+  It does not check the gain they share: same nominal shunt, same calibration word (G22).
+* **The lean sender costs 2.7 times the energy per record of the first format's** —
+  155.4 µJ against 58.4. The lean codec was written for the size of the frame and is slower in
+  this interpreted prototype. Until today the energy table was of the first format only and
+  the text did not say what the reported design costs (F78 printed an estimate that morning:
+  163; the meter says 155).
+* **Batching saves 43 % of the lean sender's energy**, where its timing said 43 % and the first
+  format's saving is 51 %.
+* **The meter is 4.4 % and 3.9 % below the script's prediction** (time of one frame × 0.749 W),
+  inside the script's 10 % acceptance. Two causes, both measured: one busy core adds
+  0.72–0.74 W on this board against the constant from the other; and with four records to a
+  frame the metered loop runs a frame 3 % faster than the timed one (0.842 ms against
+  0.868 ms), which it does not with one record (0.379 ms both).
+* **The JSON row is reportable at last** (G11): ten repetitions of ten usable, where July had
+  two of five. 120.9 µJ against July's 119.3 and 121.8.
+
+**What I did wrong during it, and what it cost.** While the control was being metered I logged
+in to the board several times to see how far it had got, and started a waiter that did so
+every fifteen seconds. Each login costs the board processor time on another core. The
+control's second repetition reads 120.7 µJ where the other four read 114.8–117.0; its load
+window is the one those logins fell in. The repetition is kept — no rule written beforehand
+removes it — and the median, which is what is reported, does not move with it. From the second
+run on nothing was asked of the board until a run's expected end, and the five repetitions of
+the next run agree within ±0.25 %. ⚠️ The same care is owed to July's captures in
+retrospect: nothing in them shows such a step, and their idle windows are steady.
+
+**Also recorded:** the manifests name the sync pin's driver as `gpiod`; on this board it was
+the kernel's sysfs interface. The script wrote `gpiod` whenever any driver worked. Fixed in
+the script after the runs; the files are as the runs wrote them.
+
+**Closes:** G9 (the lean codec timed and metered), G11 (the JSON row). **Does not close:** G22
+— the sensor's gain against a reference load.
+
+## F80 — the paper read as a supervisor would read it: seven statements that contradicted the paper's own results, one security claim the code does not deliver (2026-10-09)
+
+*Mohamed: "audit and review the paper as a supervisor and check it for any contradictions, any
+non scientific tone, any unclear or hard to read or understand section to rewrite … review them
+deeply on the concept and what it lacks and is it sound and publishable or not."* The whole of
+`paper/main.tex` was read against `paper/numbers.tex`, the result files and the code.
+
+### What contradicted what
+
+| # | where | it said | what the paper's own results say | now |
+|---|---|---|---|---|
+| 1 | abstract | "contention is simulated" | Sec. VIII and the Limitations report contention measured between two radios | "Capacities are simulated; contention was measured on two radios only" |
+| 2 | Method | sender energy metered "on the same board" | the lean rows are from a second board and sensor (the table's own caption) | says which format was metered where |
+| 3 | contribution 4 | one core "keeps up with" 296 nodes | the receiver that was built serves 57; 124 nodes need 2.2 cores | both figures, and that the prototype serves fewer than the channel admits |
+| 4 | Receiver CPU | "the channel binds first" | true of cryptography alone; for the prototype on one core the processor binds first (the thesis already said so) | the paragraph is split: the count by Eq. (cpu), then the receiver as built |
+| 5 | contribution 3 | energy reported "for each" step of the ladder | energy is metered for two steps in each format | "sender energy with and without batching" |
+| 6 | validation | the radio's closer spacing was set beside the failed prediction as if it explained it | the follow-up registered to test that explanation failed all four of its predictions (F76) | "The cause is not established", and the failed follow-up is reported |
+| 7 | energy | "the lean codec is … the slower to run" | the lean sender costs 2.7 times the first format's energy per record (F79); the thesis said so, the paper did not | the ratio is in the text and in the Limitations |
+
+Also: "the thirteen" followed a sentence that had just counted twelve (it is six fitted plus
+seven predicted); the conclusion said the access rule "was observed between two radios" without
+the load at which the prediction failed; the end-to-end energy model was not labelled as the
+first format's; the title's "capacity envelope" was not among the listed contributions.
+
+### The security claim (the one finding that is not wording)
+
+Paper, thesis ch. 3 and `docs/01` said: two validly signed records for one sequence number are
+kept as a pair, "which is transferable evidence because both carry the sender's signature".
+
+`ledger/store.py` keeps `equivocations: list[tuple[Record, Record]]`. A `Record` has five
+fields and none is a signature. In the lean format one signature covers a frame, and
+`LeanReceiver` hands the store the records and discards the frame. **Nothing the receiver
+holds can be checked by a third party — neither the pair, nor any stored record.** The frame on
+air carries everything needed; the prototype does not keep it. The introduction motivates the
+work by "evidence afterwards", so this matters more than its size suggests.
+
+**Done now (wording, to match the code):** the three documents say that a record is evidence
+only with its frame and that the store does not keep frames; the Limitations say what the store
+holds "is not yet evidence to anyone else". `tests/test_evidence_claim.py` holds both the fact
+and the wording. **Not done:** changing the receiver to keep frames. That is a change to the
+timed receive path (the board's 1.41 ms was measured on today's code) and is G28, for Mohamed.
+
+### What is narrower than it was stated
+
+* **The exclusion count depends on the format for three of its eight rates.** Signature plus
+  SHA-256 link are 96 B: the five 50/51 B rates are excluded whatever the format. At 115 B, 19 B
+  remain, and the lean format's header (16 B at its floor) and the link's framing (3 B) are
+  exactly 19. A hand-packed layout would leave some of those bytes for a record — fewer than the
+  24.0 B this telemetry's keyframe averages, so the rates stay out of reach *for this telemetry*,
+  but not "whatever the telemetry". The scope paragraph now has a fifth condition. The abstract
+  and the conclusion still say "eight of twelve … cannot carry one" (G29).
+* **Certificates "every fifth message" is a cadence in time in the source** (ten messages a
+  second, so one certificate in 500 ms — read in the PDF, lines on "every fifth SPDU" and "every
+  500 ms interval"). Charged per frame, the baseline at 50 frames/s sends one every 100 ms and
+  the design one every 400 ms. At a fixed 500 ms the reviewer's arithmetic gives about 160 B
+  per record for the baseline (table: 184.57) and 51.4 for the design (52.95): the column
+  favours the design by about 13 % of the baseline. The paper now says which reading it uses
+  and that it favours the design; the numbers are unchanged (G30).
+* **Capacity was simulated for batches of one and four records only**, because both operating
+  points have Λ·D_max = 5. Every simulated configuration in `ns3/run_nmax_direct.py` has b = 1
+  or b = 4. The rule of Eq. (line) is therefore checked across frame size and frame rate, and
+  not across batch size as such. Stated in the capacity paragraph and the Limitations (G31).
+* **"Among 64 B signatures the scheme does not decide what can run" is true by construction**
+  for bytes and capacity (equal sizes give equal frames) and is a statement about CPU only where
+  it says anything. The ladder paragraph now says so. It remains a headline (G32).
+
+### A check made for the review and NOT entered as a result
+
+The paper gives the loss at the crossing as ρ²/(W(1−ρ)) + ρc/T. Solving that for ρ at 5 % with
+nothing fitted and setting N = ρ/(fT) gives the eighteen simulated crossings within **8.1 %**
+(median about 2 %; worst is the 565 B frame), where the fitted line gives 4.2 %. It was computed
+after the data, from a scratch script, to judge whether "the slope is not a free constant" is
+quantitative. It is. It is not in the paper, has no registration and no test; whether to
+report it is G33.
+
+### Tone and reading
+
+Phrases removed: "The message is short", "in an unexpected order", "kinder", "the whole prize",
+"takes the following ones with it", "a slow record of provenance", "easy to get wrong", "the
+right unit", "whatever the authenticator weighs", "Asked for crossings". Paragraphs rewritten
+for order: the channel simulation (scenario, then source timing and why, then the estimator),
+the rule and its mechanism (each mechanism described before it is credited), the receiver's
+CPU, the energy paragraph (one format at a time), the validation (simulator, then radios).
+Statements made two or three times are made once: freshness-not-MTU, the generated-numbers
+sentence, the stream table's sizing, the periodic source. A paragraph on relayed records sat
+among the constraints and constrained nothing; it is one sentence of the Limitations. The
+energy table was 11.7 pt wider than its column.
+
+**Judgement, for the record.** Sound within the scope it states, after these corrections.
+Novelty is in the accounting and in the capacity rule with its mechanism, not in batching.
+The weakest points are the realism of the capacity scenario, the single batch size, a receiver
+that does not keep what the paper is about, and a comparison of certificates that leans its
+way. The full review was given to Mohamed in the session of 2026-10-09.
+
+## F81 — the receiver keeps what it verified; an equivocation that hid behind a replay; three statements narrowed with their numbers (2026-10-09)
+
+*Mohamed, on the review of F80: "go ahead for decisions 1–5". Decision 2 (other batch sizes) is
+its own finding, F82. This one is the other four.*
+
+### 1 · The receiver keeps frames (G28)
+
+`LeanReceiver` now keeps the bytes of every accepted frame, keyed by each record it carried
+(`frame_of`), and on an equivocation both frames as they arrived (`evidence`). Two functions in
+`placement/session_v2.py` are what a third party runs, and neither takes a receiver:
+
+* `verified_records(frame, pk)` — the records of a frame that decodes and verifies with the
+  sender's public key and nothing else; `None` otherwise, including for a frame coded against
+  a record it does not carry;
+* `proves_equivocation(held, offered, pk)` — whether two such frames give one sequence number
+  two different records.
+
+The cost is storage: a frame's on-air length for every *b* records held (43.25 B per record in
+the design), beside the record.
+
+**Written test-first, and the tests found a second defect.** The receiver offered a frame's
+records to the store in order and let the first refusal decide the frame. A frame that repeats
+records 0 and 1 and signs a *different* record 2 was therefore refused as a **replay** at
+record 0, and the equivocation at record 2 was never seen. The paper's claim (iii),
+"two validly signed records for one sequence number are detected", was false for that frame.
+`Store.contradicts` is now asked of every record of a verified frame before any is offered.
+The test is `test_an_equivocation_behind_a_duplicate_first_record_is_still_found`; it failed
+against the old receiver for the right reason before the fix.
+
+**Re-timed on the board, against a control, with the expectation committed first**
+(`hw/BENCH_SESSION.md`, commit `61a4b4f`; the receiver that keeps frames did not exist in the
+repository at that commit).
+
+| | control (old receiver, same session) | new receiver | ratio | registered |
+|---|---|---|---|---|
+| four records | 1.4159 ms | **1.4260 ms** | 1.0071 (+10.0 µs) | 1.00–1.02; "+3 to +12 µs" |
+| one record | 0.6536 ms | **0.6582 ms** | 1.0070 (+4.6 µs) | 1.00–1.02 |
+
+The control reproduced the morning's 1.4112 ms within 0.34 % (registered: 2 %). One core still
+serves **57** nodes — by a margin of 0.18 %, which the thesis states; the figure is one
+frame-time step from 56. The paper's receive times are now 1.43 and 0.66 ms (were 1.41 and
+0.65) and the receiver costs 5.5 times its verification (was 5.4). The sender's times are the
+morning's on purpose: its code is unchanged and the energy runs were registered against them.
+`tests/test_bench_session_hw.py` holds the SHA-256 of the three source files of the receive
+path as they were on the board, so that a later edit cannot leave the paper quoting a time of
+code that no longer exists.
+
+⚠️ I logged in to the board four times during the second run, a second each, to read its log.
+One fell at the start of the lean timing. Medians of 10 000 frames; the sender's rows of the
+same minute agree with the control within 0.15 %. Recorded, not excused.
+
+### 2 · The certificate column, read in time as well (G30)
+
+`design_ladder.csv` gains `bytes_per_rec_with_cert_timed`: one full certificate per 500 ms at
+any frame rate, the digest in every other frame (`frame_experiments.cert_bytes_per_frame_timed`,
+`cert_interval_s` in the experiment's config). Nothing else in the file changed; this was
+checked cell by cell.
+
+| lean format | bytes/record | cert. per 5 frames | cert. per 500 ms |
+|---|---|---|---|
+| baseline (row 5) | 145.77 | 184.57 | **159.93** |
+| design (row 8) | 43.25 | 52.95 | **51.41** |
+| ratio | 3.37 | 3.49 | **3.11** |
+
+The figures are the ones the review estimated by hand before the code existed (159.9 and
+51.4). Both columns are in both ladders; the text says the first favours the design and why
+(at ten messages a second the two readings are one, which is why the first is a reading of the
+source and not an error).
+
+### 3 · The exclusion count, split by cause (G29) — and the scheme sentence (G32)
+
+Abstract, contribution 2 and conclusion now read "eight … : five cannot hold the signature in
+any format, three more cannot hold our frame". Generated, not typed: `exclSigCount`,
+`exclFmtCount`, and `exRoomAfterCrypto` (19), with a guard that the lean header at its floor
+plus the link's framing is exactly that number. The thesis has the fifth condition in ch. 10
+and the split wherever the count is stated. The sentence "among 64 B elliptic-curve signatures
+the scheme does not" is out of the paper's abstract; it stays once in the introduction (the
+supervisor's own line) and once in the conclusion.
+
+### 4 · A correction to F80 itself
+
+F80 reported a "reviewer's check": the paper's loss expression, solved with nothing fitted,
+within 8.1 % of the eighteen crossings, and proposed it as something the paper could add
+(G33). **The repository already held the better version.** `docs/02` §6g and the registration
+of F5 give the exact form, ρ·[1 − (1 − 1/W)^(ρ/(1−ρ))] + (N−1)·f·8 µs, within **5.5 %** (mean
+2.3 %), and `tests/test_dcf_model_artifacts.py` holds it. The 8.1 % is the first-order
+simplification the paper prints. I had read the paper and not the registration. G33 is
+rewritten accordingly: if a figure is wanted in the paper, it is the 5.5 %, already tested.
+
+## F82 — the batch as a dimension: two, three and eight records to a frame, six predictions registered, six held (2026-10-09)
+
+*Decision 2 of Mohamed's five on the review of F80 (open item G31).*
+
+**What was missing.** Every simulated capacity was of a frame of one record or of four, because
+both operating points have Λ·D_max = 5. The capacity rule and the access-rule model had been
+checked across frame size and frame rate and never across the batch — which is the variable the
+paper is about.
+
+**What was done.** Three cells registered in `64322fc` before any run, not one seed: the frame
+the lean codec emits with two, three and eight records at 50 records/s. Two predictions each:
+the airtime line with its slope unchanged (±6 %) and the access-rule model with nothing fitted
+(±3 %). 630 runs, into a file of their own.
+
+| records | line | model | simulated [95 %] | from the line | from the model |
+|---|---|---|---|---|---|
+| 2 | 66.0 | 66.6 | **66.7** [66.4, 67.0] | +1.1 % | +0.2 % |
+| 3 | 96.3 | 96.0 | **96.5** [96.1, 96.8] | +0.2 % | +0.6 % |
+| 8 | 225.9 | 220.6 | **222.3** [221.5, 223.2] | −1.6 % | +0.8 % |
+
+**All six held.** Where the line and the model disagreed (2.4 % at eight records) the simulator
+is three times nearer the model. A weaker expectation recorded beside the predictions had the
+trend of the line's residual right and the sign of the middle cell wrong; it is reported as
+that in `docs/NMAX_DIRECT_EXPECTATIONS.md`.
+
+**What the documents say now.** The paper: one sentence in the capacity-rule paragraph, and the
+limitation reworded — the three batches were simulated for the rule alone and nothing else is
+evaluated at them. The thesis: a table in ch. 8 and a row in Appendix B (twenty registrations;
+seven failed in whole or in part, as before).
+
+**What it does not show.** Another PHY rate, another loss level, or a less idealised channel.
+And it does not make the deadlines of 60, 80 and 180 ms operating points of this work: only the
+channel was evaluated at them.
+
+**One thing about method.** The scoring function was tightened after two cells were complete
+and before anything was written, so that an unfinished grid cannot be scored. It was the right
+change and it was made after data had been looked at; both are said in the outcome section.
+
+## F83 — the review's last two items: four sources read and cited, and the closed form quoted (2026-10-09)
+
+*Mohamed: "yes for both" — open items G34 and G33 of the review of F80.*
+
+### The four bodies of work a networking reviewer would look for (G34)
+
+Each was looked up in an open registry, fetched from a legitimately open copy, read, and only
+then cited. All four are held locally and not redistributed (`docs/literature/HELD_LOCALLY.csv`,
+now 24 files); the register says which parts of each were read and quotes the page.
+
+| topic | source obtained | what the paper now says, and on what |
+|---|---|---|
+| frame aggregation | Skordoulis et al., IEEE Wireless Commun. 2008 — read in full | Removing three frames in four "is the principle of frame aggregation in 802.11n, whose aggregates are addressed to one receiver and exclude broadcast; batching at the application gives a broadcast sender the same effect." The source: an A-MSDU's subframes must share the receiver's address, "Thus, broadcasting or multicasting is not allowed" (p. 44) |
+| erasure-coded stream authentication | Pannetrat & Molva, NDSS 2003 — read in full | Added to the stream-signing schemes with a figure from its Table 1: 10 B per packet for blocks of sixteen at 5 % loss, at a latency of one block. It is the loss recovery that condition (iii) of the exclusion sets aside |
+| ADS-B authentication | Strohmeier, Lenders & Martinovic, COMST 2015 — §II-B and the cryptography part of §IV read | "ADS-B is the extreme case: its 112-bit messages leave 56 bits for data, and proposals for public-key authentication distribute one signature over several messages that receivers buffer" |
+| age of information | Yates et al., JSAC 2021 (survey) — §I, §II-A/B, opening of §III, §VII-A read | The freshness bound is named for what it is: a bound on **peak age** at a receiver that loses no frame |
+
+**The one thing reading produced that was not expected.** The survey defines peak age as the
+delay of the previous update plus the interval between deliveries (its Eq. 6). With one frame
+every b/Λ and a frame's newest record delayed by T_ch + t_v, that is b/Λ + T_ch + t_v — the
+paper's D(b), with the b/Λ that F43a kept as a "worst case" and could justify only by sampling
+quantisation. The convention is what a peak-age bound requires. ⚠️ This is an observation from
+the survey's definition, made after the convention was chosen; the age-of-information work on
+batching was **not** surveyed, and nothing is claimed as new. The thesis says it "does not
+change the convention; it says what the convention bounds".
+
+**Where the review's own point lands.** The review said about three fifths of the capacity gain
+is frame aggregation, a known effect. The paper now says so in the sentence that reports the
+gain, cites the source, and says why the standard's mechanism is not available to a broadcast
+sender. That is a narrower claim than before and a more defensible one.
+
+**Not obtained, so not cited:** Kaul, Yates & Gruteser 2012 (the paper the survey calls the
+start of the field) and Park, Chong & Siegel 2003 (SAIDA). Both are closed access. The register
+lists them as wanted; `tests/test_citations.py` holds that neither is in the bibliography.
+
+### The closed form with nothing fitted (G33)
+
+The paper's "Why the crossing is there" paragraph now gives the exact count,
+ρ[1 − (1 − 1/W)^(ρ/(1−ρ))], and the figure: with the detection term and nothing fitted, the
+eighteen crossings within **5.5 %** (mean 2.3 %). The numbers are generated
+(`closedWorst`, `closedMean`); the function has one definition, in `analysis/dcf_model_check.py`,
+which the test that held it since F5 now calls. The three batch-size cells of F82 are not among
+the eighteen: they were compared with the fitted line and the event model, as registered.
+
+### What it cost
+
+The paper is **11 pages** (44 references), where it had been held at 10. Nothing fixes a page
+count: the venue decided on 2026-10-08 is a journal and the class changes then. Getting back to
+10 would mean removing about 250 words of content, which was not done. The thesis is 128 pages
+(65 references).
+
+## F84 — the receiver on the board's four cores: "2.2 cores" was arithmetic, and the board needs three (2026-10-09)
+
+*Mohamed: "fix the first 4 weak points as recommended". This is the fourth: the prototype does
+not reach its own design point on one core, and what the paper said about more cores had never
+been measured.*
+
+**What the documents said.** One core of the interpreted receiver serves 57 nodes, so 124 nodes
+"need 2.2 of the board's four cores". The 2.2 is 123 neighbours × 12.5 frames/s × 1.43 ms.
+
+**What was done.** `hw/multicore_receive.py`: K receiver processes, one pinned to each of K
+cores, each fed the stream the benchmark times one frame of, started together, 30 s each,
+K = 1…4. The expected figures were committed with the script before the run (`eb2751b`).
+Nobody logged in to the board while it ran.
+
+| cores | frames/s | times one core | nodes served | registered | |
+|---|---|---|---|---|---|
+| 1 | 692 | 1.00 | **56** | 680–708 frames/s | held |
+| 2 | 1318 | **1.90** | **106** | 1.90–2.00 | held |
+| 3 | 1867 | **2.70** | **150** | 2.75–3.00 | ⚠️ failed, low |
+| 4 | 2329 | **3.36** | **187** | 3.50–4.00 | ⚠️ failed, low |
+
+No throttling; 71 °C at most. The line "two cores below 124 nodes, three at or above" held.
+
+**What it changes.**
+
+* **124 nodes need three cores, not 2.2.** Two serve 106. The paper and the thesis say three;
+  the thesis keeps the 2.2 beside it as what the arithmetic gave, and says the two scaling
+  ranges were missed.
+* **The cores do not add up**: each added process slows every process by about a twentieth
+  (692 → 659 → 622 → 582 frames a second each). The processes share the cache and the memory
+  bus; which of the two costs this was not examined, and the documents say so.
+* **One core in a loop serves 56 nodes, not 57.** The 57 came from the median frame time with
+  0.18 % to spare (F81). A loop does not keep that margin. Both are quoted for what they are:
+  57 by the frame time, 56 as measured over thirty seconds.
+
+**What it is not.** There was no radio and no dispatcher: a frame reached its process for free.
+A deployed receiver has to hand each sender's frames to one process, and that cost is not in
+these figures. The Limitations of the paper say so.
+
+**Why the expectation was wrong.** I assumed an interpreted workload would not be bound by
+memory and so would scale almost linearly. It scales at 95, 90 and 84 % of linear. The
+assumption was mine and untested; it is the kind of sentence that "2.2 cores" also was.
+
+## F85 — nodes spread out, and capture: equal power was the unfavourable assumption; and two smaller changes of emphasis (2026-10-09)
+
+*Mohamed: "fix the first 4 weak points as recommended". This finding is weak points 1, 2 and 3
+of the review of F80; the fourth is F84.*
+
+### 1 · The channel scenario (weak point 1)
+
+**The doubt.** Every capacity was simulated with all nodes at one point and equal received
+power. A reader's first question is what happens when they are not.
+
+**What was done.** Two scenario options (absent by default; nine stored runs reproduce bit for
+bit after the rebuild) place the nodes in a disc with free-space loss. `sim/dcf_capture.py`
+adds one rule to the access-rule model: of the frames that start together a receiver keeps the
+strongest if it is 4 dB above the rest — the simulator's own rule and threshold, read in its
+source (`docs/02` §6h). Four crossings registered in `db0bca1`, then 840 runs.
+
+| | predicted | simulated [95 %] | from the model | above equal power |
+|---|---|---|---|---|
+| baseline, 15 m | 39.5 ± 5 % | **39.6** [39.5, 39.7] | +0.2 % | +12.3 % |
+| design, 15 m | 139.7 ± 5 % | **140.4** [139.8, 140.8] | +0.5 % | +12.7 % |
+| baseline, 100 m | 35.3–41.5 | **39.4** [39.3, 39.5] | −0.3 % | +11.7 % |
+| design, 100 m | 124.6–146.6 | **139.3** [139.0, 139.8] | −0.2 % | +11.9 % |
+
+**All four held.** The published capacities are conservative for unequal power by about an
+eighth; the design-to-baseline ratio stays 3.5; the swarm-scale radius costs under one percent
+against the small one, where I had expected "a few percent".
+
+**What it does not change.** Hidden stations are in neither disc. A swarm wider than its
+carrier-sense range (about 370 m in the simulator's terms) is still unexamined, and that is
+the case in which capacity falls. The paper's Limitations and the thesis say so in terms.
+
+**Disclosed with the registration:** three single-seed runs made to check the new option, and
+a scratch run of the model at three thresholds made to size the grids. And one of my own
+numbers was wrong in a draft: I had written the energy-detection range as 30 m; it is 36.9 m,
+and the small disc was reduced from 18 m to 15 m radius before anything was registered.
+
+### 2 · Where the design gains nothing (weak point 2)
+
+The abstract now says that batching gains nothing unless record rate times deadline exceeds
+two, and a new figure (`fig_capacity_vs_deadline.png`) sets the five simulated batch sizes on
+the airtime line against the deadline that admits each: at 40 ms the batch is one record and
+the design is the baseline.
+
+### 3 · What the introduction leads with (weak point 3)
+
+The contribution list of the paper's introduction now opens with the capacity rule and its
+mechanism, which the review judged the most original part; the ladder, the exclusion bound and
+the built frame follow. ⚠️ **The abstract and the order of the sections still put the exclusion
+first**: the supervisor's review asked for that and two tests hold it. Reordering only the
+list leaves a small asymmetry between abstract and introduction; it is Mohamed's to resolve.
+One sentence of the first draft of the new list was wrong and was corrected before it was
+built: it credited the *fitted constant* to "a loss mechanism earlier analyses do not contain".
+The constant is the tie term, which they do contain; the mechanism they lack is the detection
+window.
+
+### What it cost
+
+The paper is 11 pages with one more figure. The thesis is 131 pages. Appendix B lists
+twenty-two registrations, of which eight failed in whole or in part (the multi-core
+measurement of F84 is the eighth).
+
+## F86 — the bootstrap interval of a mean at thirty seeds covers 92–94 %, not 95 % (2026-10-20)
+
+*Found while scoring revision A3 (`predictions/A3.md`).*
+
+**What was seen.** The model's value lay inside the measured bootstrap interval in 179 of 200
+cells of the verifiability sweep with one keyframe in r > 1 frames (89.5 %), against about 190
+expected at 95 %. No bias: the fifteen group means of (measured − model) lie within ±0.004 with
+scattered signs, and the model's ordering of the loss processes holds in all forty groups.
+
+**Checked directly, with a known mean.** `authbc.bench.stats.bootstrap_ci` (percentile, statistic
+= mean, 10 000 resamples) on thirty per-seed values: **93.7 %** coverage for binomial values
+(240 frames, p = 0.05), **91.8 %** for overdispersed (beta-binomial) values of the same mean;
+a Student-t interval on the same samples covers **95.3 %**. 600–2 000 trials each. Cells with
+r > 1 are overdispersed — one lost frame takes its group's later frames with it — which is
+why they fell lower.
+
+**What it touches.** Every V interval the paper prints is this interval at thirty seeds
+(`lossCi…`, `lossBerCi`). They are a little narrow — about a tenth in width. Crossing intervals
+(`interpolated_crossing_ci`) resample the same way and were not checked here. Nothing published
+is changed by this finding: whether to move the V intervals to a t-interval (or BCa) is a
+decision (open item H2).
+
+**The general lesson, again small-sample.** A tolerance for "measured within x of the model"
+must come from the interval's width at the sample size used, and a claim over many cells must
+expect its share of misses. Two of my A3 predictions failed for exactly these reasons.
+
+## F87 — a traced ns-3 run was not its seed's untraced run: F37's mechanism, entered again (2026-10-20)
+
+*Found while preparing revision A3 part 2; before any traced run was kept.*
+
+**What was seen.** A smoke run of the spatial scenario with `--traceLinks 5` and the same run
+without it (20 nodes, 2 s, seed 1) gave different summaries: 471 against 470 frames sent,
+delivery 1.000 against 0.996. Two untraced runs were identical.
+
+**Cause.** The trace option picks its links from a random variable meant to have a stream of its
+own: `CreateObject<UniformRandomVariable>()` then `SetStream(12288)`. ns-3 constructs the variable
+with its `Stream` attribute at the default −1 first, and −1 takes the next automatic stream index
+(`RandomVariableStream::SetStream`, `ObjectBase::ConstructSelf` in ns-3.48's source) — so every
+variable created after it (backoff, fading) drew from a stream one index further on. The code's
+comment said the opposite ("so that choosing them moves no other random number"); it was not
+checked. The same pattern was in `authbc-links.cc`, whose traced runs are revision A10.
+
+**Fix.** Both scenarios build the variable with the stream as a construction attribute,
+`CreateObjectWithAttributes<UniformRandomVariable>("Stream", IntegerValue(12288))`: no automatic
+index is taken. The links identity record (`results/raw/links_identity.csv`) now runs each check
+traced and untraced, and `tests/test_links_scenario.py` requires both to equal the published run.
+The spatial scenario gets the same check before A3's trace runs (its binary is in use by A1
+stage 2 until then).
+
+**What it touched.** Nothing kept: A1's runs are untraced (the option absent changes nothing,
+checked when the trace code was added); A10's first launch was stopped after 12 s with no run
+written. **What it would have done:** traced runs that are honest samples of the scenario but
+not the runs the registrations and identity checks name — the kind of difference F37 turned into
+a 5-point "mobility penalty".
+
+**The lesson.** F37's fix was "pin streams by node id"; the rule it implies is wider: in ns-3,
+*creating* a random variable moves the stream of everything created after it, whatever is done
+to it afterwards. Any option that is meant not to change a run is checked by running with and
+without it and requiring identical output.
+
+## F88 — the spatial scenario's group speed cannot change a run (2026-10-20)
+
+*Found while scoring revision A1, stage 2 (`predictions/A1.md`).*
+
+**What was seen.** S3 at 5 m/s and at 15 m/s gave the same crossings to the last digit — and the
+same runs: 450 of 450 identical in every column. Speed 0 differed.
+
+**Cause.** In `ns3/authbc-spatial.cc`, layout `group`, `--speedMps` drives only the group's
+reference point; each member's offset is a random walk at ns-3's default speed (2–4 m/s) that
+does not depend on it, with streams pinned by `AssignStreams`. The channel is log-distance with
+Nakagami fading drawn per frame: positions matter, velocities do not. So every speed above zero
+is a rigid translation of the same relative geometry. The scenario's header comment also said
+the members walk at speed 0; the code holds them still. Neither was checked before the
+registration, which described the sweep as testing "motion up to 15 m/s".
+
+**What it touches.** The plan's motion criterion and my A1-4 are scored HELD for what was run —
+members drifting at 2–4 m/s against members still, |ΔV| ≤ 0.0006 — and the group speeds are
+reported as not tested. Nothing published used S3.
+
+**The lesson.** The tell is F37's in reverse: there, two speeds that should have differed were
+identical because of bookkeeping; here they were identical because the model has no way to tell
+them apart. A sweep over a parameter needs, before it runs, a reason the output *can* depend on
+it — and two settings that agree to the last digit are a reason to look at the model, not a
+result.
+
+---
+
+*F89–F97: the revision's experiments, one entry each, as its acceptance criteria require
+(`docs/revision/EXECUTION_PLAN.md`). Each is scored in full in its `predictions/<ID>.md`; what
+follows is what is true now and the cross-check made by a second method.*
+
+## F89 — the design's ×3.5 does not depend on how the swarm is spread (revision A1, 2026-10-20)
+
+4 230 ns-3 runs of a scenario with log-distance loss, Nakagami-3 fading and 4 dB capture, from
+equal power to a 1 km disc: the design/base ratio lies in 3.46–3.58 in every layout (lowest
+interval end 3.31, at R = 1 km, where 11 % of the nodes able to spoil a frame cannot hear it
+coming). Capacity counted in neighbours (215 m) falls — 8.7 at R = 1 km — while counted in nodes
+it rises (218, spatial reuse): a receiver contends with the nodes of its carrier-sensing range,
+which it does not count. That mechanism is Hu & Dai's (IEEE Access 2020, Eq. 22) and is credited,
+not claimed. **Cross-check:** the equal-power layout of the new program reproduces the published
+crossings (124.55 exactly; 35.10 against 35.26, intervals overlapping). Group speed was not
+tested (F88).
+
+## F90 — one lost frame, not two, breaks the deadline (revision A2, age part, 2026-10-20)
+
+Peak age under loss at b = 4, Λ = 50 /s: the mean meets D_max = 100 ms at every p ≤ 0.10, but a
+single lost frame gives 169.75 ms, so the deadline holds for a share 1 − p of updates, as V does.
+**Cross-check:** the measured time-average age equals the closed form within 0.6 ms at every p
+(43.84 / 43.75 ms at p = 0). The ns-3 validation of the design map is running.
+
+## F91 — the adaptive controller runs at the target's edge (revision A4, 2026-10-20)
+
+120 ns-3 runs. The registered controller (smallest b with predicted delivery ≥ 0.96) saves 9–41 ms
+of peak age against fixed b = 4, but realises V ≈ 0.955 on a growing swarm, so a quarter of
+one-second windows fall below 0.95 and it fails at 76 nodes (fixed b = 4: 127; an oracle that
+knows N: 125). The 0.005 is lag, not model error. **Cross-check:** at constant N (the merged
+minute) its mean V equals the oracle's (0.962 / 0.965); below 30 nodes it is the fixed b = 1 run
+bit for bit. A larger margin is a new registration (H9).
+
+## F92 — a time window closes the delay-line attack while GNSS time is held (revision A5, 2026-10-20)
+
+At zero bytes, a 150–250 ms window refuses every frame held back by 250 ms or more, which
+sequence numbers alone never do; it costs clock quality (2 % of honest frames refused at
+σ = 50 ms) and, in a GNSS outage, a fixed 250 ms window fails after 75 min, not the plan's two
+hours. **Cross-check:** the drift of two clocks measured in the harness equals the computed
+144 ms/h; every Gaussian tail lies in its binomial interval.
+
+## F93 — the frame protocol's five properties are proven, in three models (revision A6, 2026-10-20)
+
+The registered Tamarin model settled 3 of 9 lemmas. Keying each counter by a fresh session id
+(Tamarin then treats the state as injective) and giving the receiver a start rule made a model
+without the chain and the clock settle all fifteen of its lemmas in one run (129 s): origin and
+integrity, no replay, injective agreement, equivocation implies a revealed key, gap detection.
+Continuity is proven in the registered model; the delayed-replay attack and its fix in a timed
+model. One model with everything did not settle. **Cross-check:** the delayed-replay trace is
+found in two models (the timed one and the full one), and origin and integrity is verified in two
+(the registered one and the counters one).
+
+## F94 — few radios sending fast stand for many sending slowly (revision A12, 2026-10-20)
+
+330 ns-3 runs at fixed N·f: delivery depends on the total frame rate to within the (N − 1)/N
+correction (at most 0.5 % over a 25-fold change of split), so eight radios at 194 frames/s stand
+for the design's 124 nodes at 12.5 — in ns-3; real drivers are B1/B2's question. **Cross-check:**
+the access-rule model, nothing fitted, is within 0.0011 of every split up to 350 frames/s per
+node; cells C and D re-run here reproduce the published means exactly. **Prior art (read 2026-10-21):** Kumar, Choi & Kim (EURASIP JWCN 2019, §6.2) made two V2X radios send every 1 ms to emulate 100 vehicles each, with the transmitters hidden from each other (no access collisions); what is added here is the equivalence under carrier-sensing contention.
+
+## F95 — with Falcon-512 the gain is the same ×3.5, and the design fits (revision A15, 2026-10-20)
+
+420 ns-3 runs: per-record Falcon crosses at 12.4 nodes, the design signed with Falcon at 43.5,
+ratio 3.51 — the same as Ed25519's 3.53, not larger as the plan expected: the gain is the frame
+count, which does not care how large the signature is. The paper's "post-quantum signatures do
+not fit" holds for ML-DSA only. **Cross-check:** the access-rule model within 0.6 % of both
+crossings, at frames longer than any it had met; Eq. (6) is 7 % off at the per-record frame,
+outside its fitted range. Timing waits for pi-B (H4).
+
+## F96 — the ledger can be audited from the uploads alone (revision A16, 2026-10-20)
+
+One pass over three UAVs' uploads (391 495 frames, one flight hour) finds a planted equivocation
+and a planted forgery with nothing but the public keys, and no false finding; 6.4 min of one core
+per flight hour in Python; kept frames cost 42.94 B a record (0.96 GB per hour for 124
+neighbours). **Cross-check:** the 0.7 % below the sizing convention's 43.25 B is the convention's
+sender id and sequence numbers (an hour into a flight), not the audit's arithmetic.
+
+## F97 — the deployed broadcast standards give no reason to batch (revision A17, 2026-10-20)
+
+By the freshness rule and frame lengths: ADS-B and Bluetooth-4 Remote ID cannot carry a signature
+at all; CAM at 10 Hz with a 100 ms deadline admits no frame, one record at 200 ms, two at 300 ms,
+nine at 1 s. Consistent with these standards signing each message, not an explanation of it.
+**Cross-check:** the three CAM cells by hand from b/Λ + T_ch + t_v ≤ D_max (b < 1, b = 2, b = 9).
+
+## F98 — ns-3's collision loss is independent from frame to frame (revision A3, part 2, 2026-10-21)
+
+3 000 traced neighbour links at the design's crossing (S1 at R = 1 km, S3): loss 0.052 with a
+mean burst of 1.06 frames, against 1.055 for independent loss at that rate. Verifiability with a
+reference every r frames therefore follows Eq. (3) for independent loss (V_trace − V_iid
+between −0.0002 and +0.0009 at r = 2 and 4), not the Gilbert form the plan expected; it is the
+pessimistic case for r > 1 and irrelevant for the design (r = 1). **Cross-check:** at r = 1 the
+replayed V equals 1 − p̂ exactly and equals the runs' own pooled V (0.9481 / 0.9483), and every traced run equals its untraced stage-2 run.
+
+## F99 — the stream-signing schemes against a deadline (revision A10, 2026-10-21)
+
+1 860 ns-3 runs with each scheme implemented and run on traced links: delivery reproduces Table 5
+(every N_max inside its interval; the access-rule model within 1 % of all nine cells), and the
+deadline-aware V removes most of it — Gennaro–Rohatgi, EMSS at any k and TESLA with four records
+a frame never reach 0.95 in time; TESLA reaches it only with d = 2 and I ≤ 20 ms (39.6–39.8
+nodes); MAVLink 2 (42.1) and Wong–Lam (29.1) are unchanged. TESLA with d = 1 loses a share
+(arrival delay)/I of packets to its own safe-packet test. **Cross-check:** that share, 1 ms / I,
+predicts the measured in-time/delivery ratios at I = 10, 20, 50 ms to within 0.003.
+
+## F100 — the design map holds in simulation over Λ × D_max (revision A2, 2026-10-21)
+
+3 150 ns-3 runs at fifteen roles of the (Λ, D_max) map, 18–609 nodes, frames of 146–580 B at
+2–100 frames/s: every crossing within 1.05 % of the access-rule model (nothing fitted); the ratio
+rises with the best batch (at 100 records/s: 2.66, 6.63, 17.8 for b* = 3, 9, 49) and is 6.63 at
+(100 /s, 100 ms). **Cross-check:** every run of cells C and D that the published campaign also
+ran (240) is identical in every value; D's crossing differs by 0.13 nodes only because the two
+grids bracket it with different points.
+
+## F101 — the capacity intervals cover 93–94 % too; the expanded percentile bootstrap fixes them (H2, 2026-10-21)
+
+*Decision H2 (Mohamed): V intervals become t intervals; test the crossing intervals the same way
+before deciding for them.* `analysis/interval_coverage.py` → `results/raw/interval_coverage.csv`:
+synthetic per-seed curves with a known crossing, shaped like cell D (30 seeds, per-seed sd
+0.0019, slope −0.00106 per node), through the repository's own interval code, 2 000 trials, on a
+step-3 grid (as A2) and a step-1 grid (as the published D).
+
+| interval | step 3 | step 1 |
+|---|---|---|
+| V at one N: percentile bootstrap / **t** | 0.935 / **0.953** | 0.922 / **0.941** |
+| interpolated crossing: percentile bootstrap (every capacity interval the paper prints) | 0.943 | 0.930 |
+| interpolated crossing: **expanded percentile** bootstrap (Hesterberg 2015, §5.3) | **0.951** | **0.950** |
+| interpolated crossing: delta-method t (a candidate) | 0.928 | 0.879 |
+| grid crossing N_max: percentile bootstrap | 1.000 | 0.999 (conservative) |
+
+(± about 0.01 at 2 000 trials.) **Done:** V intervals are t intervals (`stats.t_interval`;
+`run_loss_codec`); the loss table and the three printed intervals that moved (`\lossBerCi`,
+`\lossCiFour`, `\lossCiSixteen`, each by 0.001–0.003) are regenerated; no point estimate changed.
+**Adopted 2026-10-21 (Mohamed, H2):** crossing intervals are expanded percentile intervals — the same bootstrap at the level 1 − 2Φ(−√(n/(n−1)) t_{0.975,n−1}) (96.25 % for 30 seeds), `interpolated_crossing_ci(expanded=True)`, nominal coverage on both grids. The paper's two tables of interpolated crossings (spread nodes, batch sizes) are regenerated; each limit moved by 0.01–0.06 nodes and two printed intervals changed (`\batCiEight`, `\sprCiFarDesign`); no crossing moved. The grid crossing N_max keeps its plain interval: it already covers ≈ 100 % (conservative, discrete). The delta method, my first candidate, does worse than the bootstrap on a fine grid because replicates change bracket. The revision's registered analyses keep the plain interval they were scored with (the library default); an interval from them enters the paper only through the expanded option.
+
+## F102 — the adaptive controller's shortfall was mostly margin (revision A4b, 2026-10-21)
+
+60 ns-3 runs of two registered second controllers, one change each. Twice the margin (0.02, from
+A4's measured one-second scatter): V ≥ 0.95 in 93 % of a growing swarm's windows (A4: 75 %),
+failure at 116 nodes (A4: 76; fixed b = 4: 127), 20–21 ms of peak age saved against fixed b = 4.
+A growth term at A4's margin: 85 %, failure at 108, age as A4's. Neither is within 5 % of fixed
+b = 4. **Cross-check:** below 30 nodes both are A4's runs (b = 1, age identical); in the mobile
+scenario all controllers give identical series because every threshold is exceeded from the first
+second — a scenario that cannot discriminate, reported as such.
+
+## F103 — relative motion up to 15 m/s does not change delivery (revision A1-motion, 2026-10-21)
+
+900 ns-3 runs, every node an independent Gauss–Markov process at 0, 5 or 15 m/s in a square of
+the R = 1 km disc's area (decision H8; the new file `ns3/authbc-spatial-mobile.cc`, E20's rule):
+ΔV ≤ 0.0005 at every node count of both configurations; design/base ratio 3.57–3.63 (still:
+3.61). The runs do differ with speed (0 of 300 identical) and the neighbour count does not
+(within 0.85 %): motion changes who contends, not how many. **Cross-check:** the new file with
+the disc layout reproduces three stage-2 runs of `authbc-spatial.cc` bit for bit. Closes F88's
+open question for relative motion; Doppler and time-correlated fading remain outside the channel.
+
+## F104 — on six 802.11 PHYs and rates the gain is 3.4–3.8×; the model is optimistic at short frames (revision A11, 2026-10-22)
+
+2 520 ns-3 runs, 802.11a at 6/12/24 Mb/s and 802.11p (10 MHz) at 3/6/12 Mb/s: the design/base
+ratio is 3.39–3.80 and rises with rate at each width; the paper's "1.7–4.3×" (a closed form's
+saturation ratios) is not what the delivery crossings show. The access-rule model (nothing
+fitted) is within 1.5 % at every rate but the fastest of each channel width, where it is
+2.9–4.6 % optimistic (118–242 µs frames); the cause is not established (the preamble-detection
+constant is not it alone). **Cross-check:** the 802.11a 6 Mb/s cells reproduce the published
+crossings exactly. *Corrected 2026-10-24, when the paper's generator checked the claim: this
+finding first said "within 1.5 % at frames of 178 µs and longer, and 4.0–4.6 % at the fastest
+rate". 802.11p at 12 Mb/s has 226 µs baseline frames and is 2.9 % off; what holds is by rate, not
+by frame time (the outcome's table in `predictions/A11.md` was right).*
+
+## F105 — at 50 Hz the delta costs a byte per field on every airframe; 25 fields keep a 3.05× gain (revision A9, 2026-10-22)
+
+30 PX4 v1.17.0 SIH flights (quadrotor, fixed wing, VTOL; missions 1–10 each; 1 506 552 records
+on the 20 ms grid), with records of 9, 15 and 25 fields:
+
+| fields | delta | keyframe | saving at b = 4 | ratio |
+|---|---|---|---|---|
+| 9 | 9.0 B | 22.8 B | 70.1 % | 3.51 |
+| 15 | 16.0 B | 32.8 B | 67.2 % | 3.31 |
+| 25 | 26.0 B | 45.4 B | 63.4 % | 3.05 |
+
+Between airframes the delta differs by at most 0.1 B and the ratio by 0.016. At 20 ms no field
+but the roll and pitch rates changes by more than the ±63 units a one-byte zig-zag varint holds,
+so the delta is the field count. Compare the paper's 5 Hz public logs, where fast vehicles go
+above the floor.
+
+The plan's ~60 B keyframe and 10–13 B fixed-wing delta both missed. The fixed wing flew at
+15 m/s, not 15–25 m/s: SIH's airplane does not fly faster, and Mohamed decided the cap
+(2026-10-22). The encoding bounds the 9-field delta below 10 B at 25 m/s anyway.
+
+The ratio stays above 2 until a delta of 159–282 B.
+
+**Cross-checks:**
+
+* On nine fields the size code reproduces `wire_v2`'s bytes and frame lengths (tests).
+* The rerun from the logs is bit-identical.
+* Taking the nearest sample instead of holding it (the logs alternate 16 and 24 ms) moves no
+  ratio by more than 0.007. It does remove the fixed-wing 9-field excess over the quadrotor,
+  which was the hold's doubled steps (A9-3 held only as registered).
+
+## F106 — a crypto test asserted a false DER range and failed one run in 512 (clean gate, 2026-10-22)
+
+`test_signature_is_fixed_width_64_not_der` (from 2026-07-03, c23b283) asserted that an ECDSA
+P-256 signature's DER form is 70–72 B, with a fresh key and nonce on every run. When r or s lies
+below 2^247, its DER integer is 31 B, so the DER form is 68–69 B. That happens in 0.21 % of
+50 000 signatures measured; analytically about 1/512. The clean gate on 6696614 drew a 69 B
+signature.
+
+The code was right: the fixed-width 64 B form pads with leading zeros. Only the test's claim and
+two docstrings were wrong. The test now checks the DER length exactly against r and s.
+A deterministic test covers the short-integer cases (68, 69, 40 B) and the 2^247 boundary on
+every run.
+
+**Cross-check:** 5 000 repetitions of the fixed test pass, 9 of them with a short DER. No number
+in the project used the 70–72 B range: signatures are byte-accounted at 64 B.
+
+## F107 — PX4's SIH fixed wing stops near 14 m/s because of a simulator damping term, and speed does not change A9 (2026-10-22)
+
+The registered A9 fixed-wing and VTOL flights were commanded at 15 m/s but held 13.0–13.9 and
+12.8 m/s in level flight, mostly at full throttle. A9's outcome had reported the commanded
+speed as flown; it is corrected in its addendum.
+
+**Cause:** 6 N of thrust (4 N for the VTOL's pusher) against the aerodynamic drag plus SIH's
+linear damping `SIH_KDV · v` (0.2 N per m/s; PX4: "the greater this value, the slower the quad
+will move").
+
+**Causal check:** one mission commanded to 22 m/s.
+
+| change | level airspeed |
+|---|---|
+| none | 10.4 m/s (mission not finished) |
+| `SIH_KDV` = 0 | 20.9 m/s |
+| `SIH_T_MAX` = 12 N | 21.3 m/s |
+
+**Effect:** at about 18 m/s ground speed the 9-field delta is 9.09 B (nearest sample) against
+9.00, and the capacity ratio is 3.503 against 3.503. The 25-field ratio is 3.058 against
+3.03–3.05.
+
+**Cross-check:** the two different ways of flying faster give the same sizes to 0.02 B.
+`results/raw/sih_speed_limit.csv`, `results/raw/record_size_speed.csv`.
+
+## F108 — compiled, the receiver serves 289 neighbours per Pi 4 core, 628 with lazy verification (revisions A8, A13; pi-B, 2026-10-22)
+
+The identity gate's 10 000 frames on pi-B:
+
+| receiver | per frame | neighbours per core |
+|---|---|---|
+| Rust (`ed25519-dalek`) | **0.277 ms** | **289** |
+| Python | 1.409 ms (the paper's 1.43) | 57 |
+| Rust, batches of 64 | | **643** |
+| Rust, lazy: tag + decode 10.2 µs, then batches 117.2 µs | | **628** |
+
+* Rust is 5.1 times faster than Python, and verification is 97 % of its time.
+* Batch-of-64 verification costs 0.435 of a single verification.
+* With lazy verification, records are evidence ≤ 171 ms after sampling.
+* **2026-10-28 (review of 2026-10-27, S-24; Mohamed's choice):** the nodes column above is
+  1/((Λ/b)t) rounded. The paper and thesis now print Eq. (4), 1 + ⌊1/((Λ/b)t)⌋, which counts
+  the receiver itself: **290** for Rust and **629** lazy; Python (57) and batches of 64 (643)
+  are unchanged.
+
+Every plan statement of A8 and A13 that was run held. A8's energy statement was not run: it
+waits for the rig's calibration (G22). My A13-2 bound (170 ms) missed by 1 ms, an arithmetic
+slip in the registration.
+
+**Cross-check:** the Python cost reproduces 1.43 ms on the same board to 1.5 %.
+"124 neighbours need ~3 cores" (F84) is a property of the interpreter: compiled, the channel
+binds again.
+
+## F109 — an outsider's flood is stopped by the 8 B group tag; an insider is stopped by nothing tested (revision A7; pi-B, 2026-10-22)
+
+On pi-B, per frame:
+
+| frame | cost |
+|---|---|
+| honest | 1 436 µs |
+| forged (real sender, newer sequence, another key's signature) | 1 078 µs (it never reaches the store) |
+| outsider's frame refused by the tag | 22.5 µs |
+
+UDP flood against one receiver core carrying 41 senders (80 % busy). Honest V falls below 0.95
+from the forged-frame rates below.
+
+| defence | V < 0.95 from |
+|---|---|
+| none | 247 frames/s |
+| cheap checks | 171 frames/s |
+| group tag, insider | 129 frames/s |
+| per-sender cap, forgeries spread over every sender | 123 frames/s |
+| per-sender cap, all naming one sender | 2 200 frames/s |
+| group tag, outsider | never: V = 0.984 at 3 000 frames/s; the channel carries at most 2 857 |
+
+Plan and agent misses:
+
+* "700 forged frames/s per core": the measured figure is 928.
+* "> 100 000 outsider frames/s": 44 400.
+* "Cap limits damage to the impersonated sender": only when one sender is named.
+* "About 2 % of N_max": 2.6 % by Eq. (6).
+
+**Cross-check:** the interrupted first attempt, ended by a reboot (a jostled power supply),
+agrees on V to within 0.013
+over 60 rows.
+
+Arithmetic from A8's costs: an unprotected compiled receiver would fail near 2 000 forged
+frames/s, within the channel's reach. The tag is needed with either receiver.
+
+## F110 — on a Pi 4, Falcon-512 verifies three times faster than Ed25519 (revision A15, timing; 2026-10-22)
+
+liboqs 0.16.0 on pi-B:
+
+| | sign | verify |
+|---|---|---|
+| Falcon-padded-512 | 638 µs | 88.2 µs |
+| Ed25519 (`cryptography`) | 87.8 µs | 258.7 µs |
+
+On the quiet host: 157 µs sign, 28.2 µs verify. At the design's rates Falcon costs a sender
+0.8 % of a core and a receiver of 124 neighbours 13.7 %. Falcon's price is airtime, not
+computation.
+
+**Cross-check:** three 10 s repetitions agree within 1 %, and the host-to-Pi ratio (3.1×)
+matches Ed25519's (3.0×).
+
+## F112 — compiled, the lean sender is the cheapest: 17.1 µJ per record against the first format's 58.4 (revision A8, energy; pi-B, 2026-10-22)
+
+pi-B on the INA219 rig, the rig check passed the same day, 5 × 60 s repetitions per run:
+
+| run | µJ per record | added power |
+|---|---|---|
+| control, first format, every record signed | 118.0 (inside its registered range; October 116.2) | 0.747 W |
+| compiled lean sender, b = 4 | **17.1** | 0.660 W |
+| compiled lean sender, b = 1 | **60.7** | 0.646 W |
+
+* The lean format is now 3.4 times cheaper than the first format with batching, and 1.9 times
+  cheaper without. The paper's reversed order (Python lean at 155.4 µJ) was the interpreter's.
+* My registered ranges missed low: the compiled loop draws 12–14 % less added power than the
+  Python figure used to predict it.
+* The sensor's gain is assumed (G22 waived by Mohamed, 2026-10-22).
+
+**Cross-check:** the metered rate (38 600 records/s) reproduces the board timing of the
+compiled sender (103.4 µs a frame) to 0.2 %. Power × time gives the metered energy.
+
+## F111 — at the registered 15–25 m/s, fixed-wing records cost the quadrotor's plus 0.2 B (revision A9-fast, 2026-10-22)
+
+A9's ten airplane and ten VTOL missions were re-flown at their drawn speeds. The profile:
+
+* SIH's brake removed (`SIH_KDV` 0);
+* the airplane's thrust raised to 12 N;
+* TECS reset before the mission.
+
+Cruise held within 1 m/s on all 20 flights, with no touchdown; mean ground speed was 20.1 and
+16.2 m/s.
+
+| airframe | 9-field delta | ratio |
+|---|---|---|
+| airplane | 9.22 B | 3.511 |
+| VTOL | 9.21 B | 3.503 |
+| quadrotor | 9.00 B | 3.503 |
+
+At 25 fields: saving 63.3 %, ratio 3.04. The plan's "10–13 B for fixed wings" misses at its own
+speeds.
+
+**Also found:** every registered A9 airplane flight had a ground-level first leg. The cause is
+TECS's reference altitude starting at sea level (A9 Addendum 2); excluding those records
+changes nothing.
+
+**Cross-check:** the nearest-sample and altitude-floor sensitivities move no delta by more than
+0.16 B. Against A9's own flights of the same missions, the airplane's delta grows by 0.16 B.
+
+## F113 — the batch controller's peak ages are 1.5 frame periods, not one: the source sends each frame within the next period (revision A4/A4b, found drawing its figure; 2026-10-24)
+
+Drawing `fig_adaptive.png`, fixed b = 4 showed a mean peak age of **124.3 ms**. The paper's
+"Age Under Loss" gives **83.7 ms** for the same design with no loss (87.7 ms at p = 0.05).
+Both use one definition: the time from the newest record of the previous frame to the arrival
+of the next frame.
+
+**Cause, checked in the source.** `ns3/authbc-adaptive.cc` is the published traffic source of
+the capacity runs (`authbc-delay.cc`, J = one period). It closes a frame at the end of its
+period and sends it at an instant drawn uniformly over the *next* period. The peak age is then
+P(1 + U), a mean of 1.5 P. `analysis/aoi_under_loss.py` sends at fill, which gives P.
+
+* fixed b = 4, P = 80 ms: 1.5 × 80 = 120 ms, plus 4 ms of channel = 124.3 ✓;
+* below 30 nodes, b = 1, P = 20 ms: 1.5 × 20 + 0.9 = 30.9 ✓.
+
+**What changes.**
+* The capacities do not change: the source's phase is what they need.
+* The controller's saving of **21 ms** of peak age is measured under this source. A sender
+  that transmits at fill would see about two-thirds of it, since the saving scales with the
+  period; that is an argument, not simulated.
+* The paper now says the ages include the send instant and run half a period above
+  Sec. Freshness. `tests/test_figures_revision.py` pins the 1.5-period mean.
+
+**Cross-check:** the explanation predicts both the b = 4 and the b = 1 values from the period
+alone, with no fitted term.

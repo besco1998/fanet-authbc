@@ -1,0 +1,1 @@
+2026-10-22T20:18:49+03:00 throttled=0x0 temp=48.7'C frequency(48)=1800457088 governor=performance undervoltage_events=0 load=0.09 0.33 0.27

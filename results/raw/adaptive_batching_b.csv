@@ -1,0 +1,17 @@
+# python=3.12.3
+# platform=Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=adaptive_batching
+# config_hash=3823f65e09fc60d2
+scenario,policy,seeds,frac_v95,frac_v95_min,frac_v95_max,mean_v,mean_v_min,mean_v_max,bytes_per_record,bytes_per_record_min,bytes_per_record_max,b_changes_per_node_min,b_changes_per_node_min_min,b_changes_per_node_min_max,peak_age_mean_ms,peak_age_mean_ms_min,peak_age_mean_ms_max,peak_age_p95_ms,peak_age_p95_ms_min,peak_age_p95_ms_max,frac_v95_merged,frac_v95_merged_min,frac_v95_merged_max,mean_b_merged,mean_b_merged_min,mean_b_merged_max,mean_b_apart,mean_b_apart_min,mean_b_apart_max,frac_v95_n_le_115,frac_v95_n_le_115_min,frac_v95_n_le_115_max,age_n_lt_30_ms,age_n_lt_30_ms_min,age_n_lt_30_ms_max,failure_n,failure_n_min,failure_n_max,first_window_v_below_n,first_window_v_below_n_min,first_window_v_below_n_max,b_reaches_1.5_at_n,b_reaches_1.5_at_n_min,b_reaches_1.5_at_n_max,b_reaches_2.5_at_n,b_reaches_2.5_at_n_min,b_reaches_2.5_at_n_max,b_reaches_3.5_at_n,b_reaches_3.5_at_n_min,b_reaches_3.5_at_n_max
+merge,adaptive-m20,10,0.9876,0.9831,0.9888,0.9778,0.9773,0.9782,52.1286,52.1286,52.1287,1.3483,1.3483,1.3483,102.7459,102.712,102.792,154.9,154.0,155.0,0.98,0.9667,0.9833,3.9833,3.9833,3.9833,2.9649,2.9649,2.9649,,,,,,,,,,,,,,,,,,,,,
+merge,predict,10,0.977,0.9719,0.9831,0.9669,0.9662,0.9684,66.3702,65.0388,66.7122,1.6702,1.6067,1.6854,81.792,81.3645,83.3148,151.0,151.0,151.0,0.9483,0.9333,0.9667,3.9355,3.9333,3.9381,2.0,2.0,2.0,,,,,,,,,,,,,,,,,,,,,
+mobile,adaptive-m20,10,0.9655,0.9655,0.9655,0.9722,0.9709,0.9737,48.2123,48.2118,48.2128,3.1034,3.1034,3.1034,113.5457,113.372,113.742,158.0,158.0,158.0,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+mobile,predict,10,0.9655,0.9655,0.9655,0.9722,0.9709,0.9737,48.2123,48.2118,48.2128,3.1034,3.1034,3.1034,113.5457,113.372,113.742,158.0,158.0,158.0,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+ramp,adaptive-m20,10,0.6773,0.6477,0.7159,0.9562,0.9553,0.9575,55.9981,55.8199,56.1715,3.2487,3.2487,3.2487,103.0536,102.857,103.265,160.0,160.0,160.0,,,,,,,,,,0.9306,0.871,0.9677,30.9288,30.7885,31.0606,116.2,111.0,123.0,82.1,31.0,112.0,34.0,34.0,34.0,54.7,54.0,58.0,80.5,78.0,82.0
+ramp,predict,10,0.6148,0.5682,0.6591,0.9526,0.9509,0.9545,58.6702,58.375,59.135,3.2487,3.2487,3.2487,98.9117,98.5149,99.3345,160.0,160.0,160.0,,,,,,,,,,0.8468,0.7903,0.9194,30.9288,30.7885,31.0606,107.9,73.0,118.0,50.0,31.0,72.0,35.3,33.0,40.0,56.2,51.0,60.0,88.7,85.0,91.0

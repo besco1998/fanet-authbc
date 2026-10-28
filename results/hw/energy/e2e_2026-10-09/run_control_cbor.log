@@ -1,0 +1,28 @@
+========================================================================
+D1 end-to-end energy validation — EXPECTED VALUE, stated before measurement
+========================================================================
+  configuration     : cbor + ed25519 + placement B, b=1, H_f=44 B
+  model inputs      : p_cpu=0.749 W, t_enc=50.41 µs, t_sign=88.12 µs
+  scope             : SENDER side (encode+chain+sign). Verify excluded from both the pipeline and the prediction.
+  PREDICTED CPU     : 103.757 µJ/record
+  acceptance        : |measured - predicted| / predicted <= 10 %
+                      a larger gap is a FINDING to explain in writing (Law 7),
+                      never a tolerance to widen (Law 3).
+
+  sync: _open_v2 unavailable (ModuleNotFoundError: No module named 'gpiod')
+  sync: _open_v1 unavailable (ModuleNotFoundError: No module named 'gpiod')
+  rep1 idle                 frames=0        records/s=      0.0
+  rep1 e2e_frame_pipeline   frames=379811   records/s=   6330.1
+  rep2 idle                 frames=0        records/s=      0.0
+  rep2 e2e_frame_pipeline   frames=380175   records/s=   6336.2
+  rep3 idle                 frames=0        records/s=      0.0
+  rep3 e2e_frame_pipeline   frames=380299   records/s=   6338.2
+  rep4 idle                 frames=0        records/s=      0.0
+  rep4 e2e_frame_pipeline   frames=380394   records/s=   6339.8
+  rep5 idle                 frames=0        records/s=      0.0
+  rep5 e2e_frame_pipeline   frames=380142   records/s=   6335.6
+
+  manifest -> /home/pi/e2e_runs/control_cbor/manifest_1791523532.json
+  NEXT: reduce the INA219 samples against this manifest, then record measured vs
+        predicted (103.757 µJ/record) in docs/audits/ and close D1.
+RUN_EXIT=0

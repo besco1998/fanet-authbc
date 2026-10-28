@@ -1,0 +1,6 @@
+# Revision A3, part 2 (predictions/A3.md): per-link traces, 50 neighbour pairs per run, 30 seeds,
+# design configuration, at the stage-2 grid point nearest the design's crossing
+# (results/raw/spatial_capacity.csv: s1-r1000 217.84 -> 217; s3-v15 139.70 -> 142).
+# Each traced run must equal its stage-2 run in every summary value (F87).
+s1-r1000 design 217
+s3-v15 design 142

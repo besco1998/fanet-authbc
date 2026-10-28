@@ -24,6 +24,7 @@ ROLE="$1"          # tx | rx
 START_EPOCH="$2"   # absolute unix time at which window 0 opens
 FREQ="${3:-5180}"  # 5180 = ch 36 (802.11a, non-DFS, no NO-IR under reg domain EG)
 MODE="${4:-full}"  # probe = one short window (feasibility) | full = distribution + sweep
+FRAMEBURST="${5:-keep}"  # keep | 0 | 1 — the chip's frame-burst mode (frameburst.sh)
 
 OUT=/home/pi/authbc_channel
 SSID=authbc-mesh
@@ -75,6 +76,12 @@ sudo -n ip addr flush dev wlan0
 sudo -n ip addr add "$IP/24" dev wlan0 >>"$OUT/session.log" 2>&1
 sleep 12
 
+# Frame burst: as in run_adhoc_contention.sh. Logged before and after, whatever was asked.
+if [ "$FRAMEBURST" = 0 ] || [ "$FRAMEBURST" = 1 ]; then
+    sudo -n "$OUT/frameburst.sh" set "$FRAMEBURST" >/dev/null 2>&1
+fi
+log "frameburst before the windows: $(sudo -n "$OUT/frameburst.sh" get 2>&1) (asked: $FRAMEBURST)"
+
 log "type:  $(/usr/sbin/iw dev wlan0 info 2>/dev/null | grep -E 'type|channel' | tr '\n' ' ')"
 log "link:  $(/usr/sbin/iw dev wlan0 link 2>/dev/null | head -2 | tr '\n' ' ')"
 log "addr:  $(ip -4 -o addr show wlan0 2>/dev/null | grep -oE 'inet [0-9.]+' | tr '\n' ' ')"
@@ -117,6 +124,8 @@ done
 
 /usr/sbin/iw dev wlan0 station dump >"$OUT/station_dump.txt" 2>&1
 /usr/sbin/iw dev wlan0 link        >"$OUT/link_final.txt"   2>&1
+log "frameburst after the windows: $(sudo -n "$OUT/frameburst.sh" get 2>&1)"
+[ "$FRAMEBURST" = 0 ] && sudo -n "$OUT/frameburst.sh" set 1 >/dev/null 2>&1
 
 # ---- 4. Revert -----------------------------------------------------------------------------
 sudo -n "$OUT/revert_adhoc.sh"
