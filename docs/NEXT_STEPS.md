@@ -1,6 +1,43 @@
 # What to do next — pick-up guide
 
-## ⚠️⚠️ STATE CHANGED 2026-10-07: the paper was revised after the supervisor's review
+## ⚠️⚠️⚠️ STATE AS OF 2026-10-28 — read this section; everything below it is history
+
+**Where the work is.** Branch `p11-reviewer-revision`, PR #2 (a draft until Mohamed has read the
+thesis passages listed in `thesis/STATUS.md`). It contains `p9-supervisor-revision` (PR #1, his to
+merge first). The status board in `CLAUDE.md` holds the counts; `docs/DECISIONS.md` the decisions.
+
+**What is done.**
+* The reviewer revision A1–A17 is in the paper and the thesis (`docs/revision/STATUS.md`).
+* The review of the 18-page paper (2026-10-27, S-01…S-36, L-01…L-38) is applied, every item
+  traced in `docs/review 27-10-2026/CHANGE_LOG.md`:
+  * the paper is in the Springer Nature `sn-jnl` layout, 40 pages, the 802.11 result first;
+  * S-01 was registered and run (capacity at 97 % delivery, 27.6 and 97.3 nodes);
+  * Fig. 1 is TikZ, shared with the thesis.
+* Mohamed's choices on its options are recorded (2026-10-28).
+
+**How to edit the paper now.** Edit `paper/main.tex` directly. It was assembled once by scripts
+that no longer exist. Every number is still a macro from `analysis/paper_numbers.py`. The
+Springer template files are git-ignored: download them before `make paper` (`paper/README.md`).
+
+**Waiting on Mohamed — do not start these.**
+* The journal (`OPEN_ITEMS` I1), then the cuts to its limit.
+* Author details (I2), data availability (I3), the review folder in git (I6).
+* Reading the new thesis passages; merging PR #1.
+* Radios for a measured capacity (H3, G4).
+* Mobility (E20) and Direction C, deferred by him: plans written, not to be started unprompted.
+
+**What an agent may do unprompted.** All of these are optional, and no claim depends on them:
+* G27 — candidate rules for the radio's own queue, tested in the event model against the 36
+  measured windows;
+* G6 (a) — the rate-offset source's spread;
+* G15 — crypto timing on the Pi 3B+ and BeagleBone;
+* G37 — why four cores give 3.36 times one.
+
+Each new experiment is registered first (`predictions/<ID>.md`, tag `prereg-<ID>`).
+
+---
+
+## (History) STATE CHANGED 2026-10-07: the paper was revised after the supervisor's review
 
 **Read the October section at the top of `CLAUDE.md`'s status board before anything below.**
 Everything under the later headings of this file describes the project as of August 2026 and is

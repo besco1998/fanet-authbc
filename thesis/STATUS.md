@@ -2,7 +2,8 @@
 
 *Created 2026-08-30; rewritten 2026-10-08 after the whole built PDF was audited, and updated
 three times on 2026-10-09 (findings F63–F83 in `docs/audits/model_provenance.md`), and on 2026-10-24
-for the experiments of October (below). `main.pdf` builds to 151 pages with no errors, no undefined
+for the experiments of October (below), and on 2026-10-28 for the review of 2026-10-27. `main.pdf`
+builds to 153 pages with no errors, no undefined
 references and no overfull boxes. **Read this before showing the PDF to anyone.***
 
 ## In one paragraph
@@ -11,6 +12,13 @@ Every chapter is written and was read end to end in the built PDF on 2026-10-08.
 "STATUS" boxes are gone because what they listed is done. **Two red markers remain, and both
 are yours:** the declaration and the acknowledgements — with the degree and the department on the
 title page. The statement on generative AI was removed on your decision of 2026-10-24.
+
+⚠️ **On 2026-10-27 and 28, after the review of the paper** (`docs/review 27-10-2026/CHANGE_LOG.md`),
+three things changed here as well, and you have not read them:
+* **ch. 8:** a paragraph on the capacity at 97 % delivery (S-01: 27.6 and 97.3 nodes, both
+  predicted), and the receiver table's nodes per core by Eq. (4) (290 and 629, were 289 and 628).
+* **App. B:** the S-01 registration is the eighteenth row of the October table; ch. 6 counts it.
+* **Figures:** all redrawn at 4.5 in in one serif font; Fig. 3.1 is TikZ.
 
 ⚠️ **On 2026-10-25 the names changed throughout** (your decision): record-linked and
 frame-linked format (were first and lean), key record (was keyframe), contention model,
@@ -22,7 +30,8 @@ and you have not read them.** Each result sits where its subject is:
 
 * **ch. 1:** three contributions.
 * **ch. 2:** mobility, FMAC, hidden terminals and Tamarin.
-* **ch. 3:** your block diagram as Fig. 3.1; two rows of the claims table; *Formal analysis, and
+* **ch. 3:** your block diagram as Fig. 3.1, redrawn in TikZ on 2026-10-27 with the agreed names
+  (the paper's own file, `fig_overview_tikz.tex`; each constraint box points to its section here); two rows of the claims table; *Formal analysis, and
   the evidence for each property* with its table; two items of "what is not claimed" rewritten.
 * **ch. 4:** peak age under loss, the window on GNSS time, the loss margin, the design map.
 * **ch. 5:** admission (group tag, cheap checks, rate cap) and the compiled codec.
@@ -36,7 +45,7 @@ and you have not read them.** Each result sits where its subject is:
 * **ch. 10:** other broadcast links with their table.
 * **ch. 12:** three findings; limitations and future work rewritten. Nothing on hardware still to
   be bought is stated (your decision).
-* **App. B:** a second table, the seventeen registrations of October with commit and outcome.
+* **App. B:** a second table, the eighteen registrations of October with commit and outcome.
 
 ⚠️ **Chapter 9's hardware section was rewritten on the night of 2026-10-09 and has not been read
 by you.** It now reports contention measured between two radios — one registered prediction
