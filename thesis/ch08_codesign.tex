@@ -185,7 +185,8 @@ holding the group key could have records acted on that are later purged.
 
 \begin{table}[htbp]\centering
 \caption{Time to receive a four-record frame on one Raspberry~Pi~4 core, and the nodes one core
-serves at $50$~records/s; all four timed in one session.}
+serves at $50$~records/s, $1 + \lfloor 1/((\Lambda/b)\,t) \rfloor$ for a receive time $t$ (the
+receiver included, as in $N_{\mathrm{cpu}}$); all four timed in one session.}
 \label{tab:receiver}
 \begin{tabular}{lrr}
 \toprule

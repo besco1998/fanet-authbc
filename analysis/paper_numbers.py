@@ -1407,6 +1407,14 @@ def flooding() -> dict[str, str]:
             "flTagCostPct": f(100 * tagged, 1)}
 
 
+def nodes_by_eq4(per_core: float) -> str:
+    """Eq. (cpu) with a measured receive time t in place of its cryptographic terms:
+    1 + floor(1/((Lambda/b) t)), the receiver itself included. The raw file holds the bracket,
+    1/((Lambda/b) t), unrounded; until 2026-10-28 the paper printed it rounded, one node fewer for
+    Rust and the deferred receiver (review of 2026-10-27, S-24; Mohamed chose Eq. (cpu))."""
+    return str(1 + math.floor(per_core))
+
+
 def compiled() -> dict[str, str]:
     """A8/A13: the receiver in Rust on pi-B (F108)."""
     c = {(r["impl"], r["metric"]): float(r["median_ns"])
@@ -1420,9 +1428,9 @@ def compiled() -> dict[str, str]:
     evidence = float(fresh["fill_ms"]) + float(fresh["channel_ms"]) + 100.0 + 64 * tier2
     return {"rxRustMs": f(c[("rust", "receive_ns_per_frame")] / 1e6, 3),
             "rxSpeedup": f(c[("derived", "python_over_rust_receive")], 1),
-            "rxRustNodes": f(c[("derived", "nodes_per_core_rust")], 0),
-            "rxBatchNodes": f(c[("derived", "nodes_per_core_rust_batch64")], 0),
-            "rxLazyNodes": f(c[("derived", "nodes_per_core_lazy")], 0),
+            "rxRustNodes": nodes_by_eq4(c[("derived", "nodes_per_core_rust")]),
+            "rxBatchNodes": nodes_by_eq4(c[("derived", "nodes_per_core_rust_batch64")]),
+            "rxLazyNodes": nodes_by_eq4(c[("derived", "nodes_per_core_lazy")]),
             "rxTierOneUs": f(c[("rust", "tier1_tag_decode_ns_per_frame")] / 1e3, 1),
             "rxEvidenceMs": f(evidence, 0), "rustIdFrames": thousands(int(ident["frames"]))}
 
@@ -1872,8 +1880,7 @@ def review_pq() -> dict[str, str]:
 
 REVIEW_SECTIONS = (review_crossings, review_spread, review_audit, review_header, review_receive,
                    review_bls, review_lora, review_flood, review_window, review_pq)
-# S-24's nodes per core by Eq. (cpu) (Rust 290, deferred 629) were computed by
-# `review_receiver_nodes` in 7e2dd62; it returns if Mohamed chooses that reading for Table 8.
+# S-24: the receiver table's nodes per core follow Eq. (cpu) since 2026-10-28 (`nodes_by_eq4`).
 
 
 # ------------------------------------------------- tables of the revision (one per reviewer point)
@@ -1890,7 +1897,7 @@ def receiver_costs() -> dict[str, str]:
         if not abs(1e9 / (rate * t_ns) - c[("derived", nodes)]) < 0.5:
             raise ValueError("the table's time per frame and nodes per core disagree")
     return {"rxPyUs": thousands(round(c[("python", "receive_ns_per_frame")] / 1e3)),
-            "rxPyNodes": f(c[("derived", "nodes_per_core_python")], 0),
+            "rxPyNodes": nodes_by_eq4(c[("derived", "nodes_per_core_python")]),
             "rxRustUs": f(c[("rust", "receive_ns_per_frame")] / 1e3, 0),
             # one decimal: 124 us gives 646 nodes by Eq. (cpu), the unrounded 124.4 gives 643
             "rxBatchUs": f(batched / 1e3, 1),

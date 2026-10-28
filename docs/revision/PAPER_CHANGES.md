@@ -192,9 +192,9 @@ SIH's GNSS fields are constant. Do not write "fixed wings cost more bytes at 50 
 
 **Now says:** the Python receiver takes 1.43 ms per frame, so 124 neighbours need about three
 cores (F84). **Proposed:** *"Compiled (Rust, ed25519-dalek), the same receiver takes 0.28 ms per
-frame on the Raspberry Pi 4, five times faster; one core serves 289 neighbours, 643 when
+frame on the Raspberry Pi 4, five times faster; one core serves 290 neighbours, 643 when
 signatures are checked 64 at a time. With a fast tier (group tag and decode, 10 µs) and an
-evidence tier (batched signatures), one core serves 628 neighbours and a record is signed
+evidence tier (batched signatures), one core serves 629 neighbours and a record is signed
 evidence within 171 ms of being sampled."* Numbers: `results/hw/compiled_receiver.authbc-pi4b.csv`.
 ⚠️ The three-core statement must then be said to be the prototype's, not the design's.
 

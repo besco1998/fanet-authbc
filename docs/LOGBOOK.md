@@ -12,6 +12,19 @@ where the durable record lives. If you want the conclusion only, follow the poin
 
 ---
 
+# 2026-10-28 — Mohamed's choices on the review's options
+
+He took every recommendation: see `DECISIONS.md`, 2026-10-28. Two changed what is printed:
+* **Table 8 follows Eq. (4):** `nodes_by_eq4` in the generator. The raw file holds
+  1/((Λ/b)t) unrounded, labelled "Eq. (4)", but without the 1 + ⌊·⌋. Rust becomes 290 and
+  deferred 629; Python (57) and batches (643) do not move, because their brackets round up
+  anyway.
+* **Fig. 10 is recolored:** purple, orange and aqua. Blue against purple failed the validator
+  under deuteranopia (ΔE 7.5) and aqua passes every pair (10.2). Red is kept for per-record
+  signing, as in every other figure.
+
+---
+
 # 2026-10-27 — the review of the 18-page paper, in the Springer Nature layout
 
 **Doing:** applying `docs/review 27-10-2026/` (S-01…S-36, L-01…L-38) after Mohamed's decisions

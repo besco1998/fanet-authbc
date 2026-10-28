@@ -4630,6 +4630,10 @@ The identity gate's 10 000 frames on pi-B:
 * Rust is 5.1 times faster than Python, and verification is 97 % of its time.
 * Batch-of-64 verification costs 0.435 of a single verification.
 * With lazy verification, records are evidence ≤ 171 ms after sampling.
+* **2026-10-28 (review of 2026-10-27, S-24; Mohamed's choice):** the nodes column above is
+  1/((Λ/b)t) rounded. The paper and thesis now print Eq. (4), 1 + ⌊1/((Λ/b)t)⌋, which counts
+  the receiver itself: **290** for Rust and **629** lazy; Python (57) and batches of 64 (643)
+  are unchanged.
 
 Every plan statement of A8 and A13 that was run held. A8's energy statement was not run: it
 waits for the rig's calibration (G22). My A13-2 bound (170 ms) missed by 1 ms, an arithmetic

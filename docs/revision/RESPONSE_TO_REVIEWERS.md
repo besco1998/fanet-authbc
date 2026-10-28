@@ -202,7 +202,7 @@ same bytes as the prototype, checked on 10 000 frames. Measured on the Raspberry
 
 | receiver | time | nodes per core |
 |---|---|---|
-| compiled | 0.277 ms (5.1× faster) | 289; 643 with batched verification |
+| compiled | 0.277 ms (5.1× faster) | 290; 643 with batched verification |
 | Python | 1.409 ms | 57 |
 
 124 neighbours need 0.43 of one core, so the radio channel, not the CPU, is again the binding
@@ -297,7 +297,7 @@ sidelink as future work.
 * records are usable at once, after the group MAC and decoding (10.2 µs per frame);
 * signatures are verified in batches of 64 before records enter the ledger (117.2 µs per frame).
 
-One Raspberry Pi 4 core then serves 628 neighbours. A record becomes signed evidence within
+One Raspberry Pi 4 core then serves 629 neighbours. A record becomes signed evidence within
 191 ms by the paper's freshness convention (Eq. (2), which counts the whole filling period), or
 171 ms after the oldest record of its frame was sampled. The cost: in that window a swarm member holding the group key could
 inject records that are acted on and only later purged.

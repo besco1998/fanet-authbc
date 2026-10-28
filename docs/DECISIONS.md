@@ -215,6 +215,24 @@ short paper.*
 | **Data and code availability (S-36)** | Not mentioned, nothing done, for now | A journal will ask for the statement at submission |
 | **AUTHBC's expansion (L-22)** | Unchanged, as confirmed 2026-10-26 | — |
 
+## Decided by Mohamed, 2026-10-28 — the open options of the 2026-10-27 review
+
+He took the recommendation on each of: venue, length, Table 8, the 48 B BLS variant, the ETSI
+version, ASTM F3411, Fig. 10's colors and the template files. The rest (placeholders, S-36, PR #1
+and #2, thesis markers, hardware, deferred studies) waits.
+
+| decision | chosen | what it costs, or leaves open |
+|---|---|---|
+| **Venue** | Keep the Springer Nature layout; choose the journal later. The 2026-10-08 rule (no page charges) stands | The paper is not yet aimed at one journal |
+| **Length** | No cuts until the journal is chosen; then cut to its limit | 40 pages for now |
+| **Table 8, nodes per core (S-24)** | Eq. (4), 1 + ⌊1/((Λ/b)t)⌋, the receiver included: Rust **290**, deferred **629** (were 289 and 628); Python 57 and batches 643 unchanged | One node more in two cells; the reply letter and the revision documents follow |
+| **48 B BLS (S-15)** | Not timed; the text states it and the speed it would need | A CPU claim for the 48 B variant rests on its two pairings, not on a measurement |
+| **ETSI TS 103 097 (S-30)** | V1.2.1 (2015), the version read | The 2021 version is not cited |
+| **ASTM F3411 (S-34)** | RFC 9575 only | — |
+| **Fig. 10 colors** | The project's palette: purple, orange and aqua (validated, all pairs) | — |
+| **Springer template files** | Kept local and git-ignored | A fresh clone downloads the template before `make paper` |
+| **The review folder** | Not decided (the recommendation covered only the template files) | Stays out of git |
+
 > **Open items live in [`OPEN_ITEMS.md`](OPEN_ITEMS.md)** — the single tracked list of
 > everything assumed, deferred, unvalidated or accepted-as-a-limitation. Decisions live here.
 > **What each decision COST lives in [`TRADEOFFS.md`](TRADEOFFS.md)** — required reading before

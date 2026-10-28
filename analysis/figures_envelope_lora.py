@@ -89,7 +89,12 @@ def fig_t6_exclusion() -> None:
                      ("frame_floor_bytes", "frame_min_bytes", "frame_max_bytes"))
     tiers = ["signature" if r["signature_alone_overflows"] == "1" else r["verdict"]
              for r in rows]
-    colour = {"signature": "#b2182b", "excluded": "#ef8a62", "feasible": "#1b7837"}
+    # The project's palette (2026-10-28, review item 7): red means per-record signing elsewhere,
+    # so the verdicts take purple, orange and aqua. The dataviz validator passes all three pairs
+    # under colour-vision deficiency (worst dE 10.2); orange and aqua are light against white,
+    # so each bar carries its value, written in black on them and in white on purple.
+    colour = {"signature": "#762a83", "excluded": "#e08214", "feasible": "#1baf7a"}
+    ink = {"signature": "white", "excluded": "black", "feasible": "black"}
 
     fig, ax = plt.subplots(figsize=(figstyle.WIDTH, 3.9))
     ax.bar(drs, payload, color=[colour[t] for t in tiers], edgecolor="black", linewidth=0.6)
@@ -97,12 +102,12 @@ def fig_t6_exclusion() -> None:
                label=f"one-record frames of this telemetry: {lo} to {hi} B")
     ax.axhline(floor, color="black", linestyle="--", linewidth=1.2,
                label=f"smallest frame the format can emit: {floor} B")
-    ax.axhline(sig, color="#b2182b", linestyle=":", linewidth=1.2,
+    ax.axhline(sig, color=colour["signature"], linestyle=":", linewidth=1.2,
                label=f"the signature alone: {sig} B")
-    for dr, m in zip(drs, payload, strict=True):       # inside the bar: clear of the lines
+    for dr, m, tier in zip(drs, payload, tiers, strict=True):   # inside the bar: clear of lines
         # bold through the math set: cmr10 has no bold face
         ax.text(dr, m - 16, rf"$\mathbf{{{m}}}$", ha="center", fontsize=figstyle.NOTE,
-                color="white", rotation=90, va="top")
+                color=ink[tier], rotation=90, va="top")
     ax.set_xticks(drs)
     ax.set_xticklabels([f"{d}" for d in drs])
     ax.set_xlabel("EU863-870 data rate (DR)")
