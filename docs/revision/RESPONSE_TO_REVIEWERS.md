@@ -1,12 +1,13 @@
 # Response to the reviewers — AUTHBC revision
 
-*Draft for Mohamed, 2026-10-24.*
+*Draft for Mohamed, 2026-10-24; updated 2026-10-31 for the review of 2026-10-27 and the Springer Nature layout.*
 
 * **The comments.** Each comment below is an objection the revision plan (`docs/AUTHBC Revision
   Plan.md`) was written to answer. When the reviews arrive, map each one to the reviewer's own
   wording.
-* **Locations.** Sections are named by their labels (`sec:capacity`, …) until the paper text is
-  final (open item H1).
+* **Locations.** Sections, tables and figures are named by their labels (`sec:capacity`, …).
+  The labels held when the paper moved to the Springer Nature layout on 2026-10-27; the numbers
+  did not, so give numbers only against the version submitted.
 * **Sources.** Every number comes from the result file named beside it. Every experiment was
   registered before it ran (`predictions/<ID>.md`, git tag `prereg-<ID>`).
 
@@ -33,12 +34,15 @@ Predictions that failed are reported as failed. The main changes are:
 **Response.** The swarm was spread over discs of radius up to 1 km and over a grouped layout. The
 channel has log-distance path loss, Nakagami-3 fading and 4 dB capture (4 230 ns-3 runs).
 
-* **AUTHBC keeps its advantage** in every layout: the ratio of AUTHBC's capacity to the
-  baseline's lies between 3.46 and 3.58.
+* **AUTHBC keeps its advantage** in every layout: the ratio of AUTHBC's capacity to that of
+  per-record signing lies between 3.46 and 3.58 (3.46–3.63 with the moving swarm).
 * **At R = 1 km**, 11 % of the nodes able to spoil a frame cannot hear its sender. Capacity
-  counted in neighbours falls (8.7 within 215 m), because a receiver contends with every node in
-  its carrier-sensing range. This is the mechanism of Hu and Dai, not a new one. Counted in
-  nodes over the area, capacity rises to 218.
+  counted in neighbours within reach falls to 8.7 with AUTHBC and 2.5 with per-record signing,
+  against 124 and 35 in one collision domain. Neighbours within reach are the nodes within
+  215 m, the largest distance at which an isolated link delivers 99 % of frames. The fall is
+  there because a receiver contends with every node in its carrier-sensing range. This is the
+  mechanism of Hu and Dai, not a new one. Counted in nodes over the area, capacity rises to 218
+  (63 with per-record signing).
 * **Mobility** (900 further runs): every node follows its own Gauss–Markov path at 0, 5 or
   15 m/s, with parameters taken from the FANET mobility literature. Delivery changes by at most
   0.0005, and the ratio stays at 3.57–3.63.
@@ -52,9 +56,11 @@ channel has log-distance path loss, Nakagami-3 fading and 4 dB capture (4 230 ns
 
 *Results:* `spatial_capacity.csv`, `spatial_motion.csv` (F88, F103).
 
-**Changes.** `sec:spread` (Robustness): the paragraph "A Spread, Moving Swarm" and Fig. `fig:spread` (nodes
-served and AUTHBC's ratio against disc radius, with the share of hidden interferers under each
-radius and the moving swarm beside it). `sec:limits`: hidden terminals, spatial reuse and
+**Changes.** `sec:spread` (Robustness): the paragraph "A Spread, Moving Swarm", and Fig.
+`fig:spread`. Its three panels plot, against disc radius, the nodes in the disc at 95 %
+delivery, the neighbours within reach, and AUTHBC's ratio. Under each radius it gives the share of
+hidden interferers, and the moving swarm is drawn beside it. The abstract and the conclusion
+state that fewer neighbours are in reach. `sec:limits`: hidden terminals, spatial reuse and
 relative motion are now simulated, with the channel's caveat.
 
 ## Comment 2 — "b ≤ 4 holds only at the chosen operating point."
@@ -89,6 +95,10 @@ gains the age-under-loss sentence.
    design at ε = 0.1 and p = 0.08 with bursts of eight frames, where under bit errors its interval
    also falls short; every mean meets its target), and one
    registered statement missed by 0.0002.
+4. **Capacity with the margin** (registered as S01 before any run, 420 ns-3 runs). At the 3 %
+   loss the rule allows at ε = 0.05, ns-3 gives 27.6 nodes for per-record signing and 97.3 for
+   AUTHBC, a ratio of 3.5. The contention model had predicted 27.5 and 97.9, within 0.6 %. The
+   headline capacities, 35 and 124, are stated at 5 % frame loss.
 
 While answering this comment we tested the paper's intervals themselves. With a known truth and
 30 seeds, the percentile bootstrap covered 92–94 % of the time instead of 95 %. Every interval of
@@ -96,12 +106,13 @@ a mean is now a Student-t interval, and every interval of a capacity crossing an
 percentile bootstrap interval (Hesterberg, 2015); both cover 95 %. The printed intervals widen
 by 0.001–0.003; no estimate moves.
 
-*Results:* `verifiability_margin.csv`, `verifiability_margin_trace.csv`, `interval_coverage.csv`
-(F86, F98, F101).
+*Results:* `verifiability_margin.csv`, `verifiability_margin_trace.csv`, `interval_coverage.csv`,
+`capacity_97.csv` (F86, F98, F101; `predictions/S01.md`).
 
 **Changes.** `sec:loss` and Fig. `fig:margin` (AUTHBC's V against loss under five loss
-processes, with the region the rule admits), `sec:limits` (the "no channel trace" limitation is
-removed), Discussion (the rule), Methods (the intervals).
+processes, with the region the rule admits), `sec:capacity` ("Capacity With a Loss Margin"),
+`sec:limits` (the "no channel trace" limitation is removed), Discussion (the rule, and the
+capacity at the margin in recommendation 1), Methods (the intervals).
 
 ## Comment 4 — "The contribution is accounting, not a mechanism."
 
@@ -142,7 +153,7 @@ any frame stamped more than Δ before its own clock reads, with Δ = 150–250 m
 *Results:* `replay_window.csv`.
 
 **Changes.** `sec:model`: the delaying attacker moves from "not protected" to a protected
-property (v), with its condition, and Table `tab:security` gives its evidence; `sec:delay`
+property (v), with its condition. Table `tab:security` (Security Evaluation) gives its evidence; `sec:delay`
 (Security Evaluation) reports the window's measurements. `sec:limits` is
 updated.
 
@@ -160,8 +171,9 @@ did not terminate within 1 GB per lemma. In the registered model 3 of 9 lemmas s
 encodings were changed after registration (counters keyed by a session identifier, a receiver
 start rule), and both changes are disclosed. Canonical encoding is assumed injective.
 
-**Changes.** `sec:model`: Table `tab:security` lists each property with the model that proves
-it. `sec:limits` ("Security Scope"): "informal" is replaced by the proven properties, with the
+**Changes.** `sec:model` ("Formal Analysis") states what is proven, in three models, and that
+they are not composed. Table `tab:security` (Security Evaluation) lists each property with the
+model that proves it. `sec:limits` ("Security Scope"): "informal" is replaced by the proven properties, with the
 three-model caveat in the same sentence.
 
 ## Comment 7 — "Flooding is not resisted."
@@ -188,7 +200,7 @@ both conclusions held.
 
 *Results:* `flood_cost.authbc-pi4b.csv`, `flood_udp.authbc-pi4b.csv` (F109).
 
-**Changes.** `sec:model` (the group MAC in the threat model, and Table `tab:security`),
+**Changes.** `sec:model` (the group MAC in the threat model), Table `tab:security`,
 `sec:flooding` (Security Evaluation, with Fig. `fig:flood`: honest delivery against the
 forged-frame rate for each defence and attacker), `sec:limits` (insiders). The figure also shows
 that a per-sender cap holds one forging sender at V ≥ 0.96 up to the rate one channel carries.

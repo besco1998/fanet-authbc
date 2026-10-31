@@ -34,7 +34,7 @@ The paper is 17 pages (18 with the registration appendix, removed 2026-10-25). C
 
 ## Ready (experiment scored)
 
-### A1 — spread swarm, fading, capture (`sec:capacity`, `sec:limits`, `sec:method`, Conclusion)
+### A1 — spread swarm, fading, capture (`sec:capacity`, `sec:limits`, `sec:methods`, Conclusion)
 
 **Now says:** "one collision domain of static nodes … hidden terminals and mobility are identified
 as future work"; Limitations: "hidden terminals, spatial reuse and mobility are absent".
@@ -188,7 +188,7 @@ the fixed-wing and VTOL flights were re-flown at their drawn 15–25 m/s with SI
 term removed (A9-fast, F111): the delta is the quadrotor's plus 0.2 B and the ratio unchanged; and
 SIH's GNSS fields are constant. Do not write "fixed wings cost more bytes at 50 Hz" (F111: +0.2 B).
 
-### A8, A13 — the compiled receiver (`sec:validation` or `sec:discussion`, where the receiver's three cores are stated; `sec:limits`)
+### A8, A13 — the compiled receiver (`sec:mechanism` or `sec:discussion`, where the receiver's three cores are stated; `sec:limits`)
 
 **Now says:** the Python receiver takes 1.43 ms per frame, so 124 neighbours need about three
 cores (F84). **Proposed:** *"Compiled (Rust, ed25519-dalek), the same receiver takes 0.28 ms per
