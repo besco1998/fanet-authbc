@@ -434,3 +434,321 @@ already held, made to answer the review.*
 and Tracking* (a priced standard; RFC 9575 above stands in for the sizes the paper uses); IEEE Std
 1609.2-2022 and ETSI TS 103 097 V2.1.1 (2021), cited by an earlier version of the paper and not read
 for this one.
+
+---
+
+## How the citations were verified, and the F9 positioning
+
+*Two notes merged here on 2026-11-01: the verification of every citation that was once a
+placeholder (formerly `A3_CITATION_VERIFICATION.md`), and how the broadcast head start of finding F9
+was placed in the literature (formerly `f9_broadcast_dcf.md`).*
+
+### A3 — citation verification report
+
+*Formerly `docs/literature/A3_CITATION_VERIFICATION.md`, last changed 2026-08-07. Copied verbatim on 2026-11-01; headings moved down one level and relative links re-pointed.*
+
+*Every `[VERIFY]` placeholder in `paper/refs.bib` is now a real source. This file records **how each
+was verified**, and it is complete: the two paywalled sources it originally flagged were supplied by
+Mohamed and have since been read.*
+
+Date: 2026-07-30. Result: **`paper/refs.bib` contains 0 `[PLACEHOLDER]` entries and the compiled PDF
+contains 0 `[VERIFY]` markers.** Paper builds at 10 pages, 0 undefined references. **Every source
+cited is held in this directory and has been read.**
+
+---
+
+#### Method
+
+For each placeholder I found a candidate primary source, then confirmed its bibliographic fields
+against the **Crossref record for its DOI** — not against a search-engine summary. Crossref is the
+registrar's own metadata, so author list, venue, volume, page range and year come from the publisher
+rather than from a third-party description. The exact query used was:
+
+```bash
+curl -s -H "Accept: application/json" "https://api.crossref.org/works/<DOI>"
+```
+
+This matters because of the error recorded in F18 the same day: a sentence quoted correctly from a
+PDF was attributed to the wrong figure, and the conclusion inverted. Metadata from the registrar
+removes that class of mistake for the *bibliographic* fields. It does **not** remove it for the
+*claims*, which is why the third column below says whether I have read the source.
+
+---
+
+#### The three replacements
+
+##### 1. `verify_batch_verify` → `zhang2008batch`
+
+**Zhang, Lu, Lin, Ho & Shen, "An Efficient Identity-Based Batch Verification Scheme for Vehicular
+Sensor Networks", IEEE INFOCOM 2008, pp. 246–250.** DOI `10.1109/INFOCOM.2008.58`
+
+| | |
+|---|---|
+| Crossref | ✅ all fields confirmed — authors, venue, pages 246–250, year 2008 |
+| PDF held | ✅ **yes** — `zhang2008_ib_batch_verification_vanet.pdf`, supplied by Mohamed (institutional access) after this report first flagged it |
+| Claim verified **from the PDF** | *"an RSU can verify multiple received signatures at the same time such that the total verification time can be dramatically reduced"* — quoted directly |
+| Confidence | **Verified.** The abstract also supplies a sharper contrast we now use: their deadline is DSRC's **300 ms**, and their batching is **receiver-side** (V2I, the RSU verifies) where ours is **sender-side**. Complementary, not competing |
+
+✅ **Resolved.** The paper is held and the abstract read; the Related Work sentence now quotes it and
+states the receiver-vs-sender distinction explicitly.
+
+##### 2. `verify_uav_blockchain` → `mehta2020blockchainuav`
+
+**Mehta, Gupta & Tanwar, "Blockchain Envisioned UAV Networks: Challenges, Solutions, and
+Comparisons", Computer Communications 151:518–538, 2020.** DOI `10.1016/j.comcom.2020.01.023`
+
+| | |
+|---|---|
+| Crossref | ✅ all fields confirmed — 3 authors, vol. 151, pp. 518–538, 2020 |
+| PDF held | ✅ **yes** — `mehta2020_blockchain_uav_survey.pdf`, supplied by Mohamed. Front matter confirms *Computer Communications 151 (2020) 518–538*, matching Crossref exactly |
+| Claim in our paper | cited as a **survey**: *"UAV-blockchain systems, surveyed in [x], place telemetry or attestations on such a chain"* |
+| Confidence | **High.** It is cited only as a pointer to the subfield, which is what a survey is for — the weakest possible use of a citation, deliberately |
+
+✅ **Held.** Nothing load-bearing rests on it — it is a subfield pointer. If you prefer a different
+survey, swapping it changes no result.
+
+##### 3. `verify_delta_telemetry` → `pelkonen2015gorilla`
+
+**Pelkonen, Franklin, Teller, Cavallaro, Huang, Meza & Veeraraghavan, "Gorilla: A Fast, Scalable,
+In-Memory Time Series Database", PVLDB 8(12):1816–1827, 2015.** DOI `10.14778/2824032.2824078`
+
+| | |
+|---|---|
+| Crossref | ✅ all fields confirmed — 7 authors, vol. 8, pp. 1816–1827, 2015 |
+| PDF held | ✅ **yes** — `pelkonen2015_gorilla_tsdb.pdf` (open access from vldb.org) |
+| Claim verified **from the PDF** | *"we aggressively leverage compression techniques such as delta-of-delta timestamps and XOR'd floating point values to reduce Gorilla's storage footprint by 10x"* — quoted directly |
+| Confidence | **Verified.** Read, quoted, and stored |
+
+**One honest difference stated in the paper** rather than glossed: Gorilla is a database and can
+chain deltas indefinitely; a lossy broadcast link cannot, so we re-anchor on a keyframe every K
+records and pay the size for loss independence. Gorilla does not face that constraint, so it is
+prior art for *delta coding of telemetry*, not for our keyframe scheme.
+
+##### 4. `verify_fanet_auth` → **deleted**
+
+An orphan: it was defined in `refs.bib` and **cited nowhere** in `main.tex`. Removed rather than
+filled, because inventing a use for a citation is worse than not having it.
+
+---
+
+#### What you need to check yourself
+
+**Nothing outstanding.** Both paywalled sources were supplied by Mohamed after this report first
+flagged them, verified against their Crossref records, and the Zhang claim is now quoted from the
+PDF rather than paraphrased from the title. Every source cited in the paper is now held and read.
+
+Two sources were added later by the CLAS comparison (F34) and are held and read:
+`plos2025clas` (DOI 10.1371/journal.pone.0317047, its Table 2 read directly) and `ndss2024pqv2v`
+(NDSS 2024, source of the 162 B ECDSA certificate and the every-5th-message policy).
+
+Everything else in `paper/refs.bib` is either a standard (RFC/3GPP/IEEE/Semtech), a source whose PDF
+is in this directory and has been read, or a foundational paper whose cited content is
+title-level (Bianchi, Nakamoto, BLS).
+
+---
+
+#### What is still not a citation problem but looks like one
+
+**T6 and T2a carry no novelty claim**, so they need no supporting citation beyond the prior art that
+demoted them (`gundogan2021firmware` for T6; for T2a the disposition is recorded in `OPEN_ITEMS` A6
+with no citation, because the finding is that the result is *standard*, and standard results are
+attributed to the field, not to a paper).
+
+---
+
+#### Added 2026-08-07 — `klimiashvili2020loravswifi`
+
+| field | value | how checked |
+|---|---|---|
+| DOI | `10.1109/ICNC47757.2020.9049724` | Crossref API, queried by full title |
+| title | LoRa vs. WiFi Ad Hoc: A Performance Analysis and Comparison | Crossref record matches the PDF title page exactly |
+| authors | Klimiashvili, Tapparello, Heinzelman | Crossref; matches the PDF byline (U. Rochester) |
+| venue / year | 2020 International Conference on Computing, Networking and Communications (ICNC) | Crossref; corroborated by the PDF's own `/Subject` metadata |
+| pages | 654–660 | Crossref; the PDF's page furniture shows 654 |
+
+**Every claim we attribute to it was read in the PDF, not inferred from the abstract:**
+
+* *"the average of 50 independent runs over channel realization and nodes' position"* — §V, opening
+  of the numerical results. This is the Direction C `REPORTS` adjudication and it is a **direct
+  quotation**, because it is the sentence that makes them a counter-example to our own hypothesis.
+* *"the theoretical throughput of WiFi is almost 5000 times higher than that of LoRa's"* — §V-C.
+  ⚠️ Read **in context**: the surrounding text fixes their LoRa configuration at data rate 6
+  (SF7/250 kHz, 11 kb/s, their Table I), so this is a PHY bit-rate ratio, not a delivered-throughput
+  or application-level one. The paper says so explicitly rather than letting the number stand
+  next to our ≈4200× and imply agreement. *This is the F18 discipline applied on purpose:
+  quoting the sentence was not enough; the configuration it depends on had to be read too.*
+* DR3 = 123 B — their Table I ("DATA RATE FOR LORA IN EU REGION"). Checked against RP002-1.0.3:
+  it is *M* (MACPayload), where our table records *N* (application payload). **Not an error in
+  either source**, and the resolution is now in the paper because it decides the DR3 verdict.
+
+### F9 — literature positioning of the broadcast DCF head start
+
+*Formerly `docs/literature/f9_broadcast_dcf.md`, last changed 2026-07-28. Copied verbatim on 2026-11-01; headings moved down one level and relative links re-pointed.*
+
+**RESOLVED 2026-07-28 — outcome (a): the mechanism is published. F9 is a rediscovery.**
+All three papers were obtained by Mohamed and read in full; the Ma & Chen letter's bibliographic
+record was confirmed from IEEE Xplore. Ma & Chen's closed form reproduces our NS-3 measurement to
+**≤0.36 %** at every N. No novelty is claimed for the mechanism; see §2.3 and §3 below.
+
+---
+
+#### 1. The mechanism, stated for a literature search
+
+In saturated 802.11 DCF, after a busy period ends a station transmits at `DIFS + index·slot`, where
+
+* **index = a fresh draw from {0 … CW}** if the station transmitted in that busy period, and
+* **index = its residual counter, necessarily ≥ 1**, if the station deferred — a counter of 0 would
+  already have fired.
+
+A station that has just transmitted, and only such a station, can therefore hold index 0 and seize
+the medium **one slot ahead of the entire field**. Consecutive channel slots are consequently
+*correlated*, and the stations are *not* statistically homogeneous — which is exactly the pair of
+assumptions Bianchi's decoupling approximation makes.
+
+**The broadcast-specific amplification.** Broadcast is never acknowledged, so there is no
+retransmission and **no contention-window doubling**: CW is frozen at CW_min. N stations stay packed
+into CW_min+1 counter values indefinitely, collisions become near-certain, and the one-slot head
+start becomes the *dominant* channel through which any transmission ever succeeds alone.
+
+Closed form for the resulting conditional success probability, where k is the number of colliders:
+
+```
+P(next busy period succeeds | previous was a k-way collision) = k · (1/W) · (1 − 1/W)^(k−1)
+```
+
+Measured at N=50, W=16, k̄=6.108: predicted **0.2745**, measured **0.2679** — 2.4 %, nothing fitted.
+
+##### Measured signature (search terms a matching paper should exhibit)
+
+| observable | measured (NS-3 3.41, N=50, 802.11a 6 Mb/s, L=1400 B) |
+|---|---|
+| p_s, textbook no-ACK Bianchi | 0.0128 |
+| p_s, measured | **0.2234** (17.5×) |
+| p_s for independent stations at the *measured* mean multiplicity | 0.0308 → the residual is **correlation**, not access rate |
+| idle slots per busy period, model / measured | 0.0019 / **0.741** (386×) |
+| gap after a collision, winner **was** a collider | **DIFS + 0 slots** |
+| gap after a collision, winner was **not** | **DIFS + 1 slot** (hard floor) |
+| P(winner ∈ previous busy period), measured / uniform | **0.9645 / 0.1272** (7.58×) |
+| throughput error of the textbook no-ACK variant at N=50 | **+1654 %** |
+
+---
+
+#### 2. What was found
+
+##### 2.1 The mechanism IS published — for unicast [VERIFIED-PRIMARY]
+
+> **I. Tinnirello, G. Bianchi, and Y. Xiao, "Refinements on IEEE 802.11 Distributed Coordination
+> Function Modeling Approaches," IEEE Transactions on Vehicular Technology, vol. 59, no. 3,
+> pp. 1055–1067, March 2010.**
+> Retrieved and read in full from `https://yangxiao.cs.ua.edu/IEEE_TVT_New_802.11Model.pdf`.
+
+Verbatim from the abstract:
+
+> "a careful look at backoff counter decrement rules allows us to conclude that, under saturation
+> conditions, **the slot immediately following a successful transmission can be accessed only by the
+> station (STA) that has successfully transmitted in the previous channel access**. Moreover, due to
+> the specific acknowledgment (ACK) timeout setting adopted in the standard, **the slot immediately
+> following a collision cannot be accessed by any STA**. Thus, **the hypothesis of uncorrelation
+> between consecutive channel slots and statistical homogeneity is not generally true.**"
+
+Section III is titled **"Backoff Decrement and Anomalous Slots"**. The paper gives
+`ACKTimeout = SIFS + T_Ack + δ` and `EIFS = SIFS + T_Ack + DIFS`.
+
+Note the third author is **Bianchi himself** — this is the original model's author publishing the
+refinement, which makes it the authoritative statement of the effect.
+
+**Scope check: the paper is unicast-only.** A full-text search returns **zero** occurrences of
+"broadcast", "multicast", "no ACK", "fixed/constant contention window".
+
+**Our unicast measurements independently confirm both of its claims** (audit A10, N=50 unicast):
+
+| their claim | our measurement |
+|---|---|
+| post-success slot accessible only to the successful STA | gap floor **94 µs = SIFS + T_Ack + DIFS**, taken 220×; everyone else at 103 µs (+1 slot) ✓ |
+| post-collision slot accessible to nobody (ACK timeout) | only **30 of 1099** transitions took the immediate slot; 1069 at DIFS+1 ✓ |
+
+##### 2.2 Why broadcast is a different regime (Ma & Chen reach the same conclusion, §2.3)
+
+Their post-collision result depends entirely on the **ACK timeout** holding the colliders back.
+**Broadcast has no ACK and therefore no ACK timeout.** The colliders resume after DIFS like everyone
+else, except that they alone can hold index 0. So in broadcast the post-collision slot is not
+inaccessible — it is *exclusively* accessible to the stations that just collided. That is the
+opposite of the unicast conclusion, and it is the regime that produces the 16× error. Ma & Chen
+state exactly this in §II-C of their 2008 paper; the derivation below was ours, the result was not.
+
+Our broadcast measurement: **1315** post-collision winners at DIFS+0 (all previous colliders) against
+a hard **DIFS+1** floor for everyone else.
+
+##### 2.3 The broadcast model was already published — and warns against our exact error
+
+> **X. Ma and X. Chen, "Saturation Performance of IEEE 802.11 Broadcast Networks," IEEE
+> Communications Letters, vol. 11, no. 8, pp. 686–688, Aug. 2007,
+> doi:10.1109/LCOMM.2007.070040.** [VERIFIED-PRIMARY + Xplore record]
+> **X. Ma and X. Chen, "Performance Analysis of IEEE 802.11 Broadcast Scheme in Ad Hoc Wireless
+> LANs," IEEE Trans. Veh. Technol., vol. 57, no. 6, pp. 3757–3768, Nov. 2008,
+> doi:10.1109/TVT.2008.918731.** [VERIFIED-PRIMARY]
+
+*(Note: the author-copy PDF of the letter carries a placeholder header "vol. 11, no. 5, May 2007".
+The Xplore record — vol. 11, no. 8, pp. 686–688, August 2007 — is authoritative.)*
+
+Verbatim from the abstract: analytic models for unicast *"**cannot simply be reduced** for the
+analysis of broadcast service."* They name the mechanism the **backoff counter Consecutive Freeze
+Process (CFP)** and state the unicast/broadcast asymmetry in §II-C of the journal version. Their
+model splits the backoff counter into the sequential backoff process and the CFP, and yields a
+closed form for saturation throughput and packet delivery ratio.
+
+**Their closed form vs our NS-3 measurement: ≤0.36 % on p_s, idle-slots-per-busy-period and
+throughput at N = 5, 10, 20, 35, 50.** Implemented in `models/broadcast_dcf.py`. Their
+τ_s = 2/W₀ = 0.125; our discarded reduction used 2/(W+1) = 0.1176.
+
+**Caution for implementers:** the 2007 letter's eq. (6) prints `pss = 1−(1−τs)^(n−1)`, which is a
+collision probability and cannot be a success probability. The 2008 journal eq. (8) gives the
+correct `pss = n·τs·(1−τs)^(n−1)`. Use the journal.
+
+**That is precisely the error this project made**: `analysis/figures_ns3.py` reduced the unicast
+model to broadcast by setting τ = 2/(W+1), and it failed by 16×. It has been replaced by
+`models/broadcast_dcf.py`.
+
+Also surfaced, unread: *"Comments on IEEE 802.11 saturation throughput analysis with freezing of
+backoff counters"* (IEEE Xplore doc 1388729) — part of the backoff-freezing debate that Tinnirello
+et al. resolve. **[VERIFY]**
+
+---
+
+#### 3. Resolution
+
+**The question was:** does Ma & Chen's broadcast backoff model treat consecutive channel slots as
+*independent*, or does it carry the anomalous-slot correlation? (Chronology suggested independence —
+Ma & Chen 2007 predates Tinnirello et al. 2010 — which turned out to be wrong.)
+
+**ANSWERED: outcome (a).** Ma & Chen's model carries the correlation explicitly — the CFP *is*
+the correlation. Actions taken: `models/broadcast_dcf.py` implements their equations with citation;
+our in-house reduction is deleted from the analysis path and kept only as a labelled failure curve;
+`sim/dcf_ladder.py` is retained as an independent cross-check (agrees to <2 %); docs/02 §6a now
+specifies the broadcast model normatively.
+
+**What remains ours, stated conservatively:** independent validation at W₀=16 / 802.11a / 6 Mb/s
+(they tested W₀=32 and 128 at 1 Mb/s — and they conclude CFP matters *most* at small W₀); direct
+PHY-trace measurement of the mechanism rather than curve-fitting; and reproduction of the
+non-monotonic throughput reversal near N≈40 that the naive reduction cannot produce.
+
+The superseded framing follows, kept visible:
+
+> Tinnirello et al. showed that DCF's backoff decrement rules make consecutive slots correlated, and
+> that in unicast the ACK timeout blocks the post-collision slot. We show that in **broadcast**,
+> where no ACK timeout exists and the contention window never doubles, the same rules produce the
+> opposite effect — the post-collision slot is seized exclusively by the colliders — and that this,
+> not capture, accounts for a **16×** discrepancy between the standard no-ACK Bianchi adaptation and
+> a reference simulator. A slot-exact model carrying only this asymmetry matches NS-3 to ≤0.40 %
+> across N=5–50.
+
+---
+
+#### 4. Regardless of outcome — one correction is already owed to the docs
+
+`docs/02 §6` cites Bianchi without the 2010 refinement, and the project's broadcast variant was
+derived in-house rather than cited. Both should change:
+
+* add Tinnirello et al. (2010) as the refinement of the unicast model **[VERIFIED-PRIMARY]**;
+* stop presenting τ = 2/(W+1) as *the* broadcast model — it is our own reduction, and it is wrong.
+
