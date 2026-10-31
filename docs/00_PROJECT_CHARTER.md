@@ -1,5 +1,9 @@
 # 00 — PROJECT CHARTER
 
+> **Current state (2026-11-01).** This is the charter as written on 2026-07-03, with dated
+> restatements where the work moved it (items 5 and 6 below). What the project is now, and why each
+> choice was made: [`PROJECT_GUIDE.md`](PROJECT_GUIDE.md). Decisions since: [`DECISIONS.md`](DECISIONS.md).
+
 ## 1. One-paragraph statement
 Payload compression (Pillar 1, published) shifts the dominant on-air cost of an
 authenticated blockchain telemetry ledger from data to cryptography: a fixed 64 B

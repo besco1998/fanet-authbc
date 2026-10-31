@@ -7,6 +7,11 @@ robustness; MTU application budget M = 1500 B). Frames are lost i.i.d. with prob
 (channel abstraction of fading/collisions/mobility; p ∈ {0.02, 0.05, 0.10} in experiments).
 Contention is modeled by Bianchi DCF (doc 02 §6) and validated in NS-3 (E5). No GCS.
 
+> **Corrected 2026-11-01.** Bianchi's model assumes acknowledgements; broadcast has none, so the
+> broadcast model is Ma & Chen's (`src/authbc/models/broadcast_dcf.py`, finding F9). Every capacity
+> the paper reports is simulated in ns-3 per configuration (F50), and the contention model
+> (`src/authbc/sim/dcf_unsaturated.py`) explains it with nothing fitted.
+
 **Ledger.** Each UAV i maintains an append-only hash chain of its own telemetry records
 and stores verified records overheard from others. A record is
 `rec = {src, seq, ts, prev_hash, payload}`; `prev_hash = SHA-256(prev record bytes)`.
@@ -75,6 +80,12 @@ Compliance costs **~2× swarm size** (213 → 100 at the V≥0.95 boundary; 103 
 > corrected on 2026-08-07; this document was not, because every staleness guard parses `paper/main.tex`
 > only. Current values are `results/raw/capacity_envelope.csv`, columns `n_max_v95_mean`.
 
+> **Corrected 2026-11-01.** The capacities in this section came from one load ceiling, which a
+> registered test showed is not invariant (F50, 2026-10-06). They are now simulated per
+> configuration: per-record signing 35 and AUTHBC 124 drones at 5 % frame loss, 27.6 and 97.3 at
+> 3 % (`results/raw/design_ladder.csv`, `results/raw/capacity_97.csv`); 72.0 B per record became
+> 43.25 B in the frame-linked format.
+
 ⚠️ **The region has a floor, and it is a real constraint on the application.** Holding b ≥ 4 under a
 100 ms deadline needs **Λ ≥ 40 Hz**. At 20 or 10 Hz the same deadline forces b = 1 and the saving
 collapses from 58.7 % to **12.2 %**. So the batching benefit is *not* available at every compliant
@@ -92,6 +103,12 @@ apply.
 Λ_i = 20 rec/s, D_max = 250 ms (802.11a, 6 Mb/s, U < 1) is **N ≤ 25** for A+JSON, **N ≤ 32** for the
 A+CBOR Pillar-1 baseline and **N ≤ 103** for the co-designed configuration. N = 50 is quoted because
 it lies *between* those: a swarm the baselines cannot serve and the co-design can. See docs/02 §6b.
+
+> **Corrected 2026-11-01.** The capacities in this section came from one load ceiling, which a
+> registered test showed is not invariant (F50, 2026-10-06). They are now simulated per
+> configuration: per-record signing 35 and AUTHBC 124 drones at 5 % frame loss, 27.6 and 97.3 at
+> 3 % (`results/raw/design_ladder.csv`, `results/raw/capacity_97.csv`); 72.0 B per record became
+> 43.25 B in the frame-linked format.
 
 **Security model.** Adversary may inject, replay, modify, or forge frames but does not
 hold any honest UAV's private key (key compromise out of scope, per charter). Required:

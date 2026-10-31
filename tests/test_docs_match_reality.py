@@ -29,7 +29,7 @@ import pytest
 
 REPO = Path(__file__).resolve().parents[1]
 CLAUDE = REPO / "CLAUDE.md"
-NEXT = REPO / "docs" / "NEXT_STEPS.md"
+NEXT = REPO / "docs" / "OPEN_ITEMS.md"   # the pick-up guide, since 2026-11-01
 LITREG = REPO / "docs" / "literature" / "README.md"
 
 
@@ -156,7 +156,8 @@ class TestPickUpGuideCounts:
 # --------------------------------------------------------------------------- the spec documents
 # ⚠️ Added 2026-08-27. Until today EVERY staleness guard in this repo parsed `paper/main.tex`.
 # The spec documents were outside the P8 paper audit's scope, so the August corrections (F28/F30/
-# F38, S3, S3b) reached the paper and never reached docs/00-07 or TRADEOFFS.md — leaving a dated
+# F38, S3, S3b) reached the paper and never reached docs/00-07 or TRADEOFFS (since 2026-11-01 part
+# of DECISIONS.md) — leaving a dated
 # fault line at ~2026-07-30. Three defect classes had survived there for three weeks:
 #   * the pre-F30 capacity crossing 233/116 (current: 213/100);
 #   * docs/02 §9c's LoRa table, verbatim the PURGED 3-seed run;

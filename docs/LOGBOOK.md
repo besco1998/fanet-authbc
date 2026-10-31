@@ -12,6 +12,40 @@ where the durable record lives. If you want the conclusion only, follow the poin
 
 ---
 
+# 2026-11-01 — the documents tidied: about 70 became about 25, nothing lost
+
+**Asked:** "make them as few documents as possible … don't delete any data unless really old or
+redundant … arranged clean and well documented … then update the guide too." Mohamed chose to move
+every registration to `predictions/` and to merge old documents into `docs/archive/`.
+
+**Done** (the plan and its map: `docs/README.md`, "Where did it go?"):
+* The eight registrations in `docs/` were moved to `predictions/` with `git mv`, and an index was
+  written. `git log --follow` reaches their first commits.
+* Historical documents were merged verbatim, each under a heading naming its old path, into
+  `audits/AUDIT_HISTORY.md` and three archive files. `TRADEOFFS.md` became the end of
+  `DECISIONS.md`. The current part of `NEXT_STEPS.md` became `OPEN_ITEMS.md` §1. Every source line
+  was checked present in its destination before the source was removed.
+* About 120 files had their references re-pointed by a script, then checked by hand.
+
+**Found on the way — the old path is sometimes data, not a pointer:**
+* `src/authbc/ledger/store.py` is hash-pinned as timed on the board (`test_bench_session_hw`);
+  editing its docstring would have invalidated the board timing.
+* `src/authbc/sim/dcf_unsaturated.py` is checked byte-identical to its registered version
+  (`test_spread_capacity`).
+* Two tests read a registration *at its commit* (`git show 64322fc:docs/…`), where the new path
+  does not exist.
+* Three generators write the path into result-file headers.
+
+All of these were restored to the old path, and the index lists them. The pattern is the
+project's own: a reference can be evidence, and checking for a hash or a historical read before
+rewriting is what separated the two.
+
+**Also:** about 25 docstring lines went past the 100-character limit when paths grew, and were
+rewrapped. `CLAUDE.md` said 28 literature PDFs were held locally; there are 29 (Kleinrock &
+Tobagi was added on 2026-10-27).
+
+---
+
 # 2026-10-28 — Mohamed's choices on the review's options
 
 He took every recommendation: see `DECISIONS.md`, 2026-10-28. Two changed what is printed:

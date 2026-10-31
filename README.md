@@ -20,11 +20,11 @@ that was emitted, decoded and verified.
 | result | value | artifact |
 |---|---|---|
 | **Bytes per record on air** | **43.25 B** against 145.77 B for a signature on every record: **70.3 % fewer** | `results/raw/design_ladder.csv` |
-| **Neighbours one 802.11a collision domain serves** at 95 % delivery, 50 records/s, 100 ms deadline | **124** [124, 125] against **35** [35, 35] — simulated per configuration in ns-3, 30 seeds, bootstrap interval | `ns3_nmax_direct.csv` |
+| **Neighbours one 802.11a collision domain serves** at 95 % delivery, 50 records/s, 100 ms deadline | **124** [124, 125] against **35** [35, 35] — simulated per configuration in ns-3, 30 seeds, bootstrap interval. At 97 % delivery, the margin the paper's own loss rule asks for: **97.3** against **27.6**, both predicted before the runs | `ns3_nmax_direct.csv`, `capacity_97.csv` |
 | **A rule for that capacity** | N_max ≈ 0.05 / (f·(a·T + c)) with a = 0.071, c = 8 µs — fitted to six configurations, then it predicted seven others **within 3.4 %**, with the predictions committed first. A fit at one loss level and one PHY rate, not a model | `predictions/NMAX_DIRECT_EXPECTATIONS.md` |
 | **Where no frame fits** | **eight of the twelve** EU863-870 LoRaWAN data rates cannot carry one signed, hash-chained frame that verifies alone: five because a 64 B signature exceeds a 50/51 B payload, three because header, link and signature fill 115 B | `exclusion_matrix.csv` |
 | **A frame must not depend on its predecessor** | a delta-coded frame that does verifies **0.881** of its records at 5 % frame loss, not 0.95 — so every frame starts with a full record | `e3_codec_loss.csv` |
-| **Receiver CPU** | one Raspberry Pi 4 core serves a neighbourhood of 296 nodes with Ed25519 and of 10 with BLS (cryptography only); the interpreted prototype, decoding included, serves 57 | `design_ladder.csv`, `results/hw/p1_lean.authbc-pi4b.csv` |
+| **Receiver CPU** | one Raspberry Pi 4 core serves a neighbourhood of 296 nodes with Ed25519 and of 10 with BLS (cryptography only); the Python prototype, decoding included, serves 57, and the Rust receiver 290 | `design_ladder.csv`, `results/hw/p1_lean.authbc-pi4b.csv`, `results/hw/compiled_receiver.authbc-pi4b.csv` |
 
 **What is not measured.** No capacity is measured on radios: the capacities are simulated. Between two radios the access rule was observed within 6 % where both are saturated, and a registered prediction of their loss below saturation held at two loads and failed at the third (`results/hw/channel/CONTENTION_RESULTS.md`). Record sizes come from
 a synthetic generator, checked against twelve public flight logs at 5 Hz and against nothing at
@@ -92,7 +92,8 @@ See [`ns3/README.md`](ns3/README.md).
 
 | path | contents |
 |---|---|
-| [`docs/`](docs/) | Specification, theory, decisions, audits. **Start at [`docs/README.md`](docs/README.md)** — it indexes everything |
+| [`docs/`](docs/) | The project explained ([`docs/PROJECT_GUIDE.md`](docs/PROJECT_GUIDE.md)), specification, decisions, open items, audits. **Start at [`docs/README.md`](docs/README.md)** — it indexes everything |
+| [`predictions/`](predictions/) | **Every prediction registered before its experiment**, never edited; indexed with outcomes in [`predictions/README.md`](predictions/README.md) |
 | `src/authbc/` | Library: encodings, crypto, ledger, placements, channel/energy/optimizer models |
 | `experiments/` | One config per experiment; runners live in `src/authbc/bench/` |
 | `results/raw/` | **Frozen** CSVs with provenance headers; `results/figures/` derives from them |
@@ -112,7 +113,7 @@ See [`ns3/README.md`](ns3/README.md).
   findings, a headline count — are struck through with the evidence that refuted them, not
   deleted.
 - **Predictions are committed before the data,** in data-free commits whose order anyone can
-  check in the history (see the pre-registrations listed in [`docs/README.md`](docs/README.md)).
+  check in the history (every one is in [`predictions/`](predictions/), indexed with its outcome).
   Several failed — among them the prediction that one load ceiling gives every configuration's
   capacity — and are reported as failures.
 - **No typed results.** Every number in the paper is a macro that a script writes from

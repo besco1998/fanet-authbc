@@ -296,6 +296,12 @@ behind several rows here).
 | **p ∈ {0.02, 0.05, 0.10}** | loss grid | mechanism-grounded (802.11 broadcast has no ACK, no retransmission ⇒ receiver sees raw channel error) | no single measured FANET PER; 20–100× more pessimistic than TS 22.125's managed-C2 99.9 % — conservative, but not tied to a measurement | **DECLARED** (B4) |
 | **ε = p** | verifiability target | makes T6's n_max = 1 exact, closing the fragmentation escape | a looser ε would admit fragmentation and weaken T6; the theorem is stated with its condition (ε ≤ p) rather than the value | **DECLARED** |
 
+> **Corrected 2026-11-01.** The capacities in this table (100, 213, 103, 35 and 25 / 32 / 103)
+> came from one load ceiling, which a registered test showed is not invariant (F50, 2026-10-06).
+> Capacities are now simulated per configuration: 35 → 124 drones at 5 % frame loss and
+> 27.6 → 97.3 at 3 % (`results/raw/design_ladder.csv`, `results/raw/capacity_97.csv`). The
+> 58.68 % saving is now 70.3 % in the frame-linked format. The decisions themselves stand.
+
 #### 1a. LoRa channel count — why "use as many channels as possible" is right for a gateway and wrong for us
 
 *Raised by Mohamed 2026-07-30. The intuition is correct for the infrastructure case and inverts for
@@ -331,6 +337,12 @@ wrong answer to "how many UAVs can hear each other". We are asking the second. S
 | **Never quote the bare 75 % auth cut** | — | forecloses *"is your result just the definition of batching?"* — for that metric it is: the ratio is **1 − 1/b**, invariant to H_f, g_a, encoding and scheme | the most memorable number in the thesis | **FORCED** by F13 |
 | **Load-bearing claim = feasibility envelope** | N_max 25 / 32 / **103** | a capability statement that genuinely needs all four axes *plus* the channel model | depends on the channel model's validity, which is validated for throughput only (D3) | **DECLARED** |
 | **Report both the compliant and the declared operating point** | costs nothing (identical bytes) | kills the "you picked a loose bound" objection outright | two numbers to explain instead of one | **DECLARED** |
+
+> **Corrected 2026-11-01.** The capacities in this table (100, 213, 103, 35 and 25 / 32 / 103)
+> came from one load ceiling, which a registered test showed is not invariant (F50, 2026-10-06).
+> Capacities are now simulated per configuration: 35 → 124 drones at 5 % frame loss and
+> 27.6 → 97.3 at 3 % (`results/raw/design_ladder.csv`, `results/raw/capacity_97.csv`). The
+> 58.68 % saving is now 70.3 % in the frame-linked format. The decisions themselves stand.
 
 #### 3. Model scope — what is deliberately not modelled
 
@@ -378,11 +390,11 @@ quote them from the ladder, with their intervals.*
 |---|---|---|---|---|
 | **A keyframe in every frame (r = 1)** | every frame decodes alone, so V = 1 − p as T3 assumed | **3.0 B/record** in the first format (71.99 → 74.96), 3.5 B/record against r = 16 in the lean one. The saving quoted since July (−58.68 %) becomes −56.98 % for the first format | **FORCED** at ε ≤ p (T3′, F46) |
 | **A second, lean frame format beside the frozen first** | the design exists as an object with a sender and a receiver; 43.25 B/record against 74.96 | two formats to explain; the first format's delta rows remain a byte model and say so (`sized_from`) | **DECLARED** (R2) |
-| **One chain link per frame in the lean format** | 32 B per record becomes 35 B per frame | inside a frame, continuity rests on the frame signature, not on an independent hash per record — on 802.11 as well as LoRa | ⚠️ **OPEN — Mohamed** (`OPEN_ITEMS` G5) |
+| **One chain link per frame in the lean format** | 32 B per record becomes 35 B per frame | inside a frame, continuity rests on the frame signature, not on an independent hash per record — on 802.11 as well as LoRa | ⚠️ **OPEN — Mohamed** (`OPEN_ITEMS` G5) *(Corrected 2026-11-01: G5 was closed on 2026-10-08, Mohamed confirmed it.)* |
 | **Batching four records** | fewer bytes and a quarter of the frames | a lost frame takes four records; a record waits up to 80 ms; and **a longer frame is lost more often at one bit error rate** — V = 0.943 where the one-record frame loses 5 % | **DECLARED** — the last cost was not stated before E10's `ber` rows |
 | **Capacity simulated per configuration** | a V ≥ 0.95 capacity with a bootstrap interval, instead of one load ceiling that was off by up to 23 % | hours of simulation per change; a rung that was not simulated has **no** such capacity | **MEASURED** (R7, F50) |
 | **The airtime line stated as a closed form** | a rule that predicted seven unseen configurations within 3.4 %, and says why a utilisation ceiling could not work | it is a fit: one loss level, one PHY rate, 5–50 frames/s, a simulator; its residuals are ordered by frame rate. It is never quoted as a capacity | **MEASURED** — held-out, pre-registered (F54) |
-| **Send time redrawn within every period** | a run samples the channel, not one frozen phase configuration; per-run sd 0.034 → 0.0016 | not the published scenario's default; a real autopilot's jitter is unmeasured (G7). Mean delivery differs by 0.003 between the sources, and the strictly periodic crossings are 1–9 % lower — within the tolerance registered, not zero, and not yet explained | **DECLARED** — by the rule registered before the runs (F51) |
+| **Send time redrawn within every period** | a run samples the channel, not one frozen phase configuration; per-run sd 0.034 → 0.0016 | not the published scenario's default; a real autopilot's jitter is unmeasured (G7). Mean delivery differs by 0.003 between the sources, and the strictly periodic crossings are 1–9 % lower — within the tolerance registered, not zero, and not yet explained *(Corrected 2026-11-01: the 1–9 % difference was withdrawn; it did not replicate on 1 260 fresh runs, F61, and the means agree, 0.0004 ± 0.0009.)* | **DECLARED** — by the rule registered before the runs (F51) |
 | **N_max on the mean, at the grid** | the estimator registered in advance, and the LoRa arm's | coarse where the grid is; a per-run reading is stricter | **DECLARED** |
 | **A graded exclusion verdict** | "excluded" means a content-independent floor exceeds the limit — arithmetic, not telemetry | the count *eight of twelve* joins five rates excluded by the signature alone with three excluded by header + link + signature + one record (124 B > 115 B); the second kind is conditional on carrying the link on air | **DECLARED** (R4, F47) |
 | **Certificates as a second column** | both accountings visible | explicit certificates only; not in any simulated frame | **DECLARED** (R13) |

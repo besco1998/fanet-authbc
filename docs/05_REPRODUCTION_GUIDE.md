@@ -58,6 +58,12 @@ runs `analysis/paper_numbers.py`, which writes `paper/numbers.tex` from `results
 artifact no longer supports a sentence the paper makes. To change a number, re-run its
 experiment; never edit `numbers.tex`.
 
+⚠️ **`make paper` needs two files git does not hold.** Since 2026-10-27 the paper uses the Springer
+Nature LaTeX template (`sn-jnl`). Its class file says it may only be distributed with the LaTeX
+base system, so `paper/sn-jnl.cls` and `paper/sn-mathphys-num.bst` are git-ignored: download the
+Springer Nature template and copy those two files into `paper/` first (`paper/README.md`). The
+thesis and the tests do not need them.
+
 ⚠️ **`make bench-micro` overwrites `p1_crypto.csv` with *your* machine's timings.** The thesis uses
 ARM figures from `results/hw/p1_crypto.authbc-pi4a.csv` (decision D8 — the Pi is the platform).
 Running it on x86 and re-freezing would silently swap the platform. `git checkout results/raw/` to

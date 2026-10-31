@@ -1,13 +1,86 @@
-# Open items register — everything not yet closed
-*Created 2026-07-28 by the pre-P8 full audit. **This is the single tracked list.** Anything
-"remaining", "deferred", "assumed" or "future work" belongs here, not scattered in prose.
-Status: `OPEN` · `DECIDED` (needs implementing) · `ACCEPTED` (a stated limitation, will not be fixed).*
+# Open items and next steps — everything not yet closed
 
-Ordered by what a thesis examiner would hit first.
+*The single tracked list, created 2026-07-28. Anything "remaining", "deferred", "assumed" or
+"future work" belongs here, not scattered in prose. Since 2026-11-01 it also holds the pick-up
+guide (formerly `docs/NEXT_STEPS.md`; its dated history is in
+[`archive/PICKUP_GUIDE_HISTORY.md`](archive/PICKUP_GUIDE_HISTORY.md)) and the questions found while
+writing [`PROJECT_GUIDE.md`](PROJECT_GUIDE.md).*
+
+**Contents:** 1. Where the work is · 2. Open now · 3. Questions for Mohamed · 4. The register
+(every item since July, open and closed, with its history).
+
+## 1. Where the work is, and what to do next (state on 2026-11-01)
+
+**Where.** Branch `p11-reviewer-revision`, PR #2 (a draft until Mohamed has read the thesis
+passages listed in `thesis/STATUS.md`). It contains `p9-supervisor-revision` (PR #1, his to merge
+first). Counts: the status board in `CLAUDE.md`. Decisions and what each cost:
+[`DECISIONS.md`](DECISIONS.md). To understand the project: [`PROJECT_GUIDE.md`](PROJECT_GUIDE.md).
+Every document: [`README.md`](README.md).
+
+**Done.**
+* The reviewer revision A1–A17 is in the paper and the thesis (`revision/STATUS.md`).
+* The review of the 18-page paper (2026-10-27, S-01…S-36, L-01…L-38) is applied. Every item is
+  traced in `docs/review 27-10-2026/CHANGE_LOG.md` (outside git). The paper is in the Springer
+  Nature `sn-jnl` layout, 40 pages, the 802.11 result first. S-01 was registered and run.
+* Mohamed's choices on its options are recorded (2026-10-28).
+* The documents were tidied on 2026-11-01: about 70 became about 25, nothing lost
+  ([`README.md`](README.md) has the map of where each old file went).
+
+**The gate.** `make all` = lint + mypy + 2438 fast tests + the 43-test frozen gate. The paper has
+References **51** rendered (81 in the shared bibliography).
+
+**How to edit the paper.** Edit `paper/main.tex` directly. Every number is a macro from
+`analysis/paper_numbers.py`. The Springer template files are git-ignored: download them before
+`make paper` (`paper/README.md`).
+
+**Waiting on Mohamed — do not start these.** The journal (I1), then the cuts to its limit; author
+details (I2); data availability (I3); the review folder in git (I6); reading the new thesis
+passages; merging PR #1; radios for a measured capacity (H3, G4); mobility (E20) and Direction C
+(plans in [`DEFERRED_PLANS.md`](DEFERRED_PLANS.md)).
+
+**What an agent may do unprompted** (optional; no claim depends on them): G27, G6 (a), G15, G37
+(§2). Each new experiment is registered first (`predictions/<ID>.md`, tag `prereg-<ID>`,
+index in `predictions/README.md`).
+
+## 2. Open now
+
+| # | Item | Whose | Where it is described |
+|---|---|---|---|
+| G4, H3 | Contention measured between two radios only; no capacity measured on hardware | Mohamed (purchases) | register §G, §H |
+| I1 | Choose the journal; then cut to its length | Mohamed | register §I |
+| I2 | Author contributions, acknowledgements, funding, ORCID iDs; thesis declaration and acknowledgements | Mohamed | register §I |
+| I3 | Data and code availability statement | Mohamed (deferred) | register §I |
+| I6 | Whether the review folder goes into git | Mohamed | register §I |
+| G6 (a) | The rate-offset source's run-to-run spread | optional | register §G |
+| G15 | Crypto timing on the Pi 3B+ and BeagleBone | optional | register §G |
+| G27 | How the radio sends its own queued frames (event model against 36 measured windows) | optional | register §G |
+| G37 | Why four cores give 3.36 times one | optional | register §G |
+| Q1–Q7 | Questions below | Mohamed | §3 |
+
+## 3. Questions for Mohamed
+
+*Found while writing `PROJECT_GUIDE.md` (2026-10-31). The stale documents it also found were
+corrected in the tidy-up of 2026-11-01.*
+
+| # | Question | Where |
+|---|---|---|
+| Q1 | Why is the group MAC **8 bytes**? The cost is recorded, not the reason (forgery probability against tag length is not discussed). | `src/authbc/placement/admission.py` (`TAG_BYTES`); `revision/REVISION_PLAN.md:285` |
+| Q2 | How was the timestamp window **Δ = 150 ms** chosen? It is "the plan's number"; the formula window of the same experiment gives 95.75–193.75 ms. | `predictions/A5.md:38`; `revision/REVISION_PLAN.md:240` |
+| Q3 | Why **ε = 0.05** (V ≥ 0.95) specifically? The loss grid is p ∈ {0.02, 0.05, 0.10}; no application requirement is cited. | `paper/main.tex` §2.1; `01_SYSTEM_MODEL_ARCHITECTURE.md:6` |
+| Q4 | Why these **nine fields**? The paper says "position, velocity and status"; the encoding paper used 18. | `src/authbc/placement/wire_v2.py:66-68` |
+| Q5 | Should paper Table 3 name **both boards**? Crypto timings come from pi-A, the frame-linked codec, Rust, floods and frame-linked energy from pi-B. | `paper/main.tex` Table 3; `results/hw/*.authbc-pi4a.csv`, `*.authbc-pi4b.csv` |
+| Q6 | Re-time **SHA-256** on the record the receiver actually hashes? The 2 745.5 ns was measured on a 45 B first-format input and is the one timing with no raw result file (its effect is small: 0.14 ms/s against 3.24 ms/s of verification per neighbour). | `experiments/design-ladder/config.yaml:51`; `audits/model_provenance.md:465` |
+| Q7 | Confirm that the ladder row `batch-delta-published` ("keyframe every 16 records (as published)", V = 0.881) is kept only as history. | `results/raw/design_ladder.csv` |
+
+## 4. The register — every item since July, open and closed
+
+*Status: `OPEN` · `DECIDED` (needs implementing) · `ACCEPTED` (a stated limitation, will not be
+fixed) · `CLOSED`. Ordered by what a thesis examiner would hit first. Closed items are kept, with
+their history.*
 
 ---
 
-## A. Claims and framing
+### A. Claims and framing
 
 | # | Item | Status | Why it matters | Action |
 |---|---|---|---|---|
@@ -20,7 +93,7 @@ Ordered by what a thesis examiner would hit first.
 | **A6** | **T2a prior-art check — DONE 2026-07-30.** The search returned established results: batching amortizes per-transmission overhead with diminishing returns, and the latency trade-off is thoroughly covered by the packet-aggregation literature (alpha-beta cost model) | **CLOSED** | **T2a is analysis, not a novel theorem** — same disposition as T6 (F16). It is a correct and useful statement of *which ceiling binds*, and it is presented that way; no novelty is claimed | Nothing. A3 still confirms the citation formatting |
 | **A7** | **External baseline — RESOLVED for the LoRa arm (F20), argued for the 802.11 arm.** LoRa: Haxhibeqiri et al. 2017's measurement-fitted model is now **implemented and run at our operating point** (`make exp-lora-external`) — it gives **N_max = 4** against our **5**. 802.11: already validated against Bianchi and Ma & Chen. TBRD/TESLA was moved to §Related Work because it offers **no non-repudiation** and so is not a substitute | **CLOSED (LoRa) / ACCEPTED (auth schemes)** | The remaining gap is a measured comparison against another *authentication* scheme. The honest candidate is a VANET CLAS scheme, not TESLA | Optional, needs Mohamed's call on scope |
 
-## A9. Math audit 2026-08-28 (F43) — conventions that decide headlines
+### A9. Math audit 2026-08-28 (F43) — conventions that decide headlines
 
 *Every item here is defect class **C2 — an unverified constant on the measurement path**. The
 30-seed discipline installed after F30 protects against C1 and offers no protection against these.*
@@ -35,7 +108,7 @@ Ordered by what a thesis examiner would hit first.
 | **M6** | `N_max`'s first-failure search is sound only because U(n) is monotone, which it is **by arithmetic accident** — Ma & Chen's S(n) is non-monotone in N | **CLOSED — guarded** | A change to W₀ or frame size could silently make it under-report | Pinned by `tests/test_math_audit.py::TestNmaxSearchIsSound` |
 | **M7** | `s` depends on the generator window; E1's ±0.02 B CI is ~150× narrower than the ~2.7 B systematic term | **CLOSED — documented + guarded** | s_cbor is the denominator of the headline and of every capacity ratio | Window stated in docs/04 §1; direction is conservative. Pinned by `TestRecordSizeDependsOnRunLength` |
 
-## B. Unreferenced or assumed constants
+### B. Unreferenced or assumed constants
 
 | # | Item | Status | Bias | Action |
 |---|---|---|---|---|
@@ -49,7 +122,7 @@ Ordered by what a thesis examiner would hit first.
 
 | **B8** | Medium-exclusion finding | ⚠️ **CLOSED 2026-07-29 — promoted to T7, then T7 WITHDRAWN the same day** | T7 claimed capacity excludes at **U ≥ 1**. Its own validation experiment (D3) refuted it: NS-3 delivers **98.8 % at U = 1.00**, and the V≥0.95 crossing is at **U ≈ 2.435** (interpolated), so the 3GPP-compliant point (U=1.39) is feasible and **the 75 % cut is achievable at the deadline**. T7 is withdrawn; the surviving mechanism is a **cost** — meeting the 100 ms bound halves the swarm (N≤213 → N≤100) and changes nothing in bytes. *(Numbers corrected 2026-08-27 from the pre-F30 U≈2.80 and 233→116.)* | Lesson recorded in docs/02: the claim was published before the experiment already scheduled to test it |
 
-## B'. Scientific-implementation defects (audit 2026-08-05, `docs/audits/AUDIT_HISTORY.md`)
+### B'. Scientific-implementation defects (audit 2026-08-05, `docs/audits/AUDIT_HISTORY.md`)
 
 | # | Item | Status | Action |
 |---|---|---|---|
@@ -66,7 +139,7 @@ Ordered by what a thesis examiner would hit first.
 | **S11** | ⚠️ **The literature register omitted 5 of its own 25 PDFs** and its header said 20 | **CLOSED 2026-08-07** | All five now entered with roles. Two filename defects recorded rather than hidden: `branch2019_multihop_lora_linear.pdf` is actually Abrardo & Pozzebon, and `..._TOREAD.pdf` is now read and renamed `durand2025_loramesh_ns3.pdf` |
 | **O2** | `p = 0.05` has no sensitivity analysis | **CLOSED 2026-08-06** — `make exp-sensitivity-p`. **The selection is p-invariant** (`delta/ed25519/B, b=4` at every feasible p from 2.3e-4 to 0.05), so the constant is not load-bearing. ⚠️ Feasibility requires **p ≤ ε identically** (max achievable V is 1−p), so p = ε = 0.05 is a **zero-margin boundary** — a property of the requirement, not a design defect; hardware puts the real link ~200× inside it | The 802.11 envelope is analytic in `p`, so all its uncertainty is inherited from `p`. Hardware now bounds the optimistic end at 2.3 × 10⁻⁴ (F35) |
 
-## C. Model scope — what the models do not cover
+### C. Model scope — what the models do not cover
 
 | # | Item | Status | Action |
 |---|---|---|---|
@@ -77,7 +150,7 @@ Ordered by what a thesis examiner would hit first.
 | **C5** | **No sender-side CPU throughput constraint** in the optimizer | ACCEPTED | Verified never to bind: worst case (BLS inline) is 13.9 % of one core; it would bind at ~360 rec/s vs our 20. ⚠️ **The RECEIVER's CPU was never asked about until 2026-10-06** — it verifies a whole neighbourhood, and with BLS one core serves 10 neighbours at 50 rec/s (docs/02 §6c, `n_cpu_one_core`). It is reported per rung; it is not a constraint in the optimizer |
 | **C6** | Key compromise, consensus, multi-hop routing | ACCEPTED — charter scope | — |
 
-## D. Validation gaps
+### D. Validation gaps
 
 | # | Item | Status | Action |
 |---|---|---|---|
@@ -90,7 +163,7 @@ Ordered by what a thesis examiner would hit first.
 | **D8** | **802.11 arm had no hardware measurement of any kind** | **CLOSED 2026-08-05 (F35)** | Two-Pi ad-hoc IBSS on 5 GHz ch 36 measures broadcast **link loss p = 2.3 × 10⁻⁴** (99.9773 % pooled, 8 windows, σ = 0.024 pp, 0 duplicates) and broadcast **airtime 1.995 ms/frame against 1.99 ms predicted** — an independent hardware check on the 802.11a timing constants under Bianchi and Ma & Chen. ⚠️ One transmitter ⇒ **zero contention**, so it does **not** validate Ma & Chen; that stays simulation-only. ⚠️ A first 2.4 GHz sweep gave a plausible 97.45 % that was **saturation at the 1 Mb/s basic rate**, not channel loss — discarded, kept labelled. Artifacts `results/hw/channel/` |
 | **D5** | RPi3 / BeagleBone cross-platform points | OPEN — optional | "Secondary/stretch" tiers in `hw/SETUP.md`; only add generalization breadth |
 
-## E. Process and reproducibility
+### E. Process and reproducibility
 
 | # | Item | Status | Action |
 |---|---|---|---|
@@ -119,14 +192,14 @@ Ordered by what a thesis examiner would hit first.
 | **E5** | `bench/micro.py` coverage | **CLOSED 2026-07-29** | "Measurement plumbing" failed as a justification: two bugs were introduced into `measure_crypto` on 2026-07-29 and **both were caught by hardware, not tests** (a missing keyword-only arg, and a row reporting `msg_bytes=200` for a 45 B input — a silent provenance error). `test_micro_rows.py` now pins the row contract, the per-op input sizes and the schema |
 | **E6** | Missing figures | **CLOSED 2026-07-29** | `analysis/figures_envelope_lora.py` produces `fig_envelope.png` (N_max per config), `fig_t6_exclusion.png` (T6 tiers over EU868) and `fig_lora_chain.png` (F5). Visually checked, not just generated |
 
-## F. Carried decisions needing implementation
+### F. Carried decisions needing implementation
 
 | # | Item | Status | Action |
 |---|---|---|---|
 | **F1** | Paper restructure | **CLOSED 2026-07-29** | Done in the decided shape: T6 added as theory (§III-F), new §VI "Generalisation: the Low-Rate Regime" (T6 on EU868 + chaining + the LoRa capacity result — **N_max = 3, 95 % CI [2, 3]**; *this row quoted the pre-F28 value of five until 2026-08-27*), Results reordered feasibility-first. 7 pages, builds clean. Fixed three stale claims en route (T5's MTU wording, the missing chain-hash term, E4's x86 ratio) and caught one repeat of the retracted T7 error before it shipped |
 | **F2** | Abstract/conclusion framing | **CLOSED 2026-07-29** | Rewritten in the A1 pass: abstract leads with total bytes + decomposition + the feasibility envelope; conclusion states the `1−1/b` result explicitly. One residual: the success criterion is still phrased as an *auth-byte* target (§I), which is fine — it is the pre-registered criterion and must not be moved after the fact |
 
-## G. Opened by the 2026-10-06 revision
+### G. Opened by the 2026-10-06 revision
 
 *What the external review and the work that answered it left open. Findings F45–F57, decisions
 R1–R18 (`DECISIONS.md`).*
@@ -174,7 +247,7 @@ R1–R18 (`DECISIONS.md`).*
 
 ---
 
-## H. Opened by the reviewer-revision plan (2026-10-19; `docs/revision/STATUS.md`)
+### H. Opened by the reviewer-revision plan (2026-10-19; `docs/revision/STATUS.md`)
 
 | # | Item | Status | Why it matters | Action |
 |---|---|---|---|---|
@@ -188,7 +261,7 @@ R1–R18 (`DECISIONS.md`).*
 | **H9** | **A4's adaptive controller runs at the edge of the target** (2026-10-20) | **CLOSED 2026-10-21 (A4b, F102)** | A second controller was registered (`prereg-A4b`) rather than the first tuned: with a margin of 0.02 it meets the target in 93 % of windows and fails at 116 nodes (A4: 75 %, 76), saving 20 ms of peak age against fixed b = 4. The paper reports both | Neither controller comes within 5 % of fixed b = 4 at failure; choosing b at run time buys freshness, not capacity |
 | **H5** | **Hidden-terminal broadcast models** (IEEE Access 2020; EURASIP JWCN 2019; FMAC, IEEE IoT J 2021) | **DONE** (2026-10-21) | All three read (`docs/literature/README.md`, 2026-10-20 section). Hu & Dai: prior art for A1's mechanism. Kumar et al.: prior art for A12's emulation (hidden transmitters only). FMAC: nearest work to A4, adapts the contention window; precedent for the second controller's prediction | Citations enter with the paper text (H1) |
 
-## I. Left by the review of 2026-10-27 (`docs/review 27-10-2026/CHANGE_LOG.md`)
+### I. Left by the review of 2026-10-27 (`docs/review 27-10-2026/CHANGE_LOG.md`)
 
 | # | Item | Status | Why it matters | Action |
 |---|---|---|---|---|
@@ -199,7 +272,7 @@ R1–R18 (`DECISIONS.md`).*
 | **I5** | **The Springer template files are not in git** | **ACCEPTED 2026-10-28** | `sn-jnl.cls` may only be distributed with the LaTeX base system; a fresh clone cannot build the paper until they are downloaded (`paper/README.md`) | — |
 | **I6** | **The review folder is not in git** (`docs/review 27-10-2026/`, with his earlier submission's PDF) | **OPEN — Mohamed's** | The change log lives on this machine only | His call; the PDF stays out either way |
 
-## What is genuinely settled
+### What is genuinely settled
 Freshness enforced as constraint + objective (F10) · Ma & Chen broadcast model, cited, ≤0.36 % vs
 NS-3 (F9) · NS-3 sink lifetime (F8) · OFDM-quantised airtime (D9) · 30-seed size protocol (F4) ·
 BLS = 96 B everywhere (F1) · measured powers and ARM timings (P7b) · T2a binding-ceiling theory ·

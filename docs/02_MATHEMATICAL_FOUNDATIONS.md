@@ -1,4 +1,9 @@
 # 02 — MATHEMATICAL FOUNDATIONS
+
+> **Current state (2026-11-01).** Code docstrings cite this document by section (`docs/02 T3'`,
+> `§6g` …), so its numbering is kept. Superseded passages carry dated correction notes in place;
+> T7 is withdrawn and kept visible. The constraints as the paper states them now (Eqs. 1–6), with
+> worked numbers, are in [`PROJECT_GUIDE.md`](PROJECT_GUIDE.md) §7.
 All symbols per doc 01 §2. Every theorem lists its empirical validation hook.
 All numeric examples below were verified by script (`pathA_opt.py`, research archive).
 

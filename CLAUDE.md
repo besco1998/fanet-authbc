@@ -2,14 +2,16 @@
 
 ## Project (agent owns execution end-to-end; Mohamed owns decisions only)
 AUTHBC: co-optimizing encoding × authentication placement × signature scheme × batching
-for blockchain-grade UAV telemetry ledgers over 802.11 (LoRa arm later). Full specs in
-`docs/00–06`. Owner: Mohamed A. Farouk. Thesis deadline: March 2027.
+for blockchain-grade UAV telemetry ledgers over 802.11 (LoRa arm later). Specs in `docs/00–06`
+(03 archived); the whole project explained in `docs/PROJECT_GUIDE.md`. Owner: Mohamed A. Farouk.
+Thesis deadline: March 2027.
 
 ## Read-first order (every new session)
-1) this file → 2) docs/00 charter → 3) the current phase prompt in docs/prompts/ →
-4) ONLY the docs sections that prompt's CONTEXT BUDGET names → 5) docs/06 for the tools
-you're about to touch. Phase prompts + templates live in docs/prompts/. Parallel plan:
-docs/07. Resuming? use docs/prompts/T_TEMPLATES.md §Resume.
+1) this file → 2) `docs/OPEN_ITEMS.md` §1 (where the work is, what waits on Mohamed, what an agent
+may do) → 3) `docs/PROJECT_GUIDE.md` when the whole picture is needed → 4) ONLY the docs sections
+the task needs (`docs/README.md` is the index) → 5) docs/06 for the tools you're about to touch.
+Templates: `docs/prompts/T_TEMPLATES.md` (§Resume, §Validate-Results, §Debug). The July phase
+prompts and parallel plan are archived in `docs/archive/PLANNING_HISTORY.md`.
 
 ## The Eight Laws (non-negotiable)
 1. **Plan first.** Restate objective, risks, step plan + acceptance criteria; get approval
@@ -37,9 +39,9 @@ docs/07. Resuming? use docs/prompts/T_TEMPLATES.md §Resume.
    (no hidden correction factors); negative results reported plainly.
 8. **Decision points.** Items marked ⚠️ (D0–D7 in docs/00) and ANY spec deviation: stop and
    ask Mohamed. You created the repo and run everything; Mohamed only decides.
-Plus: **Autonomous chaining** — after a green phase tag, load the next docs/prompts file and
-continue; stop only at ⚠️ gates/failures; write a §Handoff every phase. **Parallel discipline
-(if D7≠serial)** — one session per worktree; edit only your lane's owned paths (docs/07 §3);
+Plus: **Autonomous chaining** — after a green phase tag, continue with the next item of
+`docs/OPEN_ITEMS.md` §1 (the July phase prompts are archived); stop only at ⚠️ gates/failures; write a §Handoff every phase. **Parallel discipline
+(if D7≠serial)** — one session per worktree; edit only your lane's owned paths (07 §3, archived in `docs/archive/PLANNING_HISTORY.md`);
 shared files are P0-frozen; merges at SYNC points only.
 
 ## Commands (the only supported entry points)
@@ -56,7 +58,7 @@ Small pure functions; every module docstring cites the docs section it implement
 type hints; no dead code; comments explain WHY, not what.
 
 ## Current status board (agent updates this section every session)
-- **NEXT SESSION: read `docs/OPEN_ITEMS.md` first** — prioritised work plan, strategy decision, and decisions not to re-litigate.
+- **NEXT SESSION: read §1 of `docs/OPEN_ITEMS.md` first** — where the work is, what waits on Mohamed, what an agent may do. Docs were tidied on 2026-11-01 (about 70 → 25; `docs/README.md` maps every old path to its new place).
 - ⚠️ **Repo is PUBLIC and history was REWRITTEN** to purge the 84 MB vendored NS-3 tree. **The remote is authoritative — never force-push an older local branch over it.** Copyrighted PDFs in `docs/literature/` stay by Mohamed's decision (risk accepted, `DECISIONS.md`).
 - **Phase: P11 — the reviewer revision and the review of 2026-10-27, both applied; waiting on Mohamed (journal, author details, thesis reading, PR #1).** Branch `p11-reviewer-revision` (PR #2, draft), which contains `p10-followups` and `p9-supervisor-revision` (PR #1). Work from any machine: `git clone`, `git checkout p11-reviewer-revision`, `make setup && make all`; `make paper` also needs the Springer template files (`paper/README.md`).
 - **2026-10-24 — the reviewer revision (A1–A17) is in the paper and the thesis.** Branch `p11-reviewer-revision`, PR #2 (draft). Every reviewer point has a figure or table (`analysis/figures_revision.py`, `tests/test_figures_revision.py`); the paper's registration appendix was removed on 2026-10-25 (Mohamed); the thesis keeps its Appendix B. ⚠️ **Mohamed's rules (2026-10-24):** no generative-AI statement and nothing showing AI made the paper or thesis; A14 and B1–B5 not stated anywhere, not even as future work, until he buys the hardware; A12 left out. See `docs/DECISIONS.md` (2026-10-24 table).
@@ -491,7 +493,7 @@ decides a headline and was never written down — defect class **C2**, the one c
 > ⚠️ **F18 came back.** On 2026-08-07 it was found still printed in `tab:lora-external` ("we are more optimistic" at N=5) — 100 lines below a bold sentence saying the opposite. **Retracting a finding in the register does not remove it from the paper.** When you retract, grep the paper. Guarded now by `test_no_row_revives_the_retracted_optimism_claim`, which checks the *artifact* rather than the wording.
 
 ### Where things live
-`docs/README.md` is the index. Findings **F1–F113** in `docs/audits/model_provenance.md`. Open items **only** in `docs/OPEN_ITEMS.md`. Trade-offs in `docs/DECISIONS.md`. Method and failed attempts in `docs/LOGBOOK.md`. **57 PDFs** in `docs/literature/` with each source's ROLE stated, and **28 more held on Mohamed's machine but NOT redistributed** (`docs/literature/HELD_LOCALLY.csv`, git-ignored files — ⚠️ never `git add -f` them); every bibliography entry is checked against its registry record by `make verify-citations` (`A3_CITATION_VERIFICATION.md` is the August record of a check that turned out not to compare authors — F49).
+`docs/README.md` is the index (and maps every pre-2026-11-01 path to its new place). The project explained: `docs/PROJECT_GUIDE.md`. Findings **F1–F113** in `docs/audits/model_provenance.md`; every past audit in `docs/audits/AUDIT_HISTORY.md`. Open items, next steps and questions **only** in `docs/OPEN_ITEMS.md`. Decisions **and** the trade-off register in `docs/DECISIONS.md`. Method and failed attempts in `docs/LOGBOOK.md`. **Every registration in `predictions/`**, indexed in `predictions/README.md` (never edit one). Deferred work in `docs/DEFERRED_PLANS.md`; history in `docs/archive/`. **57 PDFs** in `docs/literature/` with each source's ROLE stated, and **29 more held on Mohamed's machine but NOT redistributed** (`docs/literature/HELD_LOCALLY.csv`, git-ignored files — ⚠️ never `git add -f` them); every bibliography entry is checked against its registry record by `make verify-citations` (the August A3 record, now a section of `docs/literature/README.md`, is of a check that turned out not to compare authors — F49).
 
 ### Deferred by Mohamed — plans written, DO NOT START unprompted
 - **Mobility (E20)** — `docs/DEFERRED_PLANS.md`. **Separate NEW scenario files**, literature survey first. Not for the 802.11 arm (Bianchi/Ma&Chen have no position term).
