@@ -1,0 +1,56 @@
+# Registrations — every prediction made before its experiment ran
+
+*One folder for all of them since 2026-11-01. The eight older files lived in `docs/` and were moved
+here unchanged (`git mv`, so `git log --follow` shows each file's first commit). **A registration is
+never edited:** its commit date, set before the run, is the evidence. Outcomes are appended below a
+line in the same file. Paths written inside the older files (for example `docs/NMAX_DIRECT_EXPECTATIONS.md`)
+are kept as they were written; the files are now here.*
+
+**How to read a row.** *Registered* is the commit that added the file, before any run. A-items and
+S01 also carry a git tag, `prereg-<ID>`, at that commit. *Outcome* is a one-line summary; the
+file's own outcome section and `thesis/appB_preregistrations.tex` give the full verdict, misses
+included.
+
+## Before the reviewer revision (2026-08 to 2026-10-09)
+
+| File | What it predicted | Registered | Outcome |
+|---|---|---|---|
+| `DIRECTION_C_SURVEY_PROTOCOL.md` | a survey protocol for LoRa simulation papers (Direction C) | `eb3eda5`, 2026-08-07 | sweep log appended 2026-08-08: n = 14 achieved against a target of 56 |
+| `DR6_EXPECTATIONS.md` | LoRa DR6: batch, duty interval, capacity | `ca8fd1c`, 2026-08-07 | batch and interval confirmed; capacity derived, **not simulated** (run aborted), and labelled so |
+| `M4_EXPECTATIONS.md` | the crossing at a 174 B frame | `84adb92`, 2026-08-28 | crossing 2.367 inside 2.1–2.8, **confirmed**; the directional prediction was untestable, a flaw stated in the file |
+| `NMAX_DIRECT_EXPECTATIONS.md` | the 802.11 capacity search and its follow-ups F1–F7 | `6f82599`, 2026-10-06 (follow-ups added later, each before its runs) | stage 1: the single-ceiling prediction **failed** (F50). F1 and F1b: the mean held, both spread predictions failed (`docs/LOGBOOK.md` 2026-10-06). F2: the airtime line, 7 of 7 within 3.4 %. F3: stream schemes. F4: sources agree. F5: contention model, 6 of 6. F6: batches 2/3/8, 6 of 6. F7: capture, 4 of 4 |
+| `PX4_LOGS_EXPECTATIONS.md` | record sizes in twelve public PX4 flight logs | `e4e3cdf`, 2026-10-06 | key-record size **missed** by 0.02 B (F52); the 50 Hz delta untestable from 5 Hz logs |
+| `CONTENTION_HW_EXPECTATIONS.md` | contention between two real radios | `456a4e7`, 2026-10-09 | held at two loads, **failed** at the third (F73) |
+| `CONTENTION_HW_FRAMEBURST_EXPECTATIONS.md` | the effect of turning frame bursting off | `06f1bfa`, 2026-10-09 | **all four predictions failed** (F75) |
+| `CONTENTION_HW_SATURATED_EXPECTATIONS.md` | two saturated radios against the standard's rule | `9a85afa`, 2026-10-09 | **held**: 12.4 % lost against 11.8 % (F76) |
+
+## The reviewer revision, A1–A17 (`docs/revision/REVISION_PLAN.md`)
+
+Full states: `docs/revision/STATUS.md`.
+
+| File | Experiment | Registered | Outcome |
+|---|---|---|---|
+| `A1.md`, `A1-dref.md`, `A1-stage2.md` | a spread swarm with hidden stations | `d4bf273` / `b2b6ae6` / `c7f05c7`, 2026-10-19/20 | the ratio held at 3.46–3.58; the neighbour-count bracket 10–40 **missed** (8.7) |
+| `A1-motion.md` | every node moving on its own | `13c406e`, 2026-10-21 | held: ΔV ≤ 0.0005, ratio 3.57–3.63 |
+| `A2.md` | the design map and age under loss | `b2b6ae6`, 2026-10-19 | held, within 1.05 % of the model; the stated cause of the age tail was wrong |
+| `A3.md` | the verifiability margin | `527ba59`, 2026-10-19 | the rule failed by its interval in 5 of 192 cells, all bursty |
+| `A4.md` | a controller choosing the batch at run time | `1469c2b`, 2026-10-20 | **failed** (fails at 76 nodes, not within 5 % of fixed b = 4) |
+| `A4b.md` | a second controller, margin 0.02 | `a36489a`, 2026-10-21 | failure points held; the window share **missed** (93 %) |
+| `A5.md` | the timestamp acceptance window | `04658f3`, 2026-10-20 | held; the plan's "two hours" failed, as the finer prediction said (75 min) |
+| `A6.md` | the protocol in Tamarin | `3b17a90`, 2026-10-20 | proven across three models; the registered model settled 3 of 9 lemmas, 15 of 19 predicted verdicts missed |
+| `A7.md` | flooding and the group MAC | `6dc683f`, 2026-10-20 | outsiders stopped, insiders not; the registered rates **missed** |
+| `A8.md` | the Rust receiver and sender | `3a9e85a`, 2026-10-20 | held (290 nodes per core by Eq. (4)); energy ranges missed low |
+| `A9.md`, `A9-fast.md` | richer records, three airframes | `aa3b86d` / `89cfd6f`, 2026-10-20/22 | saving and ratio held; key-record and fixed-wing delta sizes **missed** |
+| `A10.md` | stream schemes against the deadline | `b7e1ae3`, 2026-10-20 | held; three finer predictions missed |
+| `A11.md` | other 802.11 PHYs | `b7e1ae3`, 2026-10-20 | the rise held; the registered span **failed** (3.39–3.80) |
+| `A12.md` | few fast radios standing for many slow ones | `8a3d302`, 2026-10-20 | held (not in the paper: it only prepared a hardware test) |
+| `A13.md` | deferred batch verification | `3b06582`, 2026-10-20 | held (629 nodes per core); the 170 ms bound missed by 1 ms |
+| `A15.md` | Falcon-512 in the frame | `50e715b`, 2026-10-20 | capacities held; "a larger ratio" **failed** (3.5, as with Ed25519) |
+| `A16.md` | the post-mission ledger audit | `baeb1d2`, 2026-10-20 | held: both planted faults found, no false finding |
+| `A17.md` | ADS-B, Remote ID and V2X CAM | `fd128fd`, 2026-10-20 | held |
+
+## The review of 2026-10-27
+
+| File | Experiment | Registered | Outcome |
+|---|---|---|---|
+| `S01.md` | capacity at 97 % delivery | `3149f70`, 2026-10-27 | **held**: 27.6 and 97.3 nodes, both within ±3 % of the contention model; ratio 3.5 |
