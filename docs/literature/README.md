@@ -4,7 +4,8 @@
 citation with no stated role is a citation nobody will check. PDFs are stored beside this file where
 licensing allows. **57 PDFs are in this repository; every source cited in the paper is held and has been read.** ⚠️ **29 more** are held on the author's machine and are **not redistributed here** (decision of 2026-10-07): [`HELD_LOCALLY.csv`](HELD_LOCALLY.csv) lists each with its SHA-256, its size and where to obtain it, so anyone holding the document can confirm it is the one that was read. ⚠️ Until 2026-10-09 one source cited in the *methods* paper was **not** held at all — Kurkowski et al. 2005, quoted only through a held paper that reports it (the 2026-10-06 section at the end keeps that record). It is held now and cited directly. ⚠️ The count read *49* until 2026-08-27 while the Mehta et al. 2020 entry below already claimed “PDF here” — the file had never been committed, so the promise in this sentence was false for anyone cloning. It is committed now. ⚠️ The header said *20* until 2026-08-07 while 25 sat on disk, and **five held PDFs had no register entry at all** despite the promise above — they are added at the end of this file. A register that silently omits a fifth of its corpus is not a register. The one
 exception was Gündoğan et al. (ACM DL only, DOI recorded instead) until 2026-10-06; the authors' arXiv version is now held. See
-[`A3_CITATION_VERIFICATION.md`](A3_CITATION_VERIFICATION.md) for how each citation was checked.*
+the section "How the citations were verified" at the end of this file for how each citation was
+checked.*
 
 **Status key:** `USED` — cited in the paper · `VALIDATES` — an independent check on one of our
 results · `PRIOR ART` — establishes something we must *not* claim · `POSITIONING` — related work,
@@ -56,7 +57,7 @@ not a comparator · `TO READ` — identified but not yet studied in full.
 | **Haxhibeqiri, Van den Abeele, Moerman & Hoebeke, *LoRa Scalability: A Simulation Model Based on Interference Measurements*, Sensors 17(6), 2017** — PDF here | `USED` `VALIDATES` | **Not just quoted — IMPLEMENTED.** Their Eq. (8) is now `lora.haxhibeqiri2017_loss_pct()`, validated against the four loss figures their own text states, and run at our operating point via `make exp-lora-external` (F20). **It gives N_max = 4 against our corrected 3** — the LoRa arm's external baseline. ⚠️ Always note which FIGURE a number comes from: collapsing Fig. 6/14/15 produced the retracted F18 |
 | **Magrin et al., signetlabdei/lorawan ns-3 module** | `USED` | The simulator behind our capacity result. Requires our `patch_lorawan.py`. ⚠️ **Its `ALOHA` region preset = 1 channel + 1 demodulation path**; the `EU` preset = 3 channels + 8 paths. We used `ALOHA`. The preset choice dominates the capacity number — see §5 |
 
-## 4a. Sources added by the A3 citation pass (see `A3_CITATION_VERIFICATION.md`)
+## 4a. Sources added by the A3 citation pass (see "How the citations were verified", at the end of this file)
 
 | source | status | role |
 |---|---|---|
@@ -244,7 +245,7 @@ security surface in its own right, not merely a byte-accounting change.
 ### Bhatt, Penumatsa & Kumar 2025 — *Hybrid MAC Protocol with Integrated Multi-Layered Security for Resource-Constrained UAV Swarm Communications*
 `arxiv2510.10236_uav_swarm_hybrid_mac.pdf` · arXiv:2510.10236 · **USED / POSITIONING**
 Current NS-3 UAV-swarm practice: 20–100 nodes, 400 × 400 × 1000 m, Random Waypoint, Nakagami,
-802.11ah. Also the anchor in `MOBILITY_SURVEY.md` for RWP being standard practice.
+802.11ah. Also the anchor in the mobility survey (`docs/DEFERRED_PLANS.md`) for RWP being standard practice.
 ⚠️ It states node count, area, path loss, PHY, MAC and energy — and **never states the RWP speed
 range or pause time**, the two parameters that define what its mobility model did.
 
@@ -311,7 +312,7 @@ complementary to — not a comparator for — the airtime constraint that binds 
 
 ⚠️ **The "9 of 9" tally previously recorded here was inflated** and is retracted. It counted papers
 that do not meet the inclusion criteria later fixed in
-`docs/DIRECTION_C_SURVEY_PROTOCOL.md` §2 — Haxhibeqiri et al. used **their own simulator, not ns-3** (its lone ns-3
+`predictions/DIRECTION_C_SURVEY_PROTOCOL.md` §2 — Haxhibeqiri et al. used **their own simulator, not ns-3** (its lone ns-3
 mention is future work); Mehta et al. is a **survey**; Bhatt et al. is ns-3 but **802.11ah, not
 LoRa**. Applying the criteria strictly leaves **4** qualifying papers, all `NONE`.
 
@@ -409,7 +410,7 @@ channel.*
 
 | source | status | what it does for us, and what was read |
 |---|---|---|
-| **Bujari, Calafate, Cano, Manzoni, Palazzi & Ronzani, *Flying ad-hoc network application scenarios and mobility models*, IJDSN 13(10), 2017**, doi:10.1177/1550147717738192 — PDF here (`bujari2017_fanet_mobility_models_ijdsn.pdf`, CC BY 4.0, the author's copy) | `READ 2026-10-21` `USED` | **Read: the model descriptions, Tables 1–3, the scenario mapping.** The basis of A1-motion's parameters: Random Walk / Waypoint / Direction excluded from every FANET application (Table 3); Gauss–Markov example at 10 m/s, speed σ 1 m/s, heading σ 45°, α 0.8 (Fig. 6); ns-3 implements GM and reference-point group mobility (Table 2). `docs/MOBILITY_SURVEY.md` §6 |
+| **Bujari, Calafate, Cano, Manzoni, Palazzi & Ronzani, *Flying ad-hoc network application scenarios and mobility models*, IJDSN 13(10), 2017**, doi:10.1177/1550147717738192 — PDF here (`bujari2017_fanet_mobility_models_ijdsn.pdf`, CC BY 4.0, the author's copy) | `READ 2026-10-21` `USED` | **Read: the model descriptions, Tables 1–3, the scenario mapping.** The basis of A1-motion's parameters: Random Walk / Waypoint / Direction excluded from every FANET application (Table 3); Gauss–Markov example at 10 m/s, speed σ 1 m/s, heading σ 45°, α 0.8 (Fig. 6); ns-3 implements GM and reference-point group mobility (Table 2). `docs/DEFERRED_PLANS.md` §6 |
 | **Guillen-Perez & Cano, *Flying Ad Hoc Networks: A New Domain for Network Communications*, Sensors 18(10):3571, 2018**, doi:10.3390/s18103571 — PDF here (`guillenperez2018_fanet_new_domain_sensors.pdf`, CC BY 4.0) | `READ 2026-10-21` `POSITIONING` | **Read: §1–2 (classification, comparison, mobility models).** Rotary-wing ~50 km/h, fixed-wing ~100 km/h (Table 2) |
 | **Wheeb, Nordin, Samah, Alsharif & Khan, *Topology-Based Routing Protocols and Mobility Models for Flying Ad Hoc Networks: A Contemporary Review and Future Research Directions*, Drones 6(1):9, 2022**, doi:10.3390/drones6010009 — PDF here (`wheeb2022_fanet_routing_mobility_review_drones.pdf`, CC BY 4.0) | `READ 2026-10-21` `POSITIONING` | **Read: §2 (mobility models) and its Table 2.** Its "30–60 m/s … suitable for quadcopter UAVs" for Enhanced GM (§2.3.4) is high for small quadcopters; quoted as written, not used |
 | **Yang, Zhao, Wang, Dong & Ju, *Betweenness Centrality Based Dynamic Source Routing for Flying Ad Hoc Networks in Marching Formation*, arXiv:2503.16834, 2025** — **held locally, not redistributed** (`yang2025_gmg_marching_formation_arxiv.pdf`, IEEE copyright, arXiv non-exclusive licence; git-ignored) | `READ 2026-10-21` `POSITIONING` | **Read: §II (the GM group model) and Table I.** ns-3, 36–144 nodes, GM leaders at 200 m/s, 100 s — the formation end of the envelope |

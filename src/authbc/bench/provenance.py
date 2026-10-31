@@ -1,4 +1,5 @@
-"""Run provenance — env block + config hash stamped on every CSV (docs/06 §1,§3; docs/07 §7).
+"""Run provenance — env block + config hash stamped on every CSV (docs/06 §1,§3;
+docs/archive/PLANNING_HISTORY.md, 07 §7).
 
 Every result row carries the config hash; every CSV carries the env block so a number can be
 traced to the machine, library versions, and config that produced it (Law 7).

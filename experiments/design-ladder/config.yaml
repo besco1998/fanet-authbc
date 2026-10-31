@@ -16,7 +16,7 @@ p_loss: 0.05
 # Capacity. `u_saturation` defines N_sat (offered load within the saturation throughput of the
 # broadcast model). The V >= 0.95 capacity is READ from the direct ns-3 search, for the one
 # traffic source named here: `period` = a send jitter of one sending period, the source that
-# follow-up F1b of docs/NMAX_DIRECT_EXPECTATIONS.md designates.
+# follow-up F1b of predictions/NMAX_DIRECT_EXPECTATIONS.md designates.
 # `u_v95` is the single load ceiling earlier results applied to every configuration (measured at
 # N = 50 with a 288 B frame). It is kept ONLY to report its error against the direct values.
 u_saturation: 1.000

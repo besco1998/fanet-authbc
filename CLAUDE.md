@@ -56,7 +56,7 @@ Small pure functions; every module docstring cites the docs section it implement
 type hints; no dead code; comments explain WHY, not what.
 
 ## Current status board (agent updates this section every session)
-- **NEXT SESSION: read `docs/NEXT_STEPS.md` first** — prioritised work plan, strategy decision, and decisions not to re-litigate.
+- **NEXT SESSION: read `docs/OPEN_ITEMS.md` first** — prioritised work plan, strategy decision, and decisions not to re-litigate.
 - ⚠️ **Repo is PUBLIC and history was REWRITTEN** to purge the 84 MB vendored NS-3 tree. **The remote is authoritative — never force-push an older local branch over it.** Copyrighted PDFs in `docs/literature/` stay by Mohamed's decision (risk accepted, `DECISIONS.md`).
 - **Phase: P11 — the reviewer revision and the review of 2026-10-27, both applied; waiting on Mohamed (journal, author details, thesis reading, PR #1).** Branch `p11-reviewer-revision` (PR #2, draft), which contains `p10-followups` and `p9-supervisor-revision` (PR #1). Work from any machine: `git clone`, `git checkout p11-reviewer-revision`, `make setup && make all`; `make paper` also needs the Springer template files (`paper/README.md`).
 - **2026-10-24 — the reviewer revision (A1–A17) is in the paper and the thesis.** Branch `p11-reviewer-revision`, PR #2 (draft). Every reviewer point has a figure or table (`analysis/figures_revision.py`, `tests/test_figures_revision.py`); the paper's registration appendix was removed on 2026-10-25 (Mohamed); the thesis keeps its Appendix B. ⚠️ **Mohamed's rules (2026-10-24):** no generative-AI statement and nothing showing AI made the paper or thesis; A14 and B1–B5 not stated anywhere, not even as future work, until he buys the hardware; A12 left out. See `docs/DECISIONS.md` (2026-10-24 table).
@@ -64,7 +64,7 @@ type hints; no dead code; comments explain WHY, not what.
 - ⚠️ **`make all` green on this machine is NOT the claim — CI green is** (2026-10-08: the gate passed here and failed on a clean install over an undeclared package). **Before every push run the WHOLE of `make all VENV=<a venv built from pip install -e '.[dev]' alone>`** — never a hand-picked subset of tests (the fix for that failure broke the build again exactly that way: a figure was regenerated and its copy in `thesis/` was not) — and do not say green until CI on the pushed commit has finished. Guards: `tests/test_declared_dependencies.py`, and no figure may embed a library version.
 - ⚠️ **TWO COPIES OF THIS FILE EXIST.** Sessions that start in `~/authbc_package` auto-load `~/authbc_package/CLAUDE.md`, which is an OLD copy. **This file, in the repository, is the status board.** A stale count read from the other one was "corrected" into the thesis on 2026-10-06 and had to be reverted.
 - **Green:** 2438 fast + **43** frozen-gate tests (**2481**), `ruff` clean, **`mypy` clean (0 / 62 files)**, paper builds (**40 pp** in the Springer Nature layout, **51 refs**, 0 undefined, 0 overfull, abstract **182 w** by the board's counter, 185 by the paper test's, which counts a macro as a word), methods paper 4 pp, thesis **153 pp** (70 refs, 0 overfull, 2 markers left — both Mohamed's). `make all` exit 0.
-- **METHODOLOGY (Mohamed):** this is an optimization problem — *state everything, choose what to stick with, state the trade-offs for every decision*. **`docs/TRADEOFFS.md` is required reading before quoting any number.**
+- **METHODOLOGY (Mohamed):** this is an optimization problem — *state everything, choose what to stick with, state the trade-offs for every decision*. **`docs/DECISIONS.md` is required reading before quoting any number.**
 - **LICENSE = all rights reserved** (© 2026 Mohamed A. Farouk). Vendored NS-3 + `signetlabdei/lorawan` stay GPLv2, **not** redistributed.
 
 ### ⚠️⚠️ OCTOBER 2026 — THE DESIGN WAS BUILT, AND THREE HEADLINE RESULTS CHANGED. READ THIS FIRST
@@ -222,7 +222,7 @@ and bit-identical (D6).
 
 - **Contention on radios was registered here (F70) and RUN the same night — see the section
   above (F73–F76).** Registration `456a4e7`,
-  `docs/CONTENTION_HW_EXPECTATIONS.md`; kit in `hw/channel/` (`run_adhoc_contention.sh` — use `probe` first); `analysis/contention_hw.py --predict|--ns3-check|--commands|--reduce`.
+  `predictions/CONTENTION_HW_EXPECTATIONS.md`; kit in `hw/channel/` (`run_adhoc_contention.sh` — use `probe` first); `analysis/contention_hw.py --predict|--ns3-check|--commands|--reduce`.
   **If the boards answer `ssh pi@<addr>`, the agent can run it** — two Pi 4 suffice for the sharp
   case (no third radio, so no capture). Predicted loss with two boards: 0.29 / 0.64 / 1.40 %.
   ⚠️ The event model is **9–18 % above ns-3 at N = 2** (agrees within 5 % at 3–5): a bias at the
@@ -379,13 +379,13 @@ baselines and implicit certificates left as stated · thesis next: **chapter 2**
 - ⚠️ `eth0` still has **no carrier** on either Pi — every session severs its own SSH path and relies on the deadman + reboot timer. **Never put a deadman marker in `/tmp`** (systemd `PrivateTmp`). Plugging in ethernet removes the whole risk class.
 
 ### Mobility (E20) — ANSWERED 2026-08-05 (F36 + F37): measured, and the effect is null
-- Survey pilot in `docs/MOBILITY_SURVEY.md`; scenario `ns3/authbc-lora-capacity-mobile.cc` (separate new file), driver `ns3/run_lora_mobility.py`, artifact `results/raw/lora_mobility.csv` (140 runs).
+- Survey pilot in `docs/DEFERRED_PLANS.md`; scenario `ns3/authbc-lora-capacity-mobile.cc` (separate new file), driver `ns3/run_lora_mobility.py`, artifact `results/raw/lora_mobility.csv` (140 runs).
 - **ANSWERED (F37): mobility does NOT change the LoRa capacity result.** 30 seeds under **goursaud** (capture, the physical model): Gauss-Markov 5 m/s **−0.24 pp**, G-M 20 m/s **−0.03 pp**, RWP 20 m/s **+0.36 pp** vs static — every arm within **0.06 σ**, |t| ≤ 0.22, at 816–967 m mean displacement. Under **aloha** all four arms are **byte-identical** (mobility structurally cannot act). **Same conclusion under both matrices, which is what makes it robust.** So C3's static assumption is **tested**, not merely excused.
 - **Both Law-8 questions are now settled empirically, not by preference:** we ran *both* matrices (conclusion identical), and *both* mobility models — **Gauss-Markov and RWP are statistically indistinguishable** (0.06 σ apart), so the "not Random Waypoint" argument in `MOBILITY_PLAN.md` §M1 carries no weight in this result.
 - ⚠️ **Per-frame Doppler is still unmodelled** (~50 coherence intervals inside one 364 ms LoRa frame). The null result means "mobility does not change *collision-limited capacity*", NOT "mobility is harmless to a LoRa link".
 - ⚠️ **The confound that nearly produced a false 5-point mobility penalty:** ns-3 assigns RNG streams by creation order, so installing a mobility model shifts every sender's stream. Fixed by pinning sender streams per node id. `ns3/run_lora_mobility.py --verify` asserts **two** properties before any sweep: `--pinStreams=false --speed=0` reproduces the frozen scenario bit-identically, and pinned `aloha` arms are all equal.
 
-### ⚠️ Scientific-implementation audit 2026-08-05 — read `docs/audits/scientific_implementation_audit.md`
+### ⚠️ Scientific-implementation audit 2026-08-05 — read `docs/audits/AUDIT_HISTORY.md`
 - ⚠️ **S3 — `N_max` was certified on a MEAN, not a distribution.** At the certified N=3, **9 of 30 seeds fail** V≥0.95. Correct reporting: **N_max = 3, 95 % CI [2, 3]** (knife edge). Under a **per-realisation** reading (≥95 % of runs meet V) it is **1**. ⚠️ **Which criterion the paper quotes is Mohamed's decision** — both are emitted (`lora_capacity_ci.csv`).
 - ⚠️ **S7 — `make sim-ns3-delay` did not reproduce `ns3_delay.csv`** (defaults stopped at U=1.34 vs the artifact's 6.69). Fixed. ⚠️ **U ≈ 2.435 is an INTERPOLATION** between measured U=2.23 and U=3.34 — label it as such.
 - **S4** delay driver now emits min/max/σ (it was means-only, against the project's own post-F30 standard). **O5** `channel_utilisation` no longer returns 0.0 at N=1 — and ⚠️ **a unit test had asserted that defect**.
@@ -412,7 +412,7 @@ baselines and implicit certificates left as stated · thesis next: **chapter 2**
   - **P2** "all results are reproduced by an automated staleness gate" covered **16/41**. Four ungated artifacts were pure model computation — **gated rather than the sentence softened** (frozen suite 14 → 18). Every remaining ungated artifact now has a stated reason.
 - **DIRECTION C IS RETIRED as a second paper (Mohamed, 2026-08-07)** — folded into the main paper as a methods contribution in §Reproducibility: the traffic model inflates CV **2–8×**, which is *why* every capacity figure is 30 seeds with a distribution. Protocol/harness/artifact kept for resumption.
 - ⚠️ **DIRECTION C, 2026-08-07 (F42) — two self-corrections, both from pre-registering the protocol first.**
-  - **The protocol was committed BEFORE any data** (`docs/DIRECTION_C_SURVEY_PROTOCOL.md`, `eb3eda5`, data-free) — the F40 lesson applied. Harness `make survey-direction-c`; artifact `results/raw/direction_c_survey.csv` with every keyword hit adjudicated in writing.
+  - **The protocol was committed BEFORE any data** (`predictions/DIRECTION_C_SURVEY_PROTOCOL.md`, `eb3eda5`, data-free) — the F40 lesson applied. Harness `make survey-direction-c`; artifact `results/raw/direction_c_survey.csv` with every keyword hit adjudicated in writing.
   - ⚠️ **The phenomenon has PRIOR ART.** Durand & Booysen 2025 attribute their own bimodal delivery to nodes that "always transmit on a specific SF, time, and channel", giving "certain packet collisions being repeated for every transmission cycle". **Direction C did not discover the frozen-phase artifact.** What remains ours is the *quantification* (2–8× CV inflation) and the link to replication reporting. Any draft saying it is unobserved must be corrected.
   - ⚠️ **"9 of 9" was inflated and is RETRACTED.** Under the pre-registered inclusion criteria only **4** papers qualify (Haxhibeqiri et al. used **their own simulator, not ns-3**; Mehta is a **survey**; Bhatt is **802.11ah not LoRa**). Honest baseline: **4/4 report no replication.** The paper said "nine studies" for a few hours today; corrected.
   - ⚠️ **UNREADABLE (<2000 chars extracted) is EXCLUDED from the denominator** — scoring a scanned PDF as "reports nothing" would manufacture support for our own hypothesis. Zirak extracts 5 characters.
@@ -491,10 +491,10 @@ decides a headline and was never written down — defect class **C2**, the one c
 > ⚠️ **F18 came back.** On 2026-08-07 it was found still printed in `tab:lora-external` ("we are more optimistic" at N=5) — 100 lines below a bold sentence saying the opposite. **Retracting a finding in the register does not remove it from the paper.** When you retract, grep the paper. Guarded now by `test_no_row_revives_the_retracted_optimism_claim`, which checks the *artifact* rather than the wording.
 
 ### Where things live
-`docs/README.md` is the index. Findings **F1–F113** in `docs/audits/model_provenance.md`. Open items **only** in `docs/OPEN_ITEMS.md`. Trade-offs in `docs/TRADEOFFS.md`. Method and failed attempts in `docs/LOGBOOK.md`. **57 PDFs** in `docs/literature/` with each source's ROLE stated, and **28 more held on Mohamed's machine but NOT redistributed** (`docs/literature/HELD_LOCALLY.csv`, git-ignored files — ⚠️ never `git add -f` them); every bibliography entry is checked against its registry record by `make verify-citations` (`A3_CITATION_VERIFICATION.md` is the August record of a check that turned out not to compare authors — F49).
+`docs/README.md` is the index. Findings **F1–F113** in `docs/audits/model_provenance.md`. Open items **only** in `docs/OPEN_ITEMS.md`. Trade-offs in `docs/DECISIONS.md`. Method and failed attempts in `docs/LOGBOOK.md`. **57 PDFs** in `docs/literature/` with each source's ROLE stated, and **28 more held on Mohamed's machine but NOT redistributed** (`docs/literature/HELD_LOCALLY.csv`, git-ignored files — ⚠️ never `git add -f` them); every bibliography entry is checked against its registry record by `make verify-citations` (`A3_CITATION_VERIFICATION.md` is the August record of a check that turned out not to compare authors — F49).
 
 ### Deferred by Mohamed — plans written, DO NOT START unprompted
-- **Mobility (E20)** — `docs/MOBILITY_PLAN.md`. **Separate NEW scenario files**, literature survey first. Not for the 802.11 arm (Bianchi/Ma&Chen have no position term).
+- **Mobility (E20)** — `docs/DEFERRED_PLANS.md`. **Separate NEW scenario files**, literature survey first. Not for the 802.11 arm (Bianchi/Ma&Chen have no position term).
 - **Direction C** — the LoRaWAN frozen-phase artifact as a second short paper. Needs the full 56-paper survey (5 done) and a defensible jitter value.
 
 ### Accepted limitations, stated in the paper

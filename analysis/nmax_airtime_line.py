@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""The airtime line of docs/NMAX_DIRECT_EXPECTATIONS.md: calibrate it, predict with it, score it.
+"""The airtime line of predictions/NMAX_DIRECT_EXPECTATIONS.md: calibrate it, predict with it,
+score it.
 
 Follow-up F2 asks whether the V >= 0.95 crossing of a configuration follows
 

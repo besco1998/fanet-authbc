@@ -1,4 +1,4 @@
-"""Figures of the reviewer revision (docs/AUTHBC Revision Plan.md, A1-A7; one per reviewer point).
+"""Figures of the reviewer revision (docs/revision/REVISION_PLAN.md, A1-A7; one per reviewer point).
 
 Each figure is drawn only from the artifact its experiment wrote, the same one
 `analysis/paper_numbers.py` reads for the numbers in the text, so the two cannot disagree:

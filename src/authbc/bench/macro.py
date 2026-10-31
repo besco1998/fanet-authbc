@@ -1,4 +1,4 @@
-"""End-to-end macrobench pipeline (docs/03 §3 bench/macro).
+"""End-to-end macrobench pipeline (docs/archive/03 §3 bench/macro).
 
 generator → framer → broadcast channel (loss + airtime) → unpack/verify → per-receiver ledger.
 Each UAV signs and packs its own records (placement A or B); every other node overhears each

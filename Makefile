@@ -1,4 +1,4 @@
-# Makefile — the ONLY supported entry points (docs/03 §5, CLAUDE.md).
+# Makefile — the ONLY supported entry points (docs/archive/03 §5, CLAUDE.md).
 # Real at P0: setup lint test all.  Everything else is a guarded stub that fails loudly
 # with the phase that implements it (so `make exp-e1` can never silently "pass").
 #
@@ -58,7 +58,7 @@ all: lint typecheck test verify-frozen  ## lint + types + fast tests + frozen-re
 bench-micro:  ## P1 microbenchmarks -> results/raw/p1_{sizes,crypto}.csv
 	$(BIN)/python -m authbc.bench.micro --seed 1 --n 10000
 bench-macro:
-	@echo "ERROR: 'bench-macro' is implemented in P1 (docs/prompts/P1_MICROBENCH.md)."; exit 1
+	@echo "ERROR: 'bench-macro' is implemented in P1 (docs/archive/PLANNING_HISTORY.md)."; exit 1
 exp-e1:  ## E1 overhead dominance -> results/raw/e1_dominance.csv
 	$(BIN)/python -m authbc.bench.experiments --exp e1
 exp-e2:  ## E2 batching cure -> results/raw/e2_batching.csv

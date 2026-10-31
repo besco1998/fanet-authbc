@@ -4,7 +4,7 @@
 however old it is. An adversary that holds a sender's frames back — a relay that delays
 everything it forwards — is therefore never detected (the paper's threat model lists this as
 not protected). Every record already carries its sampling time `ts` in ms, signed with it, and
-every UAV keeps GNSS time. The rule (`docs/AUTHBC Revision Plan.md`, A5):
+every UAV keeps GNSS time. The rule (`docs/revision/REVISION_PLAN.md`, A5):
 
     t_local − ts_newest ≤ Δ_acc = b/Λ + T_ch + t_v + 2σ_clk + g
 

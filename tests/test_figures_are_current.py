@@ -56,7 +56,8 @@ def test_the_paper_cites_its_data_figures():
     drawn from their artifact.
 
     (Until 2026-10 this test required `fig_envelope.png`, the capacity envelope computed from one
-    load ceiling. The direct search replaced that envelope — docs/NMAX_DIRECT_EXPECTATIONS.md —
+    load ceiling. The direct search replaced that envelope —
+    predictions/NMAX_DIRECT_EXPECTATIONS.md —
     and the figure went with it; the thesis keeps it, labelled as the approximation it is.)
     """
     cited = _figures_cited_by_the_paper()

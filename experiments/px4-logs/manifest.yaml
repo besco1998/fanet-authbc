@@ -1,5 +1,5 @@
 # Flight logs measured by analysis/px4_log_sizes.py — written by `--select`, then kept.
-# Rule: docs/PX4_LOGS_EXPECTATIONS.md. The logs are public uploads to the PX4 Flight
+# Rule: predictions/PX4_LOGS_EXPECTATIONS.md. The logs are public uploads to the PX4 Flight
 # Review service and are not redistributed; each is pinned here by id and SHA-256.
 index_url: https://review.px4.io/dbinfo
 index_entries: 473088

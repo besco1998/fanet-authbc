@@ -1,4 +1,4 @@
-"""Encoder registry + a stream-digest helper used by the determinism test (docs/03 §3).
+"""Encoder registry + a stream-digest helper used by the determinism test (docs/archive/03 §3).
 
 ``stream_digest`` is importable so a *subprocess* can recompute the SHA-256 of an encoded
 1000-record stream; two subprocesses must agree (determinism release gate, docs/06 §5).

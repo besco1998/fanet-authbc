@@ -1,4 +1,4 @@
-"""Every third-party package the code imports is declared in `pyproject.toml` (docs/03 §2).
+"""Every third-party package the code imports is declared in `pyproject.toml` (docs/archive/03 §2).
 
 ⚠️ Added 2026-10-08, after the frozen gate passed on the author's machine and failed on a clean
 install. A gate test re-derived an artifact from a committed flight log with `pyulog`, which had

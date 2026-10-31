@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Fly the registered mission in PX4 software-in-the-loop and record what it sends.
 
-docs/PX4_LOGS_EXPECTATIONS.md, "records at the operating rate". PX4 runs its own estimator,
+predictions/PX4_LOGS_EXPECTATIONS.md, "records at the operating rate". PX4 runs its own estimator,
 controllers, logger and MAVLink module against its built-in simulator (`sihsim_quadx`); this
 script only starts it, flies the mission that was fixed before any flight, and listens.
 

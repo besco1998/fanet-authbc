@@ -1,4 +1,4 @@
-"""Unit tests for the co-design optimizer (docs/03 §3, docs/02 T2/T3/T5).
+"""Unit tests for the co-design optimizer (docs/archive/03 §3, docs/02 T2/T3/T5).
 
 Two layers:
   * A 5-point TOY with hand-picked (bytes, energy, V) proving the Pareto front is EXACT — this

@@ -144,7 +144,7 @@ Percentile(std::vector<double>& v, double q)
 // 4 us. This source keeps the mean rate exactly and moves each frame by U(0, jitter) from its
 // place on the node's own grid, so that the two readings can be compared: whether frozen phases
 // change the 30-seed mean or only its spread is a measurement, recorded with its prediction in
-// docs/NMAX_DIRECT_EXPECTATIONS.md.
+// predictions/NMAX_DIRECT_EXPECTATIONS.md.
 //
 // It is used ONLY when --txJitterMs > 0; the default path is untouched and bit-identical.
 class JitteredPeriodicSource : public Application

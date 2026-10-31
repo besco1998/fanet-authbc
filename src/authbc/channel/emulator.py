@@ -1,4 +1,4 @@
-"""In-process 802.11 broadcast emulator + airtime ledger (docs/01 §1, docs/03 §3 channel/).
+"""In-process 802.11 broadcast emulator + airtime ledger (docs/01 §1, docs/archive/03 §3 channel/).
 
 One sender broadcasts a frame; every OTHER node receives it independently with probability
 (1−p) — per-receiver i.i.d. Bernoulli(p) drop from a single seeded RNG (deterministic given the

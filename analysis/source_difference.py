@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Do the two traffic sources deliver the same on average? (docs/NMAX_DIRECT_EXPECTATIONS.md, F4)
+"""Do the two traffic sources deliver the same on average?
+(predictions/NMAX_DIRECT_EXPECTATIONS.md, F4)
 
 Fourteen (configuration, N) points were simulated with strictly periodic senders and with a send
 time redrawn in every period. Over seeds 1–30 the redrawn source delivered 0.0031 more on

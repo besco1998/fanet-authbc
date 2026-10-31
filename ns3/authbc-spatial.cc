@@ -1,5 +1,5 @@
 // authbc-spatial.cc — revision A1: the swarm spread out, with fading, capture, hidden stations
-// and motion (docs/AUTHBC Revision Plan.md A1; registration predictions/A1.md).
+// and motion (docs/revision/REVISION_PLAN.md A1; registration predictions/A1.md).
 //
 // WHY A SECOND SCENARIO. Every capacity of the paper is of one collision domain at equal power
 // (authbc-delay.cc). This file keeps that scenario's traffic source, MAC and PHY rate exactly,

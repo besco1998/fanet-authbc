@@ -2,7 +2,7 @@
 """Revision A2 — the design over record rate × deadline, not at one operating point.
 
 Every result of the paper sits at Λ·D_max = 5, so b ≤ 4 follows from the operating point and not
-from the design (the reviewer's objection; `docs/AUTHBC Revision Plan.md`, A2). This script
+from the design (the reviewer's objection; `docs/revision/REVISION_PLAN.md`, A2). This script
 lays the design over the plan's grid of record rates Λ and deadlines D_max:
 
     python analysis/design_map.py --predict   # results/raw/design_map.csv (every cell, model)

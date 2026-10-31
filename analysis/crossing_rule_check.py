@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Does the crossing rule read low on a noisy curve? (docs/NMAX_DIRECT_EXPECTATIONS.md, F4)
+"""Does the crossing rule read low on a noisy curve? (predictions/NMAX_DIRECT_EXPECTATIONS.md, F4)
 
 Under strictly periodic senders the six crossings of seeds 1–30 all read lower than under the
 redrawn source, by 1–9 %. The registration of F4 offered an explanation — that the rule (the

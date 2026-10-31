@@ -328,8 +328,8 @@ audit spent its time removing.
 
 ## Before quoting any number
 
-Read `docs/TRADEOFFS.md`, then check the claim against the five defect classes in
-`docs/audits/scientific_implementation_audit.md` §1:
+Read `docs/DECISIONS.md`, then check the claim against the five defect classes in
+`docs/audits/AUDIT_HISTORY.md` §1:
 
 1. small-sample mean vs a threshold · 2. an unverified constant on the measurement path ·
 3. **a threshold applied to a mean instead of a distribution** · 4. a config change that perturbs

@@ -86,7 +86,7 @@ if time allows, else becomes the journal extension.
 - ⚠️ D0: one-time GitHub authentication (`gh auth login`) and git identity — the ONLY
   manual setup step; everything after (including repo creation) is agent-executed.
 - ⚠️ D7: execution mode after P0 — serial, 2-lane, or 3-lane parallel (see
-  docs/07_PARALLEL_EXECUTION_PLAN.md; parallel compresses ~8 weeks to ~5).
+  docs/archive/PLANNING_HISTORY.md; parallel compresses ~8 weeks to ~5).
 - D1 (settled, **amended 2026-07-28**): 802.11 arm first; the LoRa arm ships as a scoped modelling
   chapter in this thesis (not deferred to doc 30). See DECISIONS.md.
 - D2 (settled): Ed25519 self-batch is the frame-batching default; BLS reserved for

@@ -763,7 +763,8 @@ def _source_difference(direct: list[dict[str, str]]) -> dict[str, str]:
 
 
 def _fresh_seeds() -> dict[str, str]:
-    """Follow-up F4: the same comparison on seeds never used (docs/NMAX_DIRECT_EXPECTATIONS.md).
+    """Follow-up F4: the same comparison on seeds never used
+    (predictions/NMAX_DIRECT_EXPECTATIONS.md).
 
     The text says the difference seen in the first sample did not replicate, and that strictly
     periodic senders vary far more from run to run. Both are checked.
@@ -1093,7 +1094,8 @@ def prototype() -> dict[str, str]:
 
 
 def spread() -> dict[str, str]:
-    """Nodes spread over a disc, and capture (docs/NMAX_DIRECT_EXPECTATIONS.md F7; audit F85).
+    """Nodes spread over a disc, and capture (predictions/NMAX_DIRECT_EXPECTATIONS.md F7; audit
+    F85).
 
     Four crossings registered in db0bca1 before any run: the lean baseline and the design at
     15 m (inside ±5 % of the capture model) and at 100 m (between the published equal-power
@@ -1177,7 +1179,7 @@ def one_design_nmax() -> str:
 
 
 def batch_dimension() -> dict[str, str]:
-    """The lean design at other batch sizes (docs/NMAX_DIRECT_EXPECTATIONS.md F6; audit F82).
+    """The lean design at other batch sizes (predictions/NMAX_DIRECT_EXPECTATIONS.md F6; audit F82).
 
     Three cells registered in 64322fc before any run: two, three and eight records to a frame
     at 50 records/s. The text says each simulated crossing is inside both of its registered
@@ -1255,7 +1257,7 @@ def platforms() -> dict[str, str]:
 
 
 # ============================================================================ the reviewer revision
-# docs/AUTHBC Revision Plan.md, items A1-A17, each registered in predictions/<ID>.md before it ran
+# docs/revision/REVISION_PLAN.md, items A1-A17, each registered in predictions/<ID>.md before it ran
 # (tag prereg-<ID>). One function per item; each refuses to run where its artifact stops saying
 # what the text says in words.
 

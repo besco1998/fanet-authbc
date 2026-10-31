@@ -250,7 +250,7 @@ not widened. A deterministic case was added.
   showed SIH's linear damper; one diagnostic flight with it removed, and one with doubled
   thrust, each reached 21 m/s (F107). I had reported the commanded 15 m/s as flown: corrected.
 
-# 2026-10-20 — the reviewer revision (`docs/AUTHBC Revision Plan.md`): two failures and a proof
+# 2026-10-20 — the reviewer revision (`docs/revision/REVISION_PLAN.md`): two failures and a proof
 
 Branch `p11-reviewer-revision`; per item, `docs/revision/STATUS.md`; registrations and outcomes,
 `predictions/`.
@@ -336,7 +336,7 @@ capacity; the asymmetry between the abstract and the reordered introduction (G36
 why the cores do not add up (G37, optional).
 
 **Record:** F84, F85; `hw/BENCH_SESSION.md` (multi-core, with outcome);
-`docs/NMAX_DIRECT_EXPECTATIONS.md` F7; `docs/02` §6h.
+`predictions/NMAX_DIRECT_EXPECTATIONS.md` F7; `docs/02` §6h.
 
 ---
 
@@ -432,7 +432,7 @@ because "I looked, and then changed the analysis" is a sentence that should neve
 someone else to find.
 
 **Record:** F81 (receiver, certificates, exclusion split), F82 (batch sizes);
-`hw/BENCH_SESSION.md` (re-timing, with outcome); `docs/NMAX_DIRECT_EXPECTATIONS.md` F6.
+`hw/BENCH_SESSION.md` (re-timing, with outcome); `predictions/NMAX_DIRECT_EXPECTATIONS.md` F6.
 
 ---
 
@@ -820,7 +820,7 @@ Worked through in the structure of `docs/06` §7.
   dependencies. I then wrote a **gate** test on top of it without declaring it. From inside an
   environment that has the package, nothing can show this: the local check answers "does it
   pass here", and the question was "does it pass from the declarations".
-* **FIX.** `pyulog==1.2.4` is a pinned development dependency (`pyproject.toml`, `docs/03` §2).
+* **FIX.** `pyulog==1.2.4` is a pinned development dependency (`pyproject.toml`, `docs/archive/03` §2).
   The test was not skipped, guarded or moved out of the gate: the raw log is in the repository,
   so the gate should be able to read it everywhere. Six places that said the package was not a
   dependency now say what is true.
@@ -871,7 +871,7 @@ this defect is visible.
   bound.
 
 **Durable records:** F58–F62 in `audits/model_provenance.md`; follow-ups F4 and F5 in
-`NMAX_DIRECT_EXPECTATIONS.md`; the flight in `PX4_LOGS_EXPECTATIONS.md`; `docs/02` §6g.
+`predictions/NMAX_DIRECT_EXPECTATIONS.md`; the flight in `predictions/PX4_LOGS_EXPECTATIONS.md`; `docs/02` §6g.
 
 ---
 
@@ -957,7 +957,7 @@ project already had the rule at two levels — check the figure, not the quotati
 object, not the sum. This is the third: **audit the deliverable, not the description of it.**
 
 **Durable records:** F55–F57 in `audits/model_provenance.md`; open items G19–G21 in
-`OPEN_ITEMS.md`; follow-up F3 in `NMAX_DIRECT_EXPECTATIONS.md`.
+`OPEN_ITEMS.md`; follow-up F3 in `predictions/NMAX_DIRECT_EXPECTATIONS.md`.
 
 ---
 
@@ -1105,7 +1105,7 @@ describe and making it run.** A design that exists only as a sum has no receiver
 frame it cannot decode.
 
 **Durable records:** findings F45–F54 in `audits/model_provenance.md`; pre-registrations
-`NMAX_DIRECT_EXPECTATIONS.md`, `PX4_LOGS_EXPECTATIONS.md`; decisions R1–R16 in `DECISIONS.md`;
+`predictions/NMAX_DIRECT_EXPECTATIONS.md`, `predictions/PX4_LOGS_EXPECTATIONS.md`; decisions R1–R16 in `DECISIONS.md`;
 what is still open in `OPEN_ITEMS.md` §G.
 
 ---
@@ -1192,7 +1192,7 @@ separately does not compose them. Only re-derivation does.**
 > ⚠️ **This entry is retrospective and says so.** The logbook's whole value is that it is
 > contemporaneous, and between 2026-07-30 and 2026-08-28 it was not written at all — a three-week
 > hole covering the project's most productive stretch. Reconstructed from
-> `docs/audits/model_provenance.md` (F35–F42), `docs/audits/scientific_implementation_audit.md`
+> `docs/audits/model_provenance.md` (F35–F42), `docs/audits/AUDIT_HISTORY.md`
 > and the git history, all of which *were* written at the time. **Treat those as the record and
 > this as an index to them.** Method and trial that were never written down are simply lost;
 > nothing here is reconstructed from memory.
@@ -1479,7 +1479,7 @@ decision** (item B3).
 That changed the task: Λ and D_max are **decision variables**, not constants to defend. Built
 `operating_region.csv` (70 points) with compliance flags. The answer is a **bound, not a choice** —
 under full compliance at N=50 the best achievable auth cut is 50 %, not 75 %. Reference point kept
-**with its cost stated**. Produced [`TRADEOFFS.md`](TRADEOFFS.md).
+**with its cost stated**. Produced [`TRADEOFFS.md`](DECISIONS.md) (now the trade-off register in `DECISIONS.md`).
 
 ### A5, B2, B4
 A5: 48 B floor cited to draft-irtf-cfrg-bls-signature-05 — which **corrected us**: BLS12-381 targets

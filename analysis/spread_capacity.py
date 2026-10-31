@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Capacity with the nodes spread out and capture at work (docs/NMAX_DIRECT_EXPECTATIONS.md, F7).
+"""Capacity with the nodes spread out and capture at work (predictions/NMAX_DIRECT_EXPECTATIONS.md,
+F7).
 
 Every capacity of this work was simulated with all nodes at one point: equal received power,
 so a frame that overlaps another is lost everywhere. A review of the paper named that scenario

@@ -79,7 +79,7 @@ Compliance costs **~2× swarm size** (213 → 100 at the V≥0.95 boundary; 103 
 100 ms deadline needs **Λ ≥ 40 Hz**. At 20 or 10 Hz the same deadline forces b = 1 and the saving
 collapses from 58.7 % to **12.2 %**. So the batching benefit is *not* available at every compliant
 operating point — it requires a telemetry rate fast enough to fill a batch inside the deadline.
-See docs/02 §6b, `TRADEOFFS.md` §1 and `results/raw/operating_region.csv` for the full surface.
+See docs/02 §6b, the trade-off register in `DECISIONS.md`, §1 and `results/raw/operating_region.csv` for the full surface.
 
 **Structural coupling:** any batching at all needs `b/Λ_i ≤ D_max` with b ≥ 1, hence
 **Λ_i ≥ 1/D_max**. At D_max = 250 ms that means Λ_i ≥ 4 rec/s; at the 3GPP 100 ms bound it means

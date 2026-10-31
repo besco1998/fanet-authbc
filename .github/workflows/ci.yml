@@ -1,4 +1,4 @@
-# CI — setup + lint + types + tests only (docs/03 §4, docs/06 §6). No NS-3, no benchmarks, no
+# CI — setup + lint + types + tests only (docs/archive/03 §4, docs/06 §6). No NS-3, no benchmarks, no
 # experiments: those are machine-dependent and run locally, committing their CSVs.
 # Runs the REAL make targets (not a re-implementation) so green CI == green `make`.
 name: ci

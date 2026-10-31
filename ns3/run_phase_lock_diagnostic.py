@@ -2,7 +2,8 @@
 """WHICH nodes lose frames when sender phases are frozen (follow-up F1, direct N_max search).
 
 The 30-seed sweeps of `authbc-delay` are heavily left-skewed: a few seeds deliver far less than
-the rest. `docs/NMAX_DIRECT_EXPECTATIONS.md` attributes that to strictly periodic sources whose
+the rest. `predictions/NMAX_DIRECT_EXPECTATIONS.md` attributes that to strictly periodic sources
+whose
 relative phases never move, so that an unlucky pair of nodes collides in every period. If that is
 right, the loss in a bad seed is not spread over the network: it sits on a few nodes.
 

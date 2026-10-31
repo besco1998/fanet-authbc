@@ -7,7 +7,7 @@ The measurement needs the network, and is not repeated here. What is held:
 * that the generator rows, produced by the same sizing code, reproduce the numbers the paper's
   tables already use — so a difference between a real row and a generator row is a difference
   in telemetry, not in arithmetic;
-* the outcome of the prediction committed in `docs/PX4_LOGS_EXPECTATIONS.md`.
+* the outcome of the prediction committed in `predictions/PX4_LOGS_EXPECTATIONS.md`.
 """
 
 from __future__ import annotations

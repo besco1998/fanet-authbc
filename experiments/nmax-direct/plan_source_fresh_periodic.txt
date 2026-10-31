@@ -1,4 +1,4 @@
-# Follow-up F4 (docs/NMAX_DIRECT_EXPECTATIONS.md): the fourteen points run under both traffic
+# Follow-up F4 (predictions/NMAX_DIRECT_EXPECTATIONS.md): the fourteen points run under both traffic
 # sources, strictly periodic senders, FRESH seeds 31-90.
 #   python ns3/run_nmax_direct.py --plan <this file> --first-seed 31 --seeds 60 \
 #       --out-stem ns3_source_fresh --no-summary

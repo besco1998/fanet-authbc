@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""The batch size as a dimension of the capacity (docs/NMAX_DIRECT_EXPECTATIONS.md, follow-up F6).
+"""The batch size as a dimension of the capacity (predictions/NMAX_DIRECT_EXPECTATIONS.md,
+follow-up F6).
 
 Every capacity simulated before this one is of a frame of one record or of four, because both
 operating points have Λ·D_max = 5 (audit F80, open item G31). The airtime line and the

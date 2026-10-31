@@ -21,7 +21,7 @@ that was emitted, decoded and verified.
 |---|---|---|
 | **Bytes per record on air** | **43.25 B** against 145.77 B for a signature on every record: **70.3 % fewer** | `results/raw/design_ladder.csv` |
 | **Neighbours one 802.11a collision domain serves** at 95 % delivery, 50 records/s, 100 ms deadline | **124** [124, 125] against **35** [35, 35] — simulated per configuration in ns-3, 30 seeds, bootstrap interval | `ns3_nmax_direct.csv` |
-| **A rule for that capacity** | N_max ≈ 0.05 / (f·(a·T + c)) with a = 0.071, c = 8 µs — fitted to six configurations, then it predicted seven others **within 3.4 %**, with the predictions committed first. A fit at one loss level and one PHY rate, not a model | `docs/NMAX_DIRECT_EXPECTATIONS.md` |
+| **A rule for that capacity** | N_max ≈ 0.05 / (f·(a·T + c)) with a = 0.071, c = 8 µs — fitted to six configurations, then it predicted seven others **within 3.4 %**, with the predictions committed first. A fit at one loss level and one PHY rate, not a model | `predictions/NMAX_DIRECT_EXPECTATIONS.md` |
 | **Where no frame fits** | **eight of the twelve** EU863-870 LoRaWAN data rates cannot carry one signed, hash-chained frame that verifies alone: five because a 64 B signature exceeds a 50/51 B payload, three because header, link and signature fill 115 B | `exclusion_matrix.csv` |
 | **A frame must not depend on its predecessor** | a delta-coded frame that does verifies **0.881** of its records at 5 % frame loss, not 0.95 — so every frame starts with a full record | `e3_codec_loss.csv` |
 | **Receiver CPU** | one Raspberry Pi 4 core serves a neighbourhood of 296 nodes with Ed25519 and of 10 with BLS (cryptography only); the interpreted prototype, decoding included, serves 57 | `design_ladder.csv`, `results/hw/p1_lean.authbc-pi4b.csv` |
@@ -118,7 +118,7 @@ See [`ns3/README.md`](ns3/README.md).
 - **No typed results.** Every number in the paper is a macro that a script writes from
   `results/`; a sentence that states a verdict is checked against the artifact by the same script.
 - **Every reported configuration carries its alternatives.** This is an optimization problem, so a
-  result without its trade-offs is a selection — see [`docs/TRADEOFFS.md`](docs/TRADEOFFS.md).
+  result without its trade-offs is a selection — see [`docs/DECISIONS.md`](docs/DECISIONS.md).
 - **Failed attempts are recorded** in [`docs/LOGBOOK.md`](docs/LOGBOOK.md), so a wrong turn is not
   taken twice.
 - **Every source states what it does for the work** — including the two that cost us novelty claims.

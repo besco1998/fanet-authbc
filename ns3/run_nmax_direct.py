@@ -7,7 +7,7 @@ it simulates each configuration at its own frame size and frame rate over a grid
 the crossing off the simulated delivery — the treatment the LoRa arm has had since F28.
 
 Predictions and the decision rule were committed before the first run, and each later stage's
-before its own runs: `docs/NMAX_DIRECT_EXPECTATIONS.md`.
+before its own runs: `predictions/NMAX_DIRECT_EXPECTATIONS.md`.
 
 Writes two files:
   results/raw/ns3_nmax_direct_runs.csv   one row per (cell, source, N, seed) — raw simulator output

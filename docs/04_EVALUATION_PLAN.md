@@ -95,7 +95,7 @@ expected crossing. Driver `ns3/run_nmax_direct.py` (resumable, one row per run i
 definition of N_max, its interval and the traffic source are in docs/02 §6e; the node counts
 simulated are `experiments/nmax-direct/plan.txt`.
 
-⚠️ **Pre-registered, and the first prediction failed.** `docs/NMAX_DIRECT_EXPECTATIONS.md` was
+⚠️ **Pre-registered, and the first prediction failed.** `predictions/NMAX_DIRECT_EXPECTATIONS.md` was
 committed before any run and holds every prediction, the outcome of each, and three follow-ups
 (F1, F1b, F2) registered the same way. Read it before quoting a capacity.
 `ns3/run_phase_lock_diagnostic.py` produces the per-node evidence for the phase-freezing
@@ -105,7 +105,7 @@ mechanism (`ns3_phase_lock_diagnostic.csv`).
 
 Every record size above comes from a synthetic telemetry generator. `analysis/px4_log_sizes.py`
 encodes the same record from **twelve public PX4 flight logs**, chosen by a rule fixed before any
-size was computed (`docs/PX4_LOGS_EXPECTATIONS.md`; logs pinned by id and SHA-256 in
+size was computed (`predictions/PX4_LOGS_EXPECTATIONS.md`; logs pinned by id and SHA-256 in
 `experiments/px4-logs/manifest.yaml`, downloaded to a git-ignored cache). Needs the network,
 so it is **not** in the frozen gate; `px4_log_sizes.csv` is committed. (The one simulated flight
 of 2026-10-08 is different: its log is committed, and the gate re-derives `px4_sitl_*.csv` from

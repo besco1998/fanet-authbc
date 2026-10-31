@@ -113,7 +113,7 @@ make sim-ns3-nmax         # the V ≥ 0.95 capacity of each configuration, by di
 `results/raw/ns3_nmax_direct_runs.csv` are skipped, so on a clone it only re-writes the summary.
 To re-simulate from nothing, move that file aside first. Each run is seeded by (cell, N, seed) and
 is reproducible on its own; `ns3/run_nmax_direct.py --verify` first checks that the cached binary
-is the one `./ns3 run` would build. Read `docs/NMAX_DIRECT_EXPECTATIONS.md` before quoting any
+is the one `./ns3 run` would build. Read `predictions/NMAX_DIRECT_EXPECTATIONS.md` before quoting any
 value from it.
 
 ### 2.3 Using a different NS-3 tree
@@ -156,7 +156,7 @@ make sim-lora-capacity    # → results/raw/lora_capacity.csv
 
 ⚠️ **The module caps the DR5 payload at 222 B** (RP002 Table 12, repeater-compatible) while
 `models/lora.py` uses Table 13's 242 B. Both are defensible readings of the standard; the simulation
-runs at what the module accepts (218 B, b=6) and the difference is stated in `TRADEOFFS.md`.
+runs at what the module accepts (218 B, b=6) and the difference is stated in the trade-off register in `DECISIONS.md`.
 
 ---
 
@@ -268,7 +268,7 @@ backend, no timestamp metadata) so figures can be diffed. Four scripts are not f
 `paper_numbers.py` (**every number the paper prints**, → `paper/numbers.tex`),
 `verify_citations.py` (each bibliography entry against its registry record — needs network),
 `px4_log_sizes.py` (record sizes on pinned public flight logs — needs network), and
-`nmax_airtime_line.py` (the arithmetic of follow-up F2 in `NMAX_DIRECT_EXPECTATIONS.md`).
+`nmax_airtime_line.py` (the arithmetic of follow-up F2 in `predictions/NMAX_DIRECT_EXPECTATIONS.md`).
 
 `experiments/<name>/config.yaml` — **one config per experiment, and the only place parameters live.**
 `experiments/e4/run_e4.py` is the exception: a standalone script, for the reason its `__init__.py`

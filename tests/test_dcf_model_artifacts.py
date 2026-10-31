@@ -1,4 +1,4 @@
-"""The access-rule model's two artifacts (docs/02 §6g; docs/NMAX_DIRECT_EXPECTATIONS.md, F5).
+"""The access-rule model's two artifacts (docs/02 §6g; predictions/NMAX_DIRECT_EXPECTATIONS.md, F5).
 
 `dcf_model_vs_ns3.csv` compares the model with every point ns-3 has run; it is not a prediction
 and is not held to be one. `dcf_model_predictions.csv` is: it was committed before the ns-3 runs

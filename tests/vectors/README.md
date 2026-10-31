@@ -2,7 +2,7 @@
 
 Cryptographic KATs are vendored here **with their source URLs** (docs/06 §4) so the crypto
 suite is reproducible offline and its provenance is auditable. KATs are a release gate and
-must pass before any timing exists (docs/03 §3).
+must pass before any timing exists (docs/archive/03 §3).
 
 These are **crypto** KATs added in P1. **Wire-format** vectors (canonical CBOR frames) are a
 separate artifact frozen at **P2** under ⚠️ D6 — do not confuse the two.

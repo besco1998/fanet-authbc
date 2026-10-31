@@ -1,4 +1,4 @@
-"""Trust the harness before measuring crypto (docs/03 §3 P1b step 5).
+"""Trust the harness before measuring crypto (docs/archive/03 §3 P1b step 5).
 
 Validates timers.time_op on a known-cost function (time scales with work) and stats.bootstrap_ci
 (brackets the median, seeded → reproducible). Uses lowered floors so the test stays fast.

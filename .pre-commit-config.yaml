@@ -1,4 +1,4 @@
-# Pre-commit hooks: ruff lint + mypy (mirror `make lint` and `make typecheck`) — docs/03 §4.
+# Pre-commit hooks: ruff lint + mypy (mirror `make lint` and `make typecheck`) — docs/archive/03 §4.
 # rev is pinned to a real release and kept current via `pre-commit autoupdate`.
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit

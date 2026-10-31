@@ -330,7 +330,8 @@ class TestUCrossingIsFrameSizeInvariant:
 
     Measured at 288 B (`ns3_delay_ci.csv`) and, after M4, at 174 B (`ns3_delay_174B.csv`) — the
     A+CBOR Pillar-1 frame that produces the baselines the capacity ratios divide by. Prediction
-    committed data-free in `docs/M4_EXPECTATIONS.md` (`84adb92`) before either arm was compared.
+    committed data-free in `predictions/M4_EXPECTATIONS.md` (`84adb92`) before either arm was
+    compared.
     """
 
     @staticmethod
@@ -359,7 +360,7 @@ class TestUCrossingIsFrameSizeInvariant:
         assert 2.1 <= c <= 2.8, (
             f"174 B crosses at U={c:.3f}, outside the pre-registered 2.1-2.8. The universal "
             f"ceiling in experiments/capacity/config.yaml is no longer justified — re-derive "
-            f"tab:envelope per configuration (docs/M4_EXPECTATIONS.md)."
+            f"tab:envelope per configuration (predictions/M4_EXPECTATIONS.md)."
         )
 
     def test_the_two_crossings_are_statistically_indistinguishable(self) -> None:

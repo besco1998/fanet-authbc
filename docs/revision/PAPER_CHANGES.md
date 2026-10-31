@@ -135,7 +135,7 @@ and the auditor signs a Merkle root of what it accepted. For three UAVs over a f
 (391 495 frames) a planted equivocation and a planted forgery were found with no false finding,
 in 6.4 minutes of one core; keeping frames costs 42.9 B a record, about 1 GB an hour for 124
 neighbours."* This also bears on the plan's question whether "blockchain-style ledger" becomes
-"hash-chained log" (`EXECUTION_PLAN.md`, decisions). Numbers: `ledger_audit.csv`.
+"hash-chained log" (`STATUS.md`, "How the revision was run"). Numbers: `ledger_audit.csv`.
 
 ### A17 — other broadcast standards (Discussion table)
 

@@ -1,6 +1,7 @@
 """One saturated sender's frame spacing, read at the receiver (analysis/frame_spacing_hw.py).
 
-docs/CONTENTION_HW_FRAMEBURST_EXPECTATIONS.md. Held here: the arithmetic; that the artifact is
+predictions/CONTENTION_HW_FRAMEBURST_EXPECTATIONS.md. Held here: the arithmetic; that the artifact
+is
 what the script gives from the boards' files; and the three facts the thesis quotes from it —
 the spacing with the driver's setting, the spacing with frame burst off, and that neither is
 the standard's. It also pins the error of August 2026: the sender's own rate is not the rate

@@ -6,7 +6,7 @@
 #   * a node is a number, not a role: node k has address 10.0.0.k and does both jobs;
 #   * the sender draws each send instant within its period (`bcast_tx.py --redraw`), because
 #     strictly periodic senders on drifting clocks hold one phase configuration for a whole
-#     window (docs/CONTENTION_HW_EXPECTATIONS.md);
+#     window (predictions/CONTENTION_HW_EXPECTATIONS.md);
 #   * the receiver counts each sender separately and leaves its own broadcasts out.
 #
 # ⚠️ SSH arrives over wlan0. Joining the cell drops it; the script runs unattended under nohup,

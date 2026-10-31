@@ -1,6 +1,6 @@
 """Co-design optimizer: exhaustive Pareto search over (encoding, scheme, placement, batch).
 
-Implements docs/03 §3 (models/ optimizer) and the co-design theorem docs/02 T5. The discrete
+Implements docs/archive/03 §3 (models/ optimizer) and the co-design theorem docs/02 T5. The discrete
 design space is tiny (a few encodings × schemes × placements × batch sizes ≤ ~2000 points), so
 we enumerate it exhaustively — no solver, no heuristics — and return the FULL Pareto set over
 three objectives, not a single argmin:
@@ -44,7 +44,8 @@ from dataclasses import dataclass
 from authbc.models import bianchi, broadcast_dcf, energy
 from authbc.models.energy import EnergyConfig, Measured, Placement
 
-# Enumeration guard: the space is meant to be small (docs/03 §3 "≤ ~2k points"). A larger grid
+# Enumeration guard: the space is meant to be small (docs/archive/03 §3 "≤ ~2k points"). A larger
+# grid
 # is almost certainly a mis-specified sweep — fail loudly rather than churn.
 MAX_GRID_POINTS: int = 5000
 
@@ -211,7 +212,7 @@ def bytes_per_record(placement: Placement, batch: int, s: float, g_a: float, h_f
     out-of-band distribution — free on the wire — for *every* scheme. That assumption flatters PKI
     schemes and penalises **certificateless** ones (CLAS), whose entire advertised advantage is
     carrying no certificate at all. Comparing against a CLAS baseline without this term would have
-    rigged the comparison in our favour (docs/CLAS_BASELINE_PLAN.md).
+    rigged the comparison in our favour (docs/archive/PLANNING_HISTORY.md).
 
     ``cert_bytes``   size of the credential a receiver needs; **0 for certificateless schemes**.
     ``cert_period``  how many frames share one transmitted certificate. Broadcast systems do not
@@ -452,7 +453,8 @@ def solve(encodings: list[EncodingSpec], schemes: list[SchemeSpec],
           platform: Platform, constraints: Constraints) -> OptimizeResult:
     """Exhaustively evaluate the (e, σ, placement, b) grid; return the full Pareto set.
 
-    Raises ValueError if the grid exceeds MAX_GRID_POINTS (a mis-specified sweep, docs/03 §3).
+    Raises ValueError if the grid exceeds MAX_GRID_POINTS (a mis-specified sweep, docs/archive/03
+    §3).
     """
     grid = len(encodings) * len(schemes) * len(placements) * len(batches)
     if grid > MAX_GRID_POINTS:

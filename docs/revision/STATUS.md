@@ -1,8 +1,8 @@
-# Revision status — one row per item of `docs/AUTHBC Revision Plan.md`
+# Revision status — one row per item of `docs/revision/REVISION_PLAN.md`
 
 *Updated 2026-10-22. Branch `p11-reviewer-revision`. Registrations are
 `predictions/<ID>.md`, tagged `prereg-<ID>` at the commit that registered them; outcomes are
-appended to the same file below a line. Rules: `docs/revision/EXECUTION_PLAN.md`. Long jobs run
+appended to the same file below a line. Rules: `docs/revision/STATUS.md`. Long jobs run
 as memory-capped systemd user units (`scripts/capped.sh`; `systemctl --user list-units
 'authbc-*'`), logs in `~/.cache/authbc-logs/`.*
 
@@ -49,7 +49,7 @@ order checkpoints, logs and the clean gate under `~/.cache`.
 *Formerly `docs/revision/EXECUTION_PLAN.md`, last changed 2026-10-19. Copied verbatim on 2026-11-01; headings moved down one level and relative links re-pointed.*
 
 *Written 2026-10-19, before any run of the revision. The plan itself is
-`docs/AUTHBC Revision Plan.md` (Mohamed, 2026-10-19). This file says how it is executed, what
+`docs/revision/REVISION_PLAN.md` (Mohamed, 2026-10-19). This file says how it is executed, what
 cannot be executed here, and where the plan's predictions were checked against what the
 repository already knows. Status of each item: `docs/revision/STATUS.md`.*
 

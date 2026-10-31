@@ -246,7 +246,7 @@ class TestTheSurveyWithdrawalStaysWithdrawn:
         verdicts = [r["verdict"] for r in _rows("direction_c_survey.csv")]
         counted = [v for v in verdicts if v in {"REPORTS", "NONE"}]
         assert len(counted) >= 23 and counted.count("REPORTS") == 5
-        assert (REPO / "docs" / "DIRECTION_C_SURVEY_PROTOCOL.md").exists()
+        assert (REPO / "predictions" / "DIRECTION_C_SURVEY_PROTOCOL.md").exists()
 
     @pytest.mark.parametrize("path", ["thesis/ch11_reproducibility.tex", "paper/methods.tex"])
     def test_the_point_estimate_is_never_quoted_without_its_interval(self, path: str) -> None:

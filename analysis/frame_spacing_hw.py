@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """How far apart one saturated sender's frames are on air, from the receiver's own clock.
 
-docs/CONTENTION_HW_FRAMEBURST_EXPECTATIONS.md. IEEE 802.11 fixes the time from one frame of a
+predictions/CONTENTION_HW_FRAMEBURST_EXPECTATIONS.md. IEEE 802.11 fixes the time from one frame of a
 saturated station to its next: the frame, DIFS, and a counter drawn from 0…W−1 slots. It is the
 quantity Bianchi et al. (INFOCOM 2007) measured on six commercial cards, none of which kept to
 it. Here it separates two states of one chip: frame burst on (the Linux driver's setting) and

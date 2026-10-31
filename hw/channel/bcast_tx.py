@@ -3,11 +3,11 @@
 
 Two schedules. The default sends strictly periodically, as the two-radio link test of August
 2026 did. `--redraw` sends one frame per period at an instant drawn uniformly within it — the
-traffic source the capacity simulations use (docs/NMAX_DIRECT_EXPECTATIONS.md). With several
+traffic source the capacity simulations use (predictions/NMAX_DIRECT_EXPECTATIONS.md). With several
 transmitters the strictly periodic schedule freezes their relative phases for a whole window:
 two radios' clocks drift by microseconds per second, so a window would sample one phase
 configuration and say little about the mean. The contention experiment therefore uses
-`--redraw` (docs/CONTENTION_HW_EXPECTATIONS.md).
+`--redraw` (predictions/CONTENTION_HW_EXPECTATIONS.md).
 """
 import argparse
 import json

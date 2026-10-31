@@ -1,4 +1,5 @@
-"""The direct 802.11 `N_max` search: summary logic and cells (docs/NMAX_DIRECT_EXPECTATIONS.md).
+"""The direct 802.11 `N_max` search: summary logic and cells
+(predictions/NMAX_DIRECT_EXPECTATIONS.md).
 
 The simulator runs need NS-3 and are not repeated here. What is held instead:
 

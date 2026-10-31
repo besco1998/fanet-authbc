@@ -1,4 +1,4 @@
-"""The batch size as a dimension of the capacity (docs/NMAX_DIRECT_EXPECTATIONS.md, F6).
+"""The batch size as a dimension of the capacity (predictions/NMAX_DIRECT_EXPECTATIONS.md, F6).
 
 Every capacity simulated before follow-up F6 had one record to a frame or four (audit F80,
 open item G31). `batch_capacity_predictions.csv` was committed before the ns-3 runs it
@@ -34,7 +34,7 @@ CELLS = ("B2", "B3", "B8")
 
 class TestTheRegisteredPredictions:
     def test_three_cells_as_registered(self) -> None:
-        """The numbers of the table in docs/NMAX_DIRECT_EXPECTATIONS.md, F6."""
+        """The numbers of the table in predictions/NMAX_DIRECT_EXPECTATIONS.md, F6."""
         assert {c: (r["batch"], r["frame_bytes"], r["frames_per_s"], r["line_crossing"],
                     r["model_crossing"], r["single_ceiling"]) for c, r in PREDICTED.items()} == {
             "B2": ("2", "155", "25.0", "66.0", "66.6", "75"),
@@ -238,7 +238,7 @@ class TestThePredictionsAsScored:
         line = {c: float(r["vs_line_pct"]) for c, r in SCORED.items()}
         assert line["B2"] > line["B3"] > line["B8"]
         assert 1.0 < line["B2"] < 1.5 and line["B3"] > 0 and -2.5 < line["B8"] < -1.0
-        outcome = (REPO / "docs" / "NMAX_DIRECT_EXPECTATIONS.md").read_text(encoding="utf-8")
+        outcome = (REPO / "predictions" / "NMAX_DIRECT_EXPECTATIONS.md").read_text(encoding="utf-8")
         assert "The weaker expectation had the trend and missed the middle cell" in outcome
 
 

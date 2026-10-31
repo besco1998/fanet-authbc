@@ -1,4 +1,5 @@
-"""Capacity with the nodes spread out and capture at work (docs/NMAX_DIRECT_EXPECTATIONS.md, F7).
+"""Capacity with the nodes spread out and capture at work (predictions/NMAX_DIRECT_EXPECTATIONS.md,
+F7).
 
 `spread_capacity_predictions.csv` was committed before the ns-3 runs it predicts. Held here:
 that it says what was registered, that the two kinds of prediction are what the registration
@@ -34,7 +35,7 @@ PLANS = REPO / "experiments" / "nmax-direct"
 
 class TestTheRegisteredPredictions:
     def test_four_cases_as_registered(self) -> None:
-        """The numbers of the table in docs/NMAX_DIRECT_EXPECTATIONS.md, F7."""
+        """The numbers of the table in predictions/NMAX_DIRECT_EXPECTATIONS.md, F7."""
         assert {c: (r["kind"], r["equal_power_crossing"], r["model_crossing"], r["predicted_lo"],
                     r["predicted_hi"]) for c, r in PREDICTED.items()} == {
             "C, 15 m": ("point", "35.26", "39.52", "37.54", "41.5"),
@@ -239,7 +240,7 @@ class TestThePredictionsAsScored:
             drop = 1 - x[f"{cell}, 100 m"] / x[f"{cell}, 15 m"]
             assert 0.0 < drop < 0.01
         assert NUMBERS["sprFarBelowPct"] == "0.7"
-        outcome = (REPO / "docs" / "NMAX_DIRECT_EXPECTATIONS.md").read_text(encoding="utf-8")
+        outcome = (REPO / "predictions" / "NMAX_DIRECT_EXPECTATIONS.md").read_text(encoding="utf-8")
         assert "The weaker expectation had the sign and was too large" in outcome
 
 

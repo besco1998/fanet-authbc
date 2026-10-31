@@ -95,7 +95,7 @@ VERIFICATION: full suite output after fix
 - Status/handoff files are per-lane (`docs/status/lane<N>.md`) precisely so lanes never
   write the same file; CLAUDE.md's status board is updated only on main at sync points.
 - If two lanes accidentally touch the same file: STOP, do not resolve by guessing —
-  the ownership map (docs/07 §3) decides the owner; the other lane reverts.
+  the ownership map (docs/archive/PLANNING_HISTORY.md, 07 §3) decides the owner; the other lane reverts.
 
 ## 9. Scientific red flags (STOP conditions, always)
 Suspiciously perfect model fits (<1% everywhere) · CI widths ~0 · throughput above the

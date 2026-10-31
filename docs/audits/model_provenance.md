@@ -380,7 +380,7 @@ with hard constraints from three different physical sources. A single-axis study
 result. The error was compressing a four-objective feasibility result into a one-number byte claim
 and then attributing that number to all four axes.
 
-**Actions.** (i) headline sentence corrected in docs/00, docs/TECHNICAL_NARRATIVE, paper abstract +
+**Actions.** (i) headline sentence corrected in docs/00, docs/archive/NARRATIVES_2026-08.md, paper abstract +
 conclusion; (ii) the decomposition table above added to the results section — it is *more*
 informative than the single number; (iii) `test_headline_decomposition.py` pins the encoding-
 independence so the claim cannot silently regress.
@@ -1059,7 +1059,7 @@ pp. 400–405, DOI 10.1109/ICIT52682.2021.9491655.**
 
 Four of our positions, independently stated by people who built the thing:
 * **LoRaWAN is star-only** — F21/F22.
-* **A single channel is the right choice for an ad hoc LoRa swarm** — `TRADEOFFS.md` §1a, which we
+* **A single channel is the right choice for an ad hoc LoRa swarm** — `TRADEOFFS.md` §1a (now the trade-off register in `docs/DECISIONS.md`), which we
   argued from the sub-band duty cycle and single-radio reception. They reached it by building one.
 * **Half-duplex is a real cost with a known fix** — E10. Their fix is *dedicated TX and RX radios*,
   and they measure the improvement (their Fig. 10).
@@ -1952,7 +1952,7 @@ and the speeds immediately separate.
 
 ### ⚠️ Two consequences, both of which would have produced a wrong result
 
-1. **`MOBILITY_PLAN.md` §M2's stated prediction is unreachable under the default config.** It
+1. **`MOBILITY_PLAN.md` (now in `docs/DEFERRED_PLANS.md`) §M2's stated prediction is unreachable under the default config.** It
    predicted mobility would "reduce the bimodality" and "widen the delivery distribution". Under
    `aloha` that is *structurally impossible*, not merely unobserved. A 30-seed sweep run at the
    default would have concluded "mobility has no effect on the LoRa arm" — true, but for a reason
@@ -2276,7 +2276,7 @@ flattering it, and is safe to leave stated as an upper bound while S10 is open.
 ## F42 — Direction C: the phenomenon has PRIOR ART, and the pilot's "9 of 9" was inflated (2026-08-07)
 
 Two corrections to Direction C, both produced by writing the survey protocol *before* running the
-survey (`docs/DIRECTION_C_SURVEY_PROTOCOL.md`, committed `eb3eda5`, data-free). Neither would have
+survey (`predictions/DIRECTION_C_SURVEY_PROTOCOL.md`, committed `eb3eda5`, data-free). Neither would have
 surfaced from a looser process, and both narrow our own claim.
 
 ### ⚠️ 1. The frozen-phase artifact is not unobserved in the literature
@@ -2445,7 +2445,7 @@ produces the baselines the capacity ratios divide by. Crossing **2.367** against
 — a **0.45 σ** difference, statistically indistinguishable across a **1.66×** change in frame size.
 The universal ceiling in `experiments/capacity/config.yaml` is justified, `tab:envelope`'s absolute
 213/100/88/31 keep support they previously only assumed, and **no published number moves**.
-Prediction committed data-free first (`docs/M4_EXPECTATIONS.md`, `84adb92`).
+Prediction committed data-free first (`predictions/M4_EXPECTATIONS.md`, `84adb92`).
 
 ⚠️ **The pre-registration also made a DIRECTIONAL prediction the run had no power to test.** I
 predicted the crossing would drift slightly *higher* at the smaller frame; it drifted lower, at
@@ -2772,7 +2772,7 @@ frames carries, which is the table above.
 
 The first is the serious one. The name was in the paper, the thesis, the code
 (`lora.bor2017_loss_pct`), eight documents and a test file name. Each of these sources had been
-read, each was recorded as verified in `A3_CITATION_VERIFICATION.md`, **and the paper carried a
+read, each was recorded as verified in `A3_CITATION_VERIFICATION.md` (now in `docs/literature/README.md`), **and the paper carried a
 paragraph saying so.** The verification had checked that the DOI resolved and the claim was in the
 PDF. It had not compared the author list.
 
@@ -2796,7 +2796,7 @@ measured in ns-3 at **N = 50 with a 288 B frame** (D3), applied to every configu
 status board called the ratios "protected by construction". Nothing had ever simulated a
 configuration at its own claimed capacity.
 
-**What was done.** `docs/NMAX_DIRECT_EXPECTATIONS.md` was committed data-free (`6f82599`) with the
+**What was done.** `predictions/NMAX_DIRECT_EXPECTATIONS.md` was committed data-free (`6f82599`) with the
 prediction that a direct search would land within ±10 % of the ceiling's figure in each of six
 cells. 1080 runs later it **failed**: the lean design crosses at 109 on the grid (118.3
 interpolated) against 142 — −23.2 % / −16.7 %, the whole interval below the band — while the
@@ -2832,7 +2832,7 @@ channel. This is the 802.11 counterpart of the LoRaWAN frozen-phase artifact (F4
 carrier sense and not removed by it.
 
 **Tested, with predictions registered before each run** (follow-ups F1 and F1b in
-`docs/NMAX_DIRECT_EXPECTATIONS.md`; new scenario options `--txJitterMs`, `--txSkewPpm`,
+`predictions/NMAX_DIRECT_EXPECTATIONS.md`; new scenario options `--txJitterMs`, `--txSkewPpm`,
 `--perNode`; the published path is bit-identical with all three at zero):
 
 | prediction | outcome |
@@ -2877,7 +2877,7 @@ biased, but its seed-to-seed spread includes this artifact.
 ## F52 — record sizes checked against twelve public PX4 flight logs (2026-10-06)
 
 Every record size in the project comes from a synthetic generator (`bench/telemetry.py`). A
-reviewer asked whether real telemetry compresses the same way. `docs/PX4_LOGS_EXPECTATIONS.md`
+reviewer asked whether real telemetry compresses the same way. `predictions/PX4_LOGS_EXPECTATIONS.md`
 fixes the selection rule and the prediction, committed data-free (`e4e3cdf`); the logs are pinned
 by SHA-256 in `experiments/px4-logs/manifest.yaml`.
 
@@ -2951,7 +2951,7 @@ with one fitted constant a. N·f·T is the fraction of time the neighbourhood's 
 medium; c·N·f is the chance that another frame starts inside the window in which a station cannot
 yet hear it.
 
-**The test** (follow-up F2 in `docs/NMAX_DIRECT_EXPECTATIONS.md`). Seven configurations that had
+**The test** (follow-up F2 in `predictions/NMAX_DIRECT_EXPECTATIONS.md`). Seven configurations that had
 not been simulated were named; the line's value for each was written down with a tolerance of
 ±6 %, and a second condition — closer to the line than to the single ceiling in the five cells
 where the two differ by more than a tenth; both were committed before any of the seven was run
@@ -3018,7 +3018,7 @@ as "check the figure, not the quotation", one level up.
 each scheme a saturation bound only, beside a design whose capacity is simulated. A baseline
 measured with a weaker instrument than the design is still a weak baseline.
 
-**What was done** (follow-up F3 of `docs/NMAX_DIRECT_EXPECTATIONS.md`, registered in `f72db7f`
+**What was done** (follow-up F3 of `predictions/NMAX_DIRECT_EXPECTATIONS.md`, registered in `f72db7f`
 before any run). Five cells — each scheme's frame at its rate — through the same direct search as
 the ladder: 30 seeds, seven node counts at unit steps, 1,050 runs. The airtime line's crossing
 for each was committed first, with the slope calibrated before F2 and nothing re-fitted.
@@ -3477,7 +3477,7 @@ Every capacity is simulated (G4). No board and no meter was reachable on 2026-10
 measurement could not be made. What could be done was to leave nothing but the measurement:
 
 * **The experiment is registered** in its own commit, `456a4e7`, with no data:
-  `docs/CONTENTION_HW_EXPECTATIONS.md`. N boards in one ad-hoc cell, every one sending and
+  `predictions/CONTENTION_HW_EXPECTATIONS.md`. N boards in one ad-hoc cell, every one sending and
   receiving, one 1400 B frame per period at a redrawn instant, three loads. Twelve predictions
   from the access-rule model for two to five boards.
 * **The two-board case is the sharp one.** The only receiver is the other transmitter, so no
@@ -3633,7 +3633,7 @@ both boards: 1. A radio that sends its queued frames one behind another without 
 again would explain a model that is right at low load and too high at high load.
 
 Registered before any run with it off (`06f1bfa`,
-`docs/CONTENTION_HW_FRAMEBURST_EXPECTATIONS.md`), with a switch for it
+`predictions/CONTENTION_HW_FRAMEBURST_EXPECTATIONS.md`), with a switch for it
 (`hw/channel/frameburst.sh`) whose reported value is logged before and after every session:
 
 | | prediction | measured | |
@@ -3658,7 +3658,7 @@ the noise, and it is the reason the pooled table of F73 quotes the scatter it fo
 F73 mixes two things: how two radios contend, and how one radio sends its own queued frames.
 The second is not the standard's on this chip (F74). The case that isolates the first is the
 one every textbook starts from: both stations always have a frame. Registered before its runs
-(`9a85afa`, `docs/CONTENTION_HW_SATURATED_EXPECTATIONS.md`): each board offered 400 frames/s,
+(`9a85afa`, `predictions/CONTENTION_HW_SATURATED_EXPECTATIONS.md`): each board offered 400 frames/s,
 800 where the medium carries about 490; four windows with frame burst off, four with it on.
 Frames on air are read at the receiver, from the sequence numbers it spans.
 
@@ -4123,7 +4123,7 @@ the airtime line with its slope unchanged (±6 %) and the access-rule model with
 **All six held.** Where the line and the model disagreed (2.4 % at eight records) the simulator
 is three times nearer the model. A weaker expectation recorded beside the predictions had the
 trend of the line's residual right and the sign of the middle cell wrong; it is reported as
-that in `docs/NMAX_DIRECT_EXPECTATIONS.md`.
+that in `predictions/NMAX_DIRECT_EXPECTATIONS.md`.
 
 **What the documents say now.** The paper: one sentence in the capacity-rule paragraph, and the
 limitation reworded — the three batches were simulated for the rule alone and nothing else is
@@ -4381,7 +4381,7 @@ result.
 ---
 
 *F89–F97: the revision's experiments, one entry each, as its acceptance criteria require
-(`docs/revision/EXECUTION_PLAN.md`). Each is scored in full in its `predictions/<ID>.md`; what
+(`docs/revision/STATUS.md`). Each is scored in full in its `predictions/<ID>.md`; what
 follows is what is true now and the cross-check made by a second method.*
 
 ## F89 — the design's ×3.5 does not depend on how the swarm is spread (revision A1, 2026-10-20)

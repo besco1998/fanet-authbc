@@ -1,4 +1,4 @@
-"""The arithmetic of the traffic-source comparison (docs/NMAX_DIRECT_EXPECTATIONS.md, F4).
+"""The arithmetic of the traffic-source comparison (predictions/NMAX_DIRECT_EXPECTATIONS.md, F4).
 
 Whether the two sources differ is a question for the simulator. What is held here is that the
 statistic the registration names is the one the script computes, and that a campaign which has
@@ -95,7 +95,8 @@ class TestTheSampleAlreadyReported:
 
 
 class TestTheFreshSeedsAsScored:
-    """F4's outcome (docs/NMAX_DIRECT_EXPECTATIONS.md): the registered sample and what it gave."""
+    """F4's outcome (predictions/NMAX_DIRECT_EXPECTATIONS.md): the registered sample and what it
+    gave."""
 
     SAMPLES = sd.by_source(sd.read(sd.FRESH))
     FRESH = sd.difference(SAMPLES, sd.FRESH_SEEDS)

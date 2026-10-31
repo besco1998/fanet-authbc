@@ -2,7 +2,7 @@
 
 Living record of every design/methodology decision, its justification, the limitation it carries,
 and the mitigation. Companion to docs/00 §6 (the formal D0–D7 register) and
-docs/audits/full_audit_pre_p7b.md. Updated 2026-07-10.
+docs/audits/AUDIT_HISTORY.md. Updated 2026-07-10.
 
 ## Why the frozen data barely moved when we "fixed BLS" — read this first
 Two facts that look contradictory but aren't:
@@ -196,7 +196,7 @@ short paper.*
 | **A figure or table for every reviewer point** | Yes, in the paper | The paper grows from 15 pages |
 | **The thesis** | Each revision result goes into the chapter it belongs to | More edits than one new chapter |
 | **Paper and thesis names (2026-10-25)** | "first format" → **record-linked format**; "lean format" → **frame-linked format**; "keyframe" → **key record**, "delta" → **delta record**, reference interval → **key-record interval**; the configuration → **AUTHBC**, the baseline → **per-record signing**; access-rule model → **contention model** (an event simulation, so not "analytical"); the airtime line → **airtime capacity law**; spoilers → interferers; group tag → **group MAC**; lazy → **deferred batch verification**; GNSS-time window → **timestamp acceptance window**. In paper, thesis, figures, tables and the reply | Code and data keep the old identifiers (`lean`, `first`, `\bprLean…`); only printed text changed |
-| **Readability review (2026-10-25)** | Every recommendation of `docs/revision/PAPER_READABILITY_REVIEW.md` applied except L2 and L3 (the introduction's questions and the contribution bullets stay as written) | The paper is 18 pages |
+| **Readability review (2026-10-25)** | Every recommendation of `docs/revision/PAPER_CHANGES.md` applied except L2 and L3 (the introduction's questions and the contribution bullets stay as written) | The paper is 18 pages |
 | **AUTHBC's expansion (T5)** | **AUTHenticated telemetry for BlockChain-style ledgers** — supersedes the 2026-10-08 decision ("authenticated telemetry for a blockchain-style, hash-chained ledger") | **Confirmed by Mohamed 2026-10-26**, knowing it reverses his choice of 2026-10-08 |
 | **Section order (L5)** | The low-rate section now follows the 802.11 results — supersedes the 2026-10 decision that the exclusion is the paper's first result in the body; the abstract still states it first | **Confirmed by Mohamed 2026-10-26**, knowing it reverses the October order |
 | **Authors (2026-10-25)** | Mohamed A. Farouk, Mahmoud Abdelaziz, Ahmed F. Darwesh, Ashraf D. Elbayoumy, all Dept. of Communication Engineering, Military Technical College, Cairo | ORCID iDs and a funding statement are still to be supplied |
@@ -235,7 +235,8 @@ and #2, thesis markers, hardware, deferred studies) waits.
 
 > **Open items live in [`OPEN_ITEMS.md`](OPEN_ITEMS.md)** — the single tracked list of
 > everything assumed, deferred, unvalidated or accepted-as-a-limitation. Decisions live here.
-> **What each decision COST lives in [`TRADEOFFS.md`](TRADEOFFS.md)** — required reading before
+> **What each decision COST is in the trade-off register at the end of this file** (formerly
+> `TRADEOFFS.md`) — required reading before
 > quoting any number: this is an optimization problem, so a reported configuration without its
 > alternatives is a selection, not an optimization.
 

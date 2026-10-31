@@ -81,7 +81,7 @@ number.
 
 The radio measurements of August were driven from the PC over the network. If the boards are
 **switched on and reachable** (`ssh pi@<address>` works from WSL), the agent can run steps 1,
-4 and 5 below, and the **contention experiment** (`docs/CONTENTION_HW_EXPECTATIONS.md`, open
+4 and 5 below, and the **contention experiment** (`predictions/CONTENTION_HW_EXPECTATIONS.md`, open
 item G4) — two Pi 4 are enough for its sharpest case, the Pi 3B+ makes three. Tell it the
 addresses. Steps 0, 2 and 3 need the meter wired to the PC, and that needs your hands.
 

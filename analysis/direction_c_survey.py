@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Direction C survey harness — does the ns-3 LoRa literature report replication?
 
-⚠️ **The protocol was fixed and committed BEFORE this ran**: `docs/DIRECTION_C_SURVEY_PROTOCOL.md`,
+⚠️ **The protocol was fixed and committed BEFORE this ran**:
+`predictions/DIRECTION_C_SURVEY_PROTOCOL.md`,
 commit `eb3eda5`, which contains no data. The keyword set below is a transcription of §3 of that
 document and **must not be edited to change an outcome** — if it needs to change, amend the protocol
 in its own commit first and say why.

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Record sizes at the operating rate, and the 50 Hz stream's timing, from one PX4 SITL flight.
 
-docs/PX4_LOGS_EXPECTATIONS.md, "records at the operating rate". The flight's log goes through
+predictions/PX4_LOGS_EXPECTATIONS.md, "records at the operating rate". The flight's log goes through
 **the same functions as the twelve public logs** (`px4_log_sizes.flight_runs`, `sizes`), on a
 20 ms grid — the spacing of the adopted operating point, which no public log reaches — and on
 the 200 ms grid where the public multicopter logs can be compared with it.

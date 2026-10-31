@@ -1,5 +1,5 @@
 // authbc-adaptive.cc — revision A4: each node chooses its batch from the channel it hears
-// (docs/AUTHBC Revision Plan.md A4; registration predictions/A4.md).
+// (docs/revision/REVISION_PLAN.md A4; registration predictions/A4.md).
 //
 // WHY. The paper fixes b from the deadline (b <= 4 at 50 records/s and 100 ms) and shows what
 // each fixed b costs and buys. A node does not know how many neighbours it has, but it can

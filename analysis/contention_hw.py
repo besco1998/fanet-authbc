@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Contention on real radios: what the access-rule model predicts, and what the boards measured.
 
-docs/CONTENTION_HW_EXPECTATIONS.md. Every 802.11 capacity in the paper is simulated. The model
+predictions/CONTENTION_HW_EXPECTATIONS.md. Every 802.11 capacity in the paper is simulated. The
+model
 of docs/02 §6g says why the simulated capacities are what they are; this is the first test of
 it that does not run inside a simulator. Each of N boards in one ad-hoc cell sends one 1400 B
 broadcast frame per period at an instant drawn within the period, and counts what it receives
@@ -49,7 +50,8 @@ NODES = (2, 3, 4, 5)
 OCCUPANCY = (0.50, 0.70, 0.85)      # N · f · T, the share of time the cell's frames take
 SEEDS = 30
 LINK_LOSS = 2.3e-4                  # measured on the two-board link with one transmitter
-# The registered bands, as multiples of the model's loss (docs/CONTENTION_HW_EXPECTATIONS.md).
+# The registered bands, as multiples of the model's loss
+# (predictions/CONTENTION_HW_EXPECTATIONS.md).
 BAND_TWO_BOARDS = (0.6, 1.4)        # the receiver is the other transmitter: no capture
 BAND_MORE_BOARDS = (0.3, 1.4)       # a third board may capture one of two colliding frames
 

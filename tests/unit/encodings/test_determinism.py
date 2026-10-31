@@ -1,4 +1,4 @@
-"""Cross-subprocess determinism gate (docs/06 §5, docs/03 §3).
+"""Cross-subprocess determinism gate (docs/06 §5, docs/archive/03 §3).
 
 Encode the SAME 1000-record stream in two independent Python subprocesses and compare the
 SHA-256 of the concatenation. A mismatch means the encoding is not reproducible across

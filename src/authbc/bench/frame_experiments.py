@@ -352,7 +352,7 @@ def _capacity_columns(direct: dict[str, str] | None, ceiling_n: int, n_sat: int,
     """The V >= 0.95 capacity of one rung: simulated where it was, and labelled where it was not.
 
     The load-ceiling figure every earlier table used is kept in its own column as the
-    approximation it turned out to be (docs/NMAX_DIRECT_EXPECTATIONS.md), never as the value.
+    approximation it turned out to be (predictions/NMAX_DIRECT_EXPECTATIONS.md), never as the value.
     """
     cols: dict[str, Any] = {"n_max_v95": "", "n_max_v95_ci_lo": "", "n_max_v95_ci_hi": "",
                             "n_max_v95_per_run": "", "n_max_v95_interp": "",

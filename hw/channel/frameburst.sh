@@ -7,7 +7,7 @@
 # them one behind the other without contending again. IEEE 802.11's access rule — and ns-3, and
 # the model of docs/02 §6g — draw a new backoff counter before every frame. The two-board
 # contention measurement of 2026-10-09 could not be read without separating the two
-# (docs/CONTENTION_HW_FRAMEBURST_EXPECTATIONS.md).
+# (predictions/CONTENTION_HW_FRAMEBURST_EXPECTATIONS.md).
 #
 # How. brcmfmac passes a firmware command through one nl80211 vendor command (vendor.c: OUI
 # 0x001018, subcommand 1). Its payload is `struct brcmf_vndr_dcmd_hdr` — cmd, len, offset, set,

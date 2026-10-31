@@ -11,7 +11,7 @@ script is everything that is done with it:
 `--compare` writes `results/raw/dcf_model_vs_ns3.csv`: the model's mean delivered fraction at
 each point of the designated traffic source beside ns-3's, and both crossings of 0.95 per
 configuration. `--predict` writes `results/raw/dcf_model_predictions.csv`, which was committed
-before the runs it predicts (docs/NMAX_DIRECT_EXPECTATIONS.md, F5).
+before the runs it predicts (predictions/NMAX_DIRECT_EXPECTATIONS.md, F5).
 
 The model takes thirty seeds numbered from 1 and 20 simulated seconds per run, as ns-3 does; its
 seeds are its own and share nothing with ns-3's.

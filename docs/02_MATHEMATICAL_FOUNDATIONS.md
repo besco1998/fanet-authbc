@@ -548,7 +548,7 @@ size and rate. That assumed the ceiling does not depend on N or on the frame. **
 prediction that direct simulation would agree within ±10 % was committed before the runs and
 failed (−23.2 % for the lean design); the utilisation at the simulated crossing ranges over
 U\* = 1.98–2.61. The whole record — pre-registration, outcome, three follow-ups and which of
-their predictions failed — is `docs/NMAX_DIRECT_EXPECTATIONS.md`; it is not repeated here.
+their predictions failed — is `predictions/NMAX_DIRECT_EXPECTATIONS.md`; it is not repeated here.
 
 **The definition now in force.** For a configuration (frame bytes L, batch b, rate Λ):
 
@@ -600,7 +600,7 @@ digest and signature sizes are this project's (SHA-256 32 B, Ed25519 64 B), not 
 (MD5, SHA-1, RSA, 80-bit truncations). Two capacities are given: the saturation bound N_sat of
 §6a, and **N_max from the direct ns-3 search of §6e on a frame of that size at that rate**
 (five more cells; their crossings were predicted with the airtime line and committed before
-the runs — `docs/NMAX_DIRECT_EXPECTATIONS.md`, follow-up F3; all five held). ⚠️ For a scheme
+the runs — `predictions/NMAX_DIRECT_EXPECTATIONS.md`, follow-up F3; all five held). ⚠️ For a scheme
 whose packets do not verify alone, N_max counts frames *delivered* and is an upper bound on
 records *verified*.
 
@@ -695,7 +695,7 @@ eighteen cells, and an omission in it — half of the window, the case of an arr
 *before* a counter runs out — was found from that cell's numbers. Its predictions are for
 conditions no run had been made at: the window doubled, and the 2 % and 10 % loss levels
 (`results/raw/dcf_model_predictions.csv`), committed before their runs. The registration and
-its outcome are follow-up F5 of `docs/NMAX_DIRECT_EXPECTATIONS.md`: **all six ns-3 crossings
+its outcome are follow-up F5 of `predictions/NMAX_DIRECT_EXPECTATIONS.md`: **all six ns-3 crossings
 fell within 1.73 % of the model's** (band ±3 %). With the window doubled the per-record cell
 goes from 35.3 to **39.2** neighbours (model 39.1) — an eighth more, not twice, because a
 longer countdown keeps more stations waiting together.

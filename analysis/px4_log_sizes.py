@@ -7,7 +7,7 @@ nine-field record from real flight logs and encoding it with the same code
 (`placement/wire_v2.py`, `encodings/delta_enc.py`).
 
 The prediction, the selection rule and what each outcome means were committed before any log was
-opened: `docs/PX4_LOGS_EXPECTATIONS.md`.
+opened: `predictions/PX4_LOGS_EXPECTATIONS.md`.
 
     python analysis/px4_log_sizes.py --select    # needs network: apply the rule, write the manifest
     python analysis/px4_log_sizes.py             # download what is missing, parse, write the CSV
@@ -47,7 +47,8 @@ CACHE = REPO / ".cache" / "px4"
 MANIFEST = REPO / "experiments" / "px4-logs" / "manifest.yaml"
 OUT = REPO / "results" / "raw" / "px4_log_sizes.csv"
 
-# ---- the selection rule (docs/PX4_LOGS_EXPECTATIONS.md) -------------------------------------
+# ---- the selection rule (predictions/PX4_LOGS_EXPECTATIONS.md)
+# -------------------------------------
 DURATION_S = (300, 900)
 RELEASES = ("v1.14", "v1.15", "v1.16", "v1.17")
 MAX_BYTES = 45_000_000

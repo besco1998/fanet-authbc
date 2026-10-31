@@ -136,7 +136,8 @@ frozen-phase artifact first; then mobility is a clean sensitivity axis.
   artifacts. Recommended default.
 * **Formation / reference-point group mobility** — a swarm holding station relative to a leader.
   Closer to the actual application, and it keeps mutual distances bounded, which matters for the
-  broadcast reachability argument in `TRADEOFFS.md §1a`.
+  broadcast reachability argument in `TRADEOFFS.md §1a` (now the trade-off register in
+  `docs/DECISIONS.md`).
 
 Report both if cheap; they bracket "loose swarm" and "tight formation".
 
@@ -204,7 +205,7 @@ that envelope — the same discipline used for the LoRa arm's Haxhibeqiri et al.
 
 *Formerly `docs/MOBILITY_SURVEY.md`, last changed 2026-10-21. Copied verbatim on 2026-11-01; headings moved down one level and relative links re-pointed.*
 
-*Phase M1 of `docs/MOBILITY_PLAN.md`. Mohamed's direction (2026-07-30) was that mobility must be
+*Phase M1 of `docs/DEFERRED_PLANS.md`. Mohamed's direction (2026-07-30) was that mobility must be
 preceded by a survey of published practice, "so that our configuration is anchored to published
 practice and our results are comparable to theirs, rather than to parameters we chose ourselves."*
 

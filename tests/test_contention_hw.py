@@ -1,6 +1,7 @@
 """Contention on real radios: the registration, its artifacts and the reducer (open item G4).
 
-docs/CONTENTION_HW_EXPECTATIONS.md was committed before any board was switched on. What is held
+predictions/CONTENTION_HW_EXPECTATIONS.md was committed before any board was switched on. What is
+held
 here: that the prediction file is what the model gives; that the registration quotes it; that
 the ns-3 cross-check says what the registration says it says; and that the reducer turns the
 boards' files into a delivered fraction by the definition the simulations use — on files made
@@ -19,7 +20,7 @@ import pytest
 
 REPO = Path(__file__).resolve().parents[1]
 RAW = REPO / "results" / "raw"
-DOC = (REPO / "docs" / "CONTENTION_HW_EXPECTATIONS.md").read_text(encoding="utf-8")
+DOC = (REPO / "predictions" / "CONTENTION_HW_EXPECTATIONS.md").read_text(encoding="utf-8")
 
 _spec = importlib.util.spec_from_file_location("contention_hw",
                                                REPO / "analysis" / "contention_hw.py")
@@ -229,7 +230,7 @@ class TestTheFrameBurstSwitch:
     """`hw/channel/frameburst.sh`, and how the two sessions use it.
 
     The driver switches the chip's frame-burst mode on; a session's loss cannot be read without
-    knowing its state (docs/CONTENTION_HW_FRAMEBURST_EXPECTATIONS.md)."""
+    knowing its state (predictions/CONTENTION_HW_FRAMEBURST_EXPECTATIONS.md)."""
 
     @staticmethod
     def _get(tmp_path: Path, reply: str) -> tuple[int, str]:

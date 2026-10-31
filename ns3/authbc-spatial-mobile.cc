@@ -2,9 +2,9 @@
 //
 // A copy of authbc-spatial.cc — same channel, traffic, metrics and options; with layout disc it
 // reproduces that program's runs bit for bit — plus one layout, "gm": every node moves on its
-// own. Mohamed's rule for mobility (docs/MOBILITY_PLAN.md, E20): a separate, new scenario file,
+// own. Mohamed's rule for mobility (docs/DEFERRED_PLANS.md, E20): a separate, new scenario file,
 // the static scenarios untouched, parameters inside the envelope of published FANET practice
-// (docs/MOBILITY_SURVEY.md).
+// (docs/DEFERRED_PLANS.md).
 //
 // WHY a new layout. In authbc-spatial.cc's "group" layout the speed moves only a reference point
 // and the channel has no velocity term, so every speed gave the same run (F88): what was tested
@@ -23,7 +23,7 @@
 // What follows is authbc-spatial.cc's own description.
 //
 // authbc-spatial.cc — revision A1: the swarm spread out, with fading, capture, hidden stations
-// and motion (docs/AUTHBC Revision Plan.md A1; registration predictions/A1.md).
+// and motion (docs/revision/REVISION_PLAN.md A1; registration predictions/A1.md).
 //
 // WHY A SECOND SCENARIO. Every capacity of the paper is of one collision domain at equal power
 // (authbc-delay.cc). This file keeps that scenario's traffic source, MAC and PHY rate exactly,

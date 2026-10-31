@@ -2,7 +2,7 @@
 
 RFC 8032 vectors are deterministic sign KATs (sk+msg ⇒ exact 64-byte sig); Wycheproof adds
 negative/edge verify cases. Vectors are vendored under tests/vectors/ (see its README).
-KATs must pass before any timing exists (docs/03 §3).
+KATs must pass before any timing exists (docs/archive/03 §3).
 """
 
 from __future__ import annotations

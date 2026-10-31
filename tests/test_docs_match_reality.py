@@ -1,6 +1,6 @@
 """Documented counts must equal reality (audit I5).
 
-**Why this file exists.** `docs/NEXT_STEPS.md` is the designated session entry point, and it went
+**Why this file exists.** `docs/OPEN_ITEMS.md` is the designated session entry point, and it went
 stale **three times in two days** — including twice at my own hand, immediately after I rewrote it
 *because* it was stale. `CLAUDE.md`'s status board and the literature register drifted the same way.
 Every instance had the same shape: a doc asserts a count, the code moves, nothing compares
@@ -127,7 +127,7 @@ class TestLiteratureRegisterCount:
 
 
 class TestPickUpGuideCounts:
-    """⚠️ docs/NEXT_STEPS.md is the designated entry point and has gone stale three times."""
+    """⚠️ docs/OPEN_ITEMS.md is the designated entry point and has gone stale three times."""
 
     def test_frozen_gate_size(self):
         claimed = _claim(NEXT, r"the (\d+)-test frozen gate")
@@ -167,7 +167,7 @@ SPEC_DOCS = [
     "00_PROJECT_CHARTER.md", "01_SYSTEM_MODEL_ARCHITECTURE.md",
     "02_MATHEMATICAL_FOUNDATIONS.md", "04_EVALUATION_PLAN.md",
     "05_REPRODUCTION_GUIDE.md", "06_AGENT_KNOWLEDGE_BASE.md",
-    "README.md", "TRADEOFFS.md", "OPEN_ITEMS.md",
+    "README.md", "DECISIONS.md", "OPEN_ITEMS.md",   # TRADEOFFS.md merged into DECISIONS.md
 ]
 
 

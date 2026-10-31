@@ -17,7 +17,7 @@ adds one Ed25519 verification (0.26 ms) where a signature is checked.
 
 Because broadcast has no feedback, what a frame carries does not change which frames arrive, so
 running the schemes on traces of frames of their own size and rate is the same as running them
-inside ns-3. That is the substitution stated in docs/revision/EXECUTION_PLAN.md.
+inside ns-3. That is the substitution stated in docs/revision/STATUS.md.
 
     python ns3/run_links.py --plan experiments/stream-deadline/plan.txt --stem stream_deadline \
         --trace stream_deadline

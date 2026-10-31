@@ -1,4 +1,5 @@
-"""Records at the operating rate from PX4 software-in-the-loop (docs/PX4_LOGS_EXPECTATIONS.md).
+"""Records at the operating rate from PX4 software-in-the-loop
+(predictions/PX4_LOGS_EXPECTATIONS.md).
 
 The flight cannot be repeated by a test: it needs a built PX4. What is held is that the
 analysis is the one applied to the public logs, that the artifacts are what it gives on the
@@ -86,9 +87,10 @@ class TestTheFlightThatWasRegistered:
 
 
 class TestTheOutcomeAsRecorded:
-    """docs/PX4_LOGS_EXPECTATIONS.md, "Outcome (2026-10-08)": each line against the artifacts."""
+    """predictions/PX4_LOGS_EXPECTATIONS.md, "Outcome (2026-10-08)": each line against the
+    artifacts."""
 
-    DOC = (REPO / "docs" / "PX4_LOGS_EXPECTATIONS.md").read_text()
+    DOC = (REPO / "predictions" / "PX4_LOGS_EXPECTATIONS.md").read_text()
     WHOLE = SIZES[("whole flight", "20")]
 
     def test_every_delta_at_the_operating_rate_is_at_the_floor(self) -> None:

@@ -1,4 +1,4 @@
-"""The airtime line's arithmetic (docs/NMAX_DIRECT_EXPECTATIONS.md, follow-up F2).
+"""The airtime line's arithmetic (predictions/NMAX_DIRECT_EXPECTATIONS.md, follow-up F2).
 
 The registration fixes a procedure; these hold the script to it. Whether the line *predicts*
 anything is a question for the simulator, answered in that document, not here.
@@ -71,7 +71,7 @@ class TestTheRegisteredProcedure:
 
 
 class TestTheHeldOutTestAsScored:
-    """F2's outcome, on the grids it was registered on (docs/NMAX_DIRECT_EXPECTATIONS.md).
+    """F2's outcome, on the grids it was registered on (predictions/NMAX_DIRECT_EXPECTATIONS.md).
 
     Finer grids were run round the same crossings afterwards; they must not move this.
     """

@@ -1,7 +1,7 @@
 # E17 — the classical stream-signing schemes at this work's operating point (docs/02 §6f;
 # review comments 2.3b, 2.3c). Sizes are a MODEL: no scheme here is implemented. Each is the lean
 # one-record frame with its authenticator in place of the signature. Its V >= 0.95 capacity is
-# the direct ns-3 search on a frame of that size (docs/NMAX_DIRECT_EXPECTATIONS.md, follow-up F3).
+# the direct ns-3 search on a frame of that size (predictions/NMAX_DIRECT_EXPECTATIONS.md, follow-up F3).
 experiment: stream-baselines
 lambda_rec_per_s: 50
 batch: 4
