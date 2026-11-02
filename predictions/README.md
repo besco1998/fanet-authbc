@@ -54,3 +54,9 @@ Full states: `docs/revision/STATUS.md`.
 | File | Experiment | Registered | Outcome |
 |---|---|---|---|
 | `S01.md` | capacity at 97 % delivery | `3149f70`, 2026-10-27 | **held**: 27.6 and 97.3 nodes, both within ±3 % of the contention model; ratio 3.5 |
+
+## Open items run later
+
+| File | Experiment | Registered | Outcome |
+|---|---|---|---|
+| `G27.md` | which rule for a radio's own queued frames fits the one-sender spacing, two saturated senders and F73's 36 windows; found the frozen model's self-collision defect first (F114) | the commit that added the file, 2026-11-03 (no tag: see the file's outcome) | pending |

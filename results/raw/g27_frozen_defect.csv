@@ -1,0 +1,28 @@
+# python=3.12.3
+# platform=Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=g27_frozen_defect
+# config_hash=16ee357ba2f06b1d
+point,nodes,frames_per_s,frames,lost,self_collision_groups,frames_lost_to_the_defect,share_of_lost,loss,loss_without_the_defect,relative_change
+F73 2 boards 124/s,2,124.0,141361,382,2,4,0.0105,0.002702,0.002674,-0.0105
+F73 2 boards 174/s,2,174.0,198365,1226,12,24,0.0196,0.006181,0.00606,-0.0195
+F73 2 boards 211/s,2,211.0,240546,3306,29,58,0.0175,0.013744,0.013504,-0.0174
+F76 2 boards saturated 400/s,2,400.0,464419,55260,487,912,0.0165,0.118987,0.117146,-0.0155
+registered grid 3 boards 83/s,3,83.0,141934,907,1,1,0.0011,0.00639,0.006383,-0.0011
+registered grid 3 boards 116/s,3,116.0,198366,2966,8,16,0.0054,0.014952,0.014872,-0.0054
+registered grid 3 boards 141/s,3,141.0,241120,7190,11,22,0.0031,0.029819,0.029729,-0.003
+registered grid 4 boards 62/s,4,62.0,141360,1404,3,6,0.0043,0.009932,0.00989,-0.0043
+registered grid 4 boards 87/s,4,87.0,198364,4225,3,6,0.0014,0.021299,0.021269,-0.0014
+registered grid 4 boards 106/s,4,106.0,241690,10162,12,24,0.0024,0.042046,0.041948,-0.0023
+registered grid 5 boards 50/s,5,50.0,142502,1704,0,0,0.0,0.011958,0.011958,0.0
+registered grid 5 boards 70/s,5,70.0,199513,5721,5,9,0.0016,0.028675,0.02863,-0.0015
+registered grid 5 boards 85/s,5,85.0,242270,12720,11,22,0.0017,0.052503,0.052415,-0.0017
+cell C at N=35,35,50.0,997512,49919,1,2,0.0,0.050044,0.050042,-0.0
+cell C at N=28,28,50.0,798005,24544,1,2,0.0001,0.030757,0.030754,-0.0001
+cell D at N=124,124,12.5,883509,44490,1,2,0.0,0.050356,0.050354,-0.0
+cell D at N=97,97,12.5,691133,20441,0,0,0.0,0.029576,0.029576,0.0

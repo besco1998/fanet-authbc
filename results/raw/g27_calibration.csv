@@ -1,0 +1,59 @@
+# python=3.12.3
+# platform=Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=g27_calibration
+# config_hash=16ee357ba2f06b1d
+state,calibration,rule,parameter,measured_gap_us,closed_form_gap_us,simulated_gap_us,stage_A_pass
+on,mean,R0,—,44.77,101.5,101.89,True
+on,mean,R1,W=3,44.77,43.0,43.03,True
+on,mean,R2,q=0.84,44.77,44.8,44.8,True
+on,mean,R3,q=0.663,44.77,44.81,44.78,True
+on,mean,R4,W=3,44.77,43.0,43.03,True
+on,mean,R5,slot=1.44us,44.77,44.78,44.81,True
+on,lowest,R0,—,42.6,101.5,101.89,True
+on,lowest,R1,W=3,42.6,43.0,43.03,True
+on,lowest,R2,q=0.873,42.6,42.57,42.61,True
+on,lowest,R3,q=0.689,42.6,42.59,42.48,True
+on,lowest,R4,W=3,42.6,43.0,43.03,True
+on,lowest,R5,slot=1.15us,42.6,42.6,42.62,True
+on,highest,R0,—,50.5,101.5,101.89,True
+on,highest,R1,W=5,50.5,52.0,52.07,True
+on,highest,R2,q=0.756,50.5,50.47,50.32,True
+on,highest,R3,q=0.596,50.5,50.54,50.43,True
+on,highest,R4,W=5,50.5,52.0,52.07,True
+on,highest,R5,slot=2.20us,50.5,50.5,50.55,True
+on,reading_B,R0,—,61.46,101.5,101.89,True
+on,reading_B,R1,W=7,61.46,61.0,61.09,True
+on,reading_B,R2,q=0.593,61.46,61.47,61.39,True
+on,reading_B,R3,q=0.468,61.46,61.49,61.47,True
+on,reading_B,R4,W=7,61.46,61.0,61.09,True
+on,reading_B,R5,slot=3.66us,61.46,61.46,61.56,True
+off,mean,R0,—,73.8,101.5,101.89,True
+off,mean,R1,W=10,73.8,74.5,74.65,True
+off,mean,R2,q=0.41,73.8,73.83,73.87,True
+off,mean,R3,q=0.324,73.8,73.8,73.76,True
+off,mean,R4,W=10,73.8,74.5,74.65,True
+off,mean,R5,slot=5.31us,73.8,73.8,73.96,True
+off,lowest,R0,—,73.5,101.5,101.89,True
+off,lowest,R1,W=10,73.5,74.5,74.65,True
+off,lowest,R2,q=0.415,73.5,73.49,73.51,True
+off,lowest,R3,q=0.327,73.5,73.54,73.52,True
+off,lowest,R4,W=10,73.5,74.5,74.65,True
+off,lowest,R5,slot=5.27us,73.5,73.5,73.66,True
+off,highest,R0,—,74.1,101.5,101.89,True
+off,highest,R1,W=10,74.1,74.5,74.65,True
+off,highest,R2,q=0.406,74.1,74.09,74.16,True
+off,highest,R3,q=0.32,74.1,74.14,74.11,True
+off,highest,R4,W=10,74.1,74.5,74.65,True
+off,highest,R5,slot=5.35us,74.1,74.1,74.27,True
+off,reading_B,R0,—,84.45,101.5,101.89,True
+off,reading_B,R1,W=12,84.45,83.5,83.69,True
+off,reading_B,R2,q=0.253,84.45,84.42,84.77,True
+off,reading_B,R3,q=0.199,84.45,84.49,84.84,True
+off,reading_B,R4,W=12,84.45,83.5,83.69,True
+off,reading_B,R5,slot=6.73us,84.45,84.44,84.68,True
