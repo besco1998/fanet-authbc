@@ -880,7 +880,11 @@ another folder is named.
   two loads and **failed** at the third. A follow-up that turned off frame bursting **failed all
   four** of its predictions (F73–F76; `paper/main.tex` §3.5).
 * *Means:* the access rule holds at saturation on hardware; below saturation the cause of the
-  shortfall "is not established".
+  shortfall "is not established". G27 (2026-11-03, F115) tested five rules for how the radio sends
+  its own queued frames, each set from the single sender's spacing. None fits both the saturated
+  runs and the 36 windows, so the radio's own-queue handling is no longer "the candidate left
+  standing" (`predictions/G27.md`). Found on the way: the contention model let a station collide
+  with itself, which never moved a capacity (F114).
 * *Limits:* two radios only; **no capacity was measured**.
 
 **E15 — The broadcast model against the simulator** [modeled vs simulated]
@@ -1152,9 +1156,9 @@ hid three errors until it was built (`docs/LOGBOOK.md` 2026-10-06).
 **Open items** (`docs/OPEN_ITEMS.md`):
 * **Waiting on Mohamed:** the journal and length (I1); author details (I2); data availability
   (I3); three to five radios for a measured capacity (G4, H3); whether the review folder goes into
-  git (I6); and seven questions found while writing this guide (Q1–Q7, `docs/OPEN_ITEMS.md` §3).
-* **Optional, an agent may do:** G27 (the radio's handling of its own queued frames, testable in
-  the event model against 36 measured windows), G6 (a) (the rate-offset source's spread), G15
+  git (I6); and seven questions found while writing this guide (Q1–Q7, `docs/OPEN_ITEMS.md` §3), plus three
+  from G27 (Q8–Q10).
+* **Optional, an agent may do:** G6 (a) (the rate-offset source's spread), G15
   (crypto timing on the Pi 3B+ and BeagleBone), G37 (why four cores give 3.36×).
 * **Deferred by Mohamed:** the mobility study for the LoRa arm (`docs/DEFERRED_PLANS.md`) and
   "Direction C", the LoRaWAN frozen-phase artifact as a second short paper (`CLAUDE.md`, "Deferred
@@ -1315,7 +1319,7 @@ hid three errors until it was built (`docs/LOGBOOK.md` 2026-10-06).
 | Table 17 (other links) | `other_links.csv` |
 | Capacity at 97 % (S-01) | `capacity_97.csv`, `predictions/S01.md` |
 | Pre-registrations (every one, with commit and outcome) | `predictions/README.md` |
-| Findings F1–F113 | `docs/audits/model_provenance.md`; every past audit: `docs/audits/AUDIT_HISTORY.md` |
+| Findings F1–F115 | `docs/audits/model_provenance.md`; every past audit: `docs/audits/AUDIT_HISTORY.md` |
 | Decisions, and what each cost (the trade-off register) | `docs/DECISIONS.md` |
 | Where the work is, open items, questions | `docs/OPEN_ITEMS.md` (§1, §2, §3) |
 | What was tried, including failures | `docs/LOGBOOK.md` |
@@ -1339,7 +1343,7 @@ docs/
   LOGBOOK.md                 method and trials, failures included
   DEFERRED_PLANS.md          mobility and Direction C, deferred by Mohamed
   00 01 02 04 05 06 *.md     the specifications (cited by number in code)
-  audits/                    model_provenance.md (findings F1–F113), AUDIT_HISTORY.md (past audits)
+  audits/                    model_provenance.md (findings F1–F115), AUDIT_HISTORY.md (past audits)
   revision/                  REVISION_PLAN, STATUS, PAPER_CHANGES, REVIEW_2026-10-27_FACTS, RESPONSE
   literature/                README.md (sources, their roles, how citations were checked), PDFs
   prompts/T_TEMPLATES.md     the workflow templates the Eight Laws cite

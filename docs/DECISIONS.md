@@ -445,6 +445,14 @@ quote them from the ladder, with their intervals.*
    * *Say the cause of the shortfall has not been shown.* The radio's handling of its own
      queued frames is measurably non-standard and is the candidate the saturated test leaves
      standing. Naming it as the cause would read better and is not established.
+
+   > **Corrected 2026-11-03 (F115, G27).** The saturated test does not isolate the contention:
+   > every saturated station holds a queue, so the radio's own-queue rule acts there too. It
+   > constrains that rule. Five rules for it, each set from the single sender's spacing, were
+   > tested. With frame burst on none fits the saturated result; with it off, the one that does
+   > misses the loss below saturation. "The candidate the saturated test leaves standing" is
+   > therefore withdrawn. The choice itself, *say the cause has not been shown*, stands and is
+   > now better founded.
 10. **The prototype's receiver does not keep up with 124 nodes on one core** (F77) — 57. The
     capacity is the channel's; the ceiling in the table is cryptography's. Answered by giving
     the number beside the ceiling, not by quoting only the ceiling.

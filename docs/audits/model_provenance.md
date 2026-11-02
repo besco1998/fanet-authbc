@@ -3581,7 +3581,8 @@ each sends often: at occupancy 0.85 each board sends a frame every 4.7 ms and it
 frames then matters as much as how two radios contend. At the paper's operating point —
 124 stations, 12.5 frames/s each — a station almost never holds two. The two-board experiment
 below saturation therefore mixes two things, of which the capacities depend on one. F76
-separates them.
+separates them. *(Corrected 2026-11-03, F115: it constrains them and does not separate them.
+In saturation every station holds a queue, so the radio's own-queue rule acts there too.)*
 
 ## F74 — August's "airtime within 0.36 %" was two errors that cancelled (2026-10-09)
 
@@ -3678,6 +3679,15 @@ that the shortfall of F73 belonged to the contention. It does not. The registere
 this outcome stands: *in contention this radio follows the standard; the shortfall at occupancy
 0.85 comes from how a radio sends its own queued frames.*
 
+> **Corrected 2026-11-03 (F115).** This reading assumed that an own-queue rule "never changes what
+> happens when two radios contend frame by frame". In saturation every station always holds a
+> queue, so the rule acts at every frame there too. The saturated runs therefore constrain the
+> own-queue rule; they do not isolate the contention from it. G27 tested five rules from
+> measurements of commercial cards against both measurements. With frame burst on, **none**
+> reproduces the single sender's spacing and the saturated result together. With it off, one
+> does, and it misses the loss below saturation. The reading above has lost the support it
+> claimed. The cause of F73's shortfall is not established.
+
 **This is the first measurement in the project of the contention mechanism on hardware, and it
 agrees with the rule the simulated capacities use.** What it does not do:
 
@@ -3692,7 +3702,8 @@ agrees with the rule the simulated capacities use.** What it does not do:
 What the paper may now say: with two radios the standard's contention rule was observed within
 6 % where it can be isolated; below saturation the same radios depart from the simulations by
 +13 % to −44 %, because they do not space their own frames as the standard does; every
-capacity remains simulated.
+capacity remains simulated. *(Corrected 2026-11-03, F115: "because" is withdrawn. The radios do
+space their own frames differently, but no rule tested for that accounts for the departure.)*
 
 ## F77 — the lean codec timed on the Pi 4, batch verification, and what the boards were found to be (2026-10-09)
 
@@ -4766,3 +4777,104 @@ P(1 + U), a mean of 1.5 P. `analysis/aoi_under_loss.py` sends at fill, which giv
 
 **Cross-check:** the explanation predicts both the b = 4 and the b = 1 values from the period
 alone, with no fitted term.
+
+## F114 — the contention model let a station collide with itself; it never moved a capacity (found preparing G27; 2026-11-03)
+
+**What was found.** G27 needed the event model of docs/02 §6g with a rule for a radio's own
+queued frames as a parameter. `src/authbc/sim/dcf_unsaturated.py` is frozen, so its loop was
+copied into `src/authbc/sim/dcf_own_queue.py`. The copy's first test failed:
+
+* one simulated saturated sender spaced its frames by **94.6 µs** where the standard's arithmetic
+  gives 101.5 µs;
+* with every counter set to 0 it spaced them by **27.9 µs, less than DIFS**, which is impossible.
+
+**Cause, checked in the source and by count.** Inside the detection window of a frame, the loop
+makes every station that "decides to send" a sender of the same group. That includes the station
+whose frame it is, if one of its own frames arrives in those 4 µs. That station then appears
+twice in one group: two frames are counted, the group is a collision, and both are counted lost.
+`on_send` shows these groups directly.
+
+**The fix, in the new module only.** The frame waits in its station's queue. This makes no random
+draw, so wherever the frozen model forms no such group the two agree bit for bit
+(`tests/test_dcf_own_queue.py`, over 6 loads × 3 seeds and 4 windows). With the fix, every
+rule's one-sender gap matches its closed form within 1 µs (48 of 48).
+
+**How much it mattered**, measured from the frozen model's own groups, 30 seeds per point
+(`analysis/own_queue_rules.py --defect` → `results/raw/g27_frozen_defect.csv`). Each repeat is a
+frame never sent and counted lost; a group of one station alone was no collision, so its genuine
+frame is put back as well:
+
+| where the frozen model is used | loss | without the defect |
+|---|---|---|
+| cell C (per-record signing) at N = 28 and 35; cell D (AUTHBC) at N = 97 and 124 | 3.08 %, 5.00 %; 2.96 %, 5.04 % | unchanged (1 group in about 900 000 frames, or none) |
+| F73's points, two boards at 124 / 174 / 211 frames/s | 0.270 / 0.618 / 1.374 % | −1.0 / −2.0 / −1.7 % of the loss |
+| two saturated boards (F76's "11.9 % in the event model") | 11.90 % | 11.71 %; 2/17 is 11.76 % |
+| the registered grid, three to five boards | 0.64–5.25 % | −0.0 to −0.5 % of the loss |
+
+**What changes: no capacity, no registered verdict.**
+* At the capacity cells a station sends 12.5 or 50 frames/s. A second frame of its own almost
+  never arrives within 4 µs of the first, so the capacity crossings, the design map and every
+  registered prediction made at those rates are untouched.
+* F73's verdicts stand. The model column moves by 1–2 %; the failure at occupancy 0.85 is by a
+  factor of 0.56.
+* F76's figure of 11.9 % "in the event model" is 11.7 % without the defect. The paper prints the
+  standard's 11.8 % (\hwSatStd), which is the closed form.
+* ⚠️ **One printed number moves in its second digit.** The paper's three ratios
+  (\hwPoolLowRatio, \hwPoolMidRatio, \hwPoolHighRatio: 1.13 / 0.79 / 0.56) divide the 36
+  windows by the registered predictions, and those contain the defect. Against the corrected
+  model they are 1.14 / 0.81 / 0.57. The registered predictions stay what was registered. Whether the
+  paper quotes them or the corrected model is Mohamed's decision; until he makes it, nothing in
+  the paper changes.
+
+**The frozen file is not edited.** Its registration holds it byte for byte, and every prediction
+made with it stands as registered, defect included. `dcf_own_queue` is the corrected loop, and the
+module docstring and its test name the difference.
+
+**A second convention, examined and kept.** An arrival during an idle period moves the slot grid
+to the arrival, so a running counter loses the part of a slot that had gone by. For one saturated
+sender the gap comes out +0.18 to +0.31 µs above the closed form at 490–1200 arrivals/s and
++0.59 µs at 2000 (30 seeds; standard error 0.08). The convention predicts 0.15–0.61 µs:
+arrivals/s × 67.5 µs of backoff × half a slot. That is under 1 % of the backoff and the same for
+every rule, so it is kept and documented.
+
+**How it went unseen.** Every earlier use of the model sent at most 211 frames/s per station, and
+there the defect is at most 2 % of the loss. The test that exposed it was the first to ask the
+model about one station alone, a case the frozen code refuses (`n_nodes ≥ 2`). It is the pattern
+of F74 one level down: **a model is checked where it is used; ask it the case with a known answer
+too.**
+
+## F115 — G27: no tested rule for the radio's own queued frames fits all three measurements; F76's reading withdrawn (2026-11-03)
+
+Registered at `5ec2eda` before any rule was run with two stations (`predictions/G27.md`, which
+holds the full tables). Five rules for how a radio sends its own queued frames were taken from
+measurements of commercial cards (Bianchi et al., INFOCOM 2007) and from the vendor's burst mode;
+one, a shorter backoff slot, has no source. Each rule's one parameter was set from the single
+sender's measured gap (F74, F75). Each rule was then screened against two saturated senders (F76,
+loss and rate on air) and scored against F73's 36 windows.
+
+| | frame burst on (the driver's setting; 24 windows) | frame burst off (12 windows) |
+|---|---|---|
+| passes the saturated screen | **none**; the standard itself fails it on rate (519 against 522–532 frames/s) | the shorter slot only (11.8 % lost, 523 frames/s) |
+| fits all three loads of F73 | none | the burst only, which failed the screen (8.9 % lost against 10.9–13.0 %) |
+| survives both | **none** | **none**: the shorter slot gives 1.27 % at 211 frames/s against at most 1.09 % |
+
+The same holds under every sensitivity calibration. All five registered expectations held.
+
+**What this changes.**
+* **F76's registered reading is withdrawn** (correction notes in F73 and F76). F76 assumed that an
+  own-queue rule cannot act when both stations are saturated, but every station then holds a
+  queue. The saturated runs constrain the rule. With frame burst on, none of the five rules that
+  give the single sender's spacing meets that constraint.
+* The paper says "the cause is not established", and that stands. The thesis (ch. 9, "the cause
+  that the saturated case leaves standing is the radio's handling of its own queued frames") needs
+  a sentence. That wording is Mohamed's; a proposal is in `docs/OPEN_ITEMS.md` §3.
+* No capacity is touched: they are simulated for radios that keep the standard's rule.
+
+**Seen after scoring, not a result.** The burst rule reproduces the "off" windows at all three loads
+and loses too little when saturated. A burst only while the radio hears no other station would
+combine the two. That idea was formed from these results, so it can only be tested by a new
+registration on new measurements.
+
+**Method note.** The 36 windows had been published, so this is a postdiction: the protection was
+procedural. The rules came from sources, each parameter came from a closed form on other data,
+everything was committed before the runs, and all the rules are reported.

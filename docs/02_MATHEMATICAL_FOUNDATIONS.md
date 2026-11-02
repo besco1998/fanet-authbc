@@ -710,6 +710,13 @@ the capacities of §6e follow from that rule and a 4 µs detection time; it does
 behaves so. Capture, hidden terminals and a real preamble detector are outside both
 (`OPEN_ITEMS` G4).
 
+> **2026-11-03 (F114, F115).** `src/authbc/sim/dcf_unsaturated.py` let a station whose next frame
+> reached its queue inside the detection window of its own transmission send that frame as well:
+> a station colliding with itself. At the capacity cells this never happens to within 1–2 frames in 900 000;
+> at two boards and 124–211 frames/s it makes the loss 1–2 % too high (F114). The file is frozen and
+> stays as registered. `src/authbc/sim/dcf_own_queue.py` is the same loop without the defect, with
+> the radio's rule for its own queued frames as a parameter (G27, `predictions/G27.md`).
+
 ### 6h. Unequal received power and capture — the same access rule, one more question (2026-10-09, F85)
 
 §6g and every capacity of this work put all stations at one point: equal received power, so a

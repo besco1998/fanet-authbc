@@ -12,6 +12,48 @@ where the durable record lives. If you want the conclusion only, follow the poin
 
 ---
 
+# 2026-11-03 — G27: rules for the radio's own queued frames; none fits, and the model had a defect
+
+**Asked:** "do g27". Plan approved in plan mode. The full record is in `predictions/G27.md`, F114
+and F115.
+
+**What was tried, in order.**
+1. **Read Bianchi et al. 2007 §IV-A and §IV-B in full first.** The candidate rules come from its
+   measured cards (smaller windows, zero counters, cards that misbehave alone and behave in
+   contention), plus the vendor's burst mode. A shorter slot was added with no source, and
+   labelled so.
+2. **While planning, found that F76's reading had a gap.** Its registration assumed that an
+   own-queue rule cannot act when both stations are saturated. Every saturated station holds a
+   queue, so the saturated runs became a screen for each rule, not a separation.
+3. **Copied the frozen event loop and parametrised it. The first test failed.** One saturated
+   sender came out at 94.6 µs where the arithmetic says 101.5 µs, and at 27.9 µs, below DIFS,
+   with zero counters. The hypothesis was a station joining its own group. It was counted directly
+   from the frozen model's `on_send` groups, and confirmed: **F114**. Fixed in the new module only.
+   The frozen file stays as registered.
+4. **A smaller oddity, chased instead of tolerated.** The standard gap came out +0.39 µs high. The
+   cause is the frozen model's slot grid moving to each arrival. The excess was checked against
+   that convention's prediction at six offered rates and matched. Kept and documented.
+5. **The size of the defect was measured wherever the model is used.** Capacity cells: nothing.
+   F73's loads: 1–2 %. That turned up **one printed number that moves in its second digit**:
+   the paper's ratios (Q9).
+6. **The fast suite failed once:** thesis ch. 5's line count, which the new module raised to
+   8924. The thesis now says "about nine thousand". That is a factual edit, flagged to Mohamed.
+7. ⚠️ **My error: a stray tag.** `git commit` failed because the pre-commit hook could not find its
+   program outside the venv. `git tag` and `git push` ran on the next lines anyway and published
+   `prereg-G27` at the old head. Deleting it from the remote was refused by this session's
+   permissions. The registration is identified by its commit, `5ec2eda`; the stray tag is Q10.
+   **Lesson:** chain a commit, its tag and its push with `&&` inside one command; never put them
+   on separate lines after a heredoc. Commit with the venv on PATH.
+8. **Registered at `5ec2eda`, then run.** No rule survives in either state, and the result is the
+   same under every calibration. All five registered expectations held. No verdict rests on a
+   close call.
+
+**Seen after scoring, kept apart.** A burst only while no other station is heard would fit both
+the windows and the saturated runs. It was formed from these results, so it needs its own
+registration and new measurements before it is anything.
+
+---
+
 # 2026-11-01 — the documents tidied: about 70 became about 25, nothing lost
 
 **Asked:** "make them as few documents as possible … don't delete any data unless really old or

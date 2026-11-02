@@ -4,12 +4,14 @@ What is held here: that the readers give the numbers the findings quote from the
 (F73's pooled table, F74's spacings, F76's saturated runs); that each band is the registered rule
 applied to those files; that every parameter follows from the measured spacing by its closed
 form; and that stage A — one simulated sender gives the closed form's gap — passed for every set.
-The scores themselves are held after the run, beside the outcome.
+After the run (2026-11-03): that the scored code is the registered code, that nothing above the
+registration's outcome line changed, and the verdict.
 """
 from __future__ import annotations
 
 import csv
 import importlib.util
+import subprocess
 import sys
 from pathlib import Path
 
@@ -121,3 +123,72 @@ class TestTheFrozenModelsDefect:
         sat = rows["F76 2 boards saturated 400/s"]
         assert float(sat["loss"]) == pytest.approx(0.119, abs=0.0005)    # F76: "11.9 %"
         assert float(sat["loss_without_the_defect"]) == pytest.approx(2 / 17, abs=0.001)
+
+
+# --------------------------------------------------------------------- after the run, 2026-11-03
+REGISTRATION = "5ec2eda"            # predictions/G27.md; no tag (a stray one sits at f06b55a)
+
+
+def _git(*args: str) -> str:
+    return subprocess.run(["git", *args], cwd=REPO, capture_output=True, text=True,
+                          check=True).stdout
+
+
+class TestTheRegistrationIsWhatWasScored:
+    def test_the_code_has_not_changed_since(self) -> None:
+        for path in ("src/authbc/sim/dcf_own_queue.py", "analysis/own_queue_rules.py"):
+            assert _git("show", f"{REGISTRATION}:{path}") == (REPO / path).read_text(), path
+
+    def test_nothing_above_the_outcome_was_changed(self) -> None:
+        then = _git("show", f"{REGISTRATION}:predictions/G27.md")
+        now = (REPO / "predictions" / "G27.md").read_text()
+        assert now.startswith(then.rstrip("\n"))
+        assert "## Outcome — added 2026-11-03" in now[len(then):]
+
+    def test_the_stray_tag_is_disclosed(self) -> None:
+        now = (REPO / "predictions" / "G27.md").read_text()
+        assert "`prereg-G27` therefore exists on the" in now and "`f06b55a`" in now
+
+
+def _survivors(calibration: str | None) -> list[tuple[str, str, str]]:
+    screen = {(r["state"], r["calibration"], r["rule"]): r for r in _rows("g27_screen.csv")}
+    inside: dict[tuple[str, str, str], list[bool]] = {}
+    for r in _rows("g27_windows.csv"):
+        if r["state"] != "pooled":
+            inside.setdefault((r["state"], r["calibration"], r["rule"]), []).append(
+                r["inside"] == "True")
+    return [k for k, v in inside.items() if all(v) and screen[k]["stage_B_pass"] == "True"
+            and k[2] != "R0" and (calibration is None or k[1] == calibration)]
+
+
+class TestTheOutcome:
+    def test_no_rule_survives_in_either_state(self) -> None:
+        assert _survivors("mean") == []
+
+    def test_nor_under_any_calibration(self) -> None:
+        assert _survivors(None) == []
+
+    def test_the_screen(self) -> None:
+        passed = {(r["state"], r["rule"]) for r in _rows("g27_screen.csv")
+                  if r["calibration"] in ("mean", "—") and r["stage_B_pass"] == "True"}
+        assert passed == {("off", "R0"), ("off", "R5")}
+
+    def test_the_off_windows(self) -> None:
+        # the burst fits all three loads with frame burst off, and failed the screen; the slot
+        # that passed the screen misses at 211 frames/s
+        rows = {(r["rule"], r["rate_fps_per_node"]): r for r in _rows("g27_windows.csv")
+                if r["state"] == "off" and r["calibration"] == "mean"}
+        assert all(rows[("R3", f)]["inside"] == "True" for f in ("124", "174", "211"))
+        assert rows[("R5", "211")]["inside"] == "False"
+        assert float(rows[("R5", "211")]["model_loss"]) > float(rows[("R5", "211")]["band_hi"])
+
+    def test_the_cross_checks(self) -> None:
+        rows = {(r["state"], r["rule"]): r for r in _rows("g27_screen.csv")
+                if r["calibration"] in ("mean", "—")}
+        # the control against the closed form: 2/17 of frames lost, 520 frames/s on air
+        assert float(rows[("off", "R0")]["model_loss"]) == pytest.approx(2 / 17, abs=0.002)
+        assert float(rows[("off", "R0")]["model_rate_fps"]) == pytest.approx(520, abs=1.5)
+        # a smaller window W: about 2/(W+1)
+        for state, w in (("on", 3), ("off", 10)):
+            assert float(rows[(state, "R1")]["model_loss"]) == pytest.approx(2 / (w + 1),
+                                                                             rel=0.02)

@@ -26,7 +26,7 @@ Every document: [`README.md`](README.md).
 * The documents were tidied on 2026-11-01: about 70 became about 25, nothing lost
   ([`README.md`](README.md) has the map of where each old file went).
 
-**The gate.** `make all` = lint + mypy + 2505 fast tests + the 43-test frozen gate. The paper has
+**The gate.** `make all` = lint + mypy + 2513 fast tests + the 43-test frozen gate. The paper has
 References **51** rendered (81 in the shared bibliography).
 
 **How to edit the paper.** Edit `paper/main.tex` directly. Every number is a macro from
@@ -38,8 +38,8 @@ details (I2); data availability (I3); the review folder in git (I6); reading the
 passages; merging PR #1; radios for a measured capacity (H3, G4); mobility (E20) and Direction C
 (plans in [`DEFERRED_PLANS.md`](DEFERRED_PLANS.md)).
 
-**What an agent may do unprompted** (optional; no claim depends on them): G27, G6 (a), G15, G37
-(§2). Each new experiment is registered first (`predictions/<ID>.md`, tag `prereg-<ID>`,
+**What an agent may do unprompted** (optional; no claim depends on them): G6 (a), G15, G37
+(§2). G27 was done on 2026-11-03 (F114, F115). Each new experiment is registered first (`predictions/<ID>.md`, tag `prereg-<ID>`,
 index in `predictions/README.md`).
 
 ## 2. Open now
@@ -53,9 +53,8 @@ index in `predictions/README.md`).
 | I6 | Whether the review folder goes into git | Mohamed | register §I |
 | G6 (a) | The rate-offset source's run-to-run spread | optional | register §G |
 | G15 | Crypto timing on the Pi 3B+ and BeagleBone | optional | register §G |
-| G27 | How the radio sends its own queued frames (event model against 36 measured windows) | optional | register §G |
 | G37 | Why four cores give 3.36 times one | optional | register §G |
-| Q1–Q7 | Questions below | Mohamed | §3 |
+| Q1–Q10 | Questions below (Q8–Q10 from G27, 2026-11-03) | Mohamed | §3 |
 
 ## 3. Questions for Mohamed
 
@@ -71,6 +70,9 @@ corrected in the tidy-up of 2026-11-01.*
 | Q5 | Should paper Table 3 name **both boards**? Crypto timings come from pi-A, the frame-linked codec, Rust, floods and frame-linked energy from pi-B. | `paper/main.tex` Table 3; `results/hw/*.authbc-pi4a.csv`, `*.authbc-pi4b.csv` |
 | Q6 | Re-time **SHA-256** on the record the receiver actually hashes? The 2 745.5 ns was measured on a 45 B first-format input and is the one timing with no raw result file (its effect is small: 0.14 ms/s against 3.24 ms/s of verification per neighbour). | `experiments/design-ladder/config.yaml:51`; `audits/model_provenance.md:465` |
 | Q7 | Confirm that the ladder row `batch-delta-published` ("keyframe every 16 records (as published)", V = 0.881) is kept only as history. | `results/raw/design_ladder.csv` |
+| Q8 | **Thesis ch. 9, one sentence (F115).** It says "The cause that the saturated case leaves standing is the radio's handling of its own queued frames … that it is the cause has not been shown." G27 found that the saturated runs constrain that handling rather than leave it standing. Proposed: "The saturated case does not isolate the contention: every saturated station holds a queue, so the radio's handling of its own queued frames acts there too. Of five rules for that handling, none reproduces both the single sender's spacing and the saturated result with frame burst on, and none reproduces the loss below saturation. The cause is not established." Also the F76 summary in ch. 9 §"Two saturated radios" if you want it to say the same. | `thesis/ch09_validation.tex:236`; `predictions/G27.md` |
+| Q9 | **Paper ratios (F114).** The paper prints 1.13 / 0.79 / 0.56 times "what the model predicts": the registered predictions, made with the frozen model and its self-collision defect. Against the corrected model they are 1.14 / 0.81 / 0.57. Keep the registered figures (what was registered), or quote the corrected model? No claim changes either way. | `analysis/paper_numbers.py` (`hwPool*Ratio`); `results/raw/g27_windows.csv` |
+| Q10 | **A stray tag.** `prereg-G27` was pushed by mistake at `f06b55a`, the commit before the G27 registration (a failed commit, then the tag ran). This session could not delete it. May it be deleted (`git push origin :refs/tags/prereg-G27`)? The registration is identified by its commit, `5ec2eda`. | `predictions/G27.md`, outcome |
 
 ## 4. The register — every item since July, open and closed
 
@@ -232,7 +234,7 @@ R1–R18 (`DECISIONS.md`).*
 | **G24** | **Gaps of reading in thesis ch. 2** (F67, F68, F71, F72) | **CLOSED 2026-10-09.** A general survey is held and cited; all four aggregate-signature schemes of Li et al.'s table were obtained (one by the agent, three by Mohamed) and read for what they say of size. Cahyadi et al. state 583 B and 583n themselves; Xu et al. state no size in bytes; the figure for Liang & Liu stays Li et al.'s | — | — |
 | **G25** | ⚠️ **Merge pull requests with a merge commit, never squash or rebase** | **STANDING RULE from 2026-10-08** | Thesis Appendix B cites twenty-two registration commits by hash, and a test checks each is an ancestor of HEAD. Squashing would erase them and the evidence that predictions preceded data | Choose "Create a merge commit" on GitHub |
 | **G26** | **The energy rig: one branch of it cannot carry four busy cores** (F77, F78) | **RESOLVED FOR NOW 2026-10-09 — the rig passes its check on the other branch.** pi-B (July's software; the sync wire) is on meter channel 2 since Mohamed swapped supplies and sensors: 0.18 Ω, 5.07 V with every core busy, no under-voltage since boot. **Still true:** the sensor-1 branch has 0.47 Ω and browns a board out at four cores — pi-A is on it now — and July's captures were made on it | Which channel is which board is wiring, not software. A session that assumes July's mapping measures the wrong board | Run `hw/rig_check.py` before every session (`hw/RIG.md` §8 item 7); it finds the board by loading it. If the sensor-1 branch is ever used for the board under test again, shorten and thicken its leads first |
-| **G27** | **What this radio does with its own queued frames** (F74, F76) | **OPEN — not needed for any claim made** | One saturated sender spaces frames by 2.019 ms (driver's settings) or 2.050 ms (frame burst off) where the standard gives 2.078 ms; two saturated senders behave as the standard says. A rule that produces both is not identified, and it is the leading candidate for the shortfall of F73 at high load | Simulate candidate rules in the event model against the 36 windows on disk — no hardware needed; then test the survivor on loads not yet run |
+| **G27** | **What this radio does with its own queued frames** (F74, F76) | **CLOSED 2026-11-03 (F114, F115) — no tested rule fits; F76's reading withdrawn.** Registered `5ec2eda`. Five rules from measurements of commercial cards, each set from the single sender's spacing: with frame burst on none survives the saturated screen; with it off the one that does misses F73 at 211 frames/s. Found first: the frozen model let a station collide with itself (F114; no capacity moves). Thesis sentence and paper ratios: Q8, Q9 | One saturated sender spaces frames by 2.019 ms (driver's settings) or 2.050 ms (frame burst off) where the standard gives 2.078 ms; two saturated senders behave as the standard says. A rule that produces both is not identified, and it is the leading candidate for the shortfall of F73 at high load | Done: simulated against the 36 windows (`analysis/own_queue_rules.py`). No survivor, so there is nothing to take to hardware. A rule formed after the scoring (a burst only while no other station is heard) would need its own registration and new measurements |
 | **G28** | **The receiver kept no frame and no signature** (F80) | **CLOSED 2026-10-09 (F81)** | The receiver keeps every accepted frame and both frames of an equivocation; `verified_records` and `proves_equivocation` check them with the sender's key and no receiver state. Writing the tests first found a second defect: an equivocation behind a duplicate first record was refused as a replay. Re-timed on the board against a control, expectation committed first: +10 µs per four-record frame (0.7 %; 2 % allowed); 57 nodes per core stands, by 0.18 % | — |
 | **G29** | **"Eight of twelve data rates cannot carry one" — three of the eight depend on the frame format** (F80) | **CLOSED 2026-10-09 (F81) — Mohamed: go ahead** | Abstract, contribution 2 and conclusion say "five cannot hold the signature in any format, three more cannot hold our frame"; the split and the 19 B are generated with a guard; the thesis has the fifth scope condition | — |
 | **G30** | **Certificates were charged per frame only; the standard's cadence is in time** (F80) | **CLOSED 2026-10-09 (F81) — Mohamed: go ahead** | `design_ladder.csv` carries both readings and both ladders print both: lean baseline 184.57 / **159.93** B per record, design 52.95 / **51.41**. The text says the per-frame column favours the design and why | Still open, as before: implicit certificates are not priced |
