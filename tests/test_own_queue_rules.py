@@ -126,7 +126,7 @@ class TestTheFrozenModelsDefect:
 
 
 # --------------------------------------------------------------------- after the run, 2026-11-03
-REGISTRATION = "5ec2eda"            # predictions/G27.md; no tag (a stray one sits at f06b55a)
+REGISTRATION = "5ec2eda"            # predictions/G27.md; no tag (a stray one was deleted)
 
 
 def _git(*args: str) -> str:

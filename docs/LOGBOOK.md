@@ -41,7 +41,9 @@ and F115.
 7. ⚠️ **My error: a stray tag.** `git commit` failed because the pre-commit hook could not find its
    program outside the venv. `git tag` and `git push` ran on the next lines anyway and published
    `prereg-G27` at the old head. Deleting it from the remote was refused by this session's
-   permissions. The registration is identified by its commit, `5ec2eda`; the stray tag is Q10.
+   permissions. The registration is identified by its commit, `5ec2eda`. Mohamed approved the
+   deletion (Q10), and the tag is gone, locally and on the remote. The stray tag had also failed a
+   thesis test: every `prereg-*` tag must be named in appendix B.
    **Lesson:** chain a commit, its tag and its push with `&&` inside one command; never put them
    on separate lines after a heredoc. Commit with the venv on PATH.
 8. **Registered at `5ec2eda`, then run.** No rule survives in either state, and the result is the
