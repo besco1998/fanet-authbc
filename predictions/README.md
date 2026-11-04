@@ -60,3 +60,4 @@ Full states: `docs/revision/STATUS.md`.
 | File | Experiment | Registered | Outcome |
 |---|---|---|---|
 | `G27.md` | which rule for a radio's own queued frames fits the one-sender spacing, two saturated senders and F73's 36 windows; found the frozen model's self-collision defect first (F114) | `5ec2eda`, 2026-11-03 (no tag; a stray tag pushed by mistake at `f06b55a` was deleted, see the file) | **no rule survives**: with frame burst on none passes the saturated screen; with it off the one that does misses F73 at 211 frames/s; 5 of 5 expectations held. F76's reading withdrawn (F115) |
+| `W4a.md` | a record size no telemetry of the schema can exceed (schema and physical bounds, real frames), and AUTHBC's capacity and ratio there (main open item W4) | tag `prereg-W4a`, 2026-11-05 | pending |
