@@ -16,10 +16,16 @@ implements them (`wifi-standard-constants.h`, `ofdm-phy.cc`):
     channel   SIFS    slot    preamble   SIGNAL   symbol   rates (Mb/s)
     20 MHz    16 µs    9 µs    16 µs      4 µs     4 µs    6 … 54
     10 MHz    32 µs   13 µs    32 µs      8 µs     8 µs    3 … 27   (802.11p)
+
+`DsssPhy` is 802.11b at 2.4 GHz, for the 2.4 GHz campaign (predictions/W1b.md): there a Raspberry
+Pi broadcasts at 1 Mb/s and cannot be made to do otherwise (F35). Its constants are ns-3.48's
+(`WifiPhy::Configure80211b`, `dsss-phy.cc`, `wifi-mac.cc`): SIFS 10 µs, slot 20 µs, a long PLCP
+preamble and header of 144 + 48 µs, CWmin 31.
 """
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 
 from authbc.models import bianchi, broadcast_dcf
@@ -84,6 +90,39 @@ def ofdm_10mhz(rate_mbps: float) -> OfdmPhy:
 
 
 OFDM_20MHZ_6M: OfdmPhy = ofdm_20mhz(6)
+
+
+@dataclass(frozen=True)
+class DsssPhy:
+    """802.11b DSSS with the long PLCP preamble: one data rate."""
+
+    name: str
+    rate_bps: float
+    plcp_s: float                # long preamble 144 µs + PLCP header 48 µs
+    sifs_s: float
+    slot_s: float
+    w0: int                      # CWmin + 1
+
+    def __post_init__(self) -> None:
+        if min(self.rate_bps, self.plcp_s, self.sifs_s, self.slot_s, self.w0) <= 0:
+            raise ValueError("PHY timing constants must be > 0")
+
+    @property
+    def difs_s(self) -> float:
+        """DIFS = SIFS + 2 slots (802.11-2016 §10.3.2.3)."""
+        return self.sifs_s + 2.0 * self.slot_s
+
+    def ppdu_s(self, psdu_bytes: float) -> float:
+        """PPDU duration as ns-3 computes it: PLCP + whole microseconds of payload."""
+        return self.plcp_s + math.ceil(8.0 * psdu_bytes / (self.rate_bps / 1e6)) * 1e-6
+
+    def t_broadcast(self, payload_bytes: float) -> float:
+        """Channel-busy time of one broadcast frame: PPDU(payload + MAC overhead) + DIFS."""
+        return self.ppdu_s(bianchi.mpdu_bytes(payload_bytes)) + self.difs_s
+
+
+DSSS_1M: DsssPhy = DsssPhy("802.11b DSSS, 1 Mb/s", 1e6, plcp_s=192e-6, sifs_s=10e-6,
+                           slot_s=20e-6, w0=32)
 
 
 def channel_utilisation(phy: OfdmPhy, n_local: int, lam: float, batch: int, frame_bytes: float,

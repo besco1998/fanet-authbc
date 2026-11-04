@@ -222,7 +222,8 @@ main(int argc, char* argv[])
     // exactly as published. Any other value tests the derivation of docs/02 §6g, which says
     // how the capacity must move when the window is widened.
     uint32_t cwMin = 0;
-    std::string standard = "80211a";       // 80211p: 10 MHz channels, the 802.11p PHY (A11)
+    std::string standard = "80211a";       // 80211p: 10 MHz channels, the 802.11p PHY (A11);
+                                           // 80211b: 2.4 GHz DSSS (W1b, the 2.4 GHz campaign)
     std::string dataMode = "OfdmRate6Mbps";
     uint32_t traceLinks = 0;
     // Geometry. Both at 0 leave the scenario exactly as published: every node at one point,
@@ -248,7 +249,7 @@ main(int argc, char* argv[])
                  "per-node period offset drawn from U(-x, +x) ppm (needs txJitterMs > 0)",
                  txSkewPpm);
     cmd.AddValue("cwMin", "minimum contention window; 0 = the standard's (default)", cwMin);
-    cmd.AddValue("standard", "80211a (default) or 80211p", standard);
+    cmd.AddValue("standard", "80211a (default), 80211p or 80211b", standard);
     cmd.AddValue("dataMode", "PHY mode of every frame (default OfdmRate6Mbps)", dataMode);
     cmd.AddValue("traceLinks", "source->receiver pairs whose every frame is traced", traceLinks);
     cmd.AddValue("radiusM", "disc radius in m for uniform placement; 0 = one point (default)",
@@ -296,8 +297,11 @@ main(int argc, char* argv[])
     phy.SetChannel(channel.Create());
 
     WifiHelper wifi;
-    NS_ABORT_MSG_IF(standard != "80211a" && standard != "80211p", "standard: 80211a | 80211p");
-    wifi.SetStandard(standard == "80211p" ? WIFI_STANDARD_80211p : WIFI_STANDARD_80211a);
+    NS_ABORT_MSG_IF(standard != "80211a" && standard != "80211p" && standard != "80211b",
+                    "standard: 80211a | 80211p | 80211b");
+    wifi.SetStandard(standard == "80211p"   ? WIFI_STANDARD_80211p
+                     : standard == "80211b" ? WIFI_STANDARD_80211b
+                                            : WIFI_STANDARD_80211a);
     if (standard == "80211a" && dataMode == "OfdmRate6Mbps")
     {
         // the published configuration, exactly: broadcast goes at the first basic rate, 6 Mb/s

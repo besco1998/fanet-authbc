@@ -74,6 +74,13 @@ CELLS: dict[str, Cell] = {
     "Pp6D": Cell("phy/80211p-6-design", 173, 12.5, "80211p", "OfdmRate6MbpsBW10MHz"),
     "Pp12B": Cell("phy/80211p-12-base", 146, 50.0, "80211p", "OfdmRate12MbpsBW10MHz"),
     "Pp12D": Cell("phy/80211p-12-design", 173, 12.5, "80211p", "OfdmRate12MbpsBW10MHz"),
+    # W1b: the two frames at 802.11b, 1 Mb/s (analysis/dsss_campaign.py), and five stations sending
+    # fast in place of many sending slowly (A12's equivalence, checked at 1 Mb/s): `Pb1S<frame>_<f>`
+    "Pb1B": Cell("dsss/80211b-1-base", 146, 50.0, "80211b", "DsssRate1Mbps"),
+    "Pb1D": Cell("dsss/80211b-1-design", 173, 12.5, "80211b", "DsssRate1Mbps"),
+    **{f"Pb1S{fb}_{f:g}": Cell(f"dsss/80211b-1-split-{fb}-{f:g}", fb, f, "80211b", "DsssRate1Mbps")
+       for fb, rates in ((146, (62.5, 87.5, 112.5, 137.5)), (173, (65.625, 90.625, 115.625)))
+       for f in rates},
 }
 
 
