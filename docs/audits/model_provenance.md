@@ -4945,3 +4945,25 @@ sign. The paper's wording is Mohamed's to choose (OPEN_ITEMS §3).
 
   The paper's "a delayed frame is refused only while GNSS time is available" understates A5's own
   result. Wording is Mohamed's.
+
+## F119 — at 802.11b the contention model predicts ns-3 within 1 %, and five stations stand for many up to the crossing (W1b, Phase 0 of the 2.4 GHz campaign; 2026-11-05)
+
+Registered at `38a5370` (`predictions/W1b.md`) before any 802.11b grid run. Mohamed's boards
+beyond the two Pi 4 are 2.4 GHz only. There a Raspberry Pi broadcasts at 802.11b's 1 Mb/s
+(F35), so the model was first tested at 802.11b, as F5 tested it at 802.11a. The constants are
+ns-3.48's own: slot 20 µs, DIFS 50 µs, window 32, 192 µs of preamble and header, 8 µs a byte.
+Nothing was fitted.
+
+* **Crossings:** per-record 9.72 (model 9.65); AUTHBC 31.05 (model 31.12). **The ratio is 3.20**
+  (model 3.23), against 3.53 at 6 Mb/s, lower as A11's trend with rate says.
+* **A12's equivalence at five stations:**
+  * within 0.005 up to the crossing;
+  * beyond it, five stations lose 0.03–0.12 more than many, as the model predicted.
+* **One registered miss:** the model's five-station value at N_eq 12 (overload), −0.057. ns-3
+  discards frames after 500 ms in its MAC queue, and the model never does. The largest delay
+  reaches that limit in exactly the two overloaded cells.
+
+**What it changes.** The 2.4 GHz hardware campaign rests on a model tested at its PHY, and five
+boards can measure each design's crossing. The hardware grids stay below overload, where any
+queue's discard policy, ns-3's or a driver's, decides the result. Next: W1c, the hardware
+predictions, registered before any board session.

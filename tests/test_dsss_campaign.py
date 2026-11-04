@@ -63,3 +63,52 @@ class TestTheGrids:
             assert f"{name} {PRED[('crossing', name)]['ns3_grid']}\n" in plan
         for split, _ref in w1b.splits():
             assert f"{split} 5\n" in plan
+
+
+# --------------------------------------------------------------------- after the run, 2026-11-05
+REGISTRATION = "38a5370"            # predictions/W1b.md, tag prereg-W1b
+
+
+def _ns3() -> dict[tuple[str, int], list[dict[str, str]]]:
+    by: dict[tuple[str, int], list[dict[str, str]]] = {}
+    for r in csv.DictReader(ln for ln in w1b.RUNS.read_text().splitlines()
+                            if not ln.startswith("#")):
+        by.setdefault((r["cell"], int(r["n_nodes"])), []).append(r)
+    return by
+
+
+class TestTheOutcome:
+    SCORED = {(r["what"], r["cell"]): r for r in csv.DictReader(
+        ln for ln in w1b.SCORED.read_text().splitlines() if not ln.startswith("#"))}
+
+    def test_the_scored_code_is_the_registered_code(self) -> None:
+        import subprocess
+        for path in ("analysis/dsss_campaign.py", "ns3/authbc-links.cc"):
+            then = subprocess.run(["git", "show", f"{REGISTRATION}:{path}"], cwd=REPO,
+                                  capture_output=True, text=True, check=True).stdout
+            assert then == (REPO / path).read_text(), path
+
+    def test_w1b_1_and_2_held(self) -> None:
+        for key in (("crossing", "Pb1B"), ("crossing", "Pb1D"), ("ratio", "D/C")):
+            assert self.SCORED[key]["held"] == "True", key
+
+    def test_w1b_4_the_equivalence_holds_up_to_the_crossing_and_fails_beyond(self) -> None:
+        for split in ("Pb1S146_62.5", "Pb1S146_87.5", "Pb1S173_65.625", "Pb1S173_90.625"):
+            assert self.SCORED[("split", split)]["held"] == "True", split
+        for split in ("Pb1S146_112.5", "Pb1S146_137.5", "Pb1S173_115.625"):
+            assert float(self.SCORED[("split", split)]["difference"]) < -0.02, split
+
+    def test_w1b_3_six_of_seven_and_the_miss_is_the_queue_limit(self) -> None:
+        import statistics as st
+        runs = _ns3()
+        missed = []
+        for split, _ref in w1b.splits():
+            v = st.mean(float(r["delivered_frac"]) for r in runs[(split, 5)])
+            if abs(v - float(PRED[("split", split)]["model"])) > 0.02:
+                missed.append(split)
+        assert missed == ["Pb1S146_137.5"]
+        # ns-3 discards a frame after 500 ms in its MAC queue (WifiMacQueue MaxDelay); the
+        # largest delay reaches that limit in exactly the two overloaded splits
+        at_limit = {s for s, _ in w1b.splits()
+                    if max(float(r["delay_max_ms"]) for r in runs[(s, 5)]) > 499.0}
+        assert at_limit == {"Pb1S146_137.5", "Pb1S173_115.625"}

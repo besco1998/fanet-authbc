@@ -104,3 +104,45 @@ the medium is near saturation there, where ns-3 and the model have been compared
   that the option works. Every published default was re-run to show it unchanged
   (`results/raw/links_identity.csv`).
 * No other 802.11b run of ns-3 exists.
+
+---
+
+## Outcome — added 2026-11-05, after the 660 ns-3 runs; nothing above this line was changed
+
+Registered at `38a5370` (tag `prereg-W1b`). `analysis/dsss_campaign.py --score` (unchanged since)
+→ `results/raw/w1b.csv`; runs `results/raw/ns3_links_w1b_runs.csv`.
+
+| | registered | ns-3 | |
+|---|---|---|---|
+| **W1b-1** per-record crossing | 9.65 (9.36–9.94) | **9.72** (+0.7 %) | **held** |
+| **W1b-1** AUTHBC crossing | 31.12 (30.19–32.06) | **31.05** (−0.2 %) | **held** |
+| **W1b-2** ratio | 3.225 ± 0.3 | **3.195** | **held** |
+| **W1b-3** five stations against the model's five-station value, ±0.02 | 7 splits | 6 within 0.015; **N_eq 12 (146 B at 137.5 /s): 0.723 against 0.781** | **6 of 7** |
+| **W1b-4** the equivalence: up to the crossing within 0.02; beyond, below by more than 0.02 | N_eq 6, 8, 22, 30 / 10, 12, 38 | +0.0005, +0.0005, +0.005, +0.003 / −0.028, −0.121, −0.125 | **held** |
+
+The registered script scores W1b-1, -2 and -4. W1b-3 was computed from the same two files by the
+arithmetic stated above: the ns-3 mean at N = 5 minus the model's five-station value.
+
+**The one miss, explained with evidence.** At N_eq 12, five stations offer 688 frames/s where the
+medium carries about 590: overload. ns-3's MAC queue discards a frame that has waited 500 ms
+(`WifiMacQueue` attribute `MaxDelay`, default 500 ms, read from the ns-3.48 source). The model's
+queue never discards. In the runs:
+* the largest delay is **501.6 ms** and **501.9 ms** in exactly the two overloaded cells
+  (N_eq 12 and 38);
+* it is 13–25 ms in every other cell.
+
+The model therefore over-delivers only where ns-3 drops stale frames. At N_eq 38 that gap is
+−0.0145, inside the band; at N_eq 12, deeper in overload, it is −0.057. This is a difference of
+queue policy under overload, not of the access rule. My expectation had named these splits as the
+least certain.
+
+**Checks (Law 6).**
+* Both grids fall monotonically, 30 runs per point.
+* The crossings' 95 % bootstrap intervals are 9.68–9.76 and 30.85–31.22, fully bracketed.
+
+**What it means for the hardware (W1c).**
+* At 802.11b the model predicts ns-3's capacities within 1 %, as at 802.11a (F5).
+* **Five stations stand for many up to the capacity crossing.** That is what the crossing, and so
+  the ratio, needs.
+* Beyond the crossing they do not, and in overload a queue's discard policy decides the result.
+  **The hardware grids stay below overload:** per-record N_eq ≤ 10, AUTHBC N_eq ≤ 34.
