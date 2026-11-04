@@ -46,6 +46,7 @@ index in `predictions/README.md`).
 
 | # | Item | Whose | Where it is described |
 |---|---|---|---|
+| **W1–W9** | **The work's weaknesses: the main open items** (2026-11-04) | Mohamed chooses the options | §2a |
 | G4, H3 | Contention measured between two radios only; no capacity measured on hardware | Mohamed (purchases) | register §G, §H |
 | I1 | Choose the journal; then cut to its length | Mohamed | register §I |
 | I2 | Author contributions, acknowledgements, funding, ORCID iDs; thesis declaration and acknowledgements | Mohamed | register §I |
@@ -55,6 +56,29 @@ index in `predictions/README.md`).
 | G15 | Crypto timing on the Pi 3B+ and BeagleBone | optional | register §G |
 | G37 | Why four cores give 3.36 times one | optional | register §G |
 | Q1–Q10 | Questions below (Q8–Q10 from G27, 2026-11-03) | Mohamed | §3 |
+
+## 2a. The main open items: the work's weaknesses (set by Mohamed, 2026-11-04)
+
+*"Treat the problems in our work as the main opened items now." Each is a limit the paper states
+(§4.4) or a result left unexplained. For each: the cause, the fix that would make the work
+defendable, the options, and a recommendation. **Mohamed chooses.** Each experiment is registered
+before it is run (`predictions/`).*
+
+| # | Weakness | Cause | Options (★ = recommended) |
+|---|---|---|---|
+| **W1** | **Capacities are simulated**; contention was measured on two radios only | A capacity of 35–124 nodes needs dozens of radios; the simulations model a radio that keeps the standard's rule, and this chip does not (F74) | ★(a) Desk: capacities of cells C and D under the deviations measured on commercial cards (smaller windows, zero counters, bursts), in `dcf_own_queue` and, for the window, in ns-3: does the ratio 3.5 survive a non-standard radio? (b) Run the registered 3- and 4-board predictions with the two Pi 3B+ (5 GHz) — no purchase. (c) A remote testbed with tens of radios (ORBIT, w-iLab.t; access to be confirmed). (d) State only, as now |
+| **W2** | **Radio behaviour unexplained**: F73's shortfall (no tested rule fits, F115); loss above the model at occupancy 0.50; one sender losing 0.5–0.9 % alone; the saturated rate with frame burst on | Closed firmware; only *mean* spacings were measured, never a single frame | ★(a) Capture every frame with a monitor-mode receiver and its microsecond clock (a Pi 3B+ with patched firmware, or a USB adapter): the backoff *distribution*, overlaps, and whether "lost" frames reached the air. This is Bianchi et al.'s method. (b) Repeat F73 with a chipset whose MAC is open and standard; a match there would place the mismatch in the firmware. (c) State only |
+| **W3** | **No loss measured on air**; under bursts or bit errors the margin can be too small (§sec:loss) | Loss was generated or simulated by design | ★(a) Record loss traces on the bench with the two Pi 4 (distance or reduced power, several loss levels), and run V on those traces beside the five generated processes. (b) Published air-to-ground or air-to-air traces. (c) A flight (needs a drone) |
+| **W4** | **Telemetry is synthetic**: 12 real logs at 5 Hz; 50 Hz only simulated | No 50 Hz flight logs on hand | ★(a) Desk: an upper bound on bytes per record with every field at its largest delta, and the capacity at that bound; if AUTHBC still wins, flight statistics cannot reverse the result. (b) More public logs (PX4 Flight Review, ArduPilot datasets) at the highest rate they carry. (c) Logs from a UAV lab or a flight |
+| **W5** | **Energy and CPU**: only the sender metered, the sensor never checked against a reference; the receiver timed alone, without a radio | The rig was brought up for the sender; the Rust receiver was benchmarked in isolation | ★(a) Check the INA219 against a precision resistor and a multimeter, then meter the receiver with the second sensor (the rig has two; fix the 0.47 Ω branch first, G26). ★(b) The Rust receiver end to end on a Pi, fed over the air at AUTHBC's load by one or two boards. (c) Radio energy by on/off difference |
+| **W6** | **Security scope**: an insider can flood; freshness needs GNSS; three proof models not composed; canonical encoding *assumed* injective | Scope choices; composing the Tamarin models is hard (A6) | ★(a) Desk: a GNSS holdover bound (how long the 150 ms window holds on a free-running clock of given ppm). ★(b) Prove injectivity of the encoding (fixed widths and length prefixes) and test it property-based. (c) Quantify what an insider's flood costs a receiver (A7) and a per-sender verification budget. (d) One composed Tamarin model, or a composition argument from the literature (search first). (e) Key management by reference to IEEE 1609.2 and ETSI TS 103 097 (on file) |
+| **W7** | **Post-quantum**: an ML-DSA signature (2 420 B) cannot travel in one frame | MTU 1500 B; freshness caps the batch at four | (a) Keep Falcon-512 as the post-quantum path (A15, held). ★(b) Desk design: Ed25519 per frame for real-time authentication, plus a periodic ML-DSA checkpoint over the frames' hashes, sent in fragments with erasure coding. The ledger gains long-term post-quantum integrity at a small cost in bytes (search prior work first: stream signing, Gennaro–Rohatgi, on file). (c) State only |
+| **W8** | **Multi-hop not evaluated**: relays implemented, not measured | Scope: the design is one-hop | (a) ns-3: a two-hop line and grid with relays, V and capacity at the far end (registered). ★(b) State the one-hop scope plainly and keep relaying as future work, unless the thesis claims multi-hop. (c) Three boards in a line (hard indoors) |
+| **W9** | Small decisions from G27 | — | Q8 (one thesis sentence), Q9 (paper ratios against the corrected model), §3 |
+
+**Order recommended:** desk work first, because it costs nothing and closes the most:
+W1(a), W4(a), W6(a, b), then W7(b) if wanted. Then the bench with boards already owned: W2(a),
+W5(a, b), W3(a), W1(b). Purchases and testbeds last: W1(c), W2(b).
 
 ## 3. Questions for Mohamed
 
