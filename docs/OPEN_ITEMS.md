@@ -26,7 +26,7 @@ Every document: [`README.md`](README.md).
 * The documents were tidied on 2026-11-01: about 70 became about 25, nothing lost
   ([`README.md`](README.md) has the map of where each old file went).
 
-**The gate.** `make all` = lint + mypy + 2537 fast tests + the 43-test frozen gate. The paper has
+**The gate.** `make all` = lint + mypy + 2545 fast tests + the 43-test frozen gate. The paper has
 References **51** rendered (81 in the shared bibliography).
 
 **How to edit the paper.** Edit `paper/main.tex` directly. Every number is a macro from
@@ -55,7 +55,7 @@ index in `predictions/README.md`).
 | G6 (a) | The rate-offset source's run-to-run spread | optional | register §G |
 | G15 | Crypto timing on the Pi 3B+ and BeagleBone | optional | register §G |
 | G37 | Why four cores give 3.36 times one | optional | register §G |
-| Q1–Q10 | Questions below (Q8–Q10 from G27, 2026-11-03) | Mohamed | §3 |
+| Q1–Q11 | Questions below (Q8–Q10 from G27, 2026-11-03; Q11 from the desk work) | Mohamed | §3 |
 
 ## 2a. The main open items: the work's weaknesses (set by Mohamed, 2026-11-04)
 
@@ -97,6 +97,7 @@ corrected in the tidy-up of 2026-11-01.*
 | Q8 | **Thesis ch. 9, one sentence (F115).** It says "The cause that the saturated case leaves standing is the radio's handling of its own queued frames … that it is the cause has not been shown." G27 found that the saturated runs constrain that handling rather than leave it standing. Proposed: "The saturated case does not isolate the contention: every saturated station holds a queue, so the radio's handling of its own queued frames acts there too. Of five rules for that handling, none reproduces both the single sender's spacing and the saturated result with frame burst on, and none reproduces the loss below saturation. The cause is not established." Also the F76 summary in ch. 9 §"Two saturated radios" if you want it to say the same. | `thesis/ch09_validation.tex:236`; `predictions/G27.md` |
 | Q9 | **Paper ratios (F114).** The paper prints 1.13 / 0.79 / 0.56 times "what the model predicts": the registered predictions, made with the frozen model and its self-collision defect. Against the corrected model they are 1.14 / 0.81 / 0.57. Keep the registered figures (what was registered), or quote the corrected model? No claim changes either way. | `analysis/paper_numbers.py` (`hwPool*Ratio`); `results/raw/g27_windows.csv` |
 | Q10 | **A stray tag.** `prereg-G27` was pushed by mistake at `f06b55a`, the commit before the G27 registration (a failed commit, then the tag ran). This session could not delete it. May it be deleted (`git push origin :refs/tags/prereg-G27`)? The registration is identified by its commit, `5ec2eda`. **Answered 2026-11-03: yes; deleted locally and on the remote.** | `predictions/G27.md`, outcome |
+| Q11 | **Thesis appendix B and the November registrations.** W4a and W1a (the desk work on W4 and W1) are registered with tags, but appendix B's second table lists the registrations of October. Add a row for each once its outcome is in? Until you decide, the test that every tag is named holds them in a named list, `NOT_YET_IN_THE_THESIS`. | `thesis/appB_preregistrations.tex`; `tests/test_thesis_matches_artifacts.py` |
 
 ## 4. The register — every item since July, open and closed
 

@@ -490,6 +490,13 @@ class TestTheWorkedFrame:
         assert by_field["key record"] == 25
 
 
+# Registered after the thesis's appendix B was written (the desk work on the main open items,
+# November 2026). Whether they enter it is Mohamed's decision (docs/OPEN_ITEMS.md §3, Q11); the
+# rows are added and the tag removed from this set when he decides. A holding list, named, never
+# a silent exclusion.
+NOT_YET_IN_THE_THESIS = frozenset({"prereg-W4a", "prereg-W1a"})
+
+
 class TestTheRegistrationsOfAppendixB:
     """Every commit the table names exists and precedes the commit this test runs on."""
 
@@ -529,7 +536,7 @@ class TestTheRegistrationsOfAppendixB:
                                "refs/tags/prereg-*"], cwd=REPO, capture_output=True,
                               text=True).stdout.split("\n")
         tagged = {sha[:7] for line in tags if line for name, sha in [line.split()]
-                  if name != "prereg-A12"}
+                  if name != "prereg-A12" and name not in NOT_YET_IN_THE_THESIS}
         assert tagged == set(re.findall(r"\\texttt\{([0-9a-f]{7})\}", self.REVISION))
 
     def test_the_chapter_counts_what_the_second_table_holds(self) -> None:

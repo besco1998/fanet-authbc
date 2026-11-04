@@ -1,0 +1,4 @@
+# W1(a), predictions/W1a.md: window 8 slots (--cw-min 7), designated source.
+#   python ns3/run_nmax_direct.py --plan <this file> --cw-min 7 --out-stem ns3_w1a_cw7 --no-summary
+C period 27 28 29 30 31 32 33
+D period 97 100 103 106 109 112 115
