@@ -1127,3 +1127,99 @@ GC disabled, single pinned core if possible, discard runs after suspend (clock s
 comparisons state effect size, never bare means; raw CSVs are immutable once frozen (⚠️ D6).
 Any model-vs-measurement deviation >10% must be investigated and either explained in
 writing or the model corrected — silent tolerance widening is forbidden.
+
+## 11. The signed encoding is injective (W6(b), 2026-11-05)
+
+**Why.** The proofs (A6) treat a frame's signed bytes as a free term, which Tamarin takes to be
+injective, and the paper said "we assume canonical encoding to be injective: two different sets of
+records never encode to the same bytes". This section proves it for the encoding the code uses.
+
+**The encoding.** A record is r = (src, seq, ts, ph, pl), with src < 2¹⁶, seq and ts < 2³²,
+ph 32 bytes, and pl a map from text to integers that are not booleans (`ledger/record.py`, which
+enforces every one of these). m(r) is the CBOR map {"src", "seq", "ts", "ph", "pl"} of
+`Record.to_map`. The signed bytes (`placement/wire.covered_bytes`) are:
+
+* inline placements: σ_A(r) = E(m(r)) for each record;
+* batched placements: σ_B(r₁ … r_n) = E([m(r₁), …, m(r_n)]) for a frame;
+
+where E is deterministic CBOR (`canonical_bytes`, RFC 8949 §4.2: shortest forms, definite
+lengths, map keys in a fixed order).
+
+**Lemma.** σ_A is injective on records; σ_B is injective on finite sequences of records; and no
+output of σ_A equals an output of σ_B.
+
+**Proof.**
+1. *m is injective.* `Record.from_map` is a left inverse: from_map(m(r)) = r for every record,
+   because m keeps every field, under a key of its own, with its type. A left inverse makes a map
+   injective.
+2. *E is injective on the data items m produces.* RFC 8949 decoding D is a function from
+   well-formed bytes to data items, and D(E(x)) = x for every data item x. CBOR's major types
+   distinguish unsigned and negative integers, byte strings, text strings, arrays and maps, so no
+   two items of different kinds share an encoding. Integers beyond 64 bits are carried as tagged
+   bignums (tags 2 and 3), which D maps back to the same integer. Booleans, which Python equates
+   with 0 and 1 but CBOR encodes as simple values, are refused by the record (step 1's domain).
+3. *σ_A = E ∘ m* is a composition of injective maps, hence injective.
+4. *σ_B.* The array of the maps is an injective function of the sequence: a definite-length array
+   records n, and its elements are the maps in order, each injective by step 1. E is injective by
+   step 2.
+5. *Disjoint images.* The first byte of E(x) carries x's major type: 5 for a map, 4 for an array.
+   σ_A's outputs begin with 5 and σ_B's with 4. ∎
+
+**What it rests on.**
+* RFC 8949's decoding being a function, which is the standard's own guarantee.
+* cbor2 implementing it: checked, not proven. `tests/unit/ledger/test_canonical_injective.py`
+  runs the left inverse, distinctness, determinism, the key order and the disjointness over the
+  whole record domain, not only the telemetry schema, on generated inputs including large
+  integers and arbitrary text keys. No counterexample was found.
+* The key order is not needed for injectivity, only for determinism. For text keys alone, RFC 8949
+  §4.2.1's bytewise order and RFC 7049's length-first order coincide, so either reading of
+  "canonical" gives the same bytes.
+
+**What it does not cover.** Different signers: the signature binds the key, and `src` is inside
+every record. The on-air format v2 (`wire_v2`): a receiver rebuilds the records from it and checks
+the signature over σ, so the wire format needs to be decodable, not injective, and its round trips
+are tested in `tests/unit/placement/test_wire_v2.py`.
+
+## 12. How long the time window holds without GNSS (W6(a), 2026-11-05)
+
+**Why.** The paper says "a delayed frame is refused only while GNSS time is available". A5
+measured more than that, at one clock quality only: 20 ppm, an assumption of A5 with no source
+(`freshness_rule.TimeWindow.drift_ppm`).
+
+**The rule is exact in one variable.** In an outage of length t, two free-running clocks with
+frequency offsets of up to ±y part by at most s = 2·y·t (worst case, opposite directions). A5's
+simulation enters the outage only through s (`analysis/replay_window.py`: `clock_apart_ms`), so its
+results are a function of s alone. A window fails when s exceeds a threshold s* fixed by the
+window, and the holdover is **t* = s*/(2y): exactly inversely proportional to the offset.**
+
+**s\* from A5** (`results/raw/replay_window.csv`, σ = 10 ms, 72 000 honest frames per cell):
+
+| window | last s with false rejection below 10⁻⁴ (A5's criterion) | first s above it |
+|---|---|---|
+| fixed 150 ms | 72 ms (0 of 72 000) | 108 ms (0.31 %) |
+| fixed 250 ms | 180 ms (1 of 72 000) | 216 ms (1.6 %) |
+
+**Holdover by oscillator.** The offsets are the "frequency offset after warm-up" of Table 17.5 of
+M. A. Lombardi (NIST), *Fundamentals of Time and Frequency*, ch. 17, CRC Press, 2002: 1×10⁻⁶ for a
+temperature-compensated quartz oscillator (TCXO), 1×10⁻⁸ to 1×10⁻¹⁰ for an oven-controlled one
+(OCXO). The table gives no figure for an uncompensated crystal; 20 ppm is A5's assumption.
+
+| clock | offset y | fixed 150 ms | fixed 250 ms |
+|---|---|---|---|
+| A5's assumption | 20×10⁻⁶ | 30–45 min | 75–90 min |
+| TCXO (Lombardi) | 1×10⁻⁶ | **10–15 h** | **25–30 h** |
+| OCXO, worst of its range (Lombardi) | 1×10⁻⁸ | 1 000–1 500 h | 2 500–3 000 h |
+
+Each range runs from the last outage below A5's criterion to the first above it, on A5's
+15-minute grid scaled by 20 ppm/y. Over these spans aging adds little: per year, 5×10⁻⁷ for a
+TCXO and 5×10⁻⁹ for an OCXO (same table), so ≤ 1×10⁻⁹ over 15 h.
+
+**The design rule** (`TimeWindow.longest_outage_s`) is more conservative than the simulation,
+because it keeps the whole no-outage budget of the formula window. A window widened by the known
+outage (`TimeWindow.widened`) never refuses an honest frame (A5); its cost is a bound on an
+adversary's delay that grows by 2y per second of outage: 144 ms per hour at 20 ppm, 7.2 ms per
+hour with a TCXO.
+
+**What it does not cover.** Which oscillator a given flight controller has, and how its offset
+moves with temperature in flight. That is a property of the platform, to be read from its
+datasheet. Offsets beyond the table's (cold start, before warm-up) are not covered.
