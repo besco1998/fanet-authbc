@@ -4878,3 +4878,70 @@ registration on new measurements.
 **Method note.** The 36 windows had been published, so this is a postdiction: the protection was
 procedural. The rules came from sources, each parameter came from a closed form on other data,
 everything was committed before the runs, and all the rules are reported.
+
+## F116 — AUTHBC's advantage survives the contention windows of real cards: ratio 3.48–3.52 against 3.53 (W1a; 2026-11-05)
+
+Registered at `8d649ed` (`predictions/W1a.md`), before any ns-3 run at these windows. No measured
+card keeps the standard's contention window (Bianchi et al., INFOCOM 2007). Ralink and Realtek use
+a quarter of it, Broadcom under Linux half; in 802.11a terms, windows of 4 and 8 slots where the
+standard gives 16. ns-3 at both, 840 runs:
+
+| window | per-record (C) | AUTHBC (D) | ratio |
+|---|---|---|---|
+| 16, the standard | 35.26 | 124.55 | 3.53 |
+| 8 | 30.35 | 106.85 | **3.52** |
+| 4 | 25.33 | 88.09 | **3.48** |
+
+* Both crossings lie within 1 % of the event model's predictions (band ±3 %).
+* Both ratios lie inside the registered 3.3–3.8.
+* Every bootstrap interval is fully bracketed and tight.
+* In the model alone, the five rules calibrated on our own chip (G27) give 3.44–3.56.
+
+**What it changes.** To "the capacities belong to an ideal radio" there is now an answer: they
+do, and they fall by up to 29 % for the windows real cards use. **The ratio, which is the paper's
+claim, moves by 1.5 %.** The paper's wording is Mohamed's to choose (OPEN_ITEMS §3, Q12).
+
+## F117 — no telemetry of the schema can reverse the ordering: AUTHBC keeps 2.75× at the largest records (W4a; 2026-11-05)
+
+Registered at `1dc2301` (`predictions/W4a.md`), before any capacity was computed. Records were
+built at two bounds:
+* **the schema bound:** every field alternating between the extremes of its range, so every
+  delta is a full span;
+* **the physical bound:** the schema's speed limit at 50 Hz.
+
+Each was encoded by `wire_v2`, decoded and verified. Sizes: delta records of 28 B (schema) and
+13 B (physical); frames of 233 and 188 B; per-record signing at 150 B at its schema bound and
+125 B at its smallest. Event model, 30 seeds (`results/raw/w4a_worst_case.csv`):
+
+| AUTHBC frame | against per-record, published | against per-record, smallest |
+|---|---|---|
+| published mean (173 B) | 3.55 | 3.29 |
+| physical bound (188 B) | **3.39** | 3.14 |
+| schema bound (233 B) | **2.97** | **2.75** |
+
+**Break-even:** delta records of 223 B, eight times the schema's 28 B. All five registered
+expectations held; the closed form against the model held by 0.01 points (2.99 % against 3 %).
+
+**What it changes.** "Telemetry is synthetic" (paper §4.4) can no longer threaten the result's
+direction. The synthetic data decide the size of the advantage, between 2.75 and 3.55, not its
+sign. The paper's wording is Mohamed's to choose (OPEN_ITEMS §3).
+
+## F118 — the signed encoding is injective (proven and tested), and the time window outlasts a GNSS outage by hours with a TCXO (W6; 2026-11-05)
+
+* **W6(b).** The proofs assumed the canonical encoding injective. docs/02 §11 proves it:
+  `to_map` has the left inverse `from_map`; RFC 8949 decoding is a function; CBOR's major types
+  separate the kinds of item; `Record` refuses booleans. A record's signed bytes (a map) and a
+  frame's (an array) can never coincide.
+  `tests/unit/ledger/test_canonical_injective.py` runs the left inverse, distinctness,
+  determinism, the key order and the disjointness over the whole record domain with `hypothesis`.
+  No counterexample was found.
+* **W6(a).** A5's outcome depends on an outage only through the separation of the two clocks,
+  so the holdover is exactly inversely proportional to the oscillators' offset (docs/02 §12).
+  With A5's thresholds (72 / 108 ms for a 150 ms window) and Lombardi (NIST), *Fundamentals of
+  Time and Frequency*, Table 17.5:
+  * 30–45 min at A5's 20 ppm (an assumption without a source);
+  * **10–15 h with a TCXO** (1×10⁻⁶);
+  * 1 000–1 500 h with an OCXO.
+
+  The paper's "a delayed frame is refused only while GNSS time is available" understates A5's own
+  result. Wording is Mohamed's.

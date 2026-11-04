@@ -95,3 +95,40 @@ prediction): 840 runs. Crossings are interpolated on node counts with all 30 run
 * **No ns-3 run has been made at either window.**
 * The same session registered W4a (`1dc2301`). Its tag broke a thesis test, so this commit adds
   a named holding list for the new registrations (`NOT_YET_IN_THE_THESIS`, Q11).
+
+---
+
+## Outcome — added 2026-11-05, after the 840 ns-3 runs; nothing above this line was changed
+
+Registered at `8d649ed` (tag `prereg-W1a`). `analysis/mac_robustness.py --score` (unchanged
+since) → `results/raw/w1a.csv`; runs `results/raw/ns3_w1a_cw{3,7}_runs.csv`.
+
+| window | C, ns-3 (model) | D, ns-3 (model) | **ratio, ns-3** (model) | W1a-1 | **W1a-2** |
+|---|---|---|---|---|---|
+| 4 | 25.33 (25.09, +0.95 %) | 88.09 (87.64, +0.51 %) | **3.478** (3.493) | held | **held** |
+| 8 | 30.35 (30.09, +0.87 %) | 106.85 (106.18, +0.63 %) | **3.520** (3.529) | held | **held** |
+| 16, the standard (published) | 35.26 | 124.55 | 3.532 | — | — |
+
+**Both registered predictions held at both windows.**
+* With a window a quarter of the standard's (the one measured on Ralink and Realtek cards) the
+  capacities fall by 28–29 %.
+* With half (Broadcom under Linux) they fall by 14 %.
+* **The ratio moves from 3.53 to 3.48: by 1.5 %.**
+
+**Checks (Law 6).**
+* Delivery falls monotonically over every grid, with a per-seed standard deviation of about 0.002.
+* Every crossing's 95 % bootstrap interval is fully bracketed:
+  * W = 4: 25.21–25.43 and 87.45–88.61;
+  * W = 8: 30.26–30.45 and 106.16–107.35.
+* The model is 0.5–1 % below ns-3 throughout. That is the same small bias, in the same direction,
+  as F5's, and no verdict rests on it.
+* The closed form, which W1a recorded as 11 % low at W = 4, stayed that low. The event model was
+  the registered prediction.
+
+**My expectations.** The plan's figures, made from the closed form before the model ran (falls of
+about 19 % and 37 %), overstated the drop. The model's 14 % and 28 % were what ns-3 found.
+
+**What it means.** The capacities in the paper belong to a radio that keeps the standard's
+window, and they move when a radio does not. **AUTHBC's advantage does not:** under the windows
+measured on commercial cards, the ratio stays within 1.5 % of the standard's. In the model alone,
+the five rules calibrated on our own chip (G27) give 3.44–3.56.

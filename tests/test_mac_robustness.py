@@ -64,3 +64,29 @@ class TestThePredictionsOnFile:
         assert f"--cw-min {w - 1} " in plan and f"--out-stem ns3_w1a_cw{w - 1} " in plan
         for cell in w1a.CELLS:
             assert f"{cell} period {PRED[(f'W={w}', cell)]['ns3_grid']}" in plan
+
+
+# --------------------------------------------------------------------- after the run, 2026-11-05
+REGISTRATION = "8d649ed"            # predictions/W1a.md, tag prereg-W1a
+
+
+class TestTheOutcome:
+    SCORED = {(r["window"], r["cell"]): r for r in _rows(w1a.SCORED)}
+
+    def test_the_scored_code_is_the_registered_code(self) -> None:
+        import subprocess
+        then = subprocess.run(["git", "show", f"{REGISTRATION}:analysis/mac_robustness.py"],
+                              cwd=REPO, capture_output=True, text=True, check=True).stdout
+        assert then == (REPO / "analysis" / "mac_robustness.py").read_text()
+
+    @pytest.mark.parametrize("w", ["4", "8"])
+    def test_w1a_1_each_crossing_within_three_percent(self, w: str) -> None:
+        for cell in ("C", "D"):
+            r = self.SCORED[(w, cell)]
+            assert r["within_band"] == "True" and int(r["points"]) == 7
+
+    @pytest.mark.parametrize("w", ["4", "8"])
+    def test_w1a_2_the_ratio_survives_the_window(self, w: str) -> None:
+        ratio = float(self.SCORED[(w, "D/C")]["ns3"])
+        assert w1a.RATIO_BAND[0] <= ratio <= w1a.RATIO_BAND[1]
+        assert ratio == pytest.approx(3.53, rel=0.02)       # the standard window's, ns-3

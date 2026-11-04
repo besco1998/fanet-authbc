@@ -88,3 +88,54 @@ frame size is already registered: F2, 7 of 7 within 3.4 %; F5, 6 of 6 within 1.7
 * **No crossing, ratio or break-even had been computed** for these frames.
 * The closed form for the published frames is known (C 35.8, D 126.7: W1a's planning). These
   expectations are mine, made with that in mind.
+
+---
+
+## Outcome — added 2026-11-05, after the run; nothing above this line was changed
+
+Registered at `1dc2301` (tag `prereg-W4a`). `analysis/worst_case_records.py` (unchanged since) →
+`results/raw/w4a_worst_case.csv`; event model 30 seeds × 20 s.
+
+| frame | bytes | crossing, model | closed form |
+|---|---|---|---|
+| AUTHBC, published mean | 173.0 | 124.15 | 126.70 |
+| AUTHBC, physical bound | 188 | 118.50 | 120.33 |
+| AUTHBC, **schema bound** | 233 | **103.78** | 104.56 |
+| per-record, published mean | 146.76 | 34.99 | 35.75 |
+| per-record, schema bound | 150 | 34.68 | 35.35 |
+| per-record, **smallest** | 125 | **37.73** | 38.86 |
+
+**Ratio AUTHBC / per-record (model):**
+
+| AUTHBC frame ↓ / per-record frame → | published mean | schema bound | smallest |
+|---|---|---|---|
+| published mean | 3.55 | 3.58 | 3.29 |
+| physical bound | **3.39** | 3.42 | 3.14 |
+| schema bound | **2.97** | 2.99 | **2.75** |
+
+**Break-even** (closed form): AUTHBC would have to send frames of **819 B** to fall to
+per-record signing's capacity at its smallest frame. That is delta records of **223 B**, eight
+times the 28 B the schema allows.
+
+| | expected | outcome |
+|---|---|---|
+| W4a-1 | physical bound vs published per-record ≥ 3.3 | **held**: 3.39 |
+| W4a-2 | schema bound vs published per-record ≥ 2.5 | **held**: 2.97 |
+| W4a-3 | schema bound vs per-record at its smallest ≥ 2.0 | **held**: 2.75 |
+| W4a-4 | break-even δ* > 28 B | **held**: 223 B |
+| W4a-5 | closed form and model within 3 % at every frame | **held at the edge**: 0.75–2.99 %; the closed form is always above the model, most for the shortest frame |
+
+**What it means.** No telemetry inside the schema can reverse the ordering. At the largest record
+the schema allows, set against per-record signing at its smallest possible frame, AUTHBC still
+carries **2.75 times** as many nodes. With realistic dynamics (the physical bound) it carries
+3.39 times, against 3.55 at the published mean. The synthetic telemetry decides the *size* of the
+advantage, between 2.75 and 3.55, never its *sign*. To lose it, a sender would have to put 223 B
+into each delta record, which is outside the schema and eight times its largest.
+
+**Checks (Law 6).**
+* Every bound frame decoded to its records and verified before any capacity was computed.
+* Its lengths equal the hand arithmetic.
+* The published means reproduce the model crossings of `dcf_model_vs_ns3.csv` (C 34.99 exactly;
+  D 124.15 against 123.70, as in W1a).
+* W4a-5 held by 0.01 percentage points (2.99 % against 3 %), and is reported as that. It is not a
+  defect: the closed form's tie term is first order, and it errs in one direction.

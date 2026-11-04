@@ -60,3 +60,33 @@ class TestTheFrameLengthsAreTheRegistrations:
         assert CASES["AUTHBC, published mean"]["frame_bytes"] == pytest.approx(173.0, abs=0.01)
         assert CASES["per-record, published mean"]["frame_bytes"] == pytest.approx(146.76,
                                                                                    abs=0.01)
+
+
+# --------------------------------------------------------------------- after the run, 2026-11-05
+REGISTRATION = "1dc2301"            # predictions/W4a.md, tag prereg-W4a
+
+
+def _scored() -> dict[str, dict[str, str]]:
+    import csv
+    path = REPO / "results" / "raw" / "w4a_worst_case.csv"
+    return {r["case"]: r for r in csv.DictReader(ln for ln in path.read_text().splitlines()
+                                                 if not ln.startswith("#"))}
+
+
+class TestTheOutcome:
+    def test_the_scored_code_is_the_registered_code(self) -> None:
+        import subprocess
+        then = subprocess.run(["git", "show", f"{REGISTRATION}:analysis/worst_case_records.py"],
+                              cwd=REPO, capture_output=True, text=True, check=True).stdout
+        assert then == (REPO / "analysis" / "worst_case_records.py").read_text()
+
+    @pytest.mark.parametrize("pair,at_least", [
+        ("AUTHBC, physical bound / per-record, published mean", 3.3),
+        ("AUTHBC, schema bound / per-record, published mean", 2.5),
+        ("AUTHBC, schema bound / per-record, smallest", 2.0)])
+    def test_the_registered_ratios(self, pair: str, at_least: float) -> None:
+        assert float(_scored()[f"ratio: {pair}"]["model_crossing"]) >= at_least
+
+    def test_no_telemetry_of_the_schema_reverses_the_ordering(self) -> None:
+        even = _scored()["break-even against per-record at its smallest"]
+        assert float(even["delta_record_bytes"]) > 28 * 7          # eight times the schema's

@@ -12,6 +12,39 @@ where the durable record lives. If you want the conclusion only, follow the poin
 
 ---
 
+# 2026-11-04/05 — the desk work on the main weaknesses, and a hardware list corrected
+
+**Asked:** "treat the problems in our work as the main opened items … for now do the desk work",
+then the hardware question, then "do only phase 0 now".
+
+**Done, each registered before it was run:**
+* **W1(a), F116.** Closed form, then event model, then ns-3 at windows of 4 and 8. The ratio held
+  at 3.48 / 3.52.
+* **W4(a), F117.** Bound frames built by the real encoder. The ordering holds at the worst.
+* **W6, F118.** Injectivity proven and property-tested. Holdover derived from A5's file, with the
+  oscillator offsets read from the NIST PDF itself; a web fetch returned raw PDF bytes, so the
+  text was extracted locally in an isolated interpreter.
+
+**What went wrong and was caught:**
+* A new `prereg-*` tag broke the thesis test that every tag is named in appendix B. A named holding
+  list was added and the question went to Mohamed (Q11); this was not a silent exclusion.
+* A W1b grid missed one split's N_eq; a test caught it.
+* My band in a W1a test was tighter than two roundings allow; it was corrected with the reason
+  stated.
+* W4a-5 held by 0.01 points and is reported that way.
+
+**The hardware list was wrong in my notes.** It said 2× Pi 3B+ and 2× BeagleBone Black; Mohamed
+has one Pi 3 **Model B** and two BeagleBone **Blue**, all 2.4 GHz. The 5 GHz contention test with a
+third board is impossible without a purchase. That turned W1(b) into the 2.4 GHz campaign
+(802.11b, 1 Mb/s, five boards).
+
+**Phase 0 began:**
+* 802.11b in the PHY model and in ns-3, with the identity check unchanged after the rebuild.
+* The model's prediction that A12's equivalence holds up to the crossing and fails beyond it,
+  registered in W1b.
+
+---
+
 # 2026-11-03 — G27: rules for the radio's own queued frames; none fits, and the model had a defect
 
 **Asked:** "do g27". Plan approved in plan mode. The full record is in `predictions/G27.md`, F114
