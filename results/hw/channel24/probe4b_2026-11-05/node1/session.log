@@ -1,0 +1,15 @@
+Running timer as unit: authbc-revert.timer
+Will run service as unit: authbc-revert.service
+Running timer as unit: authbc-reboot.timer
+Will run service as unit: authbc-reboot.service
+[2026-11-05T14:51:28+02:00] deadmen armed: revert 480 s, reboot 780 s | node=1 nodes=1,2 freq=2462 windows=2 plan=plan_probe4b.txt sha=a41f67ebc23e
+[2026-11-05T14:51:28+02:00] governor: ondemand -> performance; throttled 0x0
+[2026-11-05T14:51:45+02:00] type:  	type IBSS 	channel 11 (2462 MHz), width: 20 MHz, center1: 2462 MHz 
+[2026-11-05T14:51:47+02:00] peer 10.0.0.2 reachable
+{"received_unique": 43858, "senders": 1, "duplicates": 0}
+[2026-11-05T14:53:36+02:00] window 00_X4_2000fps done (senders 4)
+{"received_unique": 21919, "senders": 1, "duplicates": 0}
+[2026-11-05T14:54:07+02:00] window 01_F4_1000fps done (senders 4)
+[2026-11-05T14:54:07+02:00] revert: starting
+[2026-11-05T14:54:16+02:00] revert: finished, wlan0 = inet 192.168.1.25
+[2026-11-05T14:54:21+02:00] reverted OK, both deadmen disarmed

@@ -1,0 +1,12 @@
+[2026-11-05T14:51:27+02:00] deadman armed: revert in 480 s | start=1793883191 windows=2 plan sha=a41f67ebc23e
+[2026-11-05T14:52:45+02:00] after join: wlan1 IEEE 802.11bgn ESSID:"authbc-mesh" Nickname:"<WIFI@REALTEK>"  Mode:Ad-Hoc Frequency:2.462 GHz Cell: FE:C7:E6:39:CE:32   Sensitivity:0/0   Retry:off RTS thr:off Fragment thr:off  Encryption key:off  Power Management:off  Link Quality=97/100 Signal level=97/100 Noise level=0/100  Rx invalid nwid:0 Rx invalid crypt:0 Rx invalid frag:0  Tx excessive retries:0 Invalid misc:0 Missed beacon:0  
+[2026-11-05T14:52:48+02:00] peer 10.0.0.1 reachable
+[2026-11-05T14:52:50+02:00] peer 10.0.0.2 reachable
+{"sent": 43999, "achieved_fps": 2000.0, "late": 6240}
+{"received_unique": 0, "senders": 0, "duplicates": 0}
+[2026-11-05T14:53:37+02:00] window 00_X4_2000fps done
+[2026-11-05T14:53:41+02:00] rate fixed: exit=0 now: 
+{"sent": 22000, "achieved_fps": 1000.0, "late": 748}
+{"received_unique": 0, "senders": 0, "duplicates": 0}
+[2026-11-05T14:54:07+02:00] window 01_F4_1000fps done
+[2026-11-05T14:54:07+02:00] after windows: wlan1 IEEE 802.11bgn ESSID:"authbc-mesh" Nickname:"<WIFI@REALTEK>"  Mode:Ad-Hoc Frequency:2.462 GHz Cell: FE:C7:E6:39:CE:32   Sensitivity:0/0   Retry:off RTS thr:off Fragment thr:off  Encryption key:off  Power Management:off  Link Quality=100/100 Signal level=99/100 Noise level=0/100  Rx invalid nwid:0 Rx invalid crypt:0 Rx invalid frag:0  Tx excessive retries:0 Invalid misc:0 Missed beacon:0  

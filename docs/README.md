@@ -40,7 +40,7 @@ moved to `predictions/`. The last section maps every old path to its new place.*
 | Document | What it holds |
 |---|---|
 | [`LOGBOOK.md`](LOGBOOK.md) | **Method and trials**, newest first, including the paths that failed and the claims that were retracted. Check here before trying something |
-| [`audits/model_provenance.md`](audits/model_provenance.md) | **The findings register, F1–F123**, each with its evidence. Retractions stay visible |
+| [`audits/model_provenance.md`](audits/model_provenance.md) | **The findings register, F1–F124**, each with its evidence. Retractions stay visible |
 | [`audits/AUDIT_HISTORY.md`](audits/AUDIT_HISTORY.md) | Every past audit in date order: the phase audits P0–P7 and E5, the pre-P7b full audit, the scientific-implementation audit and the claim audit of 2026-08-28 |
 | [`../predictions/README.md`](../predictions/README.md) | **Every registration** (a prediction committed before its experiment ran), with its commit and outcome. Registrations are never edited |
 

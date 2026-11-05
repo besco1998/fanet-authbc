@@ -5140,3 +5140,31 @@ Measured loss minus background, against W1c's registered model rows, with nothin
   its community driver offers ad-hoc mode, to be verified.
 * W2's low-load excess is now a two-band, two-chip pattern. Its reading needs the background
   measured at the contention rates, not at 50 frames/s.
+
+## F124 — a TP-Link TL-WN722N on a Blue joins the cell but broadcasts too fast to be the model's station; the kernel driver cannot slow it (2026-11-05)
+
+The candidate fourth station for the capacity ratio (F120, F123) is a USB adapter, TP-Link
+TL-WN722N v2/v3 (Realtek RTL8188EUS), on BeagleBone Blue 2. Two engineering probes were run,
+disclosed and not scored (`results/hw/channel24/probe4_2026-11-05/`, `probe4b_…`).
+* **The driver.** The Blue's kernel drives the adapter with its staging driver `r8188eu`, through
+  wireless extensions only (no `iw`, no out-of-tree code).
+* **Ad-hoc mode works.** It is accepted once the interface is up ("Operation not permitted" while
+  down). The adapter joined the Pis' cell on channel 11 and exchanged pings both ways.
+* **It receives well:** 99.45 % of pi-A's saturated frames, against pi-B's 98.79 %.
+* **It sends too fast.**
+  * It delivered every offered rate (600, 1 000 and 2 000 frames/s) without saturating: a cycle
+    of 499.9 µs at 2 000 frames/s.
+  * At 1 Mb/s this frame takes 1 864 µs on air, and the Pis' cycle is 1 945 µs, so its frames take
+    at least 3.9× less time.
+  * Its rate and backoff are unknown; an OFDM rate is likely, since 11 Mb/s DSSS with the
+    standard's backoff would need about 0.6–0.7 ms.
+* **The fix did not reach broadcasts.** `iwconfig rate 1M fixed` was accepted, yet 1 000
+  frames/s were still delivered.
+
+**What it changes.**
+* As driven by the kernel, the adapter is not a station of the model: airtime differs, and the
+  rate checks would fail it.
+* Making it one needs control of its broadcast rate. That means the community `rtl8188eus` driver
+  (cfg80211: `iw ibss join … mcast-rate`, and monitor mode), whose kernel-level build awaits
+  Mohamed's approval (out-of-tree code as root on the Blue), or radios bought for it.
+* The probes cost no registered measurement.

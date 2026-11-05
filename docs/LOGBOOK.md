@@ -63,6 +63,17 @@ While it ran, Mohamed plugged a USB adapter into the PC and then powered a Blue.
 disclosed with their windows. I could not reach the Blue on the LAN: it was on the PC's USB link,
 and it was Blue 2, not Blue 1. Its radios were quieted over USB before the last rate check.
 
+**The TP-Link (F124).** Building the community driver was blocked by the permission check:
+external kernel code, as root. That is Mohamed's call, so the kernel's own driver was tried first.
+
+Ad-hoc mode is refused while the interface is down and accepted once it is up. On the Blue, a boot
+with the adapter attached can give the Blue's own radio the name `wlan1`, and DHCP was bound to
+`wlan0`. It is now matched by MAC address (`/etc/systemd/network/05-authbc-ti-radio.network`).
+
+Two probes followed. They showed that the adapter joins and receives, but broadcasts far faster
+than 1 Mb/s, and that the kernel driver's rate setting does not reach broadcasts. A cycle of
+1 666 µs equal to 1/600 s was the clue: a sender that never saturates shows only its offered rate.
+
 ---
 
 # 2026-11-04/05 — the desk work on the main weaknesses, and a hardware list corrected

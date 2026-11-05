@@ -1,0 +1,4 @@
+# nodes: 1,2
+# probe 2 (disclosed, not scored): node 4 = the TP-Link; its own rate saturated, then rate fixed at 1 Mb/s
+X4 2000 145 4
+F4 1000 145 4
