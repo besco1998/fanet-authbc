@@ -121,6 +121,35 @@ What went wrong in my method, each caught:
 **Lesson:** before naming a failure (freeze, hang, crash), list the boots. The board's own records
 tell a reset from a hang.
 
+**Late night: W1f, the four-station campaign (F127).** Mohamed: "do 1 plan for it correctly then
+excecute the plan and give me the results". The plan was approved in plan mode. The order of work:
+1. **Code first, with tests, and the registration before any window.** `analysis/dsss_w1f.py`
+   imports W1c and W1d unchanged; node 4 got its own kit. 23 tests ran on made-up sessions, plus
+   one on replay 3's real files. The predictions were run twice and are byte-identical.
+2. **A timing trap, found while planning.** The Pis abort if a peer named in the plan's header is
+   missing at their early ping, and the TP-Link must join *after* their cell exists. So the header
+   names only the Pis, and node 4 checks the Pis itself (V3).
+3. **The pilot** (two windows) proved the kit and the reducer end to end, before the session.
+4. **The session ran clean:** 78 of 78 windows usable, no reset.
+
+**The result.**
+* Contention at N = 4 held 3 of 3.
+* AUTHBC's crossing landed at +7 % of the model.
+* **The per-record crossing fell outside the grid, so the ratio is not measured.** I had foreseen
+  that risk only for AUTHBC.
+* Before writing anything I looked at the per-window values: tight, and every window at the last
+  per-record point is above 0.95. I recomputed from the raw files with a separate script, and
+  broke the loss down by ordered pair. That last step found the cause: **the sender decides the
+  loss, not the receiver**, which is capture by the stronger radio.
+
+**Slips caught on the way.**
+* My expected value in a test used nominal fractions where the made-up files held rounded counts.
+  The code was right and the test wrong.
+* A reported bootstrap crashed on unequal window counts. It is now skipped, with the reason given.
+* `scp` with `{a,b}` braces fails under SFTP; collection is now `tar` over ssh.
+* A `pgrep` check matched its own command line, twice. A pattern only a running session can
+  match is now used.
+
 ---
 
 # 2026-11-04/05 — the desk work on the main weaknesses, and a hardware list corrected

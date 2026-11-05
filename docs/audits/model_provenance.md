@@ -5387,3 +5387,47 @@ cause is undetermined.** Mohamed reset Blue 2 onto the adapter at about 20:53 fo
   2. Log Blue 2's boot ID before and after every window; a window across a change is unusable.
   3. Start the TP-Link from a fresh boot and log the BSSID it joined. `02:11:87:…` means it
      created its own cell, which voids the session.
+
+## F127 — on four real radios the contention model holds at N = 4 and AUTHBC's capacity crossing lands within 7 % of the model; the ratio is not measured, because the stronger sender wins collisions (W1f; 2026-11-05)
+
+`predictions/W1f.md` (registered at `prereg-W1f`, `cd85eeb`, before any window), session
+`results/hw/channel24/w1f_2026-11-05/`.
+* **The stations:** pi-A, pi-B, the Pi 3 and the TP-Link on Blue 2 at `rate_ctl` 1 Mb/s, side by
+  side.
+* **The session was valid:**
+  * all 78 windows usable;
+  * node 4 in the Pis' cell at 1 Mb/s throughout, with no reset;
+  * bracket 1 941–2 470 µs, all in the band;
+  * b = 0.0996 %.
+* **Contention at N = 4: 3 of 3 inside their bands:** 0.86×, 0.75× and 0.65× of the model at
+  65, 91 and 111 frames/s per board.
+* **AUTHBC's four-board crossing: 31.57 against the model's 29.50 (+7.0 %), inside ±10 %.**
+* **Per-record's: not determined.** Its curve stays above 0.95 at the grid's last point (9.5,
+  every window 0.9505–0.9538), which is 3.5 % short of overload. **The ratio is therefore not
+  measured.** It is below 31.57 / 9.5 = 3.32 if the per-record crossing is above 9.5, and has no
+  lower bound from these data.
+* **Every loaded point lies above the model, 14 of 14,** and the cause is visible in the raw
+  files: **loss depends on the sender, not on the receiver.**
+  * At A32: pi-A's frames are lost at 8.3 %, pi-B's at 7.7 %, the Pi 3's at 4.9 % and the
+    TP-Link's at 1.5 %, nearly equally at each receiver. The order is the same at every load.
+  * Without capture, a collision loses every frame involved at every receiver, and equal senders
+    lose alike.
+  * The 5.6× spread means collisions are won by particular senders: **capture by the stronger
+    sender** (the TP-Link has an external antenna, the Pis on-board ones). A collision then costs
+    one frame, not two, matching the 0.65× at high load.
+  * The model has no capture.
+  * Transmit power and antenna gain were not measured, so capture is the reading the pattern
+    supports, not a measurement.
+* **It agrees with what came before:** F73's Pi 4 pair at 5 GHz (0.56× at high load), and W1e's
+  high-load points (0.81–1.06×).
+
+**What it changes.**
+* **The contention model now holds on hardware at N = 2, 3 (W1e) and 4 (here).**
+* **One capacity crossing is measured on hardware**, within 7 % of the model and above it.
+* **The departure has one direction.** Real radios of unequal strength deliver more than the
+  model near the crossing, so simulated capacities err low, not high, on that count.
+* **The ratio on hardware stays open.** Measuring it needs the per-record curve bracketed below
+  overload (a grid of 9.6–9.8, loads 0.97–0.996), or senders of equal strength. Either is a new
+  registration and Mohamed's call.
+* **Blue 2: no reset in this session or its pilot,** now one in 28 exits from ad-hoc mode (F126).
+

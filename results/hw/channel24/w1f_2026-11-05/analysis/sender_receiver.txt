@@ -1,0 +1,35 @@
+A32: 4 windows; loss % (sender rows, receiver columns)
+sender,receiver,pi-A,pi-B,Pi 3,TP-Link,sender mean
+pi-A,,8.39,8.05,8.48,8.31
+pi-B,8.71,,6.50,8.01,7.74
+Pi 3,4.80,5.10,,4.93,4.94
+TP-Link,1.50,1.56,1.38,,1.48
+
+P9.5: 4 windows; loss % (sender rows, receiver columns)
+sender,receiver,pi-A,pi-B,Pi 3,TP-Link,sender mean
+pi-A,,7.28,6.95,7.22,7.15
+pi-B,7.77,,6.18,7.20,7.05
+Pi 3,4.24,4.50,,3.79,4.18
+TP-Link,0.94,0.98,0.84,,0.92
+
+ABCD at 111/s: 4 windows; loss % (sender rows, receiver columns)
+sender,receiver,pi-A,pi-B,Pi 3,TP-Link,sender mean
+pi-A,,3.11,2.99,3.17,3.09
+pi-B,3.37,,2.27,3.13,2.92
+Pi 3,1.58,1.76,,1.59,1.64
+TP-Link,0.95,1.09,0.83,,0.96
+
+ABCD at 65/s: 4 windows; loss % (sender rows, receiver columns)
+sender,receiver,pi-A,pi-B,Pi 3,TP-Link,sender mean
+pi-A,,1.15,0.94,0.93,1.01
+pi-B,1.14,,0.59,0.82,0.85
+Pi 3,0.51,0.47,,0.45,0.48
+TP-Link,0.47,0.35,0.24,,0.36
+
+A24: 4 windows; loss % (sender rows, receiver columns)
+sender,receiver,pi-A,pi-B,Pi 3,TP-Link,sender mean
+pi-A,,2.21,2.04,2.06,2.10
+pi-B,2.32,,1.67,2.00,2.00
+Pi 3,1.08,1.25,,1.21,1.18
+TP-Link,0.72,0.59,0.45,,0.59
+

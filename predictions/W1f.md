@@ -197,3 +197,101 @@ Its points are then reported and not scored.
   the new node-4 script and the full launch chain.
 * **No capacity-equivalent window and no N = 4 contention window has ever been run on these
   boards.**
+
+---
+
+## Outcome — added 2026-11-05, after the session; nothing above this line was changed
+
+**How it ran.**
+* Registered at `cd85eeb` (tag `prereg-W1f`), pushed before any window.
+* The two-window pilot ran at 21:39, disclosed (`results/hw/channel24/w1f_pilot_2026-11-05/`).
+* The session ran 21:46–22:25 on channel 11.
+* **Scored by `analysis/dsss_w1f.py --score`, unchanged.** Outputs:
+  `results/raw/w1f_w1f_2026-11-05.csv`, windows `results/hw/channel24/w1f_2026-11-05_windows.csv`,
+  files `results/hw/channel24/w1f_2026-11-05/`.
+* **All 78 windows were complete and all 56 multi-sender windows usable.** No late frame, no drop,
+  every sender at ≥ 99.99 % of its rate, no under-voltage.
+* **Node 4** joined the Pis' cell (`2a:59:a9:66:b4:cb`), reached all three Pis, kept `FIXED
+  CCK_1M` in every window, and stayed on one boot: **no reset** (now one in 28 exits).
+* **Checks.** A re-score is byte-identical. An independent script recomputed b, one capacity
+  point, a rate check and the AUTHBC crossing from the raw files, and agrees to the fourth decimal.
+
+**The session is valid** (V1–V4 held).
+
+**W1f-1, the bracket: held.**
+
+| | before | after |
+|---|---|---|
+| pi-A | 1 941.3 µs | 1 941.4 µs |
+| pi-B | 1 947.8 µs | 1 942.7 µs |
+| Pi 3 | 2 356.9 µs | 2 469.8 µs |
+| TP-Link | 1 962.3 µs | 1 962.9 µs |
+
+**W1f-2, the background: held.** b = 0.0996 % over 14 controls (0.000–0.242 %).
+
+**W1f-3, N = 4 contention: 3 of 3 held.**
+
+| frames/s per board | 65 | 91 | 111 |
+|---|---|---|---|
+| measured − b | 0.574 % | 1.137 % | 2.054 % |
+| model | 0.665 % | 1.506 % | 3.184 % |
+| ratio | 0.86× | 0.75× | 0.65× |
+
+**W1f-4, the crossings.**
+
+| N_eq | 24 | 27 | 29 | 30 | 31 | 32 |
+|---|---|---|---|---|---|---|
+| AUTHBC V/(1 − b), hardware | 0.9863 | 0.9792 | 0.9734 | 0.9662 | 0.9570 | 0.9448 |
+| model | 0.9828 | 0.9722 | 0.9569 | 0.9431 | 0.9230 | 0.8964 |
+
+| N_eq | 7 | 8 | 8.5 | 9 | 9.5 |
+|---|---|---|---|---|---|
+| per-record V/(1 − b), hardware | 0.9887 | 0.9835 | 0.9784 | 0.9706 | 0.9527 |
+| model | 0.9856 | 0.9760 | 0.9658 | 0.9474 | 0.9126 |
+
+* **AUTHBC: 31.57 against 29.50 (+7.0 %): held** (band 26.55–32.45; bootstrap 31.50–31.65).
+* **Per-record: not determined.** The curve stays above 0.95 to the grid's last point: at 9.5,
+  every one of the four windows is above it (0.9505–0.9538).
+
+**W1f-5, the ratio: not determined.** It needs both crossings.
+
+**My expectations.**
+* W1f-1 held; the Pi 3 was the nearest to the band's top, as stated (2 470 µs after).
+* W1f-2 held.
+* "W1f-3 at 0.50 may fail high" was **wrong**: 0.86×. W1e's excess at low load did not recur with
+  four radios.
+* "W1f-4 holds for both" held for AUTHBC. **For per-record I did not foresee "not determined"**: I
+  named that risk only for AUTHBC, whose band runs past its grid.
+* "W1f-5 holds" could not be tested.
+
+**What the data say beyond the score (reported, not scored).**
+* **Every loaded point lies above the model, 14 of 14.** The capacity curves deliver more than
+  the model at every point, and contention loses 0.65–0.86× of the model, the less the higher the
+  load. Both crossings therefore lie above the model's: AUTHBC by 7.0 %, per-record by more than
+  6.4 % (above 9.5 against 8.93).
+* **Loss depends on the sender, not the receiver**
+  (`results/hw/channel24/w1f_2026-11-05/analysis/`).
+  * At A32, each sender's frames are lost at nearly the same rate at all three receivers: pi-A
+    8.3 %, pi-B 7.7 %, Pi 3 4.9 %, TP-Link 1.5 %.
+  * The order is the same at every load.
+  * In a collision without capture, every frame involved is lost at every receiver, so equal
+    senders at equal rates lose alike. A spread of 5.6× between senders means collisions are won
+    by particular senders: capture by the stronger one. The TP-Link, with an external antenna,
+    wins against the Pis' on-board antennas.
+  * A collision then costs one frame, not two. That matches loss at 0.65× of the model at high
+    load. The model has no capture.
+  * Transmit power and antenna gain were not measured, so this is the reading the pattern
+    supports, not a measurement.
+* **A bound, not a measurement.** With the per-record crossing above 9.5, the ratio is below
+  31.57 / 9.5 = 3.32. Its lower side is not bounded by anything measured here: the per-record
+  crossing may lie in overload (above 9.83), where queue policy, not access, decides delivery
+  (W1b).
+
+**What it means.**
+* **On four real radios of three chip families, the contention model holds at N = 4** (3 of 3,
+  inside its bands). **AUTHBC's four-board capacity crossing is measured within 7 % of the model.**
+* **The ratio is not measured by this session.** On these radios the per-record curve does not
+  fall to 0.95 inside the registered grid, which stops 3.5 % short of overload.
+* **The radios depart from the model in one direction:** the stronger sender survives collisions.
+  That raises every crossing, the direction in which the paper's simulated capacities are
+  conservative. F127.
