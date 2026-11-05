@@ -155,3 +155,25 @@ the same room.
 * W1b's results were known: its crossings, its ratio, and the overload limit that set these grids.
 * The 2.4 GHz run of August (F35) used 1400 B frames and measured saturation. Nothing at 2.4 GHz
   has been run since.
+
+---
+
+## Outcome — added 2026-11-05: not run; superseded by W1d. Nothing above this line was changed
+
+**Its premise of five ad-hoc radios is false.** The two BeagleBone Blues were checked on
+2026-11-05, before any session:
+* their TI WL18xx radios list no IBSS mode (`iw list`);
+* the kernel refuses to create an ad-hoc interface on both (`iw phy phy0 interface add ibss0 type
+  ibss` → "Operation not supported (-95)");
+* mainline `wlcore` has not announced ADHOC since commit 7845af35e0de (2015-07-30), F120.
+
+**Only three ad-hoc radios are available:** pi-A, pi-B and the Raspberry Pi 3 Model B.
+
+**A consequence found while replanning.** A12's mapping holds the contending load fixed, so the
+total offered load at the capacity crossing grows as N/(N − 1): 0.88 with five stations, 0.94
+with four, **1.06 / 1.05 with three, which is overload.** Three radios cannot measure the capacity
+ratio; that waits for a fourth station.
+
+**What survives.** The contention predictions above for N = 2 and N = 3 were registered before
+any board session. They are reused unchanged by `predictions/W1d.md`, which runs the 3-radio
+campaign.

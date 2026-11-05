@@ -6,7 +6,7 @@
 # already being in the target state, because the deadman routinely fires on a session that has
 # already reverted itself.
 set -u
-OUT=/home/pi/authbc_channel
+OUT="$(dirname "$(readlink -f "$0")")"   # the folder this script was deployed to (any login)
 LOG="$OUT/session.log"
 log() { echo "[$(date -Is)] revert: $*" >>"$LOG"; }
 

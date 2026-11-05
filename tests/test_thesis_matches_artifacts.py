@@ -495,7 +495,7 @@ class TestTheWorkedFrame:
 # rows are added and the tag removed from this set when he decides. A holding list, named, never
 # a silent exclusion.
 NOT_YET_IN_THE_THESIS = frozenset({"prereg-W4a", "prereg-W1a", "prereg-W1b",
-                                   "prereg-W1c"})
+                                   "prereg-W1c", "prereg-W1d"})
 
 
 class TestTheRegistrationsOfAppendixB:

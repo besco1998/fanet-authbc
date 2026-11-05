@@ -4967,3 +4967,39 @@ Nothing was fitted.
 boards can measure each design's crossing. The hardware grids stay below overload, where any
 queue's discard policy, ns-3's or a driver's, decides the result. Next: W1c, the hardware
 predictions, registered before any board session.
+
+## F120 — the BeagleBone Blues cannot join an ad-hoc cell, and three radios cannot measure the capacity ratio (2026-11-05)
+
+**The Blues have no ad-hoc mode.** Mohamed's extra boards are a Raspberry Pi 3 Model B and two
+BeagleBone Blue (TI WiLink 8 WL18xx, "WL18MODGB"), all 2.4 GHz only.
+* On both Blues, `iw list` lists no IBSS.
+* The kernel refuses one: `iw phy phy0 interface add ibss0 type ibss` → "Operation not supported
+  (-95)". Monitor and mesh interfaces can be created.
+* Mainline `wlcore/main.c` announces STATION, AP, P2P and MESH_POINT, not ADHOC. Bisecting the
+  file's 359 commits shows ADHOC was announced from 2011 and deleted by commit **7845af35e0de**
+  ("wlcore: add p2p device support", 2015-07-30), which gives no reason. The IBSS code paths
+  remain and are unreachable.
+* TI's forum (in search results; its pages refuse automated fetches) calls ad-hoc "not supported,
+  and no plan to support it". The BeagleBoard list says it is unsupported in both the driver and
+  the firmware.
+* Wi-Fi Direct is no substitute: a P2P group is a BSS whose owner relays its clients' broadcasts,
+  not every node broadcasting directly.
+* The Pi 3's BCM43430 does support IBSS.
+
+**Three ad-hoc radios cannot reach the capacity crossing without overload.** A12's mapping keeps
+the contending load (N − 1)·f fixed, so the total offered load grows as N/(N − 1). At the W1c
+model's crossings:
+
+| stations | AUTHBC | per-record |
+|---|---|---|
+| 5 | 0.88 | 0.87 |
+| 4 | 0.94 | 0.93 |
+| 3 | **1.06** | **1.05** |
+
+In overload a queue's discard policy decides delivery (F119).
+
+**What it changes.**
+* W1c (five boards) is superseded by **W1d** (three radios, the contention model only, channel 11,
+  `predictions/W1d.md`).
+* The capacity ratio on hardware needs a fourth ad-hoc-capable station: a Blue injecting
+  ad-hoc-format frames in monitor mode (to be probed) or a purchase.
