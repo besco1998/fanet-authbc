@@ -5168,3 +5168,29 @@ disclosed and not scored (`results/hw/channel24/probe4_2026-11-05/`, `probe4b_�
   (cfg80211: `iw ibss join … mcast-rate`, and monitor mode), whose kernel-level build awaits
   Mohamed's approval (out-of-tree code as root on the Blue), or radios bought for it.
 * The probes cost no registered measurement.
+
+**F124, addendum (same day): every route in the kernel driver checked; one route found in the community driver.** Mohamed: "before trying [the community driver], try other ways to fix 1M rate with the current driver". Read in the sources, not guessed.
+* **Kernel staging driver** (Linux v5.10, `drivers/staging/rtl8188eu`):
+  * `iwconfig … rate` is a **no-op**. `rtw_wx_set_rate` (`os_dep/ioctl_linux.c`, l. 1380) builds a
+    table and returns 0 without touching the hardware. That is why probe 2 saw no change.
+  * Data frames take the rate adaptation's choice (`hal/rtl8188eu_xmit.c`, l. 252). Only ARP, DHCP
+    and EAPOL go at the 1 Mb/s management rate.
+  * **A broadcast's rate set is the cell's *basic* rates** (`hal/usb_halinit.c`, l. 1904–1910:
+    `mask = update_basic_rate(cur_network->SupportedRates, …)`), and the adaptation starts at the
+    highest.
+    * As a joiner, the TP-Link takes them from the Pis' beacons. The Pis' driver ignores
+      `basic-rates`: brcmfmac only logs them (`brcmfmac/cfg80211.c`, l. 1824, rpi-6.12.y).
+    * As the creator, the TP-Link hard-codes all four CCK rates as basic (`core/rtw_ieee80211.c`,
+      l. 42–47).
+  * It has no module parameter for the rate or the wireless mode (`rtw_wireless_mode` is fixed at
+    BG_24N in `os_intfs.c`, l. 29) and no private ioctls.
+* **The community driver** (aircrack-ng/rtl8188eus, commit `af3bf004`):
+  * Its `join_ibss` ignores `mcast-rate` and `basic-rates` (`os_dep/linux/ioctl_cfg80211.c`,
+    l. 3519–3572), so `iw … mcast-rate 1` would not work either.
+  * But a fixed rate set through `/proc/net/rtl8188eu/<iface>/rate_ctl` overrides **every** data
+    frame, broadcasts included, with fallback off (`hal/rtl8188e/usb/rtl8188eu_xmit.c`, l. 393–398).
+    It is parsed as `"<hex rate> <fallback>"` (`core/rtw_debug.c`), and 0x00 is 1 Mb/s
+    (`DESC_RATE1M`).
+  * The file is compiled in by default (`CONFIG_PROC_DEBUG` in `include/autoconf.h`).
+  * Building and loading that driver is external code as root on Blue 2, and so Mohamed's call.
+    It is to be verified by a rate probe, as F124's probes were.
