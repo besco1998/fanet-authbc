@@ -5337,3 +5337,22 @@ Mohamed: "intensively find why". The diagnosis was run with his approval of a ha
   unexplained reset.** The next steps are to learn probe 3's supply from Mohamed, then try to
   reproduce the reset under it, with the boot ID read after every exit.
 * Blue 2 now has a hardware watchdog (30 s) and reboot on panic. A hang no longer lasts.
+
+**F126, addendum (same night): probe 3's supply confirmed, and two statements above corrected.**
+Mohamed: probe 3 ran on **a 5 V micro-USB adapter** (his "official supply"), not the 12 V jack.
+* ⚠️ **Wrong above:** "boot `b42c1d3a` ran without a break from 07:52 … so the barrel jack is more
+  likely". 07:52 was a clock restored from a saved timestamp. By its uptime (3 552 s, ending
+  15:37:39) that boot began at about 14:38:28, at the change to the adapter.
+* ⚠️ **Wrong above:** "the TP-Link enumerated only 4½ minutes after boot". It was 68 s; that too
+  was a restored clock.
+* **The same error twice:** wall-clock times inside a boot whose clock was restored. Times within
+  a boot are now read by uptime.
+* **Corrected tally, by uptime:**
+  * **On the 5 V adapter (14:38–19:04):** 2 of its boots logged `VBUS_ERROR … <AValid` on the
+    TP-Link's port, at 71.4 s and 67.6 s. In each, the TP-Link enumerated only then (72 s and
+    68 s), against about 7 s in clean boots. Probe 3's reset came in this period.
+  * **On the PC's USB (from 19:05):** 3 boots with no VBUS error, and about 14 exits from ad-hoc
+    mode with no reset.
+* **The supply is now the leading suspect for the reset**: every power anomaly on record fell on
+  the 5 V adapter. It is still an association. A reproduction on the adapter, or its voltage
+  measured, would make it a finding.

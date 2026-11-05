@@ -4,7 +4,9 @@ Mohamed: "intensively find why". He approved a hardware watchdog and reboot on p
 ("Watchdog on, diagnose"). The question was why Blue 2 went off the LAN after probe 3
 (`../probe4c_2026-11-05/`). **Answer: it did not freeze. Its revert succeeded, the board reset
 seconds later, and the iwd start-up race (fixed in F125) kept it off the LAN for about
-77 minutes.** The cause of the reset is open; power is the leading suspect.
+77 minutes.** The cause of the reset is open; power is the leading suspect. Probe 3 ran on a
+**5 V micro-USB adapter** (Mohamed). Both VBUS errors fell on that adapter, about 70 s into a
+boot, and nothing similar happened on the PC's USB (F126 addendum).
 
 ## Evidence (`blue2/`)
 
