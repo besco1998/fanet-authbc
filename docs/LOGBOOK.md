@@ -47,6 +47,13 @@ in turn:
 
 **Record:** `predictions/W1d.md` outcome, F121, `results/hw/channel24/`, Q15.
 
+**Afternoon: F121's reading withdrawn (F122).** Mohamed moved the Pi 3 beside the Pi 4s, unplugged
+one Blue and asked for the tests again. Unchanged, the Pi 3 ran at 2.45–2.51 ms and held 422–454 frames/s with no decay. I had
+expected the opposite and said so before the run. My three diagnostics had varied only the
+board's own settings, so they could not clear the room. I placed the cause inside the radio from
+two decaying sequences that shared one unknown condition. **Vary one thing outside the board
+before you blame the board.**
+
 ---
 
 # 2026-11-04/05 — the desk work on the main weaknesses, and a hardware list corrected

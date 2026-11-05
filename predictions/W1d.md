@@ -207,3 +207,47 @@ single frames. The sniffer was reported, not scored; nothing scored changes.
 **What it changes.** Three ad-hoc radios became two of one chip. The contention model can still
 be tested at 802.11b with the Pi 4 pair (N = 2, W1c's registered rows), but only under a new
 registration. What to run next is Mohamed's decision (`docs/OPEN_ITEMS.md`, Q15). F121.
+
+---
+
+## Addendum — added 2026-11-05, 13:10: the Pi 3 reading above is WITHDRAWN. Nothing above this line was changed
+
+Mohamed moved the Pi 3 beside the two Pi 4s, moved Blue 1 farther from them, unplugged Blue 2, and
+asked for the tests again. They were repeated unchanged, with the same kit (hashes checked against the repo), plan and channel. This is a
+disclosed repeat, not a scored session: the stop rule triggered in S0 stands and S1 was not run.
+Data: `results/hw/channel24/s0r_2026-11-05/`, scored by the unchanged script into
+`results/raw/w1d_s0r_2026-11-05.csv`.
+
+*Expected, stated before the run:* if the Blue had nothing to do with it, the Pi 3 at 4.7–5.0 ms
+again, decaying from about 266 to 183 frames/s.
+
+| | S0, 03:53, the boards as first placed, both Blues present | repeat, 12:53, the Pi 3 beside the Pi 4s, Blue 2 unplugged |
+|---|---|---|
+| Pi 3 cycle in the rate check | 4 714 / 5 043 µs | **2 507 / 2 452 µs** (inside 1.9–2.6 ms) |
+| Pi 3 frames sent in 22 s | 4 792 / 4 519 | **8 912 / 9 096** |
+| pi-A / pi-B | 1 946.6 / 1 945.6 µs | 1 944.0 / 1 945.8 µs |
+| background | 0.091 % | 0.091 % |
+
+**The decay test, repeated identically** (nine idle minutes, then eight 10 s runs, the Pi 3 alone
+in the cell):
+
+| run | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
+|---|---|---|---|---|---|---|---|---|
+| 04:21, frames/s | 266 | 232 | 216 | 208 | 197 | 193 | 190 | 183 |
+| 13:06, frames/s | 435 | 422 | 429 | 428 | 434 | 442 | 447 | 454 |
+
+The Pi 3 warmed more this time (45.1 → 50.5 °C, against 43.5 → 47.2 °C), yet its rate did not
+fall. **"A limit in the radio that tightens with sending and relaxes with rest" is therefore
+wrong.** What held the Pi 3 back was outside it. Two things changed together: the Pi 3's place
+(now beside the Pi 4s, with Blue 1 farther away) and Blue 2 (unplugged). Which one mattered was not
+tested, and will not be: Mohamed will not use Blue 2, which does the same as Blue 1. Rested and alone, the BCM43430 sends a
+frame every 2.20–2.37 ms, close to the standard's 2.22 ms.
+
+**What still stands.**
+* S0's failure is a fact, and so is the stop rule. Any further session needs a new registration.
+* The Blues' empty captures and the Pi 4's results stand.
+* The rate check did its job. A disturbance that made one station defer left the background
+  untouched: 0.09 % in both sessions, because a deferring sender loses nothing; it only sends
+  less. Only the single-sender rate check could see it.
+
+F122.

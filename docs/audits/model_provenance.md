@@ -5006,6 +5006,9 @@ In overload a queue's discard policy decides delivery (F119).
 
 ## F121 — W1d stopped at its rate check: the Pi 3's radio throttles its own sending, and no board in the kit can capture frames (2026-11-05)
 
+*⚠️ Its reading of the Pi 3 ("a limit inside the radio") is WITHDRAWN by F122: repeated with the Pi 3
+moved beside the Pi 4s and one Blue unplugged, the Pi 3 kept 422–454 frames/s with no decay. The rest stands.*
+
 `predictions/W1d.md` (tag `prereg-W1d`, `914b7ec`), S0 on channel 11, nine usable windows.
 * **Held:**
   * background 0.091 % (W1d-2);
@@ -5049,3 +5052,47 @@ at 50 frames/s, 0.05–0.18 %. That is W2's "one sender losing 0.5–0.9 % alone
   hardware test of the contention model at 802.11b is now N = 2 with one chip.
 * The capacity ratio, and N ≥ 3, need other radios.
 * The choice is Mohamed's (`docs/OPEN_ITEMS.md`, Q15).
+
+## F122 — the Pi 3 is not slow: S0's failure came from outside it. ⚠️ F121's reading of the Pi 3 is WITHDRAWN (2026-11-05)
+
+Mohamed moved the Pi 3 beside the two Pi 4s, moved Blue 1 farther away, unplugged Blue 2 and asked
+for the tests again. S0's plan and the decay test were repeated unchanged: the same kit (hashes checked against the repo), the same
+channel 11, the same plan. It was a disclosed repeat, not scored (`predictions/W1d.md`, second
+addendum; `results/hw/channel24/s0r_2026-11-05/`).
+
+*Expected, stated before the run:* the Pi 3 at 4.7–5.0 ms again, decaying from 266 to 183
+frames/s.
+
+**Measured:**
+* the Pi 3's cycle was **2 507 and 2 452 µs**, against 4 714 and 5 043 in S0;
+* after rest, 8 runs of 10 s gave **435, 422, 429, 428, 434, 442, 447, 454 frames/s**, with no
+  decay, although the board warmed more (45.1 → 50.5 °C) than when it decayed (43.5 → 47.2 °C);
+* the Pi 4s (1 944 / 1 946 µs) and the background (0.091 %) were unchanged.
+
+**What is withdrawn.** F121 read the Pi 3's slowness as "a limit inside the radio that tightens
+with sending and relaxes with rest (thermal or a transmit-time budget)". That was wrong.
+* The three diagnostics were all run under the same unknown condition, so they ruled out the
+  host, power save and Bluetooth but could not rule out the room.
+* "Recovers with rest" rested on two sequences, both run under that condition.
+* The decay was real; its cause was misassigned to the radio.
+
+**What is known.**
+* Something external made the Pi 3 defer. Two things changed together: the Pi 3's place and
+  Blue 2. Which one mattered is **confounded and will stay so**: Mohamed will not use Blue 2.
+* It touched the Pi 3 and not the Pi 4s, which points to proximity or to a difference in how
+  the two chips sense the channel.
+* A deferring sender loses nothing, so the background windows (0.09 % in both sessions) could not
+  see it. Only W1d's single-sender rate check could.
+* Rested and alone, the BCM43430 sends a frame every 2.20–2.37 ms, against the standard's 2.22 ms
+  and the BCM4345's 1.95 ms.
+
+**What it changes.**
+* The Pi 3 may be usable after all, but not until the disturbance is identified or excluded. Any
+  session in which it acts would bias contention silently, through a sender that defers rather
+  than loses.
+* Since the cause stays unknown, any further session must watch for it. A single-sender rate
+  check for every board before and after the session would do so; it is the only measurement
+  that sees a deferring sender. Then Q15, with three radios back in play.
+* **The lesson:** a diagnostic that varies only the board's own settings cannot clear the
+  environment. One condition outside the board (here, the room) must also be varied before the
+  cause is placed inside it.

@@ -1,0 +1,13 @@
+Running timer as unit: authbc-revert.timer
+Will run service as unit: authbc-revert.service
+Running timer as unit: authbc-reboot.timer
+Will run service as unit: authbc-reboot.service
+[2026-11-05T12:48:54+02:00] deadmen armed: revert 690 s, reboot 990 s | node=2 nodes=1,2,3 freq=2462 windows=9 plan=plan_s0.txt sha=b8d3dfd65d66
+[2026-11-05T12:48:54+02:00] governor: performance -> performance; throttled 0x0
+[2026-11-05T12:49:11+02:00] type:  	type IBSS 	channel 11 (2462 MHz), width: 20 MHz, center1: 2462 MHz 
+[2026-11-05T12:49:14+02:00] peer 10.0.0.1 UNREACHABLE
+[2026-11-05T12:49:16+02:00] peer 10.0.0.3 reachable
+[2026-11-05T12:49:16+02:00] the cell did not form with every node at 2462 MHz; reverting early
+[2026-11-05T12:49:16+02:00] revert: starting
+[2026-11-05T12:49:28+02:00] revert: finished, wlan0 = inet 192.168.1.20
+[2026-11-05T12:49:33+02:00] reverted OK, both deadmen disarmed
