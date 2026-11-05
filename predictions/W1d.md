@@ -137,3 +137,73 @@ At 2 Mb/s it would be 1 388 µs, and less at higher rates.
   0.25 %, inside the band, one window. **It is not scored and not pooled with S1.**
 * W1c's predictions, its 802.11b model (F119) and the overload arithmetic were all known.
 * Nothing else has been run at 2.4 GHz since F35 (August).
+
+---
+
+## Outcome — added 2026-11-05, after S0; nothing above this line was changed
+
+Registered at `914b7ec` (tag `prereg-W1d`). S0 ran on 2026-11-05, 03:52–04:00, on channel 11.
+`analysis/dsss_three.py --score` (unchanged since) → `results/raw/w1d_s0_2026-11-05.csv`; windows
+`results/hw/channel24/s0_2026-11-05_windows.csv`; the boards' files `results/hw/channel24/s0_2026-11-05/`.
+All nine windows were usable: no frame dropped before the air, no board lost voltage.
+
+| | registered | measured | |
+|---|---|---|---|
+| **W1d-1** rate check, pi-A | 1.9–2.6 ms | 1 946.6 µs (windows 1 950.2, 1 943.0) | held |
+| **W1d-1** rate check, pi-B | 1.9–2.6 ms | 1 945.6 µs (1 945.0, 1 946.2) | held |
+| **W1d-1** rate check, Pi 3 | 1.9–2.6 ms | **4 878.5 µs (4 714.3, 5 042.6)** | **failed** |
+| **W1d-2** background | b ≤ 1 % | 0.091 % (three control windows: 0.05, 0.18, 0.05 %) | held |
+| **W1d-4** the BCM4345 shorter than 2 224 µs | | 1 946.6 and 1 945.6 µs | held |
+| **W1d-3** contention | 12 points | **not run** | — |
+
+**The stop rule ends the campaign.** A board outside the rate band "ends the campaign until a new
+registration". S1 was not run and will not be run under this registration. My expectation (W1d-1
+holds) was wrong.
+
+**Cross-check.** In every rate window the two receivers give the same cycle to 0.1 µs. For window
+04 the Pi 3's own count gives 4 592 µs (4 792 frames in 22.0 s) and the receivers 4 714 µs. The
+receivers' span runs 0.58 s past the sender's end: frames still queued in the radio, which is
+why F74 reads the cycle at the receivers.
+
+**What the Pi 3's failure is.** Three diagnostics ran after S0, disclosed and outside this
+registration (`results/hw/channel24/diag_2026-11-05/pi3/`). In each the Pi 3 was alone in the cell
+on channel 11, offered 600 frames/s of 145 B.
+* **Not the host.** The CPU was 99 % idle and the sender blocked in its socket, waiting for the
+  radio. Every frame sent reached the radio's counter (3 819 of 3 819).
+* **Not power save or Bluetooth.** The chip shares its antenna with Bluetooth. Four runs:
+  power save on (254 frames/s), off (219), off with Bluetooth blocked (209), on again (202). The
+  last run had the first one's settings and was the slowest.
+* **A limit in the radio that tightens with sending and relaxes with rest.** After nine minutes
+  idle, eight runs of 10 s back to back gave 266, 232, 216, 208, 197, 193, 190 and 183 frames/s
+  (a cycle of 3.76 rising to 5.46 ms). The SoC was never throttled (`get_throttled` 0x0) and
+  warmed only from 43.5 to 47.2 °C. From outside the closed firmware one cannot tell whether the
+  radio throttles on its own temperature or on a budget of transmit time.
+* **Not a slower rate.** 802.11b has no rate below 1 Mb/s, at which this frame takes 1 864 µs.
+  The receivers counted no duplicates.
+
+Even rested, the BCM43430 sends a frame every 3.76 ms where the standard's rule takes 2.22 ms. It
+is not a station of the model. Its limit changes with time and would act at the contention rates
+too, in a way that no frame-level record here could show (next paragraph).
+
+**The sniffers recorded nothing.** Both Blues ran `run_sniffer.sh` through S0 and captured 0
+frames on channel 11, while the Pis sent 58 668. Two checks followed on Blue 1, each
+10 s on channel 1, where the router beacons at −69 dBm (`results/hw/channel24/diag_2026-11-05/blue1/`):
+* `wlan0` itself set to monitor: 0 frames;
+* a monitor interface beside a connected `wlan0`: 0 frames.
+
+The TI driver lets a monitor interface be created, but on this kernel and firmware it delivers
+no frame. The Pi 4's stock driver offers no monitor mode at all, so no board in the kit can see
+single frames. The sniffer was reported, not scored; nothing scored changes.
+
+**What holds, and is new.**
+* **Channel 11 is quiet:** 0.09 % background.
+* **The Pi 4's spacing is short of the standard again, now at 2.4 GHz and 1 Mb/s.** The gap
+  between frames is 82 µs (1 946 − 1 864), against a mean of 360 µs under the standard (DIFS
+  50 µs plus 15.5 slots of 20 µs). This is a second band for G27.
+* **Reported, not scored:** saturated alone, each Pi 4 lost 0.70–0.81 % of its frames at the
+  other two boards. At 50 frames/s the loss was 0.05–0.18 %. W2 lists the same symptom at 5 GHz
+  ("one sender losing 0.5–0.9 % alone").
+
+**What it changes.** Three ad-hoc radios became two of one chip. The contention model can still
+be tested at 802.11b with the Pi 4 pair (N = 2, W1c's registered rows), but only under a new
+registration. What to run next is Mohamed's decision (`docs/OPEN_ITEMS.md`, Q15). F121.

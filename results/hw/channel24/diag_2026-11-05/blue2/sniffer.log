@@ -1,0 +1,12 @@
+Running timer as unit: authbc-sniff-revert.timer
+Will run service as unit: authbc-sniff-revert.service
+[2026-11-05T03:52:08+02:00] deadman armed: revert 690 s | channel=11 windows=9 plan=plan_s0.txt sha=b8d3dfd65d66
+[2026-11-05T03:52:10+02:00] monitor: 	type monitor 	channel 11 (2462 MHz), width: 20 MHz (no HT), center1: 2462 MHz 
+tcpdump: listening on mon0, link-type IEEE802_11_RADIO (802.11 plus radiotap header), snapshot length 160 bytes
+0 packets captured
+0 packets received by filter
+0 packets dropped by kernel
+[2026-11-05T03:59:58+02:00] capture done: 24 bytes
+reading from file /home/bbb2/authbc_sniff/sniff_bbb2_1793843608.pcap, link-type IEEE802_11_RADIO (802.11 plus radiotap header), snapshot length 160
+[2026-11-05T03:59:58+02:00] decoded: 0 lines
+[2026-11-05T04:00:15+02:00] reverted OK: back on the home Wi-Fi, deadman disarmed

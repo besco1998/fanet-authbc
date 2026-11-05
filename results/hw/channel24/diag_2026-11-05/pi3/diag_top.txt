@@ -1,0 +1,8 @@
+top - 04:03:46 up  1:35,  0 user,  load average: 0.07, 0.04, 0.00
+Tasks:   1 total,   0 running,   1 sleeping,   0 stopped,   0 zombie
+%Cpu(s):  0.0 us, 20.0 sy,  0.0 ni, 60.0 id, 20.0 wa,  0.0 hi,  0.0 si,  0.0 st 
+MiB Mem :    906.0 total,    440.1 free,    142.3 used,    380.0 buff/cache     
+MiB Swap:    512.0 total,    512.0 free,      0.0 used.    763.7 avail Mem 
+
+    PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND
+   1864 pi-c      20   0   18784  11280   5632 S   0.0   1.2   0:00.24 python3

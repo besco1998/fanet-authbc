@@ -1,0 +1,20 @@
+# python=3.12.3
+# platform=Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=w1d_windows
+# config_hash=e42b85cc63f16cc8
+window,label,senders,rate_fps,power_ok,sent,received_mean,loss,cycle_us
+00_R1_600fps,R1,1,600.0,True,11529,11442,0.007546,1950.2
+01_R1_600fps,R1,1,600.0,True,11593,11510,0.007159,1943.0
+02_R2_600fps,R2,2,600.0,True,11480,11387.5,0.008057,1945.0
+03_R2_600fps,R2,2,600.0,True,11455,11374.5,0.007027,1946.2
+04_R3_600fps,R3,3,600.0,True,4792,4786,0.001252,4714.3
+05_R3_600fps,R3,3,600.0,True,4519,4510.5,0.001881,5042.6
+06_B1_50fps,B1,1,50.0,True,1100,1099.5,0.000455,
+07_B2_50fps,B2,2,50.0,True,1100,1098,0.001818,
+08_B3_50fps,B3,3,50.0,True,1100,1099.5,0.000455,

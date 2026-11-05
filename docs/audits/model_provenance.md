@@ -5003,3 +5003,49 @@ In overload a queue's discard policy decides delivery (F119).
   `predictions/W1d.md`).
 * The capacity ratio on hardware needs a fourth ad-hoc-capable station: a Blue injecting
   ad-hoc-format frames in monitor mode (to be probed) or a purchase.
+
+## F121 — W1d stopped at its rate check: the Pi 3's radio throttles its own sending, and no board in the kit can capture frames (2026-11-05)
+
+`predictions/W1d.md` (tag `prereg-W1d`, `914b7ec`), S0 on channel 11, nine usable windows.
+* **Held:**
+  * background 0.091 % (W1d-2);
+  * both Pi 4 at 1 Mb/s with a cycle of 1 946 µs (W1d-1);
+  * shorter than the standard's 2 224 µs (W1d-4).
+* **Failed: the Pi 3's cycle, 4 714 and 5 043 µs** in the two rate windows, outside 1.9–2.6 ms.
+  The registered stop rule ends the campaign; S1 was not run.
+
+**The Pi 3 (BCM43430/1, firmware 7.45.98).** Three diagnostics after S0, disclosed, with the Pi 3
+alone in the cell (`results/hw/channel24/diag_2026-11-05/pi3/`):
+* The CPU was 99 % idle while the sender fell behind; every frame reached the radio's counter.
+* Power save and Bluetooth do not set the rate: 254 / 219 / 209 / 202 frames/s with power save
+  on / off / off with Bluetooth blocked / on again.
+* **The rate falls with continuous sending and recovers with rest:** 266 → 183 frames/s over
+  eight 10 s runs after nine idle minutes, with no SoC throttling.
+
+The limit is inside the radio. Thermal or a transmit-time budget, the closed firmware does not
+say. Even rested, it sends at 3.76 ms a frame against the standard's 2.22 ms, so it is not a
+station of the model.
+
+**No frame-level capture is possible with this kit.**
+* The Blues' monitor interfaces delivered 0 frames in three set-ups:
+  * through S0 on channel 11, while 58 668 frames were sent;
+  * `wlan0` as monitor on channel 1;
+  * a monitor interface beside a connected `wlan0` on channel 1, where the router beacons at
+    −69 dBm.
+* The Pi 4's stock driver offers no monitor mode.
+
+W2's option (a), a frame-level record, needs a radio this kit does not have.
+F120's probe of a Blue injecting ad-hoc-format frames was not run. A monitor interface
+that receives nothing gives little hope that one transmits, but that is untested.
+
+**What holds and is new.** The BCM4345 at 2.4 GHz leaves 82 µs between frames (1 946 − 1 864 µs
+on air), against the standard's mean of 360 µs: short of the standard as at 5 GHz (F74), a
+second band for G27. Saturated alone, each Pi 4 lost 0.70–0.81 % of its frames at the receivers;
+at 50 frames/s, 0.05–0.18 %. That is W2's "one sender losing 0.5–0.9 % alone", recurring at
+2.4 GHz.
+
+**What it changes.**
+* The only ad-hoc radios that keep 1 Mb/s at the standard's pace or faster are the two Pi 4. A
+  hardware test of the contention model at 802.11b is now N = 2 with one chip.
+* The capacity ratio, and N ≥ 3, need other radios.
+* The choice is Mohamed's (`docs/OPEN_ITEMS.md`, Q15).

@@ -12,6 +12,43 @@ where the durable record lives. If you want the conclusion only, follow the poin
 
 ---
 
+# 2026-11-05, night — the boards, W1d's S0, and a stop
+
+**Asked:** set up the boards; "use a channel that does not overlap my home Wi-Fi after
+surveying"; then "continue" (run the 3-radio campaign).
+
+**The boards.**
+* Both Blues' factory hotspot broke iwd's scans, and their saved network had the wrong SSID
+  case. Both were fixed; the hotspot is disabled with Mohamed's approval.
+* The Blues proved to have no ad-hoc mode (F120), so W1c gave way to W1d: three radios on
+  channel 11.
+* A one-window probe of the kit was clean and is disclosed in W1d.
+
+**S0 ran and stopped the campaign.** The Pi 3 failed the rate check: 4.7–5.0 ms where 1.9–2.6
+was required. The registered stop rule applies, so S1 was not run. Diagnostics then ruled out,
+in turn:
+1. the CPU (idle while the sender fell behind);
+2. power save and Bluetooth (an A/B run, whose last repeat was the slowest);
+3. what was left: a limit inside the radio that tightens with sending and relaxes with rest.
+   Predicted before the run that if it were heat-like, a rested board would start near 250/s
+   and decay; it started at 266/s and fell to 183/s.
+
+**What failed, and the lesson.**
+* **The sniffer was never tested against a known source before the session.** Both Blues
+  captured 0 frames through S0. Two later checks against the router's beacons on channel 1 also
+  gave 0. It cost nothing scored, because the sniffer was "reported, not scored", but a kit part
+  is not ready until it has seen a frame it must see.
+* A diagnostic on a Blue had no deadman, and its Wi-Fi took about six minutes to come back. Every
+  board job now gets one.
+* Twice a cleanup pattern (`rm -f diag*`) deleted the diagnostic script it was meant to keep.
+  Each time this was caught by the launch failing.
+* Launching with `cd && nohup … &` over ssh hung the ssh (the known trap). `systemd-run` returns
+  at once.
+
+**Record:** `predictions/W1d.md` outcome, F121, `results/hw/channel24/`, Q15.
+
+---
+
 # 2026-11-04/05 — the desk work on the main weaknesses, and a hardware list corrected
 
 **Asked:** "treat the problems in our work as the main opened items … for now do the desk work",
