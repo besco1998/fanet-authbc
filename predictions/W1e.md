@@ -119,3 +119,71 @@ The model knows nothing of chips, so a mixed pair carries the Pi 4 pair's predic
   * the background (0.09 %);
   * the one-sender saturated loss (0.70–0.81 %).
 * **No contention window of W1d's S1 has ever been run on these boards.**
+
+---
+
+## Outcome — added 2026-11-05, after the session; nothing above this line was changed
+
+Registered at `2409d36` (tag `prereg-W1e`, pushed 13:31). The session ran 13:34–14:07 on channel 11;
+`analysis/dsss_w1e.py --score` (unchanged since) → `results/raw/w1e_w1e_2026-11-05.csv`, windows
+`results/hw/channel24/w1e_2026-11-05_windows.csv`, files `results/hw/channel24/w1e_2026-11-05/`.
+**All 66 windows were usable**: nothing dropped before the air, no late frame, every sender at its
+rate, no board lost voltage. A re-score is identical, and the one miss was recomputed
+independently from the raw files.
+
+**W1e-1, the bracket: held, so the session is valid.**
+
+| | before | after |
+|---|---|---|
+| pi-A | 1 945.8 µs | 1 945.4 µs |
+| pi-B | 1 944.4 µs | 1 944.5 µs |
+| Pi 3 | 2 292.7 µs | 2 358.2 µs |
+
+**W1e-2, the background: held,** b = 0.174 % over 12 control windows (0.045–0.455 %; standard
+error 0.033 %). It is higher than S0's 0.09 %.
+
+**W1e-3, contention: 11 of 12 held.** Measured loss minus b, against the model:
+
+| group | occupancy 0.50 | 0.70 | 0.85 |
+|---|---|---|---|
+| A–B (Pi 4 + Pi 4) | **0.311 % vs 0.217 % = 1.44× — failed** (band top 1.40×) | 0.524 % = 0.95× | 1.154 % = 0.81× |
+| A–C (Pi 4 + Pi 3) | 0.251 % = 1.16× | 0.617 % = 1.12× | 1.367 % = 0.96× |
+| B–C (Pi 4 + Pi 3) | 0.273 % = 1.26× | 0.642 % = 1.16× | 1.328 % = 0.93× |
+| A–B–C (trio) | 0.577 % vs 0.446 % = 1.29× | 1.339 % vs 1.059 % = 1.26× | 2.540 % vs 2.395 % = 1.06× |
+
+**The one miss, as it is.**
+* A–B at 131 frames/s: its four windows gave 0.398, 0.277, 0.259 and 0.312 % (net). Their mean
+  exceeds the band's top by 0.0075 percentage points, less than the background's own standard
+  error.
+* These were the first contention windows of the session (13:35–13:37), before any of the events
+  below.
+* By the registered rule it is a miss, and it is reported as one.
+
+**My expectations.**
+* "A–B fails low at occupancy 0.85" was **wrong**: 0.81×, inside the band. At 5 GHz the Pi 4 pair
+  gave 0.56× (F73); at 802.11b it does not depart below.
+* "The Pi 3 probably holds the bracket" held.
+* "The trio holds" held.
+
+**A pattern across all twelve points (reported, not scored).**
+* Every group lies above the model at low load (1.16–1.44× at occupancy 0.50) and drifts down to
+  0.81–1.06× at 0.85.
+* W2 lists the same symptom at 5 GHz ("loss above the model at occupancy 0.50").
+* One reading fits what was measured here, but is not tested: a receiver-side loss that grows
+  with the received rate. One saturated sender loses 0.66–0.80 % at the receivers, while 50
+  frames/s loses about 0.17 %. The background is measured at 50 frames/s, so it under-subtracts at
+  higher received rates, and the excess weighs most where contention loss is smallest.
+
+**Disclosed events during the session (Mohamed's, while preparing the next step).** In neither
+period does a window differ from the rest:
+* **A USB Wi-Fi adapter (TP-Link TL-WN722N) was plugged into the PC from about 13:48 to 13:57**
+  (windows 28–46), disconnected under Windows, which scans with it. Controls in that period:
+  0.045–0.273 %. All points there held.
+* **BeagleBone Blue 2, with that adapter, was powered from the PC's USB at about 14:02** (up four
+  minutes at 14:06:09). Its radios were taken down at 14:06:29, before the last rate check.
+  Windows 55–65 overlap. Their control (0.091 %) and rate checks were in range.
+
+**What it means.** The contention model, on which every capacity rests, predicted the loss of real
+radios of two chip families with two and three stations, at a second PHY, with nothing fitted,
+within its bands at 11 of 12 points. The miss is marginal and at the lowest load. The
+consistent excess at low load is a second appearance of W2's open symptom. F123.

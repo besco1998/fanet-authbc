@@ -54,6 +54,15 @@ board's own settings, so they could not clear the room. I placed the cause insid
 two decaying sequences that shared one unknown condition. **Vary one thing outside the board
 before you blame the board.**
 
+**W1e (F123).** Q15 was answered, and the registration was committed, tagged and pushed before the
+session. A first commit had gone in on a failing test, because `pytest | tail` hides the exit code.
+The cause was harmless: the uncommitted W1e tests changed the collected count. Since then, gates
+read exit codes, never pipes. The session ran valid, with 11 of 12 points in band.
+
+While it ran, Mohamed plugged a USB adapter into the PC and then powered a Blue. Both events are
+disclosed with their windows. I could not reach the Blue on the LAN: it was on the PC's USB link,
+and it was Blue 2, not Blue 1. Its radios were quieted over USB before the last rate check.
+
 ---
 
 # 2026-11-04/05 — the desk work on the main weaknesses, and a hardware list corrected

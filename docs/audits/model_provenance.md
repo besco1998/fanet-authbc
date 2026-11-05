@@ -5096,3 +5096,47 @@ with sending and relaxes with rest (thermal or a transmit-time budget)". That wa
 * **The lesson:** a diagnostic that varies only the board's own settings cannot clear the
   environment. One condition outside the board (here, the room) must also be varied before the
   cause is placed inside it.
+
+## F123 — on real radios of two chip families, the contention model holds at 11 of 12 points at 802.11b (W1e; 2026-11-05)
+
+`predictions/W1e.md` (tag `prereg-W1e`, `2409d36`, pushed before the session).
+* **The set-up:** three Raspberry Pis side by side, 10–15 cm apart, on channel 11; two Pi 4
+  (BCM4345/6) and a Pi 3 (BCM43430/1); W1d's sixty contention and control windows between one rate
+  check per board before and one after.
+* **Valid session:** all six rate checks in band.
+  * Pi 4s: 1 944–1 946 µs.
+  * Pi 3: 2 293 and 2 358 µs.
+  * Background: 0.174 %.
+* **All 66 windows usable.**
+
+| group | occupancy 0.50 | 0.70 | 0.85 |
+|---|---|---|---|
+| A–B (Pi 4 + Pi 4) | **1.44× (failed; band to 1.40×)** | 0.95× | 0.81× |
+| A–C (Pi 4 + Pi 3) | 1.16× | 1.12× | 0.96× |
+| B–C (Pi 4 + Pi 3) | 1.26× | 1.16× | 0.93× |
+| A–B–C | 1.29× | 1.26× | 1.06× |
+
+Measured loss minus background, against W1c's registered model rows, with nothing fitted.
+
+* **The miss.** Over the band's top by 0.0075 percentage points, less than the background's
+  standard error (0.033). These were the session's first windows. It is reported as a miss.
+* **Expectation wrong.** I expected the Pi 4 pair to fall below the band at high load, as at 5 GHz
+  (F73: 0.56×). It gave 0.81×, inside. The own-queue departure of F73/F115 does not show at
+  802.11b.
+* **Pattern, reported, not scored.** Every group sits above the model at low load and drifts
+  down with load: 1.16–1.44× at 0.50, 0.81–1.06× at 0.85. This is W2's symptom ("loss above the
+  model at occupancy 0.50") at a second band.
+  * Untested reading: a receiver-side loss that grows with the received rate. One saturated sender
+    loses 0.66–0.80 % at the receivers against about 0.17 % at 50 frames/s. A background measured
+    at 50 frames/s under-subtracts it.
+* **Disclosed events during the session.** A USB adapter was plugged into the PC (windows 28–46)
+  and Blue 2 was powered (windows 55–65). Nothing in those windows differs from the rest.
+
+**What it changes.**
+* W1's hardware support is no longer two radios of one chip at one band. The contention model,
+  on which every capacity rests, now has a registered test on three radios of two chip families at
+  802.11b: 11 of 12 points inside bands set in advance.
+* The capacity ratio still needs a fourth station (F120). The TP-Link on a Blue is the candidate:
+  its community driver offers ad-hoc mode, to be verified.
+* W2's low-load excess is now a two-band, two-chip pattern. Its reading needs the background
+  measured at the contention rates, not at 50 frames/s.

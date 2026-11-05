@@ -1,0 +1,1 @@
+{"received_unique": 1098, "duplicates": 0, "min_seq": 0, "max_seq": 1099, "span_s": 21.976796486997046, "rcvbuf_bytes": 425984, "self": "10.0.0.1", "by_source": {"10.0.0.3": {"received_unique": 1098, "duplicates": 0, "min_seq": 0, "max_seq": 1099, "span_s": 21.976796486997046}}}
