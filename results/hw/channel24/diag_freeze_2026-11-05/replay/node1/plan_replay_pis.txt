@@ -1,0 +1,8 @@
+# nodes: 1,2
+# diagnosis (not a measurement): probe 3 replayed for Blue 2's freeze (F125); the two idle windows keep the Pis in the cell while Blue 2 leaves it, as at 17:38
+F4 1000 145 4
+F4 1000 145 4
+B4 50 145 4
+R1 600 145 1
+I0 0 145 0
+I0 0 145 0

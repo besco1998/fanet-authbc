@@ -5199,6 +5199,11 @@ disclosed and not scored (`results/hw/channel24/probe4_2026-11-05/`, `probe4b_�
 
 ## F125 — with the community driver and its rate fixed at 1 Mb/s, the TP-Link paces like a Pi 4; the Blue froze when the adapter left ad-hoc mode (2026-11-05)
 
+> ⚠️ **CORRECTED the same evening (F126): Blue 2 did not freeze in its revert.** The revert
+> completed (back on the home Wi-Fi, DHCP and NTP at 17:38:00.448), and then the board **reset**
+> within about 30 s. The iwd start-up race then kept it off the LAN for about 77 minutes. The
+> lines below about a freeze are kept as written; read F126 for what happened.
+
 Probe 3 of the TP-Link as node 4 was disclosed and not scored
 (`results/hw/channel24/probe4c_2026-11-05/`). It ran the community driver (aircrack-ng/rtl8188eus
 `af3bf004`), built on Blue 2 with Mohamed's approval ("do it").
@@ -5260,3 +5265,75 @@ Probe 3 of the TP-Link as node 4 was disclosed and not scored
   where the board froze. The freeze is to be root-caused (Law 3) before any registration counts on
   this station.
 * The probe cost no registered measurement.
+
+## F126 — Blue 2 did not freeze after probe 3: it reset seconds after its revert succeeded, most likely from its power supply. ⚠️ F125's "froze in the revert" is CORRECTED (2026-11-05)
+
+Mohamed: "intensively find why". The diagnosis was run with his approval of a hardware watchdog
+(30 s) and reboot on panic. Every step was disclosed and nothing was measured
+(`results/hw/channel24/diag_freeze_2026-11-05/`).
+
+**What happened at 17:38.**
+* **The revert ran to the end.** Probe 3's boot (`8fe1d97c`) logs the Blue's own radio
+  associating with the router at 17:37:59.9, DHCP at 17:38:00.16, and **the time server reached
+  at 17:38:00.448**. That is its last entry: no shutdown and no kernel message follow.
+* **A new boot (`bae4c597`) then starts from zero.** Its clock was restored from the last saved
+  time, 17:38:00.
+* **Probe 3's lost 177 bytes date the reset.** Their file size reached the card but their text
+  did not, so the reset fell between about 17:37:58 and 17:38:27.
+* **In that boot, iwd met the radio before its interface existed.** It logged "No default
+  interface for wiphy 1" at 59.6 s, while the interface appeared at 59.8 s. So the board ran
+  about 77 minutes off the LAN, with 730 journal entries and no fault logged.
+* That is the race fixed in F125. I read the cut-off journal file as a freeze; it was a reset
+  followed by a stranded boot.
+
+**Why power is the leading suspect, and what is not known.**
+* At the time, nothing in software could reboot the board. The hardware watchdog was inactive,
+  `kernel.panic` was 0 (a panic hangs and does not reboot), and no shutdown was logged. **An
+  abrupt reset is a hardware event**, and the supply is the first candidate.
+* **Now Blue 2 runs from micro-USB power only, the PC's.** The TPS65217 status register reads
+  0x84: USB input present (bit 2), 12 V input absent (bit 3), bits as in
+  `include/linux/mfd/tps65217.h`. The ADC channels I take to be the battery and the jack read 0;
+  that mapping is not verified.
+* **What powered it during probe 3 is not known: Mohamed's "official supply".** Boot `b42c1d3a`
+  ran without a break from 07:52 to 15:36, across his change to that supply. A swap of one
+  micro-USB supply for another would have cut the power, so the barrel jack (12 V), plugged in
+  while the PC's USB was still connected, is more likely. **To be confirmed by Mohamed.**
+* **The TP-Link's USB port lost its 5 V twice:** `VBUS_ERROR … <AValid`, in 2 of the 18 readable
+  boots. Both came while cables were being changed: at 14:39:38, around the change to the official
+  supply, and at 19:03:06, during the restarts before the PC was connected; that time the TP-Link
+  enumerated only 4½ minutes after boot. They may be plug-in transients rather than a weak supply.
+* **On the PC's USB, about 14 exits from ad-hoc mode gave no reset, no freeze and no VBUS
+  error**, each one read by its boot ID:
+  * tests 1–2 (Blue alone);
+  * replay 1 (probe 3's plan, the Pis present, 3 s between steps);
+  * a 10-cycle loop (back to back, the TP-Link alone);
+  * **replay 2, faithful to probe 3:** fresh boot, the TP-Link joining the Pis' cell, the same
+    pace (516.9 against 516.6 frames/s), the exit back to back in 2.3 s.
+* **Not shown:** a reset reproduced under probe 3's supply, or any supply voltage measured. The
+  cause of the reset is open; power is the leading suspect, not a finding.
+
+**Found on the way.**
+* **The driver's join-or-create rule** (`rtw_do_join`, `core/rtw_ioctl_set.c`, l. 99–151) decides
+  from its list of earlier scan results, not from what is on the air:
+  * an empty list (a fresh boot) makes it scan, then join the cell found;
+  * a non-empty list makes it pick from the stale list, and with no match it **creates** a cell
+    without scanning.
+
+  So after any earlier ad-hoc use, the TP-Link may found its own cell (BSSID `02:11:87:…`) and
+  the Pis merge into it (replay 1). The driver ignores a BSSID given to `iw ibss join`. A session
+  must start it from a fresh boot, or log the BSSID it joined.
+* **A driver defect on the creator path.** `rtw_cfg80211_ibss_indicate_connect` reads the channel
+  (l. 964) before it fills in the network it created (l. 979). On the first cell created after a
+  boot it reports channel 0, and cfg80211 rejects it with `WARN_ON(!channel)` (`net/wireless/ibss.c`,
+  l. 69, v5.10.168). Seen once, in test 1; harmless to traffic.
+* **Alone in its own cell, the TP-Link was not paced.** It accepted 1 000 frames/s with
+  `rate_ctl` fixed at 1 Mb/s, so its frames were not going out at 1 Mb/s, or not at all. With
+  peers present it paced at 1 Mb/s every time. Unexplained; it matters only for a cell with no
+  other station.
+
+**What it changes.**
+* F125's conclusion that the TP-Link cannot yet run a session rested on a freeze in the revert,
+  which did not happen. **Remaining before any registration counts on the TP-Link: one
+  unexplained reset.** The next steps are to learn probe 3's supply from Mohamed, then try to
+  reproduce the reset under it, with the boot ID read after every exit.
+* Blue 2 now has a hardware watchdog (30 s) and reboot on panic. A hang no longer lasts.

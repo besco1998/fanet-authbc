@@ -100,6 +100,27 @@ there, each caught:
 **Lesson:** a board with no running watchdog and a fresh out-of-tree driver needs a way back that
 does not depend on its network. Here, that was the USB serial console.
 
+**Night: the "freeze" was a reset (F126).** Mohamed: "intensively find why". Five tests on Blue 2
+(two alone, a 10-cycle loop, two replays of probe 3 with the Pis) never froze it. Then, reading
+every boot's journal, I found a boot nobody had known about (`bae4c597`). Probe 3's boot ends at
+17:38:00.448 with the revert complete, on the home Wi-Fi with time synced, and then the board
+restarted. Its 77 minutes off the LAN were the iwd race.
+
+What went wrong in my method, each caught:
+1. **I read "the journal is cut off" as "it froze".** A cut-off journal only says that the
+   power or the CPU stopped; listing the boots says which.
+2. **`journalctl -k` searches only the current boot.** My first "no VBUS errors anywhere" covered
+   one boot of 18.
+3. **Replay 1 was not faithful.** The driver joins or creates according to its stale scan list,
+   so the TP-Link founded its own cell. The BSSID in the log showed it; replay 2 started from a
+   fresh boot.
+4. **I first wrote the power story too firmly.** I said probe 3 ran on micro-USB, but the boot
+   that spanned the change to the "official supply" never restarted, which points to the 12 V
+   jack. The finding now says it is not known, and asks.
+
+**Lesson:** before naming a failure (freeze, hang, crash), list the boots. The board's own records
+tell a reset from a hang.
+
 ---
 
 # 2026-11-04/05 — the desk work on the main weaknesses, and a hardware list corrected

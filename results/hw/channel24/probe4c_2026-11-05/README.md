@@ -79,6 +79,10 @@ driver joined the cell but broadcast at least 3.9× faster per frame than the Pi
 
 ## Blue 2 froze after the windows, in its revert (F125)
 
+> ⚠️ **Corrected (F126, `../diag_freeze_2026-11-05/`): it did not freeze.** The revert succeeded
+> (radio reconnected, DHCP, NTP at 17:38:00.448), and the board reset seconds later. The iwd race
+> then kept it off the LAN. The text below is kept as written that afternoon.
+
 * `probe.log` ends in **177 zero bytes**. That equals exactly the three lines written after
   window 03:
   * window 03's receive summary with a five-digit count (58 bytes);

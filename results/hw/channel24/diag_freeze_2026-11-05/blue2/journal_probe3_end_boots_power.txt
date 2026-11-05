@@ -1,0 +1,80 @@
+Nov 05 17:37:59.078864 bbb2 iwd[1061]:                         0-7
+Nov 05 17:37:59.078864 bbb2 iwd[1061]:         Ciphers: CCMP-128 TKIP
+Nov 05 17:37:59.078864 bbb2 iwd[1061]:         Supported iftypes: station ap p2p-client p2p-go p2p-device
+Nov 05 17:37:59.078864 bbb2 iwd[1061]:         Driver Flags: DefaultInterface
+Nov 05 17:37:59.078864 bbb2 iwd[1061]: Wiphy phy1 will only use the default interface
+Nov 05 17:37:59.127905 bbb2 kernel: wlcore: down
+Nov 05 17:37:59.112171 bbb2 systemd-networkd[433]: wlan0: Link DOWN
+Nov 05 17:37:59.133563 bbb2 iwd[1061]: Wiphy: 0, Name: phy0
+Nov 05 17:37:59.133563 bbb2 iwd[1061]:         Permanent Address: d0:37:45:2b:23:b0
+Nov 05 17:37:59.133563 bbb2 iwd[1061]:         2.4GHz Band:
+Nov 05 17:37:59.133563 bbb2 iwd[1061]:                 Bitrates (non-HT):
+Nov 05 17:37:59.133563 bbb2 iwd[1061]:                          1.0 Mbps
+Nov 05 17:37:59.133563 bbb2 iwd[1061]:                          2.0 Mbps
+Nov 05 17:37:59.133563 bbb2 iwd[1061]:                          5.5 Mbps
+Nov 05 17:37:59.133563 bbb2 iwd[1061]:                         11.0 Mbps
+Nov 05 17:37:59.133563 bbb2 iwd[1061]:                          6.0 Mbps
+Nov 05 17:37:59.133563 bbb2 iwd[1061]:                          9.0 Mbps
+Nov 05 17:37:59.133563 bbb2 iwd[1061]:                         12.0 Mbps
+Nov 05 17:37:59.133563 bbb2 iwd[1061]:                         18.0 Mbps
+Nov 05 17:37:59.133563 bbb2 iwd[1061]:                         24.0 Mbps
+Nov 05 17:37:59.133563 bbb2 iwd[1061]:                         36.0 Mbps
+Nov 05 17:37:59.133563 bbb2 iwd[1061]:                         48.0 Mbps
+Nov 05 17:37:59.133563 bbb2 iwd[1061]:                         54.0 Mbps
+Nov 05 17:37:59.133563 bbb2 iwd[1061]:                 HT Capabilities:
+Nov 05 17:37:59.133563 bbb2 iwd[1061]:                         HT40
+Nov 05 17:37:59.133563 bbb2 iwd[1061]:                         Short GI for 20Mhz
+Nov 05 17:37:59.133563 bbb2 iwd[1061]:                         Short GI for 40Mhz
+Nov 05 17:37:59.133563 bbb2 iwd[1061]:                 HT RX MCS indexes:
+Nov 05 17:37:59.133563 bbb2 iwd[1061]:                         0-7
+Nov 05 17:37:59.133563 bbb2 iwd[1061]:                 VHT Capabilities:
+Nov 05 17:37:59.133563 bbb2 iwd[1061]:                         Max RX MCS: 0-9 for NSS: 8
+Nov 05 17:37:59.133563 bbb2 iwd[1061]:                         Max TX MCS: 0-9 for NSS: 8
+Nov 05 17:37:59.133563 bbb2 iwd[1061]:         Ciphers: CCMP-128 TKIP
+Nov 05 17:37:59.133563 bbb2 iwd[1061]:         Supported iftypes: ad-hoc station ap p2p-client p2p-go
+Nov 05 17:37:59.133563 bbb2 iwd[1061]: Wiphy phy0 will only use the default interface
+Nov 05 17:37:59.133563 bbb2 iwd[1061]: No default interface for wiphy 0
+Nov 05 17:37:59.614671 bbb2 kernel: wlcore: PHY firmware version: Rev 8.2.0.0.243
+Nov 05 17:37:59.694667 bbb2 kernel: wlcore: firmware booted (Rev 8.9.0.0.83)
+Nov 05 17:37:59.746017 bbb2 systemd-networkd[433]: wlan0: Link UP
+Nov 05 17:37:59.757858 bbb2 iwd[1061]: event: state, old: disconnected, new: autoconnect_quick
+Nov 05 17:37:59.884309 bbb2 iwd[1061]: event: connect-info, ssid: Zhone_BAF5, bss: 62:02:71:a0:ba:f6, signal: -79, load: 15/255
+Nov 05 17:37:59.885649 bbb2 iwd[1061]: event: state, old: autoconnect_quick, new: connecting (auto)
+Nov 05 17:37:59.894718 bbb2 kernel: wlan0: authenticate with 62:02:71:a0:ba:f6
+Nov 05 17:37:59.914702 bbb2 kernel: wlan0: send auth to 62:02:71:a0:ba:f6 (try 1/3)
+Nov 05 17:37:59.938693 bbb2 kernel: wlan0: authenticated
+Nov 05 17:37:59.946635 bbb2 kernel: wlan0: associate with 62:02:71:a0:ba:f6 (try 1/3)
+Nov 05 17:37:59.958783 bbb2 kernel: wlan0: RX AssocResp from 62:02:71:a0:ba:f6 (capab=0x411 status=0 aid=6)
+Nov 05 17:38:00.007248 bbb2 kernel: wlan0: associated
+Nov 05 17:38:00.015679 bbb2 systemd-networkd[433]: wlan0: Connected WiFi access point: Zhone_BAF5 (62:02:71:a0:ba:f6)
+Nov 05 17:38:00.074137 bbb2 iwd[1061]: hardware_rekey not supported
+Nov 05 17:38:00.086813 bbb2 kernel: wlcore: Association completed.
+Nov 05 17:38:00.090174 bbb2 iwd[1061]: event: state, old: connecting (auto), new: connected
+Nov 05 17:38:00.103625 bbb2 kernel: IPv6: ADDRCONF(NETDEV_CHANGE): wlan0: link becomes ready
+Nov 05 17:38:00.106025 bbb2 systemd-networkd[433]: wlan0: Gained carrier
+Nov 05 17:38:00.159657 bbb2 systemd-networkd[433]: wlan0: DHCPv4 address 192.168.1.24/24, gateway 192.168.1.1 acquired from 192.168.1.1
+Nov 05 17:38:00.164828 bbb2 avahi-daemon[509]: Joining mDNS multicast group on interface wlan0.IPv4 with address 192.168.1.24.
+Nov 05 17:38:00.170714 bbb2 avahi-daemon[509]: New relevant interface wlan0.IPv4 for mDNS.
+Nov 05 17:38:00.170955 bbb2 avahi-daemon[509]: Registering new address record for 192.168.1.24 on wlan0.IPv4.
+Nov 05 17:38:00.205608 bbb2 systemd-timesyncd[459]: Network configuration changed, trying to establish connection.
+Nov 05 17:38:00.448177 bbb2 systemd-timesyncd[459]: Contacted time server 196.49.100.58:123 (0.debian.pool.ntp.org).
+====
+-17 3d5f26671dad430f85821ff755ff220c Wed 2024-08-07 20:36:04 EEST Wed 2024-08-07 20:36:18 EEST
+-16 a5392b29933643e695cc66889b9687fa Wed 2024-08-07 20:36:18 EEST Fri 2026-10-09 18:00:43 EEST
+-15 726b2ec4e12e496a931d1d62208e3827 Fri 2026-10-09 18:00:45 EEST Fri 2026-10-09 18:00:56 EEST
+-14 be902508a29f456491437746e701e5af Fri 2026-10-09 18:00:57 EEST Fri 2026-10-09 18:17:01 EEST
+-13 c6ebe1e557f04187b926f5df0ac87696 Fri 2026-10-09 18:18:15 EEST Thu 2026-11-05 03:05:30 EET
+-12 58172862a0254fa9bd6097b8906c3dd0 Thu 2026-11-05 03:05:31 EET  Thu 2026-11-05 03:17:02 EET
+-11 6160d7c1745e4281809cf1d22f731861 Thu 2026-11-05 03:17:47 EET  Thu 2026-11-05 07:17:01 EET
+-10 496f0f13d57f4305bd8660fdc8fdd546 Thu 2026-11-05 07:18:43 EET  Thu 2026-11-05 07:30:01 EET
+ -9 9886965c4be5470cb6ead5cd60417504 Thu 2026-11-05 07:30:10 EET  Thu 2026-11-05 07:44:42 EET
+ -8 b42c1d3a76ab4f7ba423b6b9dfea5350 Thu 2026-11-05 07:52:11 EET  Thu 2026-11-05 15:37:39 EET
+ -7 16c8947eb1f34fffbfe05d10175f62d3 Thu 2026-11-05 15:37:39 EET  Thu 2026-11-05 17:31:59 EET
+ -6 8fe1d97c54974ed6b8215c8fb61aea56 Thu 2026-11-05 17:31:59 EET  Thu 2026-11-05 17:38:00 EET
+ -5 bae4c5970132401a814ba02e4adba0d1 Thu 2026-11-05 17:38:01 EET  Thu 2026-11-05 18:17:01 EET
+ -4 202546a5c0fc446eb1164186e64ba884 Thu 2026-11-05 18:54:59 EET  Thu 2026-11-05 18:55:53 EET
+ -3 06a7b08fdd734bc5a53b442d1e17dbb2 Thu 2026-11-05 18:58:26 EET  Thu 2026-11-05 19:04:11 EET
+ -2 df38cfdd652944ecab1445aa820c58b0 Thu 2026-11-05 19:04:35 EET  Thu 2026-11-05 19:17:37 EET
+ -1 ec6cfe554b104d8494ba873013c32d5e Thu 2026-11-05 19:17:37 EET  Thu 2026-11-05 20:17:09 EET
+  0 f59e97e96e3e4136acede50c360d6f27 Thu 2026-11-05 20:17:09 EET  Thu 2026-11-05 20:30:45 EET
+====
