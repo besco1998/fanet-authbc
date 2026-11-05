@@ -1,0 +1,28 @@
+# 2026-11-05T21:10:44+02:00 boot 8beb5ee8, on the 5 V adapter
+boot 3d5f2667 (first dated line: none): 0
+boot a5392b29 (first dated line: none): 0
+boot 726b2ec4 (first dated line: none): 0
+boot be902508 (first dated line: none): 0
+boot c6ebe1e5 (first dated line: Nov 05 02:25:51): 0
+boot 58172862 (first dated line: Nov 05 03:05:11): 0
+boot 6160d7c1 (first dated line: Nov 05 03:17:47): 0
+boot 496f0f13 (first dated line: Nov 05 07:18:43): 0
+boot 9886965c (first dated line: Nov 05 07:30:10): 0
+boot b42c1d3a (first dated line: Nov 05 07:52:11): 1
+Nov 05 14:39:38.959389 bbb2 kernel: musb-hdrc musb-hdrc.1: VBUS_ERROR in a_wait_bcon (89, <AValid), retry #1, port1 00000104
+boot 16c8947e (first dated line: Nov 05 15:36:04): 0
+boot 8fe1d97c (first dated line: Nov 05 17:31:38): 0
+boot bae4c597 (first dated line: Nov 05 17:38:00): 0
+boot 202546a5 (first dated line: Nov 05 18:54:59): 0
+boot 06a7b08f (first dated line: Nov 05 18:58:26): 1
+Nov 05 19:03:06.895970 bbb2 kernel: musb-hdrc musb-hdrc.1: VBUS_ERROR in a_wait_bcon (89, <AValid), retry #1, port1 00000104
+boot df38cfdd (first dated line: Nov 05 19:04:35): 0
+boot ec6cfe55 (first dated line: Nov 05 19:16:34): 0
+boot f59e97e9 (first dated line: Nov 05 20:15:40): 0
+boot 8beb5ee8 (first dated line: Nov 05 20:51:19): 0
+i2cget: /usr/sbin/i2cget
+STATUS 0x0A raw=0x84
+  ACPWR(bit3)=0 USBPWR(bit2)=1
+PPATH 0x01 raw=0x3f
+  AC_EN=1 USB_EN=1 IAC=3 IUSB=3
+ADC raw: ch5=0 ch6=0

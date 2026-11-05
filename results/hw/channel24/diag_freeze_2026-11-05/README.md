@@ -4,9 +4,9 @@ Mohamed: "intensively find why". He approved a hardware watchdog and reboot on p
 ("Watchdog on, diagnose"). The question was why Blue 2 went off the LAN after probe 3
 (`../probe4c_2026-11-05/`). **Answer: it did not freeze. Its revert succeeded, the board reset
 seconds later, and the iwd start-up race (fixed in F125) kept it off the LAN for about
-77 minutes.** The cause of the reset is open; power is the leading suspect. Probe 3 ran on a
-**5 V micro-USB adapter** (Mohamed). Both VBUS errors fell on that adapter, about 70 s into a
-boot, and nothing similar happened on the PC's USB (F126 addendum).
+77 minutes.** Probe 3 ran on a **5 V micro-USB adapter** (Mohamed). The reset did not recur in
+25 later exits, 11 of them on that adapter, so **its cause is undetermined** (F126, second
+addendum).
 
 ## Evidence (`blue2/`)
 
@@ -33,6 +33,18 @@ boot, and nothing similar happened on the PC's USB (F126 addendum).
 | replay 1 (19:58) | probe 3's plan with both Pis (`replay/`), who stay in the cell during the exit; 3 s between steps. **The TP-Link created its own cell (`02:11:87:…`); not faithful** | `blue2/replay.log`, `blue2/kern.log` |
 | loop (20:03) | 10 cycles: Blue alone, saturated sending for 10 s, probe 3's exit back to back (1.9 s) | `blue2/loop.log`, `blue2/kern_loop.log` |
 | **replay 2 (20:21)** | **faithful:** fresh boot, the TP-Link **joined** the Pis' cell (`be:6c:1c:…`); pace 516.9 frames/s (probe 3: 516.6); exit back to back in 2.3 s; the Pis in the cell | `blue2/replay2.log`, `blue2/kern2.log`, `replay2/` |
+
+### Then on the 5 V adapter (Mohamed reset Blue 2 onto it, about 20:53)
+
+| test | what | file |
+|---|---|---|
+| boot `8beb5ee8` | the TP-Link enumerated at 7.0 s, no VBUS error | `blue2/power_check_adapter.txt` |
+| **replay 3 (20:56)** | as replay 2: joined the Pis' cell (`c2:1f:e7:…`), cycle 1 961.9–1 962.8 µs, exit back to back; no reset | `blue2/adapter_replay3*.log`, `adapter_replay3/` |
+| loop (21:00) | 10 cycles as above; no reset, no VBUS error | `blue2/adapter_loop*.log` |
+
+**Tally: one reset (probe 3) in 26 exits; 1 of 12 on the adapter, 0 of 14 on the PC's USB
+(Fisher p = 0.46). The supply is not shown to be the cause; the cause is undetermined (F126,
+second addendum).**
 
 Scripts: `scripts/`. The launchers are not kept, because they hold the Blue's password. Each test
 was started as a systemd unit on the Blue, and the Pis ran `hw/channel/run_window_plan.sh` with

@@ -5356,3 +5356,34 @@ Mohamed: probe 3 ran on **a 5 V micro-USB adapter** (his "official supply"), not
 * **The supply is now the leading suspect for the reset**: every power anomaly on record fell on
   the 5 V adapter. It is still an association. A reproduction on the adapter, or its voltage
   measured, would make it a finding.
+
+**F126, second addendum (same night): the reset does not reproduce on the 5 V adapter either; its
+cause is undetermined.** Mohamed reset Blue 2 onto the adapter at about 20:53 for the test.
+* **The boot was clean.** The TP-Link enumerated at 7.0 s, with no VBUS error.
+* **Replay 3 was faithful.** A fresh boot; the TP-Link joined the Pis' cell (`c2:1f:e7:…`); its
+  cycle was **1 961.9–1 962.8 µs** (probe 3: 1 963–1 964); the exit ran back to back in 2.3 s.
+  No reset.
+* **The 10-cycle loop gave 10 clean exits.** No reset and no VBUS error; the boot stayed
+  `8beb5ee8` throughout.
+* **Tally: one reset in 26 exits from ad-hoc mode.**
+  * 1 of 12 on the adapter, 0 of 14 on the PC's USB. Fisher's exact test gives p = 0.46, so **the
+    reproduction does not support the supply as the cause.** The addendum above, which made it
+    the leading suspect, went beyond its evidence.
+  * VBUS errors: 2 of about 7 adapter boots, 0 of 3 PC boots; just as weak.
+* **What stands.**
+  * The reset was real and a hardware event (watchdog off, `panic=0`, no shutdown logged).
+  * It is rare: about 4 % of exits, with an interval far too wide to rest a rate on.
+  * It came seconds after the Blue's own radio restarted.
+  * Its cause is undetermined. Measuring the supply voltage during exits (the INA219 rig) is the
+    remaining test that could settle the power question.
+* **Replay 1's slower cycle (2 006–2 011 µs) is not the instrumentation.** Replay 3 carried the
+  same instrumentation and paced as probe 3 did. The remaining difference is that the TP-Link had
+  **created** the cell in replay 1. Its pace as creator is untested; in a session it must join.
+* **What it means for a session with the TP-Link.** The reset has struck only during the exit,
+  after the windows. With the watchdog and the iwd fix, the board now comes back by itself. The
+  safeguards a registration would need:
+  1. Write each window's files to the card (`sync`) before the next window, and before the exit.
+     Probe 3 lost window 03's files for lack of this.
+  2. Log Blue 2's boot ID before and after every window; a window across a change is unusable.
+  3. Start the TP-Link from a fresh boot and log the BSSID it joined. `02:11:87:…` means it
+     created its own cell, which voids the session.
