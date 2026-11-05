@@ -5194,3 +5194,69 @@ disclosed and not scored (`results/hw/channel24/probe4_2026-11-05/`, `probe4b_�
   * The file is compiled in by default (`CONFIG_PROC_DEBUG` in `include/autoconf.h`).
   * Building and loading that driver is external code as root on Blue 2, and so Mohamed's call.
     It is to be verified by a rate probe, as F124's probes were.
+* ⚠️ **Path corrected in F125:** the driver's folder is `/proc/net/8188eu/<iface>/`
+  (`DRV_NAME "8188eu"`, `include/autoconf.h`, l. 28), not `/proc/net/rtl8188eu/`.
+
+## F125 — with the community driver and its rate fixed at 1 Mb/s, the TP-Link paces like a Pi 4; the Blue froze when the adapter left ad-hoc mode (2026-11-05)
+
+Probe 3 of the TP-Link as node 4 was disclosed and not scored
+(`results/hw/channel24/probe4c_2026-11-05/`). It ran the community driver (aircrack-ng/rtl8188eus
+`af3bf004`), built on Blue 2 with Mohamed's approval ("do it").
+
+* **The setting took.** The board read back `FIXED CCK_1M 0x00 0` after `echo "0x00 0" > rate_ctl`.
+* **It reaches the air.**
+  * Offered 1 000 frames/s, the TP-Link's saturated cycle at both Pis, in both windows, was
+    **1 963–1 964 µs** (span over sequence range) and 1 976–1 986 µs (span over frames
+    received). Probe 2 gave 999.7 µs.
+  * Stated before the run: 1.9–2.6 ms if the setting works, about 1.0 ms if not.
+  * The Pi 4s' cycle is 1 945 µs (W1e), so the two chips pace within 1 %. Both are short of the
+    standard's 2 224 µs.
+* **The arithmetic agrees with 1 Mb/s.**
+  * At 1 Mb/s the frame takes 1 864 µs on air, so the shortest possible cycle is 1 914 µs (with
+    DIFS). The measurement leaves about 2.5 slots of backoff on average.
+  * At 2 Mb/s (1 028 µs with the long preamble, 932 µs with the short) the cycle would need
+    44–49 slots of backoff on average, beyond the first attempt's maximum of 31.
+* **It waits rather than drops, like the Pis.**
+  * Offered 22 000 frames, it sent 11 388 (10 918 late).
+  * The driver counted `tx_packets` equal to the frames sent, with **`tx_dropped` 0**.
+  * So the sequence numbers follow the air's pace, and the Pis' gaps (68–130 frames per window)
+    are losses on the air.
+* **Loss, reported and not scored.**
+  * Saturated: 0.6–1.1 % at the Pis. W1e's one-sender saturated loss was 0.66–0.80 %.
+  * At 50 frames/s: pi-A lost 1.55 %, pi-B 0.27 %. Probe 1, with the kernel driver, lost
+    0.27–0.45 %. This is one window, so it is noted, not explained.
+  * **What it received of pi-A (window 03) was lost** with the freeze below. By the byte count
+    alone, the count had five digits.
+* **The Blue froze when the session ended, during its revert, and stayed frozen until restarted.**
+  * Its log lost exactly **177 bytes**. That equals the three lines written after window 03 (the
+    receive summary with a five-digit count, "window 03 done", and
+    `rate_ctl at end: FIXED CCK_1M 0x00 0`). No other sequence fits: a four-digit count gives
+    176, and a reading of `RA` gives 160.
+  * Window 03's files are 0 bytes, stamped 17:37:57.
+  * Neither the revert nor the deadman logged anything.
+  * At 17:52, a scan from pi-A found no ad-hoc beacons on channel 11.
+  * **So it froze while the adapter was being taken out of ad-hoc mode.** Which step froze (rate
+    back to auto, leave the cell, link down, or type change) is not known. The journal of that
+    boot was truncated by the unclean stop and is unreadable.
+  * The board's hardware watchdog is inactive (`watchdog0` inactive, `RuntimeWatchdogSec` off,
+    `kernel.panic` 0), so a freeze lasts until the power is cut.
+* **Two faults kept the Blue off the LAN; both are fixed and verified.**
+  1. **A udev rename lost a boot race.** iwd had the adapter up at 53 s, udev reached it at 59 s,
+     and a link that is up cannot be renamed. So the TP-Link took `wlan0` and the home Wi-Fi.
+     **Fix:** the driver option `ifname=tplink0` names it at registration (`os_intfs.c`, l. 3061);
+     systemd-networkd leaves it unmanaged.
+  2. **iwd's start raced the TI radio.** iwd uses only a radio's default interface. When the radio
+     was registered before its interface, iwd logged "No default interface for wiphy 1" and never
+     connected it. This happened on all four restarts after the freeze.
+     * Restarting iwd with both present connected it at once.
+     * **Fix:** iwd starts after `sys-subsystem-net-devices-wlan0.device`, as `Wants=`, so it
+       still starts if the radio never appears.
+     * **Verified by a reboot:** on the LAN by itself at 19:18:49, connected 59 s after boot.
+
+**What it changes.**
+* **The TP-Link can be the model's station at 1 Mb/s.** This is the first fourth station in the
+  kit, and the capacity ratio on hardware needs one (F120).
+* **It cannot yet run a session.** Every session ends by taking it out of ad-hoc mode, and that is
+  where the board froze. The freeze is to be root-caused (Law 3) before any registration counts on
+  this station.
+* The probe cost no registered measurement.

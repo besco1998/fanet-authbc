@@ -74,6 +74,32 @@ Two probes followed. They showed that the adapter joins and receives, but broadc
 than 1 Mb/s, and that the kernel driver's rate setting does not reach broadcasts. A cycle of
 1 666 µs equal to 1/600 s was the clue: a sender that never saturates shows only its offered rate.
 
+**Evening: the community driver, probe 3, and a freeze (F125).** Mohamed: "do it". The driver was
+built on Blue 2 at a pinned commit and probed. **The TP-Link now saturates at 1 963 µs**, inside
+the band and within 1 % of the Pi 4s, and waits rather than drops. It took five slips to get
+there, each caught:
+1. **A file I said was written was empty.** At 14:40 I reported the Blue's MAC-matched network
+   file as in place. It was empty until 15:37, because `printf … | (echo pw | sudo -S tee …)`
+   made sudo's password and the file's content share one stdin. Root files are now written with
+   `sudo -S sh -c "printf … > file"` and read back.
+2. **A udev rename lost a boot race.** iwd had the adapter up 6 s before udev reached it, and a
+   link that is up cannot be renamed. The adapter took the home Wi-Fi. The driver now names it
+   itself (`ifname=tplink0`).
+3. **I assumed the driver's folder name.** I had read the source for the write format but took
+   the folder as `rtl8188eu`; it is `8188eu`. Read every path from the source too.
+4. **I deployed the Pis' probe folder without `revert_adhoc.sh`.** The reboot deadman recovered
+   both Pis 10 minutes later, at no cost to any window. Launches now check every file the session
+   script calls.
+5. **Blue 2 froze when its revert took the adapter out of ad-hoc mode.** Then, on four restarts,
+   iwd's start raced the Blue's own radio and never connected it, so it looked like one long hang.
+   * Mohamed's USB cable gave a serial console.
+   * The log's lost tail (177 bytes, exactly the three lines after window 03) placed the freeze in
+     the revert.
+   * The iwd race is fixed and verified by a reboot. The freeze itself is not yet explained.
+
+**Lesson:** a board with no running watchdog and a fresh out-of-tree driver needs a way back that
+does not depend on its network. Here, that was the USB serial console.
+
 ---
 
 # 2026-11-04/05 — the desk work on the main weaknesses, and a hardware list corrected
