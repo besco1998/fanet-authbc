@@ -1,0 +1,9 @@
+node 1: kit=[c42010127374 30c333bce0df 2b8ab3d2f89a edf4de1e97f4 ] plan=50f4887e2a3d throttled=0x0 ntp=yes running=0
+node 2: kit=[c42010127374 30c333bce0df 2b8ab3d2f89a edf4de1e97f4 ] plan=50f4887e2a3d throttled=0x0 ntp=yes running=0
+node 3: kit=[c42010127374 30c333bce0df 2b8ab3d2f89a edf4de1e97f4 ] plan=50f4887e2a3d throttled=0x0 ntp=yes running=0
+Blue 2 rebooting at 14:20:23
+Blue 2 ready 14:22:22: boot=9968b40c uptime=105.79s watchdog=active
+node 4: [1e35e61fbcac 2b8ab3d2f89a edf4de1e97f4 50f4887e2a3d]
+node 2: set_txpower_window.sh (bd86ef80c307) started, 800 mBm
+START=1793967873 (14:24:33); 6 windows; last ends about 14:27:33
+boards on the LAN: 3/4 at 14:35:15

@@ -267,3 +267,25 @@ The gate (`dsss_w1h.py --gate`, unchanged):
 
   The scored claim becomes "the ratio under balance at the placement that gave it", which is what
   the gate already selects.
+
+**Placement 1 — Blue 2 at about 120 cm (Mohamed, ~14:20).**
+* **Try 1, 14:24: not a reading.** Node 4's start command was lost on Blue 2's weak link to the
+  router (−91/−92 dBm at this spot). The Pis ran the six windows without it, and Blue 2 then could
+  not re-associate until Mohamed power-cycled it.
+  * The launcher now starts node 4 first and verifies its unit, launching nothing else if it fails.
+  * Its lead is 150 s.
+* **Try 2, 14:45–14:49: preflight NO-GO on balance alone.** Every other check held:
+  * pi-A 1 941.0, pi-B 1 944.5, Pi 3 2 190.7, TP-Link 1 961.9 µs, all channel-limited;
+  * `FIXED CCK_1M`;
+  * pi-B at 8.00 dBm, then auto;
+  * node 4 in `f2:6c:3e:4e:f9:3a` with all Pis reached;
+  * one boot, 6/6 windows;
+  * no under-voltage.
+
+  **G31: spread 1.97×**: pi-A 3.21 %, pi-B 4.99 %, Pi 3 6.34 %, **TP-Link 6.30 %** (1.20 % at
+  90 cm). The TP-Link no longer dominates. The spread is now among the Pis: pi-A against the Pi 3.
+  * At the Pi 3, pi-A's frames are lost 3.80 % (6.11 % in calibration 3), pi-B's 5.55 % (3.47 %).
+  * The Pis' relative strengths changed after this morning's reboots, or with a move; it is not
+    known which.
+* Folders: `results/hw/channel24/w1h_2026-11-06/a2/place120/` (try 1) and
+  `…/a2/place120_try2/`.

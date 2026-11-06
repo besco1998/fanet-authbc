@@ -19,3 +19,8 @@ The first collection of a1 ran a few seconds before the boards finished revertin
 clock stepped during the 28-minute wait. All 52 windows' files were already present. It was
 collected again complete, with every revert and pi-B's return to auto, and the gate is unchanged.
 The tools now time START from a Pi's clock and wait for every board's own revert line.
+
+| attempt | time | Blue 2 boot | preflight | why |
+|---|---|---|---|---|
+| a2, placement 120 cm, try 1 | 14:24 | `9968b40c` | not a reading | node 4's start command lost on Blue 2's weak router link (−91/−92 dBm); the Pis ran alone (launcher fixed: node 4 first, verified) |
+| a2, placement 120 cm, try 2 | 14:45–14:49 | `4c1f728f` | **NO-GO** | balance 1.97×: pi-A 3.21 %, pi-B 4.99 %, Pi 3 6.34 %, TP-Link 6.30 %; all else held |
