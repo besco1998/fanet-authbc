@@ -1,0 +1,1 @@
+as pi3_35cm_in; the W1i rule's step from the pi-A 400 reading: pi-A 600, pi-B auto, Pi 3 1000 mBm (19:17:01)

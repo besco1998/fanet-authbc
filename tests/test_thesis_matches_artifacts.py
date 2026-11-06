@@ -497,7 +497,7 @@ class TestTheWorkedFrame:
 NOT_YET_IN_THE_THESIS = frozenset({"prereg-W4a", "prereg-W1a", "prereg-W1b",
                                    "prereg-W1c", "prereg-W1d", "prereg-W1e",
                                    "prereg-W1f", "prereg-W1g", "prereg-W1h",
-                                   "prereg-W1i"})
+                                   "prereg-W1i", "prereg-W1j"})
 
 
 class TestTheRegistrationsOfAppendixB:

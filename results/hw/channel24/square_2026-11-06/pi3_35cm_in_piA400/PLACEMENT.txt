@@ -1,0 +1,1 @@
+as pi3_35cm_in; exploratory power (not the rule's step): pi-A 400 mBm, pi-B auto, Pi 3 auto (19:08:19)

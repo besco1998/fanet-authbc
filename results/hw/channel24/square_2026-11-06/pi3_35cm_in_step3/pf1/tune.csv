@@ -1,0 +1,26 @@
+# python=3.12.3
+# platform=Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=w1i_tune
+# config_hash=b1494d53bcbbc733
+check,what,group,measured,held,note
+1,rate check,pi-A (BCM4345/6),1942.7,True,
+1,rate check,pi-B (BCM4345/6),1993.3,True,
+1,rate check,Pi 3 (BCM43430/1),2307.8,True,
+2,rate check,TP-Link on Blue 2 (RTL8188EUS),1962.8,True,
+2,rate_ctl at join,TP-Link,FIXED CCK_1M 0x00 0,True,
+3,"held at 6 dBm, then auto",node1 txpower.log,2026-11-06T19:30:06+02:00 set 600: txpower 6.00 dBm | 2026-11-06T19:34:01+02:00 auto: txpower 31.00 dBm,True,
+4,node 4 in the Pis' cell,12:cd:86:6f:e6:42,"reached [1, 2, 3]",True,
+4,"Blue 2 on one boot, every window complete",c2e2ee9a,6/6,True,
+5,no Pi under-voltage,all windows,0,True,
+6,senders within 1.25x,G31,1.464,False,pi-A=6.45% pi-B=6.47% Pi=4.42% TP-Link=6.02%; usable 2/2
+7,"alone, every receiver >= 97 %",pi-A (BCM4345/6),0.9877,True,
+7,"alone, every receiver >= 97 %",pi-B (BCM4345/6),0.9906,True,
+7,"alone, every receiver >= 97 %",Pi 3 (BCM43430/1),0.9979,True,
+7,"alone, every receiver >= 97 %",TP-Link on Blue 2 (RTL8188EUS),0.9882,True,
+tune,ADJUST: node3 down to 1000,"1:600,2:auto,3:1000",,True,

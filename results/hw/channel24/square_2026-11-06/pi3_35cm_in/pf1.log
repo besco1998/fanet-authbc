@@ -1,0 +1,31 @@
+node 1: kit=[c42010127374 30c333bce0df 2b8ab3d2f89a edf4de1e97f4 ] plan=50f4887e2a3d throttled=0x0 ntp=yes running=0
+node 2: kit=[c42010127374 30c333bce0df 2b8ab3d2f89a edf4de1e97f4 ] plan=50f4887e2a3d throttled=0x0 ntp=yes running=0
+node 3: kit=[c42010127374 30c333bce0df 2b8ab3d2f89a edf4de1e97f4 ] plan=50f4887e2a3d throttled=0x0 ntp=yes running=0
+Blue 2 rebooting at 18:51:13
+Blue 2 ready 18:52:36: boot=285bd38f uptime=68.38s watchdog=active
+node 4: [1e35e61fbcac 2b8ab3d2f89a edf4de1e97f4 50f4887e2a3d]
+Running as unit: authbc-preflight.service
+node 4: authbc-preflight active
+START=1793984114 (18:55:14); 6 windows; last ends about 18:58:14
+boards on the LAN: 4/4 at 18:58:49
+boards finished (reverted, pi-B auto): 4/4 at 18:58:56
+node1: 16 files; windows done 6; [2026-11-06T18:58:26+02:00] reverted OK, both deadmen disarmed
+node2: 16 files; windows done 6; [2026-11-06T18:58:24+02:00] reverted OK, both deadmen disarmed
+node3: 16 files; windows done 6; [2026-11-06T18:58:25+02:00] reverted OK, both deadmen disarmed
+node4: 18 files; windows done 6; [2026-11-06T18:58:37+02:00] reverted OK: back on the home Wi-Fi, deadman disarmed
+node 4 join: {"bssid":"62:a1:15:09:57:b0","rate_ctl":"FIXED CCK_1M 0x00 0","boot":"285bd38f","peers_reachable":[1,2,3]}; boot now 285bd38f
+  [1] ok  rate check | pi-A (BCM4345/6) | 1948.2 
+  [1] ok  rate check | pi-B (BCM4345/6) | 2007.8 
+  [1] ok  rate check | Pi 3 (BCM43430/1) | 2225.6 
+  [2] ok  rate check | TP-Link on Blue 2 (RTL8188EUS) | 1962.1 
+  [2] ok  rate_ctl at join | TP-Link | FIXED CCK_1M 0x00 0 
+  [4] ok  node 4 in the Pis' cell | 62:a1:15:09:57:b0 | reached [1, 2, 3] 
+  [4] ok  Blue 2 on one boot, every window complete | 285bd38f | 6/6 
+  [5] ok  no Pi under-voltage | all windows | 0 
+  [6] NO  senders within 1.25x | G31 | 2.219 | pi-A=3.27% pi-B=7.25% Pi=4.57% TP-Link=6.07%; usable 2/2
+  [7] ok  alone, every receiver >= 97 % | pi-A (BCM4345/6) | 0.9896 
+  [7] ok  alone, every receiver >= 97 % | pi-B (BCM4345/6) | 0.9861 
+  [7] ok  alone, every receiver >= 97 % | Pi 3 (BCM43430/1) | 0.9974 
+  [7] ok  alone, every receiver >= 97 % | TP-Link on Blue 2 (RTL8188EUS) | 0.9928 
+  [tune] ok  ADJUST: node1 down to 1000; node3 down to 1000 | 1:1000,2:auto,3:1000 |  
+ADJUST POWERS=1:1000,2:auto,3:1000
