@@ -230,3 +230,24 @@ The gate (`dsss_w1h.py --gate`, unchanged):
 * It is procedural and never scored. The registered gate still decides each attempt.
 * **The Pi 3 is rebooted before attempt 2**, its rate check being out of band. The preflight is its
   ad-hoc session after the boot, as the setup above requires.
+
+**Before attempt 2 — preflight 1, 14:12–14:16: NO-GO on balance alone; attempt 2 not started.**
+* The Pi 3 was rebooted at 14:07; Blue 2 was on boot `eeb200cc`.
+* Folder: `results/hw/channel24/w1h_2026-11-06/a2/preflight1/`.
+
+| check | reading | held |
+|---|---|---|
+| 1 Pis at 1 Mb/s | pi-A 1 941.8, pi-B 1 942.5, Pi 3 2 192.5 µs, all channel-limited | yes |
+| 2 TP-Link | 1 962.3 µs, `FIXED CCK_1M` | yes |
+| 3 pi-B's power | 8.00 dBm (14:11:30), auto (14:15:25) | yes |
+| 4 node 4 | `42:d9:e1:35:09:ab`, all Pis reached, one boot, 6/6 windows | yes |
+| 5 supply | no under-voltage | yes |
+| **6 balance** | **5.35×**: pi-A 2.88 %, pi-B 5.71 %, Pi 3 6.42 %, TP-Link 1.20 % | **no** |
+
+**What the readings show.** Three Blue 2 boots at this placement gave the TP-Link 1.17 % (W1g,
+`17618a71`), 1.17 % (attempt 1, `2f39ecd8`) and 1.20 % (`eeb200cc`). Calibration runs 1–3 gave
+3.19–4.46 %.
+* No sign of a per-boot difference.
+* The geometry now makes the TP-Link stronger than it was in calibration.
+* Further attempts at this placement would fail their gates.
+* Stopped here and reported to Mohamed.

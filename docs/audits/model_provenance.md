@@ -5568,3 +5568,22 @@ and once with 1 000 B of payload. The difference in cycle is the 855 extra bytes
 **Also this morning.** Blue 2 did not rejoin the LAN after one reboot. Its journal, selected by boot
 ID, shows its radio scanning without ever finding the router, at a time it read the router at
 −90/−92 dBm. A power-cycle brought it back (−74, then −69 dBm).
+
+**F129, addendum (2026-11-06, 14:16): the cell's creator sets the rate, not every fresh Pi.**
+* The Pi 3 alone was rebooted (14:07) and ran its first ad-hoc session after the boot in W1h's
+  preflight: **1 Mb/s** (2 192.5 µs, channel-limited). pi-A and pi-B were warm, and the cells
+  are created by pi-A, launched first.
+* In both 6 Mb/s runs (the pilot, t1) all three Pis were fresh.
+* Time since boot does not explain it. The pilot joined at about 3½ minutes of uptime and ran at
+  6 Mb/s; the Pi 3 joined at about 3½ minutes now and ran at 1 Mb/s.
+* **Reading:** a cell created by a Pi in its first ad-hoc session after a boot runs its broadcasts
+  at 6 Mb/s; Pis that join it take its rate. Two cases each way; the mechanism is in the firmware.
+* The preflight's check 1 covers every case.
+
+**F128, a further reading (2026-11-06, 14:16).** At the placement Mohamed restored, three Blue 2
+boots gave the TP-Link's frames 1.17 %, 1.17 % and 1.20 % loss at A31/G31 (W1g, W1h attempt 1,
+W1h preflight). The calibration runs gave 3.19–4.46 %.
+* The TP-Link shows no sign of a per-boot difference.
+* The difference from calibration is in the geometry, of which the displacement found at 08:25 is
+  one known change.
+* When the geometry changed stays unknown (F128 addendum).

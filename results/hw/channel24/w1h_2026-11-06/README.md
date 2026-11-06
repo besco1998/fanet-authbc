@@ -10,6 +10,7 @@ scored nor analysed.
 | attempt | time | Blue 2 boot | gate | why |
 |---|---|---|---|---|
 | a1 | 13:31–13:58 | `2f39ecd8` | **ABORT** | Pi 3 rate check before 2 613.4 µs (band ≤ 2 600); G31 spread 5.23× (TP-Link 1.17 %, the Pis 2.95–6.12 %) |
+| a2, preflight 1 | 14:12–14:16 | `eeb200cc` | **NO-GO** (attempt 2 not started) | balance 5.35× (TP-Link 1.20 %, the Pis 2.88–6.42 %); all else held, the Pi 3 at 2 192.5 µs after its reboot |
 
 A first launch of a1 stopped on my side, before touching any board (a launcher without its execute
 bit). It is not counted as an attempt.
