@@ -221,6 +221,8 @@ class TestTheSenderAndReceiverScripts:
         assert sent["redraw"] is True and 95 <= sent["sent"] <= 100
         assert got["by_source"]["127.0.0.1"]["received_unique"] == sent["sent"]
         assert got["received_unique"] == sent["sent"] and got["duplicates"] == 0
+        # W3a (2026-11-06): every received sequence number is kept, so loss can be traced
+        assert got["by_source"]["127.0.0.1"]["seqs"] == list(range(sent["sent"]))
 
 
 CHANNEL = REPO / "hw" / "channel"

@@ -1,0 +1,6 @@
+# nodes: 1,2,3
+# W3a: pi-A alone, from another room; S, A and L interleaved; rate checks around.
+R1 600 145 1
+S 50 119 1
+A 50 145 1
+L 50 1000 1

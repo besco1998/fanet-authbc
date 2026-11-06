@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Count 802.11 broadcast UDP frames received, by sender and sequence number.
+"""Count 802.11 broadcast UDP frames received, by sender and sequence number, and keep the numbers.
 
 Counts what ARRIVES, and separately what was SENT (from the sender's own record), so the delivery
 ratio is measured rather than inferred. Sequence numbers make loss and duplication distinguishable.
@@ -63,9 +63,11 @@ def main() -> None:
         heard.setdefault(src, [now, now])[1] = now
 
     s.close()
+    # `seqs`: every sequence number received, in order, so that a session's loss can be traced
+    # frame by frame and replayed (W3a, 2026-11-06). The counts above it are unchanged.
     by_source = {src: {"received_unique": len(got), "duplicates": dups.get(src, 0),
                        "min_seq": min(got), "max_seq": max(got),
-                       "span_s": heard[src][1] - heard[src][0]}
+                       "span_s": heard[src][1] - heard[src][0], "seqs": sorted(got)}
                  for src, got in sorted(seen.items())}
     everything = [seq for got in seen.values() for seq in got]
     with open(a.out, "w") as fh:
