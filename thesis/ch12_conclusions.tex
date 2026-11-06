@@ -48,6 +48,11 @@ not stopped, and is stated (\Cref{ch:sysmodel,ch:codesign}).
 \item The prototype's two anomalies were the interpreter's. Compiled, one receiver core serves
 \rxRustNodes{} nodes, so the channel binds again, and the design's sender spends
 \enRustMeas\,\si{\micro\joule} per record, \enFirstOverRust{} times less than the record-linked format.
+
+\item On four real radios, at 802.11b, the ratio of the two designs' capacities was measured at
+\hwRatio{} and \hwRepeatRatio{} in two sessions, against \hwModelRatio{} predicted. Capture puts
+both capacities $3$--$4\%$ above the model's, so the simulated ones are conservative, and it
+leaves the ratio within $1\%$ (\Cref{sec:ratio-hw}).
 \end{enumerate}
 
 \section{The research questions, answered}\label{sec:rq-answers}
@@ -109,9 +114,12 @@ one frame remain projections.
 
 On hardware, two radios gave the loss of a link, the access rule between two saturated
 stations, and a failed prediction of the loss between two busy ones (\Cref{sec:hardware}); a
-figure for airtime that earlier versions carried is withdrawn there. No capacity was measured,
-and the capacities of \Cref{ch:codesign} rest on simulation, of one collision domain in which
-every station hears every other. Unequal received power and capture were simulated and raise
+figure for airtime that earlier versions carried is withdrawn there. Three and four radios kept
+the contention model's predictions, and four gave the ratio of the two capacities, \hwRatio{} and
+\hwRepeatRatio{} against \hwModelRatio{} (\Cref{sec:ratio-hw}). That was at 802.11b with four
+boards, and the balance it needed was tuned. The capacities of \Cref{ch:codesign} themselves, at
+802.11a and tens of nodes, rest on simulation, of one collision domain in which every station hears
+every other. Unequal received power and capture were simulated and raise
 them by about an eighth (\Cref{sec:spread}); hidden stations and motion were simulated
 separately (\Cref{sec:spread-swarm}). Record sizes come from a synthetic generator, checked
 against twelve public flight logs at $0.2$\,s spacing and above and, at the $20$\,ms of the
@@ -146,9 +154,10 @@ inequality: $64 > 51$.
 \subsection{Security scope}
 
 Confidentiality, availability and key management are outside the design (\Cref{sec:threat}). A
-member of the swarm holding the group key can still flood, and a delayed frame is refused only
-while GNSS time is held. The properties are proven in three models, not one, with canonical
-encoding assumed injective (\Cref{sec:formal}). With one chain link per frame, continuity inside
+member of the swarm holding the group key can still flood, and a delayed frame is refused while
+GNSS time is held and, in an outage, for as long as the clocks hold the window: about half an hour
+at 20\,ppm, $10$--$15$\,h with a temperature-compensated oscillator. The properties are proven in
+three models, not one, and canonical encoding is injective on the records (\Cref{sec:formal}). With one chain link per frame, continuity inside
 a frame rests on the frame signature alone, and showing one record to a third party means
 showing its frame. The receiver keeps every accepted frame for that purpose, which it did not
 do until a review of 2026-10-09 (\Cref{sec:threat}).

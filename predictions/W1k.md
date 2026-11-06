@@ -99,8 +99,8 @@ The threshold is my choice, set before the run, at half the model band's width.
 | **W1k-5 the ratio** | **3.272** | 3.280 | 3.304 | 2.974–3.635 | **yes** |
 | **W1k-6 repeat**, within ±5 % of 3.280 | **−0.26 %** | | | 3.116–3.444 | **yes** |
 
-**Reported, not scored: one control window.** b came from eight control windows reading
-0.06–0.36 %, and one reading 2.58 %: the last, the TP-Link's frames lost 65 times at pi-B. Without
+**Reported, not scored: one control window.** Of the eight control windows, seven read
+0.06–0.36 %, and the last read 2.58 %: the TP-Link's frames lost 65 times at pi-B. Without
 it, b would be 0.22 %. The crossings would then be 30.45 / 9.30 and the ratio 3.273. **The ratio
 moves by 0.04 %.**
 

@@ -658,7 +658,11 @@ follow from that standard's access rule and a detection time of $4$\,\si{\micro\
 does not say a radio behaves so: hidden terminals and a real preamble detector are outside
 both, and capture was outside both until \Cref{sec:spread}. The question was put to two radios
 (\Cref{sec:hardware}): they keep the rule where contention can be isolated, and depart from the
-model below saturation.
+model below saturation. On four radios the ratio of the two capacities was measured, at \hwRatio{}
+against \hwModelRatio{} (\Cref{sec:ratio-hw}). Nor is the standard's contention window what
+commercial cards use: with a half and a quarter of it, as measured on such cards, the capacities
+fall by up to \winFall\% and the ratio stays at \winRatioQuarter--\winRatioHalf{} against
+\winRatioStd{} (registration W1a).
 \end{remark}
 
 \subsection{Nodes spread out, and capture}\label{sec:spread}

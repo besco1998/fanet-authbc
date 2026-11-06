@@ -279,6 +279,15 @@ smaller than the generator's, so with real autopilot records the design costs \s
 record, \sitlGenPct\% \emph{less} than the figure this thesis reports. At the operating point
 the generator is slightly pessimistic, where at 0.2\,s it was slightly optimistic.
 
+\paragraph{At the largest records the schema allows.} Real telemetry could still be larger than
+both. Records were therefore built at two bounds: every field alternating between the extremes of
+its range (the schema bound), and the schema's speed limit at 50\,Hz (the physical bound). Each
+was encoded, decoded and verified, and its capacity computed with the contention model
+(registration W4a). At the schema bound, against per-record signing at its smallest frame, AUTHBC
+still carries \recLargestRatio{} times as many nodes. The ordering would reverse only at delta
+records of $223$\,B, eight times the schema's largest. The synthetic data decide the size of the
+advantage, not its direction.
+
 \begin{remark}[Two predictions of this measurement that did not hold as written]
 Five ranges were committed before the flight. Four held. The fifth was a consistency check:
 resampled at 0.2\,s, the simulated flight was predicted to fall among the six real multicopter

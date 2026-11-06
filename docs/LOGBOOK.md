@@ -150,6 +150,30 @@ excecute the plan and give me the results". The plan was approved in plan mode. 
 * A `pgrep` check matched its own command line, twice. A pattern only a running session can
   match is now used.
 
+# 2026-11-06, night — W1k repeats the ratio (F133); the paper and thesis finished with November's results
+
+**Asked:** "Start a second run and in parallel finish the paper and thesis and also in parallel tell
+me what is next"; then "apply all six as drafted" (Q8, Q9, Q11–Q14).
+
+**Done:**
+1. **W1k was registered and run while the writing went on. Valid: the ratio 3.272** against W1j's
+   3.280. One control window read 2.58 %; without it the ratio moves by 0.04 %.
+2. **The paper:** every new number is a macro generated from its registered result, and the build
+   refuses if a source session or a claim does not hold. Abstract, methods, results (a new
+   paragraph and Table *tab:hw*), limitations (Q12–Q14), conclusion, and the Q9 footnote. Still
+   40 pages, clean.
+3. **The thesis:** ch. 9 gains three subsections, with ch. 1, 3, 7, 8 and 12 brought in line, and
+   App. B gains a third table (Q11). 156 pages, clean.
+
+**What went wrong and was caught:**
+* **Q9's drafted "0.81" was rounded twice.** Generated, it is 0.80. My first generation used the
+  wrong denominator (1.23 / 0.83 / 0.58); comparing with F114 caught it before anything was
+  printed.
+* **The footnote overflowed a page by 5 pt.** A build of the committed version showed the
+  warning was mine; the footnote was shortened.
+* **An annotated tag's object hash is not its commit.** The test that matches App. B to the tags
+  now reads the commit.
+
 # 2026-11-06, evening — W1i did not tune; the square layout; W1j valid: hardware ratio 3.28 against 3.30 (F131, F132)
 
 **Asked:**

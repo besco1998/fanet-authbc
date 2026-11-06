@@ -224,9 +224,10 @@ class TestWhatTheReviewAskedForIsInTheText:
         for needle in ("Capacities are simulated", "Telemetry is synthetic", "Multi-hop",
                        "Only the sender is metered"):
             assert needle.lower() in limits.lower(), needle
-        # until 2026-10-09 this read "Contention is simulated"; two radios have since been
-        # measured, and the limitation is that no capacity has
-        assert "between two radios\nonly" in limits or "between two radios only" in limits
+        # until 2026-10-09 this read "Contention is simulated"; two radios were then measured; on
+        # 2026-11-06 the capacity ratio was measured on four radios (F132, F133), and the limitation
+        # is that only that ratio, on that link, has been
+        assert "measured on four\nradios only" in limits or "measured on four radios only" in limits
 
     def test_the_abstract_is_about_180_words(self) -> None:
         """The review asked for about 180; the looser bound above let it stand at about 200 as

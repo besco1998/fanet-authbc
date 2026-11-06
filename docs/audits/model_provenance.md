@@ -5699,3 +5699,13 @@ setup, untouched.
   by 0.04 %.
 * **What it shows:** the four-radio ratio is repeatable on this setup, at 3.27–3.28 against 3.30.
   It is two sessions on one setup, not a sample of setups.
+
+**F114, addendum — ⚠️ CORRECTED (2026-11-06): the middle corrected ratio is 0.80, not 0.81.**
+F114 gave the two-radio ratios against the corrected model as 1.14 / 0.81 / 0.57. Generated from
+the unrounded values (`analysis/paper_numbers.py`, `hwPool*Corr`) they are 1.138 / 0.802 /
+0.567, that is 1.14 / **0.80** / 0.57. "0.81" came from dividing the already rounded 0.79 by
+(1 − 0.0195): rounding twice. The paper's Q9 footnote prints the generated values. A first attempt
+at generating them used the file's own re-run of the model (0.27 % against the registered 0.29 %
+at 124/s) and gave 1.23 / 0.83 / 0.58. That divided by a different simulation sample, not by the
+registered prediction with only the defect removed. It was caught by comparing with F114 before
+anything was printed.

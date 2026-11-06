@@ -549,6 +549,16 @@ def radios() -> dict[str, str]:
     def over_model(rate: int) -> float:
         return st.mean(pooled[rate]) / float(scored[rate]["predicted_loss"])
 
+    # Q9 (Mohamed, 2026-11-06): the registered figures stay; a footnote gives the same windows
+    # against the registered prediction with only the self-collision defect removed (F114). The
+    # file's own re-run of the model is a different sample (0.27 % against the registered 0.29 %
+    # at 124/s), so only its relative change is applied, as F114 did.
+    defect = {int(float(r["frames_per_s"])): float(r["relative_change"])
+              for r in rows(RAW / "g27_frozen_defect.csv") if r["point"].startswith("F73 ")}
+
+    def over_corrected(rate: int) -> float:
+        return over_model(rate) / (1 + defect[rate])
+
     # the two later sessions on their own, as the thesis tabulates them
     later = {tag: {int(r["rate_fps_per_node"]): f(100 * float(r["measured_loss"]), 2)
                    for r in rows(channel / f"contention_2nodes_{tag}.csv")}
@@ -575,6 +585,8 @@ def radios() -> dict[str, str]:
         "hwPoolHigh": f(100 * st.mean(pooled[high]), 2),
         "hwPoolLowRatio": f(over_model(low), 2), "hwPoolMidRatio": f(over_model(mid), 2),
         "hwPoolHighRatio": f(over_model(high), 2),
+        "hwPoolLowCorr": f(over_corrected(low), 2), "hwPoolMidCorr": f(over_corrected(mid), 2),
+        "hwPoolHighCorr": f(over_corrected(high), 2),
         "hwOffLow": later["fb_off"][low], "hwOffMid": later["fb_off"][mid],
         "hwOffHigh": later["fb_off"][high],
         "hwRepLow": later["fb_on_repeat"][low], "hwRepMid": later["fb_on_repeat"][mid],
@@ -590,6 +602,67 @@ def radios() -> dict[str, str]:
         "hwSatOn": f(100 * st.mean(float(r["loss"]) for r in saturated["fb_on"]), 1),
         "hwSatRateOff": f(st.mean(float(r["air_fps"]) for r in saturated["fb_off"]), 0),
         "hwSatRateOn": f(st.mean(float(r["air_fps"]) for r in saturated["fb_on"]), 0),
+    }
+
+
+def four_radios() -> dict[str, str]:
+    """Contention on three and four radios, and the AUTHBC / per-record ratio on four (F123, F127,
+    F132), with the desk checks of the same month (F116, F117). Each from its registered score.
+
+    The text says: W1e's points held 11 of 12, W1f's N = 4 points all held, W1f measured AUTHBC's
+    four-board crossing, and W1j was valid with every scored claim held. Any of those failing here
+    stops the build rather than printing a number the text then misdescribes.
+    """
+    three = [r for r in rows(RAW / "w1e_w1e_2026-11-05.csv") if r["what"] == "contention"]
+    four_run = rows(RAW / "w1f_w1f_2026-11-05.csv")
+    four = [r for r in four_run if r["what"] == "contention"]
+    ratio_run = rows(RAW / "w1i_w1j_2026-11-06_run.csv")
+    repeat_run = rows(RAW / "w1i_w1k_2026-11-06_run.csv")        # W1k, F133: the same, again
+
+    def held(table: list[dict[str, str]], what: str, group: str) -> dict[str, str]:
+        r = one(table, what=what, group=group)
+        if r["held"] != "True":
+            raise ValueError(f"the text says {what} {group} held")
+        return r
+
+    if any(one(run, what="session")["group"] != "valid"
+           for run in (four_run, ratio_run, repeat_run)):
+        raise ValueError("the text reports W1f, W1j and W1k as valid sessions")
+    if sum(r["held"] == "True" for r in four) != len(four):
+        raise ValueError("the text says every N = 4 contention point held")
+    cross_a = held(ratio_run, "crossing", "AUTHBC")
+    cross_p = held(ratio_run, "crossing", "per-record")
+    ratio = held(ratio_run, "ratio", "AUTHBC/per-record")
+    four_a = held(four_run, "crossing", "AUTHBC")
+    repeat = (held(repeat_run, "crossing", "AUTHBC"), held(repeat_run, "crossing", "per-record"),
+              held(repeat_run, "ratio", "AUTHBC/per-record"))
+    gate = one(ratio_run, what="gate (reported, not scored)")
+    spread = held(ratio_run, "senders balanced (V5)", "A31")
+    # F116: the windows real cards use; the standard window is the published campaign's crossing
+    window = {(r["window"], r["cell"]): float(r["ns3"]) for r in rows(RAW / "w1a.csv")}
+    std = {r["cell"]: float(r["n_cross_interp"]) for r in rows(RAW / "ns3_nmax_direct.csv")
+           if r["cell"] in ("C", "D") and r["n_nodes"] == "CROSSING"}
+    fall = max(1 - window[(w, c)] / std[c] for w in ("4", "8") for c in ("C", "D"))
+    # F117: AUTHBC at the schema's largest records against per-record signing at its smallest
+    largest = one(rows(RAW / "w4a_worst_case.csv"),
+                  case="ratio: AUTHBC, schema bound / per-record, smallest")
+    return {
+        "hwThreeHeld": str(sum(r["held"] == "True" for r in three)),
+        "hwThreePoints": str(len(three)),
+        "hwFourPoints": str(len(four)),
+        "hwFourCrossA": f(four_a["measured"], 1),
+        "hwModelCrossA": f(cross_a["predicted"], 1), "hwModelCrossP": f(cross_p["predicted"], 2),
+        "hwModelRatio": f(ratio["predicted"], 2),
+        "hwRatioCrossA": f(cross_a["measured"], 1), "hwRatioCrossP": f(cross_p["measured"], 2),
+        "hwRatio": f(ratio["measured"], 2),
+        "hwRatioGate": f(gate["measured"], 2), "hwRatioSpread": f(spread["measured"], 2),
+        "hwSpreadMax": f(spread["band_hi"], 1),
+        "hwRepeatCrossA": f(repeat[0]["measured"], 1),
+        "hwRepeatCrossP": f(repeat[1]["measured"], 2),
+        "hwRepeatRatio": f(repeat[2]["measured"], 2),
+        "winRatioQuarter": f(window[("4", "D/C")], 2), "winRatioHalf": f(window[("8", "D/C")], 2),
+        "winRatioStd": f(std["D"] / std["C"], 2), "winFall": f(100 * fall, 0),
+        "recLargestRatio": f(largest["model_crossing"], 2),
     }
 
 
@@ -2007,7 +2080,8 @@ def links_table() -> dict[str, str]:
 
 
 SECTIONS = (frames, ladder, loss, stream, freshness, phy, energy, timings, flight_logs,
-            validation, exclusion, low_rate, source_study, capacity_rule, capacity_model, sitl,
+            validation, four_radios, exclusion, low_rate, source_study, capacity_rule,
+            capacity_model, sitl,
             energy_runs, prototype, batch_dimension, multicore, spread, platforms,
             spread_swarm, design_map, loss_trace, adaptive, replay_window, flooding, compiled,
             compiled_energy, airframes, stream_deadline, phy_simulated, post_quantum,

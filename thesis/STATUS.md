@@ -13,6 +13,31 @@ Every chapter is written and was read end to end in the built PDF on 2026-10-08.
 are yours:** the declaration and the acknowledgements — with the degree and the department on the
 title page. The statement on generative AI was removed on your decision of 2026-10-24.
 
+⚠️ **On 2026-11-06 the hardware campaign and the desk work of November were written in, and you
+have not read them.** You asked for it ("finish the paper and thesis") and chose to apply Q8, Q9
+and Q11–Q14 as drafted. The PDF builds to 156 pages. In reading order:
+* **ch. 1:** the validation contribution names the ratio measured on four radios.
+* **ch. 3:** canonical encoding is injective, proven and tested; it is no longer "assumed" (Q14).
+* **ch. 7:** a new paragraph, *At the largest records the schema allows* (W4a: AUTHBC keeps
+  2.75× at the schema bound).
+* **ch. 8:** the remark *What this does not show* gains two sentences: the four-radio ratio, and
+  the contention windows of commercial cards (W1a: the ratio 3.48–3.52 against 3.53).
+* **ch. 9, §Hardware: three new subsections.**
+  * *Three and four radios at 2.4 GHz* (W1b–W1f);
+  * *Balancing four radios* (W1g–W1i, the square layout, the preflight);
+  * *The ratio on four radios* (W1j, W1k, with Table 9.x).
+
+  *What the hardware supports* is rewritten, with Q8's sentence; "No capacity was measured" is
+  gone.
+* **ch. 12:** a new finding (the hardware ratio). *Validation scope* is rewritten. *Security
+  scope* gains the GNSS holdover and the injective encoding (Q14).
+* **App. B:** a third table, *The registrations of November 2026*, with twelve rows (Q11). ch. 6
+  counts them.
+
+The paper changed in the same places: abstract, methods, §Results *Contention Model on Radios*
+with a new *Capacity on Four Radios* and Table *tab:hw*, the limitations (Q12, Q13, Q14) and the
+conclusion. Q9 is a footnote. It is still 40 pages.
+
 ⚠️ **On 2026-10-27 and 28, after the review of the paper** (`docs/review 27-10-2026/CHANGE_LOG.md`),
 three things changed here as well, and you have not read them:
 * **ch. 8:** a paragraph on the capacity at 97 % delivery (S-01: 27.6 and 97.3 nodes, both

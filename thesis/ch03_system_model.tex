@@ -207,7 +207,9 @@ gigabyte of memory per lemma. The registered model settled three of its nine lem
 were then keyed by a session identifier and the receiver given a start rule, and both changes
 are recorded with the registration (\Cref{app:prereg}). That the properties carry from the
 smaller models to the full protocol is an argument --- the smaller model's receiver checks less
-and so accepts a superset --- and not a proof. Canonical encoding is assumed injective.
+and so accepts a superset --- and not a proof. Canonical encoding is injective on the records:
+two different sets of records never encode to the same bytes, which is proven, with property
+tests, in the artifact.
 
 \Cref{tab:security} sets each property beside its evidence, the proofs with the simulations and
 measurements of \Cref{ch:codesign}.

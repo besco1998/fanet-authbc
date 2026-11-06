@@ -224,6 +224,82 @@ collision costs both frames. \textbf{The radios lose \hwSatOff\% where the rule 
 \hwSatStd\%}, inside the registered band of $7.1$--$16.5\%$ and about a twentieth above the figure
 itself; the expectation of $7\%$ was wrong. Frame burst makes no difference here either.
 
+\subsection{Three and four radios at 2.4\,GHz}\label{sec:four-radios}
+
+The two radios above are the only boards of the kit that reach 5\,GHz. To go beyond two, the
+work moved to 2.4\,GHz, where a broadcast is sent with 802.11b at 1\,Mb/s. There the contention
+model was first checked against ns-3, before any board was used: it predicts the simulator within
+$1\%$, and five stations stand for many up to the crossing (registration W1b). The kit gave three
+ad-hoc stations, two Raspberry~Pi~4 (BCM4345/6) and one Raspberry~Pi~3 (BCM43430/1); the
+BeagleBone boards have no ad-hoc mode. A fourth came from a USB adapter (RTL8188EUS) on one
+BeagleBone. Its kernel driver cannot hold a broadcast at 1\,Mb/s; a community driver's debug
+interface fixes every frame at that rate, and the adapter then sends one frame per
+$1\,963$\,\si{\micro\second} at saturation, against the Pi~4's $1\,945$.
+
+Each board stands for a share of a larger swarm. With four boards, each sends $(N_{\mathrm{eq}}-1)/3$
+times a node's rate, so that every receiver hears the load of $N_{\mathrm{eq}}$ nodes of the
+design. Every session starts and ends with each board alone at 600 frames/s, and is void unless
+each one's frame spacing lies in $1.9$--$2.6$\,ms. That check stopped three sessions: once the Pi~3
+sending at $3.8$--$5.5$\,ms where it stood away from the other boards, and twice the Pis
+broadcasting at 6\,Mb/s. They do so in a cell created by a freshly booted Pi.
+
+With three radios, \hwThreeHeld{} of \hwThreePoints{} contention points fell inside their
+registered bands; the one miss was at the lowest load, where two radios had missed too. With four
+radios, all \hwFourPoints{} did, and AUTHBC's capacity crossing on four boards was \hwFourCrossA{}
+against \hwModelCrossA{} predicted. Per-record signing's could not be read, because its curve stayed
+above $V = 0.95$ inside the grid. The reason was in the data: loss depended on the sender. When two
+frames collide, the stronger is often still received (capture), and the station whose frames
+arrive strongest loses far fewer of them. Every measured point lay above the model's.
+
+\subsection{Balancing four radios}\label{sec:balance-hw}
+
+A ratio needs both crossings, and while one sender wins its collisions both lie near overload.
+The senders were therefore balanced: each sender's mean loss within \hwSpreadMax{} times every
+other's. This was a condition of validity, measured in four windows before the capacity points
+and again at one of them. Three sessions failed it.
+\begin{itemize}
+\item In the first, the adapter won its collisions as before (a spread of $5.1$). A displacement of
+      its board, found the next morning, may explain it, but when the board moved is not known.
+\item In the second, the spread passed at the start ($1.43$) and failed twelve minutes later
+      ($1.55$).
+\item In the third, a rule fixed in advance stepped the Pis' transmit power. With the boards
+      $10$--$15$\,cm apart, about a wavelength at 2.4\,GHz, the balance wandered between runs by
+      more than a $2$\,dB step moved it. No setting was reached in five tries.
+\end{itemize}
+What worked was the layout: the four boards on the corners of a 1\,m square, the Pi~3 moved
+$35$\,cm inward (it sends slowly whenever it stands far from the Pi~4s), and two power trims, to
+6 and 11\,dBm. No board can be reached during a session, so every long run was preceded by a
+three-minute run of the same setup. It checks every radio's rate, the powers, the join and the
+balance, and it stopped three long runs before they started.
+
+\subsection{The ratio on four radios}\label{sec:ratio-hw}
+
+Two sessions on that setup, each registered before it ran, met every condition of validity: the
+eight rate checks, background loss under $1\%$, every board in one cell at 1\,Mb/s, both powers
+read back, and the balance. In the first, the balance was \hwRatioGate{} before the capacity
+points and \hwRatioSpread{} at one of them; in the second, $1.17$ and $1.15$.
+\Cref{tab:ratio-hw} gives the crossings.
+
+\begin{table}[ht]
+\centering
+\caption{Capacity on four 802.11b radios: the crossing of $V=0.95$ in nodes, for each design, and
+their ratio. Each session is registered separately.}\label{tab:ratio-hw}
+\begin{tabular}{lccc}
+\toprule
+ & AUTHBC & per-record signing & ratio \\
+\midrule
+session 1 & \hwRatioCrossA & \hwRatioCrossP & \hwRatio \\
+session 2 & \hwRepeatCrossA & \hwRepeatCrossP & \hwRepeatRatio \\
+contention model & \hwModelCrossA & \hwModelCrossP & \hwModelRatio \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Both crossings lie above the model's, by $3$--$4\%$. Capture lowers loss on real radios and so
+raises each design's capacity; the simulated capacities are, in that respect, conservative.
+Capture raises both alike: in both sessions the ratio, which is the claim of this thesis, lies
+within $1\%$ of the model's.
+
 \subsection{What the hardware supports, and what it does not}
 
 \begin{itemize}
@@ -232,15 +308,21 @@ itself; the expectation of $7\%$ was wrong. Frame burst makes no difference here
       in this work that did not run inside a simulator.
 \item \textbf{Below saturation the same radios depart from the model}, from \hwPoolLowRatio{}
       times its loss with the medium half full to \hwPoolHighRatio{} times at $85\%$. The
-      registered prediction failed there. The cause that the saturated case leaves standing is
-      the radio's handling of its own queued frames, which is measurably not the standard's;
-      that it is the cause has not been shown. Why the loss is \emph{above} the model at the
+      registered prediction failed there. The saturated case does not isolate the contention:
+      every saturated station holds a queue, so the radio's handling of its own queued frames
+      acts there too. Of five rules for that handling, none reproduces both the single sender's
+      spacing and the saturated result with frame burst on, and none reproduces the loss below
+      saturation. The cause is not established. Why the loss is \emph{above} the model at the
       lowest load is not explained.
-\item \textbf{No capacity was measured.} Two saturated stations are the opposite corner from
-      \nmaxLeanDesign{} stations at $12.5$ frames/s. Every capacity in this thesis remains a
-      simulated one, for radios that keep the standard's rule.
-\item One chip family, one room, two boards. The predictions for three to five boards are
-      registered and have not been run.
+\item \textbf{On three and four radios the contention model held}, at \hwThreeHeld{} of
+      \hwThreePoints{} points and at all \hwFourPoints.
+\item \textbf{The ratio of the two capacities was measured on four radios}: \hwRatio{} and
+      \hwRepeatRatio{} in two sessions, against \hwModelRatio{} predicted. Capture puts both
+      crossings $3$--$4\%$ above the model's and leaves their ratio within $1\%$.
+\item \textbf{What it does not show.} The link is 802.11b at 1\,Mb/s, not the 802.11a of the
+      capacities in \Cref{ch:codesign}; four boards stand for a larger swarm through their
+      offered load; it is one setup in one room, in two sessions; and the balance that made the
+      ratio readable was reached by tuning the setup, on windows that were never scored.
 \end{itemize}
 
 \section{The utilisation ceiling, and a flaw in the author's own pre-registration}

@@ -494,11 +494,10 @@ class TestTheWorkedFrame:
 # November 2026). Whether they enter it is Mohamed's decision (docs/OPEN_ITEMS.md §3, Q11); the
 # rows are added and the tag removed from this set when he decides. A holding list, named, never
 # a silent exclusion.
-NOT_YET_IN_THE_THESIS = frozenset({"prereg-W4a", "prereg-W1a", "prereg-W1b",
-                                   "prereg-W1c", "prereg-W1d", "prereg-W1e",
-                                   "prereg-W1f", "prereg-W1g", "prereg-W1h",
-                                   "prereg-W1i", "prereg-W1j",
-                                   "prereg-W1k"})
+# 2026-11-06 (Mohamed, Q11: "apply all six as drafted"): every November registration is now a row
+# of appendix B's third table, and the list is empty. It stays, so a later registration not yet
+# written up is held here by name rather than excluded silently.
+NOT_YET_IN_THE_THESIS: frozenset[str] = frozenset()
 
 
 class TestTheRegistrationsOfAppendixB:
@@ -512,7 +511,7 @@ class TestTheRegistrationsOfAppendixB:
         import subprocess
 
         named = sorted(set(re.findall(r"\\texttt\{([0-9a-f]{7})\}", self.WHOLE)))
-        assert len(named) == 22 + 20          # S01 (capacity at 97 %) added 2026-10-27
+        assert len(named) == 22 + 20 + 12     # S01 added 2026-10-27; November's twelve 2026-11-06
         shallow = subprocess.run(["git", "rev-parse", "--is-shallow-repository"], cwd=REPO,
                                  capture_output=True, text=True).stdout.strip()
         assert shallow == "false", (
@@ -536,9 +535,10 @@ class TestTheRegistrationsOfAppendixB:
         """Mohamed, 2026-10-24: A12, which only prepared a hardware test, is not stated."""
         import subprocess
 
-        tags = subprocess.run(["git", "for-each-ref", "--format=%(refname:short) %(objectname)",
-                               "refs/tags/prereg-*"], cwd=REPO, capture_output=True,
-                              text=True).stdout.split("\n")
+        # an annotated tag's own object is not the registration commit: read the commit it names
+        fmt = "%(refname:short) %(if)%(*objectname)%(then)%(*objectname)%(else)%(objectname)%(end)"
+        tags = subprocess.run(["git", "for-each-ref", f"--format={fmt}", "refs/tags/prereg-*"],
+                              cwd=REPO, capture_output=True, text=True).stdout.split("\n")
         tagged = {sha[:7] for line in tags if line for name, sha in [line.split()]
                   if name != "prereg-A12" and name not in NOT_YET_IN_THE_THESIS}
         assert tagged == set(re.findall(r"\\texttt\{([0-9a-f]{7})\}", self.REVISION))
@@ -553,6 +553,19 @@ class TestTheRegistrationsOfAppendixB:
         methods = " ".join(_text("ch06_methodology.tex").split())
         assert "eighteen, each registered before it ran" in methods
         assert "In fifteen of the eighteen at least one statement missed or failed" in methods
+
+
+    def test_the_third_table_holds_the_twelve_november_registrations(self) -> None:
+        third = self.REVISION.split("\\section*{The registrations of November 2026}", 1)[1]
+        body = third.split("\\endfoot", 1)[1].split("\\end{longtable}", 1)[0]
+        rows = [r for r in body.split("\\\\") if r.strip()]
+        assert len(rows) == 12
+        outcomes = [r.rsplit(" & ", 1)[1] for r in rows]
+        assert sum("\\textbf{void}" in o for o in outcomes) == 2
+        assert sum("\\textbf{stopped}" in o for o in outcomes) == 1
+        methods = " ".join(_text("ch06_methodology.tex").split())
+        assert "The twelve of November 2026 are in a third" in methods
+        assert "Two of them ended void, one stopped at its first session" in methods
 
 
 class TestTheLibraryIsTheSizeTheChapterSays:
@@ -741,9 +754,12 @@ class TestTheContentionExperimentAsItCameOut:
         assert "within $6\\%$" in self.VALIDATION and "$7.1$--$16.5\\%$" in self.VALIDATION
         assert "the expectation of $7\\%$ was wrong" in self.VALIDATION
 
-    def test_the_thesis_does_not_claim_a_capacity_or_a_cause(self) -> None:
-        assert "\\textbf{No capacity was measured.}" in self.VALIDATION
-        assert "that it is the cause has not been shown" in self.VALIDATION
+    def test_the_thesis_claims_the_measured_ratio_and_no_cause(self) -> None:
+        # until 2026-11-06 this read "No capacity was measured"; the ratio was then measured on
+        # four radios (F132, F133), and Q8's sentence replaced "has not been shown"
+        text = " ".join(self.VALIDATION.split())
+        assert "The ratio of the two capacities was measured on four radios" in text
+        assert "The cause is not established." in text
         assert "has no demonstrated effect on the loss between two boards" in self.VALIDATION
 
     def test_the_withdrawn_airtime_figure_is_withdrawn_in_view(self) -> None:

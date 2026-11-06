@@ -191,6 +191,57 @@ their rates and deadlines & held \\
 \end{longtable}
 }
 
+\section*{The registrations of November 2026}
+
+The registrations of November 2026 take up the work's main weaknesses: the desk work on the
+telemetry and on the contention windows of commercial cards, and the hardware campaign of
+\Cref{sec:four-radios,sec:balance-hw,sec:ratio-hw}. Each was registered and tagged as above, before
+it ran. \Cref{tab:prereg-nov} lists them in the order they were registered.
+
+{\small
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{2.0cm} >{\raggedright\arraybackslash}p{5.8cm}
+  >{\raggedright\arraybackslash}p{6.0cm}@{}}
+\caption{Registrations of November 2026 and their outcomes.}\label{tab:prereg-nov}\\
+\toprule
+commit, date & what was registered & outcome \\
+\midrule
+\endfirsthead
+\toprule
+commit, date & what was registered & outcome \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{1dc2301} 5~Nov & W4a: records at the schema's largest and at its physical bound; AUTHBC
+keeps the ordering against per-record signing & held: \recLargestRatio{} times as many nodes at the
+largest records \\
+\texttt{8d649ed} 5~Nov & W1a: capacities at the contention windows of commercial cards, a half and
+a quarter of the standard's; the ratio within $3.3$--$3.8$ & held: \winRatioHalf{} and
+\winRatioQuarter, against \winRatioStd{} \\
+\texttt{38a5370} 5~Nov & W1b: the contention model against ns-3 at 802.11b; five stations stand for
+many up to the crossing & held, within $1\%$ \\
+\texttt{e1bc0da} 5~Nov & W1c: three to five boards at 2.4\,GHz, the hardware predictions &
+superseded before it ran: the BeagleBone boards have no ad-hoc mode \\
+\texttt{914b7ec} 5~Nov & W1d: three radios on channel 11, with a stop rule on the rate check &
+\textbf{stopped} at the first session: the Pi~3 failed its rate check \\
+\texttt{2409d36} 5~Nov & W1e: three radios side by side, twelve contention points & valid;
+\hwThreeHeld{} of \hwThreePoints{} held, the miss at the lowest load \\
+\texttt{cd85eeb} 5~Nov & W1f: four radios; contention at $N=4$, both crossings and their ratio &
+valid; contention \hwFourPoints{} of \hwFourPoints, AUTHBC's crossing held; per-record's and the
+ratio not determined (capture) \\
+\texttt{26f3ba8} 6~Nov & W1g: the four senders balanced, the grid moved to bracket both crossings &
+\textbf{void}: the senders unbalanced, the Pi~3 out of its band \\
+\texttt{0bdb157} 6~Nov & W1h: the balance read on each session's own windows before it is scored &
+\textbf{void}: $1.43$ before, $1.55$ in the session, against $1.5$ \\
+\texttt{b7d5e37} 6~Nov & W1i: transmit power tuned by a fixed rule to a spread of $1.25$ & no
+session: not tuned in five tries \\
+\texttt{bb2dd43} 6~Nov & W1j: the 1\,m square, the powers fixed; the ratio within
+$2.974$--$3.635$ & valid, every statement held: \hwRatio{} \\
+\texttt{269588c} 6~Nov & W1k: W1j again, unchanged; the ratio within $\pm5\%$ of W1j's & valid,
+every statement held: \hwRepeatRatio{} \\
+\end{longtable}
+}
+
 \noindent All dates are 2026. Two entries of the project's history are absent on purpose. A
 prediction for the first hardware loss measurement was stated before the measurement and is
 what exposed the basic-rate artifact of \Cref{ch:validation}, but it was not a commit of its

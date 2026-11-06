@@ -55,9 +55,9 @@ two feasibility boundaries. Where the frame fits (50~records/s, 100\,ms deadline
 802.11a collision domain carries \nmaxLeanDesign{} nodes instead of \nmaxLeanBase{} at 5\% frame
 loss: the cost that binds is the frame, not the authenticator. Batching gains nothing unless
 record rate times deadline exceeds two. Where it does not fit, on \exclCount{} of twelve
-EU863-870 LoRaWAN data rates, no batch helps. Capacities are simulated; when the swarm spreads,
-fewer neighbors are in reach, but the gain stays \spRatioLo--\mvRatioHi-fold, moving or not. On
-hardware, contention was measured between two radios only.}
+EU863-870 LoRaWAN data rates, no batch helps. When the swarm spreads, fewer neighbors are in
+reach, but the gain stays \spRatioLo--\mvRatioHi-fold, moving or not. Four 802.11b radios measured
+the capacity ratio at \hwRatio{} (predicted \hwModelRatio).}
 
 \keywords{FANET, UAV telemetry, broadcast authentication, digital signatures, hash chain,
 batching, frame aggregation, age of information, formal verification, IEEE 802.11 DCF, LoRaWAN,
@@ -301,8 +301,8 @@ to fail without it. The proofs use three separate models, because one model with
 and the clock did not terminate. The three models are not composed. That the properties hold
 together for the full protocol is argued, not proven: the receiver of the model without chain
 and clock checks less than the full receiver, so it accepts a superset of what the full receiver
-accepts. We also assume canonical encoding to be injective: two different sets of records never
-encode to the same bytes.
+accepts. Canonical encoding is injective on the records: two different sets of records never
+encode to the same bytes (a proof and property tests are in the artifact).
 
 \runin{Verifiability Metric} $V$ is the probability that a record a UAV generates is received,
 decoded and verified by a given neighbor. We require $V \geq 1-\epsilon$ and take
@@ -554,8 +554,9 @@ was fixed before the experiment ran, and misses are reported as misses.
 
 The main evaluation uses one collision domain of static nodes. Section~\ref{sec:robust} repeats
 it for a swarm spread over a wider area, with hidden stations, and for a moving swarm.
-Capacities are obtained by simulation, and contention was measured on hardware between two
-radios only (Section~\ref{sec:mechanism}).
+Capacities are obtained by simulation. On hardware, the contention model was checked on two,
+three and four radios, and the ratio of the two capacities was measured on four
+(Section~\ref{sec:mechanism}).
 
 \section{Results}\label{sec:results}
 
@@ -592,7 +593,7 @@ $N_{\max}$ with its 95\% interval, and receiver CPU share.}
 6 & sign every record, share the frame (delta records) & 4 & \frmLeanInline & \bprLeanInline & \certLeanInline & \certTLeanInline & \nsatLeanInline & \nmaxLeanInline\ \ciLeanInline & \cpuLeanInline\% \\
 7 & one signature per frame, no delta coding\footnotemark[1] & 4 & \frmLeanKeys & \bprLeanKeys & \certLeanKeys & \certTLeanKeys & \nsatLeanKeys & \nmaxLeanKeys\ \ciLeanKeys & \cpuLeanKeys\% \\
 8 & one signature per frame, delta records \textbf{(AUTHBC)} & 4 & \textbf{\frmLeanDesign} & \textbf{\bprLeanDesign} & \certLeanDesign & \certTLeanDesign & \nsatLeanDesign & \textbf{\nmaxLeanDesign}\ \ciLeanDesign & \cpuLeanDesign\% \\
-\botrule
+\bottomrule
 \end{tabular}
 \footnotetext[1]{Size estimated from measured components; rows 5, 6 and 8 are measured frames.}
 \footnotetext[2]{Share of one receiver core spent verifying and hashing at $N_{\max}$.}
@@ -869,20 +870,45 @@ within \tightPredWorst\% (Section~\ref{sec:capacity}).
 \runin{Models Against the Simulator} The broadcast model~\cite{machen2008} matches saturated ns-3
 runs within $\pm\valBcast$\% over $N=5$--50 (\seeds{} seeds).
 
-\runin{Contention Model Against Two Radios} On two Raspberry~Pi~4 radios, one transmitter alone
+\runin{Contention Model on Radios} On two Raspberry~Pi~4 radios, one transmitter alone
 loses \hwLossFrames{} frames in \hwSentFrames{} ($p = \hwLoss$). With both radios saturated,
 \hwSatOff\% of the frames put on air are lost where the contention model gives \hwSatStd\%, as
 predicted before the run. Below saturation the agreement is poorer. As the medium fills from half
 to 85\%, the radios lose \hwPoolLowRatio, \hwPoolMidRatio{} and \hwPoolHighRatio{} times what the
-model predicts; the prediction made before the run held at the first two loads and failed at the
+model predicts\footnote{Against the model without its self-collision defect: \hwPoolLowCorr,
+\hwPoolMidCorr{} and \hwPoolHighCorr.}; the prediction made before the run held at the first two loads and failed at the
 third. The cause is not established. Below saturation a radio often holds two frames of its own,
 and a radio of this family sends its queued frames closer together than the standard allows: one
 per \hwCycleOn\,ms against \hwCycleStd\,ms, as commercial cards are known
 to~\cite{bianchi2007cards}. That state is common with two busy radios and rare at the operating
 point. However, a follow-up that switched off the vendor's frame bursting failed all four of its
-predictions: bursting has no demonstrated effect on the loss. No capacity was measured: the
-capacities in this paper rest on simulation, and they are the capacities of radios that keep the
-DCF access procedure.
+predictions: bursting has no demonstrated effect on the loss.
+
+\runin{Capacity on Four Radios} Three Raspberry~Pi radios and, as a fourth station, a USB adapter
+whose rate was fixed at 1\,Mb/s were then measured with 802.11b at 1\,Mb/s, in sessions whose
+predictions and validity conditions were fixed before each ran. With three radios,
+\hwThreeHeld{} of \hwThreePoints{} contention points fell inside their predicted bands; with four,
+all \hwFourPoints{} did. The four radios then ran the capacity experiment itself: each board sends
+at the rate that gives the channel the offered load of $N_{\mathrm{eq}}$ nodes of either design,
+and the crossing of $V=0.95$ is interpolated from the measured curve. Real radios depart from the
+model in one respect. When two frames collide, the stronger is often still received (capture), so
+every measured point lies above the model's, and so does each crossing. With the four senders
+balanced to within \hwSpreadMax{} times each other's loss, two sessions gave the values of
+Table~\ref{tab:hw}. Capture raises both capacities alike: the crossings lie above the model's, and
+their ratio, the claim of this paper, lies within 1\% of it.
+
+\begin{table}[tb]
+\caption{Capacity on four 802.11b radios, in nodes of the channel at $V=0.95$.}\label{tab:hw}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+ & AUTHBC & per-record signing & ratio \\
+\midrule
+session 1 & \hwRatioCrossA & \hwRatioCrossP & \hwRatio \\
+session 2 & \hwRepeatCrossA & \hwRepeatCrossP & \hwRepeatRatio \\
+contention model & \hwModelCrossA & \hwModelCrossP & \hwModelRatio \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \subsection{Receiver CPU}\label{sec:cpu}
 Equation~\eqref{eq:cpu} charges cryptography only. By it, one core of the Raspberry~Pi~4 serves a
@@ -927,7 +953,7 @@ Python & \rxPyUs & \rxPyNodes \\
 Rust & \rxRustUs & \rxRustNodes \\
 Rust, batches of 64 & \rxBatchUs & \rxBatchNodes \\
 Rust, deferred\footnotemark[1] & \rxTierOneUs{} + \rxTierTwoUs & \rxLazyNodes \\
-\botrule
+\bottomrule
 \end{tabular}
 \footnotetext[1]{The group MAC is checked first, then the frame is decoded (first time); the
 signatures are verified later, in batches of 64 (second time). Both receivers check the group MAC
@@ -1092,7 +1118,7 @@ the contention model (negative values: the model is optimistic).}
 802.11p, 12\,Mb/s & \phyPtwelveUs & \phyPtwelveBase & \phyPtwelveDesign & \phyPtwelveRatio & \phyPtwelveGap \\
 \midrule
 Falcon-512, 802.11a 6\,Mb/s & \pqUs & \pqBase & \pqDesign & \pqRatio & \pqGap \\
-\botrule
+\bottomrule
 \end{tabular}
 \footnotetext{Frame: AUTHBC's, on air. Model: the larger gap of the two rows. The 802.11a
 6\,Mb/s row reads the runs of Table~\ref{tab:ladder} on this study's grid of
@@ -1141,7 +1167,7 @@ nodes. The gain is set by the number of frames, not by the size of the record.
 9 & \afKeyNine & \afDeltaQuadNine & \afDeltaWingNine & \afDeltaVtolNine & \afSaveNine\% & \afRatioNine \\
 15 & \afKeyFifteen & \afDeltaQuadFifteen & \afDeltaWingFifteen & \afDeltaVtolFifteen & \afSaveFifteen\% & \afRatioFifteen \\
 25 & \afKeyTwentyFive & \afDeltaQuadTwentyFive & \afDeltaWingTwentyFive & \afDeltaVtolTwentyFive & \afSaveTwentyFive\% & \afRatioTwentyFive \\
-\botrule
+\bottomrule
 \end{tabular}
 \footnotetext{Saved: bytes on air. Ratio: capacity $N_{\max}$ of AUTHBC over that of per-record
 signing, by the contention model.}
@@ -1362,7 +1388,7 @@ EMSS\footnotemark[2] & \strAuthEmss & \strBprEmss & \strNsatEmss & \crossEmss\ \
 Wong--Lam, block of 4 & \strAuthWl & \strBprWl & \strNsatWl & \crossWl\ \crossCiWl & \sdWl \\
 per-record signing & \strAuthSig & \strBprSig & \strNsatSig & \crossSig\ \crossCiSig & \crossSig \\
 AUTHBC & \strAuthDesign & \strBprDesign & \strNsatDesign & \crossDesign\ \crossCiDesign & \crossDesign \\
-\botrule
+\bottomrule
 \end{tabular}
 \footnotetext{$N_{\max}$ and in time: crossings of 0.95, interpolated between the two simulated
 sizes around it (Section~\ref{sec:clas}).}
@@ -1423,7 +1449,7 @@ LoRaWAN, \exclCount{} rates & none & -- & payload & no frame fits\footnotemark[4
 Python receiver & per frame & 4 & CPU & \ncpuProto{} nodes per core \\
 Rust receiver & per frame & 4 & channel & \rxRustNodes{} nodes per core \\
 BLS12-381 & not advised & -- & CPU & \ncpuBls{} nodes per core \\
-\botrule
+\bottomrule
 \end{tabular}
 \footnotetext[1]{$N_{\max} = \nmaxLeanDesign$ at 5\% frame loss and \nmaxTightD{} at 3\%, in
 simulation; no capacity was measured.}
@@ -1494,8 +1520,11 @@ Table~\ref{tab:decision} summarizes these recommendations.
 
 \subsection{Limitations}\label{sec:limits}
 
-\runin{Capacities Are Simulated} On hardware, contention was measured between two radios only
-(Section~\ref{sec:mechanism}). The capacities in Table~\ref{tab:ladder} come from ns-3 with one
+\runin{Capacities Are Simulated} On hardware, the ratio of the two capacities was measured on four
+radios only, with 802.11b at 1\,Mb/s (Section~\ref{sec:mechanism}). With the smaller contention
+windows measured on commercial cards (a half and a quarter of the standard's), the simulated
+capacities fall by up to \winFall\% and the ratio stays at \winRatioQuarter--\winRatioHalf{} against
+\winRatioStd. The capacities in Table~\ref{tab:ladder} come from ns-3 with one
 collision domain, equal received power and static nodes. Unequal power with capture was simulated
 separately and raises them (Section~\ref{sec:robust}); a swarm spread over a wider area, with
 hidden stations, and a moving swarm were simulated as well, with no Doppler and no
@@ -1506,7 +1535,9 @@ capacity but a wider spread between runs (Section~\ref{sec:sim}).
 
 \runin{Telemetry Is Synthetic} Record sizes come from a generator. The check against flight logs
 covers twelve logs of one autopilot at 5\,Hz position resolution, and simulated flights of that
-autopilot at 50\,Hz, whose navigation-quality fields do not vary.
+autopilot at 50\,Hz, whose navigation-quality fields do not vary. No telemetry within the schema
+reverses the result: at the largest records the schema allows, against per-record signing at its
+smallest frame, AUTHBC carries \recLargestRatio{} times as many nodes.
 
 \runin{Loss Models} The loss experiment uses independent, Gilbert and length-dependent loss
 generated at the frame level, and collision loss traced in ns-3; no loss was measured on air.
@@ -1522,8 +1553,9 @@ without a radio or a dispatcher in the path.
 
 \runin{Security Scope} Confidentiality, availability and key management are outside the design
 (Section~\ref{sec:model}). A swarm member holding the group key can still flood, and a delayed
-frame is refused only while GNSS time is available. The proofs use three separate models that are
-not composed, and assume canonical encoding to be injective. With one link per frame, continuity
+frame is refused while GNSS time is available and, in an outage, for as long as the clocks hold the
+window: about half an hour at 20\,ppm, 10--15\,h with a temperature-compensated oscillator. The
+proofs use three separate models that are not composed. With one link per frame, continuity
 inside a frame rests on the frame signature alone, and showing one record to a third party means
 showing its frame. The receiver therefore keeps every accepted frame, at its on-air length for
 every $b$ records held.
@@ -1551,8 +1583,8 @@ freshness, not by the MTU, and every frame starts with a key record. Where it do
 on \exclCount{} of the twelve EU863-870 LoRaWAN data rates, no batch size helps: not even one
 self-verifying frame can be carried. The capacities are simulated; in a spread or moving swarm fewer neighbors are in
 reach (at 1\,km, \spNeighbours{} with AUTHBC and \spNeighboursBase{} with per-record signing),
-but the gain stays \spRatioLo--\mvRatioHi-fold. On hardware, contention was measured between two
-radios only. In Rust, the frame-linked sender spends \enRustMeas\,$\mu$J per record,
+but the gain stays \spRatioLo--\mvRatioHi-fold. On four 802.11b radios, two sessions measured the
+ratio of the two capacities at \hwRatio{} and \hwRepeatRatio, against \hwModelRatio{} predicted. In Rust, the frame-linked sender spends \enRustMeas\,$\mu$J per record,
 a factor of \enFirstOverRust{} lower than the record-linked format with batching.
 
 This accounting should carry over to other broadcast systems whose records are small beside
