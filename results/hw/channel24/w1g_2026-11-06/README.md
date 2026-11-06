@@ -23,3 +23,13 @@ repo by hash.
 * **V1 (bracket) failed:** the Pi 3 after the session read 2 779.6 µs (band ≤ 2 600).
 
 Neither curve crossed 0.95 inside the grid (A32 0.952, P9.75 0.951). F128.
+
+**Correction (2026-11-06, morning).** The line "its reception of the Pis was as in calibration run
+3; only its sending changed" does not follow. The Pis' frames at the TP-Link compete only with each
+other, so a move of the TP-Link leaves that reception almost unchanged.
+
+At about 08:25 Mohamed found Blue 2 and its dongle displaced closer to the Pis, and restored them
+to 90 cm. When they moved is unknown. **The TP-Link's dominance here is undetermined:** a move
+before this session, or a difference between boots.
+
+The session remains void. See the correction in `predictions/W1g.md` and the F128 addendum.

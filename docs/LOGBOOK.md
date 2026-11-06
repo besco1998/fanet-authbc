@@ -150,6 +150,55 @@ excecute the plan and give me the results". The plan was approved in plan mode. 
 * A `pgrep` check matched its own command line, twice. A pattern only a running session can
   match is now used.
 
+# 2026-11-06, morning — W1g's cause undetermined (F128 corrected); W1h
+
+**Asked:** "i have restarted the pi3, try again". Mohamed then found **Blue 2 and its dongle
+displaced closer to the Pis** (about 08:25) and restored them to 90 cm; later, "Try again i have
+rebooted the blue 2".
+
+**What went wrong, mine, twice.**
+1. **An invalid inference.** I told Mohamed the TP-Link "still heard the Pis as in calibration, so
+   it hadn't moved", and wrote "its transmit strength changed between boots" into W1g.md, F128,
+   the session README and memory.
+   * At the TP-Link, the Pis' frames compete only with each other, and their relative strengths
+     barely change when the TP-Link moves. So its reception could not exclude a move.
+   * I found the flaw while planning the re-run, before his message.
+2. **Nearly an unproven replacement.** With the displacement found, I drafted "the move explains
+   W1g". Before committing, I checked what could date the move.
+   * Blue 2's TI radio logs the router's signal at each reconnect: −79/−80 dBm through
+     calibration and W1g, then −92 when Mohamed moved it at 08:27.
+   * It also swung −90 → −74 dBm across a power-cycle with nothing moved, so it dates nothing.
+   * **The cause stays undetermined:** a move before W1g, or a difference between boots.
+
+   Rewritten so before the commit.
+
+**Also this morning.** The first W1h pilot stopped before any window, at its first step: Blue 2
+did not return to the LAN after its reboot.
+* Its journal, selected by boot ID, shows the radio scanning but never finding the router. That
+  is consistent with the −90/−92 dBm read just after it was moved at 08:27.
+* `journalctl -b -1` mixed in an older boot, because a journal file is truncated. **Select a boot
+  by `_BOOT_ID`.**
+* The wall times in `--list-boots` were the restored clock, not real time.
+
+**Lessons:**
+* Before using a measurement to exclude a cause, ask whether that cause would have changed it.
+* A fact found later is not a cause until its time is known.
+
+**The W1h pilot and three diagnostics (F129).**
+* **No board can be reached during a session.** Node 4's kit takes Blue 2's own radio off the air.
+  I had checked that its SSH server allows forwarding, not that it stays on the LAN.
+* **After a fresh reboot the Pis broadcast at 6 Mb/s.** They sent 600 frames/s with nothing late,
+  impossible at 1 Mb/s. The rate measured from two frame sizes: 6 Mb/s in the first ad-hoc session
+  after a boot (twice), 1 Mb/s in later ones (twice).
+* My plan's "reboot every board before each attempt" would have voided every session. The rate
+  checks would have caught it; the pilot caught it first.
+* Mohamed chose "Revised W1h": the gate read after each attempt, and no Pi reboots.
+
+**Lesson:** a pilot of the real chain, run before registering, found two faults in an approved
+plan, both of which reading the code had missed.
+
+**Next:** W1h, W1g's session scored only on an attempt whose own gate windows are balanced.
+
 # 2026-11-06, small hours — equal senders, the calibration, and W1g void (F128)
 
 **Asked:** "what is the recommended option according to the scientific honest" → equal the

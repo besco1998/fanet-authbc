@@ -5440,7 +5440,7 @@ test the capture reading by making the senders equal (W1g).
 * The calibration rule was fixed before any calibration run:
   `results/hw/channel24/w1g_cal_2026-11-06/PROTOCOL.md`.
 
-## F128 — W1g is void: the balance did not survive a reboot of Blue 2, and the Pi 3 drifted out of its rate band; this kit cannot measure the ratio (2026-11-06)
+## F128 — W1g is void: the balance did not survive a reboot of Blue 2, and the Pi 3 drifted out of its rate band; this kit cannot measure the ratio (2026-11-06) ⚠️ CORRECTED in its addendum: the cause is UNDETERMINED (Blue 2 was later found displaced; when it moved is unknown); the reciprocity argument and "cannot measure" are retracted
 
 `predictions/W1g.md` (registered at `prereg-W1g`, `26f3ba8`), session
 `results/hw/channel24/w1g_2026-11-06/`, calibration `results/hw/channel24/w1g_cal_2026-11-06/`.
@@ -5480,3 +5480,91 @@ test the capture reading by making the senders equal (W1g).
 * **A hardware ratio would need four identical radios** with transmit power that can be set and
   holds (a purchase), or a testbed.
 
+
+**F128, addendum — ⚠️ CORRECTED (2026-11-06, morning): the cause of the imbalance is
+undetermined.**
+
+**What is new.** At about 08:25 Mohamed found **Blue 2 and its dongle displaced closer to the
+Pis**, and restored them to 90 cm. When they moved is unknown: any time after about 03:00.
+* Blue 2's own radio (the TI chip) logs the home router's signal at each reconnect: −79/−80 dBm
+  through calibration (03:04–03:25), −78 at W1g's boot, −79 just after W1g. That would argue
+  against a move before W1g.
+* But the same signal went from −90 to −74 dBm between 08:28 and 09:00 across a power-cycle with
+  nothing moved. So it cannot date a move.
+
+**Retracted:**
+* **The reciprocity argument.** The inference was invalid.
+  * When the TP-Link receives, only the Pis' frames compete, and with the Pis 10–15 cm apart their
+    relative strengths barely change when the TP-Link moves.
+  * Its unchanged reception could not exclude a move.
+* **"Its transmit strength changed between boots"**, stated as the finding. Two explanations
+  remain, neither established:
+  * (a) Blue 2 and its dongle had moved before W1g;
+  * (b) the TP-Link differed between boots.
+* **"This kit cannot measure the ratio."** Two of its four reasons are unproven:
+  * "the balance does not hold across a reboot" is (b);
+  * "both crossings within about 1 % of overload" was measured with the TP-Link dominant. In the
+    balanced calibration 3, loss at A31 was 5.0 %, which puts V ≈ 0.95 near A31.
+
+**What stands:**
+* the void, on V5 and V1;
+* capture cannot be removed;
+* the Pi 3 drifts, and a reboot is the untested remedy.
+
+**Lessons:**
+* Before using a measurement to exclude a cause, ask whether that cause would have changed the
+  measurement.
+* A fact found later (a displacement) is not a cause until its time is known. I first wrote "the
+  move explains it", and caught that before committing, by checking what could date the move.
+
+**Next.** Mohamed asked to try again: W1h (`predictions/W1h.md`) runs W1g's session only after a
+balance gate on the session's own boot and placement. That covers both (a) and (b).
+
+## F129 — the Pis broadcast at 6 Mb/s in their first ad-hoc session after a boot, at 1 Mb/s in later ones; and no board can be reached during a session (W1h pilot and diagnostics; 2026-11-06)
+
+`results/hw/channel24/w1h_pilot_2026-11-06/` and `results/hw/channel24/diag_rate_2026-11-06/`.
+Both are disclosed, not scored.
+
+**What the pilot showed.** In its first 12 windows, run after the Pis were freshly rebooted, each
+Pi sent **600.0 frames/s of 145 B with nothing late or dropped**, and the receivers got 13 043–13 199
+of 13 200.
+* At 1 Mb/s a 145 B frame takes about 1 860 µs on air, so 600/s is impossible there.
+* In every earlier session the Pi 4s were channel-limited at about 520/s, and the Pi 3 at
+  405–442/s.
+
+**The diagnostics: the rate from two frame sizes.** Each Pi sent alone, saturated, once with 145 B
+and once with 1 000 B of payload. The difference in cycle is the 855 extra bytes on air
+(`rate_from_sizes.py`).
+
+| run | Pis' uptime | ad-hoc session on that boot | rate (pi-A / pi-B / Pi 3) |
+|---|---|---|---|
+| t0 | 15 min | 2nd (after the pilot) | 0.98 / 0.97 / 1.01 Mb/s |
+| t1 | 1 min | 1st | **5.96 / 5.98 / 6.13 Mb/s** |
+| t2 | 6 min | 2nd | 0.97 / 0.97 / 1.02 Mb/s |
+
+* In t1 the 145 B cycle was 353 µs: an OFDM frame at 6 Mb/s.
+* So the Pis' **first ad-hoc session after a boot broadcasts at 6 Mb/s; later sessions use
+  1 Mb/s.** A time threshold between 2½ and 6 minutes after boot would also fit; the session
+  order is the simpler reading.
+* Node 4 was absent in t0–t2, so it is not the cause.
+* The mechanism is inside the firmware. brcmfmac ignores `basic-rates` and `mcast-rate` (F124
+  addendum). The router's basic rates are 1, 2, 5.5 and 11 Mb/s.
+* Rate cannot be set here; only its effect can be checked.
+
+**What it means.**
+* **Every earlier scored session is unaffected.** Each passed its registered rate checks, before and
+  after, at 1 Mb/s (W1d–W1g). A session at 6 Mb/s would fail them (1 666 µs at 600/s, below the
+  1.9 ms band).
+* **Rebooting the Pis before a session would void it.** After a Pi boots, one ad-hoc session must run
+  first, disclosed and not scored.
+
+**And: no board can be reached during a session.**
+* The Pis' only link is the ad-hoc cell.
+* Node 4's kit takes Blue 2's own radio off the air for the session, as its header says.
+* I had checked that Blue 2's SSH server allows forwarding, but not that Blue 2 stays on the LAN
+  during a session. The pilot's mid-session fetch therefore failed, and the W1h gate is read after
+  the attempt (Mohamed's choice).
+
+**Also this morning.** Blue 2 did not rejoin the LAN after one reboot. Its journal, selected by boot
+ID, shows its radio scanning without ever finding the router, at a time it read the router at
+−90/−92 dBm. A power-cycle brought it back (−74, then −69 dBm).

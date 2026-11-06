@@ -1,0 +1,13 @@
+Pis rebooting at 09:06:14
+node 1 freshly booted: uptime 39.36s ntp=yes
+node 2 freshly booted: uptime 37.68s ntp=yes
+node 3 freshly booted: uptime 42.61s ntp=yes
+node 1: kit=[c42010127374 30c333bce0df 2b8ab3d2f89a edf4de1e97f4 ] plan=18871d6a6054 throttled=0x0 ntp=yes running=0
+node 2: kit=[c42010127374 30c333bce0df 2b8ab3d2f89a edf4de1e97f4 ] plan=18871d6a6054 throttled=0x0 ntp=yes running=0
+node 3: kit=[c42010127374 30c333bce0df 2b8ab3d2f89a edf4de1e97f4 ] plan=18871d6a6054 throttled=0x0 ntp=yes running=0
+Blue 2 rebooting at 09:07:17
+Blue 2 ready 09:08:37: boot=60748dbc uptime=66.40s watchdog=active
+node 4: [1e35e61fbcac 2b8ab3d2f89a edf4de1e97f4 18871d6a6054]
+node 2: set_txpower_window.sh (bd86ef80c307) started, 800 mBm
+Running as unit: authbc-w1h.service
+START=1793949036 (09:10:36); 12 windows; last ends about 09:16:36

@@ -205,3 +205,39 @@ Note that the per-record band reaches 9.82, beyond the grid's last point (9.75).
 **What it means.** A re-run needs a new registration (registered rule). The calibration and this
 session together show that this kit cannot hold a balanced four-station setup across boots, and
 that the Pi 3 drifts out of its rate band over hours. F128.
+
+---
+
+## Correction — added 2026-11-06, morning; nothing above this line was changed
+
+**A new fact.** At about 08:25 Mohamed found **Blue 2 and its TP-Link dongle both displaced closer
+to the Pis**. He put them back at 90 cm.
+
+**When they moved is unknown.** It could have been any time after he placed Blue 2 for
+calibration (about 03:00).
+* Blue 2's own radio (the TI chip, not the TP-Link) logs the home router's signal each time it
+  reconnects. It read −79/−80 dBm at all seven calibration reconnects (03:04–03:25), −78 at
+  W1g's boot (03:45) and −79 just after W1g (04:12). That would argue against a move before W1g.
+* But the same signal went from −90 to −74 dBm between 08:28 and 09:00 with nothing moved (a
+  power-cycle only, Mohamed). So it cannot date a move.
+
+**Retracted from the outcome above:**
+* **"Radio links are reciprocal: had Blue 2 moved or turned, both directions would have changed.
+  Only its sending changed."** The inference was invalid.
+  * When the TP-Link receives, the Pis' frames compete only with each other.
+  * The three Pis sit 10–15 cm apart, so their strengths relative to each other barely change when
+    the TP-Link moves.
+  * Unchanged reception at the TP-Link therefore could not rule out a move.
+* **"The TP-Link's transmit strength changed between boots"**, stated as the finding. It is one of
+  two explanations, and neither is established:
+  * (a) Blue 2 and its dongle had already moved closer when W1g ran;
+  * (b) the TP-Link's transmission differed between the two boots.
+* **"This kit cannot hold a balanced four-station setup across boots."** Not established.
+
+**What stands.** The session is still **VOID**:
+* the senders were not balanced (V5), whatever the cause;
+* the Pi 3 was out of its rate band (V1).
+
+The calibration's finding stands as well: equal sender means do not remove capture. A re-run needs
+a new registration: W1h, which checks the balance on the session's own boot and placement before
+the session runs.

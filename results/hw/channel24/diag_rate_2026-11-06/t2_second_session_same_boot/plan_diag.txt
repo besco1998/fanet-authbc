@@ -1,0 +1,8 @@
+# nodes: 1,2,3
+# Diagnostic (disclosed, not scored), 2026-11-06: each Pi alone at 3000/s, 145 B then 1000 B. The cycle difference gives the broadcast PHY rate.
+R1 3000 145 1
+R2 3000 145 2
+R3 3000 145 3
+R1 3000 1000 1
+R2 3000 1000 2
+R3 3000 1000 3
