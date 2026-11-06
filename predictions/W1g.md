@@ -154,3 +154,54 @@ Note that the per-record band reaches 9.82, beyond the grid's last point (9.75).
 * **The power script was tested on pi-B** on its home Wi-Fi link before this registration (set,
   read back, returned to `auto`); its inline form ran in calibration runs 2–3.
 * **No window of this plan has been run.**
+
+---
+
+## Outcome — added 2026-11-06, after the session; nothing above this line was changed
+
+**How it ran.**
+* Registered at `26f3ba8` (tag `prereg-W1g`) before any window. The session ran 03:48–04:12 on
+  channel 11, scored by `analysis/dsss_w1g.py --score`, unchanged. Outputs:
+  `results/raw/w1g_w1g_2026-11-06.csv`, windows `results/hw/channel24/w1g_2026-11-06_windows.csv`,
+  files `results/hw/channel24/w1g_2026-11-06/`.
+* All four boards ran all 48 windows and reverted.
+* Node 4 joined the Pis' cell (`aa:69:5b:4c:da:61`) at `FIXED CCK_1M` and stayed on one boot
+  (no reset).
+* pi-B was held at 8.00 dBm (03:47:47) and returned to `auto` (04:12:42).
+* An independent script recomputed b, every point, the A31 spread and the crossings from the raw
+  files; it agrees exactly.
+
+**The session is VOID, by two registered conditions.**
+* **V5, balance: failed.** The A31 spread was **5.08×** (rule ≤ 1.5×).
+  * The TP-Link's frames were lost at 1.17 %, the Pis' at 4.70–5.92 %.
+  * The TP-Link dominated at every point (0.8–1.2 % against the Pis' 3.0–7.1 %).
+* **V1, bracket: failed.** The Pi 3's rate check after the session was **2 779.6 µs**, above the
+  band's top (2 600 µs). The other seven held (1 940.5–2 508.7 µs).
+* V2 (b = 0.083 %), V3, V4 and V6 held.
+
+**Nothing is scored.**
+
+**Reported, not scored.**
+* **Neither curve crossed 0.95 inside the grid** (A32 0.9518, P9.75 0.9509). So even a valid
+  session would not have measured the ratio: on these radios, with the TP-Link dominant, both
+  crossings lie within about 1 % of overload.
+* **The TP-Link's transmit strength changed between boots.**
+  * In calibration run 3, with the same setup 25 minutes earlier and a fresh boot, its frames were
+    lost at 4.46 % and the spread was 1.30×.
+  * At the TP-Link as a receiver, the Pis' frames were lost about as in calibration 3: pi-A 7.1 %
+    (8.0 %), Pi 3 2.9 % (2.3 %).
+  * Radio links are reciprocal: had Blue 2 moved or turned, both directions would have changed.
+    Only its sending changed. The cause is unknown.
+* **The Pi 3 slows across the day:** before / after 2 293 / 2 358 µs in W1e (13:34), 2 357 /
+  2 470 µs in W1f (21:46), 2 509 / 2 780 µs here (03:48). It was at 46 °C, not throttled, after
+  15 hours up. The cause is unknown; a reboot may reset it, untested.
+
+**My expectations.**
+* "V5 probably holds" was **wrong**, as stated possible: the balance did not survive a reboot of
+  Blue 2.
+* "V1 holds" was **wrong** for the Pi 3.
+* "Per-record's crossing between 9.25 and 9.75" was wrong: it lies above 9.75.
+
+**What it means.** A re-run needs a new registration (registered rule). The calibration and this
+session together show that this kit cannot hold a balanced four-station setup across boots, and
+that the Pi 3 drifts out of its rate band over hours. F128.

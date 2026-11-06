@@ -150,6 +150,38 @@ excecute the plan and give me the results". The plan was approved in plan mode. 
 * A `pgrep` check matched its own command line, twice. A pattern only a running session can
   match is now used.
 
+# 2026-11-06, small hours — equal senders, the calibration, and W1g void (F128)
+
+**Asked:** "what is the recommended option according to the scientific honest" → equal the
+senders. Then "do whatever is correct", "Now", "Re-scoped W1g".
+
+**What was tried, in order.**
+1. **The drivers, read before acting.** The TP-Link's `iw … set txpower` and its `/proc` power
+   offset are both stored and never applied; the Pis' brcmfmac power setting is real. So the
+   TP-Link can only be weakened by distance.
+2. **The rule was written and pushed before any calibration run** (`PROTOCOL.md`, `fde2ca8`):
+   every sender within 1.5×.
+3. **Three calibration runs.** Moving the TP-Link to 90 cm ended its dominance, and pi-B at 8 dBm
+   met the rule (1.30×). **But the same data showed my rule was the wrong proxy.** Total loss
+   stayed 0.59–0.65× of the model, because equal sender means do not remove capture: each receiver
+   keeps its own strongest sender. I said so before running anything further. Mohamed chose to
+   measure the ratio with capture present.
+4. **W1g was registered (`26f3ba8`), the power step put in the repo kit and tested alone first,
+   and the session run. It was void:**
+   * the TP-Link was dominant again (spread 5.08×), with its reception unchanged, so its transmit
+     strength changed between boots;
+   * the Pi 3's cycle had drifted above its band (2 780 µs). That drift has grown session by
+     session since midday.
+
+**Lessons.**
+* **A balance that holds in calibration is not a property of the setup until it survives a reboot
+  of the boards that set it.** Calibrate across the same reboot the session will have.
+* **Ask what a proxy rule would let through before fixing it.** Equal means, unequal pairs.
+* **A slow drift in one station shows only by comparing sessions.** Read each session's bracket
+  next to the last before starting the next.
+* The scratchpad was emptied overnight, and with it the launcher. The registered parts live in the
+  repo; the launcher holds credentials and is rebuilt from the record.
+
 ---
 
 # 2026-11-04/05 — the desk work on the main weaknesses, and a hardware list corrected

@@ -5440,3 +5440,43 @@ test the capture reading by making the senders equal (W1g).
 * The calibration rule was fixed before any calibration run:
   `results/hw/channel24/w1g_cal_2026-11-06/PROTOCOL.md`.
 
+## F128 — W1g is void: the balance did not survive a reboot of Blue 2, and the Pi 3 drifted out of its rate band; this kit cannot measure the ratio (2026-11-06)
+
+`predictions/W1g.md` (registered at `prereg-W1g`, `26f3ba8`), session
+`results/hw/channel24/w1g_2026-11-06/`, calibration `results/hw/channel24/w1g_cal_2026-11-06/`.
+
+**The calibration first.**
+* Three runs at the A31 rate reached the pre-set balance rule (sender spread 1.30×: the TP-Link at
+  90 cm, pi-B at 8 dBm).
+* But total loss stayed **0.59–0.65× of the model** (4.58–5.00 % against 7.70 %).
+* Equal per-sender means do not remove capture: each receiver keeps its own strongest sender.
+  That made the rule in `PROTOCOL.md` the wrong proxy, my error, stated before the session.
+* Mohamed chose a re-scoped W1g: the ratio measured with capture present, the grid moved to
+  bracket both crossings.
+
+**The session was void, by two registered conditions.**
+* **The balance failed (V5): spread 5.08×.** The TP-Link's frames were lost at 1.2 % against the
+  Pis' 4.7–5.9 %, dominant at every point.
+  * Its reception of the Pis was as in calibration 3, so, by reciprocity, it did not move: **its
+    transmit strength changed between boots** (calibration 3 and the session, each from a fresh
+    boot).
+* **The bracket failed (V1).** The Pi 3's cycle after the session was 2 780 µs (band ≤ 2 600).
+* **The Pi 3 drifts across the day.** Before / after: 2 293 / 2 358 µs (W1e, 13:34), 2 357 /
+  2 470 µs (W1f, 21:46), 2 509 / 2 780 µs (W1g, 03:48). Not heat, not power (46 °C, not
+  throttled); cause unknown.
+* **Reported:** neither curve crossed 0.95 inside the grid (A32 0.952, P9.75 0.951). Both
+  crossings lie within about 1 % of overload on these radios.
+
+**What it changes.**
+* **The ratio cannot be measured on hardware with this kit:**
+  * capture cannot be removed with these radios;
+  * the balance that reduces it does not hold across a reboot of the TP-Link's host;
+  * one of the four stations drifts out of its rate band within hours;
+  * on these radios both crossings sit at the edge of overload, where the method is weakest
+    (W1b).
+* **The hardware results stand as F123 and F127.** The contention model holds at N = 2, 3 and 4
+  on real radios. AUTHBC's four-board crossing is measured within 7 % of the model. Capture is the
+  dominant departure, in the direction in which simulated capacities are conservative.
+* **A hardware ratio would need four identical radios** with transmit power that can be set and
+  holds (a purchase), or a testbed.
+
