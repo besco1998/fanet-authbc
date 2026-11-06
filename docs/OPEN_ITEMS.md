@@ -11,6 +11,29 @@ writing [`PROJECT_GUIDE.md`](PROJECT_GUIDE.md).*
 
 ## 1. Where the work is, and what to do next (state on 2026-11-01)
 
+**What is next (2026-11-06, after the four-radio ratio was measured and written in):**
+1. **Mohamed, to unblock submission:**
+   * read the new passages (`thesis/STATUS.md`, the 2026-11-06 block);
+   * choose the journal (I1). The condition set on 2026-10-08, "after contention has been
+     measured on radios", is now met.
+   * author details, funding and ORCID (I2), and data availability (I3);
+   * merge PR #1, then #2;
+   * Q10, the stray tag.
+2. **Then the agent:** cut the paper to the journal's limit and class, and rebuild and re-check
+   both PDFs.
+3. **Open weaknesses, optional, each a new registration:**
+   * W3, loss measured on air, now feasible with the square setup;
+   * W5, the energy rig checked against a reference, and the receiver metered;
+   * W8, two hops in ns-3;
+   * W7, a post-quantum checkpoint design (desk);
+   * W2, the radio's unexplained behaviour;
+   * repeatability on another setup or day.
+4. **The thesis deadline, March 2027.**
+   * November–December: Mohamed's reading, the journal chosen and the paper submitted.
+   * January–February: the supervisor's reading, and any of item 3 he wants.
+   * March: submission.
+
+
 **Where.** Branch `p11-reviewer-revision`, PR #2 (a draft until Mohamed has read the thesis
 passages listed in `thesis/STATUS.md`). It contains `p9-supervisor-revision` (PR #1, his to merge
 first). Counts: the status board in `CLAUDE.md`. Decisions and what each cost:
