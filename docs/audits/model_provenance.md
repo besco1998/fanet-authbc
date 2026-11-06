@@ -5685,3 +5685,17 @@ retry after a join-ping NO-GO). Folders `results/hw/channel24/w1i_2026-11-06/tun
 * W1i had no session (power alone could not balance a 10–15 cm cluster).
 * **The layout made the difference:** the 1 m square, plus the Pi 3 nearer the others. The 3-minute
   preflight (Mohamed's rule) found each fault in about 8 minutes instead of 30.
+
+## F133 — W1k: the hardware ratio repeats, 3.272 against W1j's 3.280 (2026-11-06)
+
+`predictions/W1k.md` (registered at `prereg-W1k`, `269588c5`): W1j's session again, on the same
+setup, untouched.
+* **Valid, every scored claim held.**
+  * The crossings: 30.67 / 9.37 (W1j 30.48 / 9.29).
+  * **The ratio 3.272** (W1j 3.280, model 3.304).
+  * **The repeat within −0.26 %** (registered rule ±5 %).
+  * V5 1.149×, b 0.52 %.
+* **One control window read 2.58 %.** Without it b would be 0.22 %, and the ratio 3.273: it moves
+  by 0.04 %.
+* **What it shows:** the four-radio ratio is repeatable on this setup, at 3.27–3.28 against 3.30.
+  It is two sessions on one setup, not a sample of setups.

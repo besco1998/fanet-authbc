@@ -1,0 +1,38 @@
+# python=3.12.3
+# platform=Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=w1i
+# config_hash=b1494d53bcbbc733
+what,group,measured,predicted,band_lo,band_hi,held,windows
+"gate (reported, not scored)",GO,1.169,,,1.5,True,pi-A=6.28% pi-B=5.64% Pi=5.37% TP-Link=5.66%
+session,valid,,,,,True,52
+node 4 joined the Pis' cell,f6:2e:4e:89:8b:b7,"reached [1, 2, 3]",,,,True,
+node 4 rate fixed at join,FIXED CCK_1M 0x00 0,,FIXED CCK_1M,,,True,
+senders balanced (V5),A31,1.149,,,1.5,True,pi-A=6.27% pi-B=5.74% Pi=5.45% TP-Link=6.23%
+node1 at 6 dBm (V6),node1 txpower.log,2026-11-06T20:46:03+02:00 set 600: txpower 6.00 dBm | 2026-11-06T21:12:58+02:00 auto: txpower 31.00 dBm,,,,True,
+node3 at 11 dBm (V6),node3 txpower.log,2026-11-06T20:46:03+02:00 set 1100: txpower 11.00 dBm | 2026-11-06T21:12:58+02:00 auto: txpower 31.00 dBm,,,,True,
+rate check before,pi-A (BCM4345/6),1945.8,2224.0,1900.0,2600.0,True,1
+rate check before,pi-B (BCM4345/6),2002.6,2224.0,1900.0,2600.0,True,1
+rate check before,Pi 3 (BCM43430/1),2343.5,2224.0,1900.0,2600.0,True,1
+rate check before,TP-Link on Blue 2 (RTL8188EUS),1964.7,2224.0,1900.0,2600.0,True,1
+rate check after,pi-A (BCM4345/6),1939.8,2224.0,1900.0,2600.0,True,1
+rate check after,pi-B (BCM4345/6),1989.3,2224.0,1900.0,2600.0,True,1
+rate check after,Pi 3 (BCM43430/1),2463.0,2224.0,1900.0,2600.0,True,1
+rate check after,TP-Link on Blue 2 (RTL8188EUS),1963.0,2224.0,1900.0,2600.0,True,1
+background,controls,0.005151,,,0.01,True,8
+capacity-equivalent,A29,0.96744,,,,scored,4/4
+capacity-equivalent,A30,0.95863,,,,scored,4/4
+capacity-equivalent,A31,0.94564,,,,scored,4/4
+capacity-equivalent,A32,0.93551,,,,scored,4/4
+crossing,AUTHBC,30.665,29.502,26.552,32.452,True,95% CI 30.58-30.76 (100% bracketed)
+capacity-equivalent,P9,0.96271,,,,scored,4/4
+capacity-equivalent,P9.25,0.95493,,,,scored,4/4
+capacity-equivalent,P9.5,0.94492,,,,scored,4/4
+capacity-equivalent,P9.75,0.93502,,,,scored,4/4
+crossing,per-record,9.373,8.929,8.036,9.822,True,95% CI 9.34-9.43 (100% bracketed)
+ratio,AUTHBC/per-record,3.2716,3.3041,2.9737,3.6345,True,
