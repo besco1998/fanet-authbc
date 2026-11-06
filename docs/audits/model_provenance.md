@@ -5431,3 +5431,12 @@ cause is undetermined.** Mohamed reset Blue 2 onto the adapter at about 20:53 fo
   registration and Mohamed's call.
 * **Blue 2: no reset in this session or its pilot,** now one in 28 exits from ad-hoc mode (F126).
 
+**F127, addendum (2026-11-06): equalising the senders, what the drivers allow.** Mohamed chose to
+test the capture reading by making the senders equal (W1g).
+* **The TP-Link's power cannot be set in software.** In its driver, `iw … set txpower` and
+  `/proc/…/tx_power_offset` are both stored and never applied (`ioctl_cfg80211.c`, l. 3957–3990;
+  `adapter->power_offset` is only zeroed, set and printed). It can only be weakened by placement.
+* **The Pis' power can be set.** brcmfmac writes the firmware's `qtxpower` with its override flag.
+* The calibration rule was fixed before any calibration run:
+  `results/hw/channel24/w1g_cal_2026-11-06/PROTOCOL.md`.
+
