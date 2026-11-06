@@ -1,0 +1,1 @@
+Pi 3 and pi-B swapped corners; all antennas toward the square's centre; Pi 3 and pi-B power-cycled (Mohamed, 18:28:02)

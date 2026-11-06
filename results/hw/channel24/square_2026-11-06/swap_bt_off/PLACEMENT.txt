@@ -1,0 +1,1 @@
+as swap_pi3_piB (Pi 3 and pi-B swapped, antennas to the centre); Bluetooth soft-blocked on all three Pis (rfkill), 18:37:59
