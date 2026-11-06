@@ -188,3 +188,9 @@ Folder: `results/hw/channel24/w1i_2026-11-06/tune1/`.
 * **The balance at G31 read 1.442×:** pi-A 5.77 %, pi-B 4.53 %, Pi 3 6.53 %, TP-Link 6.08 %.
   It was not used, the preflight being NO-GO.
 * Reported to Mohamed. Continuing needs his decision.
+
+**Deviation — 2026-11-06, ~16:50, approved by Mohamed ("Retry once, rule unchanged").**
+* **One retry** of the tuning after a NO-GO caused by node 4's join ping alone.
+* **The join check (check 4) and V3 stay exactly as registered.** If the join check fails again,
+  W1i stops for good.
+* The retry counts toward the five tuning preflights, so preflights 2–5 remain.
