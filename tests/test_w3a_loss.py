@@ -6,7 +6,7 @@ Held here, before any session:
 * the statistics: loss, mean burst against the independent value, the length ratio against the
   paper's bit-error model;
 * V through the real decoder: for AUTHBC as built (r = 1) it is exactly the share of frames
-  received; a dependent design (r = 4) is scored against its independent value;
+  received; a dependent design (r = 4) fails only if shown below its independent value;
 * the three scored claims hold and fail where they should.
 
 Everything is checked on traces made up for the purpose.
@@ -148,6 +148,10 @@ class TestTheScore:
         verdict = {r["what"]: r["held"] for r in rows if r["what"].startswith("W3a-")}
         assert verdict["W3a-2"] is True and verdict["W3a-3"] is True
         assert next(r for r in rows if r["what"] == "session")["held"] is True
+
+    def test_independent_loss_does_not_fail_w3a_1_on_noise(self, tmp_path) -> None:
+        rows = w3a.score(_session(tmp_path, self.P), mbm=400)
+        assert next(r for r in rows if r["what"] == "W3a-1")["held"] is True
 
     def test_bursty_loss_helps_the_dependent_design(self, tmp_path) -> None:
         rows = w3a.score(_session(tmp_path, self.P, burst=6.0), mbm=400)

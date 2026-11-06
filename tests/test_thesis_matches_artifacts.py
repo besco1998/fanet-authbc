@@ -497,7 +497,7 @@ class TestTheWorkedFrame:
 # 2026-11-06 (Mohamed, Q11: "apply all six as drafted"): every November registration is now a row
 # of appendix B's third table, and the list is empty. It stays, so a later registration not yet
 # written up is held here by name rather than excluded silently.
-NOT_YET_IN_THE_THESIS: frozenset[str] = frozenset()
+NOT_YET_IN_THE_THESIS: frozenset[str] = frozenset({"prereg-W3a"})
 
 
 class TestTheRegistrationsOfAppendixB:

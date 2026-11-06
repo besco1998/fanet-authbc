@@ -210,10 +210,21 @@ def score_all(sessions: Sequence[tuple[Path, int]]) -> list[dict]:
     se = (np.sqrt(1 / lost_l - 1 / n_l + 1 / lost_s - 1 / n_s)
           if s_and_l and lost_s and lost_l else float("nan"))
     ratio_lo = measured_ratio * float(np.exp(-1.96 * se))
+    # W3a-1 fails only if shown: pooled over the traces, V(r=4) below its independent value by more
+    # than the 95 % one-sided sampling margin. A frame's fate is shared by the groups of r = 4 it
+    # starts, so the binomial variance is inflated by r (the design effect).
+    n1 = sum(g["frames"] for g in claim1)
+    got = sum(g["V_r4"] * g["frames"] for g in claim1)
+    want = sum(g["V_r4_iid"] * g["frames"] for g in claim1)
+    margin = 1.645 * float(np.sqrt(sum(4 * g["frames"] * g["V_r4_iid"] * (1 - g["V_r4_iid"])
+                                       for g in claim1)))
     claims = [
-        {"what": "W3a-1", "group": "bursty loss helps dependent frames: V(r=4) >= independent",
-         "measured": f"{sum(g['V_r4'] >= g['V_r4_iid'] for g in claim1)}/{len(claim1)} traces",
-         "held": bool(claim1) and all(g["V_r4"] >= g["V_r4_iid"] for g in claim1)},
+        {"what": "W3a-1", "group": "real loss hurts dependent frames no more than independent loss",
+         "measured": f"V(r=4) {got / n1:.5f} against {want / n1:.5f} independent, margin "
+                     f"{margin / n1:.5f} ({len(claim1)} traces; "
+                     f"{sum(g['V_r4'] >= g['V_r4_iid'] for g in claim1)} at or above)"
+         if claim1 else "no trace at p >= 1 %",
+         "held": bool(claim1) and got >= want - margin},
         {"what": "W3a-2", "group": "AUTHBC as built loses only its own frames: V(r=1) = 1 - p",
          "measured": f"{sum(g['_v1_exact'] for g in a_rows)}/{len(a_rows)} traces exact",
          "held": bool(a_rows) and all(g["_v1_exact"] for g in a_rows)},
