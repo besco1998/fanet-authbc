@@ -147,6 +147,13 @@ class TestTheVerdict:
         rows, verdict = pf.check(_run(tmp_path / "b", log=wrong))
         assert verdict == "NO-GO" and _held(rows, 3) == [False]
 
+    def test_pi_a_held_too_needs_its_own_log(self, tmp_path) -> None:
+        d = _run(tmp_path)
+        assert pf.check(d, held_at_8dbm=(1, 2))[1] == "NO-GO"
+        (d / "node1" / "txpower.log").write_text(LOG)
+        rows, verdict = pf.check(d, held_at_8dbm=(1, 2))
+        assert verdict == "GO" and _held(rows, 3) == [True, True]
+
     def test_node_4_in_its_own_cell_is_no_go(self, tmp_path) -> None:
         rows, verdict = pf.check(_run(tmp_path, meta=META | {"bssid": "02:11:87:00:00:01"}))
         assert verdict == "NO-GO" and False in _held(rows, 4)

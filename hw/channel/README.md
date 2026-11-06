@@ -97,7 +97,7 @@ long run (anything over ~5 minutes) is preceded by a **preflight**:
 |---|---|---|
 | 1 | Pis at 1 Mb/s | each Pi's rate check in 1.9–2.6 ms **and** channel-limited (a Pi sending its full offered 600/s is faster than 1 Mb/s: its first ad-hoc session after a boot runs at 6 Mb/s, F129) |
 | 2 | TP-Link at 1 Mb/s | `rate_ctl` reads `FIXED CCK_1M` at join; its rate check in band |
-| 3 | pi-B's power | `txpower.log`: `set 800: txpower 8.00 dBm`, then `auto` |
+| 3 | the held powers | each held Pi's `txpower.log` (pi-B; pi-A too with `--held 1,2`): `set 800: txpower 8.00 dBm`, then `auto` |
 | 4 | node 4 | in the Pis' cell (BSSID not `02:11:87:…`), all Pis reached, Blue 2 on one boot, every window complete |
 | 5 | supply | no Pi under-voltage |
 | 6 | balance | G31 senders within 1.5× of each other |

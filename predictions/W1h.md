@@ -289,3 +289,15 @@ The gate (`dsss_w1h.py --gate`, unchanged):
     known which.
 * Folders: `results/hw/channel24/w1h_2026-11-06/a2/place120/` (try 1) and
   `…/a2/place120_try2/`.
+
+**Deviation 2 — 2026-11-06, ~14:55, approved by Mohamed ("pi-A at 8 dBm, preflight").**
+* Blue 2 stays at about 120 cm.
+* **pi-A is now held at 8 dBm as well**: the same registered script (`set_txpower_window.sh`,
+  hash-checked), set before the windows, read back, and returned to auto after.
+* **An added void condition, V6b:** pi-A's `txpower.log` shows `set 800: txpower 8.00 dBm`, then
+  `auto`. It is read with the same function as V6 (`w1g.power_check`), reported beside the score,
+  and the registered score code is unchanged. The preflight checks both Pis' logs.
+* **One preflight reads this setup.**
+  * GO starts attempt 2 at once.
+  * NO-GO stops, and is reported.
+* Everything else as registered.

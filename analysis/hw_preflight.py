@@ -7,7 +7,7 @@ the parameters first:
 1. every Pi broadcasts at 1 Mb/s: its rate check in band and channel-limited (a Pi in its first
    ad-hoc session after a boot sends at 6 Mb/s and is limited by its own offered rate; F129);
 2. the TP-Link at 1 Mb/s: `rate_ctl` fixed at join, its rate check in band;
-3. pi-B held at 8 dBm, then back to auto;
+3. every Pi whose power is held (pi-B; pi-A too when asked) at 8 dBm, then back to auto;
 4. node 4 in the Pis' cell with every Pi reached, and Blue 2 on one boot throughout;
 5. no Pi under-voltage;
 6. the senders within 1.5x of each other at W1g's A31 line (two G31 windows).
@@ -89,7 +89,18 @@ def _rate_rows(windows: list[dict], achieved: dict[str, float]) -> list[dict]:
     return rows
 
 
-def check(folder: Path) -> tuple[list[dict], str]:
+def _power_rows(folder: Path, held_at_8dbm: tuple[int, ...]) -> list[dict]:
+    """Check 3: every Pi whose power the run holds shows 8.00 dBm read back, then auto."""
+    rows = []
+    for node in held_at_8dbm:
+        path = folder / f"node{node}" / "txpower.log"
+        power = w1g.power_check(path.read_text() if path.exists() else "")
+        rows.append(_row(3, "held at 8 dBm, then auto", f"node{node} txpower.log",
+                         power["measured"], power["held"] is True))
+    return rows
+
+
+def check(folder: Path, held_at_8dbm: tuple[int, ...] = (w1g.PI_B,)) -> tuple[list[dict], str]:
     """The six checks, then GO, NO-GO, or RETRY.
 
     RETRY: every Pi that failed was sender-limited (6 Mb/s: its first ad-hoc session after a boot,
@@ -101,9 +112,7 @@ def check(folder: Path) -> tuple[list[dict], str]:
     rows = _rate_rows(windows, _achieved(folder))
     rows.append(_row(2, "rate_ctl at join", "TP-Link", rate_fixed["group"],
                      rate_fixed["held"] is True))
-    power = w1g.power_check(w1g._power_log(folder))
-    rows.append(_row(3, "pi-B at 8 dBm, then auto", "node2 txpower.log", power["measured"],
-                     power["held"] is True))
+    rows += _power_rows(folder, held_at_8dbm)
     rows.append(_row(4, "node 4 in the Pis' cell", joined["group"], joined["measured"],
                      joined["held"] is True))
     boots = {b for w in windows for b in (w.get("boot_before", ""), w.get("boot_after", ""))}
@@ -133,13 +142,15 @@ def main() -> None:
     what = ap.add_mutually_exclusive_group(required=True)
     what.add_argument("--plan", action="store_true")
     what.add_argument("--check", type=Path, metavar="RUN_DIR")
+    ap.add_argument("--held", default=str(w1g.PI_B), metavar="NODES",
+                    help="Pis whose power the run holds at 8 dBm, comma-separated (default 2)")
     args = ap.parse_args()
     if args.plan:
         PLAN.parent.mkdir(parents=True, exist_ok=True)
         PLAN.write_text("\n".join(plan()) + "\n")
         print(PLAN.read_text())
         return
-    rows, verdict = check(args.check)
+    rows, verdict = check(args.check, tuple(int(n) for n in args.held.split(",")))
     w1f._write(args.check / "preflight.csv", rows, "hw_preflight")
     for r in rows:
         print(f"  [{r['check']}] {'ok ' if r['held'] else 'NO '} {r['what']} | {r['group']} | "
