@@ -1,0 +1,6 @@
+CAL: 4 windows; loss % (sender rows, receiver columns)
+sender,receiver,pi-A,pi-B,Pi 3,TP-Link,sender mean
+pi-A,,3.41,6.26,8.05,5.91
+pi-B,3.33,,3.57,2.37,3.09
+Pi 3,6.95,6.95,,4.49,6.13
+TP-Link,3.29,3.23,3.06,,3.19
