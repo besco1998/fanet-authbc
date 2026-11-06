@@ -10,6 +10,12 @@ recorded in the project"** and the question is listed in [`OPEN_ITEMS.md`](OPEN_
 documents were tidied on 2026-11-01; the numbers re-checked are listed in the appendix at the
 end.*
 
+*Updated 2026-11-07 with the work of November:*
+* *the hardware campaign that measured the capacity ratio on four radios (§8.9);*
+* *the desk work on the main weaknesses (§8.9);*
+* *the loss measured on air (W3a, §8.9);*
+* *the history (§9), the results (§10) and the limitations (§11).*
+
 **Three kinds of evidence, kept apart as the paper keeps them apart:**
 
 | Label | Means | Example |
@@ -79,8 +85,13 @@ evidence from the paper (§3.4 and §3.9):
 **One rule of thumb.** Batching gains nothing unless *record rate × deadline* is above 2
 (`paper/main.tex` abstract; Fig. 4, `results/raw/design_map.csv`).
 
-**What is honest about it.** Every capacity is simulated. On hardware, contention was measured
-between two radios only (`paper/main.tex` §3.5).
+**What is honest about it.**
+* **The capacities themselves are simulated:** 124 and 35 drones are ns-3 at 802.11a with one
+  collision domain.
+* **The ratio between them is now measured on four real radios** (802.11b at 1 Mb/s, two
+  registered sessions): **3.28 and 3.27, against the model's 3.30** [measured] (§8.9; F132, F133).
+  Real radios put both capacities 3–4 % above the model, because the stronger of two colliding
+  frames is often still received. So the simulated numbers are, if anything, conservative.
 
 ---
 
@@ -885,7 +896,8 @@ another folder is named.
   runs and the 36 windows, so the radio's own-queue handling is no longer "the candidate left
   standing" (`predictions/G27.md`). Found on the way: the contention model let a station collide
   with itself, which never moved a capacity (F114).
-* *Limits:* two radios only; **no capacity was measured**.
+* *Limits:* two radios only. Three and four radios, and the capacity ratio, followed in November
+  (§8.9).
 
 **E15 — The broadcast model against the simulator** [modeled vs simulated]
 * *Result:* Ma & Chen's broadcast model matches saturated ns-3 runs within ±0.51 % over N = 5–50,
@@ -1066,9 +1078,73 @@ makes verification fail (`paper/main.tex` §2.2).
   (`paper/main.tex` §2.7; F51, F61).
 
 ---
+### 8.9 The November campaign: the main weaknesses, at the desk and on hardware
+
+On 2026-11-04 Mohamed set the work's weaknesses as the main open items, W1–W9
+(`docs/OPEN_ITEMS.md` §2a). Each experiment below was registered before it ran
+(`predictions/<ID>.md`, tag `prereg-<ID>`).
+
+**At the desk:**
+* **W1a: the contention windows of real cards** [simulated] (F116). Commercial cards use a half or
+  a quarter of the standard's window. In ns-3 the capacities fall by up to 29 %, and the ratio
+  stays 3.48–3.52 against 3.53. *Held.*
+* **W4a: the largest records the schema allows** [measured frames, modeled capacity] (F117).
+  Against per-record signing at its smallest, AUTHBC keeps 2.75×. The ordering would reverse only
+  at delta records eight times the schema's largest. *Held.*
+* **W6: security scope** (F118):
+  * the canonical encoding is proven injective, and property-tested;
+  * the GNSS time window holds through an outage for about half an hour at 20 ppm, and 10–15 h
+    with a temperature-compensated oscillator.
+* **W1b: the contention model at 802.11b** [modeled vs simulated] (F119). It predicts ns-3 within
+  1 %, and five stations stand for many up to the crossing. That made a 2.4 GHz campaign possible.
+
+**On hardware, at 2.4 GHz (802.11b, 1 Mb/s, channel 11)** [measured]:
+* **The boards.**
+  * Two Raspberry Pi 4, one Pi 3, and a TP-Link USB adapter on a BeagleBone (the BeagleBones'
+    own radios have no ad-hoc mode, F120).
+  * The adapter needed a community driver whose debug interface fixes every frame at 1 Mb/s
+    (F124, F125).
+  * Every session is void unless each board's frame spacing, alone, lies in 1.9–2.6 ms.
+* **Three radios (W1e, F123):** 11 of 12 contention points inside their bands.
+* **Four radios (W1f, F127):** all 3 contention points held. AUTHBC's four-board crossing was 31.6
+  against 29.5. Loss depended on the sender: **capture**, where the stronger of two colliding
+  frames is received.
+* **Balancing four radios.** A ratio needs both crossings, and a dominant sender pushes them to
+  overload.
+  * W1g: void, the senders unbalanced; the cause is undetermined (F128).
+  * W1h: void by a hair, 1.43× at the gate and 1.55× in the session, against a 1.5× limit (F130).
+  * W1i: no session. Power steps moved the balance less than it wandered with the boards 10–15 cm
+    apart, about one wavelength (F131).
+* **What made it work: the layout.**
+  * The four boards on a 1 m square; the Pi 3 moved 35 cm inward (it sends slowly whenever it
+    stands far from the Pi 4s); two power trims.
+  * And Mohamed's rule: **a 3-minute preflight before every long run** (`analysis/hw_preflight.py`).
+    No board can be reached during a session, so faults would otherwise show only at the end.
+* **The ratio on four radios (W1j, W1k; F132, F133):**
+
+  | | AUTHBC | per-record signing | ratio |
+  |---|---|---|---|
+  | session 1 | 30.5 | 9.29 | **3.28** |
+  | session 2 | 30.7 | 9.37 | **3.27** |
+  | contention model | 29.5 | 8.93 | 3.30 |
+
+  Every registered condition held in both sessions.
+* **Found on the way (F129):**
+  * a cell created by a freshly booted Pi broadcasts at 6 Mb/s, not 1;
+  * no board can be reached during a session.
+
+**Loss on air (W3a)** [measured]:
+* pi-A sends alone, three walls away, at 10, 4 and 1 dBm. pi-B, the Pi 3 and the TP-Link record
+  every frame.
+* Three frame sizes: the one-record frame, AUTHBC's frame, and 1 000 B.
+* Each trace is replayed through the real receiver. *Registered at `prereg-W3a`; outcome:
+  `predictions/W3a.md`.*
+
+---
+
 ## 9. The evolution of the work
 
-Built from `git log` (326 commits, 2026-07-03 to 2026-10-31), the phase tags `p0-done` … `p8-done`,
+Built from `git log` (365 commits, 2026-07-03 to 2026-11-07), the phase tags `p0-done` … `p8-done`,
 and the dated entries of `docs/LOGBOOK.md`.
 
 | Date | What changed (commit) | Why |
@@ -1091,6 +1167,11 @@ and the dated entries of `docs/LOGBOOK.md`.
 | 2026-10-28 | Mohamed's choices: nodes per core by Eq. (4), so 290 and 629 (`d53dc9e`); a read-through with twelve fixes (`cb19187`) | — |
 | 2026-10-31 | Reply letter updated (`bc7881e`); this guide written | — |
 | 2026-11-01 | Documents tidied: about 70 → 25, nothing lost; every registration moved to `predictions/` with an index; history merged into `docs/archive/` and `docs/audits/AUDIT_HISTORY.md` | Mohamed: "make them as few documents as possible … don't delete any data" |
+| 2026-11-03 | G27: five rules for how a radio sends its own queued frames, none fits (F115); the contention model's self-collision defect found, no capacity moved (F114) | the two-radio mismatch |
+| 2026-11-04/05 | The weaknesses W1–W9 set as the main open items; desk work W1a, W4a, W6 (F116–F118); the 2.4 GHz campaign: W1b in ns-3 (F119), the boards (F120–F122), three radios valid (W1e, F123), the TP-Link made a fourth station (F124–F126), four radios valid (W1f, F127) | Mohamed: "treat the problems in our work as the main opened items" |
+| 2026-11-06 | Balancing four radios: W1g void (F128), W1h void by a hair (F130), W1i untuned (F131); the 3-minute preflight before every long run; the 1 m square; **W1j and W1k valid: the ratio 3.28 and 3.27 against 3.30** (F132, F133); the 6 Mb/s first cell (F129) | Mohamed: "try again", "make this adaptive", "what can i do physically" |
+| 2026-11-06 | The paper and thesis finished with November's results; Q8, Q9, Q11–Q14 applied (`thesis/STATUS.md`) | Mohamed: "finish the paper and thesis" |
+| 2026-11-06/07 | W3a: frame loss measured on air, traced frame by frame | Mohamed: "do the packet-loss measurement" |
 
 **The pattern the project recorded about itself:** four headline numbers were once distorted by
 small-sample means near a threshold, and the cure was 30 seeds and looking at the distribution
@@ -1113,6 +1194,12 @@ hid three errors until it was built (`docs/LOGBOOK.md` 2026-10-06).
   5 because of the signature, 3 because of this format.
 * On the four feasible rates, about 3 drones share a channel [simulated], so on those links the
   ledger records provenance every few seconds (`paper/main.tex` §3.11).
+
+**On hardware** [measured]:
+* The contention model held on three radios (11 of 12 points) and four (3 of 3).
+* **The ratio of the two capacities, measured on four radios at 802.11b: 3.28 and 3.27 in two
+  sessions, against the model's 3.30.** Capture raises both capacities by 3–4 % and leaves the
+  ratio within 1 %.
 
 **The mechanism:**
 * Capacity follows the airtime capacity law, N_max ≈ 0.05 / (f(aT + c)), with one fitted constant.
@@ -1138,26 +1225,36 @@ hid three errors until it was built (`docs/LOGBOOK.md` 2026-10-06).
 ## 11. Limitations and open work
 
 **Stated in the paper** (`paper/main.tex` §4.4):
-* **Capacities are simulated.** On hardware, contention was measured between two radios only;
-  below saturation the cause of the mismatch is not established.
+* **Capacities are simulated at scale.** On hardware the ratio was measured on four radios only,
+  at 802.11b 1 Mb/s, in one setup. With the contention windows of real cards the simulated
+  capacities fall by up to 29 % and the ratio barely moves. Below saturation, two radios still
+  depart from the model, and the cause is not established.
 * **Telemetry is synthetic.** The flight-log check covers twelve logs of one autopilot at 5 Hz,
   plus simulated 50 Hz flights.
-* **Loss is generated or simulated;** none was measured on air.
+* **Loss:** generated or simulated in the paper; measured on air at 1 Mb/s in W3a (§8.9).
 * **Length-dependent loss:** AUTHBC is below its target where one-record frames lose 5 % to bit
   errors.
 * **Only the sender is metered,** with a sensor never checked against a reference load; receiver
   and radio energy are modelled.
 * **Security scope:** no confidentiality, availability or key management; an insider holding the
-  group key can still flood; the time window works only while GNSS time is available; the three
-  Tamarin models are not composed.
+  group key can still flood; the time window holds while GNSS time is available, and through an
+  outage for half an hour to 15 h depending on the oscillator; the three Tamarin models are not
+  composed; the encoding is proven injective.
 * **Post-quantum:** ML-DSA's 2 420 B signature cannot travel in one frame at any batch size.
 * **Multi-hop:** relays are implemented but not measured.
 
 **Open items** (`docs/OPEN_ITEMS.md`):
-* **Waiting on Mohamed:** the journal and length (I1); author details (I2); data availability
-  (I3); three to five radios for a measured capacity (G4, H3); whether the review folder goes into
-  git (I6); and seven questions found while writing this guide (Q1–Q7, `docs/OPEN_ITEMS.md` §3), plus three
-  from G27 (Q8–Q10).
+* **Waiting on Mohamed:**
+  * reading the new passages (`thesis/STATUS.md`);
+  * the journal and length (I1), now unblocked;
+  * author details (I2), data availability (I3);
+  * whether the review folder goes into git (I6);
+  * Q1–Q7 and Q10 (`docs/OPEN_ITEMS.md` §3). Q8, Q9 and Q11–Q14 were applied on 2026-11-06.
+* **The main weaknesses still open** (§2a of `OPEN_ITEMS.md`):
+  * W2, the radios' own behaviour, which needs a frame-capture receiver;
+  * W5, the energy rig checked against a reference, and the receiver metered;
+  * W7, a post-quantum checkpoint;
+  * W8, multi-hop.
 * **Optional, an agent may do:** G6 (a) (the rate-offset source's spread), G15
   (crypto timing on the Pi 3B+ and BeagleBone), G37 (why four cores give 3.36×).
 * **Deferred by Mohamed:** the mobility study for the LoRa arm (`docs/DEFERRED_PLANS.md`) and
