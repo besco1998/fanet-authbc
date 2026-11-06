@@ -1,0 +1,46 @@
+# python=3.12.3
+# platform=Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=w3a
+# config_hash=49bbbcd6f8b4d133
+what,group,mbm,held,measured,size,receiver,windows,frames,lost,p_hat,mean_burst,iid_burst,V_r1,V_r4,V_r4_iid,V_r4_gilbert
+session,p1000,1000,True,"rate checks [1941.6, 1948.0]; power read back True; missing 0",,,,,,,,,,,,
+session,p400,400,True,"rate checks [1945.4, 1954.7]; power read back True; missing 0",,,,,,,,,,,,
+session,p100,100,True,"rate checks [1944.8, 1939.5]; power read back True; missing 0",,,,,,,,,,,,
+trace,,1000,,,A,2,4,4400,151,0.03432,1.034,1.036,0.965682,0.917955,0.917099,0.917039
+trace,,1000,,,A,3,4,4400,3,0.00068,1.0,1.001,0.999318,0.998182,0.998297,0.998296
+trace,,1000,,,A,4,4,4400,165,0.0375,1.078,1.039,0.9625,0.915909,0.9097,0.911586
+trace,,1000,,,L,2,4,4400,196,0.04455,1.043,1.047,,,,
+trace,,1000,,,L,3,4,4400,10,0.00227,1.0,1.002,,,,
+trace,,1000,,,L,4,4,4400,175,0.03977,1.108,1.041,,,,
+trace,,1000,,,S,2,4,4400,138,0.03136,1.007,1.032,,,,
+trace,,1000,,,S,3,4,4400,6,0.00136,1.0,1.001,,,,
+trace,,1000,,,S,4,4,4400,161,0.03659,1.059,1.038,,,,
+trace,,400,,,A,2,4,4400,180,0.04091,1.053,1.043,0.959091,0.9025,0.901826,0.902354
+trace,,400,,,A,3,4,4400,20,0.00455,1.053,1.005,0.995455,0.989545,0.988688,0.988996
+trace,,400,,,A,4,4,4400,296,0.06727,1.383,1.072,0.932727,0.861818,0.842757,0.862276
+trace,,400,,,L,2,4,4400,241,0.05477,1.148,1.058,,,,
+trace,,400,,,L,3,4,4400,30,0.00682,1.0,1.007,,,,
+trace,,400,,,L,4,4,4400,215,0.04886,1.086,1.051,,,,
+trace,,400,,,S,2,4,4400,144,0.03273,1.021,1.034,,,,
+trace,,400,,,S,3,4,4400,12,0.00273,1.0,1.003,,,,
+trace,,400,,,S,4,4,4400,210,0.04773,1.061,1.05,,,,
+trace,,100,,,A,2,4,4400,727,0.16523,1.645,1.198,0.834773,0.694318,0.64973,0.695816
+trace,,100,,,A,3,4,4400,207,0.04705,1.137,1.049,0.952955,0.888182,0.887791,0.892685
+trace,,100,,,A,4,4,4400,562,0.12773,1.398,1.146,0.872273,0.746364,0.718929,0.744546
+trace,,100,,,L,2,4,4400,1308,0.29727,1.763,1.423,,,,
+trace,,100,,,L,3,4,4400,553,0.12568,1.295,1.144,,,,
+trace,,100,,,L,4,4,4400,1032,0.23455,1.662,1.306,,,,
+trace,,100,,,S,2,4,4400,573,0.13023,1.619,1.15,,,,
+trace,,100,,,S,3,4,4400,137,0.03114,1.123,1.032,,,,
+trace,,100,,,S,4,4,4400,479,0.10886,1.43,1.122,,,,
+W3a-1,real loss hurts dependent frames no more than independent loss,,True,"V(r=4) 0.84672 against 0.83255 independent, margin 0.00675 (7 traces; 7 at or above)",,,,,,,,,,,,
+W3a-2,AUTHBC as built loses only its own frames: V(r=1) = 1 - p,,True,9/9 traces exact,,,,,,,,,,,,
+W3a-3,length dependence no stronger than the bit-error model,,True,p(L)/p(S) 2.020 (95 % lower bound 1.914) against 5.038 at p(S) 0.0598 (7 links),,,,,,,,,,,,
+reported: AUTHBC's length penalty,"p(A)/p(S), all links",,,1.242 against the model's 1.138,,,,,,,,,,,,
+reported: the link nearest 5 %,"100 mBm, node3",,,"p 0.0471, V(r=1) 0.9530, meets 0.95: True",,,,,,,,,,,,

@@ -132,3 +132,64 @@ The claims read the valid sessions, over the traces with p̂ ≥ 1 %.
 * **No window of a W3a session has been run.**
 
 ---
+
+## Outcome — added 2026-11-07, 00:45, after the three sessions; nothing above this line was changed
+
+**How it ran.**
+* Three sessions, 00:01–00:33, at pi-A 1000, 400 and 100 mBm.
+* Every board ran all 14 windows and reverted.
+* Node 4 was in the cell at `FIXED CCK_1M`, with every Pi reached.
+* Each power setting was read back.
+* **All three sessions valid:** rate checks 1 939.5–1 954.7 µs (1 Mb/s), no file missing.
+* Scored by `analysis/w3a_loss.py --score`, unchanged since `prereg-W3a` (an empty diff) →
+  `results/raw/w3a_w3a_2026-11-06.csv`. One link was recounted independently from the raw JSON
+  (100 mBm, pi-B, A: 727/4 400 lost, mean burst 1.645), and agrees exactly.
+
+**The losses** (4 400 frames per size per link):
+
+| pi-A | pi-B S / A / L | TP-Link S / A / L | Pi 3 S / A / L |
+|---|---|---|---|
+| 10 dBm | 3.14 / 3.43 / 4.45 % | 3.66 / 3.75 / 3.98 % | 0.14 / 0.07 / 0.23 % |
+| 4 dBm | 3.27 / 4.09 / 5.48 % | 4.77 / 6.73 / 4.89 % | 0.27 / 0.45 / 0.68 % |
+| 1 dBm | 13.02 / 16.52 / 29.73 % | 10.89 / 12.77 / 23.45 % | 3.11 / 4.70 / 12.57 % |
+
+**Scored: all three held.**
+* **W3a-1, held.** Pooled over the seven A traces at p̂ ≥ 1 %, V(r = 4) = **0.8467** against
+  **0.8326** independent (margin 0.0068). All seven were at or above their independent value.
+* **W3a-2, held.** V(r = 1) = 1 − p̂ exactly on all nine A traces.
+* **W3a-3, held.** p̂(L)/p̂(S) = **2.02** (95 % lower bound 1.91) against the bit-error model's
+  **5.04**, at p̂(S) = 6.0 %, over seven links.
+
+**Reported, not scored:**
+* **Burstiness.** Near independent at 10 and 4 dBm (mean bursts 1.01–1.15 against 1.00–1.07).
+  Bursty at 1 dBm: 1.12–1.76 against 1.03–1.42.
+* **The loss swings strongly between 22-second windows.** At 1 dBm, pi-B's L windows read 22.5 /
+  38.2 / 20.1 / 38.2 %, the Pi 3's 5.9 / 22.2 / 1.8 / 20.4 %. The channel is not stationary at
+  that scale.
+* **AUTHBC's length penalty, p̂(A)/p̂(S) = 1.24,** with a 95 % interval of 1.06–1.45 from a
+  bootstrap over the 36 paired S/A cycles, against the model's 1.14. The excess over the model is
+  not significant. A computed per frame, it would have looked significant: the window-to-window
+  swings make the frames of one window far from independent.
+* **The A trace nearest 5 %** (1 dBm, Pi 3): p̂ = 4.71 %, V(r = 1) = 0.953, meets 0.95.
+* **Every receiver's loss rose as pi-A's power fell,** the TP-Link's included (A: 3.75 → 6.73 →
+  12.77 %). So at three walls its loss is the channel's. The flat readings through one wall were
+  not repeated here.
+
+**My expectations:**
+* **Right:** W3a-1, W3a-2, W3a-3; burstiness near independent at the higher powers.
+* **Wrong:**
+  * pi-B "about 1 %, 4 %, 8 %" read 3.4 / 4.1 / 16.5 %, a steeper fall between 4 and 1 dBm;
+  * the TP-Link "following power weakly or not at all": it followed it;
+  * "p̂(A)/p̂(S) near 1, below the model's": it is 1.24, its interval containing the model's 1.14.
+
+**What it means. On this link, real loss is no harder on the design than the paper's generated
+processes:**
+* it is independent to mildly bursty, which helps dependent frames;
+* AUTHBC as built loses only its own frames;
+* loss grows with length far less than the bit-error model says for long frames, and about as it
+  says at AUTHBC's own size.
+
+The paper's known weak spot, that AUTHBC's longer frame loses more, is real on air at about the
+size the model gives, not worse within the interval. F134.
+
+**Limits:** one indoor link through walls, static, 802.11b at 1 Mb/s, one sender, one evening.

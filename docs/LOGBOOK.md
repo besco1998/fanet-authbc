@@ -150,6 +150,24 @@ excecute the plan and give me the results". The plan was approved in plan mode. 
 * A `pgrep` check matched its own command line, twice. A pattern only a running session can
   match is now used.
 
+# 2026-11-07, small hours — W3a: loss measured on air (F134); the work re-evaluated; the project guide updated
+
+**Asked:** "do the packet-loss measurement"; pi-A moved to a second room (one wall), then to a third
+(three walls). Then, while it ran: re-evaluate the work's strengths and weaknesses, summarise the
+whole work simply, and update the project guide.
+
+**What happened:**
+1. **One wall was not enough,** even at pi-A's 1 dBm minimum. Three walls put pi-B and the TP-Link
+   at 3–5 % at 4 dBm.
+2. **Two rules were tightened before registering,** so that agreement within noise could not read
+   as failure. W3a-1 and W3a-3 became one-sided interval tests.
+3. **Valid, all three claims held.** The one surprise, AUTHBC's length penalty 1.24 against 1.14,
+   has an interval containing the model's once it is bootstrapped over cycles. Loss swings between
+   windows by factors of 2–10.
+
+**Lesson.** When the channel changes between windows, the unit of independence is the window, not
+the frame. A per-frame interval would have called the 1.24 a finding.
+
 # 2026-11-06, night — W1k repeats the ratio (F133); the paper and thesis finished with November's results
 
 **Asked:** "Start a second run and in parallel finish the paper and thesis and also in parallel tell

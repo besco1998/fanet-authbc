@@ -1137,8 +1137,14 @@ On 2026-11-04 Mohamed set the work's weaknesses as the main open items, W1–W9
 * pi-A sends alone, three walls away, at 10, 4 and 1 dBm. pi-B, the Pi 3 and the TP-Link record
   every frame.
 * Three frame sizes: the one-record frame, AUTHBC's frame, and 1 000 B.
-* Each trace is replayed through the real receiver. *Registered at `prereg-W3a`; outcome:
-  `predictions/W3a.md`.*
+* Each trace is replayed through the real receiver. *Registered at `prereg-W3a`.*
+* **All three registered claims held (F134):**
+  * real loss hurt dependent frames no more than independent loss (V 0.847 against 0.833);
+  * AUTHBC as built lost only its own frames;
+  * long frames lost 2.0× the one-record frame, where the bit-error model says 5.0×.
+* AUTHBC's own frame lost 1.24× the one-record frame (95 % interval 1.06–1.45), about the model's
+  1.14: the known weak spot is real on air, and no worse than modelled.
+* Loss swung by factors of 2–10 between 22-second windows.
 
 ---
 
@@ -1416,7 +1422,7 @@ hid three errors until it was built (`docs/LOGBOOK.md` 2026-10-06).
 | Table 17 (other links) | `other_links.csv` |
 | Capacity at 97 % (S-01) | `capacity_97.csv`, `predictions/S01.md` |
 | Pre-registrations (every one, with commit and outcome) | `predictions/README.md` |
-| Findings F1–F133 | `docs/audits/model_provenance.md`; every past audit: `docs/audits/AUDIT_HISTORY.md` |
+| Findings F1–F134 | `docs/audits/model_provenance.md`; every past audit: `docs/audits/AUDIT_HISTORY.md` |
 | Decisions, and what each cost (the trade-off register) | `docs/DECISIONS.md` |
 | Where the work is, open items, questions | `docs/OPEN_ITEMS.md` (§1, §2, §3) |
 | What was tried, including failures | `docs/LOGBOOK.md` |
@@ -1440,7 +1446,7 @@ docs/
   LOGBOOK.md                 method and trials, failures included
   DEFERRED_PLANS.md          mobility and Direction C, deferred by Mohamed
   00 01 02 04 05 06 *.md     the specifications (cited by number in code)
-  audits/                    model_provenance.md (findings F1–F133), AUDIT_HISTORY.md (past audits)
+  audits/                    model_provenance.md (findings F1–F134), AUDIT_HISTORY.md (past audits)
   revision/                  REVISION_PLAN, STATUS, PAPER_CHANGES, REVIEW_2026-10-27_FACTS, RESPONSE
   literature/                README.md (sources, their roles, how citations were checked), PDFs
   prompts/T_TEMPLATES.md     the workflow templates the Eight Laws cite

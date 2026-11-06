@@ -5709,3 +5709,23 @@ at generating them used the file's own re-run of the model (0.27 % against the r
 at 124/s) and gave 1.23 / 0.83 / 0.58. That divided by a different simulation sample, not by the
 registered prediction with only the defect removed. It was caught by comparing with F114 before
 anything was printed.
+
+## F134 — W3a: loss measured on air is no harder on the design than the paper's generated processes; length dependence is far weaker than the bit-error model for long frames, and about as modelled at AUTHBC's size (2026-11-07)
+
+`predictions/W3a.md` (registered at `prereg-W3a`, `d5794428`). Three sessions, pi-A three walls
+away at 10 / 4 / 1 dBm, 802.11b 1 Mb/s. Every frame was traced at pi-B, the Pi 3 and the TP-Link
+(`bcast_rx.py` keeps the sequence numbers since `43a2f1a4`), and replayed through `LeanReceiver`.
+* **Valid, all three claims held:**
+  * real loss hurts dependent frames no more than independent loss (V(r = 4) 0.847 against
+    0.833);
+  * AUTHBC as built loses exactly its own frames (9/9 traces);
+  * long frames lose 2.0× the one-record frame against the bit-error model's 5.0×.
+* **Reported:**
+  * AUTHBC's frame loses 1.24× the one-record frame (95 % interval 1.06–1.45, bootstrapped over
+    paired cycles), against the model's 1.14;
+  * loss swings by factors of 2–10 between 22-second windows;
+  * independent to mildly bursty within a window (mean bursts up to 1.76 frames).
+* **What it changes.** "No loss was measured on air" can narrow to this link and setting. The
+  length-dependent weak spot is confirmed on air at about the modelled size, not worse.
+* **A method note:** with windows this unlike each other, a per-frame interval would have
+  overstated the certainty. The penalty's interval is over cycles.

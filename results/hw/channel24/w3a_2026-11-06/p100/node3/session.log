@@ -1,0 +1,40 @@
+Running timer as unit: authbc-revert.timer
+Will run service as unit: authbc-revert.service
+Running timer as unit: authbc-reboot.timer
+Will run service as unit: authbc-reboot.service
+[2026-11-07T00:23:24+02:00] deadmen armed: revert 840 s, reboot 1140 s | node=3 nodes=1,2,3 freq=2462 windows=14 plan=plan_w3a.txt sha=39b7d4f8d064
+[2026-11-07T00:23:24+02:00] governor: ondemand -> performance; throttled 0x0
+[2026-11-07T00:23:41+02:00] type:  	type IBSS 	channel 11 (2462 MHz), width: 20 MHz, center1: 2462 MHz 
+[2026-11-07T00:23:43+02:00] peer 10.0.0.1 reachable
+[2026-11-07T00:23:45+02:00] peer 10.0.0.2 reachable
+{"received_unique": 11004, "senders": 1, "duplicates": 0}
+[2026-11-07T00:26:09+02:00] window 00_R1_600fps done (senders 1)
+{"received_unique": 1042, "senders": 1, "duplicates": 0}
+[2026-11-07T00:26:38+02:00] window 01_S_50fps done (senders 1)
+{"received_unique": 1014, "senders": 1, "duplicates": 0}
+[2026-11-07T00:27:10+02:00] window 02_A_50fps done (senders 1)
+{"received_unique": 1035, "senders": 1, "duplicates": 0}
+[2026-11-07T00:27:39+02:00] window 03_L_50fps done (senders 1)
+{"received_unique": 1044, "senders": 1, "duplicates": 0}
+[2026-11-07T00:28:09+02:00] window 04_S_50fps done (senders 1)
+{"received_unique": 1063, "senders": 1, "duplicates": 0}
+[2026-11-07T00:28:39+02:00] window 05_A_50fps done (senders 1)
+{"received_unique": 856, "senders": 1, "duplicates": 0}
+[2026-11-07T00:29:09+02:00] window 06_L_50fps done (senders 1)
+{"received_unique": 1091, "senders": 1, "duplicates": 0}
+[2026-11-07T00:29:39+02:00] window 07_S_50fps done (senders 1)
+{"received_unique": 1088, "senders": 1, "duplicates": 0}
+[2026-11-07T00:30:09+02:00] window 08_A_50fps done (senders 1)
+{"received_unique": 1080, "senders": 1, "duplicates": 0}
+[2026-11-07T00:30:39+02:00] window 09_L_50fps done (senders 1)
+{"received_unique": 1086, "senders": 1, "duplicates": 0}
+[2026-11-07T00:31:10+02:00] window 10_S_50fps done (senders 1)
+{"received_unique": 1028, "senders": 1, "duplicates": 0}
+[2026-11-07T00:31:39+02:00] window 11_A_50fps done (senders 1)
+{"received_unique": 876, "senders": 1, "duplicates": 0}
+[2026-11-07T00:32:09+02:00] window 12_L_50fps done (senders 1)
+{"received_unique": 11406, "senders": 1, "duplicates": 0}
+[2026-11-07T00:32:38+02:00] window 13_R1_600fps done (senders 1)
+[2026-11-07T00:32:38+02:00] revert: starting
+[2026-11-07T00:32:48+02:00] revert: finished, wlan0 = inet 192.168.1.22
+[2026-11-07T00:32:53+02:00] reverted OK, both deadmen disarmed
