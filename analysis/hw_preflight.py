@@ -90,7 +90,11 @@ def _rate_rows(windows: list[dict], achieved: dict[str, float]) -> list[dict]:
 
 
 def check(folder: Path) -> tuple[list[dict], str]:
-    """The six checks, then GO, NO-GO, or RETRY (only the Pis at 6 Mb/s, everything else fine)."""
+    """The six checks, then GO, NO-GO, or RETRY.
+
+    RETRY: every Pi that failed was sender-limited (6 Mb/s: its first ad-hoc session after a boot,
+    F129), and checks 2-5 held. Balance (6) may fail with it: shorter frames collide less.
+    """
     windows = w1f.apply_node4_rules(w1f.window_rows(folder))
     meta = w1f.load_meta(folder)
     joined, rate_fixed = w1f.join_checks(meta)
@@ -117,8 +121,8 @@ def check(folder: Path) -> tuple[list[dict], str]:
                      f"{balance['windows']}; usable {len(gate)}/{GATE_WINDOWS}"))
     if all(r["held"] for r in rows):
         return rows, "GO"
-    pis = [r for r in rows if r["check"] == 1]
-    fast = len(pis) == len(PIS) and all("sender-limited" in r["note"] for r in pis)
+    failed = [r for r in rows if r["check"] == 1 and not r["held"]]
+    fast = bool(failed) and all("sender-limited" in r["note"] for r in failed)
     others = all(r["held"] for r in rows if r["check"] in (2, 3, 4, 5))
     return rows, "RETRY" if fast and others else "NO-GO"
 

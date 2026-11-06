@@ -7,8 +7,8 @@ Held here: six windows (R1-R4, G31 x2) checked mechanically, GO only if
 4. node 4 in the Pis' cell, all Pis reached, Blue 2 on one boot throughout;
 5. no Pi under-voltage;
 6. the senders within 1.5x of each other at G31.
-A run whose Pis were all sender-limited (6 Mb/s, their first ad-hoc session after a boot; F129) and
-otherwise fine asks for one retry.
+A run whose failing Pis were all sender-limited (6 Mb/s, their first ad-hoc session after a boot;
+F129) and otherwise fine asks for one retry.
 
 Everything is checked on files made up for the purpose.
 """
@@ -120,6 +120,10 @@ class TestTheVerdict:
         assert verdict == "RETRY"
         assert _held(rows, 1) == [False, False, False]
         assert all("sender-limited" in r["note"] for r in rows if r["check"] == 1)
+
+    def test_one_freshly_booted_pi_alone_asks_for_one_retry(self, tmp_path) -> None:
+        rows, verdict = pf.check(_run(tmp_path, fast=(3,)))
+        assert verdict == "RETRY" and _held(rows, 1) == [True, True, False]
 
     def test_one_pi_too_slow_is_no_go_without_retry(self, tmp_path) -> None:
         rows, verdict = pf.check(_run(tmp_path, cycle={3: 2.78e-3}))

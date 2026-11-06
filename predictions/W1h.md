@@ -186,3 +186,47 @@ file states:
 **No window of a W1h attempt has been run.**
 
 ---
+
+## Attempts — added as they run, 2026-11-06; nothing above the first `---` line was changed
+
+**Erratum in the registration above.** "Setup" says the Pis "have run two ad-hoc sessions since,
+both at 1 Mb/s". In fact the first (diagnostic t1) ran at 6 Mb/s, which was its finding, and the
+second (t2) at 1 Mb/s. The design is unaffected: attempt 1 was their third session.
+
+**Attempt 1 — 13:31–13:58, gate ABORT, discarded unscored.**
+* All four boards ran all 52 windows and reverted.
+* Node 4 joined the Pis' cell (`22:37:7b:21:13:7b`) at `FIXED CCK_1M`, reached all three Pis, and
+  stayed on one boot (`2f39ecd8`).
+* pi-B was held at 8.00 dBm (13:30:50), then returned to auto (13:57:45).
+* Folder: `results/hw/channel24/w1h_2026-11-06/a1/`.
+
+The gate (`dsss_w1h.py --gate`, unchanged):
+
+| check | reading | held |
+|---|---|---|
+| node 4 joined, rate fixed | `22:37:7b:21:13:7b`, `FIXED CCK_1M` | yes |
+| rate check before, pi-A / pi-B / TP-Link | 1 942.3 / 1 947.7 / 1 962.8 µs | yes |
+| **rate check before, Pi 3** | **2 613.4 µs** (band ≤ 2 600) | **no** |
+| G31 windows usable | 4/4 | yes |
+| **G31 sender spread** | **5.23×**: pi-A 2.95 %, pi-B 5.50 %, Pi 3 6.12 %, TP-Link 1.17 % | **no** |
+
+* The Pis were at 1 Mb/s. The Pi 3 was already above its band at the start, after 4½ hours up.
+* The TP-Link dominated as in W1g (1.17 % there too), at the placement Mohamed restored.
+* As registered, its capacity windows are neither scored nor analysed.
+
+**Procedure addendum — 2026-11-06, ~13:45, before attempt 2 (Mohamed's instruction).**
+* **A 3-minute preflight precedes every further attempt:** `analysis/hw_preflight.py`, procedure in
+  `hw/channel/README.md`, committed at `474b1f5` and amended in this commit. It has six checks:
+  * the Pis at 1 Mb/s;
+  * the TP-Link's rate;
+  * pi-B's power;
+  * node 4's join;
+  * the supply;
+  * a G31 spread ≤ 1.5×.
+* **What the verdicts do:**
+  * GO starts the attempt at once;
+  * RETRY (only Pis too fast, after a boot) runs one more preflight;
+  * NO-GO starts nothing and is reported.
+* It is procedural and never scored. The registered gate still decides each attempt.
+* **The Pi 3 is rebooted before attempt 2**, its rate check being out of band. The preflight is its
+  ad-hoc session after the boot, as the setup above requires.

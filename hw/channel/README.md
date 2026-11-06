@@ -104,8 +104,8 @@ long run (anything over ~5 minutes) is preceded by a **preflight**:
 
 **Verdicts:**
 * **GO (exit 0):** the long run starts at once.
-* **RETRY (exit 4):** only the Pis were too fast. That run was their first ad-hoc session after a
-  boot. One more preflight runs, and it must say GO.
+* **RETRY (exit 4):** only Pis too fast (any of them, freshly booted). That run was their first
+  ad-hoc session after a boot. One more preflight runs, and it must say GO.
 * **NO-GO (exit 3):** stop and report the failing check. A balance failure most likely means a
   board or dongle has moved.
 
