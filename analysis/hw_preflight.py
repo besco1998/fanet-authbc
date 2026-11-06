@@ -137,7 +137,8 @@ def check(folder: Path, held: Mapping[int, int] | None = None,
     """The seven checks, then GO, NO-GO, or RETRY.
 
     RETRY: every Pi that failed was sender-limited (6 Mb/s: its first ad-hoc session after a boot,
-    F129), and checks 2-5 and 7 held. Balance (6) may fail with it: shorter frames collide less.
+    F129), and checks 2-5 held. Balance (6) and links alone (7) may fail with it: at 6 Mb/s
+    they are measured at the wrong rate.
     """
     windows = w1f.apply_node4_rules(w1f.window_rows(folder))
     meta = w1f.load_meta(folder)
@@ -167,7 +168,9 @@ def check(folder: Path, held: Mapping[int, int] | None = None,
         return rows, "GO"
     failed = [r for r in rows if r["check"] == 1 and not r["held"]]
     fast = bool(failed) and all("sender-limited" in r["note"] for r in failed)
-    others = all(r["held"] for r in rows if r["check"] in (2, 3, 4, 5, 7))
+    # at 6 Mb/s the balance (6) and the links alone (7) are measured at the wrong rate, so they do
+    # not block a retry (square layout, 2026-11-06: the Pi 3's OFDM frames reached one at 96.9 %)
+    others = all(r["held"] for r in rows if r["check"] in (2, 3, 4, 5))
     return rows, "RETRY" if fast and others else "NO-GO"
 
 

@@ -127,6 +127,10 @@ class TestTheVerdict:
         rows, verdict = pf.check(_run(tmp_path, fast=(3,)))
         assert verdict == "RETRY" and _held(rows, 1) == [True, True, False]
 
+    def test_pis_too_fast_with_a_weak_link_still_retry(self, tmp_path) -> None:
+        # at 6 Mb/s the link check is measured at the wrong rate (square layout, 2026-11-06)
+        assert pf.check(_run(tmp_path, fast=(1, 2, 3), weak_link=3))[1] == "RETRY"
+
     def test_one_pi_too_slow_is_no_go_without_retry(self, tmp_path) -> None:
         rows, verdict = pf.check(_run(tmp_path, cycle={3: 2.78e-3}))
         assert verdict == "NO-GO"
