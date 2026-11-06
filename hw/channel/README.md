@@ -84,6 +84,38 @@ supported (-95)* — so the band is the only control.
 **The fix for every NM-related symptom is to take `wlan0` away from NetworkManager**
 (`nmcli dev set wlan0 managed no` + `systemctl stop wpa_supplicant`) and drive it with raw `iw`.
 
+## Preflight before every long run (2026-11-06, Mohamed)
+
+No board can be reached during a session (F129): the Pis' only link is the ad-hoc cell, and node
+4's kit takes Blue 2's own radio off the air. So a long run's faults show only when it ends. Every
+long run (anything over ~5 minutes) is preceded by a **preflight**:
+* `experiments/channel24/plan_preflight.txt` (R1–R4, G31 ×2): six windows, about 3 minutes;
+* the same setup and launcher as the long run;
+* checked by `analysis/hw_preflight.py --check <run dir>`.
+
+| # | parameter | GO needs |
+|---|---|---|
+| 1 | Pis at 1 Mb/s | each Pi's rate check in 1.9–2.6 ms **and** channel-limited (a Pi sending its full offered 600/s is faster than 1 Mb/s: its first ad-hoc session after a boot runs at 6 Mb/s, F129) |
+| 2 | TP-Link at 1 Mb/s | `rate_ctl` reads `FIXED CCK_1M` at join; its rate check in band |
+| 3 | pi-B's power | `txpower.log`: `set 800: txpower 8.00 dBm`, then `auto` |
+| 4 | node 4 | in the Pis' cell (BSSID not `02:11:87:…`), all Pis reached, Blue 2 on one boot, every window complete |
+| 5 | supply | no Pi under-voltage |
+| 6 | balance | G31 senders within 1.5× of each other |
+
+**Verdicts:**
+* **GO (exit 0):** the long run starts at once.
+* **RETRY (exit 4):** only the Pis were too fast. That run was their first ad-hoc session after a
+  boot. One more preflight runs, and it must say GO.
+* **NO-GO (exit 3):** stop and report the failing check. A balance failure most likely means a
+  board or dongle has moved.
+
+**Limits:**
+* The preflight is **never scored**.
+* It decides only whether a long run starts; the run's own registered conditions decide its
+  validity.
+* The long run reboots Blue 2 again, so check 6 is read on a different Blue 2 boot from the run.
+* **Never reboot the Pis between a GO and the long run.**
+
 ## ⚠️ Safety — read before running
 
 SSH arrives over `wlan0` and **`eth0` has no carrier on either Pi**, so going ad-hoc severs the only
