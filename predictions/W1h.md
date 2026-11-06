@@ -301,3 +301,65 @@ The gate (`dsss_w1h.py --gate`, unchanged):
   * GO starts attempt 2 at once.
   * NO-GO stops, and is reported.
 * Everything else as registered.
+
+---
+
+## Outcome — added 2026-11-06, after attempt 2; nothing above the first `---` line was changed
+
+**How it ran.**
+* Preflight (15:18–15:22): GO, spread 1.499×. Blue 2 at about 120 cm; pi-A and pi-B at 8 dBm;
+  all four radios at 1 Mb/s.
+* **Attempt 2 ran 15:26:48–15:52:48** on Blue 2's boot `ca461667`.
+  * All four boards ran all 52 windows and reverted.
+  * Node 4 was in the Pis' cell (`ca:96:4c:b4:cd:2e`) at `FIXED CCK_1M`, with every Pi reached.
+  * pi-A and pi-B were held at 8.00 dBm (15:25:58), then returned to auto (15:52:53).
+* **Its gate said GO** (`dsss_w1h.py --gate`): spread 1.433× (pi-A 5.18 %, pi-B 4.76 %, Pi 3
+  6.82 %, TP-Link 5.18 %), the four rate checks before in band, 4/4 gate windows usable. **So it
+  is the session**, scored once, and no attempt follows.
+* Scored by `analysis/dsss_w1h.py --score`, unchanged. Outputs:
+  * `results/raw/w1h_w1h_2026-11-06_a2.csv`;
+  * `results/hw/channel24/w1h_2026-11-06_a2_windows.csv`;
+  * files in `results/hw/channel24/w1h_2026-11-06/a2/w1h_2026-11-06_a2/`.
+* An independent script (plain Python on the raw files) agrees exactly: b, every point, both
+  crossings, the ratio and the A31 spread.
+
+**The session is VOID, by one registered condition.**
+* **V5, balance at the session's own A31 windows: 1.549×** (rule ≤ 1.5×). The losses were pi-A
+  4.14 %, pi-B 4.31 %, Pi 3 6.42 %, TP-Link 5.89 %.
+* All four A31 windows were above 1.5× (1.53–1.63), so the failure is not one noisy window. The
+  gate's four windows, 12 minutes earlier, read 1.38–1.57.
+* **Every other condition held:**
+  * V1, all eight rate checks in band: the Pi 3 at 2 592.3 µs before and 2 488.7 µs after;
+  * V2, b = 0.19 %;
+  * V3 and V4;
+  * V6, and V6b (pi-A's log: 8.00 dBm, then auto).
+
+**Nothing is scored.**
+
+**Reported, not scored** (the session is void; these numbers support no claim):
+
+| | measured | model (W1f's registration) | band |
+|---|---|---|---|
+| AUTHBC crossing | 30.99 (95 % CI 30.83–31.09) | 29.50 | 26.55–32.45 |
+| per-record crossing | 9.33 (95 % CI 9.24–9.36) | 8.93 | 8.04–9.82 |
+| ratio | 3.32 | 3.30 | 2.974–3.635 |
+
+* The points: AUTHBC 0.9621 / 0.9600 / 0.9499 / 0.9352, per-record 0.9583 / 0.9536 / 0.9422 /
+  0.9371 (A29–A32, P9–P9.75).
+* Both curves crossed 0.95 inside the grid, every point lying above the model's (capture, F127).
+
+**My expectations.** These were right:
+* AUTHBC near 31;
+* per-record between 9.25 and 9.75;
+* the ratio near 3.2–3.4;
+* V1 held.
+
+"V5 could still exceed 1.5× if the balance drifts within the boot" was stated as possible, and it
+happened.
+
+**What it means.**
+* W1h ends here: void, with nothing scored.
+* The balance can be reached on these radios, but it holds only near the rule's edge: 1.43× at the
+  gate, 1.55× twelve minutes later.
+* Whether to run again is Mohamed's decision, and needs a new registration. The 1.5× rule is not
+  to be widened after this result. F130.

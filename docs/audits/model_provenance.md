@@ -5587,3 +5587,40 @@ W1h preflight). The calibration runs gave 3.19–4.46 %.
 * The difference from calibration is in the geometry, of which the displacement found at 08:25 is
   one known change.
 * When the geometry changed stays unknown (F128 addendum).
+
+## F130 — W1h is void by a hair: its balance held at the gate (1.43×) and not at the session's own A31 windows (1.55×); every other condition held (2026-11-06)
+
+`predictions/W1h.md` (registered at `prereg-W1h`, `0bdb157`, with two deviations Mohamed approved:
+Blue 2 at about 120 cm, and pi-A held at 8 dBm like pi-B). Session
+`results/hw/channel24/w1h_2026-11-06/a2/w1h_2026-11-06_a2/`.
+
+**What it took to reach balance.**
+* At 90 cm the TP-Link dominated on every boot: 1.17 / 1.17 / 1.20 % against the Pis'
+  2.9–6.4 % (F128).
+* At 120 cm it lost 6.30 %, and the spread moved among the Pis: pi-A 3.21 % against the Pi 3's
+  6.34 %.
+* With pi-A at 8 dBm the preflight read 1.499× (GO).
+* The 3-minute preflight (Mohamed's rule) stopped three long runs before they started.
+
+**The session.** The gate said GO at 1.433×, so it was the session.
+* **It was void on V5:** the session's A31 spread was 1.549×, with all four of its windows
+  1.53–1.63×.
+* Between the gate and A31 (12 minutes), pi-A's frames went from about 5.2 % lost to 4.1 %.
+* **Every other condition held:**
+  * the rate checks, the Pi 3 at 2 592 µs before and 2 489 µs after;
+  * b = 0.19 %;
+  * node 4's join and rate;
+  * both Pis' power.
+
+**Reported, not scored** (void):
+* the AUTHBC crossing 30.99 (model 29.50);
+* the per-record crossing 9.33 (model 8.93);
+* the ratio 3.32 (model 3.30, band 2.974–3.635).
+
+An independent script agrees exactly. These numbers support no claim: the session failed a
+condition fixed before it ran. **The rule is not widened after the fact.**
+
+**What it shows.**
+* Balance within 1.5× is reachable on these radios only near the rule's edge. It drifts by about
+  0.1× within half an hour, so the 1.5× rule is met or missed by chance.
+* A re-run needs a new registration with a rule fixed in advance. Mohamed's decision.

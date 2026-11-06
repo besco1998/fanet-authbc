@@ -150,6 +150,39 @@ excecute the plan and give me the results". The plan was approved in plan mode. 
 * A `pgrep` check matched its own command line, twice. A pattern only a running session can
   match is now used.
 
+# 2026-11-06, afternoon — the preflight, two placements, W1h void by a hair (F130)
+
+**Asked:**
+* "plan doing a short test run before any long run … to make a faster decision": the preflight;
+* then "Re-place, guided by preflights", 120 cm;
+* then "pi-A at 8 dBm, preflight".
+
+**What happened, in order.**
+1. **Attempt 1 was aborted by its gate:** the Pi 3 at 2 613 µs, and the TP-Link dominant (5.23×).
+2. **The preflight was built**, six checks and a 3-minute run. It then stopped three long runs
+   before they started:
+   * at 90 cm (5.35×);
+   * at 120 cm, where node 4 never started;
+   * at 120 cm again (1.97×, now pi-A against the Pi 3).
+3. **pi-A was held at 8 dBm:** the preflight read 1.499×, GO. Attempt 2's gate read 1.433×, GO,
+   so it was the session.
+4. **The session was void on V5: A31 spread 1.549×.** Everything else held. Reported, not scored:
+   ratio 3.32 (model 3.30).
+
+**What went wrong, mine:**
+* the launcher did not check that node 4 had started, so the Pis once ran alone;
+* the runner trusted a WSL-timed sleep, and collected seconds early.
+
+Both were fixed: node 4 is started first and verified, START comes from a Pi's clock, and
+collection waits for every board's own revert line.
+
+**Lessons:**
+* A preflight turns a 30-minute failure into an 8-minute one. It stopped three runs today.
+* **A balance near its rule's edge passes or fails by drift.** 1.43× became 1.55× in 12 minutes. A
+  rule met with no margin decides nothing.
+* The temptation after a void by 0.049 with a ratio of 3.32 is plain. The rule stands as
+  registered.
+
 # 2026-11-06, morning — W1g's cause undetermined (F128 corrected); W1h
 
 **Asked:** "i have restarted the pi3, try again". Mohamed then found **Blue 2 and its dongle
