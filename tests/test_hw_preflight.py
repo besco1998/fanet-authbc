@@ -43,7 +43,8 @@ def _w(d: Path, kind: str, node: int, tag: str, obj: dict) -> None:
 
 def _run(d: Path, cycle: dict[int, float] | None = None, fast: tuple[int, ...] = (),
          factors: dict[int, float] = BALANCED, meta: dict = META, log: str | None = LOG,
-         reset_at: int | None = None, undervolt_at: int | None = None) -> Path:
+         reset_at: int | None = None, undervolt_at: int | None = None,
+         weak_link: int | None = None) -> Path:
     """A made-up preflight. `fast` Pis send at the offered 600/s (sender-limited, F129)."""
     cycle = CYCLE | (cycle or {})
     for k, line in enumerate(ln for ln in pf.plan() if not ln.startswith("#")):
@@ -58,7 +59,8 @@ def _run(d: Path, cycle: dict[int, float] | None = None, fast: tuple[int, ...] =
                 if w1d.RATE_CHECK.fullmatch(label):
                     c = 1 / fps if s in fast else cycle[s]
                     sent = round(22 / c)
-                    by[f"10.0.0.{s}"] = {"received_unique": sent - 5, "duplicates": 0,
+                    got = round(0.90 * sent) if s == weak_link and node == 1 else sent - 5
+                    by[f"10.0.0.{s}"] = {"received_unique": got, "duplicates": 0,
                                          "min_seq": 0, "max_seq": sent - 1,
                                          "span_s": c * (sent - 1)}
                 else:
@@ -113,7 +115,7 @@ class TestTheVerdict:
     def test_a_good_run_is_go(self, tmp_path) -> None:
         rows, verdict = pf.check(_run(tmp_path))
         assert verdict == "GO", [r for r in rows if r["held"] is not True]
-        assert sorted({r["check"] for r in rows}) == [1, 2, 3, 4, 5, 6]
+        assert sorted({r["check"] for r in rows}) == [1, 2, 3, 4, 5, 6, 7]
 
     def test_pis_at_6_mbps_ask_for_one_retry(self, tmp_path) -> None:
         rows, verdict = pf.check(_run(tmp_path, fast=(1, 2, 3)))
@@ -149,9 +151,9 @@ class TestTheVerdict:
 
     def test_pi_a_held_too_needs_its_own_log(self, tmp_path) -> None:
         d = _run(tmp_path)
-        assert pf.check(d, held_at_8dbm=(1, 2))[1] == "NO-GO"
+        assert pf.check(d, held={1: 800, 2: 800})[1] == "NO-GO"
         (d / "node1" / "txpower.log").write_text(LOG)
-        rows, verdict = pf.check(d, held_at_8dbm=(1, 2))
+        rows, verdict = pf.check(d, held={1: 800, 2: 800})
         assert verdict == "GO" and _held(rows, 3) == [True, True]
 
     def test_node_4_in_its_own_cell_is_no_go(self, tmp_path) -> None:
@@ -169,6 +171,20 @@ class TestTheVerdict:
     def test_a_spread_of_two_is_no_go(self, tmp_path) -> None:
         rows, verdict = pf.check(_run(tmp_path, factors={1: 1.4, 2: 1.0, 3: 1.2, 4: 0.7}))
         assert verdict == "NO-GO" and _held(rows, 6) == [False]
+
+    def test_a_weak_link_alone_is_no_go(self, tmp_path) -> None:
+        rows, verdict = pf.check(_run(tmp_path, weak_link=2))
+        assert verdict == "NO-GO" and False in _held(rows, 7)
+
+    def test_a_tighter_spread_limit_is_honoured(self, tmp_path) -> None:
+        d = _run(tmp_path)                                    # spread 1.10 / 0.90 = 1.22
+        assert pf.check(d, spread_max=1.25)[1] == "GO"
+        assert pf.check(d, spread_max=1.20)[1] == "NO-GO"
+
+    def test_any_power_setting_is_read_back(self) -> None:
+        log = "t set 600: txpower 6.00 dBm\nt auto: txpower 31.00 dBm\n"
+        assert pf.power_check_at(log, 600) and not pf.power_check_at(log, 800)
+        assert not pf.power_check_at("t set 600: txpower 6.00 dBm\n", 600)
 
     def test_nothing_collected_is_no_go(self, tmp_path) -> None:
         assert pf.check(tmp_path)[1] == "NO-GO"

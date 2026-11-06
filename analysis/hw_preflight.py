@@ -10,7 +10,8 @@ the parameters first:
 3. every Pi whose power is held (pi-B; pi-A too when asked) at 8 dBm, then back to auto;
 4. node 4 in the Pis' cell with every Pi reached, and Blue 2 on one boot throughout;
 5. no Pi under-voltage;
-6. the senders within 1.5x of each other at W1g's A31 line (two G31 windows).
+6. the senders within 1.5x (or a tighter limit asked for) at W1g's A31 line (two G31 windows);
+7. alone in its rate check, each sender reaches every receiver with >= 97 % of its frames.
 
 The preflight is never scored. It decides only whether a long run starts; the long run's own
 registered conditions still decide its validity.
@@ -25,7 +26,9 @@ Reused unchanged: the reducer, node 4's rules, the bracket and the join checks (
 from __future__ import annotations
 
 import argparse
+import re
 import sys
+from collections.abc import Mapping
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
@@ -38,8 +41,11 @@ PLAN = w1d.PLANS / "plan_preflight.txt"
 GATE_LABEL = "G31"
 GATE_WINDOWS = 2
 SENDER_LIMITED = 0.98           # achieved >= 98 % of the offered rate: the sender, not the channel
+LINK_MIN = 0.97                 # check 7: alone, every receiver gets >= 97 % of the frames
+SPREAD_MAX = w1g.SPREAD_MAX     # check 6, W1g's rule; W1i's tuning asks for 1.25
 PIS = (1, 2, 3)
 EXIT = {"GO": 0, "NO-GO": 3, "RETRY": 4}
+DEFAULT_HELD = {w1g.PI_B: w1g.PI_B_MBM}   # pi-B at 800 mBm, as W1g registered
 
 
 def plan() -> list[str]:
@@ -89,22 +95,49 @@ def _rate_rows(windows: list[dict], achieved: dict[str, float]) -> list[dict]:
     return rows
 
 
-def _power_rows(folder: Path, held_at_8dbm: tuple[int, ...]) -> list[dict]:
-    """Check 3: every Pi whose power the run holds shows 8.00 dBm read back, then auto."""
+def power_check_at(log: str, mbm: int) -> bool:
+    """V6 at any setting: `set <mbm>: txpower <mbm/100> dBm` read back, then `auto` after it."""
+    m = re.search(rf"set {mbm}: txpower {mbm / 100:.2f} dBm", log)
+    return m is not None and "auto:" in log[m.end():]
+
+
+def _power_rows(folder: Path, held: Mapping[int, int]) -> list[dict]:
+    """Check 3: every Pi whose power the run holds shows its setting read back, then auto."""
     rows = []
-    for node in held_at_8dbm:
+    for node, mbm in sorted(held.items()):
         path = folder / f"node{node}" / "txpower.log"
-        power = w1g.power_check(path.read_text() if path.exists() else "")
-        rows.append(_row(3, "held at 8 dBm, then auto", f"node{node} txpower.log",
-                         power["measured"], power["held"] is True))
+        log = path.read_text() if path.exists() else ""
+        rows.append(_row(3, f"held at {mbm / 100:g} dBm, then auto", f"node{node} txpower.log",
+                         " | ".join(ln.strip() for ln in log.splitlines()),
+                         power_check_at(log, mbm)))
     return rows
 
 
-def check(folder: Path, held_at_8dbm: tuple[int, ...] = (w1g.PI_B,)) -> tuple[list[dict], str]:
-    """The six checks, then GO, NO-GO, or RETRY.
+def link_rows(folder: Path) -> list[dict]:
+    """Check 7: alone in its rate check, each sender reaches every receiver with >= 97 %.
+
+    Guards against a power tuned too low; it needs no window beyond the rate checks.
+    """
+    rows = []
+    for tag, parts in sorted(w1d._files(folder).items()):
+        label, tx, rx = tag.split("_")[1], parts.get("tx", {}), parts.get("rx", {})
+        if not w1d.RATE_CHECK.fullmatch(label) or len(tx) != 1:
+            continue
+        s, sent = next(iter(tx.items()))[0], next(iter(tx.values()))["sent"]
+        got = {r: rx[r]["by_source"].get(f"10.0.0.{s}", {}).get("received_unique", 0) / sent
+               for r in w1f.BOARDS if r != s and r in rx}
+        worst = min(got.values(), default=0.0)
+        rows.append(_row(7, "alone, every receiver >= 97 %", w1f.BOARDS[s], round(worst, 4),
+                         len(got) == w1f.N_BOARDS - 1 and worst >= LINK_MIN))
+    return rows
+
+
+def check(folder: Path, held: Mapping[int, int] | None = None,
+          spread_max: float = SPREAD_MAX) -> tuple[list[dict], str]:
+    """The seven checks, then GO, NO-GO, or RETRY.
 
     RETRY: every Pi that failed was sender-limited (6 Mb/s: its first ad-hoc session after a boot,
-    F129), and checks 2-5 held. Balance (6) may fail with it: shorter frames collide less.
+    F129), and checks 2-5 and 7 held. Balance (6) may fail with it: shorter frames collide less.
     """
     windows = w1f.apply_node4_rules(w1f.window_rows(folder))
     meta = w1f.load_meta(folder)
@@ -112,7 +145,7 @@ def check(folder: Path, held_at_8dbm: tuple[int, ...] = (w1g.PI_B,)) -> tuple[li
     rows = _rate_rows(windows, _achieved(folder))
     rows.append(_row(2, "rate_ctl at join", "TP-Link", rate_fixed["group"],
                      rate_fixed["held"] is True))
-    rows += _power_rows(folder, held_at_8dbm)
+    rows += _power_rows(folder, DEFAULT_HELD if held is None else held)
     rows.append(_row(4, "node 4 in the Pis' cell", joined["group"], joined["measured"],
                      joined["held"] is True))
     boots = {b for w in windows for b in (w.get("boot_before", ""), w.get("boot_after", ""))}
@@ -125,15 +158,22 @@ def check(folder: Path, held_at_8dbm: tuple[int, ...] = (w1g.PI_B,)) -> tuple[li
                      bool(windows) and all(w["power_ok"] for w in windows)))
     balance = w1g.balance_check(w1g.sender_means(folder, GATE_LABEL))
     gate = [w for w in windows if w["label"] == GATE_LABEL and w.get("usable")]
-    rows.append(_row(6, "senders within 1.5x", GATE_LABEL, balance["measured"],
-                     balance["held"] is True and len(gate) == GATE_WINDOWS,
+    spread = balance["measured"]
+    rows.append(_row(6, f"senders within {spread_max:g}x", GATE_LABEL, spread,
+                     spread != "" and float(spread) <= spread_max and len(gate) == GATE_WINDOWS,
                      f"{balance['windows']}; usable {len(gate)}/{GATE_WINDOWS}"))
+    rows += link_rows(folder)
     if all(r["held"] for r in rows):
         return rows, "GO"
     failed = [r for r in rows if r["check"] == 1 and not r["held"]]
     fast = bool(failed) and all("sender-limited" in r["note"] for r in failed)
-    others = all(r["held"] for r in rows if r["check"] in (2, 3, 4, 5))
+    others = all(r["held"] for r in rows if r["check"] in (2, 3, 4, 5, 7))
     return rows, "RETRY" if fast and others else "NO-GO"
+
+
+def parse_held(text: str) -> dict[int, int]:
+    """'1:600,2:800' -> {1: 600, 2: 800}; a Pi at auto is simply not listed."""
+    return {int(n): int(m) for n, m in (kv.split(":") for kv in text.split(",") if kv)}
 
 
 def main() -> None:
@@ -142,15 +182,16 @@ def main() -> None:
     what = ap.add_mutually_exclusive_group(required=True)
     what.add_argument("--plan", action="store_true")
     what.add_argument("--check", type=Path, metavar="RUN_DIR")
-    ap.add_argument("--held", default=str(w1g.PI_B), metavar="NODES",
-                    help="Pis whose power the run holds at 8 dBm, comma-separated (default 2)")
+    ap.add_argument("--held", default="2:800", metavar="NODE:MBM,...",
+                    help="Pis whose power the run holds, with their setting (default 2:800)")
+    ap.add_argument("--spread-max", type=float, default=SPREAD_MAX)
     args = ap.parse_args()
     if args.plan:
         PLAN.parent.mkdir(parents=True, exist_ok=True)
         PLAN.write_text("\n".join(plan()) + "\n")
         print(PLAN.read_text())
         return
-    rows, verdict = check(args.check, tuple(int(n) for n in args.held.split(",")))
+    rows, verdict = check(args.check, parse_held(args.held), args.spread_max)
     w1f._write(args.check / "preflight.csv", rows, "hw_preflight")
     for r in rows:
         print(f"  [{r['check']}] {'ok ' if r['held'] else 'NO '} {r['what']} | {r['group']} | "
