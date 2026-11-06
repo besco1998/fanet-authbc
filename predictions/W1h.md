@@ -251,3 +251,19 @@ The gate (`dsss_w1h.py --gate`, unchanged):
 * The geometry now makes the TP-Link stronger than it was in calibration.
 * Further attempts at this placement would fail their gates.
 * Stopped here and reported to Mohamed.
+
+**Deviation — 2026-11-06, ~14:20, approved by Mohamed ("Re-place, guided by preflights").**
+* The registered setup puts Blue 2 at 90 cm; at that placement the TP-Link dominated on every boot.
+* **Blue 2 is now moved by Mohamed**, first to about 1.5 m from the Pis at the same height,
+  and/or with the dongle turned. **One preflight reads each placement.**
+* **At most three placements.** The first preflight that says GO starts attempt 2 at once, on that
+  placement.
+* The placement used, and every preflight's readings, are reported.
+* **Nothing else changes:**
+  * the plan;
+  * the gate and its 1.5× rule;
+  * V1–V6 and the bands;
+  * the limit of three attempts.
+
+  The scored claim becomes "the ratio under balance at the placement that gave it", which is what
+  the gate already selects.
