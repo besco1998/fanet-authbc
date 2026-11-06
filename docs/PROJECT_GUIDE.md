@@ -1319,7 +1319,7 @@ hid three errors until it was built (`docs/LOGBOOK.md` 2026-10-06).
 | Table 17 (other links) | `other_links.csv` |
 | Capacity at 97 % (S-01) | `capacity_97.csv`, `predictions/S01.md` |
 | Pre-registrations (every one, with commit and outcome) | `predictions/README.md` |
-| Findings F1–F131 | `docs/audits/model_provenance.md`; every past audit: `docs/audits/AUDIT_HISTORY.md` |
+| Findings F1–F132 | `docs/audits/model_provenance.md`; every past audit: `docs/audits/AUDIT_HISTORY.md` |
 | Decisions, and what each cost (the trade-off register) | `docs/DECISIONS.md` |
 | Where the work is, open items, questions | `docs/OPEN_ITEMS.md` (§1, §2, §3) |
 | What was tried, including failures | `docs/LOGBOOK.md` |
@@ -1343,7 +1343,7 @@ docs/
   LOGBOOK.md                 method and trials, failures included
   DEFERRED_PLANS.md          mobility and Direction C, deferred by Mohamed
   00 01 02 04 05 06 *.md     the specifications (cited by number in code)
-  audits/                    model_provenance.md (findings F1–F131), AUDIT_HISTORY.md (past audits)
+  audits/                    model_provenance.md (findings F1–F132), AUDIT_HISTORY.md (past audits)
   revision/                  REVISION_PLAN, STATUS, PAPER_CHANGES, REVIEW_2026-10-27_FACTS, RESPONSE
   literature/                README.md (sources, their roles, how citations were checked), PDFs
   prompts/T_TEMPLATES.md     the workflow templates the Eight Laws cite

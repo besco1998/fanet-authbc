@@ -5648,3 +5648,40 @@ retry after a join-ping NO-GO). Folders `results/hw/channel24/w1i_2026-11-06/tun
 
 **What it changes.** Balance by software alone is not reliable at this geometry. A physical layout
 (spacing, symmetry, fixing) is the open lever; it would need a new registration (Mohamed).
+
+## F132 — W1j: the AUTHBC / per-record ratio measured on four real radios is 3.28, against the model's 3.30; both crossings inside their bands (2026-11-06)
+
+`predictions/W1j.md` (registered at `prereg-W1j`, `bb2dd437`, before the run). Session
+`results/hw/channel24/w1j_2026-11-06/w1j_2026-11-06_run/`.
+
+**Setup.**
+* The four boards on a 1 m square, the Pi 3 moved 35 cm inward.
+* pi-A held at 6 dBm, the Pi 3 at 11 dBm, pi-B at default.
+* 802.11b at 1 Mb/s, channel 11.
+* The layout and powers were found by short preflights the same evening (disclosed).
+* Moving the Pi 3 inward also cured its slow sending (F131's square readings): it is slow whenever
+  it sits far from the Pi 4s.
+
+**The result: valid, every registered condition held.**
+* Gate 1.092×; the session's A31 spread 1.208×; b = 0.22 %; all eight rate checks in band.
+* **The AUTHBC crossing: 30.48** (model 29.50, band 26.55–32.45).
+* **The per-record crossing: 9.29** (model 8.93, band 8.04–9.82).
+* **The ratio: 3.280** (model 3.304, band 2.974–3.635; −0.7 %).
+* An independent script agrees exactly.
+
+**What it shows.**
+* **On real radios both crossings sit 3–4 % above the model,** because capture lowers loss (F127).
+* **The ratio, the paper's claim, is unchanged by capture to within 1 %.**
+* With F123 (contention holds at N = 2, 3 and 4 on real radios) and F127 (AUTHBC's crossing at
+  four boards), the hardware now backs the ratio, within its limits:
+  * 802.11b at 1 Mb/s;
+  * four boards mapped to many by A12;
+  * one session;
+  * capture present and balanced.
+
+**How it got here: four sessions.**
+* W1g was void (the balance, cause undetermined).
+* W1h was void by a hair (1.549×).
+* W1i had no session (power alone could not balance a 10–15 cm cluster).
+* **The layout made the difference:** the 1 m square, plus the Pi 3 nearer the others. The 3-minute
+  preflight (Mohamed's rule) found each fault in about 8 minutes instead of 30.

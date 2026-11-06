@@ -94,3 +94,63 @@ The scored predictions are W1f's (through `w1g_predictions.csv`), unchanged.*
 * **No window of the W1j run has been run.**
 
 ---
+
+## Outcome — added 2026-11-06, 20:25, after the run; nothing above this line was changed
+
+**How it ran.**
+* The run lasted 19:52:18–20:18:18, on Blue 2's boot `5ad256eb`.
+  * All four boards ran all 52 windows and reverted.
+  * Node 4 was in the Pis' cell (`2a:e2:ae:2d:71:69`) at `FIXED CCK_1M`, with every Pi reached.
+  * pi-A was held at 6.00 dBm and the Pi 3 at 11.00 dBm (from 19:51:28), both returned to auto
+    (20:18:23).
+* **The gate said GO**: G31 spread 1.092× (pi-A 5.64 %, pi-B 5.79 %, Pi 3 5.48 %, TP-Link
+  5.98 %), the rate checks before in band. So it is the session.
+* Scored by `dsss_w1i.py --score … --powers 1:600,2:auto,3:1100`; the registered code is unchanged
+  since `prereg-W1j` (an empty diff).
+* Outputs:
+  * `results/raw/w1i_w1j_2026-11-06_run.csv`;
+  * `results/hw/channel24/w1j_2026-11-06_run_windows.csv`;
+  * the files in `results/hw/channel24/w1j_2026-11-06/w1j_2026-11-06_run/`.
+* An independent script (plain Python on the raw files) agrees exactly.
+
+**The session is VALID. Every condition held:**
+* V1: all eight rate checks in band, the Pi 3 at 2 344.9 µs before and 2 286.9 µs after;
+* V2: b = 0.22 %;
+* V3, V4;
+* **V5: the A31 spread 1.208×**, each of its four windows within 1.07–1.39×;
+* V6 for both held Pis.
+
+**Scored:**
+
+| | measured | registered model | band | held |
+|---|---|---|---|---|
+| W1j-1 the bracket | 8/8 in band | | 1.9–2.6 ms | **yes** |
+| W1j-2 the background | 0.22 % | | ≤ 1 % | **yes** |
+| W1j-3 AUTHBC crossing | **30.48** (95 % CI 30.29–31.05) | 29.50 | 26.55–32.45 | **yes** (+3.3 %) |
+| W1j-4 per-record crossing | **9.29** (95 % CI 9.27–9.32) | 8.93 | 8.04–9.82 | **yes** (+4.1 %) |
+| **W1j-5 the ratio** | **3.280** | **3.304** | 2.974–3.635, > 2.5 | **yes** (−0.7 %) |
+
+**The points** (V/(1 − b); four windows each, each standard deviation 0.002–0.005):
+* AUTHBC A29–A32: 0.9649 / 0.9539 / 0.9458 / 0.9345;
+* per-record P9–P9.75: 0.9595 / 0.9523 / 0.9393 / 0.9332.
+
+Every point lies above the model's (capture, F127). Both crossings shift up by similar fractions,
+and in the ratio the shifts nearly cancel.
+
+**My expectations.** Each held:
+* the gate GO;
+* V5 (1.208×);
+* V1;
+* the crossings near 31 / 9.3 (30.48 / 9.29);
+* the ratio near 3.3 (3.28).
+
+**What it means.** **The AUTHBC / per-record capacity ratio was measured on four real radios —
+balanced and with capture present — at 3.28, within 0.7 % of the model's 3.30.** The paper's claim
+holds on hardware, within the limits below. F132.
+
+**Limits, as registered:**
+* 802.11b at 1 Mb/s, not the paper's PHY;
+* four boards, through A12's mapping;
+* one session;
+* capture present;
+* the layout and powers were selected by preflights on G31 windows, never on scored ones.

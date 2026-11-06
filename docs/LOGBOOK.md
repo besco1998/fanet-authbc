@@ -150,6 +150,33 @@ excecute the plan and give me the results". The plan was approved in plan mode. 
 * A `pgrep` check matched its own command line, twice. A pattern only a running session can
   match is now used.
 
+# 2026-11-06, evening — W1i did not tune; the square layout; W1j valid: hardware ratio 3.28 against 3.30 (F131, F132)
+
+**Asked:**
+* "go 1 … adaptive" → W1i;
+* then "what can i do physically";
+* then the 1 m square, the swap, the Pi 3 moved 35 cm in;
+* then "run the long test directly".
+
+**What happened:**
+1. **W1i: no session.** Five tuning preflights, none tuned (F131). Power steps moved the balance
+   less than it wandered, with the boards 10–15 cm apart.
+2. **The square** (Mohamed): pi-A, pi-B and the TP-Link came within 1.2× at default power. The Pi 3
+   was slow (3.2–3.5 ms) at either corner: it follows the board, Bluetooth was not the cause, and
+   moving it 35 cm inward cured it.
+3. **Power now acted, steeply.** Whoever is strongest wins with about 3 %. The Pi 3 went from
+   weakest at 10 dBm to strongest at 12; 11 dBm balanced (1.249×).
+4. **W1j was registered in minutes, no new code,** and run: **valid; the ratio 3.280 against the
+   model's 3.304; every scored claim held.**
+
+**Lessons:**
+* **Geometry before software.** At 10–15 cm (about a wavelength) power barely acts and the balance
+  wanders. At 1 m it acts, predictably if steeply.
+* **Changing one thing at a time found the Pi 3's fault in two tests:** the swap showed the board,
+  the move showed the distance.
+* **Short preflights between physical moves** turned an evening of 30-minute failures into
+  8-minute readings.
+
 # 2026-11-06, afternoon — the preflight, two placements, W1h void by a hair (F130)
 
 **Asked:**
