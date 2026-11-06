@@ -1,0 +1,7 @@
+node1: 17 files; windows done 6; [2026-11-06T17:13:17+02:00] reverted OK, both deadmen disarmed
+node2: 17 files; windows done 6; [2026-11-06T17:13:21+02:00] reverted OK, both deadmen disarmed
+node3: 16 files; windows done 6; [2026-11-06T17:13:18+02:00] reverted OK, both deadmen disarmed
+node4: 18 files; windows done 6; [2026-11-06T17:13:30+02:00] reverted OK: back on the home Wi-Fi, deadman disarmed
+node 4 join: {"bssid":"2e:da:bb:6b:12:50","rate_ctl":"FIXED CCK_1M 0x00 0","boot":"6fbc2fb7","peers_reachable":[1,2,3]}; boot now 6fbc2fb7
+node 2 power: 2026-11-06T17:09:17+02:00 set 800: txpower 8.00 dBm
+node 2 power: 2026-11-06T17:13:12+02:00 auto: txpower 31.00 dBm

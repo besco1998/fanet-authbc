@@ -5624,3 +5624,27 @@ condition fixed before it ran. **The rule is not widened after the fact.**
 * Balance within 1.5× is reachable on these radios only near the rule's edge. It drifts by about
   0.1× within half an hour, so the 1.5× rule is met or missed by chance.
 * A re-run needs a new registration with a rule fixed in advance. Mohamed's decision.
+
+## F131 — W1i: the adaptive preflight did not tune; at 10–15 cm the senders' balance moves less with power than it wanders between runs (2026-11-06)
+
+`predictions/W1i.md` (registered at `prereg-W1i`, `b7d5e37`; one deviation approved by Mohamed, a
+retry after a join-ping NO-GO). Folders `results/hw/channel24/w1i_2026-11-06/tune1`–`tune5`.
+
+**The run.**
+* Five tuning preflights at Blue 2's 120 cm placement, from (pi-A 800, pi-B 800, Pi 3 auto)
+  through (400, 600, auto).
+* Spreads: 1.442 (NO-GO on node 4's join ping), 1.320, 1.411, 1.488, and **1.239** (NO-GO on
+  check 7, a receive-side loss at node 4 in one window).
+* **No long run started; nothing scored.**
+
+**What it shows.**
+* **The balance wanders by more than one 2 dB step moves it.** At a single setting the spread read
+  1.32–1.55× over two hours, and pi-A's loss 4.1–5.8 %.
+* **Power has a weak effect.** −15 dB on pi-A moved its loss from about 3.2 % to about 5.0 %.
+* **The Pi 3 is the weakest sender at every setting**, and the software cannot raise it.
+* **A reading, not tested:** the boards sit within about one wavelength of each other (12.5 cm at
+  2.4 GHz). There, coupling depends on exact positions and orientations rather than on distance
+  and power. That would fit both the weak power effect and the drift.
+
+**What it changes.** Balance by software alone is not reliable at this geometry. A physical layout
+(spacing, symmetry, fixing) is the open lever; it would need a new registration (Mohamed).

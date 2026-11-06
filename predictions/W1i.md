@@ -194,3 +194,43 @@ Folder: `results/hw/channel24/w1i_2026-11-06/tune1/`.
 * **The join check (check 4) and V3 stay exactly as registered.** If the join check fails again,
   W1i stops for good.
 * The retry counts toward the five tuning preflights, so preflights 2–5 remain.
+
+**Tuning preflights 2–5 — 16:49–17:22.** Folders `…/w1i_2026-11-06/tune2`–`tune5`.
+
+| # | powers pi-A / pi-B / Pi 3 (mBm) | G31 loss pi-A / pi-B / Pi 3 / TP-Link | spread | verdict |
+|---|---|---|---|---|
+| 2 | 800 / 800 / auto | 4.22 / 5.13 / 5.39 / 5.57 % | 1.320× | ADJUST: pi-A to 600 |
+| 3 | 600 / 800 / auto | 4.24 / 5.04 / 5.98 / 5.72 % | 1.411× | ADJUST: pi-A to 400 |
+| 4 | 400 / 800 / auto | 4.62 / 4.52 / 6.73 / 5.73 % | 1.488× | ADJUST: pi-B to 600 |
+| 5 | 400 / 600 / auto | 5.00 / 5.24 / 5.98 / 6.19 % | **1.239×** | **NO-GO on check 7** |
+
+* In every one, checks 1–5 held: all four radios at 1 Mb/s, each held power read back then auto,
+  node 4 joined with all Pis reached, one boot, no under-voltage.
+* **Preflight 5 met the tuning target (1.239×) and failed check 7.** Alone in its rate check, the
+  Pi 3's frames reached node 4 at 92.75 %. In preflights 2–4 that figure was 99.98 %; at pi-A and
+  pi-B it was 99.75 / 99.80 %.
+  * It is a receive-side loss at node 4, in one window. The Pi 3 was at `auto`, never lowered.
+
+---
+
+## Outcome — added 2026-11-06, 17:25; nothing above the first `---` line was changed
+
+**W1i ends with no session, as registered.** Its fifth and last tuning preflight was NO-GO (check
+7), and a NO-GO stops the tuning. No long run was started, and nothing is scored.
+
+**What the five preflights show:**
+* **The spread at one setting varies more than one step of the rule moves it.**
+  * At (800, 800, auto) it read 1.442× and 1.320×, 16 minutes apart. W1h's readings at the same
+    setting were 1.43–1.55×.
+  * pi-A's loss at 800 mBm ranged over 4.1–5.8 % across today's runs.
+  * Taking pi-A from `auto` to 4 dBm (about −15 dB) moved its loss only from about 3.2 % to about
+    5.0 %.
+* **The Pi 3 was the weakest sender at every setting** (5.4–6.7 %), already at full power.
+* **The 1.25× target was reached once** (1.239×), when that preflight failed on another check.
+* These boards, 10–15 cm apart, sit within about one wavelength of each other at 2.4 GHz
+  (12.5 cm). That could explain why power steps act weakly and the balance wanders, but it is
+  not tested here. F131.
+
+**My expectations:**
+* "Tuning in one or two preflights" was wrong. Five ran, and none was TUNED.
+* The toy plant converged; the radios moved less, and less steadily.
