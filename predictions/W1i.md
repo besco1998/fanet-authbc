@@ -166,3 +166,25 @@ Computed by `dsss_w1i.score` on the session's own windows. It is W1g's score wit
 * **No tuning preflight or long run of W1i has been run.**
 
 ---
+
+## Runs — added as they happen, 2026-11-06; nothing above the first `---` line was changed
+
+**Tuning preflight 1 — 16:38–16:42, at (800, 800, auto): NO-GO, so tuning stopped as registered.**
+Folder: `results/hw/channel24/w1i_2026-11-06/tune1/`.
+* **Check 4 failed: node 4's ping at join reached only pi-A** (`peers_reachable [1]`; pi-B and the
+  Pi 3 "UNREACHABLE" at 16:38:08–11).
+* **The window data show the four boards in one cell throughout.** From the first window
+  (16:38:29) every board received every other's frames in every window. In the G31 windows each
+  pair exchanged 2 539–2 664 frames.
+* The ping is an instant check at join; it missed for the first time in about ten node-4 joins
+  today.
+* Every other check held:
+  * the rate checks: 1 945.7 / 1 965.3 / 2 196.2 / 1 967.1 µs, all channel-limited;
+  * `FIXED CCK_1M`;
+  * pi-A and pi-B at 8.00 dBm, then auto;
+  * one Blue 2 boot (`730fad64`), 6/6 windows;
+  * no under-voltage;
+  * links alone ≥ 98.7 %.
+* **The balance at G31 read 1.442×:** pi-A 5.77 %, pi-B 4.53 %, Pi 3 6.53 %, TP-Link 6.08 %.
+  It was not used, the preflight being NO-GO.
+* Reported to Mohamed. Continuing needs his decision.
