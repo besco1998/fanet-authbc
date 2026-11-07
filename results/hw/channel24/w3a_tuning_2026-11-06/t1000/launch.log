@@ -1,0 +1,10 @@
+node 1: kit=[c42010127374 30c333bce0df 2b8ab3d2f89a a2aa8cfaf0cf ] plan=7fc6b1d962be throttled=0x0 ntp=yes running=0
+node 2: kit=[c42010127374 30c333bce0df 2b8ab3d2f89a a2aa8cfaf0cf ] plan=7fc6b1d962be throttled=0x0 ntp=yes running=0
+node 3: kit=[c42010127374 30c333bce0df 2b8ab3d2f89a a2aa8cfaf0cf ] plan=7fc6b1d962be throttled=0x0 ntp=yes running=0
+Blue 2 rebooting at 22:50:49
+Blue 2 ready 22:52:09: boot=4c4f46de uptime=66.68s watchdog=active
+node 4: [1e35e61fbcac 2b8ab3d2f89a a2aa8cfaf0cf 7fc6b1d962be]
+Running as unit: authbc-w3a.service
+node 4: authbc-w3a active
+node 1: set_txpower_window.sh (bd86ef80c307) started, 1000 mBm
+START=1793998488 (22:54:48); 4 windows; last ends about 22:56:48

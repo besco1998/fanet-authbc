@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""E20 / phase M2 — does node mobility change the LoRa capacity result? (docs/MOBILITY_PLAN.md)
+"""E20 / phase M2 — does node mobility change the LoRa capacity result? (docs/DEFERRED_PLANS.md)
 
 Runs `authbc-lora-capacity-mobile` across mobility models, speeds and BOTH collision matrices,
 at the project's 30-seed floor, and reports the **distribution** rather than a mean.

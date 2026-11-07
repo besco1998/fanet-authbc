@@ -7,6 +7,11 @@ robustness; MTU application budget M = 1500 B). Frames are lost i.i.d. with prob
 (channel abstraction of fading/collisions/mobility; p ∈ {0.02, 0.05, 0.10} in experiments).
 Contention is modeled by Bianchi DCF (doc 02 §6) and validated in NS-3 (E5). No GCS.
 
+> **Corrected 2026-11-01.** Bianchi's model assumes acknowledgements; broadcast has none, so the
+> broadcast model is Ma & Chen's (`src/authbc/models/broadcast_dcf.py`, finding F9). Every capacity
+> the paper reports is simulated in ns-3 per configuration (F50), and the contention model
+> (`src/authbc/sim/dcf_unsaturated.py`) explains it with nothing fitted.
+
 **Ledger.** Each UAV i maintains an append-only hash chain of its own telemetry records
 and stores verified records overheard from others. A record is
 `rec = {src, seq, ts, prev_hash, payload}`; `prev_hash = SHA-256(prev record bytes)`.
@@ -57,6 +62,7 @@ headline.
 
 **Why the switch is free in bytes.** Batching obeys **b ≤ Λ_i·D_max**, so only the *product*
 matters. Both points give Λ·D = 5 ⇒ **b = 4 ⇒ 72.0 B/record ⇒ −58.68 %**. Identical.
+*(Corrected 2026-10-06: 72.0 B is the design with one keyframe per four frames, which misses V — F46. With a keyframe in every frame b = 4 gives 74.96 B, −56.98 %, in this format and 43.25 B, −70.33 %, in the lean one; still identical at both points.)*
 
 **What it costs, stated because this is an optimization problem:**
 
@@ -74,11 +80,17 @@ Compliance costs **~2× swarm size** (213 → 100 at the V≥0.95 boundary; 103 
 > corrected on 2026-08-07; this document was not, because every staleness guard parses `paper/main.tex`
 > only. Current values are `results/raw/capacity_envelope.csv`, columns `n_max_v95_mean`.
 
+> **Corrected 2026-11-01.** The capacities in this section came from one load ceiling, which a
+> registered test showed is not invariant (F50, 2026-10-06). They are now simulated per
+> configuration: per-record signing 35 and AUTHBC 124 drones at 5 % frame loss, 27.6 and 97.3 at
+> 3 % (`results/raw/design_ladder.csv`, `results/raw/capacity_97.csv`); 72.0 B per record became
+> 43.25 B in the frame-linked format.
+
 ⚠️ **The region has a floor, and it is a real constraint on the application.** Holding b ≥ 4 under a
 100 ms deadline needs **Λ ≥ 40 Hz**. At 20 or 10 Hz the same deadline forces b = 1 and the saving
 collapses from 58.7 % to **12.2 %**. So the batching benefit is *not* available at every compliant
 operating point — it requires a telemetry rate fast enough to fill a batch inside the deadline.
-See docs/02 §6b, `TRADEOFFS.md` §1 and `results/raw/operating_region.csv` for the full surface.
+See docs/02 §6b, the trade-off register in `DECISIONS.md`, §1 and `results/raw/operating_region.csv` for the full surface.
 
 **Structural coupling:** any batching at all needs `b/Λ_i ≤ D_max` with b ≥ 1, hence
 **Λ_i ≥ 1/D_max**. At D_max = 250 ms that means Λ_i ≥ 4 rec/s; at the 3GPP 100 ms bound it means
@@ -92,11 +104,65 @@ apply.
 A+CBOR Pillar-1 baseline and **N ≤ 103** for the co-designed configuration. N = 50 is quoted because
 it lies *between* those: a swarm the baselines cannot serve and the co-design can. See docs/02 §6b.
 
+> **Corrected 2026-11-01.** The capacities in this section came from one load ceiling, which a
+> registered test showed is not invariant (F50, 2026-10-06). They are now simulated per
+> configuration: per-record signing 35 and AUTHBC 124 drones at 5 % frame loss, 27.6 and 97.3 at
+> 3 % (`results/raw/design_ladder.csv`, `results/raw/capacity_97.csv`); 72.0 B per record became
+> 43.25 B in the frame-linked format.
+
 **Security model.** Adversary may inject, replay, modify, or forge frames but does not
 hold any honest UAV's private key (key compromise out of scope, per charter). Required:
 existential unforgeability (EUF-CMA schemes at 128-bit level), replay rejection (src,seq
 monotonic per chain), integrity (hash chain). Availability under loss is a *robustness*
 metric, not a security claim.
+
+**Threat model, stated in full (2026-10-06; the paragraph above is the summary it expands).**
+*What is claimed, and where each property is enforced* (`ledger/store.py`, `placement/session_v2.py`):
+
+| property | meaning | mechanism | where it is checked |
+|---|---|---|---|
+| origin authentication | a stored record was produced by the UAV named in `src` | public-key signature over the canonical records | `verify_v2`, before anything is stored |
+| integrity | no field of a stored record was altered in transit | the same signature (every one of 1328 single-bit flips of a frame fails it) | ″ |
+| replay rejection | a frame delivered twice is stored once | `seq` strictly increasing per sender | `Store.ingest` → `REPLAY` |
+| equivocation evidence | two validly signed records for one `(src, seq)` are detected, and the two frames that carried them are kept | one signature covers a frame, so a record is proof only with its frame; each kept frame verifies alone under the sender's key (audit F80, fixed in F81) | `Store.contradicts` on every record of a verified frame → `LeanReceiver.evidence`; a third party runs `session_v2.proves_equivocation` |
+| continuity | omission or re-ordering inside what is held is detectable | each record's `prev_hash`; one link per frame commits to the record before it | `Store.ingest` → `TAMPERED` when the predecessor is held |
+| non-repudiation | a sender cannot later deny a record | follows from a public-key signature, for whoever holds the frame; a symmetric tag would not give it. The receiver keeps every accepted frame (F81) | `LeanReceiver.frame_of`; a third party runs `session_v2.verified_records` |
+
+*The adversary* controls the radio: it can read, inject, replay, modify, delay and drop frames,
+and may run any number of its own radios. It holds no honest UAV's private key.
+
+*What is NOT claimed* — each of these is outside the design, not an oversight in it:
+
+* **Confidentiality.** Telemetry is broadcast in clear.
+* **Availability.** Jamming removes frames; nothing here recovers them (no retransmission, no
+  coding across frames). Loss is the *robustness* metric V, not a security property. A flood of
+  forged frames costs a receiver one verification each — bounded by the CPU budget of docs/02
+  §6c, not prevented.
+* **Timeliness against a delaying attacker.** Replay is rejected by sequence number, not by
+  time. An attacker who keeps a frame from a receiver and delivers it later gets it accepted, as
+  authentic and in order, however stale. Rejecting that needs a clock shared with the sender,
+  which is not assumed. The record's signed `ts` lets an application apply its own bound.
+* **Truthfulness.** A UAV holding a valid key can sign false telemetry. Only *inconsistent*
+  falsehood — two records for one sequence number — is detectable.
+* **Key distribution, revocation and admission.** Receivers are assumed to hold each sender's
+  public key. The on-air cost of delivering certificates is charged separately (docs/02 §6d);
+  who may join, and how a key is withdrawn, is out of scope, and so is Sybil resistance.
+* **Privacy.** Senders are identified by a stable `src`. Pseudonymous schemes (the certificateless
+  aggregate signatures of the vehicular literature) buy conditional privacy that this design
+  does not offer.
+
+*Behaviour under loss, which the properties above depend on.* Every frame of the design decodes
+alone (docs/02 T3′), so a lost frame costs its own records and nothing else. The receiver then
+holds a chain with a gap: the next frame's link commits to a record it does not have, which it
+records and cannot check. Continuity across the gap is therefore *provable later*, if the missing
+records are ever obtained, and *unknown until then* — not violated, and not verified.
+
+*What one link per frame gives up.* In the first format every record carries its own
+`prev_hash`; in the lean format (§4b) only the first record of a frame does, and the rest are
+derived by the receiver. Within a frame, order and content then rest on the frame signature
+alone rather than on a signature and an independent hash. A frame is signed as a unit and is
+accepted or refused as a unit, so nothing is lost in strength — but there is one mechanism where
+there were two (docs/02 §9b).
 
 **Authentication placements (the decision space)** — audit-corrected:
 - **A. Inline per-record:** every record carries its own signature g. Baseline.
@@ -136,8 +202,8 @@ the CBOR array-length and byte-string-length prefixes widen.
 > | src | base_seq | H_f | state |
 > |---|---|---|---|
 > | 0 | 0 | **38 B** | first 24 records of a flight, low node id |
-> | 24 | 24 | 39 B | — |
-> | 256 | 256 | 40 B | — |
+> | 24 | 24 | **40 B** | — |
+> | 256 | 256 | **42 B** | — |
 > | 40 000 | 180 000 | **44 B** | 1 h into flight at 50 Hz — the value above |
 >
 > ⚠️ **And the direction of bias is opposite for T6.** The table below analyses H_f's bias for the
@@ -146,10 +212,21 @@ the CBOR array-length and byte-string-length prefixes widen.
 > most favourable to the paper's most durable claim. DR3 is excluded for H_f ≥ 39 and **feasible at
 > H_f ≤ 38**, at which point the headline is *three* of seven EU868 rates, not four. DR0–DR2 are
 > unconditional at any header size (64 B will not fit 51 B). See docs/02 T6 and
-> `tests/test_math_audit.py::TestFrameHeaderIsARange`. The empty frame skeleton alone is
+> `tests/test_math_audit.py::TestFrameHeaderIsARange`.
+>
+> ⚠️ **CORRECTED 2026-10-06 (audit F47, F52). Two things in this box were wrong.**
+> (1) The paragraph above is **withdrawn**: DR3's exclusion does not turn on H_f. The bound it
+> uses charged neither the chain link nor a record that decodes alone; the signature plus the
+> smallest self-contained record of this format is already 120 B, so DR3 is excluded at every
+> header size including zero (docs/02 T6′). (2) The two middle rows of the table read 39 B and
+> 40 B until today. The encoder gives **40 B and 42 B**: `src` and `base_seq` each cross a width
+> boundary at 24 and again at 256, so each row is two steps above the last, not one. The
+> endpoints, 38 and 44 B, which are the only values any result uses, were right.
+
+The empty frame skeleton alone is
 43 B; most of it is CBOR *text* keys (`v`, `t`, `src`, `base_seq`, `n`, `recs`, `auth`), which an
-integer-keyed profile would shrink substantially — that is a wire-format optimisation this thesis
-does not claim.
+integer-keyed profile would shrink substantially. Until 2026-10 this sentence ended "that is a
+wire-format optimisation this thesis does not claim"; it is now built — §4b, 23 B.
 
 **The model uses a single H_f, but the real value is placement-dependent.** Measured:
 
@@ -234,6 +311,60 @@ AuthBlock:
 ```
 Canonicalization rule: CBOR canonical form; signature input = canonical bytes of the
 covered region; test vectors frozen in `tests/vectors/` at P2 (⚠️ D6 applies after).
+
+## 4b. Wire format v2 — the lean frame (2026-10-06, audit F45)
+
+*Implemented: `placement/wire_v2.py` (format), `placement/session_v2.py` (sender, receiver).
+Additive: §4 above is frozen and untouched, and every artifact derived from it is bit-identical.*
+
+Until this format existed, the design the results headline was a sum of sizes measured in
+three places; no frame carrying delta records had been encoded or decoded (F45). v2 is that
+design as one object, and every size reported for it is the length of an emitted frame.
+
+```
+Frame := canonical CBOR map, INTEGER keys (the COSE / SenML convention)
+  0 v         2
+  1 t         0 inline (one signature per record) · 1 self-batch, decodes alone ·
+              2 self-batch, first record coded against the previous frame's last
+  2 src       u16
+  3 base_seq  u32 — sequence number of the first record
+  4 n         1..255 records
+  5 link      bytes(32) — prev_hash of the first record: the ONE chain link a frame carries
+  6 recs      bytes — the record stream
+  7 auth      self-batch: bytes(64) · inline: array of n × bytes(64)
+
+Record stream := nine LEB128 varints per record: ts, lat, lon, alt, vel_x, vel_y, vel_z,
+  battery, mode. A KEY record carries absolute values; a DELTA record, zig-zag differences
+  from the record before it. `src` and `seq` are not repeated: seq_i = base_seq + i.
+```
+
+**What is signed is unchanged from §4:** the canonical CBOR of the ledger records, each with its
+own `prev_hash` (`prev_hash_0 = link`, `prev_hash_i = SHA-256(canonical(rec_{i−1}))`). A receiver
+must therefore *rebuild* the records before it can verify them — which is the point: a frame it
+cannot decode is a frame it cannot verify, and docs/02 T3′ counts that.
+
+Bytes, field by field, at the documented flight point (sender 40 000, one hour at 50 Hz;
+`results/raw/frame_components.csv`, rows `header_field`):
+
+| field | first format (§4) | lean (§4b) | why it differs |
+|---|---|---|---|
+| map header | 1 | 1 | |
+| `v` | 3 | 2 | key name: 1 B of text against a 1 B integer |
+| `t` | 3 | 2 | ″ |
+| `src` | 7 | 4 | `"src"` is 4 B as a key |
+| `base_seq` | 14 | 6 | `"base_seq"` is 9 B as a key |
+| `n` | 3 | 2 | |
+| `recs` | 6 | 3 | key name; an array header against a byte-string prefix |
+| `auth` | 7 | 3 | key name |
+| **H_f** | **44** (38–44) | **23** (17–23) | key names are 29 B of the first header and 7 B of the lean one |
+| chain link | 32 **per record**, inside it | 35 **per frame** (32 + key + prefix) | §9b of docs/02 |
+| record that decodes alone | 59.85 (56–61), link included | 24.0 (21–25) | no key names, no `src`/`seq`, varints |
+| record coded against its predecessor, 50 ms apart | 44.0, link included | 9.0 | ″ |
+
+**Decision recorded (D2 of the 2026-10 revision, `DECISIONS.md`).** The lean format carries one
+chain link per frame on **both** arms. That extends to 802.11 what the decision of 2026-07-28
+scoped to LoRa only — *for the lean format*; the first format keeps a link in every record. The
+cost is stated under "What one link per frame gives up" in §1.
 
 ## 5. Measured-parameters table (what/where/how — methodology in doc 04 §1)
 | Param | Platform(s) | Method |

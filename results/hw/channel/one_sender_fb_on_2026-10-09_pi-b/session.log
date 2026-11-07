@@ -1,0 +1,38 @@
+[2026-10-09T03:50:47+03:00] deadmen armed: revert 800 s, reboot 1100 s | role=rx freq=5180 mode=full
+[2026-10-09T03:51:04+03:00] type:  	type IBSS 	channel 36 (5180 MHz), width: 20 MHz, center1: 5180 MHz 
+[2026-10-09T03:51:04+03:00] link:  Joined IBSS 1a:27:26:c4:64:ee (on wlan0) 	SSID: authbc-mesh 
+[2026-10-09T03:51:04+03:00] addr:  inet 10.0.0.2 
+[2026-10-09T03:51:06+03:00] PEER 10.0.0.1 REACHABLE — link formed at 5180 MHz
+{"received_unique": 2200, "senders": 1, "duplicates": 0}
+[2026-10-09T03:52:11+03:00] window 00_A_100fps done
+{"received_unique": 2200, "senders": 1, "duplicates": 0}
+[2026-10-09T03:52:42+03:00] window 01_A_100fps done
+{"received_unique": 2200, "senders": 1, "duplicates": 0}
+[2026-10-09T03:53:11+03:00] window 02_A_100fps done
+{"received_unique": 2200, "senders": 1, "duplicates": 0}
+[2026-10-09T03:53:41+03:00] window 03_A_100fps done
+{"received_unique": 2200, "senders": 1, "duplicates": 0}
+[2026-10-09T03:54:11+03:00] window 04_A_100fps done
+{"received_unique": 2200, "senders": 1, "duplicates": 0}
+[2026-10-09T03:54:41+03:00] window 05_A_100fps done
+{"received_unique": 2200, "senders": 1, "duplicates": 0}
+[2026-10-09T03:55:11+03:00] window 06_A_100fps done
+{"received_unique": 2200, "senders": 1, "duplicates": 0}
+[2026-10-09T03:55:41+03:00] window 07_A_100fps done
+{"received_unique": 600, "senders": 1, "duplicates": 0}
+[2026-10-09T03:56:01+03:00] window 08_B_50fps done
+{"received_unique": 1200, "senders": 1, "duplicates": 0}
+[2026-10-09T03:56:22+03:00] window 09_B_100fps done
+{"received_unique": 2400, "senders": 1, "duplicates": 0}
+[2026-10-09T03:56:41+03:00] window 10_B_200fps done
+{"received_unique": 3594, "senders": 1, "duplicates": 0}
+[2026-10-09T03:57:01+03:00] window 11_B_300fps done
+{"received_unique": 4787, "senders": 1, "duplicates": 0}
+[2026-10-09T03:57:21+03:00] window 12_B_400fps done
+{"received_unique": 5972, "senders": 1, "duplicates": 0}
+[2026-10-09T03:57:41+03:00] window 13_B_600fps done
+{"received_unique": 5935, "senders": 1, "duplicates": 0}
+[2026-10-09T03:58:02+03:00] window 14_B_900fps done
+[2026-10-09T03:58:02+03:00] revert: starting
+[2026-10-09T03:58:11+03:00] revert: finished, wlan0 = inet 192.168.1.20
+[2026-10-09T03:58:17+03:00] reverted OK, both deadmen disarmed

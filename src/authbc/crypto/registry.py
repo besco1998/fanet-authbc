@@ -1,4 +1,4 @@
-"""Signature-scheme registry (docs/03 §3 crypto/)."""
+"""Signature-scheme registry (docs/archive/03 §3 crypto/)."""
 
 from __future__ import annotations
 

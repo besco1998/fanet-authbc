@@ -1,0 +1,27 @@
+# python=3.12.3
+# platform=Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=w4a_worst_case
+# config_hash=b97e6aca21f7ef51
+case,scheme,frame_bytes,key_record_bytes,delta_record_bytes,closed_form_crossing,model_crossing
+"AUTHBC, schema bound",AUTHBC,233,27,28,104.56,103.78
+"AUTHBC, physical bound",AUTHBC,188,27,13,120.33,118.5
+"per-record, schema bound",per-record,150,27,,35.35,34.68
+"per-record, smallest",per-record,125,9,,38.86,37.73
+"AUTHBC, published mean",AUTHBC,173.0,,,126.7,124.15
+"per-record, published mean",per-record,146.76,,,35.75,34.99
+"ratio: AUTHBC, published mean / per-record, published mean",ratio,,,,3.544,3.548
+"ratio: AUTHBC, published mean / per-record, schema bound",ratio,,,,3.584,3.58
+"ratio: AUTHBC, published mean / per-record, smallest",ratio,,,,3.26,3.29
+"ratio: AUTHBC, physical bound / per-record, published mean",ratio,,,,3.366,3.387
+"ratio: AUTHBC, physical bound / per-record, schema bound",ratio,,,,3.404,3.417
+"ratio: AUTHBC, physical bound / per-record, smallest",ratio,,,,3.097,3.141
+"ratio: AUTHBC, schema bound / per-record, published mean",ratio,,,,2.925,2.966
+"ratio: AUTHBC, schema bound / per-record, schema bound",ratio,,,,2.958,2.993
+"ratio: AUTHBC, schema bound / per-record, smallest",ratio,,,,2.691,2.751
+break-even against per-record at its smallest,AUTHBC,819.2,27,223.4,38.93,

@@ -1,0 +1,1 @@
+pre control_cbor: throttled=0x0 temp=49.6'C gov performance load 0.14 0.28 0.17 uv 0   (read at launch, 05:15 UTC, before the helper that writes these files existed)

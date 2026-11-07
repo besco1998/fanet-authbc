@@ -111,15 +111,25 @@ def validate(rec: TelemetryRecord) -> None:
             raise ValueError(f"{field}={val} out of range [{lo}, {hi}]")
 
 
-def stream(seed: int, n: int, *, src: int = 1) -> Iterator[TelemetryRecord]:
+def stream(seed: int, n: int, *, src: int = 1,
+           step_ms: int = TS_STEP_MS) -> Iterator[TelemetryRecord]:
     """Yield ``n`` schema-valid records as a seeded random-walk trajectory from ``src``.
 
     The walk takes small per-step increments (realistic UAV motion) so consecutive records
-    differ by small deltas; ``seq`` increments by 1 and ``ts`` by ~50 ms. ``prev_hash`` is
+    differ by small deltas; ``seq`` increments by 1 and ``ts`` by ~``step_ms``. ``prev_hash`` is
     fresh seeded-random 32 bytes per record (incompressible — encoders must carry it fully).
+
+    ``step_ms`` is the nominal spacing between records. Every published size uses the default,
+    50 ms, which dates from the 20 records/s operating point; 20 ms is the spacing of the adopted
+    50 records/s point, and the parameter exists so that the claim "the delta record is no larger
+    there" is a test (`tests/unit/bench/test_telemgen.py`) and not an argument. The default
+    stream is unchanged bit for bit.
     """
     if n < 0:
         raise ValueError("n must be >= 0")
+    if not (1 <= step_ms <= 1000):
+        raise ValueError(f"step_ms must be in [1, 1000], got {step_ms}")
+    per_s = 1000 // step_ms  # steps per second: velocity is in cm/s
     if not (U16[0] <= src <= U16[1]):
         raise ValueError(f"src out of u16 range: {src}")
     rng = Random(seed)
@@ -135,17 +145,17 @@ def stream(seed: int, n: int, *, src: int = 1) -> Iterator[TelemetryRecord]:
     ts = rng.randint(0, 10_000)
 
     for i in range(n):
-        # integrate velocity (cm/s) over ~50 ms and jitter it slightly — small, realistic deltas
-        lat = _clamp(lat + vel_x // 20 + rng.randint(-2, 2), LAT_RANGE)
-        lon = _clamp(lon + vel_y // 20 + rng.randint(-2, 2), LON_RANGE)
-        alt = _clamp(alt + vel_z // 20 + rng.randint(-1, 1), ALT_RANGE)
+        # integrate velocity (cm/s) over one step and jitter it slightly — small, realistic deltas
+        lat = _clamp(lat + vel_x // per_s + rng.randint(-2, 2), LAT_RANGE)
+        lon = _clamp(lon + vel_y // per_s + rng.randint(-2, 2), LON_RANGE)
+        alt = _clamp(alt + vel_z // per_s + rng.randint(-1, 1), ALT_RANGE)
         vel_x = _clamp(vel_x + rng.randint(-10, 10), VEL_RANGE)
         vel_y = _clamp(vel_y + rng.randint(-10, 10), VEL_RANGE)
         vel_z = _clamp(vel_z + rng.randint(-5, 5), VEL_RANGE)
         battery = _clamp(battery - (1 if rng.random() < 0.02 else 0), BATTERY_RANGE)
         if rng.random() < 0.01:
             mode = rng.randint(0, N_MODES - 1)
-        ts = _clamp(ts + TS_STEP_MS + rng.randint(-3, 3), U32)
+        ts = _clamp(ts + step_ms + rng.randint(-3, 3), U32)
 
         rec = TelemetryRecord(
             src=src,
@@ -164,6 +174,7 @@ def stream(seed: int, n: int, *, src: int = 1) -> Iterator[TelemetryRecord]:
         yield rec
 
 
-def samples(seed: int, n: int, *, src: int = 1) -> list[TelemetryRecord]:
+def samples(seed: int, n: int, *, src: int = 1,
+            step_ms: int = TS_STEP_MS) -> list[TelemetryRecord]:
     """Materialize ``stream`` into a list (convenience for encoders/benchmarks)."""
-    return list(stream(seed, n, src=src))
+    return list(stream(seed, n, src=src, step_ms=step_ms))

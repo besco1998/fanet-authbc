@@ -1,0 +1,1 @@
+Blue 2 + TP-Link at about 120 cm from the Pis (Mohamed); second try after Blue 2 was power-cycled 14:36 (try 1: node 4's start command was lost on its weak link, launcher fixed)

@@ -1,9 +1,10 @@
 """ECDSA P-256 / SHA-256 via ``cryptography`` (docs/06 §4).
 
 Signatures are byte-accounted as **fixed-width 64 B r‖s** (each of r, s is 32 B big-endian),
-NOT the variable 70–72 B DER that ``cryptography`` emits/consumes — the DER form would inflate
-the on-air byte counts (T1) and is not what a real deployment would put on the wire. We convert
-raw↔DER at the boundary via ``decode_dss_signature``/``encode_dss_signature``.
+NOT the variable-length DER that ``cryptography`` emits/consumes (≤ 72 B; 70–72 B for all but
+~0.2 % of signatures) — the DER form would inflate the on-air byte counts (T1) and is not what a
+real deployment would put on the wire. We convert raw↔DER at the boundary via
+``decode_dss_signature``/``encode_dss_signature``.
 """
 
 from __future__ import annotations

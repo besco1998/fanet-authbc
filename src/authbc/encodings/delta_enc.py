@@ -1,4 +1,4 @@
-"""Delta-CBOR-style encoder (docs/03 §3 encodings/, docs/06 §5).
+"""Delta-CBOR-style encoder (docs/archive/03 §3 encodings/, docs/06 §5).
 
 Stateful, per-src: a keyframe every ``K=16`` records carries absolute field values; the
 15 records in between carry **zigzag-varint deltas vs the previous record**. ``src`` is
@@ -8,7 +8,7 @@ round-trips standalone (the real chain that would let the decoder recompute it i
 
 Loss model: a lost frame desyncs a src until its next keyframe — the decoder raises
 :class:`DeltaDesyncError` for a delta frame it has no state for and bumps ``desync_count``
-(docs/03 §3: "re-sync at next keyframe").
+(docs/archive/03 §3: "re-sync at next keyframe").
 """
 
 from __future__ import annotations
@@ -24,7 +24,7 @@ from authbc.encodings.base import (
 
 KEYFRAME = 0x00
 DELTA = 0x01
-K = 16  # keyframe interval (docs/01 §1, docs/03 §3)
+K = 16  # keyframe interval (docs/01 §1, docs/archive/03 §3)
 
 # src is carried absolutely; everything else (seq, ts, lat, lon, alt, vel_*, battery, mode)
 # is delta-coded against the previous record for the same src.

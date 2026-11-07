@@ -1,4 +1,4 @@
-"""Round-trip + delta-recovery tests for all encoders (docs/03 §3, docs/06 §5)."""
+"""Round-trip + delta-recovery tests for all encoders (docs/archive/03 §3, docs/06 §5)."""
 
 from __future__ import annotations
 

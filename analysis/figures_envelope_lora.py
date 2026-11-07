@@ -6,8 +6,10 @@ metadata) so the frozen-figure discipline holds:
 * **fig_envelope.png** — largest single collision domain each configuration can serve. This is the
   co-design claim that needs all four axes *and* the channel model (audit F13/A1), so it deserves a
   figure more than the auth-byte ratio does.
-* **fig_t6_exclusion.png** — T6's three exclusion tiers across EU868 data rates: what fits, what is
-  excluded by the signature alone, and what misses on the encoding.
+* **fig_t6_exclusion.png** — T6' across all twelve EU863-870 data rates: what fits, what is
+  excluded by the signature alone, and what is excluded by what a frame must contain. The paper
+  prints it, so it alone is drawn in the paper's style (`figstyle`); the other two are thesis
+  figures and keep their look.
 * **fig_lora_chain.png** — the F5 decision on the LoRa arm: per-frame chaining against the 802.11
   per-record format, in the currency LoRa actually rations (sustainable records/s).
 """
@@ -21,15 +23,13 @@ from pathlib import Path
 import matplotlib
 
 matplotlib.use("Agg")
+import figstyle  # noqa: E402
 import matplotlib.pyplot as plt  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[1]
 RAW = REPO / "results" / "raw"
 FIGS = REPO / "results" / "figures"
-_SAVE = {"dpi": 110, "bbox_inches": "tight", "metadata": {"Software": None}}
-
-H_F, G_A = 44, 64          # measured wire header (B1) + Ed25519
-S_MIN_LORA = 13.0          # delta record under per-frame chaining (F5)
+_SAVE = {"dpi": 200, "bbox_inches": "tight", "metadata": {"Software": None}}
 
 
 def _rows(name: str) -> list[dict[str, str]]:
@@ -72,46 +72,58 @@ def fig_envelope() -> None:
     plt.close(fig)
 
 
+@figstyle.paper_figure
 def fig_t6_exclusion() -> None:
-    """T6: s_max = M − H_f − g_a against the smallest available record, per EU868 data rate."""
-    drs = [0, 1, 2, 3, 4, 5, 6]
-    payload = [51, 51, 51, 115, 242, 242, 242]          # RP002-1.0.3 Table 13
-    s_max = [m - H_F - G_A for m in payload]
-    tiers = ["signature" if m < G_A else
-             ("framing" if m < H_F + G_A else
-              ("encoding" if m - H_F - G_A < S_MIN_LORA else "feasible")) for m in payload]
-    colour = {"signature": "#b2182b", "framing": "#ef8a62",
-              "encoding": "#fddbc7", "feasible": "#1b7837"}
+    """T6': the payload each EU863-870 data rate allows against the smallest frame it must carry.
 
-    fig, ax = plt.subplots(figsize=(7.2, 3.6))
-    ax.bar(drs, payload, color=[colour[t] for t in tiers], edgecolor="black", linewidth=0.6,
-           label="_nolegend_")
-    ax.axhline(H_F + G_A, color="black", linestyle="--", linewidth=1.2,
-               label=f"$H_f+g_a={H_F + G_A}$ B — header + signature")
-    ax.axhline(G_A, color="#b2182b", linestyle=":", linewidth=1.2,
-               label=f"$g_a={G_A}$ B — signature alone")
-    for dr, m, sm in zip(drs, payload, s_max, strict=True):
-        note = (f"$s_{{max}}={sm:.0f}$ B" if sm < 0
-                else (f"$s_{{max}}={sm:.0f}$ B\n(needs {S_MIN_LORA:.0f})" if sm < S_MIN_LORA
-                      else f"$s_{{max}}={sm:.0f}$ B"))
-        # lift the excluded-tier labels clear of the g_a reference line at y=64
-        y = 76 if m < G_A else m + 8
-        ax.text(dr, y, note, ha="center", fontsize=7.5)
+    Everything drawn is read from `exclusion_matrix.csv` (lean format, 64 B signature): the
+    payload limits of all twelve data rates, the smallest frame the format can emit at all, and
+    the range of frames this telemetry actually produces.
+    """
+    rows = [r for r in _rows("exclusion_matrix.csv")
+            if r["auth_bytes"] == "64" and r["design"] == "lean"]
+    drs = [int(r["dr"]) for r in rows]
+    payload = [int(r["payload_not_repeater"]) for r in rows]
+    sig = int(rows[0]["auth_bytes"])
+    floor, lo, hi = (int(rows[0][k]) for k in
+                     ("frame_floor_bytes", "frame_min_bytes", "frame_max_bytes"))
+    tiers = ["signature" if r["signature_alone_overflows"] == "1" else r["verdict"]
+             for r in rows]
+    # The project's palette (2026-10-28, review item 7): red means per-record signing elsewhere,
+    # so the verdicts take purple, orange and aqua. The dataviz validator passes all three pairs
+    # under colour-vision deficiency (worst dE 10.2); orange and aqua are light against white,
+    # so each bar carries its value, written in black on them and in white on purple.
+    colour = {"signature": "#762a83", "excluded": "#e08214", "feasible": "#1baf7a"}
+    ink = {"signature": "white", "excluded": "black", "feasible": "black"}
+
+    fig, ax = plt.subplots(figsize=(figstyle.WIDTH, 3.9))
+    ax.bar(drs, payload, color=[colour[t] for t in tiers], edgecolor="black", linewidth=0.6)
+    ax.axhspan(lo, hi, color="#555555", alpha=0.18, linewidth=0,
+               label=f"one-record frames of this telemetry: {lo} to {hi} B")
+    ax.axhline(floor, color="black", linestyle="--", linewidth=1.2,
+               label=f"smallest frame the format can emit: {floor} B")
+    ax.axhline(sig, color=colour["signature"], linestyle=":", linewidth=1.2,
+               label=f"the signature alone: {sig} B")
+    for dr, m, tier in zip(drs, payload, tiers, strict=True):   # inside the bar: clear of lines
+        # bold through the math set: cmr10 has no bold face
+        ax.text(dr, m - 16, rf"$\mathbf{{{m}}}$", ha="center", fontsize=figstyle.NOTE,
+                color=ink[tier], rotation=90, va="top")
     ax.set_xticks(drs)
-    ax.set_xticklabels([f"DR{d}" for d in drs])
-    ax.set_ylabel("max application payload $M$ (B)")
-    ax.set_title("T6: EU868 data rates that cannot carry authenticated telemetry", fontsize=10)
+    ax.set_xticklabels([f"{d}" for d in drs])
+    ax.set_xlabel("EU863-870 data rate (DR)")
+    # M, as in the payload constraint of the paper (Eq. 5); N is the number of nodes
+    ax.set_ylabel("maximum payload $M$ (B)")
     handles = [plt.Rectangle((0, 0), 1, 1, fc=colour[k], ec="black", lw=0.6)
-               for k in ("signature", "encoding", "feasible")]
-    labels = ["excluded — signature alone overflows the payload",
-              f"excluded — no record fits $s_{{max}}$ (smallest is {S_MIN_LORA:.0f} B)",
-              "feasible"]
+               for k in ("signature", "excluded", "feasible")]
+    labels = [f"excluded: the signature alone overflows ({tiers.count('signature')} rates)",
+              f"excluded: header, chain link and signature fill it ({tiers.count('excluded')})",
+              f"feasible ({tiers.count('feasible')})"]
     line_h, line_l = ax.get_legend_handles_labels()
-    ax.legend(handles + line_h, labels + line_l, fontsize=7.5, loc="upper center",
-              bbox_to_anchor=(0.5, -0.13), ncol=2, frameon=False)
-    ax.set_ylim(0, 300)
+    ax.legend(handles + line_h, labels + line_l, loc="upper center",
+              bbox_to_anchor=(0.5, -0.17), ncol=1, frameon=False)
+    ax.set_ylim(0, 290)
     ax.grid(axis="y", alpha=0.3)
-    fig.savefig(FIGS / "fig_t6_exclusion.png", **_SAVE)
+    fig.savefig(FIGS / "fig_t6_exclusion.png", **figstyle.SAVE)
     plt.close(fig)
 
 

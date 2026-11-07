@@ -1,0 +1,25 @@
+[19:47:13.931] === start mode=lan boot=ec6cfe55 up=1769.45s
+[19:47:14.163] BEGIN ip link set tplink0 down
+[19:47:14.242] END rc=0 ip link set tplink0 down
+[19:47:17.358] BEGIN /usr/sbin/iw dev tplink0 set type ibss
+[19:47:17.946] END rc=0 /usr/sbin/iw dev tplink0 set type ibss
+[19:47:21.002] BEGIN ip link set tplink0 up
+[19:47:21.079] END rc=0 ip link set tplink0 up
+[19:47:24.224] BEGIN /usr/sbin/iw dev tplink0 ibss join authbc-mesh 2462 fixed-freq
+[19:47:24.453] END rc=0 /usr/sbin/iw dev tplink0 ibss join authbc-mesh 2462 fixed-freq
+[19:47:27.537] BEGIN rate_ctl 0x00 0
+[19:47:27.693] END rate_ctl now: FIXED CCK_1M 0x00 0 
+[19:47:27.724] BEGIN ip addr add 10.0.0.4/24 dev tplink0
+[19:47:27.797] END rc=0 ip addr add 10.0.0.4/24 dev tplink0
+[19:47:50.949] in the cell:  type IBSS  | Not connected.
+[19:47:50.982] BEGIN rate_ctl 0xff
+[19:47:51.032] END rate_ctl now: RA 
+[19:47:54.075] BEGIN /usr/sbin/iw dev tplink0 ibss leave
+[19:47:54.143] END rc=0 /usr/sbin/iw dev tplink0 ibss leave
+[19:47:57.196] BEGIN ip addr flush dev tplink0
+[19:47:57.289] END rc=0 ip addr flush dev tplink0
+[19:48:00.353] BEGIN ip link set tplink0 down
+[19:48:00.424] END rc=0 ip link set tplink0 down
+[19:48:03.478] BEGIN /usr/sbin/iw dev tplink0 set type managed
+[19:48:03.525] END rc=0 /usr/sbin/iw dev tplink0 set type managed
+[19:48:06.602] === done: tplink0 DOWN d0:37:45:2b:23:b0 <BROADCAST,MULTICAST> 

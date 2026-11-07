@@ -1,4 +1,4 @@
-"""Unit tests for the Bianchi DCF solver (docs/02 §6; guards docs/03 §3 models/).
+"""Unit tests for the Bianchi DCF solver (docs/02 §6; guards docs/archive/03 §3 models/).
 
 Validation strategy (Law 4 TDD, Law 6 result-validation):
   * THREE frozen spot values the solver must reproduce, obtained by an INDEPENDENT route:

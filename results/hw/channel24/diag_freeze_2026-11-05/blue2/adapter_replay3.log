@@ -1,0 +1,35 @@
+[2026-11-05T20:54:48+02:00] deadman armed: revert in 540 s | start=1793904994 windows=4 plan sha=379cde646ec1 | tplink=tplink0 driver=8188eu
+[2026-11-05T20:55:58+02:00] rate_ctl now: FIXED CCK_1M 0x00 0 
+[2026-11-05T20:56:08+02:00] after join: 	type IBSS  | Joined IBSS c2:1f:e7:01:9c:07 (on tplink0) 	SSID: authbc-mesh 	freq: 2462 
+[2026-11-05T20:56:10+02:00] peer 10.0.0.1 reachable
+[2026-11-05T20:56:12+02:00] peer 10.0.0.2 reachable
+{"sent": 11410, "achieved_fps": 517.0, "late": 10932}
+{"received_unique": 0, "senders": 0, "duplicates": 0}
+[2026-11-05T20:57:00+02:00] window 00_F4_1000fps done
+{"sent": 11439, "achieved_fps": 516.7, "late": 10957}
+{"received_unique": 0, "senders": 0, "duplicates": 0}
+[2026-11-05T20:57:30+02:00] window 01_F4_1000fps done
+{"sent": 1100, "achieved_fps": 50.0, "late": 0}
+{"received_unique": 0, "senders": 0, "duplicates": 0}
+[2026-11-05T20:58:00+02:00] window 02_B4_50fps done
+{"received_unique": 11241, "senders": 1, "duplicates": 0}
+[2026-11-05T20:58:30+02:00] window 03_R1_600fps done
+[2026-11-05T20:58:30+02:00] rate_ctl at end: FIXED CCK_1M 0x00 0 
+[20:58:30.930] BEGIN pkill
+[20:58:31.112] END pkill
+[20:58:31.144] BEGIN rate_ctl 0xff
+[20:58:31.196] END rate_ctl now: RA 
+[20:58:31.292] cell before leave: Joined IBSS c2:1f:e7:01:9c:07 (on tplink0) | stations: 0
+[20:58:31.324] BEGIN /usr/sbin/iw dev tplink0 ibss leave
+[20:58:31.402] END rc=0 /usr/sbin/iw dev tplink0 ibss leave
+[20:58:31.451] BEGIN ip addr flush dev tplink0
+[20:58:31.541] END rc=0 ip addr flush dev tplink0
+[20:58:31.605] BEGIN ip link set tplink0 down
+[20:58:31.677] END rc=0 ip link set tplink0 down
+[20:58:31.729] BEGIN /usr/sbin/iw dev tplink0 set type managed
+[20:58:31.793] END rc=0 /usr/sbin/iw dev tplink0 set type managed
+[20:58:31.830] BEGIN ip link set wlan0 up
+[20:58:32.666] END rc=0 ip link set wlan0 up
+[20:58:32.722] BEGIN systemctl start iwd
+[20:58:33.184] END rc=0 systemctl start iwd
+[20:58:58.497] === reverted OK: back on the home Wi-Fi, deadman disarmed

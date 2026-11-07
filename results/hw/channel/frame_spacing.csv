@@ -1,0 +1,17 @@
+# python=3.12.3
+# platform=Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=frame_spacing_hw
+# config_hash=4b9003541c2890e0
+session,frame_burst,window,offered_fps,sent,received,sender_fps,sender_ms_per_frame,first_seq_recorded,frames_spanned,receiver_span_s,air_fps,cycle_us,gap_after_frame_us,ppdu_us,standard_cycle_us
+2026-08-05,on (driver's setting; not logged that day),13_B_600fps,600,6072,6019,501.19,1.9953,False,6071,12.255,495.39,2018.6,42.6,1976.0,2077.5
+2026-08-05,on (driver's setting; not logged that day),14_B_900fps,900,6019,5931,501.07,1.9957,False,5985,12.0841,495.28,2019.1,43.1,1976.0,2077.5
+2026-10-09,on (driver's setting; not logged in this session),13_B_600fps,600,6025,5972,501.8,1.9928,False,6024,12.1621,495.31,2018.9,42.9,1976.0,2077.5
+2026-10-09,on (driver's setting; not logged in this session),14_B_900fps,900,6004,5935,499.9,2.0004,False,5970,12.0983,493.46,2026.5,50.5,1976.0,2077.5
+2026-10-09,off (logged),13_B_600fps,600,5988,5957,494.38,2.0227,True,5987,12.2702,487.93,2049.5,73.5,1976.0,2077.5
+2026-10-09,off (logged),14_B_900fps,900,5971,5940,494.22,2.0234,True,5970,12.2388,487.79,2050.1,74.1,1976.0,2077.5

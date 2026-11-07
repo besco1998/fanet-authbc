@@ -5,12 +5,40 @@ delivery on an ad-hoc link between the two Pis, so the channel model has a hardw
 
 ## Status: measured. Results in `results/hw/channel/RESULTS.md`.
 
-Headline: **99.977 % delivery** at the operating point (8 windows, σ = 0.024 pp, 0 duplicates,
-loss `p` = 2.3 × 10⁻⁴), and a measured broadcast airtime of **1.995 ms/frame against 1.99 ms
-predicted** — an independent hardware check on the 802.11a timing model.
+Headline of August: **99.977 % delivery** at the operating point (8 windows, σ = 0.024 pp,
+0 duplicates, loss `p` = 2.3 × 10⁻⁴).
 
-⚠️ One transmitter ⇒ **zero contention**. This measures *link* loss and *airtime*. It **cannot**
-validate Ma & Chen, which models N contending stations.
+> ⚠️ **Withdrawn 2026-10-09 (F74):** this file also said "a measured broadcast airtime of
+> 1.995 ms/frame against 1.99 ms predicted — an independent hardware check on the 802.11a timing
+> model". Both figures were wrong and nearly cancelled. On air the frames were 2.019 ms apart;
+> the standard gives 2.078 ms. See `results/hw/channel/RESULTS.md`.
+
+⚠️ One transmitter ⇒ **zero contention**: the one-sender session measures *link* loss and how a
+radio spaces its own frames.
+
+## Two radios contending (2026-10-09)
+
+Results and the record of eight sessions: `results/hw/channel/CONTENTION_RESULTS.md`; findings
+F73–F76. In one line each:
+
+* **Two saturated radios lose 12.4 % of frames on air; the standard's rule gives 11.8 %.**
+* Below saturation a registered prediction held at two loads and failed at the third.
+* The chip's **frame-burst mode** — switched on by the Linux driver — changes how one sender
+  spaces its frames and has no shown effect on the loss between two boards.
+
+```bash
+# every board sends and receives; node 1 first
+python analysis/contention_hw.py --commands 2 --hosts pi@<pi-a> pi@<pi-b> --mode probe   # then full
+python analysis/contention_hw.py --reduce 2 results/hw/channel/contention_2/node1 \
+       results/hw/channel/contention_2/node2            # scores against the registered bands
+python analysis/contention_hw.py --saturated 2 <node1 dir> <node2 dir> --tag fb_off
+python analysis/frame_spacing_hw.py                     # one sender's spacing, from the receiver
+```
+
+A session script's last argument is the frame-burst mode: `keep` (default), `0` or `1`. The
+value the firmware reports is written to the session log before and after the windows. A board
+whose `sudo` asks for a password is started as root:
+`sudo systemd-run --unit=authbc-session-$START --collect /home/pi/authbc_channel/run_adhoc_contention.sh …`.
 
 ---
 
@@ -56,6 +84,39 @@ supported (-95)* — so the band is the only control.
 **The fix for every NM-related symptom is to take `wlan0` away from NetworkManager**
 (`nmcli dev set wlan0 managed no` + `systemctl stop wpa_supplicant`) and drive it with raw `iw`.
 
+## Preflight before every long run (2026-11-06, Mohamed)
+
+No board can be reached during a session (F129): the Pis' only link is the ad-hoc cell, and node
+4's kit takes Blue 2's own radio off the air. So a long run's faults show only when it ends. Every
+long run (anything over ~5 minutes) is preceded by a **preflight**:
+* `experiments/channel24/plan_preflight.txt` (R1–R4, G31 ×2): six windows, about 3 minutes;
+* the same setup and launcher as the long run;
+* checked by `analysis/hw_preflight.py --check <run dir>`.
+
+| # | parameter | GO needs |
+|---|---|---|
+| 1 | Pis at 1 Mb/s | each Pi's rate check in 1.9–2.6 ms **and** channel-limited (a Pi sending its full offered 600/s is faster than 1 Mb/s: its first ad-hoc session after a boot runs at 6 Mb/s, F129) |
+| 2 | TP-Link at 1 Mb/s | `rate_ctl` reads `FIXED CCK_1M` at join; its rate check in band |
+| 3 | the held powers | each held Pi's `txpower.log` (`--held 1:600,2:800`, default `2:800`): its setting read back, then `auto` |
+| 4 | node 4 | in the Pis' cell (BSSID not `02:11:87:…`), all Pis reached, Blue 2 on one boot, every window complete |
+| 5 | supply | no Pi under-voltage |
+| 6 | balance | G31 senders within 1.5× of each other (`--spread-max`; W1i's tuning asks 1.25×) |
+| 7 | links | alone in its rate check, each sender reaches every receiver with ≥ 97 % of its frames (a power tuned too low) |
+
+**Verdicts:**
+* **GO (exit 0):** the long run starts at once.
+* **RETRY (exit 4):** only Pis too fast (any of them, freshly booted). That run was their first
+  ad-hoc session after a boot. One more preflight runs, and it must say GO.
+* **NO-GO (exit 3):** stop and report the failing check. A balance failure most likely means a
+  board or dongle has moved.
+
+**Limits:**
+* The preflight is **never scored**.
+* It decides only whether a long run starts; the run's own registered conditions decide its
+  validity.
+* The long run reboots Blue 2 again, so check 6 is read on a different Blue 2 boot from the run.
+* **Never reboot the Pis between a GO and the long run.**
+
 ## ⚠️ Safety — read before running
 
 SSH arrives over `wlan0` and **`eth0` has no carrier on either Pi**, so going ad-hoc severs the only
@@ -77,7 +138,9 @@ risk** and is still worth doing.
 ## Files
 | | |
 |---|---|
-| `run_adhoc_sweep.sh` | the session: deadmen, join, N measurement windows on a shared clock, revert |
+| `run_adhoc_sweep.sh` | the one-sender session: deadmen, join, N measurement windows on a shared clock, revert |
+| `run_adhoc_contention.sh` | the same with every board sending and receiving, at redrawn instants |
+| `frameburst.sh` | reads and sets the chip's frame-burst mode through the driver's vendor command |
 | `revert_adhoc.sh` | idempotent teardown; also what the deadman runs |
 | `bcast_tx.py` / `bcast_rx.py` | sequence-numbered UDP broadcast sender / counter, so loss and duplication are distinguishable |
 | `run_adhoc_session.sh` | the older single-window session, kept because `RESULTS.md` §2 cites its 2.4 GHz output |

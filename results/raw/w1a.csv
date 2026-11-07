@@ -1,0 +1,17 @@
+# python=3.12.3
+# platform=Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=w1a
+# config_hash=8e5cdab596441778
+window,cell,predicted,ns3,error_pct,within_band,points
+4,C,25.09,25.33,0.95,True,7
+4,D,87.64,88.09,0.51,True,7
+4,D/C,3.493,3.478,,True,
+8,C,30.09,30.35,0.87,True,7
+8,D,106.18,106.85,0.63,True,7
+8,D/C,3.529,3.52,,True,

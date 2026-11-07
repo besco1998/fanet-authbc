@@ -86,5 +86,5 @@ blocked>.
 SYNC-<k> merge. On main: for each ready lane branch: `git merge --ff-only lane<N>` (if
 non-ff, rebase the lane first and re-run its `make all`). Then on main: `make all` must be
 green; update CLAUDE.md status board; tag `sync-<k>`; push. Re-plan the next phase set per
-docs/07 §2 and confirm ownership boundaries still hold.
+docs/archive/PLANNING_HISTORY.md (07 §2) and confirm ownership boundaries still hold.
 ```

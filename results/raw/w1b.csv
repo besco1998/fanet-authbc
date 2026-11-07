@@ -1,0 +1,21 @@
+# python=3.12.3
+# platform=Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=w1b
+# config_hash=f3e10253a13a2e6c
+what,cell,predicted,ns3,difference,held
+crossing,Pb1B,9.65,9.72,0.007,True
+crossing,Pb1D,31.12,31.05,-0.0022,True
+ratio,D/C,3.225,3.195,-0.03,True
+split,Pb1S146_62.5,0.99,0.9905,0.0005,True
+split,Pb1S146_87.5,0.97642,0.97695,0.00053,True
+split,Pb1S146_112.5,0.9445,0.91633,-0.02817,False
+split,Pb1S146_137.5,0.84495,0.72348,-0.12147,False
+split,Pb1S173_65.625,0.9819,0.98652,0.00461,True
+split,Pb1S173_90.625,0.95531,0.95868,0.00337,True
+split,Pb1S173_115.625,0.89279,0.76816,-0.12463,False

@@ -1,0 +1,21 @@
+# python=3.12.3
+# platform=Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=hw_preflight
+# config_hash=b1494d53bcbbc733
+check,what,group,measured,held,note
+1,rate check,pi-A (BCM4345/6),1941.8,True,
+1,rate check,pi-B (BCM4345/6),1942.5,True,
+1,rate check,Pi 3 (BCM43430/1),2192.5,True,
+2,rate check,TP-Link on Blue 2 (RTL8188EUS),1962.3,True,
+2,rate_ctl at join,TP-Link,FIXED CCK_1M 0x00 0,True,
+3,"pi-B at 8 dBm, then auto",node2 txpower.log,2026-11-06T14:11:30+02:00 set 800: txpower 8.00 dBm | 2026-11-06T14:15:25+02:00 auto: txpower 31.00 dBm,True,
+4,node 4 in the Pis' cell,42:d9:e1:35:09:ab,"reached [1, 2, 3]",True,
+4,"Blue 2 on one boot, every window complete",eeb200cc,6/6,True,
+5,no Pi under-voltage,all windows,0,True,
+6,senders within 1.5x,G31,5.354,False,pi-A=2.88% pi-B=5.71% Pi=6.42% TP-Link=1.20%; usable 2/2

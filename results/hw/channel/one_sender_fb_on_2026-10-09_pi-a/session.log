@@ -1,0 +1,38 @@
+[2026-10-09T03:50:47+03:00] deadmen armed: revert 800 s, reboot 1100 s | role=tx freq=5180 mode=full
+[2026-10-09T03:51:04+03:00] type:  	type IBSS 	channel 36 (5180 MHz), width: 20 MHz, center1: 5180 MHz 
+[2026-10-09T03:51:04+03:00] link:  Joined IBSS 1a:27:26:c4:64:ee (on wlan0) 	SSID: authbc-mesh 
+[2026-10-09T03:51:04+03:00] addr:  inet 10.0.0.1 
+[2026-10-09T03:51:06+03:00] PEER 10.0.0.2 REACHABLE — link formed at 5180 MHz
+{"sent": 2200, "achieved_fps": 100.0, "late": 0}
+[2026-10-09T03:52:09+03:00] window 00_A_100fps done
+{"sent": 2200, "achieved_fps": 100.0, "late": 0}
+[2026-10-09T03:52:39+03:00] window 01_A_100fps done
+{"sent": 2200, "achieved_fps": 100.0, "late": 0}
+[2026-10-09T03:53:09+03:00] window 02_A_100fps done
+{"sent": 2200, "achieved_fps": 100.0, "late": 0}
+[2026-10-09T03:53:39+03:00] window 03_A_100fps done
+{"sent": 2200, "achieved_fps": 100.0, "late": 0}
+[2026-10-09T03:54:09+03:00] window 04_A_100fps done
+{"sent": 2200, "achieved_fps": 100.0, "late": 0}
+[2026-10-09T03:54:39+03:00] window 05_A_100fps done
+{"sent": 2200, "achieved_fps": 100.0, "late": 0}
+[2026-10-09T03:55:09+03:00] window 06_A_100fps done
+{"sent": 2200, "achieved_fps": 100.0, "late": 0}
+[2026-10-09T03:55:39+03:00] window 07_A_100fps done
+{"sent": 600, "achieved_fps": 50.1, "late": 0}
+[2026-10-09T03:55:59+03:00] window 08_B_50fps done
+{"sent": 1200, "achieved_fps": 100.1, "late": 0}
+[2026-10-09T03:56:20+03:00] window 09_B_100fps done
+{"sent": 2400, "achieved_fps": 200.1, "late": 0}
+[2026-10-09T03:56:39+03:00] window 10_B_200fps done
+{"sent": 3600, "achieved_fps": 300.1, "late": 0}
+[2026-10-09T03:56:59+03:00] window 11_B_300fps done
+{"sent": 4800, "achieved_fps": 400.1, "late": 0}
+[2026-10-09T03:57:19+03:00] window 12_B_400fps done
+{"sent": 6025, "achieved_fps": 501.8, "late": 5351}
+[2026-10-09T03:57:39+03:00] window 13_B_600fps done
+{"sent": 6004, "achieved_fps": 499.9, "late": 5729}
+[2026-10-09T03:57:59+03:00] window 14_B_900fps done
+[2026-10-09T03:57:59+03:00] revert: starting
+[2026-10-09T03:58:11+03:00] revert: finished, wlan0 = inet 192.168.1.21
+[2026-10-09T03:58:16+03:00] reverted OK, both deadmen disarmed

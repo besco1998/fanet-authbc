@@ -1,0 +1,1 @@
+as pi3_35cm_in; exploratory: pi-A 600, pi-B auto, Pi 3 1100 mBm (19:35:34)

@@ -1,0 +1,8 @@
+[2026-10-09T04:04:22+03:00] frameburst before the windows: 0 (asked: 0)
+[2026-10-09T04:04:24+03:00] peer 10.0.0.1 reachable
+[2026-10-09T04:10:59+03:00] frameburst after the windows: 0
+[2026-10-09T04:11:13+03:00] reverted OK, both deadmen disarmed
+authbc-pi4b timers_left 0 throttled throttled=0x50000 temp temp=52.5'C
+udp_after: Udp: 226750 26 0 93259 0 0 0 118 0
+36
+1

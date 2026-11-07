@@ -12,6 +12,1578 @@ where the durable record lives. If you want the conclusion only, follow the poin
 
 ---
 
+# 2026-11-05, night — the boards, W1d's S0, and a stop
+
+**Asked:** set up the boards; "use a channel that does not overlap my home Wi-Fi after
+surveying"; then "continue" (run the 3-radio campaign).
+
+**The boards.**
+* Both Blues' factory hotspot broke iwd's scans, and their saved network had the wrong SSID
+  case. Both were fixed; the hotspot is disabled with Mohamed's approval.
+* The Blues proved to have no ad-hoc mode (F120), so W1c gave way to W1d: three radios on
+  channel 11.
+* A one-window probe of the kit was clean and is disclosed in W1d.
+
+**S0 ran and stopped the campaign.** The Pi 3 failed the rate check: 4.7–5.0 ms where 1.9–2.6
+was required. The registered stop rule applies, so S1 was not run. Diagnostics then ruled out,
+in turn:
+1. the CPU (idle while the sender fell behind);
+2. power save and Bluetooth (an A/B run, whose last repeat was the slowest);
+3. what was left: a limit inside the radio that tightens with sending and relaxes with rest.
+   Predicted before the run that if it were heat-like, a rested board would start near 250/s
+   and decay; it started at 266/s and fell to 183/s.
+
+**What failed, and the lesson.**
+* **The sniffer was never tested against a known source before the session.** Both Blues
+  captured 0 frames through S0. Two later checks against the router's beacons on channel 1 also
+  gave 0. It cost nothing scored, because the sniffer was "reported, not scored", but a kit part
+  is not ready until it has seen a frame it must see.
+* A diagnostic on a Blue had no deadman, and its Wi-Fi took about six minutes to come back. Every
+  board job now gets one.
+* Twice a cleanup pattern (`rm -f diag*`) deleted the diagnostic script it was meant to keep.
+  Each time this was caught by the launch failing.
+* Launching with `cd && nohup … &` over ssh hung the ssh (the known trap). `systemd-run` returns
+  at once.
+
+**Record:** `predictions/W1d.md` outcome, F121, `results/hw/channel24/`, Q15.
+
+**Afternoon: F121's reading withdrawn (F122).** Mohamed moved the Pi 3 beside the Pi 4s, unplugged
+one Blue and asked for the tests again. Unchanged, the Pi 3 ran at 2.45–2.51 ms and held 422–454 frames/s with no decay. I had
+expected the opposite and said so before the run. My three diagnostics had varied only the
+board's own settings, so they could not clear the room. I placed the cause inside the radio from
+two decaying sequences that shared one unknown condition. **Vary one thing outside the board
+before you blame the board.**
+
+**W1e (F123).** Q15 was answered, and the registration was committed, tagged and pushed before the
+session. A first commit had gone in on a failing test, because `pytest | tail` hides the exit code.
+The cause was harmless: the uncommitted W1e tests changed the collected count. Since then, gates
+read exit codes, never pipes. The session ran valid, with 11 of 12 points in band.
+
+While it ran, Mohamed plugged a USB adapter into the PC and then powered a Blue. Both events are
+disclosed with their windows. I could not reach the Blue on the LAN: it was on the PC's USB link,
+and it was Blue 2, not Blue 1. Its radios were quieted over USB before the last rate check.
+
+**The TP-Link (F124).** Building the community driver was blocked by the permission check:
+external kernel code, as root. That is Mohamed's call, so the kernel's own driver was tried first.
+
+Ad-hoc mode is refused while the interface is down and accepted once it is up. On the Blue, a boot
+with the adapter attached can give the Blue's own radio the name `wlan1`, and DHCP was bound to
+`wlan0`. It is now matched by MAC address (`/etc/systemd/network/05-authbc-ti-radio.network`).
+
+Two probes followed. They showed that the adapter joins and receives, but broadcasts far faster
+than 1 Mb/s, and that the kernel driver's rate setting does not reach broadcasts. A cycle of
+1 666 µs equal to 1/600 s was the clue: a sender that never saturates shows only its offered rate.
+
+**Evening: the community driver, probe 3, and a freeze (F125).** Mohamed: "do it". The driver was
+built on Blue 2 at a pinned commit and probed. **The TP-Link now saturates at 1 963 µs**, inside
+the band and within 1 % of the Pi 4s, and waits rather than drops. It took five slips to get
+there, each caught:
+1. **A file I said was written was empty.** At 14:40 I reported the Blue's MAC-matched network
+   file as in place. It was empty until 15:37, because `printf … | (echo pw | sudo -S tee …)`
+   made sudo's password and the file's content share one stdin. Root files are now written with
+   `sudo -S sh -c "printf … > file"` and read back.
+2. **A udev rename lost a boot race.** iwd had the adapter up 6 s before udev reached it, and a
+   link that is up cannot be renamed. The adapter took the home Wi-Fi. The driver now names it
+   itself (`ifname=tplink0`).
+3. **I assumed the driver's folder name.** I had read the source for the write format but took
+   the folder as `rtl8188eu`; it is `8188eu`. Read every path from the source too.
+4. **I deployed the Pis' probe folder without `revert_adhoc.sh`.** The reboot deadman recovered
+   both Pis 10 minutes later, at no cost to any window. Launches now check every file the session
+   script calls.
+5. **Blue 2 froze when its revert took the adapter out of ad-hoc mode.** Then, on four restarts,
+   iwd's start raced the Blue's own radio and never connected it, so it looked like one long hang.
+   * Mohamed's USB cable gave a serial console.
+   * The log's lost tail (177 bytes, exactly the three lines after window 03) placed the freeze in
+     the revert.
+   * The iwd race is fixed and verified by a reboot. The freeze itself is not yet explained.
+
+**Lesson:** a board with no running watchdog and a fresh out-of-tree driver needs a way back that
+does not depend on its network. Here, that was the USB serial console.
+
+**Night: the "freeze" was a reset (F126).** Mohamed: "intensively find why". Five tests on Blue 2
+(two alone, a 10-cycle loop, two replays of probe 3 with the Pis) never froze it. Then, reading
+every boot's journal, I found a boot nobody had known about (`bae4c597`). Probe 3's boot ends at
+17:38:00.448 with the revert complete, on the home Wi-Fi with time synced, and then the board
+restarted. Its 77 minutes off the LAN were the iwd race.
+
+What went wrong in my method, each caught:
+1. **I read "the journal is cut off" as "it froze".** A cut-off journal only says that the
+   power or the CPU stopped; listing the boots says which.
+2. **`journalctl -k` searches only the current boot.** My first "no VBUS errors anywhere" covered
+   one boot of 18.
+3. **Replay 1 was not faithful.** The driver joins or creates according to its stale scan list,
+   so the TP-Link founded its own cell. The BSSID in the log showed it; replay 2 started from a
+   fresh boot.
+4. **I first wrote the power story too firmly.** I said probe 3 ran on micro-USB, but the boot
+   that spanned the change to the "official supply" never restarted, which points to the 12 V
+   jack. The finding now says it is not known, and asks.
+
+**Lesson:** before naming a failure (freeze, hang, crash), list the boots. The board's own records
+tell a reset from a hang.
+
+**Late night: W1f, the four-station campaign (F127).** Mohamed: "do 1 plan for it correctly then
+excecute the plan and give me the results". The plan was approved in plan mode. The order of work:
+1. **Code first, with tests, and the registration before any window.** `analysis/dsss_w1f.py`
+   imports W1c and W1d unchanged; node 4 got its own kit. 23 tests ran on made-up sessions, plus
+   one on replay 3's real files. The predictions were run twice and are byte-identical.
+2. **A timing trap, found while planning.** The Pis abort if a peer named in the plan's header is
+   missing at their early ping, and the TP-Link must join *after* their cell exists. So the header
+   names only the Pis, and node 4 checks the Pis itself (V3).
+3. **The pilot** (two windows) proved the kit and the reducer end to end, before the session.
+4. **The session ran clean:** 78 of 78 windows usable, no reset.
+
+**The result.**
+* Contention at N = 4 held 3 of 3.
+* AUTHBC's crossing landed at +7 % of the model.
+* **The per-record crossing fell outside the grid, so the ratio is not measured.** I had foreseen
+  that risk only for AUTHBC.
+* Before writing anything I looked at the per-window values: tight, and every window at the last
+  per-record point is above 0.95. I recomputed from the raw files with a separate script, and
+  broke the loss down by ordered pair. That last step found the cause: **the sender decides the
+  loss, not the receiver**, which is capture by the stronger radio.
+
+**Slips caught on the way.**
+* My expected value in a test used nominal fractions where the made-up files held rounded counts.
+  The code was right and the test wrong.
+* A reported bootstrap crashed on unequal window counts. It is now skipped, with the reason given.
+* `scp` with `{a,b}` braces fails under SFTP; collection is now `tar` over ssh.
+* A `pgrep` check matched its own command line, twice. A pattern only a running session can
+  match is now used.
+
+# 2026-11-07, night — W3a written in; ePrint 2022/133 read; the novelty framed against the prior art
+
+**Asked:** "Do it" (W3a into the paper and thesis); read IACR ePrint 2022/133; "take care of the
+novelty framing in the whole work … honestly and scientifically"; strengthen the paper's framing;
+update the project guide. Plan approved before any edit.
+
+**Reading.**
+* **The ePrint's direct link was behind a browser check.** The PDF came from the Internet Archive's
+  copy (CC BY, one version, 2022-02-09) and the journal version's metadata from Crossref by DOI.
+  No personal identifier was sent.
+* **What it does:** every V2X message keeps its signature and carries 16–48 B of predecessors'
+  hashes. That saves verifications (about 90 %; more than 65 % at 20 % loss) and adds bytes.
+* **Rotta & Mykytyn re-read in the PDF:** their relays aggregate messages of several sources into
+  one 802.11 frame, each keeping its tag.
+
+**The framing (what changed and why).**
+* The paper's own numbers say the larger step of the capacity gain is the established one,
+  sharing the frame (35 → 76), and that one signature per frame adds 1.6×. The intro did not say
+  so, and its gap sentence claimed "on which links such a frame does not fit" without crediting
+  Gündoğan et al.
+* Both are now stated, with a positioning table (`tab:position`) in the paper and thesis.
+
+**W3a written in, and two of its reported figures found wrong.**
+* Generating the macros and comparing them with W3a.md's own table (Validate-Results) showed:
+  * the bursts at the higher powers were quoted as 1.01–1.15; they are 1.01–1.38, with one trace
+    left out;
+  * the trace nearest 5 % was quoted as 4.71 %; it is 4.70 %, rounded twice.
+* **My own first macros made the same double-rounding error** (4.46 for 196/4400 = 4.4545 %).
+* `on_air()` now computes from the counts and refuses a value rounded twice. Correction addendum
+  below W3a's outcome; F134 addendum. No scored claim moved.
+* **Added after the outcome, for reporting only:** the window counts
+  (`w3a_w3a_2026-11-06_cycles.csv`) and the bootstrap of the length penalty. It reproduces
+  1.242 / 1.062–1.448 exactly, and is tested.
+
+**Side effect found:** the new Table 1 renumbered every later table. The guide's table numbers
+were already one behind since `tab:hw` (2026-11-06); all 46 are remapped.
+
+**Decided by Mohamed:** the paper is 42 pages (41.4 of content), past the one-page growth the
+plan allowed. He chose to keep it until the journal is chosen (I1).
+
+# 2026-11-07, small hours — W3a: loss measured on air (F134); the work re-evaluated; the project guide updated
+
+**Asked:** "do the packet-loss measurement"; pi-A moved to a second room (one wall), then to a third
+(three walls). Then, while it ran: re-evaluate the work's strengths and weaknesses, summarise the
+whole work simply, and update the project guide.
+
+**What happened:**
+1. **One wall was not enough,** even at pi-A's 1 dBm minimum. Three walls put pi-B and the TP-Link
+   at 3–5 % at 4 dBm.
+2. **Two rules were tightened before registering,** so that agreement within noise could not read
+   as failure. W3a-1 and W3a-3 became one-sided interval tests.
+3. **Valid, all three claims held.** The one surprise, AUTHBC's length penalty 1.24 against 1.14,
+   has an interval containing the model's once it is bootstrapped over cycles. Loss swings between
+   windows by factors of 2–10.
+
+**Lesson.** When the channel changes between windows, the unit of independence is the window, not
+the frame. A per-frame interval would have called the 1.24 a finding.
+
+# 2026-11-06, night — W1k repeats the ratio (F133); the paper and thesis finished with November's results
+
+**Asked:** "Start a second run and in parallel finish the paper and thesis and also in parallel tell
+me what is next"; then "apply all six as drafted" (Q8, Q9, Q11–Q14).
+
+**Done:**
+1. **W1k was registered and run while the writing went on. Valid: the ratio 3.272** against W1j's
+   3.280. One control window read 2.58 %; without it the ratio moves by 0.04 %.
+2. **The paper:** every new number is a macro generated from its registered result, and the build
+   refuses if a source session or a claim does not hold. Abstract, methods, results (a new
+   paragraph and Table *tab:hw*), limitations (Q12–Q14), conclusion, and the Q9 footnote. Still
+   40 pages, clean.
+3. **The thesis:** ch. 9 gains three subsections, with ch. 1, 3, 7, 8 and 12 brought in line, and
+   App. B gains a third table (Q11). 156 pages, clean.
+
+**What went wrong and was caught:**
+* **Q9's drafted "0.81" was rounded twice.** Generated, it is 0.80. My first generation used the
+  wrong denominator (1.23 / 0.83 / 0.58); comparing with F114 caught it before anything was
+  printed.
+* **The footnote overflowed a page by 5 pt.** A build of the committed version showed the
+  warning was mine; the footnote was shortened.
+* **An annotated tag's object hash is not its commit.** The test that matches App. B to the tags
+  now reads the commit.
+
+# 2026-11-06, evening — W1i did not tune; the square layout; W1j valid: hardware ratio 3.28 against 3.30 (F131, F132)
+
+**Asked:**
+* "go 1 … adaptive" → W1i;
+* then "what can i do physically";
+* then the 1 m square, the swap, the Pi 3 moved 35 cm in;
+* then "run the long test directly".
+
+**What happened:**
+1. **W1i: no session.** Five tuning preflights, none tuned (F131). Power steps moved the balance
+   less than it wandered, with the boards 10–15 cm apart.
+2. **The square** (Mohamed): pi-A, pi-B and the TP-Link came within 1.2× at default power. The Pi 3
+   was slow (3.2–3.5 ms) at either corner: it follows the board, Bluetooth was not the cause, and
+   moving it 35 cm inward cured it.
+3. **Power now acted, steeply.** Whoever is strongest wins with about 3 %. The Pi 3 went from
+   weakest at 10 dBm to strongest at 12; 11 dBm balanced (1.249×).
+4. **W1j was registered in minutes, no new code,** and run: **valid; the ratio 3.280 against the
+   model's 3.304; every scored claim held.**
+
+**Lessons:**
+* **Geometry before software.** At 10–15 cm (about a wavelength) power barely acts and the balance
+  wanders. At 1 m it acts, predictably if steeply.
+* **Changing one thing at a time found the Pi 3's fault in two tests:** the swap showed the board,
+  the move showed the distance.
+* **Short preflights between physical moves** turned an evening of 30-minute failures into
+  8-minute readings.
+
+# 2026-11-06, afternoon — the preflight, two placements, W1h void by a hair (F130)
+
+**Asked:**
+* "plan doing a short test run before any long run … to make a faster decision": the preflight;
+* then "Re-place, guided by preflights", 120 cm;
+* then "pi-A at 8 dBm, preflight".
+
+**What happened, in order.**
+1. **Attempt 1 was aborted by its gate:** the Pi 3 at 2 613 µs, and the TP-Link dominant (5.23×).
+2. **The preflight was built**, six checks and a 3-minute run. It then stopped three long runs
+   before they started:
+   * at 90 cm (5.35×);
+   * at 120 cm, where node 4 never started;
+   * at 120 cm again (1.97×, now pi-A against the Pi 3).
+3. **pi-A was held at 8 dBm:** the preflight read 1.499×, GO. Attempt 2's gate read 1.433×, GO,
+   so it was the session.
+4. **The session was void on V5: A31 spread 1.549×.** Everything else held. Reported, not scored:
+   ratio 3.32 (model 3.30).
+
+**What went wrong, mine:**
+* the launcher did not check that node 4 had started, so the Pis once ran alone;
+* the runner trusted a WSL-timed sleep, and collected seconds early.
+
+Both were fixed: node 4 is started first and verified, START comes from a Pi's clock, and
+collection waits for every board's own revert line.
+
+**Lessons:**
+* A preflight turns a 30-minute failure into an 8-minute one. It stopped three runs today.
+* **A balance near its rule's edge passes or fails by drift.** 1.43× became 1.55× in 12 minutes. A
+  rule met with no margin decides nothing.
+* The temptation after a void by 0.049 with a ratio of 3.32 is plain. The rule stands as
+  registered.
+
+# 2026-11-06, morning — W1g's cause undetermined (F128 corrected); W1h
+
+**Asked:** "i have restarted the pi3, try again". Mohamed then found **Blue 2 and its dongle
+displaced closer to the Pis** (about 08:25) and restored them to 90 cm; later, "Try again i have
+rebooted the blue 2".
+
+**What went wrong, mine, twice.**
+1. **An invalid inference.** I told Mohamed the TP-Link "still heard the Pis as in calibration, so
+   it hadn't moved", and wrote "its transmit strength changed between boots" into W1g.md, F128,
+   the session README and memory.
+   * At the TP-Link, the Pis' frames compete only with each other, and their relative strengths
+     barely change when the TP-Link moves. So its reception could not exclude a move.
+   * I found the flaw while planning the re-run, before his message.
+2. **Nearly an unproven replacement.** With the displacement found, I drafted "the move explains
+   W1g". Before committing, I checked what could date the move.
+   * Blue 2's TI radio logs the router's signal at each reconnect: −79/−80 dBm through
+     calibration and W1g, then −92 when Mohamed moved it at 08:27.
+   * It also swung −90 → −74 dBm across a power-cycle with nothing moved, so it dates nothing.
+   * **The cause stays undetermined:** a move before W1g, or a difference between boots.
+
+   Rewritten so before the commit.
+
+**Also this morning.** The first W1h pilot stopped before any window, at its first step: Blue 2
+did not return to the LAN after its reboot.
+* Its journal, selected by boot ID, shows the radio scanning but never finding the router. That
+  is consistent with the −90/−92 dBm read just after it was moved at 08:27.
+* `journalctl -b -1` mixed in an older boot, because a journal file is truncated. **Select a boot
+  by `_BOOT_ID`.**
+* The wall times in `--list-boots` were the restored clock, not real time.
+
+**Lessons:**
+* Before using a measurement to exclude a cause, ask whether that cause would have changed it.
+* A fact found later is not a cause until its time is known.
+
+**The W1h pilot and three diagnostics (F129).**
+* **No board can be reached during a session.** Node 4's kit takes Blue 2's own radio off the air.
+  I had checked that its SSH server allows forwarding, not that it stays on the LAN.
+* **After a fresh reboot the Pis broadcast at 6 Mb/s.** They sent 600 frames/s with nothing late,
+  impossible at 1 Mb/s. The rate measured from two frame sizes: 6 Mb/s in the first ad-hoc session
+  after a boot (twice), 1 Mb/s in later ones (twice).
+* My plan's "reboot every board before each attempt" would have voided every session. The rate
+  checks would have caught it; the pilot caught it first.
+* Mohamed chose "Revised W1h": the gate read after each attempt, and no Pi reboots.
+
+**Lesson:** a pilot of the real chain, run before registering, found two faults in an approved
+plan, both of which reading the code had missed.
+
+**Next:** W1h, W1g's session scored only on an attempt whose own gate windows are balanced.
+
+# 2026-11-06, small hours — equal senders, the calibration, and W1g void (F128)
+
+**Asked:** "what is the recommended option according to the scientific honest" → equal the
+senders. Then "do whatever is correct", "Now", "Re-scoped W1g".
+
+**What was tried, in order.**
+1. **The drivers, read before acting.** The TP-Link's `iw … set txpower` and its `/proc` power
+   offset are both stored and never applied; the Pis' brcmfmac power setting is real. So the
+   TP-Link can only be weakened by distance.
+2. **The rule was written and pushed before any calibration run** (`PROTOCOL.md`, `fde2ca8`):
+   every sender within 1.5×.
+3. **Three calibration runs.** Moving the TP-Link to 90 cm ended its dominance, and pi-B at 8 dBm
+   met the rule (1.30×). **But the same data showed my rule was the wrong proxy.** Total loss
+   stayed 0.59–0.65× of the model, because equal sender means do not remove capture: each receiver
+   keeps its own strongest sender. I said so before running anything further. Mohamed chose to
+   measure the ratio with capture present.
+4. **W1g was registered (`26f3ba8`), the power step put in the repo kit and tested alone first,
+   and the session run. It was void:**
+   * the TP-Link was dominant again (spread 5.08×), with its reception unchanged, so its transmit
+     strength changed between boots;
+   * the Pi 3's cycle had drifted above its band (2 780 µs). That drift has grown session by
+     session since midday.
+
+**Lessons.**
+* **A balance that holds in calibration is not a property of the setup until it survives a reboot
+  of the boards that set it.** Calibrate across the same reboot the session will have.
+* **Ask what a proxy rule would let through before fixing it.** Equal means, unequal pairs.
+* **A slow drift in one station shows only by comparing sessions.** Read each session's bracket
+  next to the last before starting the next.
+* The scratchpad was emptied overnight, and with it the launcher. The registered parts live in the
+  repo; the launcher holds credentials and is rebuilt from the record.
+
+---
+
+# 2026-11-04/05 — the desk work on the main weaknesses, and a hardware list corrected
+
+**Asked:** "treat the problems in our work as the main opened items … for now do the desk work",
+then the hardware question, then "do only phase 0 now".
+
+**Done, each registered before it was run:**
+* **W1(a), F116.** Closed form, then event model, then ns-3 at windows of 4 and 8. The ratio held
+  at 3.48 / 3.52.
+* **W4(a), F117.** Bound frames built by the real encoder. The ordering holds at the worst.
+* **W6, F118.** Injectivity proven and property-tested. Holdover derived from A5's file, with the
+  oscillator offsets read from the NIST PDF itself; a web fetch returned raw PDF bytes, so the
+  text was extracted locally in an isolated interpreter.
+
+**What went wrong and was caught:**
+* A new `prereg-*` tag broke the thesis test that every tag is named in appendix B. A named holding
+  list was added and the question went to Mohamed (Q11); this was not a silent exclusion.
+* A W1b grid missed one split's N_eq; a test caught it.
+* My band in a W1a test was tighter than two roundings allow; it was corrected with the reason
+  stated.
+* W4a-5 held by 0.01 points and is reported that way.
+
+**The hardware list was wrong in my notes.** It said 2× Pi 3B+ and 2× BeagleBone Black; Mohamed
+has one Pi 3 **Model B** and two BeagleBone **Blue**, all 2.4 GHz. The 5 GHz contention test with a
+third board is impossible without a purchase. That turned W1(b) into the 2.4 GHz campaign
+(802.11b, 1 Mb/s, five boards).
+
+**Phase 0 began:**
+* 802.11b in the PHY model and in ns-3, with the identity check unchanged after the rebuild.
+* The model's prediction that A12's equivalence holds up to the crossing and fails beyond it,
+  registered in W1b.
+
+---
+
+# 2026-11-03 — G27: rules for the radio's own queued frames; none fits, and the model had a defect
+
+**Asked:** "do g27". Plan approved in plan mode. The full record is in `predictions/G27.md`, F114
+and F115.
+
+**What was tried, in order.**
+1. **Read Bianchi et al. 2007 §IV-A and §IV-B in full first.** The candidate rules come from its
+   measured cards (smaller windows, zero counters, cards that misbehave alone and behave in
+   contention), plus the vendor's burst mode. A shorter slot was added with no source, and
+   labelled so.
+2. **While planning, found that F76's reading had a gap.** Its registration assumed that an
+   own-queue rule cannot act when both stations are saturated. Every saturated station holds a
+   queue, so the saturated runs became a screen for each rule, not a separation.
+3. **Copied the frozen event loop and parametrised it. The first test failed.** One saturated
+   sender came out at 94.6 µs where the arithmetic says 101.5 µs, and at 27.9 µs, below DIFS,
+   with zero counters. The hypothesis was a station joining its own group. It was counted directly
+   from the frozen model's `on_send` groups, and confirmed: **F114**. Fixed in the new module only.
+   The frozen file stays as registered.
+4. **A smaller oddity, chased instead of tolerated.** The standard gap came out +0.39 µs high. The
+   cause is the frozen model's slot grid moving to each arrival. The excess was checked against
+   that convention's prediction at six offered rates and matched. Kept and documented.
+5. **The size of the defect was measured wherever the model is used.** Capacity cells: nothing.
+   F73's loads: 1–2 %. That turned up **one printed number that moves in its second digit**:
+   the paper's ratios (Q9).
+6. **The fast suite failed once:** thesis ch. 5's line count, which the new module raised to
+   8924. The thesis now says "about nine thousand". That is a factual edit, flagged to Mohamed.
+7. ⚠️ **My error: a stray tag.** `git commit` failed because the pre-commit hook could not find its
+   program outside the venv. `git tag` and `git push` ran on the next lines anyway and published
+   `prereg-G27` at the old head. Deleting it from the remote was refused by this session's
+   permissions. The registration is identified by its commit, `5ec2eda`. Mohamed approved the
+   deletion (Q10), and the tag is gone, locally and on the remote. The stray tag had also failed a
+   thesis test: every `prereg-*` tag must be named in appendix B.
+   **Lesson:** chain a commit, its tag and its push with `&&` inside one command; never put them
+   on separate lines after a heredoc. Commit with the venv on PATH.
+8. **Registered at `5ec2eda`, then run.** No rule survives in either state, and the result is the
+   same under every calibration. All five registered expectations held. No verdict rests on a
+   close call.
+
+**Seen after scoring, kept apart.** A burst only while no other station is heard would fit both
+the windows and the saturated runs. It was formed from these results, so it needs its own
+registration and new measurements before it is anything.
+
+---
+
+# 2026-11-01 — the documents tidied: about 70 became about 25, nothing lost
+
+**Asked:** "make them as few documents as possible … don't delete any data unless really old or
+redundant … arranged clean and well documented … then update the guide too." Mohamed chose to move
+every registration to `predictions/` and to merge old documents into `docs/archive/`.
+
+**Done** (the plan and its map: `docs/README.md`, "Where did it go?"):
+* The eight registrations in `docs/` were moved to `predictions/` with `git mv`, and an index was
+  written. `git log --follow` reaches their first commits.
+* Historical documents were merged verbatim, each under a heading naming its old path, into
+  `audits/AUDIT_HISTORY.md` and three archive files. `TRADEOFFS.md` became the end of
+  `DECISIONS.md`. The current part of `NEXT_STEPS.md` became `OPEN_ITEMS.md` §1. Every source line
+  was checked present in its destination before the source was removed.
+* About 120 files had their references re-pointed by a script, then checked by hand.
+
+**Found on the way — the old path is sometimes data, not a pointer:**
+* `src/authbc/ledger/store.py` is hash-pinned as timed on the board (`test_bench_session_hw`);
+  editing its docstring would have invalidated the board timing.
+* `src/authbc/sim/dcf_unsaturated.py` is checked byte-identical to its registered version
+  (`test_spread_capacity`).
+* Two tests read a registration *at its commit* (`git show 64322fc:docs/…`), where the new path
+  does not exist.
+* Three generators write the path into result-file headers.
+
+All of these were restored to the old path, and the index lists them. The pattern is the
+project's own: a reference can be evidence, and checking for a hash or a historical read before
+rewriting is what separated the two.
+
+**Also:** about 25 docstring lines went past the 100-character limit when paths grew, and were
+rewrapped. `CLAUDE.md` said 28 literature PDFs were held locally; there are 29 (Kleinrock &
+Tobagi was added on 2026-10-27).
+
+---
+
+# 2026-10-28 — Mohamed's choices on the review's options
+
+He took every recommendation: see `DECISIONS.md`, 2026-10-28. Two changed what is printed:
+* **Table 8 follows Eq. (4):** `nodes_by_eq4` in the generator. The raw file holds
+  1/((Λ/b)t) unrounded, labelled "Eq. (4)", but without the 1 + ⌊·⌋. Rust becomes 290 and
+  deferred 629; Python (57) and batches (643) do not move, because their brackets round up
+  anyway.
+* **Fig. 10 is recolored:** purple, orange and aqua. Blue against purple failed the validator
+  under deuteranopia (ΔE 7.5) and aqua passes every pair (10.2). Red is kept for per-record
+  signing, as in every other figure.
+
+**Then the tracking documents were brought up to date** (OPEN_ITEMS G35/G36/H9 closed and a new
+section I, NEXT_STEPS's current top, thesis/STATUS). **And the built PDF was read end to end as a
+reviewer would:** twelve fixes, all wording or layout, listed in the change log. The one
+substantive one: §2.3 still said "five constraints" over a list of six, with bytes, the
+objective, counted as a constraint. That is the inconsistency S-04 was about, reintroduced by the
+rewrite. A text dump of a PDF drops the cells that hold only digits, so the tables were checked
+on the rendered pages.
+
+---
+
+# 2026-10-27 — the review of the 18-page paper, in the Springer Nature layout
+
+**Doing:** applying `docs/review 27-10-2026/` (S-01…S-36, L-01…L-38) after Mohamed's decisions
+(`DECISIONS.md`, 2026-10-27). The record of each item is
+`docs/review 27-10-2026/CHANGE_LOG.md`; the sourced answers are in
+`docs/revision/REVIEW_2026-10-27_FACTS.md`.
+
+**How:** five workstreams in parallel. Four ran as forked agents in their own git worktrees
+(`~/.cache/authbc-wt/{figs,fig1,refs,facts}`), each owning disjoint files and committing on its
+own branch. I converted the paper in the main tree and merged their branches. All four hit the
+session limit mid-task and were resumed from their transcripts after the reset; none lost work.
+`main.tex` was assembled from a new body (`sn-jnl`, IMRaD) and the floats of the IEEE version,
+followed by a script of edits.
+
+**S-01, registered and run:** 420 ns-3 runs at 97 % delivery. Both crossings fell inside the
+contention model's ±3 % bands (C 27.56 against 27.53, D 97.30 against 97.89), and all 90 repeated
+runs were bit-identical. Outcome in `predictions/S01.md`.
+
+**Found while doing it:**
+* Fig. 6 printed 124.6 for a crossing of 124.549, rounded twice (summary to 0.01, then label to
+  0.1). It now computes the crossing from the runs (workstream E found it).
+* sn-jnl sets `\footnotesize` to 7 pt and `\scriptsize` to 9 pt. Tables now use the class's 8 bp
+  table font, and the TikZ figure fixes its own sizes (workstream C).
+* The "broken diacritics" of L-17 came from the class's OT1 encoding, not from the bib (D).
+* S-11: both receivers check the group MAC before decoding (read in the code). Only a table note
+  was ambiguous.
+
+**Wrong turns, for next time:**
+* A caption-rewriting regex, `\caption\{(.*?)\}\s*\\label\{X\}` with DOTALL, matched from the
+  *first* caption in the file to X's label and deleted everything between. `main.tex` fell
+  from 97 KB to 36 KB. It was rebuilt from the assembly plus a replayable edit script. Captions
+  are now found backwards from the label and matched by braces.
+* `scripts/capped.sh` returns as soon as systemd has the job: its exit 0 means "started". I
+  took it twice for a green suite; the first run had stopped on a real failure (the status
+  board's reference count).
+
+---
+
+# 2026-10-25 — readability: names, figures at print size, a copy-edited paper
+
+Mohamed:
+* remove Appendix B;
+* Fig. 4 is hard to read;
+* use scientific, readable names ("I don't know what the first and lean formats are");
+* review every page and give options;
+* then do all the recommendations except L2 and L3, in the thesis as well, with the same names in
+  every graph and table.
+
+1. **Names.**
+   * "first format" → **record-linked format**; "lean format" → **frame-linked format**. The
+     names say where the chain link travels, which is what moves the bytes (Fig. 3).
+   * "keyframe" → **key record**: "frame" already means the radio frame.
+   * The configuration is **AUTHBC**; the baseline is **per-record signing**.
+   * Smaller terms are in `docs/DECISIONS.md`.
+   * Code identifiers and data columns keep `lean`/`first`, so no artifact changes.
+2. **Figures at print size.** Most were drawn 4.4–7.2 in wide and shrunk into a 3.5 in column, so
+   their 8 pt text printed at 4–6 pt. All are now drawn at 3.5 in.
+   * The exclusion figure's axis said "payload N" where the paper's payload is M.
+   * Fig. 6 drew AUTHBC green where every other figure draws it blue.
+   * Fig. 4 became a grouped dot plot with a colour-blind-safe palette.
+   * Lesson: chaining `ruff && redraw` silently skipped the redraw twice when lint failed. I
+     caught it only by looking at the images.
+3. **The copy-edit** was assembled from a prose template plus the float blocks extracted from the
+   file, so no number macro could be retyped into a wrong cell. Section VIII was split into
+   Results, Robustness and Security Evaluation; the capacity derivation moved to Appendix B; the
+   peak-age remark became a footnote; the paper gained a notation table and the sentence that
+   explains "registered".
+4. **Two of my recommendations reversed earlier decisions of Mohamed's**, and the review did not
+   say so:
+   * T5, the expansion of AUTHBC (2026-10-08);
+   * L5, the exclusion as the first result.
+
+   The tests that encode them failed and showed it. Both are applied, as instructed; both were put
+   to him, and the tests now record the new decisions.
+5. **One recommended term was wrong:** "analytical contention model". The model is an event
+   simulation, so the paper says "contention model".
+
+# 2026-10-24 — the revision written into Mohamed's 2026-10-12 paper
+
+Mohamed: "edit the latest uncommitted main.tex"; hardware items not to be stated, not even as
+future work, until purchased.
+
+1. **His version committed as his** (87bd25a), then made green (6764ce1).
+   * The block diagram and the capacity figure shared the label `fig:nmax`, so the capacity
+     figure's references pointed at the diagram.
+   * Two captions were over two lines.
+   * The AI-use statement had been removed, and was restored.
+   * Tests that matched lowercase run-in labels now accept his Title Case.
+2. **The revision text, every number through `paper_numbers.py`.** Sixteen new generator
+   functions, each refusing to run where its artifact stops saying what the text says in words.
+   Two of those guards fired on claims I had written earlier:
+   * the trace link count (36 000 counted where 3 000 were traced, rows repeated per batch);
+   * F104's "within 1.5 % at frames of 178 µs and longer". 802.11p at 12 Mb/s is 2.9 % off at
+     226 µs; what holds is by rate.
+3. **Six references added and checked against their registries.** Three held PDFs I added on
+   2026-10-21 had no manifest row; they have one now. The paper is 15 pages.
+4. **A12 left out:** it only prepared a hardware test.
+5. **The first clean gate failed four quote tests, and they were right.** Rewriting the
+   Limitations and the energy table, I had dropped four disclosures that earlier tests pin by
+   their words, and renamed the table's rows:
+   * the batches of two, three and eight serve the capacity rule alone;
+   * hidden stations, which would lower the capacity, are not in the two-disc test;
+   * the first format's codec is the slower one in this prototype;
+   * unequal power with capture raises the capacities.
+
+   All four are restored word for word, and the table's rows have their names back.
+6. **Mohamed, the same afternoon:**
+   * use his block diagram;
+   * remove the generative-AI statement and anything that shows AI made the paper;
+   * give every result a figure or table that answers its reviewer point;
+   * then the thesis.
+
+   The diagram was his file all along, byte for byte, but squeezed into one column; it is now
+   full width with a caption for the whole system. Five figures (`analysis/figures_revision.py`)
+   and six tables were added, and the registration table went into the appendix (his choice over
+   a supplement).
+7. **Drawing the figures found five things the text had wrong.** Each was checked against its
+   source before it was fixed.
+   * **The batch controller's peak ages.** Fixed b = 4 showed 124 ms against Age Under Loss's
+     84 ms. The capacity source sends each frame within the *next* period, so peak age is 1.5
+     periods; the text now says so (F113). The letter's "20 ms" saving was 21 ms.
+   * **The margin claim was too wide.** "Wherever p ≤ ε − 0.02, intervals included" holds at the
+     paper's ε = 0.05 only. The new generator guard (`margin_rule`) refused to run: the design
+     misses by its interval at ε = 0.1, p = 0.08 under Gilbert-8 *and* under bit errors. I had
+     found only the first.
+   * **"5 of 192 bursty cells" in three documents.** The source says 5 of 192 cells, all
+     bursty: the 192 are the four equal-loss processes.
+   * **My first description of the flood rig.** I described a sender host; it is a second process
+     on the same board.
+   * **An unsupported cause, and a false origin.** A "likely cause" for the model's fast-rate error
+     contradicted F104 ("not established"). "An external review" was written for experiments that
+     answer objections the revision plan *anticipated*: the reviews have not arrived.
+8. **The thesis carries the revision, chapter by chapter** (his choice over one new chapter). It
+   is 151 pages. The AI paragraph of the front matter is gone. Future work no longer lists the
+   hardware items (more radios, meter calibration) or what is now done (compiled receiver,
+   spread swarm).
+
+# 2026-10-22, evening — A8's energy, and why the SIH airplane dived after takeoff
+
+Mohamed: assume the sensor calibrated, re-fly the fixed wing for completeness (plan approved).
+
+**A8 energy.**
+
+* The Arduino was re-attached by `usbipd`, and the rig check passed twice (live, then against
+  the board's record).
+* The board timed the compiled sender first. The expectation was registered, then the meter
+  read in three runs, nobody on the board.
+* The control landed inside October's range (118.0 µJ).
+* The compiled sender metered 17.1 and 60.7 µJ per record, both below my ranges, because the
+  compiled loop draws 0.65 W, not Python's 0.75. The plan's statement held (F112).
+
+**The airplane's descent: one wrong diagnosis, then the right one.**
+
+1. While choosing the fast profile, a checker found that every airplane flight, registered
+   ones included, touched the ground after takeoff for 80–100 s; GPS and the global altitude
+   agreed.
+2. I read PX4's controller, found the altitude first-order hold, and committed it as the cause
+   with a climb-out waypoint as the fix. The waypoint changed nothing, and a 25 m/s airplane
+   circled it for 15 minutes.
+3. One flight with the controller's setpoints logged showed the cause directly: TECS's
+   reference altitude started at sea level, 490 m under the airfield, and climbed at 3–5 m/s.
+4. Three seconds in manual mode before the mission (a gap re-initialises TECS) fixed it. The
+   addendum was corrected in place, with the first attribution kept visibly.
+
+Lesson in the memory notes: log the internal state an explanation predicts before calling it
+the cause.
+
+**A9-fast.**
+
+* Profile chosen on mission 98 by a ladder fixed in the plan: the airplane with the brake
+  removed and 12 N; the VTOL with the brake removed only, since raising its thrust failed its
+  takeoff ("unable to reach heading").
+* Registered with every development flight listed. All 20 missions flew at the first attempt,
+  each within 1 m/s of its drawn speed, with no touchdown.
+
+# 2026-10-22 — A9's thirty flights, and two clean gates that failed
+
+**The fixed wing would not fly the registered speeds.** The registered script set
+`FW_AIRSPD_TRIM` to the drawn cruise and left `FW_AIRSPD_MAX` at PX4's default, below it. Airplane
+mission 2 circled its first waypoint for 20 minutes. Keeping the maximum 5 m/s above the trim
+(3fd8fa3) was not enough: SIH's airplane never went faster than about 15 m/s through the air.
+Missions 2 and 6, commanded at 19–20 m/s, dipped and circled again. The failed logs showed this
+(altitude, airspeed, mission sequence), so I asked rather than tuned. Mohamed capped the cruise
+at 15 m/s (299571a). All 30 missions then flew at the first attempt. The attempts flown under
+the earlier procedures are kept, unused, and listed in `predictions/A9.md`.
+
+**A surprise in the sizes, run down before writing.** Half of the airplane's position deltas
+were exactly zero at 12 m/s. The raw topic had none. Its samples alternate 16 and 24 ms apart,
+and holding them on the 20 ms grid repeats every other one. A nearest-sample option measured
+the effect: ratios move by ≤ 0.007. But my A9-3 held at 9 fields only through this artefact,
+which the outcome says (F105).
+
+**Clean gate 1 (23784c6) failed** `test_fast_suite_size`: two new tests, and the guide's count
+not updated. Local runs could not show it, because Mohamed's uncommitted `refs.bib` adds two
+citation tests here (2389 local, 2387 committed). The count is now taken from the clean
+worktree.
+
+**Clean gate 2 (6696614) failed a test untouched since July:** an ECDSA test asserting a 70–72 B
+DER length, which fails once in about 512 runs (F106). The test was fixed to an exact length,
+not widened. A deterministic case was added.
+
+**Later: pi-B switched on (H4), and why the fixed wing stopped at 14 m/s.**
+
+* **Board set-up, nothing system-wide.** pi-B got a worktree of the branch beside its old
+  clone, which has uncommitted July edits and was left untouched. It also got a project venv,
+  rustup 1.99.1 in `~` (the host's compiler) and liboqs 0.16.0 with the host's options, built
+  with cmake and ninja from a throwaway venv.
+* **Harnesses committed before any timing.** The A7 flood harness and the A8/A13 driver were
+  committed first (8824e91, 2719fba); the board printed their SHA-256 before running.
+* **Runs.** One sequence, no logins while it ran. A8/A13 and A7's costs finished.
+* **The reboot.** The board rebooted at ~10:17, 16 minutes into the flood: Mohamed had jostled
+  its power supply (flags were clean before and after every part). The flood was repeated whole rather than
+  completed, and the interrupted rows kept: they agree within 0.013.
+* **The fixed wing.** Throttle was pinned at 100 % with airspeed stuck at 14 m/s. The source
+  showed SIH's linear damper; one diagnostic flight with it removed, and one with doubled
+  thrust, each reached 21 m/s (F107). I had reported the commanded 15 m/s as flown: corrected.
+
+# 2026-10-20 — the reviewer revision (`docs/revision/REVISION_PLAN.md`): two failures and a proof
+
+Branch `p11-reviewer-revision`; per item, `docs/revision/STATUS.md`; registrations and outcomes,
+`predictions/`.
+
+**The machine ran out of memory at 01:02** (WSL's own init was OOM-killed). Cause: two uncapped
+Tamarin proofs (5.7 GB and growing), the frozen test gate (4.2 GB), ten ns-3 runs (3.4 GB) and the
+editor, against 14 GB + 4 GB swap. Lost: about 2.5 h of A2 runs, because the driver wrote its
+checkpoint in submission order, and everything under `/tmp`. Fixed at the cause, not the symptom:
+every long job is a memory-capped systemd unit (`scripts/capped.sh`, one slice capped at 8 GB),
+drivers checkpoint in completion order, logs and the clean gate live under `~/.cache`.
+
+**The clean fast gate failed one test on 3b06582:** `test_nearly_eight_thousand_lines` — the
+revision's new modules (freshness rule, admission, stream schemes, ledger audit) took `src/authbc`
+from under 8 000 lines to 8 617, and ch. 5 still said "nearly eight thousand". A count that went
+stale, caught by the test written for exactly that; local runs of the touched test files had not
+included it. Fix: the sentence says "about eight and a half thousand", the test holds 8 250–8 750
+and now also checks the sentence. The thesis PDF is rebuilt after H1 (it would pick up the
+uncommitted `thesis/numbers.tex`). **The next gate (6029148) failed one test the same way:**
+A9's flight script imports `pymavlink`, which is kept out of the declared dependencies and was
+allowed in one named file only; the A9 commit had been checked with its own test file alone. The
+allowance now names both flight scripts. Twice in a day: a commit is checked against the whole
+fast suite, not the files it touched.
+
+**Tamarin (A6): what made the proofs end.** The registered model settled 3 of 9 lemmas; a model
+without the hash chain still did not settle its two counter invariants (heap, 1 GB), and the six
+lemmas that "verified" in seconds there had used those unproven invariants as `[reuse]`
+assumptions. **Those verdicts were never counted.** Bisection on theories of five lines found two
+causes: (1) a counter kept in a state fact keyed by a public name — keyed by a fresh session id,
+Tamarin treats the fact as injective and the invariant proves (sender: 2 steps; receiver: 1 474);
+(2) a receiver whose first acceptance also drew the fresh id — with a start rule of its own, the
+induction ends. A gap written as `%last %+ %1 %+ %k` in the pattern did not end either; the
+registered `Less` restriction does. Durable record: `predictions/A6.md` (outcome), the models in
+`formal/`, the proof output in `formal/proofs/`.
+
+**A traced ns-3 run was not its untraced run (F87).** A smoke test of the spatial driver's new
+`--trace-links` ran one seed with and without the option: 471 against 470 frames. The links
+were picked by a variable built with `CreateObject` and then given stream 12288 — but building
+it took the next automatic stream index first, shifting every later stream (F37's mechanism).
+The A10 queue had started 12 s earlier on the links binary with the same pattern; stopped,
+nothing written. Fixed with the stream as a construction attribute; the links identity record
+now holds traced = untraced = published, digit for digit, for C (seeds 1, 2) and D (seed 1).
+
+---
+
+# 2026-10-09, night — four weak points of the review, worked in parallel (F84, F85)
+
+**What we were doing.** Mohamed: "fix the first 4 weak points as recommended in parallel" — the
+idealised channel, the applicability of the design, what the introduction leads with, and the
+prototype on more than one core.
+
+**How "in parallel" was done.** Two things needed machines and time: the board (six minutes)
+and the simulator (two hours). Both were registered first and started; the writing was done
+while they ran. The order was set by the longest job's registration, not by the numbering.
+
+**The channel.** Before writing a model I read the simulator's source for what it does with
+two preambles that arrive together: it keeps the strongest and asks whether it is 4 dB above
+the rest. That made the model one rule on top of the access-rule model, with a threshold that
+is read and not chosen. An exploratory run (disclosed) sized the grids. Then the part that
+took judgement: at a realistic radius most stations sense each other by preamble, and a
+station that locks onto neither of two colliding frames may think the medium idle. The model
+cannot show that. I did not try to model it in an evening; I registered a *bracket* for that
+radius and a point for the radius where the effect cannot occur, and wrote down that I
+expected the larger radius to come out "a few percent" lower. It came out 0.5–0.7 % lower.
+All four predictions held, and the model is within half a percent of each.
+⚠️ **A number of mine was wrong on the way:** I wrote the energy-detection range as 30 m in a
+draft of docs/02; computing it gave 36.9 m. The small disc had been planned at 18 m radius —
+36 m across, 0.2 dB inside the range — and was reduced to 15 m before registration. The
+verification of constants (Law 2) was done after the sentence was written, not before; it
+caught the error only because it was done at all.
+
+**The board.** Expected near-linear scaling; got 1.90, 2.70, 3.36. Two of five registered lines
+failed. "2.2 cores" had been in the paper and the thesis since the morning as if it were a
+property of the board; it was a product of three numbers. The board needs three cores. This
+time nobody logged in during the run: started 16:31:29Z, first read 16:37:58Z.
+
+**The introduction.** Reordered to lead with the capacity rule. The first draft of the new
+first item credited the fitted constant to the mechanism that earlier analyses lack — the
+wrong way round (they have the ties; they lack the detection window). Caught on a proof-read
+of the built text, before any commit.
+
+**What is left open by it:** hidden stations (G35) — the real remaining doubt about the
+capacity; the asymmetry between the abstract and the reordered introduction (G36, Mohamed's);
+why the cores do not add up (G37, optional).
+
+**Record:** F84, F85; `hw/BENCH_SESSION.md` (multi-core, with outcome);
+`predictions/NMAX_DIRECT_EXPECTATIONS.md` F7; `docs/02` §6h.
+
+---
+
+# 2026-10-09, evening — the review's last two items: four sources read, the closed form quoted (F83)
+
+**What we were doing.** Mohamed: "yes for both" — the four related-work gaps and the no-fit
+closed form.
+
+**How the sources were found and obtained.** Each of the four starting papers was looked up in
+OpenAlex for an open copy (no account, no e-mail in the request). Two had one: a university
+repository copy of the aggregation paper, and an arXiv version of the ADS-B survey. Two were
+closed (Kaul 2012, Park 2003), so I looked for an open source that covers the same ground and
+found the survey by the first paper's own group (arXiv) and Pannetrat & Molva on the NDSS
+site, which also describes Park's scheme. Each file went into its own empty folder, was
+checked to be the paper it claimed to be, and was read as extracted text. Nothing behind a
+login was fetched.
+
+**Read before written.** Two were read whole (8 and 12 pages). For the two surveys (22 and 30
+pages) I read the sections that bear on this paper and recorded which in the register — the
+rule for long sources since Bianchi 2007. Every sentence the paper gained quotes a figure or a
+phrase I can point to a page for.
+
+**What reading changed.** I expected four sentences of positioning. The age-of-information
+survey gave more: its *peak age* is our freshness expression term for term, including the
+b/Λ that the thesis had kept as a "worst case" without a better reason than sampling
+quantisation. I checked the identity against the survey's Eq. 6 before writing it, and wrote
+it as what it is — an observation from someone else's definition, made late.
+*And one sentence I had drafted was wrong until I read the paper:* I had meant to write that
+802.11n aggregation "is not used for broadcast". The source is stronger and more specific:
+the aggregate formats require one receiver address, and it says so in terms. The sentence
+quotes that.
+
+**The page count.** Five sentences and four references took the paper from 10 pages to 11.
+I had trimmed twice that day to hold 10 and looked for a third 250 words; what was left to cut
+was content. No decision fixes a page count, so it stays at 11 and is reported.
+
+**Record:** F83; `docs/literature/README.md` (the 2026-10-09 section); `HELD_LOCALLY.csv` (24);
+`tests/test_citations.py::TestTheFourSourcesAReviewNamedAsMissing`.
+
+---
+
+# 2026-10-09, later — the review's five decisions carried out (F81, F82)
+
+**What we were doing.** Mohamed: "go ahead for decisions 1–5" — the receiver keeps frames; other
+batch sizes simulated; the certificate column read in time; the exclusion count split by cause;
+the scheme sentence out of the abstract.
+
+**Order, and why.** The batch-size runs first, because their predictions had to be committed
+before any run and the runs take two hours (`64322fc`, then 630 runs in the background). Then
+the receiver, because its time is in the paper and must be re-measured on the board.
+
+**The receiver, test-first.** The tests were written against the receiver as it was and failed
+on import, as they should. One of them was written from a suspicion formed while reading the
+receive loop: *the first record the store declines decides the frame* — so what if the first
+record is a harmless duplicate and the third is the lie? The test built that frame (records 0
+and 1 repeated, a different record 2, properly signed) and the old receiver called it a replay.
+⚠️ **The fix for "evidence is not kept" would have kept evidence of only some equivocations had
+the tests been written after the code.**
+
+**Re-timing: a control before the change, in the same session.** The morning's figure was from
+another boot of the board. Rather than compare the new receiver with it, the old receiver was
+timed again first (1.4159 ms against the morning's 1.4112, 0.34 % apart), then the new one
+(1.4260). The expectation — 1.00 to 1.02 times the control — was committed before either run
+and before the new receiver existed in the repository (`61a4b4f`).
+*What went less well:* I logged in to the board four times during the second run. This is the
+same mistake as during the morning's energy control, a few hours later. The figure is a median
+and the sender's rows did not move, but the rule I wrote for myself that morning was "nothing
+is asked of the board until a run's expected end" and I did not keep it.
+
+**A name I did not change.** The receiver's new dictionary is `_frames`; the sender in the same
+file already has a counter called `_frames`. I noticed after the board had timed the file.
+Renaming would have made the repository's receiver differ from the timed one by a few bytes
+that change nothing — and then the hash test, added for exactly that purpose, would be holding
+a file that was never timed. The name stays.
+
+**Certificates.** The review's hand arithmetic (159.9 and 51.4 B per record) was written down
+before the code; the regenerated ladder gives 159.925 and 51.41. Every other cell of the file
+was compared with its previous value before the new one was accepted.
+
+**A correction to my own review.** F80 offered an "8.1 % closed form" as something new. While
+registering the batch runs I read the registration of F5 again: the exact closed form, 5.5 %,
+has been in `docs/02` and under test since 2026-10-08. It is the lesson of F9 and F65 a third
+time — search before deriving — and the prior work this time was the project's own.
+
+**The batch sizes, when they came in.** 630 runs, two hours. All six predictions inside their
+bands; where the line and the model parted (eight records, 2.4 %) the simulator is nearer the
+model. The weaker expectation I had written beside them was right about the trend and wrong
+about the middle cell, and is reported so.
+*One thing I did while waiting:* looked at the finished cells with ninety runs still to go, and
+saw that the scoring function would already have scored the unfinished one. I tightened it
+before writing any result. Looking early changed no number; it is said in the outcome anyway,
+because "I looked, and then changed the analysis" is a sentence that should never be left for
+someone else to find.
+
+**Record:** F81 (receiver, certificates, exclusion split), F82 (batch sizes);
+`hw/BENCH_SESSION.md` (re-timing, with outcome); `predictions/NMAX_DIRECT_EXPECTATIONS.md` F6.
+
+---
+
+# 2026-10-09, afternoon — the paper read as a supervisor would read it (F80)
+
+**What we were doing.** Mohamed asked for the paper to be audited as a supervisor would:
+contradictions, tone, passages hard to read, and whether the concept is sound and publishable.
+
+**How it was read.** Start to finish, once for the argument and once line by line, with
+`paper/numbers.tex` open beside it; every suspected contradiction was then checked against the
+result file or the code before a word was changed. Six of the candidate contradictions were of
+one kind: a sentence written before the hardware session of the night before and not revisited
+after it (the abstract's "contention is simulated", the Method's "the same board", the
+receiver's "the channel binds first").
+
+**What reading the code found that reading the paper could not.** The threat model promises
+"transferable evidence" of equivocation. The store keeps two records and no signature. The
+test for it (`test_two_different_signed_records_for_one_sequence_number_are_kept_as_evidence`)
+had always passed: it counts the pairs and never asks whether a pair can be checked.
+⚠️ **A test named for a property is not a test of the property.**
+
+**Two things I checked and did not change.** The certificate column (per frame against per
+500 ms) and the exclusion count (three of eight rest on the format): both are stated in the
+text now, and both are Mohamed's to decide on (G29, G30). The numbers were not touched.
+
+**One number computed and deliberately not recorded as a result:** the closed form with nothing
+fitted, 8.1 % at worst over the eighteen crossings. Computed after the data, for the review.
+
+**Fitting it in ten pages.** The rewrites took the paper to eleven. It came back by saying once
+what had been said three times (freshness-not-MTU is in the introduction, the constraints and
+the conclusion; it was also in two results paragraphs).
+
+**Record:** F80; open items G28–G34; `tests/test_evidence_claim.py`.
+
+---
+
+# 2026-10-09, night — the boards were switched on
+
+**What we were doing.** Mohamed switched on the two Raspberry Pi 4, wired the meter and
+downloaded five papers. The plan: read the papers; run the contention experiment registered
+that morning; then the bench session.
+
+**The papers (F72).** Read before anything was written from them. Nothing overturned; two
+things became firmer (the tie mechanism has two independent sources; the linear cost of
+aggregate signatures on the sender's link is one scheme's own statement).
+
+**The boards as found.** pi-A answered with a new host key: re-installed, Debian 13, Python
+3.13, `sudo` with a password. The meter read 1 V until a common ground was wired. Neither was
+worked around silently: the radio sessions on pi-A were started as root through `systemd-run`,
+nothing was installed on it, and the timings went to pi-B, which still has July's software.
+
+**The contention experiment — what was tried, in order.**
+
+1. *Probe, then the registered session.* The kit worked first time. Two points inside the
+   band, the third at 0.46 of the prediction. Losses paired by direction: collisions.
+2. *Looked for the cause instead of averaging.* First thought: the link (control: 0 lost of
+   17 600 — no). Then the model's make-up at two boards (ties and a 4 µs window — no variant
+   fitted all three points). Then **August's own files**: the receiver's timestamps put one
+   saturated sender's frames 2.019 ms apart, where the standard gives 2.078 ms.
+3. ⚠️ **A wrong turn, caught by arithmetic.** I had dismissed a "burst" explanation ten
+   minutes earlier *because* August's write-up said 1.995 ms, matching a prediction of 1.99.
+   Recomputing the prediction from the frame's real length gave 2.010 ms before any backoff —
+   more than the "measurement". Both August figures were wrong (F74). **A number I trusted
+   because it had been validated was the thing hiding the answer.**
+4. *Searched before explaining* (the rule of F65, kept this time): Bianchi et al., INFOCOM
+   2007 — six commercial cards, none keeps the standard's backoff; and the kernel commit that
+   switches Broadcom's frame burst on.
+5. *Registered a follow-up, then ran it* (`06f1bfa`): frame burst off, one sender, a repeat.
+   All four predictions failed, two of them at the top load only. ⚠️ **After the first of them I believed frame burst
+   explained a third of the gap; the repeat I had registered gave the same number with it on.**
+   Without the repeat that sentence would be in the thesis.
+6. *Registered the textbook case* (`9a85afa`), writing down that I expected about 7 %. Two
+   saturated radios lost 12.4 %; the standard gives 11.8 %. **The prediction held and my
+   expectation was wrong** — the contention is the standard's; what is not is how a radio sends
+   its own queue.
+7. ⚠️ **What I should have seen when designing the experiment:** two boards can fill the
+   medium only if each sends often, so each often holds two frames — a state the capacities
+   never visit. The "sharp" two-board case was sharp about capture and blunt about this.
+
+**The bench.** pi-B logs an under-voltage at every boot, which blinds the script's throttling
+test; validity was taken from the kernel's log and from the signature timings matching July's
+within 0.4 %. Lean sender 0.87 ms, receiver 1.41 ms: both under the ranges written down,
+because the desktop baseline had been taken on a busy machine. Batch verification 0.46,
+inside its range. **The meter's sync wire is on neither board; no energy was measured, and no
+substitute method was improvised.**
+
+**Small things that cost time.** `pkill -f` killed its own shell again (the string was in the
+command line). A backgrounded `cd … && nohup …` over ssh keeps the channel open. The boards'
+`awk` has no hex conversion. The PC slept and dropped the Arduino's USB link.
+
+**Durable record:** findings F72–F77; `results/hw/channel/CONTENTION_RESULTS.md`; the three
+registrations; `docs/OPEN_ITEMS.md` G4, G9, G19, G26, G27.
+
+**Later the same morning — "make sure the hardware side is correct and honest" (F78).**
+Mohamed attached the sync wire to pi-B. Before using it:
+
+1. *Tested the wire with a known pattern.* The window flag followed an 8.00 s window exactly.
+   The same capture showed the voltage reading 0.28 V lower with the line high. Repeated with
+   the line alone, five cycles, and an unconnected pin as a control: a loose ground.
+2. *Asked whether the published numbers had the same fault,* before anything else. July's raw
+   captures: −1 to −4 mV. Then re-ran the reducer on all five stored pairs: identical, row for
+   row. ⚠️ No test had ever run that reducer.
+3. *Read the three scripts and the sketch against the datasheet.* The calibration is the
+   0.1 Ω one. The validation script described itself wrongly ("a fixed record rate"; it is a
+   tight loop) and carried a flag that could not be switched off.
+4. *A manifest with hand-entered metadata.* The design row's run said Python 3.11.2 where the
+   other three said 3.12.13. Tested rather than assumed: the same pipeline on pi-B under
+   3.12.13 gives 98.9 % of that run's rate; the system 3.11.2 cannot import the crypto library.
+   The entry was wrong, the measurement was not.
+5. *Wrote the check that would have refused this rig* (`hw/rig_check.py`), with limits from
+   July's captures, and ran it. Ground: passed (re-seated meanwhile). ⚠️ **It then failed on
+   something I had not been looking for**: four busy cores brown the board out in 40 ms.
+6. ⚠️ **Did not measure.** The tempting argument — energy windows load one core, and one core
+   holds — would have relaxed a rule on the morning it was written. Twice of two tries failed.
+7. *Found on the way:* the paper said the model was "composed from separately measured times
+   and powers", and the power is the median of the same metered runs; and both documents still
+   said the lean codec had not been timed, four hours after it was. And the lean sender, by
+   its timing, costs nearly three times the energy per record of the first format the table
+   shows — now printed, as an estimate.
+
+**Durable record:** F78; `results/hw/energy/rig/README.md`; `hw/RIG.md` §8 item 7; G26.
+
+**And then the rig passed, and four runs were metered (F79).** Mohamed swapped the two boards'
+supplies and sensors; the branch that holds four cores now feeds pi-B.
+
+1. *The check failed twice more before it passed, for reasons of mine and of the PC's.* On a
+   board just booted the script's fallback for driving the sync pin gave up before the system
+   had made the pin writable (it waits now). Then the PC had dropped the Arduino. Then: every
+   line passed, +3.49 W with four cores at 5.07 V.
+2. *Wrote the four expected ranges and committed them* (`a38994f`) before starting anything.
+   The first run is a control — July's baseline row on this board and sensor — because the
+   power constant in every prediction came from the other board through the other sensor.
+3. *Control: 116.2 µJ, 2.2 % from July's.* The rigs agree.
+4. ⚠️ *I disturbed my own measurement.* Checking progress, I logged in to the board during the
+   control's second load window; that repetition reads 4 % high. Kept, reported, and from then
+   on nothing was asked of the board during a run. The next run's five repetitions agree
+   within ±0.25 %.
+5. *Lean sender: 155.4 µJ with four records, 273.1 with one; JSON row 120.9.* All four inside
+   their ranges. The lean sender costs 2.7 times the first format's energy per record — the
+   number the energy table had never carried.
+
+**Durable record:** F79; `results/hw/energy/e2e_2026-10-09/README.md`;
+`results/raw/energy_runs.csv`; `hw/BENCH_SESSION.md`.
+
+---
+
+# 2026-10-09 — "solve all the issues": what could be closed from here, and what could not
+
+*Mohamed, after the audit: "solve all the issues and contradictions except the front matter".
+The audit had left five: contention never measured; three older papers not obtained; few
+references and two gaps of reading; superseded figures among the results; the sensor never
+calibrated. Durable records: F68–F71; registration `456a4e7`.*
+
+## What was reachable
+
+Nothing physical. No board answered and no meter was attached, so every hardware item was
+reduced to its last step and left there, said plainly. Papers were sought through open indexes
+(OpenAlex, Crossref, Semantic Scholar, CORE, arXiv) with no identifier of the user in any
+request.
+
+## Reading
+
+Two sources were obtained and read: a general survey of UAV networks (Gupta et al.) and one of
+the four aggregate-signature schemes the thesis knew only through another paper's table (Wang
+et al.). **The second corrected a claim (F68).** Both documents said the cost of n messages is n
+times the cost of one. That is what each signer sends; what the *aggregator* forwards is one
+compact aggregate. The claim had been written from a table that counts the first link. It is
+the supervisor's kind of comment — an assertion one size too wide — found by doing the reading
+the thesis had said it lacked.
+
+**Tried and not obtained.** Three CC BY papers are served only behind a script challenge, by
+their publishers and by the public aggregator alike. I did not work round it. Three more are
+closed access. They are listed by DOI for a browser (G23, G24, G8).
+
+**A source read in part is now recorded as read in part.** The thesis said every source was
+read in full. For a 32-page survey and a 60-page standard that was not true of every section.
+The sentence now says what is true, and the register says which parts.
+
+## Contention
+
+A real experiment was designed for the boards on hand, and registered before any board was
+switched on. The useful idea came from asking what two radios can show that three cannot:
+with two, the only receiver is the other transmitter, so capture — the thing that would blur
+a comparison with a model that has none — cannot happen.
+
+**Checked before registering, and it found something.** The model had only ever been compared
+with ns-3 at 28 nodes and more. Run at two to five, ns-3 agrees within 5 % from three nodes up
+and is 9–18 % below the model at two. A prediction registered without that check would have
+carried an unknown bias into the one case meant to be sharp.
+
+**The check itself first crashed.** ns-3 aborted at 116 frames per second: the driver's "one
+period" of jitter exceeded the scenario's guard by one unit in the last place (F69). Diagnosed
+by running the binary by hand; fixed in the driver with a test over a sweep of rates.
+
+## Tried and wrong
+
+* **Splitting the work into two commits.** The registration had to be a commit of its own. I
+  staged it, stashed the rest, found that the test counts differ in that tree (two fewer
+  bibliography entries mean fewer parametrised tests), corrected three count lines — and the
+  stash then conflicted on those lines when restored. Resolved by hand and verified identical
+  to what had been set aside, file by file, before the stash was dropped. Do the count before
+  the stash.
+* **A test that needed a PDF library nobody had declared.** Written, then caught by the guard
+  added yesterday before it was ever committed. The guard earned its place in a day.
+* **Two locally held PDFs appeared as "in the repository"** while their manifest lines were
+  stashed. An artifact of the split, not of the repository; they were moved aside for the check.
+
+## Layout
+
+The three superseded figures and the old envelope table moved to an appendix of their own.
+The history is as visible as before; the results chapters now show only what is current.
+
+---
+
+# 2026-10-08, later — the paper and the thesis read whole, as built
+
+*Mohamed: "audit the paper and the thesis and make sure they are strong and complete and will
+not have any future comments from any supervisor". Nobody can promise the last part. What could
+be done was to read both documents as an examiner would and remove everything that reading
+found. Durable records: F63–F67; open items G22–G25.*
+
+## Method
+
+1. **The deliverable, not its source.** Both PDFs were converted to text and read end to end —
+   10 pages and 100 — beside a list of the *kinds* of comment the supervisor's review had made
+   (a headline that does not match its table; a count that moves; a claim wider than its
+   evidence; a missing comparison; a name never defined).
+2. **Mechanical checks first**: LaTeX and BibTeX logs, placeholders, references that print
+   without an identifier, phrases the review had objected to.
+3. **Every suspicion checked at the source before a word was changed** — a number against its
+   CSV, a formula against the code, a sentence against the chapter it summarises.
+4. **Everything typed in the fix is pinned by a test.**
+
+## What it found
+
+The paper: no result moved; twelve defects of presentation (F63). The thesis: six statements
+that were wrong and seven that had gone stale, a test cited in the conclusions and reported
+nowhere, seventeen places where a table ran off the page (F64, F67). And one thing that matters
+more than the rest:
+
+**The derivation written this morning had prior work, and no search had been made (F65).** One
+query found a 2021 analysis of periodic 802.11p broadcast with the same first mechanism. It is
+now credited, and what this work adds to it is stated. That is F9 a second time: in July the
+project rediscovered a published broadcast model and lost a novelty claim, and wrote down
+"search before deriving". The rule did not survive one busy day.
+
+## Tried and wrong
+
+* **A false alarm of my own.** Checking that the generator's default stream was unchanged, I
+  compared lists of records from two copies of the module and got "different" — the two copies
+  define two classes, and a dataclass is equal only to its own class. Compared field by field
+  they are identical. A check has to be checked.
+* **A guard I nearly widened.** The registry lists RFC 9575's editor apart from its authors, so
+  my entry failed the citation check. The quick fix was the override that exists for registry
+  abbreviations; a test allows that override for exactly one entry and requires a held file.
+  The entry now cites the RFC as the registry does, with the editor in a note.
+* **Three sources I could not get.** The open-access paper by the authors of the broadcast model
+  is behind a cookie redirect that refuses scripts. I did not work around it; it is G23.
+* **The module figure** first drew an arrow through two boxes, and the byte table wrapped its
+  hex column. Both were seen only by rendering the page and looking.
+
+## What was not done, on purpose
+
+Superseded figures stay where they are (a choice of style, for Mohamed). No new experiment was
+run. Nothing was added to the reference list that was not read.
+
+---
+
+# 2026-10-08 — eighteen decisions taken, and the work they asked for
+
+*Mohamed answered every open point with an option, and: "handle all in parallel but in the
+correct logical order to save time and credit". The decisions are in `DECISIONS.md`. This entry
+is what was done under them, in the order it was done, and why that order.*
+
+## The order, and why
+
+Long unattended jobs first, each after its prediction was committed; writing while they ran.
+
+1. The decisions recorded, the pull request to `main` opened (not merged — his to merge), and a
+   new branch cut so the request he reads stays fixed.
+2. PX4 download and build started; the fresh-seed campaign (F4) registered, committed, launched.
+3. While both ran: the derivation, the bench-session kit, one paper read, thesis chapter 2.
+4. The simulated flight, registered before it was flown.
+5. The derivation's predictions (F5), registered before their runs; queued behind F4 because the
+   doubled contention window needs a rebuilt binary, and a campaign's binary is not replaced
+   while it runs.
+
+## The derivation (decision 14-c) — F58
+
+The airtime line had a fitted slope "near 1/W₀" that nobody had explained. Writing down how a
+frame can be lost here gave two mechanisms — a tie between backoff counters, and the 4 µs in
+which a transmission cannot yet be sensed — and a closed form with no free constant that put
+the eighteen crossings within 5.5 %. An event simulator of the access rule, 150 lines sharing
+nothing with ns-3, then reproduced all eighteen within 1.2 %.
+
+**Tried and wrong the first time.**
+* The simulator's first version delivered 0.005 too much everywhere. It handled a frame arriving
+  within 4 µs *after* a counter runs out and not one arriving just *before*: half the window.
+  Found by comparing with one ns-3 cell — which is why the agreement with the eighteen is
+  recorded as a comparison and not as a prediction.
+* Its first loop never ended when the detection window was set to zero (a unit test found it).
+* I wrote that the fit "had found the slope to three figures". It had not: the tie term's slope
+  equals the fitted 0.071 at the *mean* occupancy of the crossings and varies by ±25 % cell by
+  cell. Corrected, with a dated note in the registration, before any F5 run.
+
+**Then it was asked for something it had not seen (F5 → F62).** Six crossings were registered
+before any of their runs, with a ±3 % band: the contention window doubled, and loss levels of
+2 % and 10 %, each for the baseline and the design. The doubled window needed a new option in
+the ns-3 scenario; the rebuilt binary first reproduced nine stored runs bit for bit, and the
+option at its default value gave the default's output. 1,080 runs later:
+
+| case | registered | ns-3 | error |
+|---|---|---|---|
+| baseline, window doubled | 39.09 | 39.18 | +0.23 % |
+| design, window doubled | 139.03 | 139.61 | +0.42 % |
+| baseline, 10 % loss | 46.77 | 47.36 | +1.26 % |
+| design, 10 % loss | 165.30 | 166.79 | +0.90 % |
+| baseline, 2 % loss | 22.49 | 22.40 | −0.39 % |
+| design, 2 % loss | 79.65 | 78.27 | −1.73 % |
+
+All six inside the band, recounted from the run files by a second route. Two simpler readings
+were written down beside the first case before its runs and both missed: scaling the fitted
+line by 1/W gives 53.4, the closed form 42.6; ns-3 gave 39.2. Doubling the window buys 11–12 %
+more neighbours, not twice as many — stations that count down for longer wait together more
+often, so the tie probability does not halve.
+
+## The simulated flight (decision 13-a) — F60
+
+PX4 v1.17.0 needed no system packages, but its recursive download stalled for twenty minutes on
+simulator models the build does not use; killing it left four small libraries cloned and empty,
+and the build failed twice until each was checked out by hand.
+
+The sizes came out as predicted and slightly better than the generator's. Two predictions did
+not hold as written: the 0.2 s comparison missed its range by 0.04 B (the flight is more dynamic
+than the real logs), and the timing statistic could not be scored because **the measuring host's
+wall clock was stepped back eight times during the flight**. The stream's regularity was
+recovered from an interquantile spread and a second capture on a monotonic clock: 20.0 ms,
+±0.37 ms.
+
+**Tried and wrong the first time.**
+* The first flight hung at 28 m waiting to reach 29: the vehicle settles under the commanded
+  height. The climb is now over when the altitude stops changing.
+* ⚠️ `pkill -f` killed its own shell **twice more** today. The bracket trick protects against the
+  pattern matching *itself*; it does nothing when the same string appears elsewhere in the
+  command line (here, a file name passed to the next command). Kill in a command of its own.
+
+## The traffic-source question (decision 14-b) — F61
+
+Fresh seeds, registered first: the +0.0031 between the two sources **did not replicate**
+(+0.0004 ± 0.0009 on 1,260 runs). Closed.
+
+**And an explanation of mine did not survive its own check.** I had written into the same
+registration that the crossing rule reads low on noisy means, to account for all six crossings
+being lower under periodic senders. Resampling showed the rule is unbiased; the six were one
+fluctuation of one set of thirty seeds. The paper's sentence quoting "1–9 % lower" is withdrawn.
+Designing the test also changed it for the better: the periodic source carries nearly all the
+noise, so it got sixty fresh seeds and the redrawn source thirty — the same machine time bought
+a standard error of 0.0009 instead of 0.0014.
+
+## A caveat found by preparing a measurement — F59
+
+Timing the lean receiver for the bench kit showed that the prototype spends several times more
+on decoding than on verifying. The paper's receiver-CPU ceiling charges cryptography only, so
+"the channel binds first" is true of a compiled receiver and not of the prototype. The paper and
+thesis now say so; the bench session will put a number on it.
+
+## A failure: the frozen gate was green here and red on a clean install
+
+Worked through in the structure of `docs/06` §7.
+
+* **WHAT.** After the push of `1a5baf7`, CI's `make verify-frozen` failed, 1 of 38:
+  `tests/test_px4_sitl.py::TestTheFlightThatWasRegistered::test_the_artifacts_are_the_analysis_of_the_raw_files`
+  — `ModuleNotFoundError: No module named 'pyulog'` at `analysis/px4_log_sizes.py:160`.
+  Lint, types and the 1951 fast tests had passed there. `make all` had exited 0 on this machine
+  minutes before.
+* **CONTEXT.** Branch `p10-followups`. The test was added with the simulated flight (`989fac9`);
+  it re-derives `px4_sitl_sizes.csv` and `px4_sitl_stream_timing.csv` from the committed
+  `flight.ulg`. No earlier CI run had seen it: the branch was pushed for the first time today.
+* **REPRO.** `sys.modules["pyulog"] = None`, then that one test: the same error, here.
+* **HYPOTHESES.** H1, the package is missing from CI's environment — supported at once by the
+  message, and by `pyproject.toml`, which does not name it. H2, a platform difference in the
+  log parser — killed: the import fails before any parsing.
+* **ROOT CAUSE.** `pyulog` was installed by hand in August for the public-log measurement,
+  which is outside the gate because it needs the network, and was deliberately left out of the
+  dependencies. I then wrote a **gate** test on top of it without declaring it. From inside an
+  environment that has the package, nothing can show this: the local check answers "does it
+  pass here", and the question was "does it pass from the declarations".
+* **FIX.** `pyulog==1.2.4` is a pinned development dependency (`pyproject.toml`, `docs/archive/03` §2).
+  The test was not skipped, guarded or moved out of the gate: the raw log is in the repository,
+  so the gate should be able to read it everywhere. Six places that said the package was not a
+  dependency now say what is true.
+* **REGRESSION GUARD.** `tests/test_declared_dependencies.py` reads every import statement in
+  `src/`, `analysis/`, `tests/` and the `ns3/` drivers and requires each third-party package to
+  be declared. Before the fix it failed naming exactly `pyulog`. Two packages stay outside on
+  purpose (`pymavlink`, `pypdf`), each tied to the one file that may import it, and only inside
+  a function.
+* **VERIFICATION.** A new virtual environment built from `pip install -e '.[dev]'` alone
+  (`make all VENV=<that environment>`): `ruff` clean, `mypy` 0 / 57 files, **1955 fast tests
+  and all 38 gate tests passed**. Then CI on the fixed commit.
+
+**Found by the verification itself.** Running the gate in that second environment left one
+committed figure modified, `results/figures/e4_crossover.png` — same size, **zero pixels
+different**. `figures_e4.py` was the only one of seven generators that saved without
+`metadata={"Software": None}`, so its file named the matplotlib release that drew it (3.11.0
+here, 3.11.2 there), against the reproduction guide's statement that the figures are
+byte-stable. Fixed in the generator; the regenerated file is byte-identical under both
+releases and pixel-identical to the one it replaces. Guard:
+`test_no_figure_embeds_the_plotting_library_version` reads the text chunks of every figure.
+The same lesson twice in one hour: an environment-dependent output is invisible until a second
+environment runs it.
+
+**And then I broke the build with the fix.** CI on `445731f` failed in the fast suite:
+`thesis/e4_crossover.png is stale`. The thesis keeps byte copies of the figures (`make thesis`
+makes them, a test compares them); I regenerated the figure and did not refresh its copy.
+*Root cause:* before that push I ran the tests I judged to be affected — four files — and not
+the suite. The one that failed was not among them, and no amount of care in choosing would
+have been as good as running everything. *Fix:* `make thesis`; the copy matches, 100 pages.
+*Guard:* the test that caught it already exists; what was missing was running it. The status
+board now says: **the whole of `make all`, in the clean environment, before every push** — a
+subset is for iterating, never for deciding to push.
+
+**What it teaches.** "Green on my machine" was the claim I had just made about a gate whose
+purpose is that anyone can re-derive the results. A check run inside the author's environment
+tests the author's environment. The guard reads declarations because that is the only place
+this defect is visible.
+
+## Also
+
+* **Bench session** (decision 11-a): `hw/BENCH_SESSION.md`, five steps, with the expected ranges
+  written first. Ed25519 batch verification, dry-run on x86: 0.49× per signature at a batch of 64.
+* **SSDBFAN** (decision 17-a): read, not cited — it aggregates *data* at cluster heads and gives
+  no per-message byte budget.
+* **Thesis chapter 2** (decision 18-a): drafted from the sources held; two gaps of reading are
+  marked in the chapter instead of being written round.
+* **Implicit certificates** (decision 16-a): one sentence; the certificate column is an upper
+  bound.
+
+**Durable records:** F58–F62 in `audits/model_provenance.md`; follow-ups F4 and F5 in
+`predictions/NMAX_DIRECT_EXPECTATIONS.md`; the flight in `predictions/PX4_LOGS_EXPECTATIONS.md`; `docs/02` §6g.
+
+---
+
+# 2026-10-07 — the second pass: auditing the revision, not the description of it
+
+*Mohamed: "think deeply of the current state and the remaining open and decision points and give
+me options for each, then edit the paper and thesis and re-audit them against the latest reviewer
+comment".*
+
+## Method
+
+The review was read again in full, from the PDF. Each request was then looked up **in the built
+paper**, not in the response that had been written about it, and not from memory of the edit.
+The thesis was read against the same list, because a claim the paper had lost could still be
+standing in a chapter.
+
+## What it found
+
+Eleven places in the paper where the response said "done" and the text did not yet do it (F55).
+The three that matter:
+
+* **The LoRa paragraph had re-created the mismatch the review listed** — the batch and rate of a
+  242 B frame beside the capacity of a simulation run at 222 B.
+* **"All lean sizes are emitted frames" was false for one row** of the ladder, in the paper, the
+  thesis and the checklist; and every first-format row is a sum of parts too. This is the review's
+  root concern in miniature, written by the revision that answered it.
+* **The curve the review asked for did not exist.** Drawing it gave the cleanest statement yet of
+  what the lean format buys: 24 of the 31.7 B per record between the two designs are *where the
+  chain link sits*, and a link in every record costs more at twelve records per frame than one
+  link per frame costs at four.
+
+And in the thesis, which the first pass had corrected chapter by chapter but not re-read whole:
+
+* **"No choice of existing cryptography helps"** — the review's own example of an over-claim —
+  **was still in four places**: the abstract, research question 5, the positioning section and the
+  closing paragraph. The paper had lost it; the thesis had not.
+* The abstract still gave the payload as "45–190 B", sizes that include the record's own 32 B
+  chain link. Chapters 1, 4 and 7 never said so. A remark now does: 13 B of telemetry, 32 B of
+  link; signature and link are 88 % of what is sent, not the 58.7 % that φ gave.
+* Ed25519 batch verification was mentioned in the paper and not in the thesis.
+
+## Tried and did NOT work, or was wrong the first time
+
+* **A response row written before measuring.** I wrote "related work is about half the length
+  (about 540 words)" from the edit I intended; the count after the edit was 587. Corrected before
+  anything was sent. Cutting further would have removed a prior-art citation, so the length stays
+  and the response states the real figure.
+* **The figure's first labels** overlapped the legend, and matplotlib printed 43.25 as "43.2"
+  where the paper prints 43.3. Labels are now rounded half-up, as the generator rounds.
+* **The project's red/green pair fails a colour-blindness check** (ΔE 2.5 under deuteranopia).
+  The new figure uses a checked three-colour set with different markers. The older two-panel
+  figure is not affected in practice — its series are in separate, titled panels.
+* **Unpaywall was queried with the author's e-mail address in the URL** while looking for an
+  open-access copy. That was a mistake: the address is for identification only. One request, to
+  one service; reported to Mohamed.
+
+## The baselines got the same instrument as the design (follow-up F3)
+
+The stream-signing schemes had a saturation bound where the design had a simulated capacity. Five
+more cells went through the direct search, their crossings predicted with the airtime line and
+committed first (`f72db7f`). **All five held**, 3.5–4.2 % above the line — the offset written
+down beforehand for cells at 50 frames per second. A 13 B tag in place of a 64 B signature takes
+the neighbourhood from 35 to 42; four records in a frame take it to 124 (F56).
+
+**And the scoring caught a defect in the readers.** Its first table had four rows. The summary
+stores the send jitter to six significant figures and three readers looked it up by the exact
+period — invisible while every period was a round number of milliseconds, fatal for EMSS's
+1000/50.5. Fixed at the root with one function and three regression tests. It was caught only
+because the scorer's output was compared with the list of cells it was supposed to contain.
+
+## A source that "needed a browser" did not
+
+Rajasekaran et al. 2022 had been on the checklist since August as a missing FANET comparator.
+The publisher's article page refuses scripts; its static file server does not. Read in full,
+checked against Crossref (five authors, not the four the checklist listed), cited in one
+sentence. It supports the same point as the CLAS table: its communication cost for n
+authentications is n times the cost of one (F57).
+
+## The pattern
+
+*A response to a review is one more document that can drift from the text it describes.* The
+project already had the rule at two levels — check the figure, not the quotation; build the
+object, not the sum. This is the third: **audit the deliverable, not the description of it.**
+
+**Durable records:** F55–F57 in `audits/model_provenance.md`; open items G19–G21 in
+`OPEN_ITEMS.md`; follow-up F3 in `predictions/NMAX_DIRECT_EXPECTATIONS.md`.
+
+---
+
+# 2026-10-06 — an outside reader: the design had never been built
+
+*Mohamed's supervisor reviewed the paper. Mohamed: "understand and analyse it deeply … plan how to
+fix these comments", then "re-read and re-audit the comments and don't skip any tiny detail",
+then "think deeper while fixing, do the recommended decision, and double-check everything after
+editing or running".*
+
+## What the review found that two audits had not
+
+Not a wrong number. **A missing object.** The configuration every result headlined — delta
+records, one signature per four — was a *sum*: a record size from one module, a header measured
+on frames of a different encoding, a signature length. No frame carrying delta records had ever
+been encoded, sent or decoded, and the receiver that would decode one did not exist. Each part was
+right, so re-deriving any number reproduced it — which is exactly what the August audits did.
+
+Four errors followed from that one (F45–F48), and a fifth was unrelated (F49, a paper cited for
+two months under another paper's authors).
+
+## Method: build it, then recompute everything from the one definition
+
+1. **A second frame format, `wire_v2` ("lean")**, with a sender and a receiver
+   (`placement/session_v2.py`): integer keys, one chain link per frame, a keyframe then deltas.
+   The first format is untouched and its artifacts are bit-identical (D6).
+2. **One definition of a frame** (`models/frame.py`), whose arithmetic a test holds equal to the
+   frames the code emits. Bytes, loss and exclusion are all computed from it.
+3. **Nine experiments on that object** (E9–E17, `make exp-frames`), all in the frozen gate.
+4. **No typed results.** `analysis/paper_numbers.py` writes every number the paper and the
+   corrected thesis chapters print, from the artifacts, and refuses to run if an artifact stops
+   supporting a sentence ("eight of twelve", "does not meet the target").
+5. **The paper was rewritten** around the frame, not patched. Retraction history moved to the
+   methods paper and thesis ch. 11 (decision R12); the low-rate section became the exclusion
+   matrix and one paragraph, the rest moving to thesis ch. 10 (R11).
+
+## What it cost
+
+* **The design misses its own target as published.** One keyframe per four frames at p = 0.05
+  verifies 0.881 of records, not 0.95 (T3′). Fixed by a keyframe in every frame: +3 B per record
+  in the first format.
+* **"Three of seven" excluded data rates is withdrawn** — and so is F44, the August finding that
+  produced it. With the chain link and a record that decodes alone charged, over the twelve rates
+  the standard defines, **eight** cannot carry one frame.
+* **The LoRa batch was sized with a record measured at the wrong time scale** (50 ms spacing used
+  at 5.5 s): five records per frame in the first format, not seven.
+* **Every 802.11 capacity changed**, because the review asked for confidence intervals and
+  producing them meant simulating each configuration (below).
+
+## The capacity search — a prediction that failed, and what chasing it found
+
+Pre-registered data-free (`6f82599`): direct simulation would agree with the single load ceiling
+U = 2.435 within ±10 %. **It did not** (−23 % for the lean design, +8 % for the long-frame cell).
+The ceiling was measured at one N with one frame and is not invariant (F50).
+
+The per-run spread then looked wrong: at node counts well under the crossing, a few runs in
+thirty fell below 0.95. Per-node output showed why — in the worst run four nodes delivered
+nothing and 22 lost nothing. Strictly periodic senders keep their phases; the simulator raises
+carrier sense only after a 4 µs preamble-detection period; a pair inside that window collides
+every period (F51).
+
+**Tried, each registered before it was run:**
+
+| follow-up | prediction | outcome |
+|---|---|---|
+| F1 | the source moves the mean by under 0.005 | **held** — and later data put the difference at +0.003, of one sign in all six cells; see below |
+| F1 | 1 ms of send jitter halves the per-run spread | **failed** |
+| F1b | a ±5000 ppm rate offset brings the spread under 0.004 | **failed** |
+| F1b | the offset source and the redraw-every-period source agree in the mean | **held** |
+
+By the rule F1b registered, every reported capacity uses a send time redrawn within each period.
+
+**A wrong explanation, written down and committed before it was checked.** When all six cells
+had been run under both sources, every crossing was higher with redrawn phases. I explained the
+common sign away: seed *s*, I wrote, draws the same start offsets in every cell, so the thirty
+strictly periodic runs are one sample six times over. That came from reading the scenario. The
+runs file was on disk; one correlation would have tested it. It was false — per-seed delivery is
+uncorrelated between node counts, because ns-3 assigns random streams in creation order — and it
+went into the pre-registration document, a commit message (`fad28e0`), the findings register and
+the thesis within ten minutes. The correct reading is duller: fourteen nearly independent
+differences averaging +0.003 ± 0.0014. Weak evidence of something real, with no mechanism.
+**The lesson is the project's own, again: an explanation is a claim, and it gets checked like
+one.**
+
+**The one prediction that held.** Looking at the six crossings suggested a line in airtime,
+0.05 = N·f·(a·T + c). It was found by looking, so it was tested as a hypothesis: seven
+configurations it had not seen, its value for each written down with a ±6 % tolerance, committed,
+then simulated (1470 runs). All seven fell within 3.4 %; the old ceiling misses them by up to
+15 %. It replaces the ceiling as the closed form the paper states — with a domain, and with the
+residual pattern (ordered by frame rate) written beside it (F54).
+
+## Tried and did NOT work, or was wrong the first time
+
+* **The driver printed the wrong estimate** — the median of the bootstrap replicates instead of
+  the sample's own crossing. They differed in one cell (31 against 29). Caught before a number
+  was quoted.
+* **Three sentences in my own outcome text were wrong against the raw data** ("at least three of
+  30" was two to five; "three of 60" was five; "−11 %" was −10.5 %). Found by re-reading each
+  claim against the CSV, not by a test.
+* **The keyframe-size prediction for real flight logs missed** by 0.02 B (F52). Recorded as a miss.
+* **PX4 logs carry position at 5 Hz, not 50.** The prediction had to be amended to 0.2 s spacing
+  — done, and committed, before any size was computed. The 20 ms delta stays untested.
+* **Two approved items were found undelivered on a second pass** over the decision list: the
+  analytic table of classical stream-signing schemes, and loss that grows with frame length.
+  Both are now in (E17; the `ber` rows of E10). The second cost the design something: at equal
+  bit error rate its longer frame is lost more often and V = 0.943 at the 5 % point.
+* **A citation check found the methods paper misquoting a source that was never held** —
+  survey years wrong, a figure attributed to the wrong paper, another unsupported. Corrected to
+  what the held follow-up reports. This is the F49 class again, in the document written to
+  describe it.
+* **The first rewrite of the paper departed from the approved plan twice, silently.** It carried a
+  new, design-first title, and it put the exclusion after the 802.11 results. The plan Mohamed
+  approved said to drop one phrase from the title and to put the exclusion *first*. Found by
+  re-reading the plan row by row against the paper, not by any test; both undone, and a test now
+  holds the order. The same pass found the abstract did not state the condition under which the
+  exclusion holds, the paper never said what a receiver does after a lost frame, and the
+  receiver-CPU paragraph lacked the batch-verification sentence the plan promised.
+* **Four hours lost to a wait that could not end.** The loop waiting for the held-out campaign
+  grepped the process list for a string its own command line contained. The campaign finished at
+  05:31; the loop was still "waiting" at 09:20.
+* **`thirteen hundred tests`**: I "corrected" this to eleven hundred from a stale copy of the
+  status board, checked the repository's own, and reverted. The copy of `CLAUDE.md` outside the
+  repository is older than the one inside it.
+
+## Before publication: eleven PDFs taken out of the branch (2026-10-07)
+
+Asked before the first push, Mohamed chose not to publish the new PDFs. The unpublished commits
+from the one that added them were rewritten with `git filter-branch`: the eleven files removed,
+nothing else changed, dates kept. Because documents and commit messages cite commit hashes, the
+same pass rewrote each cited hash to its new value as it went (filter-branch's `map`), so no
+reference dangles. The four pre-registration commits that precede the PDFs kept their hashes.
+Checked afterwards: no stripped file reachable from the branch; the old and new tips differ only
+by those files and eight lines of hash references; committer dates identical.
+
+What "held and read" means changed with it. It used to be checkable by cloning. Now a manifest
+gives each withheld file's SHA-256 and where to obtain it, and the tests check the hash wherever
+the file is present.
+
+## The pattern
+
+The August chapter ended: *a register that stores facts separately does not compose them; only
+re-derivation does.* That was not enough — these errors were re-derived, repeatedly, and
+reproduced, because each part was right. **What composes facts is building the thing they
+describe and making it run.** A design that exists only as a sum has no receiver to refuse a
+frame it cannot decode.
+
+**Durable records:** findings F45–F54 in `audits/model_provenance.md`; pre-registrations
+`predictions/NMAX_DIRECT_EXPECTATIONS.md`, `predictions/PX4_LOGS_EXPECTATIONS.md`; decisions R1–R16 in `DECISIONS.md`;
+what is still open in `OPEN_ITEMS.md` §G.
+
+---
+
 # 2026-08-28 — the math audit: nothing was wrong, and the headline still moved
 
 *Mohamed: "analyze then audit deeply each scientific claim, number, result, implementation,
@@ -94,7 +1666,7 @@ separately does not compose them. Only re-derivation does.**
 > ⚠️ **This entry is retrospective and says so.** The logbook's whole value is that it is
 > contemporaneous, and between 2026-07-30 and 2026-08-28 it was not written at all — a three-week
 > hole covering the project's most productive stretch. Reconstructed from
-> `docs/audits/model_provenance.md` (F35–F42), `docs/audits/scientific_implementation_audit.md`
+> `docs/audits/model_provenance.md` (F35–F42), `docs/audits/AUDIT_HISTORY.md`
 > and the git history, all of which *were* written at the time. **Treat those as the record and
 > this as an index to them.** Method and trial that were never written down are simply lost;
 > nothing here is reconstructed from memory.
@@ -158,7 +1730,7 @@ The longest correction run in the project. Everything below was found by attacki
 233/116→213/100. The models were right the whole time. Drivers now default to 30 seeds and emit
 min/max/σ so the next instance is visible in the artifact.
 
-**Two of my own claims were retracted.** F18 (I said we were the *more optimistic* model vs Bor —
+**Two of my own claims were retracted.** F18 (I said we were the *more optimistic* model vs Haxhibeqiri et al. —
 I had quoted their pure-ALOHA figure as their LoRa one) and the "no capture" correction, where I had
 attributed our low-N margin to capture that our interference matrix does not implement.
 
@@ -226,7 +1798,7 @@ wrong. See §3.
 
 ## 3. `N_max = 5` checked against published measurements — and a secondary source caught lying
 
-**The trap.** A search summary attributed *"32 % loss at 1000 nodes"* to Bor et al. 2017. Reading
+**The trap.** A search summary attributed *"32 % loss at 1000 nodes"* to Haxhibeqiri et al. 2017. Reading
 the PDF: **"For 1000 nodes per gateway, around 90 % of packets collide."** Using the snippet would
 have manufactured a disagreement with our own result that does not exist. **This is the third time
 the rule has paid: quote the PDF, never the summary** (cf. F9, F16).
@@ -276,7 +1848,7 @@ exercise the paths that get called, and this defect lived in the path nobody cal
 
 ## 6. Mohamed's three corrections, and what each cost
 
-**(a) "Bor said 90 % is pure ALOHA and 32 % is LoRaWAN."** Correct. I had quoted their Fig. 14
+**(a) "Haxhibeqiri et al. said 90 % is pure ALOHA and 32 % is LoRaWAN."** Correct. I had quoted their Fig. 14
 (pure ALOHA) as their LoRa result — after "correcting" a search snippet that had it right. F18
 retracted, F19 written, and the wrong wording chased out of four other files with a grep on the
 *wording*, not the name (the F9 rule).
@@ -289,7 +1861,7 @@ bracket it (E9, needs an NS-3 rebuild, not yet run).
 
 **(c) "Why didn't we implement their model and run it with our optimizer?"** No good reason — I read
 the paper after the result existed and treated it as a yardstick rather than a model. It is stated in
-closed form. Now implemented (`lora.bor2017_loss_pct`), validated against their own four prose
+closed form. Now implemented (`lora.haxhibeqiri2017_loss_pct`), validated against their own four prose
 figures, and run at our operating point: **their N_max = 4, ours = 5.** That closed A7 for the LoRa
 arm and is a far stronger statement than the one F18 claimed. Implementing it also surfaced two
 defects in *their* published fit — a 1.78 % intercept at N=0 and a non-monotone stretch at
@@ -381,7 +1953,7 @@ decision** (item B3).
 That changed the task: Λ and D_max are **decision variables**, not constants to defend. Built
 `operating_region.csv` (70 points) with compliance flags. The answer is a **bound, not a choice** —
 under full compliance at N=50 the best achievable auth cut is 50 %, not 75 %. Reference point kept
-**with its cost stated**. Produced [`TRADEOFFS.md`](TRADEOFFS.md).
+**with its cost stated**. Produced [`TRADEOFFS.md`](DECISIONS.md) (now the trade-off register in `DECISIONS.md`).
 
 ### A5, B2, B4
 A5: 48 B floor cited to draft-irtf-cfrg-bls-signature-05 — which **corrected us**: BLS12-381 targets

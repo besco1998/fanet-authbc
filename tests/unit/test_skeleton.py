@@ -2,7 +2,7 @@
 
 Guards the scaffold: if a package is missing, misnamed, or has an import-time error, CI
 fails here rather than deep inside a later phase. Real per-module unit tests replace/augment
-this from P1 onward (docs/03 §3–4).
+this from P1 onward (docs/archive/03 §3–4).
 """
 
 import importlib

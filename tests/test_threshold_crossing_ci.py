@@ -9,7 +9,12 @@ an interval to the crossing itself.
 
 import pytest
 
-from authbc.bench.stats import threshold_crossing_ci
+from authbc.bench.stats import (
+    crossing_point,
+    interpolated_crossing,
+    interpolated_crossing_ci,
+    threshold_crossing_ci,
+)
 
 RESAMPLES = 2000  # enough to be stable at the tolerances asserted here, fast enough for the suite
 
@@ -131,3 +136,59 @@ class TestLoneSenderStillOccupiesAirtime:
 
         us = [channel_utilisation(n, lam=20.0, batch=4, frame_bytes=288.0) for n in (1, 2, 5, 10)]
         assert all(b > a for a, b in zip(us, us[1:], strict=False))
+
+
+class TestTheSamplesOwnCrossing:
+    """The estimate is the sample's crossing; the bootstrap supplies only its interval."""
+
+    def test_it_is_the_last_n_before_the_first_failure(self):
+        assert crossing_point({5: 0.99, 10: 0.96, 20: 0.94, 50: 0.97}, 0.95) == 10
+        assert crossing_point({5: 0.94, 10: 0.99}, 0.95) == 0
+        assert crossing_point({5: 0.99, 10: 0.95}, 0.95) == 10       # meeting it exactly passes
+
+    def test_the_bootstrap_median_is_not_the_samples_crossing(self):
+        """The defect of 2026-10-06: `ThresholdCI.point` was reported as the estimate.
+
+        Here N=20 passes in the sample (mean 0.9505), yet most replicates fail somewhere on the
+        way to it, so the replicates' median sits lower than the sample's own answer.
+        """
+        per_n = {5: _flat(0.99), 10: [0.99] * 16 + [0.91] * 14, 20: [0.99] * 16 + [0.905] * 14}
+        means = {n: sum(v) / len(v) for n, v in per_n.items()}
+        assert crossing_point(means, 0.95) == 20
+        r = threshold_crossing_ci(per_n, threshold=0.95, resamples=RESAMPLES)
+        assert r.point < 20 and r.ci_lo <= r.point <= r.ci_hi == 20
+
+
+class TestInterpolatedCrossing:
+    def test_by_hand(self):
+        """0.96 at N=10 and 0.92 at N=20: a quarter of the way down is N = 12.5."""
+        assert interpolated_crossing({5: 0.99, 10: 0.96, 20: 0.92}, 0.95) == pytest.approx(12.5)
+
+    def test_it_follows_the_first_failure_like_the_grid_rule(self):
+        assert interpolated_crossing({5: 0.97, 10: 0.93, 20: 0.99, 40: 0.90}, 0.95) == \
+            pytest.approx(7.5)
+
+    def test_an_unbracketed_crossing_is_not_extrapolated(self):
+        assert interpolated_crossing({5: 0.99, 10: 0.97}, 0.95) is None
+        assert interpolated_crossing({5: 0.90, 10: 0.80}, 0.95) is None
+
+    def test_its_interval_contains_it_and_narrows_with_less_noise(self):
+        import numpy as np
+        rng = np.random.default_rng(3)
+        truth = {10: 0.97, 20: 0.96, 30: 0.95, 40: 0.94, 50: 0.93}       # crosses at exactly 30
+        def sample(sd: float) -> dict[int, list[float]]:
+            return {n: (m + rng.normal(0.0, sd, size=30)).tolist() for n, m in truth.items()}
+        noisy, quiet = sample(0.02), sample(0.002)
+        widths = []
+        for per_n in (noisy, quiet):
+            lo, hi, inside = interpolated_crossing_ci(per_n, threshold=0.95, resamples=RESAMPLES)
+            point = interpolated_crossing({n: sum(v) / len(v) for n, v in per_n.items()}, 0.95)
+            assert inside > 0.9 and point is not None and lo <= point <= hi
+            widths.append(hi - lo)
+        assert widths[1] < widths[0] / 3
+        assert abs(interpolated_crossing(
+            {n: sum(v) / len(v) for n, v in quiet.items()}, 0.95) - 30.0) < 1.5
+
+    def test_no_interval_when_no_replicate_is_bracketed(self):
+        assert interpolated_crossing_ci({5: _flat(0.99), 10: _flat(0.98)}, threshold=0.95,
+                                        resamples=RESAMPLES) is None

@@ -1,0 +1,6 @@
+# nodes: 1,2,3
+# W1g calibration (disclosed, not scored): all four at 125 frames/s each, W1f's A31 rate
+CAL 125 145 1,2,3,4
+CAL 125 145 1,2,3,4
+CAL 125 145 1,2,3,4
+CAL 125 145 1,2,3,4

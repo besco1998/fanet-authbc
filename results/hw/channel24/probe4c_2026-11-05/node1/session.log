@@ -1,0 +1,17 @@
+Failed to find executable /home/pi-a/authbc_probe4c/revert_adhoc.sh: No such file or directory
+Running timer as unit: authbc-reboot.timer
+Will run service as unit: authbc-reboot.service
+[2026-11-05T17:34:11+02:00] deadmen armed: revert 540 s, reboot 840 s | node=1 nodes=1,2 freq=2462 windows=4 plan=plan_probe4c.txt sha=379cde646ec1
+[2026-11-05T17:34:11+02:00] governor: ondemand -> performance; throttled 0x0
+[2026-11-05T17:34:28+02:00] type:  	type IBSS 	channel 11 (2462 MHz), width: 20 MHz, center1: 2462 MHz 
+[2026-11-05T17:34:30+02:00] peer 10.0.0.2 reachable
+{"received_unique": 11258, "senders": 1, "duplicates": 0}
+[2026-11-05T17:36:25+02:00] window 00_F4_1000fps done (senders 4)
+{"received_unique": 11285, "senders": 1, "duplicates": 0}
+[2026-11-05T17:36:56+02:00] window 01_F4_1000fps done (senders 4)
+{"received_unique": 1083, "senders": 1, "duplicates": 0}
+[2026-11-05T17:37:25+02:00] window 02_B4_50fps done (senders 4)
+{"sent": 11320, "achieved_fps": 511.6, "late": 9716}
+{"received_unique": 0, "senders": 0, "duplicates": 0}
+[2026-11-05T17:37:55+02:00] window 03_R1_600fps done (senders 1)
+[2026-11-05T17:38:01+02:00] revert did NOT restore the LAN address — leaving both deadmen armed

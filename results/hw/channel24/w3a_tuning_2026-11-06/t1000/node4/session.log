@@ -1,0 +1,15 @@
+[2026-11-06T22:52:23+02:00] deadman armed: revert in 540 s | start=1793998488 windows=4 plan sha=7fc6b1d962be | tplink=tplink0 driver=8188eu boot=4c4f46de uptime=81.43s
+[2026-11-06T22:54:24+02:00] peer 10.0.0.1 reachable
+[2026-11-06T22:54:26+02:00] peer 10.0.0.2 reachable
+[2026-11-06T22:54:28+02:00] peer 10.0.0.3 reachable
+[2026-11-06T22:54:28+02:00] after join: {"bssid":"9e:79:0c:31:9e:75","rate_ctl":"FIXED CCK_1M 0x00 0","boot":"4c4f46de","peers_reachable":[1,2,3]}
+{"received_unique": 11248, "senders": 1, "duplicates": 0}
+[2026-11-06T22:55:15+02:00] window 00_R1_600fps done (senders 1)
+{"received_unique": 1018, "senders": 1, "duplicates": 0}
+[2026-11-06T22:55:45+02:00] window 01_S_50fps done (senders 1)
+{"received_unique": 1017, "senders": 1, "duplicates": 0}
+[2026-11-06T22:56:14+02:00] window 02_A_50fps done (senders 1)
+{"received_unique": 1047, "senders": 1, "duplicates": 0}
+[2026-11-06T22:56:44+02:00] window 03_L_50fps done (senders 1)
+[2026-11-06T22:56:44+02:00] at end: bssid=9e:79:0c:31:9e:75 rate_ctl=FIXED CCK_1M 0x00 0 boot=4c4f46de
+[2026-11-06T22:57:11+02:00] reverted OK: back on the home Wi-Fi, deadman disarmed

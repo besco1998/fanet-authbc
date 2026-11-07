@@ -1,0 +1,23 @@
+# E9 — measured sizes of both frame formats (docs/04 §2; audit F45, F48).
+# `first` = placement/wire.py header + the encodings/ delta encoder (a byte model: no frame
+# carrying delta records in that header was ever emitted). `lean` = placement/wire_v2.py, and
+# every lean row is the length of an emitted frame or record stream.
+experiment: frame-components
+
+# Where in a flight the header is measured: [label, src, base_seq]. Canonical CBOR integers grow
+# with magnitude, so a header has a range, not a size (audit F43b). The last point is the one
+# docs/01 §2a has always used: sender id 40 000, one hour into a 50 Hz flight.
+header_points:
+  - ["sender 0 / record 0", 0, 0]
+  - ["sender 24 / record 24", 24, 24]
+  - ["sender 256 / record 256", 256, 256]
+  - ["sender 40000 / one hour at 50 Hz", 40000, 180000]
+
+# Record spacing: stride k keeps every k-th generator record (one per 50 ms), so records are
+# 50*k ms apart. Value = records per seed. 110 and 330 are what the LoRa arm sustains at DR5/DR4.
+stride_records: {1: 1000, 2: 1000, 20: 200, 110: 64, 330: 64}
+
+batches: [1, 2, 3, 4, 5, 6, 8, 10, 12]   # each with every frame decoding alone (the curve of fig_bytes_vs_batch)
+ref_batch: 4                        # the batch at which the reference interval is swept
+ref_intervals: [1, 2, 4, 8, 16]     # frames per self-contained frame
+inline_batches: [1, 4]

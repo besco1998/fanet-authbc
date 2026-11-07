@@ -1,5 +1,5 @@
 // authbc-dcf-trace.cc — INSTRUMENTED twin of authbc-sat.cc for the broadcast-residual study
-// (docs/audits/p7.md "scenario-A broadcast residual"; docs/06 §2).
+// (docs/audits/AUDIT_HISTORY.md "scenario-A broadcast residual"; docs/06 §2).
 //
 // WHY a separate file: authbc-sat.cc produced the frozen results/raw/ns3_matrix.csv and must stay
 // byte-identical. This twin keeps the scenario (channel, MAC, apps, goodput accounting) EXACTLY the

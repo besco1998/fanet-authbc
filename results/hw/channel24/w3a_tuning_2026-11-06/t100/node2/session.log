@@ -1,0 +1,20 @@
+Running timer as unit: authbc-revert.timer
+Will run service as unit: authbc-revert.service
+Running timer as unit: authbc-reboot.timer
+Will run service as unit: authbc-reboot.service
+[2026-11-06T23:07:36+02:00] deadmen armed: revert 540 s, reboot 840 s | node=2 nodes=1,2,3 freq=2462 windows=4 plan=plan_w3a_tuning.txt sha=7fc6b1d962be
+[2026-11-06T23:07:36+02:00] governor: performance -> performance; throttled 0x0
+[2026-11-06T23:07:53+02:00] type:  	type IBSS 	channel 11 (2462 MHz), width: 20 MHz, center1: 2462 MHz 
+[2026-11-06T23:07:55+02:00] peer 10.0.0.1 reachable
+[2026-11-06T23:07:57+02:00] peer 10.0.0.3 reachable
+{"received_unique": 11379, "senders": 1, "duplicates": 0}
+[2026-11-06T23:10:22+02:00] window 00_R1_600fps done (senders 1)
+{"received_unique": 1096, "senders": 1, "duplicates": 0}
+[2026-11-06T23:10:51+02:00] window 01_S_50fps done (senders 1)
+{"received_unique": 1098, "senders": 1, "duplicates": 0}
+[2026-11-06T23:11:23+02:00] window 02_A_50fps done (senders 1)
+{"received_unique": 1088, "senders": 1, "duplicates": 0}
+[2026-11-06T23:11:52+02:00] window 03_L_50fps done (senders 1)
+[2026-11-06T23:11:52+02:00] revert: starting
+[2026-11-06T23:12:05+02:00] revert: finished, wlan0 = inet 192.168.1.20
+[2026-11-06T23:12:10+02:00] reverted OK, both deadmen disarmed

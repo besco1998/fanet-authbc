@@ -1,0 +1,13 @@
+Interface wlan0
+	ifindex 5
+	wdev 0x1
+	addr 38:d2:69:dc:e6:07
+	type monitor
+	wiphy 0
+	channel 1 (2412 MHz), width: 20 MHz (no HT), center1: 2412 MHz
+	txpower 0.00 dBm
+tcpdump: listening on wlan0, link-type IEEE802_11_RADIO (802.11 plus radiotap header), snapshot length 160 bytes
+0 packets captured
+0 packets received by filter
+0 packets dropped by kernel
+frames: 0

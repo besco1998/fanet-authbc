@@ -4,7 +4,7 @@ Encodes the record as a schema-implied **array** (no field names on the wire) �
 telemetry schema the field names are ~42 B/record of pure overhead (measured), so a compact
 CBOR ledger drops them. ``cbor2.dumps(arr, canonical=True)`` gives deterministic core encoding
 (shortest int/length forms); ``prev_hash`` rides as a native CBOR byte string. cbor2 is pinned
-to 5.8.0 (docs/03 §2) because 5.8.1 regressed canonical output.
+to 5.8.0 (docs/archive/03 §2) because 5.8.1 regressed canonical output.
 """
 
 from __future__ import annotations

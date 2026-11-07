@@ -1,0 +1,20 @@
+# Revision A2 (predictions/A2.md): the ten validation cells of the design map, 30 seeds, one
+# sending period of jitter (the published source). Grids are those registered in
+# results/raw/design_map_predictions.csv. Largest runs first, so that no long run is left last.
+# Run: python ns3/run_nmax_direct.py --plan experiments/design-map/plan.txt \
+#        --out-stem ns3_design_map --no-summary --workers 10
+MD10-500 period 561 576 591 606 621 636 651
+MB10 period 157 161 165 169 173 177 181
+MD50-150 period 184 189 194 199 204 209 214
+MD75-200 period 205 211 217 223 229 235 241
+MD100-500 period 300 308 316 324 332 340 348
+MD40-100 period 111 114 117 120 123 126 129
+D period 115 118 121 124 127 130 133
+MB20 period 79 81 83 85 87 89 91
+MB25 period 63 65 67 69 71 73 75
+MD100-40 period 46 47 48 49 50 51 52
+MB40 period 41 42 43 44 45 46 47
+C period 32 33 34 35 36 37 38
+MB75 period 21 22 23 24 25 26 27
+MB100 period 15 16 17 18 19 20 21
+MD100-100 period 113 116 119 122 125 128 131

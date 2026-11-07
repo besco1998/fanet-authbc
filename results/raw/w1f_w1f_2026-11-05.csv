@@ -1,0 +1,40 @@
+# python=3.12.3
+# platform=Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=w1f
+# config_hash=b1494d53bcbbc733
+what,group,measured,predicted,band_lo,band_hi,held,windows
+session,valid,,,,,True,78
+node 4 joined the Pis' cell,2a:59:a9:66:b4:cb,"reached [1, 2, 3]",,,,True,
+node 4 rate fixed at join,FIXED CCK_1M 0x00 0,,FIXED CCK_1M,,,True,
+rate check before,pi-A (BCM4345/6),1941.3,2224.0,1900.0,2600.0,True,1
+rate check before,pi-B (BCM4345/6),1947.8,2224.0,1900.0,2600.0,True,1
+rate check before,Pi 3 (BCM43430/1),2356.9,2224.0,1900.0,2600.0,True,1
+rate check before,TP-Link on Blue 2 (RTL8188EUS),1962.3,2224.0,1900.0,2600.0,True,1
+rate check after,pi-A (BCM4345/6),1941.4,2224.0,1900.0,2600.0,True,1
+rate check after,pi-B (BCM4345/6),1942.7,2224.0,1900.0,2600.0,True,1
+rate check after,Pi 3 (BCM43430/1),2469.8,2224.0,1900.0,2600.0,True,1
+rate check after,TP-Link on Blue 2 (RTL8188EUS),1962.9,2224.0,1900.0,2600.0,True,1
+background,controls,0.000996,,,0.01,True,14
+contention,ABCD at 65/s,0.005735,0.00665,0.00199,0.00931,True,4/4
+contention,ABCD at 91/s,0.011367,0.01506,0.00452,0.02108,True,4/4
+contention,ABCD at 111/s,0.020537,0.03184,0.00955,0.04458,True,4/4
+capacity-equivalent,A24,0.98631,,,,scored,4/4
+capacity-equivalent,A27,0.97925,,,,scored,4/4
+capacity-equivalent,A29,0.9734,,,,scored,4/4
+capacity-equivalent,A30,0.96622,,,,scored,4/4
+capacity-equivalent,A31,0.95699,,,,scored,4/4
+capacity-equivalent,A32,0.94476,,,,scored,4/4
+crossing,AUTHBC,31.572,29.502,26.552,32.452,True,95% CI 31.50-31.65 (100% bracketed)
+capacity-equivalent,P7,0.98867,,,,scored,4/4
+capacity-equivalent,P8,0.9835,,,,scored,4/4
+capacity-equivalent,P8.5,0.97843,,,,scored,4/4
+capacity-equivalent,P9,0.97064,,,,scored,4/4
+capacity-equivalent,P9.5,0.95271,,,,scored,4/4
+crossing,per-record,,8.929,8.036,9.822,not determined (the curve does not cross 0.95 inside the grid),
+ratio,AUTHBC/per-record,,3.3041,2.9737,3.6345,not determined,

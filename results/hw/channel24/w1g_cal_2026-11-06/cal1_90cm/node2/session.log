@@ -1,0 +1,24 @@
+Running timer as unit: authbc-revert.timer
+Will run service as unit: authbc-revert.service
+Running timer as unit: authbc-reboot.timer
+Will run service as unit: authbc-reboot.service
+[2026-11-06T03:05:35+02:00] deadmen armed: revert 540 s, reboot 840 s | node=2 nodes=1,2,3 freq=2462 windows=4 plan=plan_cal.txt sha=15b04c178d68
+[2026-11-06T03:05:35+02:00] governor: performance -> performance; throttled 0x0
+[2026-11-06T03:05:52+02:00] type:  	type IBSS 	channel 11 (2462 MHz), width: 20 MHz, center1: 2462 MHz 
+[2026-11-06T03:05:54+02:00] peer 10.0.0.1 reachable
+[2026-11-06T03:05:56+02:00] peer 10.0.0.3 reachable
+{"sent": 2750, "achieved_fps": 125.0, "late": 0}
+{"received_unique": 7864, "senders": 3, "duplicates": 0}
+[2026-11-06T03:07:50+02:00] window 00_CAL_125fps done (senders 1,2,3,4)
+{"sent": 2750, "achieved_fps": 125.0, "late": 0}
+{"received_unique": 7867, "senders": 3, "duplicates": 0}
+[2026-11-06T03:08:20+02:00] window 01_CAL_125fps done (senders 1,2,3,4)
+{"sent": 2750, "achieved_fps": 125.0, "late": 0}
+{"received_unique": 7895, "senders": 3, "duplicates": 0}
+[2026-11-06T03:08:50+02:00] window 02_CAL_125fps done (senders 1,2,3,4)
+{"sent": 2750, "achieved_fps": 125.0, "late": 0}
+{"received_unique": 7880, "senders": 3, "duplicates": 0}
+[2026-11-06T03:09:20+02:00] window 03_CAL_125fps done (senders 1,2,3,4)
+[2026-11-06T03:09:20+02:00] revert: starting
+[2026-11-06T03:09:29+02:00] revert: finished, wlan0 = inet 192.168.1.20
+[2026-11-06T03:09:34+02:00] reverted OK, both deadmen disarmed

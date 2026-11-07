@@ -140,11 +140,32 @@ Pi flagged as **throttled are excluded and reported**, never averaged in.
 5. **Add Pi-B** on INA219 #2; repeat 3–4.
 6. **Sync line** — run `./hw/energy_loop.py --quick` and confirm the `window` column flips to 1 and
    `wtrans` increments; then reduce the quick run end-to-end.
-7. Only then run the full protocol (`hw/energy_protocol.md`).
+7. **The rig check — every session, and again after touching any wire.** On this machine:
+   `./hw/rig_check.py --port /dev/ttyACM0 --channel <the board's channel> --seconds 45`, and
+   within a few seconds on the board: `./hw/rig_selftest.py`. Then judge it again with the
+   board's own record: `./hw/rig_check.py --samples <the capture> --manifest <selftest-*.json>
+   --channel <n>`. It must print `RIG CHECK PASSED`.
+8. Only then run the full protocol (`hw/energy_protocol.md`).
+
+⚠️ **Why step 7 is not optional (2026-10-09, finding F78).** The board's ground had come loose
+from the meter's. The sync line worked, the current read correctly and every sample looked
+plausible; the *voltage* reading moved by 0.29 V with the state of the sync line, and the power
+with it. With the ground fixed, the same check showed the next fault: with every core busy the
+board drew 1.17 A, the supply fell to 4.73 V at the sensor, and the board throttled itself
+within 40 ms. Neither is visible in an energy run's own output.
+
+⚠️ **Which channel is which board is a property of the wiring, not of the software.** In July
+channel 1 was pi-A; on 2026-10-09 it was pi-B. The check identifies the board by loading it.
+
+⚠️ **What the check cannot show: that the sensor's gain is right.** That is step 2, and it has
+never been done (`docs/OPEN_ITEMS.md` G22).
 
 ---
 ## 9. Safety recap
 Feeding 5 V into the GPIO pin bypasses the Pi's input protection: **no reverse-polarity, no fuse**.
 Triple-check polarity, **never** also plug in USB-C while GPIO-powered, set the supply to
 **5.15–5.2 V** (to offset the ~0.15 V burden of a 0.1 Ω shunt at ~1.5 A), and wire everything with the
-supply **off**. Confirm `get_throttled=0x0` after every boot — anything else invalidates the run.
+supply **off**. Confirm `get_throttled=0x0` after every boot. ⚠️ A board whose supply dips while
+it boots reads `0x50000` until the next boot; that alone does not invalidate a run, but then
+only the kernel's log (`journalctl -k -b -g "Undervoltage detected"`) can say whether a window
+was clean, and `energy_loop.py` counts its lines around every window for that reason.

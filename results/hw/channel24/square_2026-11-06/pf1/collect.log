@@ -1,0 +1,5 @@
+node1: 16 files; windows done 6; [2026-11-06T17:46:15+02:00] reverted OK, both deadmen disarmed
+node2: 16 files; windows done 6; [2026-11-06T17:46:15+02:00] reverted OK, both deadmen disarmed
+node3: 16 files; windows done 6; [2026-11-06T17:46:15+02:00] reverted OK, both deadmen disarmed
+node4: 18 files; windows done 6; [2026-11-06T17:46:28+02:00] reverted OK: back on the home Wi-Fi, deadman disarmed
+node 4 join: {"bssid":"ee:69:63:4e:1a:77","rate_ctl":"FIXED CCK_1M 0x00 0","boot":"dc3cb78d","peers_reachable":[1,2,3]}; boot now dc3cb78d

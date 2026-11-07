@@ -1,0 +1,37 @@
+# python=3.12.3
+# platform=Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=w1h
+# config_hash=b1494d53bcbbc733
+what,group,measured,predicted,band_lo,band_hi,held,windows
+"gate (reported, not scored)",GO,1.433,,,1.5,True,pi-A=5.18% pi-B=4.76% Pi=6.82% TP-Link=5.18%
+session,VOID,,,,,False,52
+node 4 joined the Pis' cell,ca:96:4c:b4:cd:2e,"reached [1, 2, 3]",,,,True,
+node 4 rate fixed at join,FIXED CCK_1M 0x00 0,,FIXED CCK_1M,,,True,
+senders balanced (V5),A31,1.549,,,1.5,False,pi-A=4.14% pi-B=4.31% Pi=6.42% TP-Link=5.89%
+pi-B at 8 dBm (V6),node2 txpower.log,2026-11-06T15:25:58+02:00 set 800: txpower 8.00 dBm | 2026-11-06T15:52:53+02:00 auto: txpower 31.00 dBm,,,,True,
+rate check before,pi-A (BCM4345/6),1941.4,2224.0,1900.0,2600.0,True,1
+rate check before,pi-B (BCM4345/6),1940.7,2224.0,1900.0,2600.0,True,1
+rate check before,Pi 3 (BCM43430/1),2592.3,2224.0,1900.0,2600.0,True,1
+rate check before,TP-Link on Blue 2 (RTL8188EUS),1968.1,2224.0,1900.0,2600.0,True,1
+rate check after,pi-A (BCM4345/6),1937.6,2224.0,1900.0,2600.0,True,1
+rate check after,pi-B (BCM4345/6),1945.8,2224.0,1900.0,2600.0,True,1
+rate check after,Pi 3 (BCM43430/1),2488.7,2224.0,1900.0,2600.0,True,1
+rate check after,TP-Link on Blue 2 (RTL8188EUS),1980.2,2224.0,1900.0,2600.0,True,1
+background,controls,0.001894,,,0.01,True,8
+capacity-equivalent,A29,0.9621,,,,void (session): scored,4/4
+capacity-equivalent,A30,0.96001,,,,void (session): scored,4/4
+capacity-equivalent,A31,0.94989,,,,void (session): scored,4/4
+capacity-equivalent,A32,0.93521,,,,void (session): scored,4/4
+crossing,AUTHBC,30.989,29.502,26.552,32.452,void (session): True,95% CI 30.83-31.09 (100% bracketed)
+capacity-equivalent,P9,0.95825,,,,void (session): scored,4/4
+capacity-equivalent,P9.25,0.95363,,,,void (session): scored,4/4
+capacity-equivalent,P9.5,0.94225,,,,void (session): scored,4/4
+capacity-equivalent,P9.75,0.93705,,,,void (session): scored,4/4
+crossing,per-record,9.33,8.929,8.036,9.822,void (session): True,95% CI 9.24-9.36 (100% bracketed)
+ratio,AUTHBC/per-record,3.3215,3.3041,2.9737,3.6345,void (session): True,

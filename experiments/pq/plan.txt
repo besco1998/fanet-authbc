@@ -1,0 +1,5 @@
+# Revision A15 (predictions/A15.md): Falcon-padded-512 in the lean frame, 30 seeds, one
+# sending period of jitter. Run: python ns3/run_nmax_direct.py --plan experiments/pq/plan.txt \
+#   --out-stem ns3_pq --no-summary --workers 4
+PQ4 period 40 41 42 43 44 45 46
+PQ1 period 9 10 11 12 13 14 15

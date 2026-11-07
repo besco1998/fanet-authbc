@@ -1,0 +1,38 @@
+========================================================================
+D1 end-to-end energy validation — EXPECTED VALUE, stated before measurement
+========================================================================
+  configuration     : json + ed25519 + placement B, b=1, H_f=44 B
+  model inputs      : p_cpu=0.749 W, t_enc=51.37 µs, t_sign=88.12 µs
+  scope             : SENDER side (encode+chain+sign). Verify excluded from both the pipeline and the prediction.
+  PREDICTED CPU     : 104.478 µJ/record
+  acceptance        : |measured - predicted| / predicted <= 10 %
+                      a larger gap is a FINDING to explain in writing (Law 7),
+                      never a tolerance to widen (Law 3).
+
+  sync: _open_v2 unavailable (ModuleNotFoundError: No module named 'gpiod')
+  sync: _open_v1 unavailable (ModuleNotFoundError: No module named 'gpiod')
+  rep1 idle                 frames=0        records/s=      0.0
+  rep1 e2e_frame_pipeline   frames=366525   records/s=   6108.7
+  rep2 idle                 frames=0        records/s=      0.0
+  rep2 e2e_frame_pipeline   frames=366474   records/s=   6107.8
+  rep3 idle                 frames=0        records/s=      0.0
+  rep3 e2e_frame_pipeline   frames=367026   records/s=   6117.0
+  rep4 idle                 frames=0        records/s=      0.0
+  rep4 e2e_frame_pipeline   frames=367231   records/s=   6120.4
+  rep5 idle                 frames=0        records/s=      0.0
+  rep5 e2e_frame_pipeline   frames=367640   records/s=   6127.3
+  rep6 idle                 frames=0        records/s=      0.0
+  rep6 e2e_frame_pipeline   frames=367622   records/s=   6127.0
+  rep7 idle                 frames=0        records/s=      0.0
+  rep7 e2e_frame_pipeline   frames=368314   records/s=   6138.5
+  rep8 idle                 frames=0        records/s=      0.0
+  rep8 e2e_frame_pipeline   frames=367901   records/s=   6131.6
+  rep9 idle                 frames=0        records/s=      0.0
+  rep9 e2e_frame_pipeline   frames=367876   records/s=   6131.2
+  rep10 idle                 frames=0        records/s=      0.0
+  rep10 e2e_frame_pipeline   frames=368069   records/s=   6134.4
+
+  manifest -> /home/pi/e2e_runs/ajson_r10/manifest_1791526267.json
+  NEXT: reduce the INA219 samples against this manifest, then record measured vs
+        predicted (104.478 µJ/record) in docs/audits/ and close D1.
+RUN_EXIT=0
