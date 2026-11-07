@@ -86,13 +86,12 @@ class TestWhatCannotBeCheckedSaysSo:
 class TestWhatIsHeldButNotRedistributed:
     """Eleven PDFs were kept out of the public repository on 2026-10-07; more, read on
     2026-10-08 and 2026-10-09, joined them — four for the related-work gaps a review of the
-    paper named (audit F83), and Kleinrock & Tobagi for the review of 2026-10-27. "Held and
-    read" must
-    still be checkable: the manifest gives each file's SHA-256, and wherever the file is present
-    it has to be that file."""
+    paper named (audit F83), Kleinrock & Tobagi for the review of 2026-10-27, and Bazzi et al.
+    for the seminar of 2026-11-07. "Held and read" must still be checkable: the manifest gives
+    each file's SHA-256, and wherever the file is present it has to be that file."""
 
     def test_the_manifest_is_well_formed(self) -> None:
-        assert len(HELD_LOCALLY) == 29
+        assert len(HELD_LOCALLY) == 30
         for name, row in HELD_LOCALLY.items():
             assert name.endswith(".pdf") and re.fullmatch(r"[0-9a-f]{64}", row["sha256"]), name
             assert int(row["bytes"]) > 0 and row["obtain_from"] and row["document"], name

@@ -150,6 +150,49 @@ excecute the plan and give me the results". The plan was approved in plan mode. 
 * A `pgrep` check matched its own command line, twice. A pattern only a running session can
   match is now used.
 
+# 2026-11-07, late — the seminar deck rebuilt as one story; prior work of the two capacity models found
+
+**Asked:** the first deck was hard to follow: the capacity ratio, the models and the fitted
+constant were never defined, and nobody could tell whether the law was derived here or taken
+from a source; too many numbers; no story. Then: "find if the airtime capacity law has any prior
+work or official law, apply it also for contention model"; nothing framed as a weakness;
+hardware as 802.11b only; strong points of comparison.
+
+**What the search found** (each source read from its own text; the register entry "Added
+2026-11-07 (evening)" has the quotes):
+* **Bazzi et al., IEEE PIMRC 2016** already asked the law's question for vehicle beacons, the
+  highest beacon rate at a collision target, solved numerically. They also counted our first
+  loss mechanism, busy and then the same slot, with our occupancy (N−1)·f·(t_DIFS + t_pk). They
+  have no detection term. **The paper and the thesis did not cite it. This is F9/F65 a third
+  time**, caught before submission. It is now credited in one sentence in paper §3.5 and in ch.
+  2 and ch. 8 of the thesis; the pages are unchanged (42 / 158).
+* **The official counterparts**, used on the slides only:
+  * the IEEE 802.11-2012 §13.9 airtime link metric, (O + B_t/r)/(1 − e_f), read in ns-3's source;
+  * ETSI TS 102 687 V1.2.1, whose channel busy ratio is airtime (CBR_target 0.68,
+    δ_max 0.03).
+  No numerical equivalence with our occupancy is claimed: CBR excludes the DIFS that our T
+  includes.
+* **Hassan, Vu & Sakurai 2011**, the origin Bazzi credits, could not be obtained (CORE refused
+  the request). It is not cited.
+* **Kumar, Choi & Kim 2019** (held, read on 2026-10-21) is prior work for the hardware's
+  equivalent load. The register says to credit it wherever the method is described, **but the
+  paper does not cite it.** It is credited on the slide; the paper is left to Mohamed.
+
+**The deck** (54 slides, git-excluded):
+* **Story devices.** An eight-question story, a trail in every footer, claim titles, a bridge
+  line on every slide, and dividers that restate the answer so far.
+* **Definitions.** A slide of definitions.
+* **Models.** A slide on where each model comes from. The airtime law is shown in three steps,
+  with its one fitted constant named. The contention model gives a = 0.0712 against 0.0710
+  fitted (at the mean occupancy 0.53; checked in code to within 0.002).
+* **Numbers.** One headline number per result slide; exact values in the notes.
+* **Removed at Mohamed's request:** the limitations slide and the 5 GHz two-radio work. Both
+  stay in the paper.
+* Rendered through PowerPoint and checked slide by slide.
+
+**Slip.** The Write tool stored `×` as a literal ×, so a later scripted replacement missed
+it. The script asserts a single match before replacing, so it stopped and wrote nothing.
+
 # 2026-11-07, night — W3a written in; ePrint 2022/133 read; the novelty framed against the prior art
 
 **Asked:** "Do it" (W3a into the paper and thesis); read IACR ePrint 2022/133; "take care of the

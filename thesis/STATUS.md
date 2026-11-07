@@ -13,6 +13,23 @@ Every chapter is written and was read end to end in the built PDF on 2026-10-08.
 are yours:** the declaration and the acknowledgements — with the degree and the department on the
 title page. The statement on generative AI was removed on your decision of 2026-10-24.
 
+⚠️ **On the evening of 2026-11-07 one source was credited, and you have not read the
+sentences.** You asked, reviewing the seminar deck, for prior work or an official law behind the
+airtime capacity law and the contention model. Bazzi *et al.*, IEEE PIMRC 2016, already asked the
+law's question for vehicle beacons (the highest beacon rate at a loss target, found numerically)
+and counted our first loss mechanism (busy, then the same slot). Not crediting it would be the
+F9/F65 defect a third time. Pages unchanged: thesis 158, paper 42.
+* **Paper §3.5, "The Airtime Capacity Law":** one new sentence after "We call Eq. (7) the airtime
+  capacity law …" (the question is theirs; the closed form in airtime is ours). In "The Contention
+  Model", `bazzi2016beaconing` was added to the citation of the first mechanism.
+* **Thesis ch. 2 (non-saturated broadcast):** one sentence on Bazzi *et al.*; "Both check" became
+  "All three check", and "which neither has" became "which none has".
+* **Thesis ch. 8 §"What is known, and what is added":** two sentences on Bazzi *et al.*; "Neither
+  analysis" became "None of the three"; "Their fixed point" became "The fixed point of Cao *et al.*".
+* The official counterparts (the IEEE 802.11 airtime link metric; ETSI TS 102 687's channel busy
+  ratio) are on the seminar slides only, not in the paper or thesis. The register entry,
+  `docs/literature/README.md` "Added 2026-11-07 (evening)", says why.
+
 ⚠️ **On 2026-11-07 W3a and the novelty framing were written in, and you have not read them.**
 You asked: "Do it", read ePrint 2022/133, "take care of the novelty framing … honestly and
 scientifically", and strengthen the paper's framing. The thesis builds to 158 pages, the paper to

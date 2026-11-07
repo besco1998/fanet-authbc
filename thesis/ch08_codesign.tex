@@ -582,13 +582,18 @@ finds it busy backs off within a fixed window, and collisions arise only among p
 backed off; a fixed point gives the delivery ratio, which they check against a simulation of
 their own~\cite{cao2021dsrc}. That is the tie of this section, in the setting of this chapter,
 and it was found only when this thesis was audited: the derivation below had been written
-without a search for prior work. Neither analysis has a counterpart of the second mechanism,
+without a search for prior work. Bazzi \emph{et al.} count the same loss, a station that finds
+the medium busy and picks a slot another has picked, add hidden terminals, and invert their
+model numerically for the highest beacon rate at which the collision probability stays below a
+target~\cite{bazzi2016beaconing}. That is the question \Cref{eq:line} answers in closed form; it
+too was found after the derivation had been written. None of the three has a counterpart of the
+second mechanism,
 the window in which a transmission cannot yet be sensed, which is between a sixth and a half
 of the loss at the crossings found here. What this section adds is that term, a comparison
 with a packet-level simulator at eighteen configurations instead of with a simulation that
-shares the model's assumptions, and predictions written down before their runs. Their fixed
-point was not evaluated at these configurations: it uses the mean number of packets in a
-collision, for which the paper gives no expression.
+shares the model's assumptions, and predictions written down before their runs. The fixed
+point of Cao \emph{et al.} was not evaluated at these configurations: it uses the mean number
+of packets in a collision, for which the paper gives no expression.
 
 In this scenario --- broadcast, so no acknowledgement, no retransmission and a contention window
 that never grows --- a frame is lost in exactly two ways.

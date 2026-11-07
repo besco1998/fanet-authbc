@@ -891,6 +891,10 @@ N_{\max} \approx \frac{0.05}{f\,(a\,T + c)}, \qquad a = \lineA,\quad c = 8\,\mu\
 \label{eq:line}
 \end{equation}
 We call Eq.~\eqref{eq:line} the airtime capacity law; it is the capacity envelope of the title.
+Its question, the most broadcast traffic a channel carries at a loss target, was posed for
+vehicle beacons by Bazzi \emph{et al.}, who invert an analytical model numerically for the
+highest beacon rate~\cite{bazzi2016beaconing}; Eq.~\eqref{eq:line} answers it in closed form, in
+airtime, so that frames of different size and rate can be compared.
 It was fitted to six rows of Table~\ref{tab:ladder} (1, 2, 4, 5, 6 and 8), which it then
 reproduces within \lineFitWorst\%. Twelve further configurations were predicted from the law
 before they were simulated. Seven of our own all lie within \lineWorst\% of it.
@@ -918,7 +922,7 @@ record and nothing is gained; longer deadlines buy capacity as the law predicts.
 
 \runin{The Contention Model} The constant $a$ is not free. A frame is lost in two ways. Two
 stations that found the medium busy may draw the same backoff slot, a mechanism known from
-analyses of vehicular safety broadcast~\cite{ma2009dsrc,cao2021dsrc}. Or a station decides to
+analyses of vehicular safety broadcast~\cite{ma2009dsrc,bazzi2016beaconing,cao2021dsrc}. Or a station decides to
 send within the 4\us{} in which it cannot yet sense another; that is $c$.
 This is the vulnerable period of carrier sensing~\cite{kleinrock1975csma}, with the
 detection time in place of the propagation delay; the DCF broadcast analyses above omit it.
