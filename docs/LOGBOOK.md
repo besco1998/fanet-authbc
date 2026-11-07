@@ -187,8 +187,8 @@ update the project guide. Plan approved before any edit.
 **Side effect found:** the new Table 1 renumbered every later table. The guide's table numbers
 were already one behind since `tab:hw` (2026-11-06); all 46 are remapped.
 
-**Open, for Mohamed:** the paper is 42 pages (41.4 of content), past the one-page growth the
-plan allowed.
+**Decided by Mohamed:** the paper is 42 pages (41.4 of content), past the one-page growth the
+plan allowed. He chose to keep it until the journal is chosen (I1).
 
 # 2026-11-07, small hours — W3a: loss measured on air (F134); the work re-evaluated; the project guide updated
 

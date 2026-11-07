@@ -16,7 +16,7 @@ title page. The statement on generative AI was removed on your decision of 2026-
 ⚠️ **On 2026-11-07 W3a and the novelty framing were written in, and you have not read them.**
 You asked: "Do it", read ePrint 2022/133, "take care of the novelty framing … honestly and
 scientifically", and strengthen the paper's framing. The thesis builds to 158 pages, the paper to
-**42 (from 40: your decision, below)**. In reading order:
+**42 (from 40; you chose to keep it until the journal is chosen)**. In reading order:
 * **Thesis:**
   * **ch. 1, Contributions:** a new opening paragraph on what is known and what is added. The
     larger step of the capacity gain, sharing the frame, is the established one. The validation
@@ -60,7 +60,7 @@ scientifically", and strengthen the paper's framing. The thesis builds to 158 pa
   * The abstract and the title are unchanged.
 * ⚠️ **The paper is 42 pages.** Its content is about 41.4: page 42 holds the last references. My
   own added text was tightened once. It grew by the table, the loss paragraph and the framing.
-  Whether to keep, cut or move the table to the thesis only is yours.
+  **Decided 2026-11-07: keep 42 pp until the journal is chosen (I1).**
 
 ⚠️ **On 2026-11-06 the hardware campaign and the desk work of November were written in, and you
 have not read them.** You asked for it ("finish the paper and thesis") and chose to apply Q8, Q9

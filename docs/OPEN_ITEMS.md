@@ -319,7 +319,7 @@ R1–R18 (`DECISIONS.md`).*
 
 | # | Item | Status | Why it matters | Action |
 |---|---|---|---|---|
-| **I1** | **Journal and length** | **DECIDED 2026-10-28 — journal later; no cuts until then** | 40 pages in `sn-jnl`; the review lists candidate cuts in order of least loss | Mohamed chooses the journal; then cut to its limit |
+| **I1** | **Journal and length** | **DECIDED 2026-10-28 — journal later; no cuts until then.** Reaffirmed 2026-11-07 at 42 pp (after W3a and the novelty framing): keep until the journal is chosen | 42 pages in `sn-jnl` (40 until 2026-11-07); the review lists candidate cuts in order of least loss | Mohamed chooses the journal; then cut to its limit |
 | **I2** | **Author details** — author contributions (a red placeholder), acknowledgements, funding, ORCID iDs; the thesis's declaration and acknowledgements | **OPEN — Mohamed's** | A submission needs them | His text |
 | **I3** | **Data and code availability** (S-36) | **DEFERRED by Mohamed (2026-10-27)** | A journal asks for it at submission; the paper refers to registered predictions without a link | His decision, with the journal |
 | **I4** | **The 48 B BLS variant was never timed** (S-15) | **ACCEPTED 2026-10-28 — stated in the paper** | The CPU exclusion of BLS rests on the 96 B variant's timing; the 48 B one uses the same two pairings, and would need 0.64 ms (13× faster) for the channel to bind | Optional: `blst` `min_sig` on pi-B |

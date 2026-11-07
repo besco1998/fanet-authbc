@@ -1321,7 +1321,7 @@ framing was strengthened for these, and nothing was claimed beyond the evidence)
 | "An insider can flood; key management is out of scope" | §2.1, Security Scope | stated, not solved | out of scope by design |
 | "Energy: only the sender is metered" | Limitations *Energy and CPU* | the receiver and radio are modeled | W5: a reference load and a receiver meter |
 | "No multi-hop" | Limitations *Multi-Hop* | implemented, not measured | W8 |
-| "42 pages" | — | the length | Mohamed's choice of journal (I1), and what goes to supplementary material |
+| "42 pages" | — | the length (kept at 42 pp by Mohamed, 2026-11-07, until the journal is chosen) | Mohamed's choice of journal (I1), and what goes to supplementary material |
 
 **Open items** (`docs/OPEN_ITEMS.md`):
 * **Waiting on Mohamed:**
