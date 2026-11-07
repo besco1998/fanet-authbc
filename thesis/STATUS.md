@@ -13,6 +13,16 @@ Every chapter is written and was read end to end in the built PDF on 2026-10-08.
 are yours:** the declaration and the acknowledgements — with the degree and the department on the
 title page. The statement on generative AI was removed on your decision of 2026-10-24.
 
+⚠️ **Later on 2026-11-07 ("Continue") a second source was credited: Kumar, Choi & Kim, EURASIP
+JWCN 2019.** Their four-device 802.11p testbed let each transmitter send for a hundred vehicles,
+which is the device by which our four boards stand for many drones. The paper and the thesis
+described that device without the citation; the literature register had said to credit it.
+* **Paper §3.5, "Capacity on Four Radios":** one sentence after "…interpolated from the
+  measured curve.": their transmitters could not sense each other; ours contend for the channel.
+* **Thesis ch. 9 (the paragraph "Each board stands for a share of a larger swarm"):** two
+  sentences on the same.
+* Pages: the paper is still 42; the thesis went from 158 to 159.
+
 ⚠️ **On the evening of 2026-11-07 one source was credited, and you have not read the
 sentences.** You asked, reviewing the seminar deck, for prior work or an official law behind the
 airtime capacity law and the contention model. Bazzi *et al.*, IEEE PIMRC 2016, already asked the

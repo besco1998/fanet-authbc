@@ -49,8 +49,8 @@ Every document: [`README.md`](README.md).
 * The documents were tidied on 2026-11-01: about 70 became about 25, nothing lost
   ([`README.md`](README.md) has the map of where each old file went).
 
-**The gate.** `make all` = lint + mypy + 2718 fast tests + the 43-test frozen gate. The paper has
-References **53** rendered (83 in the shared bibliography).
+**The gate.** `make all` = lint + mypy + 2720 fast tests + the 43-test frozen gate. The paper has
+References **54** rendered (84 in the shared bibliography).
 
 **How to edit the paper.** Edit `paper/main.tex` directly. Every number is a macro from
 `analysis/paper_numbers.py`. The Springer template files are git-ignored: download them before

@@ -150,6 +150,39 @@ excecute the plan and give me the results". The plan was approved in plan mode. 
 * A `pgrep` check matched its own command line, twice. A pattern only a running session can
   match is now used.
 
+# 2026-11-07, evening — the deck's third revision; Kumar et al. 2019 credited
+
+**The deck, revision 3** (Mohamed's slide-by-slide review; plan approved; 61 slides, git-excluded):
+* **Structure.** The guide moved to the top. The order is models → simulation → hardware. LoRa
+  is renamed "LPWAN link". The Boundaries section was distributed and Security made its own
+  section. The research questions were removed.
+* **Explanations.** Why 130 B (paper 1, 18 keyed fields with the hash) became 24 B (9 keyless
+  fields; the hash, sender and sequence number moved to the frame). Where 50/s (PX4), 100 ms (3GPP
+  TS 22.125) and 95 % (our target) come from.
+* **Worked numbers.** Model 1 gives 302/338 µs → 34/125 drones against ns-3's 35/124. Model 2
+  gives a = ρ/(16(1−ρ)) with ρ = 0.533, hence a = 0.071.
+* **New plots,** read from `results/raw` and asserted against the macros:
+  * the model against ns-3 at 18 configurations;
+  * the hardware contention points, predicted against measured;
+  * delivery against load in both ratio sessions;
+  * W3a, records verified against frames received.
+* **The architecture redrawn** as editable shapes: `docs/seminar_assets/`, git-excluded.
+
+**Slips.**
+* My delta size first used the standard frame's mean record (23.77 B) in place of the key record
+  (24.0 B). An assertion against paper Fig. 1 (24 + 3 × 9) caught it.
+* `ax is ch.category_axis` is always False in python-pptx: each call returns a new proxy. So the
+  y tick spacing went onto the x axis and smeared it. Found by rendering.
+
+**Then, on "Continue": Kumar, Choi & Kim (EURASIP JWCN 2019) credited.** Their §6.2 lets each of
+two 802.11p transmitters send every 1 ms "to emulate 100 vehicles", and "there are no access
+collisions because the two transmitters are hidden terminals to each other". That is our
+equivalent-load device; ours contend. It was held and read on 2026-10-21, and the register said
+to credit it, but the paper did not. This is F9/F65 in its mildest form: the search had been
+done and the citation was never written. It is now cited in paper §3.5 and thesis ch. 9.
+* Counts: paper 54 refs, still 42 pp; thesis 73 refs, 159 pp. The new key adds two tests, so the
+  fast suite has 2720.
+
 # 2026-11-07, late — the seminar deck rebuilt as one story; prior work of the two capacity models found
 
 **Asked:** the first deck was hard to follow: the capacity ratio, the models and the fitted

@@ -238,7 +238,10 @@ $1\,963$\,\si{\micro\second} at saturation, against the Pi~4's $1\,945$.
 
 Each board stands for a share of a larger swarm. With four boards, each sends $(N_{\mathrm{eq}}-1)/3$
 times a node's rate, so that every receiver hears the load of $N_{\mathrm{eq}}$ nodes of the
-design. Every session starts and ends with each board alone at 600 frames/s, and is void unless
+design. The device is that of Kumar \emph{et al.}, who let each of two 802.11p transmitters send
+for a hundred vehicles~\cite{kumar2019hidden}. Their two transmitters could not sense each
+other, so none of their frames contended for the channel; here every frame does. Every session
+starts and ends with each board alone at 600 frames/s, and is void unless
 each one's frame spacing lies in $1.9$--$2.6$\,ms. That check stopped three sessions: once the Pi~3
 sending at $3.8$--$5.5$\,ms where it stood away from the other boards, and twice the Pis
 broadcasting at 6\,Mb/s. They do so in a cell created by a freshly booted Pi.

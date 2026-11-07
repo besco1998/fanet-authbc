@@ -956,8 +956,10 @@ predictions and validity conditions were fixed before each ran. With three radio
 \hwThreeHeld{} of \hwThreePoints{} contention points fell inside their predicted bands; with four,
 all \hwFourPoints{} did. The four radios then ran the capacity experiment itself: each board sends
 at the rate that gives the channel the offered load of $N_{\mathrm{eq}}$ nodes of either design,
-and the crossing of $V=0.95$ is interpolated from the measured curve. Real radios depart from the
-model in one respect. When two frames collide, the stronger is often still received (capture), so
+and the crossing of $V=0.95$ is interpolated from the measured curve. Kumar \emph{et al.} let
+each of two 802.11p transmitters send for a hundred vehicles in this way, but theirs could not
+sense each other~\cite{kumar2019hidden}; here the senders contend for the channel. Real radios
+depart from the model in one respect. When two frames collide, the stronger is often still received (capture), so
 every measured point lies above the model's, and so does each crossing. With the four senders
 balanced to within \hwSpreadMax{} times each other's loss, two sessions gave the values of
 Table~\ref{tab:hw}. Capture raises both capacities alike: the crossings lie above the model's, and

@@ -75,8 +75,9 @@ type hints; no dead code; comments explain WHY, not what.
     * the IEEE 802.11 airtime link metric;
     * ETSI TS 102 687's channel busy ratio, which budgets airtime (CBR target 0.68). No
       numerical equivalence is claimed.
-  * ⚠️ **Kumar et al. 2019** (equivalent load) is held and read, and **still not cited in the
-    paper**; that is Mohamed's call.
+  * **Kumar et al. 2019** (the equivalent-load method of the hardware) is **now cited** in
+    paper §3.5 and thesis ch. 9 (on "Continue", 2026-11-07). The paper is still 42 pp; the
+    thesis is 159 pp.
   * **Hassan et al. 2011** was not obtained, so it is not cited.
   * **The deck:** `docs/seminar_final_2026-11.pptx`, 54 slides, git-excluded.
 - **2026-11-07 — W3a written in; the novelty framed against the prior art.**
@@ -89,7 +90,7 @@ type hints; no dead code; comments explain WHY, not what.
 - **2026-11-03 — G27 done (F114, F115; `predictions/G27.md`, registered `5ec2eda`).** Five rules for how the radio sends its own queued frames, each set from the single sender's spacing: **no rule fits** both the saturated runs and F73's 36 windows, so F76's reading ("the shortfall is the radio's own-queue handling") is withdrawn; the paper's "cause not established" stands. Found first: **the frozen contention model let a station collide with itself** — no capacity moves, F73's model column was 1–2 % high (F114); the corrected loop is `src/authbc/sim/dcf_own_queue.py`. A stray tag `prereg-G27`, pushed by mistake at `f06b55a`, was deleted with Mohamed's approval (Q10); the registration has no tag. Open for Mohamed: Q8 (thesis sentence), Q9 (paper ratios).
 - ⚠️ **`make all` green on this machine is NOT the claim — CI green is** (2026-10-08: the gate passed here and failed on a clean install over an undeclared package). **Before every push run the WHOLE of `make all VENV=<a venv built from pip install -e '.[dev]' alone>`** — never a hand-picked subset of tests (the fix for that failure broke the build again exactly that way: a figure was regenerated and its copy in `thesis/` was not) — and do not say green until CI on the pushed commit has finished. Guards: `tests/test_declared_dependencies.py`, and no figure may embed a library version.
 - ⚠️ **TWO COPIES OF THIS FILE EXIST.** Sessions that start in `~/authbc_package` auto-load `~/authbc_package/CLAUDE.md`, which is an OLD copy. **This file, in the repository, is the status board.** A stale count read from the other one was "corrected" into the thesis on 2026-10-06 and had to be reverted.
-- **Green:** 2718 fast + **43** frozen-gate tests (**2761**), `ruff` clean, **`mypy` clean (0 / 63 files)**, paper builds (**42 pp** in the Springer Nature layout, **53 refs**, 0 undefined, 0 overfull, abstract **182 w** by the board's counter, 185 by the paper test's, which counts a macro as a word), methods paper 4 pp, thesis **158 pp** (72 refs, 0 overfull, 2 markers left — both Mohamed's). `make all` exit 0.
+- **Green:** 2720 fast + **43** frozen-gate tests (**2763**), `ruff` clean, **`mypy` clean (0 / 63 files)**, paper builds (**42 pp** in the Springer Nature layout, **54 refs**, 0 undefined, 0 overfull, abstract **182 w** by the board's counter, 185 by the paper test's, which counts a macro as a word), methods paper 4 pp, thesis **159 pp** (73 refs, 0 overfull, 2 markers left — both Mohamed's). `make all` exit 0.
 - **METHODOLOGY (Mohamed):** this is an optimization problem — *state everything, choose what to stick with, state the trade-offs for every decision*. **`docs/DECISIONS.md` is required reading before quoting any number.**
 - **LICENSE = all rights reserved** (© 2026 Mohamed A. Farouk). Vendored NS-3 + `signetlabdei/lorawan` stay GPLv2, **not** redistributed.
 
