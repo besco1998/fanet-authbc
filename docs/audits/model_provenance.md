@@ -5729,3 +5729,25 @@ away at 10 / 4 / 1 dBm, 802.11b 1 Mb/s. Every frame was traced at pi-B, the Pi 3
   length-dependent weak spot is confirmed on air at about the modelled size, not worse.
 * **A method note:** with windows this unlike each other, a per-frame interval would have
   overstated the certainty. The penalty's interval is over cycles.
+
+**Addendum, 2026-11-07, writing W3a into the paper and thesis.** Two of the *reported* figures
+above, and in W3a.md's outcome, were wrong. No scored claim moves. Both were caught by the
+Validate-Results comparison against the outcome's own table.
+* **"Mean bursts up to 1.76 frames"** stands. The outcome's range at the higher powers, "1.01–1.15
+  against 1.00–1.07", does not.
+  * It mixed two sets: its lower end came from the traces at p̂ ≥ 1 %, its independent range from
+    all traces.
+  * It left out the TP-Link's A trace at 4 dBm, 1.383 against 1.072.
+  * Over the claims' set: **1.01–1.38 against 1.03–1.07**, all but that one at most 1.15.
+* **The A trace nearest 5 % is 4.70 %, not 4.71 %** (207 of 4 400 = 4.7045 %). The score's line
+  printed `p_hat`, already rounded to five places, at four: 0.047045 → 0.04705 → 0.0471. This is
+  F114's double rounding again.
+  * My first macros did the same to the loss table: 196/4400 = 4.4545 % printed as 4.46.
+  * `on_air()` now computes every loss from the counts and refuses a three-place value whose
+    third place is 5.
+* **Written in:**
+  * the paper's §3.2 "Loss on Air" and Limitations "Loss Models";
+  * the thesis's `sec:loss-air` (the full loss table) and appendix B row 13.
+  * The interval of the length penalty is re-drawn exactly (1.242, 1.062–1.448) from
+    `results/raw/w3a_w3a_2026-11-06_cycles.csv` by `w3a_loss.length_penalty_bootstrap`. That is
+    reporting added after the outcome, tested in `tests/test_w3a_loss.py::TestTheReport`.

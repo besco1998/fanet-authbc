@@ -173,3 +173,36 @@ class TestTheScore:
             obj["by_source"]["10.0.0.1"]["span_s"] = 1.666e-3 * 10999      # 6 Mb/s, F129
             path.write_text(json.dumps(obj))
         assert next(r for r in w3a.score(d, mbm=400) if r["what"] == "session")["held"] is False
+
+
+class TestTheReport:
+    """Reporting added after the outcome (2026-11-07): the window counts and the interval."""
+    P = {2: 0.02, 3: 0.05, 4: 0.09}
+
+    def test_the_windows_add_up_to_the_scored_traces(self, tmp_path) -> None:
+        d = _session(tmp_path, self.P)
+        rows = w3a.cycles(d, mbm=400)
+        assert len(rows) == 3 * 3 * 4                     # receivers x sizes x cycles
+        traces = {(r["receiver"], r["size"]): r for r in w3a.score(d, mbm=400)
+                  if r["what"] == "trace"}
+        for (rx, size), t in traces.items():
+            mine = [r for r in rows if r["receiver"] == rx and r["size"] == size]
+            assert sum(r["lost"] for r in mine) == t["lost"]
+            assert sum(r["sent"] for r in mine) == t["frames"]
+
+    def test_the_interval_holds_the_pooled_ratio_and_repeats_for_its_seed(self, tmp_path) -> None:
+        rows = w3a.cycles(_session(tmp_path, self.P), mbm=400)
+        pooled, lo, hi = w3a.length_penalty_bootstrap(rows, n=500)
+        assert lo < pooled < hi
+        assert w3a.length_penalty_bootstrap(rows, n=500) == (pooled, lo, hi)
+        assert w3a.length_penalty_bootstrap(rows, seed=1, n=500) != (pooled, lo, hi)
+
+    def test_the_committed_windows_give_the_outcomes_interval(self) -> None:
+        """W3a's outcome: 1.24, 95 % 1.06-1.45, over the 36 paired cycles of the three sessions."""
+        import csv
+        path = REPO / "results" / "raw" / "w3a_w3a_2026-11-06_cycles.csv"
+        rows = list(csv.DictReader(ln for ln in path.read_text().splitlines()
+                                   if not ln.startswith("#")))
+        assert len(rows) == 3 * 3 * 3 * 4
+        pooled, lo, hi = w3a.length_penalty_bootstrap(rows)
+        assert (round(pooled, 3), round(lo, 3), round(hi, 3)) == (1.242, 1.062, 1.448)

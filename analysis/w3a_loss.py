@@ -15,6 +15,9 @@ Each received list becomes a lost-frame mask of the length pi-A sent.
     python analysis/w3a_loss.py --tune DIR         -> the loss each receiver saw, per size
     python analysis/w3a_loss.py --score DIR:MBM [DIR:MBM ...] --name NAME
         -> results/raw/w3a_NAME.csv
+    python analysis/w3a_loss.py --cycles DIR:MBM [DIR:MBM ...] --name NAME
+        -> results/raw/w3a_NAME_cycles.csv, the frames sent and lost in every window (reporting,
+           added after the outcome; the score is unchanged)
 
 Reused: `verifiability_margin.burst_stats` and `.v_of_masks` (A3's trace replay through
 `LeanReceiver`), `frame_model.verifiability`, `.verifiability_gilbert`, `.length_scaled_loss`, W1d's
@@ -24,6 +27,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import random
 import statistics as st
 import sys
 from collections.abc import Sequence
@@ -261,6 +265,40 @@ def tune(session: Path) -> list[str]:
     return out + [f"missing: {missing}"] if missing else out
 
 
+# --------------------------------------------- reporting, added 2026-11-07 after the outcome
+# Not part of the score: `score_all` and the scored CSV are as registered. These give the window
+# counts the paper and thesis quote, and the interval the outcome reported.
+def cycles(session: Path, mbm: int) -> list[dict]:
+    """One row per window: its size, receiver, place among that size's windows, frames sent and
+    lost. The k-th S, A and L windows of a session are one cycle, a minute apart at most."""
+    by, _missing = traces(session)
+    return [{"mbm": mbm, "receiver": r, "size": label, "cycle": k, "sent": len(m),
+             "lost": int(m.sum())}
+            for (label, r), masks in sorted(by.items()) for k, m in enumerate(masks)]
+
+
+def length_penalty_bootstrap(rows: Sequence[dict], seed: int = 20261107,
+                             n: int = 5000) -> tuple[float, float, float]:
+    """p(A)/p(S) pooled, and its 95 % percentile interval, resampling paired S/A cycles.
+
+    A cycle's two windows share the channel's state, and the loss swings between windows, so
+    the cycle is the unit; resampling single frames would treat them as independent and give an
+    interval far too narrow (W3a outcome). Units in session order (power falling), receiver,
+    cycle, as the outcome's computation of 2026-11-07 drew them."""
+    cell = {(int(r["mbm"]), int(r["receiver"]), int(r["cycle"]), r["size"]):
+            (int(r["lost"]), int(r["sent"])) for r in rows}
+    keys = sorted({k[:3] for k in cell if k[3] == "S"}, key=lambda k: (-k[0], k[1], k[2]))
+    units = [cell[k + ("S",)] + cell[k + ("A",)] for k in keys]
+
+    def ratio(us: Sequence[tuple[int, ...]]) -> float:
+        lost_s, sent_s, lost_a, sent_a = (sum(col) for col in zip(*us, strict=True))
+        return (lost_a / sent_a) / (lost_s / sent_s)
+
+    rng = random.Random(seed)
+    boot = sorted(ratio([rng.choice(units) for _ in units]) for _ in range(n))
+    return ratio(units), boot[int(0.025 * n)], boot[int(0.975 * n) - 1]
+
+
 def _write(path: Path, rows: list[dict]) -> None:
     import csv
     import io
@@ -284,6 +322,7 @@ def main() -> None:
     what.add_argument("--plan", action="store_true")
     what.add_argument("--tune", type=Path, metavar="DIR")
     what.add_argument("--score", nargs="+", metavar="DIR:MBM")
+    what.add_argument("--cycles", nargs="+", metavar="DIR:MBM")
     ap.add_argument("--tuning", action="store_true")
     ap.add_argument("--name", default="session")
     args = ap.parse_args()
@@ -293,6 +332,12 @@ def main() -> None:
         print(out.read_text())
     elif args.tune:
         print("\n".join(tune(args.tune)))
+    elif args.cycles:
+        pairs = [(Path(s.rsplit(":", 1)[0]), int(s.rsplit(":", 1)[1])) for s in args.cycles]
+        rows = [row for session, mbm in pairs for row in cycles(session, mbm)]
+        _write(w1d.RAW / f"w3a_{args.name}_cycles.csv", rows)
+        pooled, lo, hi = length_penalty_bootstrap(rows)
+        print(f"{len(rows)} windows; p(A)/p(S) {pooled:.3f}, 95 % {lo:.3f}-{hi:.3f}")
     else:
         pairs = [(Path(s.rsplit(":", 1)[0]), int(s.rsplit(":", 1)[1])) for s in args.score]
         rows = score_all(pairs)

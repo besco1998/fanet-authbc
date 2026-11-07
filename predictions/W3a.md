@@ -193,3 +193,26 @@ The paper's known weak spot, that AUTHBC's longer frame loses more, is real on a
 size the model gives, not worse within the interval. F134.
 
 **Limits:** one indoor link through walls, static, 802.11b at 1 Mb/s, one sender, one evening.
+
+---
+
+## Correction — added 2026-11-07, while writing W3a into the paper and thesis; nothing above was changed
+
+**Two reported figures above are wrong; the three scored claims and their numbers are not
+affected.** Both were found when the paper's numbers were generated from the counts
+(`analysis/paper_numbers.py`, `on_air`), which now refuses a value rounded twice.
+
+* **Burstiness at 10 and 4 dBm.** "Mean bursts 1.01–1.15 against 1.00–1.07" mixed two sets and
+  left out one trace.
+  * Over the traces the claims read (p̂ ≥ 1 %), the mean bursts are **1.01–1.38 against 1.03–1.07**.
+  * All but one are at most 1.15. The exception is the TP-Link's A trace at 4 dBm: **1.38 against
+    1.07** (296 of 4 400 lost).
+  * "Near independent" holds for eleven of the twelve.
+* **The A trace nearest 5 %** is p̂ = **4.70 %** (207 of 4 400), not 4.71 %.
+  * The score's line rounded p̂ twice: 0.047045 → 0.04705 → 0.0471.
+  * The loss table above already gives 4.70.
+  * V(r = 1) = 0.953, as stated.
+* **Added after the outcome, for reporting only:** `analysis/w3a_loss.py --cycles` writes
+  `results/raw/w3a_w3a_2026-11-06_cycles.csv`, the frames sent and lost in each of the 108
+  windows. From it, `length_penalty_bootstrap` re-draws the interval of AUTHBC's length penalty
+  above exactly: 1.242, 95 % 1.062–1.448. The score and its CSV are unchanged.
