@@ -194,8 +194,9 @@ their rates and deadlines & held \\
 \section*{The registrations of November 2026}
 
 The registrations of November 2026 take up the work's main weaknesses: the desk work on the
-telemetry and on the contention windows of commercial cards, and the hardware campaign of
-\Cref{sec:four-radios,sec:balance-hw,sec:ratio-hw}. Each was registered and tagged as above, before
+telemetry and on the contention windows of commercial cards, the hardware campaign of
+\Cref{sec:four-radios,sec:balance-hw,sec:ratio-hw}, and the loss measured on air of
+\Cref{sec:loss-air}. Each was registered and tagged as above, before
 it ran. \Cref{tab:prereg-nov} lists them in the order they were registered.
 
 {\small
@@ -239,6 +240,10 @@ session: not tuned in five tries \\
 $2.974$--$3.635$ & valid, every statement held: \hwRatio{} \\
 \texttt{269588c} 6~Nov & W1k: W1j again, unchanged; the ratio within $\pm5\%$ of W1j's & valid,
 every statement held: \hwRepeatRatio{} \\
+\texttt{d579442} 6~Nov & W3a: loss on air, one sender through walls at three powers; real loss no
+harder on dependent frames than independent loss, the design losing only its own frames, length
+dependence no stronger than the bit-error model & valid, all three held: \airVdep{} against
+\airVdepIid, \airTracesA{} of \airTracesA{} exact, \airLenRatio{} against \airLenModel \\
 \end{longtable}
 }
 

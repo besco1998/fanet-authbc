@@ -150,6 +150,46 @@ excecute the plan and give me the results". The plan was approved in plan mode. 
 * A `pgrep` check matched its own command line, twice. A pattern only a running session can
   match is now used.
 
+# 2026-11-07, night — W3a written in; ePrint 2022/133 read; the novelty framed against the prior art
+
+**Asked:** "Do it" (W3a into the paper and thesis); read IACR ePrint 2022/133; "take care of the
+novelty framing in the whole work … honestly and scientifically"; strengthen the paper's framing;
+update the project guide. Plan approved before any edit.
+
+**Reading.**
+* **The ePrint's direct link was behind a browser check.** The PDF came from the Internet Archive's
+  copy (CC BY, one version, 2022-02-09) and the journal version's metadata from Crossref by DOI.
+  No personal identifier was sent.
+* **What it does:** every V2X message keeps its signature and carries 16–48 B of predecessors'
+  hashes. That saves verifications (about 90 %; more than 65 % at 20 % loss) and adds bytes.
+* **Rotta & Mykytyn re-read in the PDF:** their relays aggregate messages of several sources into
+  one 802.11 frame, each keeping its tag.
+
+**The framing (what changed and why).**
+* The paper's own numbers say the larger step of the capacity gain is the established one,
+  sharing the frame (35 → 76), and that one signature per frame adds 1.6×. The intro did not say
+  so, and its gap sentence claimed "on which links such a frame does not fit" without crediting
+  Gündoğan et al.
+* Both are now stated, with a positioning table (`tab:position`) in the paper and thesis.
+
+**W3a written in, and two of its reported figures found wrong.**
+* Generating the macros and comparing them with W3a.md's own table (Validate-Results) showed:
+  * the bursts at the higher powers were quoted as 1.01–1.15; they are 1.01–1.38, with one trace
+    left out;
+  * the trace nearest 5 % was quoted as 4.71 %; it is 4.70 %, rounded twice.
+* **My own first macros made the same double-rounding error** (4.46 for 196/4400 = 4.4545 %).
+* `on_air()` now computes from the counts and refuses a value rounded twice. Correction addendum
+  below W3a's outcome; F134 addendum. No scored claim moved.
+* **Added after the outcome, for reporting only:** the window counts
+  (`w3a_w3a_2026-11-06_cycles.csv`) and the bootstrap of the length penalty. It reproduces
+  1.242 / 1.062–1.448 exactly, and is tested.
+
+**Side effect found:** the new Table 1 renumbered every later table. The guide's table numbers
+were already one behind since `tab:hw` (2026-11-06); all 46 are remapped.
+
+**Open, for Mohamed:** the paper is 42 pages (41.4 of content), past the one-page growth the
+plan allowed.
+
 # 2026-11-07, small hours — W3a: loss measured on air (F134); the work re-evaluated; the project guide updated
 
 **Asked:** "do the packet-loss measurement"; pi-A moved to a second room (one wall), then to a third

@@ -16,6 +16,13 @@ end.*
 * *the loss measured on air (W3a, §8.9);*
 * *the history (§9), the results (§10) and the limitations (§11).*
 
+*Updated again 2026-11-07:*
+* *W3a written into the paper and thesis (§8.9);*
+* *the novelty stated against the prior art, after reading IACR ePrint 2022/133 (§1, "What is new
+  and what is not"; §4.1);*
+* *the paper's framing for review, with the objections a reviewer is likely to raise and where
+  each is answered (§11).*
+
 **Three kinds of evidence, kept apart as the paper keeps them apart:**
 
 | Label | Means | Example |
@@ -84,6 +91,34 @@ evidence from the paper (§3.4 and §3.9):
 
 **One rule of thumb.** Batching gains nothing unless *record rate × deadline* is above 2
 (`paper/main.tex` abstract; Fig. 4, `results/raw/design_map.csv`).
+
+**What is new and what is not** (paper §1, Table 1 `tab:position`; thesis §2, "Where this thesis
+sits").
+* **Known.**
+  * *Amortizing one signature over many packets* is classical: Gennaro–Rohatgi 1997, Wong–Lam 1999,
+    EMSS and TESLA 2000–2002, erasure-coded blocks 2003.
+  * *Batch and aggregate verification*, CLAS, and in V2X *message chaining* (Cominetti et al.,
+    ePrint 2022/133) reduce the **verifier's work**. Chaining keeps a signature on every message
+    and adds 16–48 B of hashes.
+  * *Sharing one frame among several messages* is the principle of 802.11n aggregation, which the
+    MAC allows for unicast only. A UAV-swarm design (Rotta & Mykytyn 2024) applies it at relays,
+    each message keeping its own HMAC tag.
+  * That a signature crowds a small frame is known (Gündoğan et al., 802.15.4).
+* **So the larger step of our capacity gain is the known one.** Sharing the frame alone takes 35 →
+  76 drones (2.2×). One signature per frame adds 1.6×, to 124 (`paper/main.tex` §3.4). The paper
+  says this in its contributions.
+* **What AUTHBC adds:**
+  * one signature and one chain link per frame of b records, **every frame verifiable alone**;
+  * the accounting of what that costs under five coupled constraints;
+  * the boundaries it implies (the LoRaWAN exclusion; Λ·D_max > 2);
+  * their checks: simulation, four radios, loss on air.
+* **The axis:** prior schemes reduce the signer's work, the verifier's work or the authenticator's
+  bytes, and those that keep non-repudiation and a frame that verifies alone do not reduce the
+  bytes. **None reduces the frames a source sends**, and on a contended channel the frame is the
+  cost that binds. A 13 B tag in place of the signature, still one frame per record, reaches only
+  42.1 drones.
+* **The one-sentence novelty:** *not a new primitive, but the measured price of combining a shared
+  frame with a shared signature for a ledger, and where that price cannot be paid.*
 
 **What is honest about it.**
 * **The capacities themselves are simulated:** 124 and 35 drones are ns-3 at 802.11a with one
@@ -440,15 +475,17 @@ items 5–6).
 
 | Alternative | What it is | Why it was not chosen | Evidence |
 |---|---|---|---|
-| **A smaller MAC instead of a signature** (MAVLink 2, 13 B tag) | shared-key tag on each message | no non-repudiation: anyone with the key could have made it. It also still sends a frame per record: 42.1 drones against 124.5 | `paper/main.tex` §1.1, §3.12; Table 15 (`results/raw/stream_deadline.csv`) |
+| **A smaller MAC instead of a signature** (MAVLink 2, 13 B tag) | shared-key tag on each message | no non-repudiation: anyone with the key could have made it. It also still sends a frame per record: 42.1 drones against 124.5 | `paper/main.tex` §1.1, §3.12; Table 17 (`results/raw/stream_deadline.csv`) |
 | **TESLA** | a MAC whose key is revealed later | delays verification at the receiver; a disclosed key gives no non-repudiation; a frame per record (40.4 drones) | `paper/main.tex` §1.1, §3.12 |
 | **Gennaro–Rohatgi chaining** | sign the first packet, hash-chain the rest | one lost packet breaks the chain; a record waits for later packets, so it never verifies within 100 ms | `paper/main.tex` §1.1, §3.12 |
 | **EMSS** | several hashes per packet plus periodic signature packets | packets depend on later ones; never verifies within the deadline (34.8 drones) | `paper/main.tex` §3.12 |
 | **Wong–Lam hash tree** | sign a tree over a block; each packet carries its path | each packet verifies alone and keeps non-repudiation, but pays 129 B per packet (29.0 drones) | `paper/main.tex` §3.12 |
 | **Erasure-coded stream authentication** | spread hashes and signature over a block's packets | packets depend on each other; latency of one block | `paper/main.tex` §1.1 (Pannetrat & Molva, ref. [13]) |
-| **Aggregate signatures** (BLS, CLAS schemes) | combine many signatures into one | they reduce the **verifier's work**, not what each signer sends (583–859 B per message in published CLAS schemes); BLS verification on the Pi serves only 10 drones per core | `paper/main.tex` §1.1, §3.6, §3.12; Table 14 |
+| **Message chaining in V2X** (Cominetti et al., ePrint 2022/133) | every message keeps its signature and carries the hashes of 1–3 predecessors, so one verified signature validates a run | it reduces the **verifier's work** and **adds** 16–48 B per message: the cost that does not bind here, paid for with the one that does. At 10 messages/s, verified within tens of milliseconds, Λ·D_max < 1, where no batch is admitted anyway | `paper/main.tex` §1.1; `docs/literature/README.md` (2026-11-07) |
+| **Relay aggregation** (Rotta & Mykytyn 2024) | relays put messages of several sources in one 802.11 frame, each keeping its HMAC | shares the frame but not the authenticator (row 6 of Table 5 with a tag); no non-repudiation; only at relays | `paper/main.tex` §1.1, §3.4 |
+| **Aggregate signatures** (BLS, CLAS schemes) | combine many signatures into one | they reduce the **verifier's work**, not what each signer sends (583–859 B per message in published CLAS schemes); BLS verification on the Pi serves only 10 drones per core | `paper/main.tex` §1.1, §3.6, §3.12; Table 16 |
 | **Larger batches** (more records per frame) | amortise the signature further | the freshness deadline caps the batch at **4** at 50 records/s and 100 ms. The 1500 B MTU would allow 151 | `paper/main.tex` §2.3, Eq. (2) |
-| **Dependent frames** (key record only every *r* frames) | save a few bytes per record | after a loss, the next frames cannot be decoded. At p = 0.05, r = 4 verifies only **0.876** of records, below 0.95; the most it could ever save is 3.5 B per record | `paper/main.tex` §3.2; Table 5 (`results/raw/e3_codec_loss.csv`) |
+| **Dependent frames** (key record only every *r* frames) | save a few bytes per record | after a loss, the next frames cannot be decoded. At p = 0.05, r = 4 verifies only **0.876** of records, below 0.95; the most it could ever save is 3.5 B per record | `paper/main.tex` §3.2; Table 6 (`results/raw/e3_codec_loss.csv`) |
 | **One signature split across several frames** (fragmentation) | fit a big signature on a small link | a unit spread over n frames verifies with probability (1 − p)ⁿ; with ε ≤ p only n = 1 passes | `paper/main.tex` §2.3, "Verifiability"; `docs/02_MATHEMATICAL_FOUNDATIONS.md:231` |
 | **Block aggregate with fragmentation** (original placement D) | one signature over a block spanning several frames | the same (1 − p)ⁿ argument (thesis Theorem "Fragmentation is foreclosed") | `src/authbc/placement/block_agg.py`; `thesis/ch04_theory.tex` (label `thm:t3`) |
 
@@ -460,7 +497,7 @@ frame** (`paper/main.tex` §2.2, "Design Parameters"):
 * **Four records**, because that is the largest batch the 100 ms deadline allows at 50 records/s
   (Eq. (2), §7).
 * **One signature over the frame**, because per-record signatures inside a shared frame still cost
-  64 B each (row 6 of Table 4: 93.00 B per record, against 43.25 B).
+  64 B each (row 6 of Table 5: 93.00 B per record, against 43.25 B).
 * **One chain link per frame**: the receiver recomputes the other links from the records
   themselves, so they need not travel (`wire_v2.py:38-41`).
 * **A key record in every frame**, so that every frame decodes and verifies alone, and a lost frame
@@ -478,14 +515,14 @@ contributions.)
 
 | Decision | Alternatives | Why this one | Evidence |
 |---|---|---|---|
-| **b = 4 records per frame** | 1, 2, 3, 5 … up to the MTU's 151 | Eq. (2): five records already fill the whole 100 ms at 50 records/s, leaving nothing for the channel. Four is the most the deadline allows | `paper/main.tex` §2.3; Table 6 (`results/raw/freshness_budget.csv`: worst case 83.8 ms); Fig. 6 (`results/raw/batch_capacity.csv`: batches 2, 3, 8 simulated) |
-| **r = 1: a key record in every frame** | r = 2, 4, 8, 16 | Eq. (3): with independent loss p and target ε ≤ p, only r = 1 meets V ≥ 1 − ε. Measured with the codec in the loop: r = 4 gives 0.876 at p = 0.05 | `paper/main.tex` §3.2, Table 5; `docs/DECISIONS.md` R3; `docs/DECISIONS.md` (trade-off register) §6 ("FORCED") |
-| **One signature per frame** (per-frame signing) | a signature per record inside the frame | 43.25 against 93.00 B per record; capacity 124 against 76 | Table 4, rows 6 and 8 (`design_ladder.csv`) |
+| **b = 4 records per frame** | 1, 2, 3, 5 … up to the MTU's 151 | Eq. (2): five records already fill the whole 100 ms at 50 records/s, leaving nothing for the channel. Four is the most the deadline allows | `paper/main.tex` §2.3; Table 7 (`results/raw/freshness_budget.csv`: worst case 83.8 ms); Fig. 6 (`results/raw/batch_capacity.csv`: batches 2, 3, 8 simulated) |
+| **r = 1: a key record in every frame** | r = 2, 4, 8, 16 | Eq. (3): with independent loss p and target ε ≤ p, only r = 1 meets V ≥ 1 − ε. Measured with the codec in the loop: r = 4 gives 0.876 at p = 0.05 | `paper/main.tex` §3.2, Table 6; `docs/DECISIONS.md` R3; `docs/DECISIONS.md` (trade-off register) §6 ("FORCED") |
+| **One signature per frame** (per-frame signing) | a signature per record inside the frame | 43.25 against 93.00 B per record; capacity 124 against 76 | Table 5, rows 6 and 8 (`design_ladder.csv`) |
 | **Ed25519** | ECDSA P-256 (same 64 B), BLS (96 B), Falcon-512 (666 B) | same bytes as ECDSA but faster verification on the Pi 4 (259 against 327 µs). BLS: 8.61 ms per verification, 10 drones per core. The order flips on x86 | `docs/DECISIONS.md` (trade-off register) §4; `paper/main.tex` §3.1, §3.6; charter decision D2 (`docs/00_PROJECT_CHARTER.md` §6) |
 | **One chain link per frame** (frame-linked) instead of one per record (record-linked) | 32 B link inside every record | the per-record links are redundant: a frame is signed and accepted as a unit, and the receiver recomputes them. Cost: inside a frame, order rests on the signature alone, one protection instead of two | `paper/main.tex` §2.2, "One Chain Link per Frame"; `wire_v2.py:38-41`; `docs/OPEN_ITEMS.md` G5 (confirmed by Mohamed, 2026-10-08) |
 | **Integer keys** in the frame header | text keys ("src", "base_seq" …) | 29 of the 44 header bytes were key *names*. Integer keys give a 23 B header, and this alone decided whether one LoRa data rate was excluded | `docs/DECISIONS.md` (trade-off register) §4 (F44); `results/raw/frame_components.csv` |
 | **Canonical CBOR** | JSON, MessagePack, plain CBOR | one exact byte form, so a signature over bytes always verifies; standard (RFC 8949); found byte-identical across 10,000 trials in the earlier work | `src/authbc/ledger/record.py` (`canonical_bytes`); `paper/main.tex` §1.1 |
-| **Delta records** | full (key) records only | 9 B instead of 24 B for records 2–4: row 7 (no delta coding) is 54.50 B per record, row 8 is 43.25 B | Table 4 rows 7–8; `frame_components.csv` |
+| **Delta records** | full (key) records only | 9 B instead of 24 B for records 2–4: row 7 (no delta coding) is 54.50 B per record, row 8 is 43.25 B | Table 5 rows 7–8; `frame_components.csv` |
 | **sender and sequence number written once per frame** | in every record | every record of a frame shares the sender and has consecutive sequence numbers; repeating them cost 10 B per record in the first format | `wire_v2.py:29-31`; `docs/DECISIONS.md` (trade-off register) §4 ("Per-record src and seq") |
 | **8 B group MAC**, checked before decoding | no admission check; per-sender rate cap; cheap shape checks | an outsider's forged frame is refused in 22.5 µs instead of costing a full receive (1.08 ms); costs 3.1 % of capacity. **The choice of 8 bytes rather than another length: reason not recorded in the project** (`OPEN_ITEMS.md` Q1) | `src/authbc/placement/admission.py`; `paper/main.tex` §3.10; `docs/revision/REVISION_PLAN.md:285` |
 | **Timestamp acceptance window** (Δ = 150 ms tested) | sequence numbers only | sequence numbers cannot see an attacker who *delays* frames; the signed timestamp can, at zero extra bytes. **Why 150 ms exactly: the revision plan's number, not derived in the project** (`OPEN_ITEMS.md` Q2) | `src/authbc/placement/freshness_rule.py`; `predictions/A5.md:38`; `docs/revision/REVISION_PLAN.md:240` |
@@ -493,7 +530,7 @@ contributions.)
 | **Randomised send time in ns-3** (each frame at a random instant within its period) | strictly periodic sending | strictly periodic senders freeze their relative phases for a whole run, so a few nodes collide every period while others never do; a run then samples one phase pattern. Both sources give the same mean (difference 0.0004 ± 0.0009 over 1 260 runs) | `paper/main.tex` §2.7; `docs/LOGBOOK.md` 2026-10-06 (F51, F1b); `docs/DECISIONS.md` (trade-off register) §6 |
 | **50 records/s, 100 ms deadline** | 20 records/s, 250 ms | 50 Hz is the PX4 autopilot's onboard stream rate (read from its source), and the pair meets 3GPP TS 22.125 (at least 10 messages/s, at most 100 ms). The relaxed point breaks the 100 ms requirement and buys no bytes | `docs/DECISIONS.md` (trade-off register) §1; `paper/main.tex` §2.1 |
 | **ε = 0.05** (target V ≥ 0.95) | other budgets | the paper takes ε = 0.05 "throughout"; the loss grid in the system model is p ∈ {0.02, 0.05, 0.10}. **Why 0.05 specifically: reason not recorded in the project** (`OPEN_ITEMS.md` Q3) | `paper/main.tex` §2.1; `docs/01_SYSTEM_MODEL_ARCHITECTURE.md:6` |
-| **802.11a at 6 Mb/s** | faster rates | "base rate … for robustness". Other rates were simulated later: the gain grows at faster rates | `docs/01_SYSTEM_MODEL_ARCHITECTURE.md:5`; `paper/main.tex` §3.9, Table 10 |
+| **802.11a at 6 Mb/s** | faster rates | "base rate … for robustness". Other rates were simulated later: the gain grows at faster rates | `docs/01_SYSTEM_MODEL_ARCHITECTURE.md:5`; `paper/main.tex` §3.9, Table 12 |
 | **One LoRa channel for all nodes** | three channels | broadcast needs every node on the same frequency; extra channels add no airtime, because the duty cycle is per sub-band | `docs/DECISIONS.md` (trade-off register) §1a |
 | **Capacity simulated per configuration** | one load ceiling applied to all | a registered test showed the single ceiling (U = 2.435) misses by up to 23 % | `docs/LOGBOOK.md` 2026-10-06; F50; `predictions/NMAX_DIRECT_EXPECTATIONS.md` |
 | **Total bytes reported, never "75 % fewer authentication bytes"** | quote 75 % | 75 % is exactly 1 − 1/b at b = 4: the definition of batching, not a finding | `docs/DECISIONS.md` (trade-off register) §2 (F13); `docs/archive/NARRATIVES_2026-08.md`, "The AUTHBC story" §6 |
@@ -581,7 +618,7 @@ offset  bytes  field (CBOR key)                 what it holds
 ```
 
 * **Header H_f = 23 B** = 1 + 2 + 2 + 4 + 6 + 2 + 3 + 3 (`frame_components.csv`, rows
-  `header_field, lean`; Table 2 of the paper).
+  `header_field, lean`; Table 3 of the paper).
 * **Link L = 35 B** = 1 key byte + 2 length bytes + 32 hash bytes
   (`src/authbc/models/frame.py`, `LINK_FIELD_BYTES = 35`).
 * **Records** = 24 + 3 × 9 = 51 B.
@@ -592,7 +629,7 @@ offset  bytes  field (CBOR key)                 what it holds
 For comparison, the **record-linked format** built first (`src/authbc/placement/wire.py`) used
 text keys (a 44 B header, 29 B of it key names), and put a 32 B link, the sender id and the
 sequence number inside every record. Its key record is 59.9 B and its delta record 44.0 B, each
-including its 32 B link (Table 2). The frame-linked format is **42 %** smaller
+including its 32 B link (Table 3). The frame-linked format is **42 %** smaller
 (`paper/main.tex` §2.2).
 
 ### 6.4 The receiver, step by step
@@ -636,7 +673,7 @@ missing record, for example the post-mission audit (`paper/main.tex` §2.2;
 The selection **minimises bytes on air** (Eq. 1), subject to **five constraints**: freshness,
 verifiability, channel capacity and receiver CPU select the configuration; payload decides where
 a frame can be sent at all (`paper/main.tex` §2.3). The capacity law, Eq. (6), describes the
-channel constraint (§3.5 of the paper). Symbols are listed in Table 1 of the paper.
+channel constraint (§3.5 of the paper). Symbols are listed in Table 2 of the paper.
 
 ### Eq. (1) — bytes per record (the objective)
 
@@ -671,7 +708,7 @@ D(b) = b / Λ + T_ch + t_v  ≤  D_max
 | t_v | one signature verification | 0.26 ms [measured] |
 | D_max | deadline | 100 ms |
 
-*Worked:* D(4) = 80 + 3.49 + 0.26 = **83.75 ms ≤ 100 ms** (Table 6, `results/raw/freshness_budget.csv`).
+*Worked:* D(4) = 80 + 3.49 + 0.26 = **83.75 ms ≤ 100 ms** (Table 7, `results/raw/freshness_budget.csv`).
 With b = 5 the fill alone is 100 ms, so nothing is left for the channel: b ≤ 4 "whatever the
 encoding or the scheme" (`paper/main.tex` §2.3). In general a batch of b needs Λ > b / D_max: 40
 records/s here. At 20 records/s with a 100 ms deadline the batch is one and nothing is gained
@@ -689,7 +726,7 @@ Frame j of a group verifies only if it and the j − 1 frames before it arrive.
 *Worked at p = 0.05:*
 * r = 1: V = 0.95, which meets V ≥ 0.95 exactly.
 * r = 4: V = (0.95 + 0.9025 + 0.857 + 0.815) / 4 = **0.881**, which misses. Measured with the real
-  codec: 0.876 (Table 5).
+  codec: 0.876 (Table 6).
 
 So with ε ≤ p only r = 1 passes (`paper/main.tex` §2.3). At the loss actually measured between
 two radios, 2.3 × 10⁻⁴, even r = 16 gives V = 0.998 (`paper/main.tex` §3.2).
@@ -711,7 +748,7 @@ k = signatures per frame; t_v = one verification (Ed25519: 259.5 µs [measured],
 * BLS (t_v = 8.61 ms): **10**.
 
 This counts cryptography only. The full Python receiver, decoding included, serves **57** per core;
-the Rust receiver **290** (Table 8; `paper/main.tex` §3.6).
+the Rust receiver **290** (Table 10; `paper/main.tex` §3.6).
 
 ### Eq. (5) — payload
 
@@ -744,7 +781,7 @@ N_max ≈ 0.05 / ( f · (a·T + c) ),    a = 0.071 (fitted),  c = 8 µs
   **125.0**, against 124.55 simulated.
 * Per-record signing: f = 50, T = 302 µs → **33.96**, against 35.26 simulated.
 
-The law was fitted to six rows of Table 4 and reproduces them within 3.8 %. It then predicted
+The law was fitted to six rows of Table 5 and reproduces them within 3.8 %. It then predicted
 seven new configurations within 3.4 %, with the predictions committed first
 (`paper/main.tex` §3.5; F54). It is a fit at one loss level and one PHY rate; the tables always
 quote simulated values, not the law.
@@ -772,7 +809,7 @@ another folder is named.
 * *Means:* every byte figure in the paper is the length of a frame the code emitted and decoded.
 * *Limits:* sizes from one synthetic generator; real flight logs are checked separately (E20).
 
-**E2 — The bytes ladder, step by step** (Table 4) [measured frames; record-linked rows estimated]
+**E2 — The bytes ladder, step by step** (Table 5) [measured frames; record-linked rows estimated]
 * *Question:* how much does each step save — sharing the frame, sharing the signature, delta
   coding — and where does the chain link belong?
 * *How:* `design_ladder` experiment → `results/raw/design_ladder.csv`; an exhaustive search over
@@ -783,9 +820,9 @@ another folder is named.
 * *Means:* the link inside each record costs 32 B that no batch can amortise; moving it to the
   frame saves 24 B per record at b = 4.
 * *Limits:* the record-linked frames with delta records were never produced; their sizes are
-  estimated and marked (Table 4, footnote 1).
+  estimated and marked (Table 5, footnote 1).
 
-**E3 — Verifiability against the key-record interval** (Table 5) [measured codec, synthetic loss]
+**E3 — Verifiability against the key-record interval** (Table 6) [measured codec, synthetic loss]
 * *Question:* if only one frame in r starts with a key record, how many records still verify?
 * *Why:* the July design used a key record every 16 records (`paper/main.tex` §3.2), and as
   published it verified only 0.881 (`docs/LOGBOOK.md` 2026-10-06).
@@ -819,7 +856,7 @@ another folder is named.
 * *Limits:* the capacities are simulated at strong, equal power, where frames are lost by
   collision, not by bit errors.
 
-**E7 — Freshness** (Table 6) [simulated channel delay + measured verification]
+**E7 — Freshness** (Table 7) [simulated channel delay + measured verification]
 * *How:* `freshness_budget` → `results/raw/freshness_budget.csv`, with the channel delay
   simulated at the heaviest load that still delivers 95 %.
 * *Result:* 80 ms fill + 0.76 ms channel (mean; 3.49 ms worst) + 0.26 ms verification = 81.0 ms
@@ -839,7 +876,7 @@ another folder is named.
 
 ### 8.2 Channel capacity
 
-**E9 — Direct capacity search in ns-3** (Table 4, Fig. 5) [simulated]
+**E9 — Direct capacity search in ns-3** (Table 5, Fig. 5) [simulated]
 * *Question:* how many drones fit in one collision domain with mean delivery ≥ 95 %?
 * *How:* `ns3/run_nmax_direct.py` (the `make sim-ns3-nmax` target) → `ns3_nmax_direct_runs.csv`,
   `ns3_nmax_direct.csv`; 802.11a 6 Mb/s, broadcast, equal power; 30 seeds of 20 s per point;
@@ -929,7 +966,7 @@ another folder is named.
   registered rather than A4 being tuned** (F102).
 * *Means:* run-time batching buys freshness, not capacity.
 
-**E19 — Other PHY rates** (Table 10; A11) [simulated]
+**E19 — Other PHY rates** (Table 12; A11) [simulated]
 * *Result:* AUTHBC serves 3.39–3.80 times per-record signing on six 802.11a/p settings, more at
   faster rates; the model is within 1.5 %, except 2.9–4.6 % optimistic at the fastest rate of each
   width. The registered span 1.7–4.3 **failed** (`docs/revision/STATUS.md`, A11).
@@ -941,7 +978,7 @@ another folder is named.
   69.4 % synthetic. The key-record prediction missed by 0.02 B (F52).
 * *Simulated flights:* PX4 software-in-the-loop at 20 ms → `px4_sitl_sizes.csv`: every delta
   9.0 B, key 20.9 B, 42.47 B per record; the 50 Hz stream holds 20.0 ± 0.4 ms.
-* *Airframes* (A9, A9-fast; Table 11): 30 flights; 9/15/25 fields save 70.1/67.2/63.3 % and give
+* *Airframes* (A9, A9-fast; Table 13): 30 flights; 9/15/25 fields save 70.1/67.2/63.3 % and give
   ratios 3.51/3.31/3.04. The registered key-record and fixed-wing delta sizes **missed**.
 * *Means:* the generator is representative within about one percentage point; the gain is set by
   the number of frames, not the record size.
@@ -965,7 +1002,7 @@ another folder is named.
   registered scaling ranges held for one and two cores and **failed** (low) for three and four
   (F84, `docs/audits/model_provenance.md:4192`).
 
-**E24 — Rust receiver and deferred verification** (Table 8; A8, A13) [measured]
+**E24 — Rust receiver and deferred verification** (Table 10; A8, A13) [measured]
 * *How:* `hw/rust_receiver/`; `analysis/compiled_receiver_bench.py` →
   `results/hw/compiled_receiver.authbc-pi4b.csv`; byte identity with Python on 10 000 frames
   (`analysis/rust_identity.py`).
@@ -973,7 +1010,7 @@ another folder is named.
   64; deferred batch verification 629. A record is evidence within 191 ms by Eq. (2)'s convention
   (171 ms counting the fill wait as (b − 1)/Λ, as the registration did: `predictions/A13.md:50`).
 
-**E25 — Sender energy** (Table 9) [measured]
+**E25 — Sender energy** (Table 11) [measured]
 * *How:* an INA219 sensor on the supply rail, five repetitions, idle power subtracted
   (`hw/validate_energy_e2e.py`; `results/raw/energy_runs.csv`, `energy_runs_2026-10-22.csv`).
 * *Result:* record-linked 118.8 → 58.4 µJ per record with batching; frame-linked Python 273.1 →
@@ -1031,10 +1068,10 @@ makes verification fail (`paper/main.tex` §2.2).
 
 ### 8.6 LoRaWAN
 
-**E32 — The exclusion matrix** (Fig. 10, Table 13) [arithmetic on a measured frame]
+**E32 — The exclusion matrix** (Fig. 10, Table 15) [arithmetic on a measured frame]
 * *How:* `exclusion_matrix` → `results/raw/exclusion_matrix.csv`.
 * *Result:* 8 of 12 data rates excluded: 5 by the signature alone, 3 by header + link + signature
-  (124 B floor > 115 B). What each relaxation buys (Table 13): sending no link frees the 115 B
+  (124 B floor > 115 B). What each relaxation buys (Table 15): sending no link frees the 115 B
   rates; a 48 B BLS signature fits 51 B but no frame of this telemetry fits 115 B (118 B); a 13 B
   MAC fits the 115 B rates.
 * *Scope:* five conditions (`paper/main.tex` §3.11, "Scope").
@@ -1048,19 +1085,19 @@ makes verification fail (`paper/main.tex` §2.2).
 
 ### 8.7 Comparison with published schemes
 
-**E34 — Stream-signing schemes** (Table 15; A10) [simulated]
+**E34 — Stream-signing schemes** (Table 17; A10) [simulated]
 * *How:* `src/authbc/placement/stream_schemes.py`, `analysis/stream_deadline.py`,
   `ns3/authbc-links.cc` → `stream_deadline.csv`; 1 860 runs.
 * *Result:* every scheme sends a frame per record (50 frames/s): MAVLink 42.1, TESLA 40.4,
   Gennaro–Rohatgi 39.4, EMSS 34.8, Wong–Lam 29.0 drones; AUTHBC 124.5. Within 100 ms only MAVLink,
   Wong–Lam and TESLA with a short disclosure delay reach 95 % (F99).
 
-**E35 — Aggregate-signature schemes** (Table 14) [published numbers]
+**E35 — Aggregate-signature schemes** (Table 16) [published numbers]
 * *Result:* 583–859 B per message as reported by Li et al. (ref. [7]), against 52.95 B per record
   for AUTHBC with certificates. Not a ranking: those schemes give conditional privacy, which AUTHBC
   does not (`paper/main.tex` §3.12).
 
-**E36 — Other broadcast systems** (Table 17; A17) [modeled]
+**E36 — Other broadcast systems** (Table 19; A17) [modeled]
 * *How:* `analysis/other_links.py` → `other_links.csv`.
 * *Result:* ADS-B and Bluetooth 4 Remote ID cannot carry a signature at all; V2X CAM at 10 Hz
   admits no frame at 100 ms (`paper/main.tex` §4.2).
@@ -1145,6 +1182,20 @@ On 2026-11-04 Mohamed set the work's weaknesses as the main open items, W1–W9
 * AUTHBC's own frame lost 1.24× the one-record frame (95 % interval 1.06–1.45), about the model's
   1.14: the known weak spot is real on air, and no worse than modelled.
 * Loss swung by factors of 2–10 between 22-second windows.
+* **Written into the paper and thesis on 2026-11-07:**
+  * the paper's §3.2 "Loss on Air";
+  * the thesis's §7 "Loss measured on air", with the full loss table;
+  * the limitations narrowed to the link measured.
+
+  Every number is generated (`analysis/paper_numbers.py`, `on_air`) from
+  `results/raw/w3a_w3a_2026-11-06.csv` and the new window counts
+  `results/raw/w3a_w3a_2026-11-06_cycles.csv`.
+* **Two reported figures corrected** (W3a.md, correction addendum):
+  * the bursts at the higher powers are 1.01–1.38, not 1.01–1.15 (one trace, the TP-Link's A at
+    4 dBm, was left out);
+  * the trace nearest 5 % lost 4.70 %, not 4.71 % (rounded twice).
+
+  No scored claim moved.
 
 ---
 
@@ -1178,6 +1229,7 @@ and the dated entries of `docs/LOGBOOK.md`.
 | 2026-11-06 | Balancing four radios: W1g void (F128), W1h void by a hair (F130), W1i untuned (F131); the 3-minute preflight before every long run; the 1 m square; **W1j and W1k valid: the ratio 3.28 and 3.27 against 3.30** (F132, F133); the 6 Mb/s first cell (F129) | Mohamed: "try again", "make this adaptive", "what can i do physically" |
 | 2026-11-06 | The paper and thesis finished with November's results; Q8, Q9, Q11–Q14 applied (`thesis/STATUS.md`) | Mohamed: "finish the paper and thesis" |
 | 2026-11-06/07 | W3a: frame loss measured on air, traced frame by frame | Mohamed: "do the packet-loss measurement" |
+| 2026-11-07 | W3a written into the paper and thesis; ePrint 2022/133 read; the novelty stated as what is known and what is added, with a positioning table, in both documents; two reported W3a figures corrected | Mohamed: "take care of the novelty framing … honestly and scientifically" |
 
 **The pattern the project recorded about itself:** four headline numbers were once distorted by
 small-sample means near a threshold, and the cure was 30 seeds and looking at the distribution
@@ -1206,13 +1258,17 @@ hid three errors until it was built (`docs/LOGBOOK.md` 2026-10-06).
 * **The ratio of the two capacities, measured on four radios at 802.11b: 3.28 and 3.27 in two
   sessions, against the model's 3.30.** Capture raises both capacities by 3–4 % and leaves the
   ratio within 1 %.
+* **Loss on air** (three links through walls from one sender, 802.11b):
+  * AUTHBC lost only its own frames;
+  * a dependent design did no worse than under independent loss;
+  * AUTHBC's length penalty, 1.24 (1.06–1.45), matched the bit-error model's 1.14.
 
 **The mechanism:**
 * Capacity follows the airtime capacity law, N_max ≈ 0.05 / (f(aT + c)), with one fitted constant.
 * The contention model, with nothing fitted, explains the constant and predicts unsimulated cases.
 * The fixed ~173 µs per frame is why removing frames matters more than removing bytes.
 
-**Deployment guidance** (`paper/main.tex` §4.3, Table 16):
+**Deployment guidance** (`paper/main.tex` §4.3, Table 18):
 1. High-rate 802.11 swarms (Λ·D_max = 5): one Ed25519 signature and one link per four records,
    with a key record in every frame.
 2. Tight deadlines: per-record signing when 1 < Λ·D_max ≤ 2. No frame meets the deadline when
@@ -1237,9 +1293,11 @@ hid three errors until it was built (`docs/LOGBOOK.md` 2026-10-06).
   depart from the model, and the cause is not established.
 * **Telemetry is synthetic.** The flight-log check covers twelve logs of one autopilot at 5 Hz,
   plus simulated 50 Hz flights.
-* **Loss:** generated or simulated in the paper; measured on air at 1 Mb/s in W3a (§8.9).
+* **Loss:** generated or simulated, and measured on air on three static indoor links from one
+  sender, in one evening, at 802.11b (not the 802.11a of the capacities). The loss swung several-fold
+  between 22 s windows.
 * **Length-dependent loss:** AUTHBC is below its target where one-record frames lose 5 % to bit
-  errors.
+  errors. On air, its length penalty agreed with the model within its interval.
 * **Only the sender is metered,** with a sensor never checked against a reference load; receiver
   and radio energy are modelled.
 * **Security scope:** no confidentiality, availability or key management; an insider holding the
@@ -1248,6 +1306,22 @@ hid three errors until it was built (`docs/LOGBOOK.md` 2026-10-06).
   composed; the encoding is proven injective.
 * **Post-quantum:** ML-DSA's 2 420 B signature cannot travel in one frame at any batch size.
 * **Multi-hop:** relays are implemented but not measured.
+
+**The objections a reviewer is likely to raise, and where each is answered** (2026-11-07; the
+framing was strengthened for these, and nothing was claimed beyond the evidence):
+
+| Objection | Where the paper answers it | What is left | What would close it |
+|---|---|---|---|
+| "Batching under one signature is obvious / not new" | §1, paragraph 2 (three costs, none reduces frames); contributions 1 (the larger step, 2.2×, is the established one, frame sharing; the signature adds 1.6×); Table 1 `tab:position`; "Batching … is not new"; §4.2 | a reader may still call the mechanism incremental. The paper's claim is the accounting and the boundaries, and it says so | nothing more to write; the venue matters (a systems/measurement venue values boundaries) |
+| "The capacities are simulated" | §3.5 *Capacity on Four Radios*, Table 9; Limitations *Capacities Are Simulated* | absolute capacity at 802.11a is not measured; only the ratio, at 802.11b | ≥ 4 radios at 5 GHz (only the two Pi 4 have 5 GHz) |
+| "The hardware PHY is not the paper's PHY" | W1b (the model against ns-3 at 802.11b, within 1 %); the ratio within 1 % of the model | the 802.11a result rests on the simulator and the model | as above |
+| "Real loss is not independent / not length-neutral" | §3.2 *Loss on Air* (W3a) | three static indoor links, one sender, one evening | a flight, or published air-to-air traces |
+| "The telemetry is synthetic" | Limitations *Telemetry Is Synthetic*; twelve flight logs; W4a (no telemetry within the schema reverses the result, 2.75×) | one autopilot | logs of other autopilots |
+| "The comparison with CLAS is unfair" | §3.12: the axis, not a ratio; "should not be read as a ranking" | — | — |
+| "An insider can flood; key management is out of scope" | §2.1, Security Scope | stated, not solved | out of scope by design |
+| "Energy: only the sender is metered" | Limitations *Energy and CPU* | the receiver and radio are modeled | W5: a reference load and a receiver meter |
+| "No multi-hop" | Limitations *Multi-Hop* | implemented, not measured | W8 |
+| "42 pages" | — | the length | Mohamed's choice of journal (I1), and what goes to supplementary material |
 
 **Open items** (`docs/OPEN_ITEMS.md`):
 * **Waiting on Mohamed:**
@@ -1400,26 +1474,29 @@ hid three errors until it was built (`docs/LOGBOOK.md` 2026-10-06).
 | Stream-signing schemes | `src/authbc/placement/stream_schemes.py` |
 | Tamarin models | `formal/` |
 | ns-3 scenarios | `ns3/` (`run_nmax_direct.py`, `authbc-spatial.cc`, `authbc-links.cc`, `authbc-adaptive.cc`) |
-| Table 2 (byte budget), Fig. 2 | `results/raw/frame_components.csv` |
-| Table 4 (ladder), Table 7 | `results/raw/design_ladder.csv` |
-| Table 5 (loss), Fig. 3 | `e3_codec_loss.csv`, `verifiability_margin.csv` |
-| Table 6 (freshness) | `freshness_budget.csv` |
+| Table 1 (positioning against prior work) | `paper/main.tex` §1.1, sources in `docs/literature/README.md` |
+| Table 3 (byte budget), Fig. 2 | `results/raw/frame_components.csv` |
+| Table 5 (ladder), Table 8 | `results/raw/design_ladder.csv` |
+| Table 9 (four radios) | `w1i_w1j_2026-11-06_run.csv`, `w1i_w1k_2026-11-06_run.csv`, `w1f_w1f_2026-11-05.csv` |
+| Table 6 (loss), Fig. 3 | `e3_codec_loss.csv`, `verifiability_margin.csv` |
+| Loss on air (§3.2, "Loss on Air"; thesis Table `tab:loss-air`) | `w3a_w3a_2026-11-06.csv`, `w3a_w3a_2026-11-06_cycles.csv`, `predictions/W3a.md` |
+| Table 7 (freshness) | `freshness_budget.csv` |
 | Fig. 4 (design map) | `design_map.csv`, `design_map_validation.csv` |
 | Fig. 5 (delivery against nodes) | `ns3_nmax_direct.csv` (`analysis/figures_nmax.py`) |
 | Fig. 6 (capacity against deadline) | `batch_capacity.csv`, `ns3_nmax_direct_runs.csv` (`analysis/figures_frames.py`) |
 | Fig. 7 (spread swarm) | `spatial_capacity.csv`, `spatial_motion.csv`, `spatial_dref.csv` |
 | Fig. 8 (adaptive batch) | `adaptive_batching.csv`, `adaptive_batching_b.csv` |
-| Table 8 (receiver) | `results/hw/compiled_receiver.authbc-pi4b.csv` |
-| Table 9 (energy) | `energy_runs.csv`, `energy_runs_2026-10-22.csv`, `energy_table.csv` |
-| Table 10 (PHYs, Falcon) | `phy_links.csv`, `pq_capacity.csv` |
-| Table 11 (airframes) | `record_size_fast.csv` |
-| Table 12 (security), Fig. 9 | `replay_window.csv`, `results/hw/flood_*.authbc-pi4b.csv`, `ledger_audit.csv`, `formal/` |
-| Table 13, Fig. 10 (LoRaWAN) | `exclusion_matrix.csv` |
+| Table 10 (receiver) | `results/hw/compiled_receiver.authbc-pi4b.csv` |
+| Table 11 (energy) | `energy_runs.csv`, `energy_runs_2026-10-22.csv`, `energy_table.csv` |
+| Table 12 (PHYs, Falcon) | `phy_links.csv`, `pq_capacity.csv` |
+| Table 13 (airframes) | `record_size_fast.csv` |
+| Table 14 (security), Fig. 9 | `replay_window.csv`, `results/hw/flood_*.authbc-pi4b.csv`, `ledger_audit.csv`, `formal/` |
+| Table 15, Fig. 10 (LoRaWAN) | `exclusion_matrix.csv` |
 | LoRa capacity | `lora_capacity.csv`, `lora_budget.csv` |
-| Table 14 (CLAS) | numbers from Li et al. (ref. [7]) in `paper/main.tex` |
-| Table 15 (stream schemes) | `stream_baselines.csv`, `stream_deadline.csv` |
-| Table 16 (decisions) | built from the macros above |
-| Table 17 (other links) | `other_links.csv` |
+| Table 16 (CLAS) | numbers from Li et al. (ref. [7]) in `paper/main.tex` |
+| Table 17 (stream schemes) | `stream_baselines.csv`, `stream_deadline.csv` |
+| Table 18 (decisions) | built from the macros above |
+| Table 19 (other links) | `other_links.csv` |
 | Capacity at 97 % (S-01) | `capacity_97.csv`, `predictions/S01.md` |
 | Pre-registrations (every one, with commit and outcome) | `predictions/README.md` |
 | Findings F1–F134 | `docs/audits/model_provenance.md`; every past audit: `docs/audits/AUDIT_HISTORY.md` |

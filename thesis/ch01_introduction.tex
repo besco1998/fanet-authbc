@@ -87,6 +87,16 @@ stated it wrongly.
 
 \section{Contributions}
 
+What is known is stated first, because most of the mechanism is. Amortising one signature over
+many packets is a classical problem (stream signing, TESLA, erasure-coded blocks); batch and
+aggregate verification, and in V2X message chaining, reduce the verifier's work; sharing one frame
+among several messages is the principle of 802.11n aggregation, and a swarm design applies it at
+its relays (\Cref{ch:background}, \Cref{tab:position}). The larger step of the capacity gain
+reported here is that established one, sharing the frame. What this thesis adds is one signature
+and one chain link per frame with every frame verifiable alone, the accounting of what that costs
+under five coupled constraints, the boundaries it implies, and their checks in simulation and on
+radios:
+
 \begin{enumerate}
 \item \textbf{An overhead-dominance characterisation} for compressed authenticated FANET ledgers,
       with the threshold stated in closed form and measured across four encodings
@@ -116,7 +126,10 @@ stated it wrongly.
       against NS-3, plus measurements on two radios of the link's loss and of the access rule
       under saturation, a registered prediction of their loss below saturation that failed at
       one load of three, and the ratio of the two designs' capacities measured on four radios,
-      \hwRatio{} and \hwRepeatRatio{} against \hwModelRatio{} predicted (\Cref{ch:validation}).
+      \hwRatio{} and \hwRepeatRatio{} against \hwModelRatio{} predicted (\Cref{ch:validation});
+      and loss traced on air through walls, on which the design lost only its own frames and
+      its frame's length penalty matched the bit-error model within its interval
+      (\Cref{sec:loss-air}).
 
 \item \textbf{The gain under the conditions a reviewer would vary.} Spread over discs of up to
       $1$\,km with fading, capture and hidden stations, moving on independent paths, carried by

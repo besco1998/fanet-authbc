@@ -132,7 +132,7 @@ validate is the loss process itself, which is synthetic at the frame level in bo
 The corrected design uses $r = 1$. It costs \lossPrize\,B per record more than $r = 16$ would,
 and it is the only interval that meets the target at the design's own loss rate.
 
-\subsection{When loss grows with frame length}
+\subsection{When loss grows with frame length}\label{sec:loss-length}
 
 Everything above gives every frame the same loss probability. At a fixed bit error rate a frame
 of $L$ bytes with $o$ bytes of MAC overhead survives with probability $(1-\beta)^{8(L+o)}$, so
@@ -180,6 +180,89 @@ processes, with $95\%$ intervals; for loss that grows with length, $p$ is the lo
 one-record frame. Shaded: the losses the margin rule admits at $\varepsilon = 0.05$.}
 \label{fig:margin}
 \end{figure}
+
+\subsection{Loss measured on air}\label{sec:loss-air}
+
+Every loss above is generated, or made by the simulator. In November 2026 loss was measured on air
+(registration W3a, \Cref{tab:prereg-nov}). pi-A, one of the two Raspberry~Pi~4, sent alone from
+another room, three walls from the other boards, at three transmit powers set in software and read
+back: $10$, $4$ and $1$\,dBm. Three receivers kept every sequence number they received: the other
+Pi~4 (pi-B), a Pi~3 and a USB adapter. The channel was 802.11b at $1$\,Mb/s, checked by a rate
+measurement before and after each session. pi-A interleaved three sizes at $50$ frames/s, $22$\,s
+a window:
+\begin{itemize}
+\item the one-record frame of the frame-linked format (S);
+\item the design's four-record frame (A);
+\item a $1000$\,B frame (L), as a lever on length.
+\end{itemize}
+At each power, \airFrames{} frames of each size were sent. \Cref{tab:loss-air} gives the loss.
+
+\begin{table}[htbp]\centering
+\caption{Frame loss measured on air (\%), 802.11b at $1$\,Mb/s, through three walls; \airFrames{}
+frames per size, receiver and power. S: one-record frame; A: the design's four-record frame;
+L: $1000$\,B.}
+\label{tab:loss-air}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{l rrr rrr rrr}
+\toprule
+ & \multicolumn{3}{c}{pi-B} & \multicolumn{3}{c}{USB adapter} & \multicolumn{3}{c}{Pi~3} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-7}\cmidrule(lr){8-10}
+pi-A & S & A & L & S & A & L & S & A & L \\
+\midrule
+$10$\,dBm & \airTenPiBS & \airTenPiBA & \airTenPiBL & \airTenTpS & \airTenTpA & \airTenTpL & \airTenPiThreeS & \airTenPiThreeA & \airTenPiThreeL \\
+$4$\,dBm & \airFourPiBS & \airFourPiBA & \airFourPiBL & \airFourTpS & \airFourTpA & \airFourTpL & \airFourPiThreeS & \airFourPiThreeA & \airFourPiThreeL \\
+$1$\,dBm & \airOnePiBS & \airOnePiBA & \airOnePiBL & \airOneTpS & \airOneTpA & \airOneTpL & \airOnePiThreeS & \airOnePiThreeA & \airOnePiThreeL \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Each trace of the design's frame was replayed through the receiver. A key record was put in every
+frame ($r = 1$, as built), and in one frame of four ($r = 4$, a dependent design). Three claims
+were registered before the sessions, and all three held.
+\begin{itemize}
+\item \textbf{As built, the design lost only its own frames.} It verified exactly the share of
+      its frames received, on all \airTracesA{} traces.
+\item \textbf{Real loss was no harder on dependent frames than independent loss.} The seven traces
+      losing at least $1\%$ were pooled. $V(r = 4)$ was \airVdep{} against \airVdepIid{} for
+      independent loss at the same rates, and all seven were at or above their independent value.
+\item \textbf{Loss grew with length far less than the bit-error model of
+      \Cref{sec:loss-length} says for long frames.} L frames were lost \airLenRatio{} times as
+      often as S frames (95\% lower bound \airLenRatioLo). The model predicts \airLenModel{} at
+      the pooled S loss of \airLenPs\%.
+\end{itemize}
+
+\paragraph{The design's own length penalty is the model's.} This was reported, not scored. A
+frames were lost \airPenalty{} times as often as S frames, against \airPenaltyModel{} predicted.
+A bootstrap over the $36$ paired cycles of S and A windows gives a 95\% interval of
+\airPenaltyLo--\airPenaltyHi, so the excess over the model is not significant.
+
+Resampled frame by frame instead, the excess would have looked significant. The loss swings
+between windows of $22$\,s: at $1$\,dBm, pi-B's L windows read \airSwingPiBLo--\airSwingPiBHi\%,
+and the Pi~3's \airSwingPiThreeLo--\airSwingPiThreeHi\%. So the frames of one window are far from
+independent.
+
+The weak spot of \Cref{sec:loss-length}, that the design's longer frame loses more, is therefore
+real on air, at about the size the model gives. On the link nearest $5\%$, the Pi~3 at $1$\,dBm,
+the design's frame was lost \airNearP\% of the time and \airNearV{} of its records verified.
+
+\paragraph{Burstiness.} Over the traces losing at least $1\%$, loss was near independent at
+$10$ and $4$\,dBm. The mean bursts measured were \airBurstHighLo--\airBurstHighHi{} frames,
+against \airBurstHighIidLo--\airBurstHighIidHi{} for independent loss. The upper end comes from
+one trace, the adapter's A trace at $4$\,dBm.
+
+At $1$\,dBm loss was bursty: \airBurstLowLo--\airBurstLowHi{} measured, against
+\airBurstLowIidLo--\airBurstLowIidHi{} for independent loss. Bursts help a dependent design,
+which is why $r = 4$ did better than independent loss predicts.
+
+Every receiver's loss rose as pi-A's power fell, so at three walls it is the channel's loss, not a
+receiver's.\footnote{The registration's outcome first gave the higher powers' bursts as
+$1.01$--$1.15$, leaving out the adapter's trace, and the loss nearest $5\%$ as $4.71\%$, a value
+rounded twice ($207$ of $4400$ is $4.70\%$). Both were corrected when these figures were
+generated from the counts.}
+
+\paragraph{What it cannot show.} Three static indoor links through walls, from one sender, at one
+PHY, 802.11b, and not the 802.11a of the capacities. One sender, so no collisions: collision loss
+was traced in the simulator (\Cref{fig:margin}). One evening.
 
 \section{E9 --- what a frame is made of}\label{sec:e6}
 

@@ -497,7 +497,8 @@ class TestTheWorkedFrame:
 # 2026-11-06 (Mohamed, Q11: "apply all six as drafted"): every November registration is now a row
 # of appendix B's third table, and the list is empty. It stays, so a later registration not yet
 # written up is held here by name rather than excluded silently.
-NOT_YET_IN_THE_THESIS: frozenset[str] = frozenset({"prereg-W3a"})
+# 2026-11-07 (Mohamed: "Do it"): W3a written in as the thirteenth row; the list is empty again.
+NOT_YET_IN_THE_THESIS: frozenset[str] = frozenset()
 
 
 class TestTheRegistrationsOfAppendixB:
@@ -511,7 +512,8 @@ class TestTheRegistrationsOfAppendixB:
         import subprocess
 
         named = sorted(set(re.findall(r"\\texttt\{([0-9a-f]{7})\}", self.WHOLE)))
-        assert len(named) == 22 + 20 + 12     # S01 added 2026-10-27; November's twelve 2026-11-06
+        # S01 added 2026-10-27; November's twelve 2026-11-06; W3a 2026-11-07
+        assert len(named) == 22 + 20 + 13
         shallow = subprocess.run(["git", "rev-parse", "--is-shallow-repository"], cwd=REPO,
                                  capture_output=True, text=True).stdout.strip()
         assert shallow == "false", (
@@ -555,16 +557,16 @@ class TestTheRegistrationsOfAppendixB:
         assert "In fifteen of the eighteen at least one statement missed or failed" in methods
 
 
-    def test_the_third_table_holds_the_twelve_november_registrations(self) -> None:
+    def test_the_third_table_holds_the_thirteen_november_registrations(self) -> None:
         third = self.REVISION.split("\\section*{The registrations of November 2026}", 1)[1]
         body = third.split("\\endfoot", 1)[1].split("\\end{longtable}", 1)[0]
         rows = [r for r in body.split("\\\\") if r.strip()]
-        assert len(rows) == 12
+        assert len(rows) == 13
         outcomes = [r.rsplit(" & ", 1)[1] for r in rows]
         assert sum("\\textbf{void}" in o for o in outcomes) == 2
         assert sum("\\textbf{stopped}" in o for o in outcomes) == 1
         methods = " ".join(_text("ch06_methodology.tex").split())
-        assert "The twelve of November 2026 are in a third" in methods
+        assert "The thirteen of November 2026 are in a third" in methods
         assert "Two of them ended void, one stopped at its first session" in methods
 
 
@@ -761,6 +763,18 @@ class TestTheContentionExperimentAsItCameOut:
         assert "The ratio of the two capacities was measured on four radios" in text
         assert "The cause is not established." in text
         assert "has no demonstrated effect on the loss between two boards" in self.VALIDATION
+
+    def test_loss_on_air_is_claimed_for_the_link_measured_and_no_further(self) -> None:
+        """W3a (F134), written in 2026-11-07: three links through walls, one sender, at 802.11b. The
+        stale sentence "no loss was measured on air" must be gone, and the scope must stay."""
+        for name in ("ch07_bytes.tex", "ch12_conclusions.tex"):
+            assert "no loss was measured on air" not in " ".join(_text(name).split())
+        loss = " ".join(_text("ch07_bytes.tex").split())
+        assert "\\label{sec:loss-air}" in loss and "What it cannot show." in loss
+        assert "it says nothing of flight" in " ".join(_text("ch12_conclusions.tex").split())
+        paper = " ".join((REPO / "paper" / "main.tex").read_text().split())
+        assert "no loss was measured on air" not in paper
+        assert "Loss was measured on air on three static indoor links from one sender" in paper
 
     def test_the_withdrawn_airtime_figure_is_withdrawn_in_view(self) -> None:
         assert "A figure withdrawn" in self.VALIDATION and "$0.36\\%$" in self.VALIDATION

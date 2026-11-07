@@ -82,36 +82,49 @@ how many neighbors can be heard.
 
 Current practice authenticates each message individually. MAVLink~2 appends a 13\,B symmetric
 tag to each message~\cite{mavlink2signing}, and vehicular standards attach an ECDSA signature,
-and periodically a certificate, to each one~\cite{etsi_ts103097}. Existing stream-signing
-schemes~\cite{gennaro1997streams,wong1999flows,perrig2000emss} amortize the cost of signing
-across packets without reducing the number of frames that a sender places on the channel.
-Conversely, aggregate-signature schemes~\cite{li2025clas} reduce the work of the verifier
-without reducing what each signer transmits. Letting several records share one frame, one
-signature and one chain link is an established alternative, and its price is known in kind:
-records wait for the frame to fill, and a lost frame loses all of
-them~\cite{skordoulis2008aggregation}. What prior work does not provide is the accounting: what a frame must carry so that a receiver can verify it without any other
-frame, on which links such a frame does not fit at any batch size, which constraint caps the
-batch where it fits, and what the saved bytes buy on a contended channel in nodes and not in
-percent. This gap leaves system designers without data-driven guidance for selecting batch
-size, encoding and signature scheme jointly.
+and periodically a certificate, to each one~\cite{etsi_ts103097}. The schemes that improve on
+this each reduce one of three costs. Stream signing amortizes the signer's work across
+packets~\cite{gennaro1997streams,wong1999flows,perrig2000emss}. Aggregate signatures and message
+chaining reduce the verifier's work~\cite{li2025clas,cominetti2022chaining}, and chaining adds
+bytes to every message. A MAC tag in place of the signature reduces the bytes but gives up
+non-repudiation~\cite{mavlink2signing,perrig2002tesla}. None of them reduces the number of frames
+that a sender places on the channel. Sharing one frame among several messages does, and it is
+established: IEEE 802.11n aggregates frames to cut the overhead each one carries, though not
+for broadcast~\cite{skordoulis2008aggregation}, and a swarm design lets relays aggregate
+authenticated telemetry of several sources~\cite{rotta2024telemetrybroadcast}. Its price is known
+in kind: records wait for the frame to fill, and a lost frame loses all of
+them~\cite{skordoulis2008aggregation}. That a signature crowds
+a small frame is known as well~\cite{gundogan2021firmware}. What prior work does not provide is
+the accounting that decides between these options for authenticated telemetry: what a frame must
+carry so that a receiver can verify it without any other frame, on which links of a real band
+such a frame does not fit at any batch size, which constraint caps the batch where it fits, and
+what the saved bytes buy on a contended channel in nodes and not in percent. This gap leaves
+system designers without data-driven guidance for selecting batch size, encoding and signature
+scheme jointly.
 
 This paper presents AUTHBC (AUTHenticated telemetry for BlockChain-style ledgers) as a frame
 format, a sender and a receiver. The system was implemented, measured and searched over its
 parameters. Its central observation is that on a contended broadcast channel the cost that binds
 is the frame, not the authenticator. The main contributions are:
 \begin{itemize}
-\item \textbf{Byte and capacity gain.} One signature and one chain link per four records cut the
-bytes per record by \saveLean\% and raise the simulated capacity of one 802.11a collision domain
-from \nmaxLeanBase{} to \nmaxLeanDesign{} nodes. A step-by-step comparison shows that most of the
-gain comes from sending fewer frames (Sections~\ref{sec:bytes} and~\ref{sec:capacity}).
-\item \textbf{Capacity law and mechanism.} An airtime capacity law with one fitted constant
-reproduces the simulated capacities. A contention model with nothing fitted explains the
+\item \textbf{Where the gain comes from.} One signature and one chain link per four records cut
+the bytes per record by \saveLean\% and raise the simulated capacity of one 802.11a collision
+domain from \nmaxLeanBase{} to \nmaxLeanDesign{} nodes. Taken step by step, the larger step is
+the established one, sharing the frame (\stepShareLean$\times$); one signature per frame adds
+\stepSignLean$\times$. A 13\,B tag in place of the signature, with a frame per record, reaches
+\crossMav{} nodes (Sections~\ref{sec:bytes}, \ref{sec:capacity} and~\ref{sec:clas}).
+\item \textbf{Capacity law, mechanism and radios.} An airtime capacity law with one fitted
+constant reproduces the simulated capacities. A contention model with nothing fitted explains the
 constant and predicted cases that had not been simulated, other batch sizes and loss levels
-among them (Section~\ref{sec:mechanism}).
+among them. On four 802.11b radios it predicted the ratio of the two capacities at
+\hwModelRatio, and two sessions measured \hwRatio{} and \hwRepeatRatio{}
+(Section~\ref{sec:mechanism}).
 \item \textbf{Binding constraints.} Freshness, not the Maximum Transmission Unit (MTU), caps the
-batch at four records. A frame that depends on its predecessor misses the verifiability target,
-so every frame carries a key record. A Rust receiver serves \rxRustNodes{} nodes per core, so the
-channel, not the processor, binds (Sections~\ref{sec:loss}--\ref{sec:cpu}).
+batch at four records, and batching gains nothing unless record rate times deadline exceeds two.
+A frame that depends on its predecessor misses the verifiability target, so every frame carries a
+key record; under loss measured on air, AUTHBC's frames lost only their own records. A Rust
+receiver serves \rxRustNodes{} nodes per core, so the channel, not the processor, binds
+(Sections~\ref{sec:loss}--\ref{sec:cpu}).
 \item \textbf{Exclusion bound.} \exclCountCap{} of the twelve EU863-870 LoRaWAN data rates cannot
 carry one signed, chained frame: \exclSigCount{} because the signature alone does not fit, and
 \exclFmtCount{} because of the header of this format. The five conditions of the bound, and what
@@ -126,21 +139,51 @@ models. Two defenses are measured: a timestamp acceptance window against delayed
 Batching several records under one signature is not new. What this paper adds is the
 accounting --- which links can carry a self-verifying frame, which constraint caps the batch, and
 what the saved bytes buy in nodes on a contended channel --- together with a measured
-implementation. AUTHBC introduces no new cryptographic primitive. Each result states whether it
+implementation. AUTHBC introduces no new cryptographic primitive; Table~\ref{tab:position} sets
+it beside the families of prior work by what each reduces. Each result states whether it
 is measured, simulated or only modeled; Section~\ref{sec:limits} collects the limitations, and
 Table~\ref{tab:decision} summarizes which configuration to use.
 
 \subsection{Related work}\label{sec:related}
 Our work intersects per-message authentication, stream signing, aggregate and batch
 verification, hash-linked records, compact encoding for small payloads, and broadcast channel
-models.
+models. Table~\ref{tab:position} sets the authentication families side by side. Those that keep
+non-repudiation and a frame that verifies alone do not reduce the bytes, and none reduces the
+frames a source sends.
+
+\begin{table}[t]\centering
+\caption{Families of broadcast authentication: what each reduces (work: signing or verification),
+frames sent per record, whether a frame verifies without any other, non-repudiation (NR), and
+who waits.}
+\label{tab:position}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}l l c c c l@{}}
+\toprule
+\textbf{Family} & \textbf{Reduces} & \textbf{Frames} & \textbf{Alone} & \textbf{NR} & \textbf{Waits} \\
+\midrule
+Per-message signature~\cite{etsi_ts103097} & -- & 1 & yes & yes & -- \\
+Per-message MAC tag~\cite{mavlink2signing,rotta2024telemetrybroadcast} & bytes, work & 1 & yes & no & -- \\
+Relay aggregation~\cite{rotta2024telemetrybroadcast} & frames, at relays & 1 & yes & no & relay \\
+Hash chain~\cite{gennaro1997streams} & bytes, work & 1 & no & yes & receiver \\
+EMSS~\cite{perrig2000emss} & work & $>1$ & no & yes & receiver \\
+Erasure-coded block~\cite{pannetrat2003multicast} & bytes, work & 1 & no & yes & either \\
+Hash tree~\cite{wong1999flows} & signing & 1 & yes & yes & sender \\
+TESLA, TBRD~\cite{perrig2002tesla,veara2025tbrd} & bytes, work & 1 & no & no & receiver \\
+Aggregate, batch~\cite{bgls2003,zhang2008batch,li2025clas} & verification & 1 & yes & yes & -- \\
+Message chaining~\cite{cominetti2022chaining} & verification & 1 & yes & yes & -- \\
+AUTHBC & frames, bytes, work & $1/b$ & yes & yes & sender \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \runin{Per-Message Authentication} MAVLink~2 signing appends a link identifier, a 48-bit
 timestamp and a 48-bit truncated SHA-256 tag computed with a shared
 secret~\cite{mavlink2signing}. This mechanism authenticates a \emph{link}: any holder of the key
 can produce any message, so a record cannot later be attributed to one vehicle. Rotta and
 Mykytyn likewise attach a keyed hash (HMAC) and a timestamp to each broadcast telemetry message
-of a swarm~\cite{rotta2024telemetrybroadcast}. Vehicular broadcast uses public-key signatures:
+of a swarm~\cite{rotta2024telemetrybroadcast}. Their relays may aggregate messages of several
+sources into one IEEE 802.11 frame, each keeping its tag: the frame is shared, the authenticator
+is not. Vehicular broadcast uses public-key signatures:
 ECDSA over each message, with the signer's certificate in some messages and an eight-octet
 digest of it in the others~\cite{etsi_ts103097,ndss2024pqv2v}. We adopt this trust model, and
 its per-message cost is the baseline of our evaluation.
@@ -167,9 +210,13 @@ certificateless aggregate signature (CLAS) schemes for vehicular networks build 
 constructions~\cite{li2025clas}. Zhang \emph{et al.} verify many signatures at once at a roadside
 unit~\cite{zhang2008batch}. Rajasekaran \emph{et al.} batch-authenticate a group of drones with a
 pairing-based scheme and report a communication cost that grows linearly with the
-group~\cite{rajasekaran2022batchfanet}. All of these reduce the \emph{work} of the verifier.
+group~\cite{rajasekaran2022batchfanet}. In V2X, Cominetti \emph{et al.} let each signed message
+also carry the hashes of one to three predecessors, so that one verified signature validates the
+messages it links; with a TESLA variant, they report about 90\% fewer signature verifications on
+a reliable channel and more than 65\% at 20\% loss, for 16--48\,B more per
+message~\cite{cominetti2022chaining}. All of these reduce the \emph{work} of the verifier.
 Each message, however, still carries its own signature material as its signer sends it
-(Section~\ref{sec:clas}).
+(Section~\ref{sec:clas}), and chaining adds to it.
 
 \runin{Hash-Linked Records} Linking each record to the hash of its predecessor to make a
 sequence tamper-evident is due to Haber and Stornetta~\cite{haber1991timestamp}; blockchain
@@ -679,7 +726,8 @@ at $p=0.01$), but a longer interval can save at most \lossPrize\,B per record.
 \item \runin{Specification Versus Measurement} The loss rate here is a specification, not a
 measurement. At the loss of $\hwLoss$ we measured between two radios
 (Section~\ref{sec:mechanism}), every key-record interval in the table meets the target, up to
-$r=\lossCleanR$ with $V=\lossCleanV$.
+$r=\lossCleanR$ with $V=\lossCleanV$. Through walls at reduced power, AUTHBC's frame was lost
+\airLossMinA--\airLossMaxA\% of the time (Loss on Air, below).
 \end{enumerate}
 AUTHBC is sized for the budget and therefore uses $r=1$: each frame starts with a key record,
 costs \bprLeanDesign\,B per record and loses only its own records when it is lost.
@@ -709,6 +757,19 @@ target, and the measurement, \lossBerV~\lossBerCi, agrees. AUTHBC reaches 0.95 o
 one-record frames are lost at most \lossBerPmax{} of the time. The capacities of
 Table~\ref{tab:ladder} are simulated at equal, strong received power, where frames are lost by
 collision and not by bit error, and carry that qualification.
+
+\runin{Loss on Air} One Raspberry~Pi sent alone through three walls to three receivers, at three
+powers (802.11b, 1\,Mb/s), interleaving one-record, AUTHBC and 1000\,B frames, \airFrames{} of
+each per power; receivers kept every sequence number. Replayed through the receiver, AUTHBC
+verified exactly the share of its frames received on all \airTracesA{} traces: a lost frame took
+only its own records. Loss was near independent at the two higher powers, but for one trace,
+and bursty at the lowest, so the dependent design ($r=4$) verified \airVdep{} of records against \airVdepIid{}
+under independent loss at the same rates. Frames of 1000\,B were lost \airLenRatio{} times as
+often as one-record frames (95\% lower bound \airLenRatioLo), against \airLenModel{} by the bit-error
+model. At AUTHBC's length the ratio was \airPenalty{} (\airPenaltyLo--\airPenaltyHi, resampling
+paired windows) against \airPenaltyModel: the penalty above is real on air, at about its modeled
+size. On the link nearest 5\% loss, AUTHBC's frame was lost \airNearP\% of the time and
+\airNearV{} of its records verified.
 
 \subsection{Freshness}\label{sec:fresh}
 
@@ -805,7 +866,8 @@ in the record-linked one --- but it depends on the format, so we quote it with t
 \end{enumerate}
 The dominant step is the principle of frame aggregation in IEEE~802.11n, whose aggregates are
 addressed to one receiver and exclude broadcast~\cite{skordoulis2008aggregation}. Batching at the
-application gives a broadcast sender the same effect.
+application gives a broadcast sender the same effect, as relays that aggregate the messages of
+several sources do~\cite{rotta2024telemetrybroadcast}.
 
 \runin{Per-Run Capacity} These values require the mean over runs to reach the 0.95 target.
 Requiring that 95\% of individual runs reach it gives \nrunLeanBase{} and \nrunLeanDesign{}
@@ -1452,7 +1514,7 @@ BLS12-381 & not advised & -- & CPU & \ncpuBls{} nodes per core \\
 \bottomrule
 \end{tabular}
 \footnotetext[1]{$N_{\max} = \nmaxLeanDesign$ at 5\% frame loss and \nmaxTightD{} at 3\%, in
-simulation; no capacity was measured.}
+simulation; on hardware only the ratio of the two capacities was measured.}
 \footnotetext[2]{Under the peak-age convention of Eq.~\eqref{eq:fresh}, which counts the whole
 sampling interval; with the wait $(b-1)/\Lambda$ instead, per-record signing.}
 \footnotetext[3]{At DR5 with a 242\,B frame under the 1\% duty cycle.}
@@ -1464,9 +1526,12 @@ constraints of Section~\ref{sec:constraints} admit, and to the constraint that b
 
 \subsection{What generalizes}
 One insight carries beyond this paper: on a contended broadcast channel the cost that binds is
-the frame, not the authenticator. A frame costs about \fixedCost\us{} of channel time whatever its
-length, so schemes that amortize signing but send a frame per record gain little, and a
-post-quantum signature leaves the gain of batching unchanged.
+the frame, not the authenticator. That the fixed cost of a frame dominates a short one is the
+reason IEEE 802.11n aggregates frames~\cite{skordoulis2008aggregation}. What this paper adds is
+the consequence for authentication. A frame costs about \fixedCost\us{} of channel time whatever
+its length, so schemes that amortize signing or verification but send a frame per record gain
+little, a shorter authenticator gains less than a shared frame, and a post-quantum signature
+leaves the gain of batching unchanged.
 
 The same accounting applies to other broadcast systems (Table~\ref{tab:links}). ADS-B 1090ES and
 Bluetooth~4 Remote~ID cannot carry a signature at all.
@@ -1476,7 +1541,8 @@ messages, 225\,B~\cite{rfc9575}.
 Bluetooth~5 and Wi-Fi Remote~ID fit up to \olRidRecords{} records in a frame, but at one message a
 second no frame meets any deadline up to 1\,s. V2X CAM at 10\,Hz admits no frame at 100\,ms,
 \olCamTwo{} record at 200\,ms and \olCamThree{} at 300\,ms. This is consistent with those standards
-signing each message, although it is not offered as their reason.
+signing each message, and with V2X work that reduces the verifier's load instead of the
+bytes~\cite{cominetti2022chaining}, although it is not offered as their reason.
 
 \begin{table}[t]\centering
 \caption{Records per frame that each broadcast system admits with one signature per
@@ -1540,9 +1606,11 @@ reverses the result: at the largest records the schema allows, against per-recor
 smallest frame, AUTHBC carries \recLargestRatio{} times as many nodes.
 
 \runin{Loss Models} The loss experiment uses independent, Gilbert and length-dependent loss
-generated at the frame level, and collision loss traced in ns-3; no loss was measured on air.
-Under length-dependent loss, AUTHBC is below its target where one-record frames lose 5\%
-(Section~\ref{sec:loss}). Batches of two, three and eight were simulated for the capacity law
+generated at the frame level, and collision loss traced in ns-3. Loss was measured on air on three
+static indoor links from one sender, in one evening, at 802.11b and not at the 802.11a rates of
+the capacities, and it swung several-fold between windows of 22\,s. Under length-dependent loss,
+AUTHBC is below its target where one-record frames lose 5\% (Section~\ref{sec:loss}); on air,
+its length penalty agreed with the model within its interval. Batches of two, three and eight were simulated for the capacity law
 alone, and nothing else here is evaluated at them.
 
 \runin{Energy and CPU} Only the sender is metered, with a sensor never checked against a
@@ -1572,7 +1640,10 @@ is measured here.
 
 \subsection{Conclusion}
 What a frame must carry decides where it can be sent. On a contended broadcast channel, the cost
-that binds is the frame, not the authenticator. This work costs authentication at the frame rather
+that binds is the frame, not the authenticator. Prior schemes reduce the signer's work, the
+verifier's work or the authenticator's bytes and leave the frame count in place; sharing a frame
+is the established remedy for that count, and this work prices it, with one signature per frame,
+for authenticated telemetry. This work costs authentication at the frame rather
 than at the record, using measured frames, ns-3 simulation with \seeds{} seeds per point and
 metered sender energy.
 
@@ -1584,7 +1655,9 @@ on \exclCount{} of the twelve EU863-870 LoRaWAN data rates, no batch size helps:
 self-verifying frame can be carried. The capacities are simulated; in a spread or moving swarm fewer neighbors are in
 reach (at 1\,km, \spNeighbours{} with AUTHBC and \spNeighboursBase{} with per-record signing),
 but the gain stays \spRatioLo--\mvRatioHi-fold. On four 802.11b radios, two sessions measured the
-ratio of the two capacities at \hwRatio{} and \hwRepeatRatio, against \hwModelRatio{} predicted. In Rust, the frame-linked sender spends \enRustMeas\,$\mu$J per record,
+ratio of the two capacities at \hwRatio{} and \hwRepeatRatio, against \hwModelRatio{} predicted.
+On air, through walls, AUTHBC's frames lost only their own records, and the length penalty of its
+frame matched the bit-error model within its interval. In Rust, the frame-linked sender spends \enRustMeas\,$\mu$J per record,
 a factor of \enFirstOverRust{} lower than the record-linked format with batching.
 
 This accounting should carry over to other broadcast systems whose records are small beside

@@ -264,6 +264,15 @@ records a frame never do: a packet that waits for a later one to verify misses t
 None of the three reaches the design's \strNmaxDesign, and two of them give up
 non-repudiation.
 
+Two designs of the background are not in the table because they send no fewer authenticator
+bytes than per-record signing. Message chaining in V2X keeps the signature on every message and
+adds hashes~\cite{cominetti2022chaining}. In this frame its frames would be longer than those of
+per-record signing at the same rate, so by the airtime law of \Cref{sec:line} its capacity would
+be lower; it was not simulated. Relays that aggregate messages of several
+sources~\cite{rotta2024telemetrybroadcast} share the frame and keep each message's tag. That is
+the step of row~6 of the byte ladder, sharing the frame, which with signatures alone takes the
+capacity from \nmaxLeanBase{} to \nmaxLeanInline{} nodes.
+
 \section{Capacity, by direct search}\label{sec:capacity}
 
 Bytes matter because they are airtime, and airtime decides how many neighbours can be heard. The

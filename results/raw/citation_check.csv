@@ -1,5 +1,5 @@
 # run=citation_check
-# checked=2026-10-27
+# checked=2026-11-07
 # bib=paper/refs.bib
 key,kind,identifier,registry,authors_bib,authors_registry,authors_match,title_match,year_bib,years_registry,year_match,status,fingerprint
 bianchi2000,doi,10.1109/49.840210,crossref,bianchi,G. Bianchi,1,1.00,2000,2000,1,ok,c1cc699a34bca9c9
@@ -18,6 +18,7 @@ perrig2000emss,doi,10.1109/SECPRI.2000.848446,crossref,perrig; canetti; tygar; s
 perrig2002tesla,document,docs/literature/perrig2002_tesla_cryptobytes.pdf,,perrig; canetti; tygar; song,,,,2002,,,document,3bda3c2c98985f4c
 veara2025tbrd,arxiv,2510.11343,arxiv,veara; jain; moy; ranganathan,Jason Veara; Manav Jain; Kyle Moy; Aanjhan Ranganathan,1,1.00,2025,2025,1,ok,508d6b0c5da54995
 rotta2024telemetrybroadcast,arxiv,2401.11915,arxiv,rotta; mykytyn,Randolf Rotta; Pavlo Mykytyn,1,1.00,2024,2024,1,ok,8ca5b2d45243566e
+cominetti2022chaining,document,docs/literature/cominetti2022_v2x_message_chaining.pdf,,cominetti; silva; simplicio; kupwade patil; ricardini,,,,2022,,,document,12d42850484012dd
 mavlink2signing,document,"web: mavlink.io/en/guide/message_signing.html, read 2026-10-06",,mavlink development team,,,,2026,,,document,21f9077e9439da9f
 zhang2008batch,doi,10.1109/INFOCOM.2008.58,crossref,zhang; lu; lin; ho; shen,C. Zhang; R. Lu; X. Lin; P.-H. Ho; X. Shen,1,1.00,2008,2008,1,ok,b80dca2a9d75237b
 rajasekaran2022batchfanet,doi,10.3390/drones6010014,crossref,rajasekaran; maria; al turjman; altrjman; mostarda,Arun Sekar Rajasekaran; Azees Maria; Fadi Al-Turjman; Chadi Altrjman; Leonardo Mostarda,1,1.00,2022,2022,1,ok,ca8dc7a65db845b8

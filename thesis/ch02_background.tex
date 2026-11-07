@@ -159,7 +159,11 @@ telemetry message~\cite{rotta2024telemetrybroadcast} --- corroborating the basel
 this work. Their construction is a symmetric MAC under a group key, so it provides
 integrity and group authenticity but \emph{not} non-repudiation, and therefore cannot underwrite a
 ledger attributable to a specific UAV. That is a different trust model, not a cheaper solution to
-this one.
+this one. Their relays also share frames: since MAVLink messages are much smaller than
+$256$\,B, ``during forwarding, multiple messages from different sources can be aggregated into a
+single IEEE 802.11 frame''~\cite{rotta2024telemetrybroadcast}, each message keeping its own
+$16$\,B tag. That is the frame shared and the authenticator not --- row~6 of the byte ladder of
+\Cref{ch:codesign}, with a tag in place of a signature, at a relay.
 
 \section{Authenticating messages one at a time, and signing streams}
 
@@ -258,6 +262,17 @@ $n$ authentications as $n$ times that of one ($1184\,n$ bits) --- the verifier's
 shared, the bytes are not. This work generalises from
 receiver batching to authentication \emph{placement}, co-designs it with encoding and scheme, and
 adds a loss-robustness frontier that pure aggregation does not address.
+
+The most recent vehicular work on amortising signatures keeps the signature on every message.
+Cominetti \emph{et al.} let each signed V2X message also carry the hashes of one to three of its
+predecessors, so that ``the signature of one BSM can, thus, validate a series of previously
+received BSMs''~\cite{cominetti2022chaining}. With this and a variant of TESLA, they report about
+$90\%$ fewer signature verifications on a reliable channel and more than $65\%$ at $20\%$ loss.
+The hashes cost $16$, $32$ or $48$\,B per message, about $8.3\%$ of a message each by their
+count. The verifier's work falls and the bytes rise: the opposite of the trade this thesis makes.
+Their messages are sent ten times a second and must be verified ``within tens of milliseconds'',
+so $\Lambda D_{\max} < 1$, where the design map of \Cref{ch:codesign} admits no batch. Keeping a
+signature on each message is consistent with that, although it is not offered as their reason.
 
 Certificateless aggregate signature (CLAS) schemes for vehicular broadcast are the closest
 external comparator. Li \emph{et al.}~\cite{li2025clas} tabulate the per-message size of their
@@ -380,6 +395,42 @@ transmissions'' --- the standard's own statement of the artifact that strictly p
 simulated senders produce (\Cref{ch:reproducibility}).
 
 \section{Where this thesis sits}
+
+The schemes above each reduce one of three costs: the signer's work (stream signing), the
+verifier's work (batch and aggregate verification, message chaining), or the authenticator's
+bytes (a MAC tag, TESLA), and those that keep non-repudiation and a self-verifying packet do not
+reduce the bytes. None reduces the number of frames a source sends. Sharing a frame does, and it
+is established: 802.11n aggregates frames for unicast (\Cref{sec:bg-aggregation}), and a swarm
+design aggregates authenticated messages at its relays. What this thesis does with that is to
+share the signature and the chain link as well, keep every frame verifiable alone, and cost the
+result under freshness, loss, the channel, the receiver's processor and the payload limit.
+\Cref{tab:position} sets the families side by side; the larger step of the capacity gain is the
+established one, sharing the frame (\Cref{ch:codesign}).
+
+\begin{table}[htbp]\centering\small
+\caption{Families of broadcast authentication: what each reduces (work: signing or verification),
+frames a source sends per record, whether a frame verifies without any other, non-repudiation
+(NR), and who waits.}
+\label{tab:position}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}l l c c c l@{}}
+\toprule
+\textbf{Family} & \textbf{Reduces} & \textbf{Frames} & \textbf{Alone} & \textbf{NR} & \textbf{Waits} \\
+\midrule
+Per-message signature~\cite{etsi_ts103097} & -- & 1 & yes & yes & -- \\
+Per-message MAC tag~\cite{mavlink2signing,rotta2024telemetrybroadcast} & bytes, work & 1 & yes & no & -- \\
+Relay aggregation~\cite{rotta2024telemetrybroadcast} & frames, at relays & 1 & yes & no & relay \\
+Hash chain~\cite{gennaro1997streams} & bytes, work & 1 & no & yes & receiver \\
+EMSS~\cite{perrig2000emss} & work & $>1$ & no & yes & receiver \\
+Erasure-coded block~\cite{pannetrat2003multicast} & bytes, work & 1 & no & yes & either \\
+Hash tree~\cite{wong1999flows} & signing & 1 & yes & yes & sender \\
+TESLA, TBRD~\cite{perrig2002tesla,veara2025tbrd} & bytes, work & 1 & no & no & receiver \\
+Aggregate, batch~\cite{bgls2003,zhang2008batch,li2025clas} & verification & 1 & yes & yes & -- \\
+Message chaining~\cite{cominetti2022chaining} & verification & 1 & yes & yes & -- \\
+This thesis & frames, bytes, work & $1/b$ & yes & yes & sender \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 The adjacent literature almost uniformly proposes a \emph{new construction} and evaluates it
 against its predecessors. This thesis deliberately proposes none. Its contribution is a boundary:

@@ -13,6 +13,55 @@ Every chapter is written and was read end to end in the built PDF on 2026-10-08.
 are yours:** the declaration and the acknowledgements — with the degree and the department on the
 title page. The statement on generative AI was removed on your decision of 2026-10-24.
 
+⚠️ **On 2026-11-07 W3a and the novelty framing were written in, and you have not read them.**
+You asked: "Do it", read ePrint 2022/133, "take care of the novelty framing … honestly and
+scientifically", and strengthen the paper's framing. The thesis builds to 158 pages, the paper to
+**42 (from 40: your decision, below)**. In reading order:
+* **Thesis:**
+  * **ch. 1, Contributions:** a new opening paragraph on what is known and what is added. The
+    larger step of the capacity gain, sharing the frame, is the established one. The validation
+    bullet gains the loss on air.
+  * **ch. 2:**
+    * Rotta & Mykytyn's relays aggregate messages into one 802.11 frame, each keeping its tag
+      (row 6 of the ladder);
+    * a new paragraph on message chaining (Cominetti et al.: the verifier's work falls and the
+      bytes rise);
+    * *Where this thesis sits* opens with the three costs and a new **Table `tab:position`**.
+  * **ch. 7:** a new subsection, *Loss measured on air* (W3a), with the loss table, the three
+    claims, the length penalty, the bursts, a footnote correcting two reported figures, and what
+    it cannot show.
+  * **ch. 8, E17:** a paragraph on why chaining and relay aggregation are not in the stream table.
+  * **ch. 9, *What the hardware supports*:** a bullet on the loss on air.
+  * **ch. 12:**
+    * finding 6 gains the 2.2× / 1.6× split;
+    * a new finding 12 (loss on air);
+    * *Modelling scope*: "no loss was measured on air" is replaced by its scope;
+    * *Closing*: one sentence on the established mechanism.
+  * **App. B:** row 13 (W3a); ch. 6 counts thirteen.
+* **Paper:**
+  * **§1, paragraph 2, rewritten on three costs:** the signer's work, the verifier's work and the
+    bytes. None reduces frames; sharing a frame is established (802.11n, not for broadcast;
+    Rotta's relays). Gündoğan is credited. The gap sentence is narrowed to "the accounting that
+    decides between these options for authenticated telemetry".
+  * **Contributions:**
+    * 1, *Where the gain comes from*: 2.2× is the established step, 1.6× the signature's, a 13 B
+      tag reaches 42.1;
+    * 2 gains the four-radio ratio;
+    * 3 gains Λ·D_max > 2 and the loss on air.
+  * **§1.1:** a new **Table 1 `tab:position`**; a sentence after it; Rotta's relays; Cominetti's
+    chaining.
+  * **§3.2:** item 3 gains one sentence; a new run-in, **Loss on Air**.
+  * **§3.4:** Rotta joins the 802.11n aggregation sentence.
+  * **§4.2, *What generalizes*:** 802.11n is credited for the frame's fixed cost; the
+    authentication consequence is ours; the V2X sentence cites Cominetti.
+  * **Table 18, footnote 1:** "only the ratio was measured".
+  * **Limitations, *Loss Models*:** rewritten to the link measured.
+  * **Conclusion:** one sentence on the three costs, one on the loss on air.
+  * The abstract and the title are unchanged.
+* ⚠️ **The paper is 42 pages.** Its content is about 41.4: page 42 holds the last references. My
+  own added text was tightened once. It grew by the table, the loss paragraph and the framing.
+  Whether to keep, cut or move the table to the thesis only is yours.
+
 ⚠️ **On 2026-11-06 the hardware campaign and the desk work of November were written in, and you
 have not read them.** You asked for it ("finish the paper and thesis") and chose to apply Q8, Q9
 and Q11–Q14 as drafted. The PDF builds to 156 pages. In reading order:

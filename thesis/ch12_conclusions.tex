@@ -27,7 +27,9 @@ chain link and signature fill a $115$\,B payload. The result holds under four st
 \item Built as one frame format and simulated directly, the design carries \bprLeanDesign\,B per
 record where per-record signing carries \bprLeanBase\,B (\saveLean\% fewer), and sustains
 \nmaxLeanDesign{} nodes at 95\% delivery where per-record signing sustains \nmaxLeanBase, at
-an operating point compliant with 3GPP TS~22.125.
+an operating point compliant with 3GPP TS~22.125. The larger part of that gain is the
+established one, sharing the frame (\stepShareLean$\times$); one signature per frame adds
+\stepSignLean$\times$.
 
 \item Of the four design axes, placement and batching interact exactly, by $\ga(1-1/b)$, and in
 the frame as built delta coding is conditional on batching as well: both gains are zero at
@@ -53,6 +55,12 @@ not stopped, and is stated (\Cref{ch:sysmodel,ch:codesign}).
 \hwRatio{} and \hwRepeatRatio{} in two sessions, against \hwModelRatio{} predicted. Capture puts
 both capacities $3$--$4\%$ above the model's, so the simulated ones are conservative, and it
 leaves the ratio within $1\%$ (\Cref{sec:ratio-hw}).
+
+\item Loss measured on air, at 802.11b through walls, was no harder on the design than the loss
+processes it was evaluated under. The design lost only its own frames; a dependent design did no
+worse than under independent loss; and the design's length penalty, \airPenalty{}
+(\airPenaltyLo--\airPenaltyHi), matched the bit-error model's \airPenaltyModel{} within its
+interval (\Cref{sec:loss-air}).
 \end{enumerate}
 
 \section{The research questions, answered}\label{sec:rq-answers}
@@ -106,8 +114,10 @@ what a capacity counts changed. That scenario has one propagation model, no Dopp
 time-correlated fading. On the low-rate arm mobility moves collision-limited delivery by nothing
 measurable (\Cref{sec:lora-mobility}); that is not a statement that mobility is harmless to a
 link. Loss in the verifiability experiments is generated at the frame level --- independent,
-bursty, or growing with frame length --- and collision loss was traced in the simulator; no loss
-was measured on air. Falcon-512 was timed and simulated in the frame; signatures that do not fit
+bursty, or growing with frame length --- and collision loss was traced in the simulator. Loss
+was measured on air on three static links through walls, at 802.11b, from one sender in one evening
+(\Cref{sec:loss-air}). There it was no harder on the design than the generated processes; it says
+nothing of flight. Falcon-512 was timed and simulated in the frame; signatures that do not fit
 one frame remain projections.
 
 \subsection{Validation scope}
@@ -212,7 +222,10 @@ generalisation of this work.
 
 \section{Closing}
 
-This thesis introduces no new cryptographic primitive and makes no claim to one. Its contribution
+This thesis introduces no new cryptographic primitive and makes no claim to one. Its mechanism is
+largely established: amortising a signature over many packets is classical, and sharing a frame
+among messages is the principle of 802.11n aggregation, which gives the larger part of the
+capacity gain. Its contribution
 is a reproducible co-design of existing, standardised components; the quantified trade-offs that
 co-design entails; the boundary beyond which no batch size helps, with its conditions; and an
 account --- unusually explicit for a thesis --- of the errors made in establishing that boundary and

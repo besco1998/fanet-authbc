@@ -666,6 +666,95 @@ def four_radios() -> dict[str, str]:
     }
 
 
+def on_air() -> dict[str, str]:
+    """Loss measured on air, W3a (F134): pi-A alone through walls at three powers, three
+    receivers, one-record (S), AUTHBC (A) and 1000 B (L) frames, replayed through the receiver.
+
+    The text says the three sessions were valid and the three scored claims held; either failing
+    here stops the build. The interval of AUTHBC's length penalty is the outcome's, re-drawn from
+    the window counts (reporting added after the outcome, `w3a_loss.length_penalty_bootstrap`).
+    Bursts are quoted over the traces the claims read (loss of at least 1 %), as corrected in the
+    outcome's addendum of 2026-11-07.
+    """
+    import w3a_loss as w3a
+
+    table = rows(RAW / "w3a_w3a_2026-11-06.csv")
+    windows = rows(RAW / "w3a_w3a_2026-11-06_cycles.csv")
+    if [r["held"] for r in table if r["what"] == "session"] != ["True"] * 3:
+        raise ValueError("the text reports three valid sessions")
+    claim = {c: one(table, what=c) for c in ("W3a-1", "W3a-2", "W3a-3")}
+    if any(c["held"] != "True" for c in claim.values()):
+        raise ValueError("the text says all three W3a claims held")
+    v4 = re.search(r"V\(r=4\) ([\d.]+) against ([\d.]+) independent", claim["W3a-1"]["measured"])
+    exact = re.search(r"(\d+)/(\d+) traces exact", claim["W3a-2"]["measured"])
+    length = re.search(r"p\(L\)/p\(S\) ([\d.]+) \(95 % lower bound ([\d.]+)\) against ([\d.]+) "
+                       r"at p\(S\) ([\d.]+)", claim["W3a-3"]["measured"])
+    near_row = one(table, what="reported: the link nearest 5 %")
+    near = re.search(r"V\(r=1\) ([\d.]+), meets 0.95: True", near_row["measured"])
+    if not (v4 and exact and length and near) or exact[1] != exact[2]:
+        raise ValueError("a W3a row no longer reads as the text describes it")
+    traces = [r for r in table if r["what"] == "trace"]
+
+    def loss(r: dict[str, str]) -> float:
+        # from the counts: `p_hat` is stored to five places, and rounding it again misprints
+        # 196/4400 = 4.4545 % as 4.46 (the double rounding of F114)
+        return int(r["lost"]) / int(r["frames"])
+
+    def two_places(value: str) -> float:
+        # a value stored to three places is safe to print at two unless its third place is 5
+        if round(1000 * float(value)) % 10 == 5:
+            raise ValueError(f"{value} would be rounded twice")
+        return float(value)
+
+    frames = {r["frames"] for r in traces}
+    if len(frames) != 1:
+        raise ValueError("the text gives one count of frames per size and link")
+    pooled, lo, hi = w3a.length_penalty_bootstrap(windows)
+    a_rows = [r for r in traces if r["size"] == "A"]
+    nearest = min(a_rows, key=lambda r: abs(loss(r) - 0.05))
+    if (f"{nearest['mbm']} mBm, node{nearest['receiver']}" != near_row["group"]
+            or abs(1 - loss(nearest) - float(near[1])) > 5e-5):
+        raise ValueError("the trace nearest 5 % is not the one the score reported")
+    p_s = (sum(int(r["lost"]) for r in traces if r["size"] == "S")
+           / sum(int(r["frames"]) for r in traces if r["size"] == "S"))
+    if abs(sum(int(r["lost"]) for r in a_rows) / sum(int(r["frames"]) for r in a_rows) / p_s
+           - pooled) > 1e-12:
+        raise ValueError("the window counts and the scored traces give different penalties")
+    out = {
+        "airFrames": frames.pop(), "airTracesA": exact[1],
+        "airVdep": f(v4[1], 3), "airVdepIid": f(v4[2], 3),
+        "airLenRatio": f(length[1], 2), "airLenRatioLo": f(length[2], 2),
+        "airLenModel": f(length[3], 2), "airLenPs": f(100 * float(length[4]), 1),
+        "airPenalty": f(pooled, 2), "airPenaltyLo": f(lo, 2), "airPenaltyHi": f(hi, 2),
+        "airPenaltyModel": f(w3a.model_length_ratio(p_s, "A"), 2),
+        "airNearP": f(100 * loss(nearest), 2), "airNearV": f(1 - loss(nearest), 3),
+        "airLossMinA": f(100 * min(loss(r) for r in a_rows), 2),
+        "airLossMaxA": f(100 * max(loss(r) for r in a_rows), 1),
+    }
+    for name, powers in (("High", ("1000", "400")), ("Low", ("100",))):
+        read = [r for r in traces if r["mbm"] in powers and loss(r) >= w3a.P_MIN]
+        for col, key in (("mean_burst", ""), ("iid_burst", "Iid")):
+            vals = [float(r[col]) for r in read]
+            out |= {f"airBurst{name}{key}Lo": f(two_places(str(min(vals))), 2),
+                    f"airBurst{name}{key}Hi": f(two_places(str(max(vals))), 2)}
+    worst = max((r for r in traces if r["mbm"] in ("1000", "400")),
+                key=lambda r: float(r["mean_burst"]))
+    # the text names the upper end of the higher powers' bursts as this one trace
+    if (worst["receiver"], worst["size"], worst["mbm"]) != ("4", "A", "400") or \
+            f(worst["mean_burst"], 2) != out["airBurstHighHi"]:
+        raise ValueError("the text names the TP-Link's AUTHBC trace at 4 dBm as the bursty one")
+    power = {"1000": "Ten", "400": "Four", "100": "One"}
+    rx = {"2": "PiB", "3": "PiThree", "4": "Tp"}
+    for r in traces:
+        out[f"air{power[r['mbm']]}{rx[r['receiver']]}{r['size']}"] = f(100 * loss(r), 2)
+    for r_id, name in (("2", "PiB"), ("3", "PiThree")):
+        swing = [int(w["lost"]) / int(w["sent"]) for w in windows
+                 if w["mbm"] == "100" and w["receiver"] == r_id and w["size"] == "L"]
+        out |= {f"airSwing{name}Lo": f(100 * min(swing), 1),
+                f"airSwing{name}Hi": f(100 * max(swing), 1)}
+    return out
+
+
 # ============================================================================== exclusion, LoRa
 def exclusion() -> dict[str, str]:
     table = rows(RAW / "exclusion_matrix.csv")
@@ -2080,7 +2169,7 @@ def links_table() -> dict[str, str]:
 
 
 SECTIONS = (frames, ladder, loss, stream, freshness, phy, energy, timings, flight_logs,
-            validation, four_radios, exclusion, low_rate, source_study, capacity_rule,
+            validation, four_radios, on_air, exclusion, low_rate, source_study, capacity_rule,
             capacity_model, sitl,
             energy_runs, prototype, batch_dimension, multicore, spread, platforms,
             spread_swarm, design_map, loss_trace, adaptive, replay_window, flooding, compiled,
