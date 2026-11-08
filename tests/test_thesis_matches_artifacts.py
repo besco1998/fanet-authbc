@@ -498,9 +498,10 @@ class TestTheWorkedFrame:
 # of appendix B's third table, and the list is empty. It stays, so a later registration not yet
 # written up is held here by name rather than excluded silently.
 # 2026-11-07 (Mohamed: "Do it"): W3a written in as the thirteenth row; the list is empty again.
-# W1l, W1m, W1n (2026-11-08): each goes into Appendix B, with the chapter counts, when Mohamed
-# has the wording; W1n is still running
-NOT_YET_IN_THE_THESIS: frozenset[str] = frozenset({"prereg-W1l", "prereg-W1m", "prereg-W1n"})
+# W1l-W1o (2026-11-08): each goes into Appendix B, with the chapter counts, when Mohamed has the
+# wording; W1o is still running
+NOT_YET_IN_THE_THESIS: frozenset[str] = frozenset(
+    {"prereg-W1l", "prereg-W1m", "prereg-W1n", "prereg-W1o"})
 
 
 class TestTheRegistrationsOfAppendixB:

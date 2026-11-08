@@ -49,7 +49,7 @@ Every document: [`README.md`](README.md).
 * The documents were tidied on 2026-11-01: about 70 became about 25, nothing lost
   ([`README.md`](README.md) has the map of where each old file went).
 
-**The gate.** `make all` = lint + mypy + 2740 fast tests + the 43-test frozen gate. The paper has
+**The gate.** `make all` = lint + mypy + 2758 fast tests + the 43-test frozen gate. The paper has
 References **55** rendered (85 in the shared bibliography).
 
 **How to edit the paper.** Edit `paper/main.tex` directly. Every number is a macro from
