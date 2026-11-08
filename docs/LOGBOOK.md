@@ -232,6 +232,25 @@ Decided: deck, paper and thesis; recent schemes modeled; swarm key management.
   * The stub score wrote two files into `results/` under session 1's names. Deleted before the
     launch.
 
+**W1m ended with no session (03:06).**
+* W1k's preflight at W1j's powers: 1.524×, NO-GO on balance alone.
+* Five tuning preflights: 1.584 / 1.582 / 2.216 / 1.697 / 2.037×. Not TUNED in six steps.
+* An independent script reproduces all six spreads exactly.
+* **What the data say:**
+  * pi-A's loss (3.1–4.3 %) does not follow its power from 6 down to 4 dBm;
+  * the Pi 3 flips between 8 and 9 dBm;
+  * the same setting read 0.18× apart within 16½ minutes.
+* Power cannot balance this placement: the decision goes back to Mohamed (layout).
+* **My first draft of the outcome had four wrong statements**, found on rereading it against the
+  table before committing:
+  * window times inferred from the cadence;
+  * "pi-B the weakest in five of six";
+  * "the Pi 3 the weakest at 8 dBm" (only in one of the two steps);
+  * "1.52× is pi-A against pi-B" (it is the TP-Link, pi-B 0.07 behind).
+
+  Each was corrected from the logs. The same kind of slip as F114's: read a pattern by eye, then
+  write it down without checking it against every row.
+
 # 2026-11-07, evening — the deck's third revision; Kumar et al. 2019 credited
 
 **The deck, revision 3** (Mohamed's slide-by-slide review; plan approved; 61 slides, git-excluded):

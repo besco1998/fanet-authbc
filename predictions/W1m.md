@@ -122,3 +122,65 @@ Each valid session is scored against W1f's bands:
 * **The launch and tuning tools hold credentials** and are not in the repo. They do only what this
   file states.
 * **No preflight or window of W1m has been run.**
+
+---
+
+## Outcome — added 2026-11-08, 03:15, after the series ended; nothing above this line was changed
+
+**No session was run. The series ended in session 1's tuning: not TUNED in six steps, as
+registered.**
+
+Every step failed on check 6 (balance) alone:
+* each Pi's rate in band;
+* node 4 at `FIXED CCK_1M` in the Pis' cell;
+* each held power read back, then auto;
+* no under-voltage;
+* each sender alone ≥ 97 %.
+
+All four boards reverted after every step.
+
+| step | ran | pi-A / pi-B / Pi 3 (mBm) | G31 spread | pi-A | pi-B | Pi 3 | TP-Link | the rule's next move |
+|---|---|---|---|---|---|---|---|---|
+| 1, W1k's preflight (1.5×) | 02:21–02:24 | 600 / auto / 1100 | **1.524×** | 4.01 | 6.05 | 4.49 | 6.12 | pi-A and the Pi 3 down |
+| 2 | 02:29–02:32 | 500 / auto / 1000 | 1.584× | 4.04 | 6.39 | 4.28 | 6.20 | pi-A and the Pi 3 down |
+| 3 | 02:37–02:40 | 400 / auto / 900 | 1.582× | 3.93 | 6.21 | 4.92 | 5.69 | the Pi 3 down (pi-A at the floor) |
+| 4 | 02:45–02:48 | 400 / auto / 800 | 2.216× | 3.51 | 5.52 | 7.78 | 5.99 | the Pi 3 up, pi-B down to 1400 |
+| 5 | 02:54–02:57 | 400 / 1400 / 900 | 1.697× | 4.27 | 7.24 | 5.49 | 5.64 | the Pi 3 down, pi-B up to auto |
+| 6 | 03:02–03:05 | 400 / auto / 800 | 2.037× | 3.11 | 4.96 | 6.31 | 6.33 | (the sixth step: the series ends) |
+
+Losses are in % per sender over the two G31 windows; times are the windows' own, from each
+step's log. Files: `results/hw/channel24/w1m_2026-11-08_s1/`
+and `…/w1m_2026-11-08_series.log`. An independent script (plain Python on the raw JSON, the
+formula of `crosscheck_w1g.py`) gives all six spreads and all 24 losses exactly.
+
+**Against the expectations:**
+* "The first preflight NO-GO on balance again, near W1l's 1.77×": NO-GO held, but at **1.524×**,
+  not near 1.77.
+* "TUNED within the six steps … perhaps two chances in three": **it did not tune.**
+* The rest is not reached.
+
+**What the steps show** (reported, not scored):
+* **pi-A stayed the strongest sender at every setting from 6 dBm down to the 4 dBm floor.** Its
+  loss was 3.1–4.3 %, with no trend against its power.
+* **The Pi 3 has a threshold between 8 and 9 dBm.**
+  * At 9–11 dBm its loss was 4.3–5.5 %.
+  * At 8 dBm it was 6.3–7.8 %: the weakest sender in step 4, and 0.02 points short of it in
+    step 6.
+  * W1j saw such a threshold on this radio too, at other powers in its earlier placement: the
+    weakest at 10 dBm, the strongest at 12.
+* **The same setting read twice** (steps 4 and 6, 16½ minutes apart) gave 2.216× and 2.037×. That
+  wander, 0.18×, is larger than W1i's 0.12× (F131).
+* **Whenever the Pi 3 was at 9 dBm or above** (steps 1, 2, 3, 5), pi-B was the weakest sender or
+  next to it:
+  * the weakest in steps 2, 3 and 5, by 0.19–1.6 points;
+  * second to the TP-Link in step 1, by 0.07.
+* **So the lowest spread reached, 1.524× (step 1), is pi-A (4.01 %) against the TP-Link (6.12 %),
+  with pi-B at 6.05 %.** The rule can move none of these three far enough:
+  * pi-A is at the floor from step 3;
+  * pi-B is already at full power;
+  * the TP-Link has no software knob.
+
+**What it means.** In the rebuilt square, power alone does not balance the senders within 1.25×.
+At W1j's powers it came within 0.024× of the 1.5× limit, then wandered. pi-A's frames survive at
+every power the grid allows. The lever left is physical, the layout (as in W1j, where moving the
+Pi 3 inward did it), and that is Mohamed's to set. Nothing about the ratio was measured.
