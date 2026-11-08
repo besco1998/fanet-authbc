@@ -52,8 +52,9 @@ not stopped, and is stated (\Cref{ch:sysmodel,ch:codesign}).
 \enRustMeas\,\si{\micro\joule} per record, \enFirstOverRust{} times less than the record-linked format.
 
 \item On four real radios, at 802.11b, the ratio of the two designs' capacities was measured at
-\hwRatio{} and \hwRepeatRatio{} in two sessions, against \hwModelRatio{} predicted. Capture puts
-both capacities $3$--$4\%$ above the model's, so the simulated ones are conservative, and it
+\hwRatio, \hwRepeatRatio{} and \hwThirdRatio{} in three sessions, against \hwModelRatio{} predicted.
+Capture puts both capacities \hwAboveLo--\hwAboveHi\% above the model's, so the simulated ones are
+conservative, and it
 leaves the ratio within $1\%$ (\Cref{sec:ratio-hw}).
 
 \item Loss measured on air, at 802.11b through walls, was no harder on the design than the loss
@@ -125,8 +126,8 @@ one frame remain projections.
 On hardware, two radios gave the loss of a link, the access rule between two saturated
 stations, and a failed prediction of the loss between two busy ones (\Cref{sec:hardware}); a
 figure for airtime that earlier versions carried is withdrawn there. Three and four radios kept
-the contention model's predictions, and four gave the ratio of the two capacities, \hwRatio{} and
-\hwRepeatRatio{} against \hwModelRatio{} (\Cref{sec:ratio-hw}). That was at 802.11b with four
+the contention model's predictions, and four gave the ratio of the two capacities, \hwRatio,
+\hwRepeatRatio{} and \hwThirdRatio{} against \hwModelRatio{} (\Cref{sec:ratio-hw}). That was at 802.11b with four
 boards, and the balance it needed was tuned. The capacities of \Cref{ch:codesign} themselves, at
 802.11a and tens of nodes, rest on simulation, of one collision domain in which every station hears
 every other. Unequal received power and capture were simulated and raise

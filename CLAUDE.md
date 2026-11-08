@@ -88,7 +88,13 @@ type hints; no dead code; comments explain WHY, not what.
     * s1 VOID on V5 (1.643×). ⚠️ Its ratio 3.286 is never to be quoted as measured.
     * s3 ended in tuning on check 7: the Pi 3 at 10 dBm reached node 4 at only 76.7 %.
     * **Valid hardware ratios (W1j, W1k, W1n-s2): mean 3.283, SD 0.013, range 3.272–3.297.**
-      Paper and thesis still say two sessions: updating them is Mohamed's call.
+      **Written into the paper, thesis and deck** (Mohamed, "Deck, paper and thesis"): three sessions,
+      Table 9 / 9.5 gain a row, the abstract gives 3.27–3.30, the void session is stated in the
+      paper and thesis (in the deck only in the notes); crossings 3–6 % above the model.
+  * **W1o registered** (`prereg-W1o`): W1n's series with tuning floors (pi-A ≥ 500, the Pi 3 ≥ 1100
+    mBm); a STOP at the floors ends it. ⚠️ **Not started: Blue 2 off the LAN after a power cut at
+    about 13:39** (the PC restarted too, so /tmp was wiped). The hardware tools were rebuilt from
+    the transcript into `~/.authbc_hw_tools/` (never commit them).
 - **2026-11-07, late — the seminar deck rebuilt as one story; the two capacity models' prior
   work found.**
   * **Bazzi et al., IEEE PIMRC 2016** posed the airtime law's question first: the highest beacon

@@ -618,6 +618,9 @@ def four_radios() -> dict[str, str]:
     four = [r for r in four_run if r["what"] == "contention"]
     ratio_run = rows(RAW / "w1i_w1j_2026-11-06_run.csv")
     repeat_run = rows(RAW / "w1i_w1k_2026-11-06_run.csv")        # W1k, F133: the same, again
+    # W1n session 2 (prereg-W1n): the layout set up again, pi-A 1 dB lower. Its session 1 was void
+    # on V5 and is never printed; only a valid session's score is read here.
+    third_run = rows(RAW / "w1i_w1n_2026-11-08_s2_run.csv")
 
     def held(table: list[dict[str, str]], what: str, group: str) -> dict[str, str]:
         r = one(table, what=what, group=group)
@@ -626,8 +629,8 @@ def four_radios() -> dict[str, str]:
         return r
 
     if any(one(run, what="session")["group"] != "valid"
-           for run in (four_run, ratio_run, repeat_run)):
-        raise ValueError("the text reports W1f, W1j and W1k as valid sessions")
+           for run in (four_run, ratio_run, repeat_run, third_run)):
+        raise ValueError("the text reports W1f, W1j, W1k and W1n's session 2 as valid sessions")
     if sum(r["held"] == "True" for r in four) != len(four):
         raise ValueError("the text says every N = 4 contention point held")
     cross_a = held(ratio_run, "crossing", "AUTHBC")
@@ -636,8 +639,16 @@ def four_radios() -> dict[str, str]:
     four_a = held(four_run, "crossing", "AUTHBC")
     repeat = (held(repeat_run, "crossing", "AUTHBC"), held(repeat_run, "crossing", "per-record"),
               held(repeat_run, "ratio", "AUTHBC/per-record"))
+    third = (held(third_run, "crossing", "AUTHBC"), held(third_run, "crossing", "per-record"),
+             held(third_run, "ratio", "AUTHBC/per-record"))
     gate = one(ratio_run, what="gate (reported, not scored)")
     spread = held(ratio_run, "senders balanced (V5)", "A31")
+    third_gate = one(third_run, what="gate (reported, not scored)")
+    third_spread = held(third_run, "senders balanced (V5)", "A31")
+    ratios = [float(r["measured"]) for r in (ratio, repeat[2], third[2])]
+    # how far each valid session's crossings lie above the model's, in %, over all six
+    above = [100 * (float(r["measured"]) / float(r["predicted"]) - 1)
+             for r in (cross_a, cross_p, repeat[0], repeat[1], third[0], third[1])]
     # F116: the windows real cards use; the standard window is the published campaign's crossing
     window = {(r["window"], r["cell"]): float(r["ns3"]) for r in rows(RAW / "w1a.csv")}
     std = {r["cell"]: float(r["n_cross_interp"]) for r in rows(RAW / "ns3_nmax_direct.csv")
@@ -660,6 +671,12 @@ def four_radios() -> dict[str, str]:
         "hwRepeatCrossA": f(repeat[0]["measured"], 1),
         "hwRepeatCrossP": f(repeat[1]["measured"], 2),
         "hwRepeatRatio": f(repeat[2]["measured"], 2),
+        "hwThirdCrossA": f(third[0]["measured"], 1), "hwThirdCrossP": f(third[1]["measured"], 2),
+        "hwThirdRatio": f(third[2]["measured"], 2),
+        "hwThirdGate": f(third_gate["measured"], 2),
+        "hwThirdSpread": f(third_spread["measured"], 3),
+        "hwRatioLo": f(min(ratios), 2), "hwRatioHi": f(max(ratios), 2),
+        "hwAboveLo": f(min(above), 0), "hwAboveHi": f(max(above), 0),
         "winRatioQuarter": f(window[("4", "D/C")], 2), "winRatioHalf": f(window[("8", "D/C")], 2),
         "winRatioStd": f(std["D"] / std["C"], 2), "winFall": f(100 * fall, 0),
         "recLargestRatio": f(largest["model_crossing"], 2),

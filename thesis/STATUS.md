@@ -13,6 +13,32 @@ Every chapter is written and was read end to end in the built PDF on 2026-10-08.
 are yours:** the declaration and the acknowledgements — with the degree and the department on the
 title page. The statement on generative AI was removed on your decision of 2026-10-24.
 
+⚠️ **Later on 2026-11-08 a third valid hardware session was written in, and you have not read
+it.** You chose "Deck, paper and thesis". The session is W1n's second (`prereg-W1n`): ratio 3.297.
+* **New macros**, generated from `results/raw/w1i_w1n_2026-11-08_s2_run.csv`:
+  * `\hwThirdCrossA` 31.1, `\hwThirdCrossP` 9.43, `\hwThirdRatio` 3.30 (3.2973);
+  * `\hwThirdGate` 1.41, `\hwThirdSpread` 1.495;
+  * `\hwRatioLo`–`\hwRatioHi` 3.27–3.30;
+  * `\hwAboveLo`–`\hwAboveHi` 3–6 %.
+* **Ch. 9 §"The ratio on four radios":** "Two sessions" became three. Added:
+  * the third session's layout (set out again, measured with a tape) and its power (pi-A 5 dBm);
+  * its balance (1.41 and 1.495, inside 1.5 by little);
+  * **the void session before it (1.64), stated as not scored**;
+  * a third row in Table 9.5.
+* **"By 3–4 %" became 3–6 %, generated.** The old range was already wrong for W1k's per-record
+  crossing (+4.9 %).
+* **The other mentions:**
+  * ch. 9's summary bullets, ch. 1, ch. 8 and ch. 12: three sessions;
+  * ch. 9's limits: "set out twice, in three sessions".
+* **Paper:**
+  * the abstract gives the range, 3.27–3.30 (its word count is at the test's limit, so "in three
+    sessions" did not fit);
+  * the contributions, §mechanism (the third session and the void one) and the conclusion say
+    three;
+  * Table 9 gains a row.
+* **Appendix B is unchanged.** `prereg-W1l` to `-W1o` wait in `NOT_YET_IN_THE_THESIS` for your
+  wording.
+
 ⚠️ **On 2026-11-08 the derivation of the two capacity models was restated as mathematics, and
 you have not read it.** You asked for the assumptions to be defined and for a proof in place of a
 table, in the deck, the paper and the thesis ("Deck, paper and thesis").

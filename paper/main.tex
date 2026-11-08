@@ -57,7 +57,7 @@ loss: the cost that binds is the frame, not the authenticator. Batching gains no
 record rate times deadline exceeds two. Where it does not fit, on \exclCount{} of twelve
 EU863-870 LoRaWAN data rates, no batch helps. When the swarm spreads, fewer neighbors are in
 reach, but the gain stays \spRatioLo--\mvRatioHi-fold, moving or not. Four 802.11b radios measured
-the capacity ratio at \hwRatio{} (predicted \hwModelRatio).}
+the capacity ratio at \hwRatioLo--\hwRatioHi{} (predicted \hwModelRatio).}
 
 \keywords{FANET, UAV telemetry, broadcast authentication, digital signatures, hash chain,
 batching, frame aggregation, age of information, formal verification, IEEE 802.11 DCF, LoRaWAN,
@@ -117,7 +117,7 @@ the established one, sharing the frame (\stepShareLean$\times$); one signature p
 constant reproduces the simulated capacities. A contention model with nothing fitted explains the
 constant and predicted cases that had not been simulated, other batch sizes and loss levels
 among them. On four 802.11b radios it predicted the ratio of the two capacities at
-\hwModelRatio, and two sessions measured \hwRatio{} and \hwRepeatRatio{}
+\hwModelRatio, and three sessions measured \hwRatio, \hwRepeatRatio{} and \hwThirdRatio{}
 (Section~\ref{sec:mechanism}).
 \item \textbf{Binding constraints.} Freshness, not the Maximum Transmission Unit (MTU), caps the
 batch at four records, and batching gains nothing unless record rate times deadline exceeds two.
@@ -962,9 +962,11 @@ each of two 802.11p transmitters send for a hundred vehicles in this way, but th
 sense each other~\cite{kumar2019hidden}; here the senders contend for the channel. Real radios
 depart from the model in one respect. When two frames collide, the stronger is often still received (capture), so
 every measured point lies above the model's, and so does each crossing. With the four senders
-balanced to within \hwSpreadMax{} times each other's loss, two sessions gave the values of
-Table~\ref{tab:hw}. Capture raises both capacities alike: the crossings lie above the model's, and
-their ratio, the claim of this paper, lies within 1\% of it.
+balanced to within \hwSpreadMax{} times each other's loss, three sessions gave the values of
+Table~\ref{tab:hw}. The third ran two days after the first two, with the boards set out again and
+one sender's power 1\,dB lower; a session just before it failed its own balance condition and is
+not scored. Capture raises both capacities alike: the crossings lie \hwAboveLo--\hwAboveHi\% above
+the model's, and their ratio, the claim of this paper, lies within 1\% of it.
 
 \begin{table}[tb]
 \caption{Capacity on four 802.11b radios, in nodes of the channel at $V=0.95$.}\label{tab:hw}
@@ -974,6 +976,7 @@ their ratio, the claim of this paper, lies within 1\% of it.
 \midrule
 session 1 & \hwRatioCrossA & \hwRatioCrossP & \hwRatio \\
 session 2 & \hwRepeatCrossA & \hwRepeatCrossP & \hwRepeatRatio \\
+session 3 & \hwThirdCrossA & \hwThirdCrossP & \hwThirdRatio \\
 contention model & \hwModelCrossA & \hwModelCrossP & \hwModelRatio \\
 \bottomrule
 \end{tabular}
@@ -1661,8 +1664,9 @@ freshness, not by the MTU, and every frame starts with a key record. Where it do
 on \exclCount{} of the twelve EU863-870 LoRaWAN data rates, no batch size helps: not even one
 self-verifying frame can be carried. The capacities are simulated; in a spread or moving swarm fewer neighbors are in
 reach (at 1\,km, \spNeighbours{} with AUTHBC and \spNeighboursBase{} with per-record signing),
-but the gain stays \spRatioLo--\mvRatioHi-fold. On four 802.11b radios, two sessions measured the
-ratio of the two capacities at \hwRatio{} and \hwRepeatRatio, against \hwModelRatio{} predicted.
+but the gain stays \spRatioLo--\mvRatioHi-fold. On four 802.11b radios, three sessions measured the
+ratio of the two capacities at \hwRatio, \hwRepeatRatio{} and \hwThirdRatio, against \hwModelRatio{}
+predicted.
 On air, through walls, AUTHBC's frames lost only their own records, and the length penalty of its
 frame matched the bit-error model within its interval. In Rust, the frame-linked sender spends \enRustMeas\,$\mu$J per record,
 a factor of \enFirstOverRust{} lower than the record-linked format with batching.

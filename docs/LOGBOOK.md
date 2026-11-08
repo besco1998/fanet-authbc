@@ -283,6 +283,36 @@ Decided: deck, paper and thesis; recent schemes modeled; swarm key management.
 
   The habit works only when it is done every time.
 
+**Afternoon: a power cut, W1o registered, the third session written in.**
+* **The power cut, at about 13:39.** The three Pis rebooted (uptime 2.96 h at 16:36). The PC
+  restarted too: WSL has been up since 16:16, with /tmp empty.
+  * Every hardware tool was in the scratchpad under /tmp, and all of them were gone.
+  * Blue 2 did not come back onto the LAN. Mohamed: a power cut; nothing in the square moved.
+* **The tools were rebuilt, not rewritten.**
+  * `launch_w1g.sh` and `collect_w1h.sh`: each recorded creation and edit was replayed in order
+    from the session transcript (13 steps for the launcher, 2 for the collector).
+  * The checks: the launcher's lines 67–76, which the transcript had printed verbatim, match; so
+    do the message order of W1n's real launch log and its collect log.
+  * The rest came from their full text printed in the session.
+  * Kept in `~/.authbc_hw_tools/` (mode 700), outside the repo.
+* **W1o** (`prereg-W1o`, 16:41): W1n's series with floors on the tuning, pi-A ≥ 500 and the Pi 3
+  ≥ 1100 mBm. Mohamed: a STOP at the floors ends the series, as in W1n.
+  * `dsss_w1o.py`, 18 tests.
+  * The driver was dry-run on stubs fed W1n's session-3 preflight: STOP, the series ends, no long
+    run.
+* **The third valid session went into the paper, thesis and deck** (Mohamed's choice).
+  * New generated macros. The paper stays at 43 pp and the thesis at 160 pp, with 0 overfull and
+    0 undefined.
+  * **A sentence already wrong was corrected:** "both crossings 3–4 % above the model" was false
+    for W1k's per-record crossing (+4.9 %). The range is now generated: 3–6 %.
+  * At two decimals W1n's 3.2973 prints as 3.30, equal to the model's 3.30. That is correct
+    rounding, and the deck's notes give 3.297.
+  * The abstract, at its 185-word limit, gives the range 3.27–3.30.
+  * **The deck was edited in place.** Its build inputs in /tmp were lost, and the build script
+    carries the same change for a later rebuild. Before touching anything, its two existing
+    sessions were asserted equal to the score files. Rendered through PowerPoint, slides 54, 55 and
+    66 were inspected.
+
 # 2026-11-07, evening — the deck's third revision; Kumar et al. 2019 credited
 
 **The deck, revision 3** (Mohamed's slide-by-slide review; plan approved; 61 slides, git-excluded):

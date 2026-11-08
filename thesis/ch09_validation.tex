@@ -277,11 +277,14 @@ balance, and it stopped three long runs before they started.
 
 \subsection{The ratio on four radios}\label{sec:ratio-hw}
 
-Two sessions on that setup, each registered before it ran, met every condition of validity: the
-eight rate checks, background loss under $1\%$, every board in one cell at 1\,Mb/s, both powers
-read back, and the balance. In the first, the balance was \hwRatioGate{} before the capacity
-points and \hwRatioSpread{} at one of them; in the second, $1.17$ and $1.15$.
-\Cref{tab:ratio-hw} gives the crossings.
+Three sessions, each registered before it ran, met every condition of validity: the eight rate
+checks, background loss under $1\%$, every board in one cell at 1\,Mb/s, both powers read back,
+and the balance. In the first, the balance was \hwRatioGate{} before the capacity points and
+\hwRatioSpread{} at one of them; in the second, $1.17$ and $1.15$. The third ran two days later,
+after the square had been taken down, set out again and measured with a tape, and with pi-A at
+5\,dBm, one decibel lower. Its balance was \hwThirdGate{} and \hwThirdSpread, inside the limit of
+$1.5$ by little. A session run just before it on the same setup did not meet that limit, at $1.64$,
+and is not scored. \Cref{tab:ratio-hw} gives the crossings.
 
 \begin{table}[ht]
 \centering
@@ -293,15 +296,16 @@ their ratio. Each session is registered separately.}\label{tab:ratio-hw}
 \midrule
 session 1 & \hwRatioCrossA & \hwRatioCrossP & \hwRatio \\
 session 2 & \hwRepeatCrossA & \hwRepeatCrossP & \hwRepeatRatio \\
+session 3 & \hwThirdCrossA & \hwThirdCrossP & \hwThirdRatio \\
 contention model & \hwModelCrossA & \hwModelCrossP & \hwModelRatio \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Both crossings lie above the model's, by $3$--$4\%$. Capture lowers loss on real radios and so
-raises each design's capacity; the simulated capacities are, in that respect, conservative.
-Capture raises both alike: in both sessions the ratio, which is the claim of this thesis, lies
-within $1\%$ of the model's.
+Both crossings lie above the model's, by \hwAboveLo--\hwAboveHi\%. Capture lowers loss on real
+radios and so raises each design's capacity; the simulated capacities are, in that respect,
+conservative. Capture raises both alike: in all three sessions the ratio, which is the claim of
+this thesis, lies within $1\%$ of the model's.
 
 \subsection{What the hardware supports, and what it does not}
 
@@ -319,16 +323,18 @@ within $1\%$ of the model's.
       lowest load is not explained.
 \item \textbf{On three and four radios the contention model held}, at \hwThreeHeld{} of
       \hwThreePoints{} points and at all \hwFourPoints.
-\item \textbf{The ratio of the two capacities was measured on four radios}: \hwRatio{} and
-      \hwRepeatRatio{} in two sessions, against \hwModelRatio{} predicted. Capture puts both
-      crossings $3$--$4\%$ above the model's and leaves their ratio within $1\%$.
+\item \textbf{The ratio of the two capacities was measured on four radios}: \hwRatio,
+      \hwRepeatRatio{} and \hwThirdRatio{} in three sessions, against \hwModelRatio{} predicted.
+      Capture puts both crossings \hwAboveLo--\hwAboveHi\% above the model's and leaves their ratio
+      within $1\%$.
 \item \textbf{Loss was measured on air}, on three links through walls, from one sender
       (\Cref{sec:loss-air}). The design lost only its own frames, and its frame's length penalty
       matched the bit-error model within its interval.
 \item \textbf{What it does not show.} The link is 802.11b at 1\,Mb/s, not the 802.11a of the
       capacities in \Cref{ch:codesign}; four boards stand for a larger swarm through their
-      offered load; it is one setup in one room, in two sessions; and the balance that made the
-      ratio readable was reached by tuning the setup, on windows that were never scored.
+      offered load; it is one setup in one room, set out twice, in three sessions; and the
+      balance that made the ratio readable was reached by tuning the setup, on windows that
+      were never scored.
 \end{itemize}
 
 \section{The utilisation ceiling, and a flaw in the author's own pre-registration}
