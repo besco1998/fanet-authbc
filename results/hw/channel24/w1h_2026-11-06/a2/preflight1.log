@@ -1,0 +1,29 @@
+node 1: kit=[c42010127374 30c333bce0df 2b8ab3d2f89a edf4de1e97f4 ] plan=50f4887e2a3d throttled=0x0 ntp=yes running=0
+node 2: kit=[c42010127374 30c333bce0df 2b8ab3d2f89a edf4de1e97f4 ] plan=50f4887e2a3d throttled=0x0 ntp=yes running=0
+node 3: kit=[c42010127374 30c333bce0df 2b8ab3d2f89a edf4de1e97f4 ] plan=50f4887e2a3d throttled=0x0 ntp=yes running=0
+Blue 2 rebooting at 14:08:45
+Blue 2 ready 14:10:21: boot=eeb200cc uptime=82.32s watchdog=active
+node 4: [1e35e61fbcac 2b8ab3d2f89a edf4de1e97f4 50f4887e2a3d]
+node 2: set_txpower_window.sh (bd86ef80c307) started, 800 mBm
+Running as unit: authbc-preflight.service
+START=1793967140 (14:12:20); 6 windows; last ends about 14:15:20
+boards on the LAN: 4/4 at 14:15:54
+boards finished (reverted, pi-B auto): 4/4 at 14:16:02
+node1: 16 files; windows done 6; [2026-11-06T14:15:30+02:00] reverted OK, both deadmen disarmed
+node2: 17 files; windows done 6; [2026-11-06T14:15:36+02:00] reverted OK, both deadmen disarmed
+node3: 16 files; windows done 6; [2026-11-06T14:15:31+02:00] reverted OK, both deadmen disarmed
+node4: 18 files; windows done 6; [2026-11-06T14:15:43+02:00] reverted OK: back on the home Wi-Fi, deadman disarmed
+node 4 join: {"bssid":"42:d9:e1:35:09:ab","rate_ctl":"FIXED CCK_1M 0x00 0","boot":"eeb200cc","peers_reachable":[1,2,3]}; boot now eeb200cc
+node 2 power: 2026-11-06T14:11:30+02:00 set 800: txpower 8.00 dBm
+node 2 power: 2026-11-06T14:15:25+02:00 auto: txpower 31.00 dBm
+  [1] ok  rate check | pi-A (BCM4345/6) | 1941.8 
+  [1] ok  rate check | pi-B (BCM4345/6) | 1942.5 
+  [1] ok  rate check | Pi 3 (BCM43430/1) | 2192.5 
+  [2] ok  rate check | TP-Link on Blue 2 (RTL8188EUS) | 1962.3 
+  [2] ok  rate_ctl at join | TP-Link | FIXED CCK_1M 0x00 0 
+  [3] ok  pi-B at 8 dBm, then auto | node2 txpower.log | 2026-11-06T14:11:30+02:00 set 800: txpower 8.00 dBm | 2026-11-06T14:15:25+02:00 auto: txpower 31.00 dBm 
+  [4] ok  node 4 in the Pis' cell | 42:d9:e1:35:09:ab | reached [1, 2, 3] 
+  [4] ok  Blue 2 on one boot, every window complete | eeb200cc | 6/6 
+  [5] ok  no Pi under-voltage | all windows | 0 
+  [6] NO  senders within 1.5x | G31 | 5.354 | pi-A=2.88% pi-B=5.71% Pi=6.42% TP-Link=1.20%; usable 2/2
+NO-GO

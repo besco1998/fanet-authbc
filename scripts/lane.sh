@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ⚠️ NOT USED. D7 resolved to SERIAL execution, so no lane worktree was ever created.
-# Kept for provenance alongside docs/07 (also marked historical). See docs/README.md.
-# scripts/lane.sh — create a parallel-execution git worktree for a lane (docs/07 §3–4).
+# Kept for provenance alongside docs/archive/PLANNING_HISTORY.md (07). See docs/README.md.
+# scripts/lane.sh — create a parallel-execution git worktree for a lane (docs/archive/PLANNING_HISTORY.md, 07 §3–4).
 #
 # Usage: scripts/lane.sh <N>        N ∈ {2,3,4}
 #   lane 2 -> P5_MODELS_OPTIMIZER   lane 3 -> P6_NS3_VALIDATION   lane 4 -> P7_HARDWARE
@@ -18,9 +18,9 @@ usage() {
 [ $# -eq 1 ] || { usage; exit 2; }
 N="$1"
 case "$N" in
-  2) PROMPT="docs/prompts/P5_MODELS_OPTIMIZER.md" ;;
-  3) PROMPT="docs/prompts/P6_NS3_VALIDATION.md" ;;
-  4) PROMPT="docs/prompts/P7_HARDWARE.md" ;;
+  2) PROMPT="docs/archive/PLANNING_HISTORY.md" ;;
+  3) PROMPT="docs/archive/PLANNING_HISTORY.md" ;;
+  4) PROMPT="docs/archive/PLANNING_HISTORY.md" ;;
   1) echo "ERROR: lane 1 is the main working tree (integrator); not created by lane.sh."; exit 2 ;;
   *) echo "ERROR: lane must be 2, 3, or 4 (got '$N')."; usage; exit 2 ;;
 esac
@@ -50,12 +50,12 @@ cat <<EOF
    path:   ${ABS}
    branch: ${BRANCH}
 
-Checklist (docs/07 §4, USAGE_GUIDE §3):
+Checklist (docs/archive/PLANNING_HISTORY.md: 07 §4, USAGE_GUIDE §3):
   1. Open the folder in a SEPARATE VSCode window:  code ${ABS}
   2. Start a NEW Claude Code session there — one session per worktree, never two per dir.
   3. Run 'make setup' once in that tree (the venv is per-worktree).
   4. Paste the phase prompt:  ${PROMPT}
-  5. Edit ONLY this lane's owned paths (docs/07 §3). Shared files (Makefile, pyproject,
+  5. Edit ONLY this lane's owned paths (07 §3). Shared files (Makefile, pyproject,
      CLAUDE.md, docs/) are P0-frozen — coordinate any change at a SYNC point.
   6. Merges to main happen only at SYNC points; the Lane-1 session is the integrator.
 EOF

@@ -1,0 +1,37 @@
+[2026-11-06T09:08:54+02:00] deadman armed: revert in 780 s | start=1793949036 windows=12 plan sha=18871d6a6054 | tplink=tplink0 driver=8188eu boot=60748dbc uptime=84.39s
+[2026-11-06T09:10:12+02:00] peer 10.0.0.1 reachable
+[2026-11-06T09:10:14+02:00] peer 10.0.0.2 reachable
+[2026-11-06T09:10:16+02:00] peer 10.0.0.3 reachable
+[2026-11-06T09:10:16+02:00] after join: {"bssid":"82:ae:ea:89:aa:24","rate_ctl":"FIXED CCK_1M 0x00 0","boot":"60748dbc","peers_reachable":[1,2,3]}
+{"received_unique": 13199, "senders": 1, "duplicates": 0}
+[2026-11-06T09:11:02+02:00] window 00_R1_600fps done (senders 1)
+{"received_unique": 13199, "senders": 1, "duplicates": 0}
+[2026-11-06T09:11:32+02:00] window 01_R2_600fps done (senders 2)
+{"received_unique": 13199, "senders": 1, "duplicates": 0}
+[2026-11-06T09:12:02+02:00] window 02_R3_600fps done (senders 3)
+{"sent": 11424, "achieved_fps": 517.8, "late": 9785}
+{"received_unique": 0, "senders": 0, "duplicates": 0}
+[2026-11-06T09:12:32+02:00] window 03_R4_600fps done (senders 4)
+{"sent": 2750, "achieved_fps": 125.0, "late": 0}
+{"received_unique": 8150, "senders": 3, "duplicates": 0}
+[2026-11-06T09:13:02+02:00] window 04_G31_125fps done (senders 1,2,3,4)
+{"sent": 2750, "achieved_fps": 125.0, "late": 0}
+{"received_unique": 8142, "senders": 3, "duplicates": 0}
+[2026-11-06T09:13:32+02:00] window 05_G31_125fps done (senders 1,2,3,4)
+{"sent": 2750, "achieved_fps": 125.0, "late": 0}
+{"received_unique": 8179, "senders": 3, "duplicates": 0}
+[2026-11-06T09:14:02+02:00] window 06_G31_125fps done (senders 1,2,3,4)
+{"sent": 2750, "achieved_fps": 125.0, "late": 0}
+{"received_unique": 8175, "senders": 3, "duplicates": 0}
+[2026-11-06T09:14:32+02:00] window 07_G31_125fps done (senders 1,2,3,4)
+{"received_unique": 1100, "senders": 1, "duplicates": 0}
+[2026-11-06T09:15:02+02:00] window 08_Q1_50fps done (senders 1)
+{"received_unique": 1100, "senders": 1, "duplicates": 0}
+[2026-11-06T09:15:33+02:00] window 09_Q2_50fps done (senders 2)
+{"received_unique": 1100, "senders": 1, "duplicates": 0}
+[2026-11-06T09:16:02+02:00] window 10_Q3_50fps done (senders 3)
+{"sent": 1100, "achieved_fps": 50.0, "late": 0}
+{"received_unique": 0, "senders": 0, "duplicates": 0}
+[2026-11-06T09:16:32+02:00] window 11_Q4_50fps done (senders 4)
+[2026-11-06T09:16:32+02:00] at end: bssid=82:ae:ea:89:aa:24 rate_ctl=FIXED CCK_1M 0x00 0 boot=60748dbc
+[2026-11-06T09:16:59+02:00] reverted OK: back on the home Wi-Fi, deadman disarmed

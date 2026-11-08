@@ -1,0 +1,13 @@
+# host authbc-pi4b 2026-10-22T10:56:36+03:00 load 0.97 1.47 1.38
+# end 2026-10-22T11:01:15+03:00 load 1.00 1.18 1.27
+# source=a15_speed_sig.log
+alg,op,reps,median_us,lo_us,hi_us,core_share_at_design_rate
+Falcon-512,keypair,3,18811.34,18779.9,19305.18,
+Falcon-512,sign,3,641.43,640.81,645.9,0.00802
+Falcon-512,verify,3,88.44,88.14,88.75,0.13708
+Falcon-padded-512,keypair,3,19044.18,18779.12,19103.05,
+Falcon-padded-512,sign,3,638.38,638.03,639.77,0.00798
+Falcon-padded-512,verify,3,88.23,88.09,88.3,0.13675
+ML-DSA-44,keypair,3,145.01,144.43,145.06,
+ML-DSA-44,sign,3,375.22,374.49,377.37,0.00469
+ML-DSA-44,verify,3,131.23,130.51,132.07,0.20341

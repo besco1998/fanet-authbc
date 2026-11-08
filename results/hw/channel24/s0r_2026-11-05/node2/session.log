@@ -1,0 +1,33 @@
+Running timer as unit: authbc-revert.timer
+Will run service as unit: authbc-revert.service
+Running timer as unit: authbc-reboot.timer
+Will run service as unit: authbc-reboot.service
+[2026-11-05T12:50:15+02:00] deadmen armed: revert 690 s, reboot 990 s | node=2 nodes=1,2,3 freq=2462 windows=9 plan=plan_s0.txt sha=b8d3dfd65d66
+[2026-11-05T12:50:15+02:00] governor: performance -> performance; throttled 0x0
+[2026-11-05T12:50:32+02:00] type:  	type IBSS 	channel 11 (2462 MHz), width: 20 MHz, center1: 2462 MHz 
+[2026-11-05T12:50:34+02:00] peer 10.0.0.1 reachable
+[2026-11-05T12:50:36+02:00] peer 10.0.0.3 reachable
+{"received_unique": 11411, "senders": 1, "duplicates": 0}
+[2026-11-05T12:52:20+02:00] window 00_R1_600fps done (senders 1)
+{"received_unique": 11458, "senders": 1, "duplicates": 0}
+[2026-11-05T12:52:50+02:00] window 01_R1_600fps done (senders 1)
+{"sent": 11570, "achieved_fps": 520.9, "late": 9995}
+{"received_unique": 0, "senders": 0, "duplicates": 0}
+[2026-11-05T12:53:19+02:00] window 02_R2_600fps done (senders 2)
+{"sent": 11552, "achieved_fps": 521.5, "late": 9936}
+{"received_unique": 0, "senders": 0, "duplicates": 0}
+[2026-11-05T12:53:49+02:00] window 03_R2_600fps done (senders 2)
+{"received_unique": 8895, "senders": 1, "duplicates": 0}
+[2026-11-05T12:54:20+02:00] window 04_R3_600fps done (senders 3)
+{"received_unique": 9079, "senders": 1, "duplicates": 0}
+[2026-11-05T12:54:50+02:00] window 05_R3_600fps done (senders 3)
+{"received_unique": 1097, "senders": 1, "duplicates": 0}
+[2026-11-05T12:55:19+02:00] window 06_B1_50fps done (senders 1)
+{"sent": 1100, "achieved_fps": 50.0, "late": 0}
+{"received_unique": 0, "senders": 0, "duplicates": 0}
+[2026-11-05T12:55:50+02:00] window 07_B2_50fps done (senders 2)
+{"received_unique": 1099, "senders": 1, "duplicates": 0}
+[2026-11-05T12:56:19+02:00] window 08_B3_50fps done (senders 3)
+[2026-11-05T12:56:19+02:00] revert: starting
+[2026-11-05T12:56:30+02:00] revert: finished, wlan0 = inet 192.168.1.20
+[2026-11-05T12:56:35+02:00] reverted OK, both deadmen disarmed

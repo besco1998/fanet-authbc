@@ -1,4 +1,4 @@
-"""Boundary-value correctness for every encoder (docs/03 §3).
+"""Boundary-value correctness for every encoder (docs/archive/03 §3).
 
 Exercises the extreme field values of the integer schema (min/max of each width, ±full-range
 coordinate deltas, 0x00.../0xff... hashes) through encode→decode. Catches int-width, varint,

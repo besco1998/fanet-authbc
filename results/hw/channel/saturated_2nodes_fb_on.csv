@@ -1,0 +1,19 @@
+# python=3.12.3
+# platform=Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=contention_hw_saturated
+# config_hash=f547873387674985
+window,nodes,sender,receiver,offered_fps,accepted_by_sendto,tx_dropped,on_air,received,loss,span_s,air_fps
+00_C_400fps,2,1,2,400,5776,0,5776,5027,0.12967,22.3228,258.7
+00_C_400fps,2,2,1,400,6144,0,6142,5392,0.12211,22.4954,272.99
+01_C_400fps,2,1,2,400,5898,0,5898,5171,0.12326,22.4071,263.18
+01_C_400fps,2,2,1,400,5940,0,5940,5214,0.12222,22.2861,266.49
+02_C_400fps,2,1,2,400,5835,0,5835,5149,0.11757,22.3412,261.13
+02_C_400fps,2,2,1,400,5949,0,5949,5261,0.11565,22.3245,266.43
+03_C_400fps,2,1,2,400,5887,0,5887,5177,0.1206,22.2684,264.32
+03_C_400fps,2,2,1,400,5934,0,5934,5223,0.11982,22.3802,265.1

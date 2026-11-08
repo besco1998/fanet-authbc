@@ -1,0 +1,9 @@
+Pis rebooting at 08:45:29
+node 1 freshly booted: uptime 39.21s ntp=yes
+node 2 freshly booted: uptime 37.94s ntp=yes
+node 3 freshly booted: uptime 42.70s ntp=yes
+node 1: kit=[c42010127374 30c333bce0df 2b8ab3d2f89a edf4de1e97f4 ] plan=18871d6a6054 throttled=0x0 ntp=yes running=0
+node 2: kit=[c42010127374 30c333bce0df 2b8ab3d2f89a edf4de1e97f4 ] plan=18871d6a6054 throttled=0x0 ntp=yes running=0
+node 3: kit=[c42010127374 30c333bce0df 2b8ab3d2f89a edf4de1e97f4 ] plan=18871d6a6054 throttled=0x0 ntp=yes running=0
+Blue 2 rebooting at 08:46:32
+STOP: Blue 2 not ready by 08:54:24

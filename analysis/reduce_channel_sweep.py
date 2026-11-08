@@ -79,6 +79,8 @@ def main() -> None:
     ap.add_argument("--out", required=True, type=Path)
     ap.add_argument("--band", required=True, help="e.g. '5GHz ch36 (802.11a)'")
     ap.add_argument("--frame-bytes", type=int, default=1400)
+    ap.add_argument("--boards", default="tx=pi-a(authbc-pi4a) rx=pi-b(authbc-pi4b)",
+                    help="which board did what, and anything about its state worth a line")
     a = ap.parse_args()
 
     rows = collect(a.tx_dir, a.rx_dir)
@@ -92,7 +94,7 @@ def main() -> None:
         fh.write(f"# git_rev={_git_rev()}  host={platform.node()}"
                  f"  python={platform.python_version()}\n")
         fh.write(f"# band={a.band}  frame_bytes={a.frame_bytes}\n")
-        fh.write("# tx=pi-a(authbc-pi4a) rx=pi-b(authbc-pi4b), 2 nodes, one transmitter\n")
+        fh.write(f"# {a.boards}, 2 nodes, one transmitter\n")
         fh.write("# ⚠️ ONE transmitter: this measures LINK loss, NOT contention. It cannot\n")
         fh.write("#    validate Ma & Chen, which is a model of N contending stations.\n")
         w = csv.DictWriter(fh, fieldnames=list(rows[0].keys()))

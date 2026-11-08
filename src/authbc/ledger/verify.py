@@ -1,4 +1,4 @@
-"""Record verification helpers (docs/01 §1 security model, docs/03 §3 ledger/).
+"""Record verification helpers (docs/01 §1 security model, docs/archive/03 §3 ledger/).
 
 A record's authenticity is its signature over its **canonical bytes** (the same bytes that
 chain into ``prev_hash``); its ordering/non-equivocation is the hash chain. These helpers are

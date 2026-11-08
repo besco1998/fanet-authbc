@@ -1,7 +1,7 @@
 // authbc-lora-capacity-mobile.cc — the capacity envelope when the UAVs actually fly (E20, M2)
 //
 // ⚠️ A SEPARATE FILE BY DIRECTION, NOT A MODIFICATION. Mohamed's instruction (2026-07-30, recorded
-// in docs/MOBILITY_PLAN.md) is that mobility is added as new scenario files so the frozen static
+// in docs/DEFERRED_PLANS.md) is that mobility is added as new scenario files so the frozen static
 // results stay bit-reproducible and mobility becomes an ADDITIVE comparison rather than a
 // migration. `authbc-lora-capacity.cc` must therefore stay byte-identical; every difference
 // between the two files is listed under "WHAT THIS CHANGES vs the static scenario" below.
@@ -12,12 +12,12 @@
 // Gauss-Markov gives temporally correlated velocity with a tunable memory alpha, and is one of the
 // four models the LoRa-FANET survey (Paredes et al. 2023 §3.2.2) records for FANETs. Full evidence
 // and the speed anchor (Davoli et al. 2021: UAVs typically 20-70 km/h = 5.6-19.4 m/s) are in
-// docs/MOBILITY_SURVEY.md.
+// docs/DEFERRED_PLANS.md.
 //
 // ⚠️ WHAT MOBILITY STILL DOES NOT MODEL, and must be stated wherever this is reported: per-frame
 // Doppler fading. At 20 m/s the LoRa coherence time is ~7.3 ms against a 364 ms frame, so the
 // channel decorrelates ~50x WITHIN one transmission. This scenario moves nodes between frames; it
-// does not fade within them. See MOBILITY_PLAN.md §1a.
+// does not fade within them. See docs/DEFERRED_PLANS.md (mobility plan) §1a.
 //
 // ORIGINAL HEADER OF THE STATIC SCENARIO FOLLOWS.
 //
@@ -252,7 +252,7 @@ main(int argc, char* argv[])
     // decentralised FANET, and a UAV peer has ONE radio and ONE demodulator; 8 paths across 3
     // channels models a ground gateway, which is a different question. Note also that a peer
     // listening on 868.1 cannot hear a frame sent on 868.3 — for broadcast, where every node must
-    // receive every record, all nodes must share one channel (docs/TRADEOFFS.md §1a).
+    // receive every record, all nodes must share one channel (docs/DECISIONS.md §1a).
     //
     // ⚠️ E11: the "aloha" preset sets the g1 sub-band duty cycle to 1 (i.e. 100%), so the MAC does
     // NOT enforce the regulatory 1 %. That limit is imposed here by appPeriodS instead. Changing
@@ -351,7 +351,7 @@ main(int argc, char* argv[])
     // E20. The bounding box is the deployment disc extruded in z. Gauss-Markov REFLECTS off the
     // box, so nodes stay in the region the propagation model was characterised for instead of
     // drifting to arbitrary range — a node at 20 m/s covers 72 km in a 3600 s run, which no fixed
-    // disc could contain (MOBILITY_PLAN.md §1b).
+    // disc could contain (docs/DEFERRED_PLANS.md, mobility plan §1b).
     const double zLo = 1.2;    // the static scenario's device altitude, kept as the floor
     const double zHi = 120.0;  // typical small-UAV ceiling; z is bounded, not free
     NS_ABORT_MSG_IF(speedMps < 0.0, "speed must be >= 0");
@@ -389,7 +389,7 @@ main(int argc, char* argv[])
     else if (mobilityModel == "rwp")
     {
         // The field's default, run as a BASELINE so the Gauss-Markov choice is a measured
-        // comparison rather than an assertion (docs/MOBILITY_SURVEY.md §2a).
+        // comparison rather than an assertion (docs/DEFERRED_PLANS.md §2a).
         mobility.SetMobilityModel(
             "ns3::RandomWaypointMobilityModel",
             "Speed", StringValue("ns3::UniformRandomVariable[Min=" +

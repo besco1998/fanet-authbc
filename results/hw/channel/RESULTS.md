@@ -7,6 +7,22 @@ logs in `5g_pi-{a,b}/` and `2g4_pi-{a,b}/`.*
 **This closes the longest-standing gap in the project: every 802.11 capacity claim was simulation.
 Two of them now have a hardware anchor.**
 
+> ⚠️ **CORRECTION, 2026-10-09 (finding F74). Two statements below are withdrawn; the text is left
+> as it was written so that the error stays visible.**
+>
+> * **"Airtime 1.995 ms against 1.99 ms predicted, 0.36 %" compared two wrong numbers.** 1.995 ms
+>   is the reciprocal of the *sender's* rate, which counts frames still queued when it stops.
+>   The receiver's own clock gives **2.019 ms** per frame for these same windows
+>   (`frame_spacing.csv`). The 1.99 ms left out the 64 B of headers and assumed the standard's
+>   backoff; the standard's cycle for this frame is **2.078 ms**. Likewise the "capacity
+>   501.19 frames/s" was 495.4 on air.
+> * **It is therefore not "an independent hardware confirmation of the 802.11a timing model".**
+>   What these windows show is that one saturated sender on this chip spaces its frames by
+>   about 43 µs where the standard's rule gives 101.5 µs on average.
+>
+> The link loss (§1), the 2.4 GHz story (§2) and the rig facts (§3–4) stand. The measurements of
+> 2026-10-09 — two radios contending — are in `CONTENTION_RESULTS.md`.
+
 ---
 
 ## Law-6 record: what was predicted BEFORE the run

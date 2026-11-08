@@ -1,0 +1,34 @@
+fetching the gate at 09:14:27 (START+231s)
+ssh: connect to host 192.168.1.24 port 22: Connection timed out
+Connection closed by UNKNOWN port 65535
+tar: This does not look like a tar archive
+tar: Exiting with failure status due to previous errors
+  node 1: fetch FAILED
+ssh: connect to host 192.168.1.24 port 22: No route to host
+Connection closed by UNKNOWN port 65535
+tar: This does not look like a tar archive
+tar: Exiting with failure status due to previous errors
+  node 2: fetch FAILED
+ssh: connect to host 192.168.1.24 port 22: No route to host
+Connection closed by UNKNOWN port 65535
+tar: This does not look like a tar archive
+tar: Exiting with failure status due to previous errors
+  node 3: fetch FAILED
+tar: This does not look like a tar archive
+tar: Exiting with failure status due to previous errors
+  what=node 4 joined the Pis' cell  group=no join record  measured=reached []  held=False
+  what=node 4 rate fixed at join  predicted=FIXED CCK_1M  held=False
+  what=gate: windows usable  group=G31  measured=0/4  held=False
+  what=gate: senders balanced  group=G31  band_hi=1.5  held=False
+ABORT
+ABORT (pilot: the abort path tested whatever the verdict (gate exit 3)) at 09:14:44: rebooting every board
+ssh: connect to host 192.168.1.24 port 22: No route to host
+Connection closed by UNKNOWN port 65535
+  node 1: relay FAILED (its deadmen remain)
+ssh: connect to host 192.168.1.24 port 22: No route to host
+Connection closed by UNKNOWN port 65535
+  node 2: relay FAILED (its deadmen remain)
+ssh: connect to host 192.168.1.24 port 22: No route to host
+Connection closed by UNKNOWN port 65535
+  node 3: relay FAILED (its deadmen remain)
+  node 4: reboot sent

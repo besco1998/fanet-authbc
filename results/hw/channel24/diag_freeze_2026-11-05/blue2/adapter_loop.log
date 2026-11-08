@@ -1,0 +1,132 @@
+[21:00:22.404] === start: 10 cycles, boot=8beb5ee8
+[21:00:22.484] cycle 1: join
+[21:00:30.966] cycle 1: in cell [Joined IBSS 02:11:87:9a:9e:31 (on tplink0)] rate [FIXED CCK_1M 0x00 0 ]; sending
+{"sent": 10000, "achieved_fps": 1000.0, "late": 4316}
+[21:00:41.565] c1 pkill
+[21:00:41.736] c1 rate 0xff
+[21:00:41.769] c1 ibss leave
+[21:00:41.838] c1 addr flush
+[21:00:41.952] c1 link down
+[21:00:42.041] c1 type managed
+[21:00:42.107] c1 wlan0 up
+[21:00:42.937] c1 start iwd
+[21:00:43.459] c1 revert done
+[21:01:13.625] cycle 1: LAN 192.168.1.24/24
+[21:01:13.658] cycle 2: join
+[21:01:22.129] cycle 2: in cell [Joined IBSS 02:11:87:dd:cf:b0 (on tplink0)] rate [FIXED CCK_1M 0x00 0 ]; sending
+{"sent": 10000, "achieved_fps": 1000.0, "late": 44}
+[21:01:32.755] c2 pkill
+[21:01:32.948] c2 rate 0xff
+[21:01:32.980] c2 ibss leave
+[21:01:33.049] c2 addr flush
+[21:01:33.162] c2 link down
+[21:01:33.255] c2 type managed
+[21:01:33.318] c2 wlan0 up
+[21:01:34.164] c2 start iwd
+[21:01:34.625] c2 revert done
+[21:02:04.802] cycle 2: LAN 192.168.1.24/24
+[21:02:04.856] cycle 3: join
+[21:02:13.338] cycle 3: in cell [Joined IBSS 02:11:87:90:d9:9c (on tplink0)] rate [FIXED CCK_1M 0x00 0 ]; sending
+{"sent": 10000, "achieved_fps": 1000.0, "late": 45}
+[21:02:23.938] c3 pkill
+[21:02:24.109] c3 rate 0xff
+[21:02:24.141] c3 ibss leave
+[21:02:24.212] c3 addr flush
+[21:02:24.326] c3 link down
+[21:02:24.430] c3 type managed
+[21:02:24.493] c3 wlan0 up
+[21:02:25.333] c3 start iwd
+[21:02:25.919] c3 revert done
+[21:02:56.081] cycle 3: LAN 192.168.1.24/24
+[21:02:56.114] cycle 4: join
+[21:03:04.598] cycle 4: in cell [Joined IBSS 02:11:87:14:92:9d (on tplink0)] rate [FIXED CCK_1M 0x00 0 ]; sending
+{"sent": 9999, "achieved_fps": 999.9, "late": 42}
+[21:03:15.223] c4 pkill
+[21:03:15.405] c4 rate 0xff
+[21:03:15.448] c4 ibss leave
+[21:03:15.517] c4 addr flush
+[21:03:15.632] c4 link down
+[21:03:15.733] c4 type managed
+[21:03:15.801] c4 wlan0 up
+[21:03:16.649] c4 start iwd
+[21:03:17.131] c4 revert done
+[21:03:47.315] cycle 4: LAN 192.168.1.24/24
+[21:03:47.349] cycle 5: join
+[21:03:55.878] cycle 5: in cell [Joined IBSS 02:11:87:5a:53:9c (on tplink0)] rate [FIXED CCK_1M 0x00 0 ]; sending
+{"sent": 10000, "achieved_fps": 1000.0, "late": 46}
+[21:04:06.478] c5 pkill
+[21:04:06.647] c5 rate 0xff
+[21:04:06.679] c5 ibss leave
+[21:04:06.751] c5 addr flush
+[21:04:06.868] c5 link down
+[21:04:06.977] c5 type managed
+[21:04:07.046] c5 wlan0 up
+[21:04:07.877] c5 start iwd
+[21:04:08.434] c5 revert done
+[21:04:38.592] cycle 5: LAN 192.168.1.24/24
+[21:04:38.625] cycle 6: join
+[21:04:47.111] cycle 6: in cell [Joined IBSS 02:11:87:7d:95:ff (on tplink0)] rate [FIXED CCK_1M 0x00 0 ]; sending
+{"sent": 10000, "achieved_fps": 1000.0, "late": 42}
+[21:04:57.736] c6 pkill
+[21:04:57.906] c6 rate 0xff
+[21:04:57.938] c6 ibss leave
+[21:04:58.029] c6 addr flush
+[21:04:58.143] c6 link down
+[21:04:58.243] c6 type managed
+[21:04:58.331] c6 wlan0 up
+[21:04:59.188] c6 start iwd
+[21:04:59.655] c6 revert done
+[21:05:29.844] cycle 6: LAN 192.168.1.24/24
+[21:05:29.877] cycle 7: join
+[21:05:38.441] cycle 7: in cell [Joined IBSS 02:11:87:0b:dc:77 (on tplink0)] rate [FIXED CCK_1M 0x00 0 ]; sending
+{"sent": 9999, "achieved_fps": 999.9, "late": 40}
+[21:05:49.039] c7 pkill
+[21:05:49.206] c7 rate 0xff
+[21:05:49.239] c7 ibss leave
+[21:05:49.308] c7 addr flush
+[21:05:49.439] c7 link down
+[21:05:49.567] c7 type managed
+[21:05:49.639] c7 wlan0 up
+[21:05:50.477] c7 start iwd
+[21:05:51.038] c7 revert done
+[21:06:21.177] cycle 7: LAN 192.168.1.24/24
+[21:06:21.210] cycle 8: join
+[21:06:29.686] cycle 8: in cell [Joined IBSS 02:11:87:9e:29:aa (on tplink0)] rate [FIXED CCK_1M 0x00 0 ]; sending
+{"sent": 10000, "achieved_fps": 1000.1, "late": 39}
+[21:06:40.283] c8 pkill
+[21:06:40.451] c8 rate 0xff
+[21:06:40.484] c8 ibss leave
+[21:06:40.566] c8 addr flush
+[21:06:40.688] c8 link down
+[21:06:40.794] c8 type managed
+[21:06:40.866] c8 wlan0 up
+[21:06:41.705] c8 start iwd
+[21:06:42.195] c8 revert done
+[21:07:12.386] cycle 8: LAN 192.168.1.24/24
+[21:07:12.419] cycle 9: join
+[21:07:20.907] cycle 9: in cell [Joined IBSS 02:11:87:d9:94:90 (on tplink0)] rate [FIXED CCK_1M 0x00 0 ]; sending
+{"sent": 10000, "achieved_fps": 1000.0, "late": 47}
+[21:07:31.540] c9 pkill
+[21:07:31.721] c9 rate 0xff
+[21:07:31.753] c9 ibss leave
+[21:07:31.826] c9 addr flush
+[21:07:31.965] c9 link down
+[21:07:32.066] c9 type managed
+[21:07:32.141] c9 wlan0 up
+[21:07:32.974] c9 start iwd
+[21:07:33.435] c9 revert done
+[21:08:03.657] cycle 9: LAN 192.168.1.24/24
+[21:08:03.784] cycle 10: join
+[21:08:12.366] cycle 10: in cell [Joined IBSS 02:11:87:39:89:90 (on tplink0)] rate [FIXED CCK_1M 0x00 0 ]; sending
+{"sent": 10000, "achieved_fps": 1000.0, "late": 53}
+[21:08:22.964] c10 pkill
+[21:08:23.134] c10 rate 0xff
+[21:08:23.166] c10 ibss leave
+[21:08:23.237] c10 addr flush
+[21:08:23.371] c10 link down
+[21:08:23.467] c10 type managed
+[21:08:23.539] c10 wlan0 up
+[21:08:24.376] c10 start iwd
+[21:08:24.871] c10 revert done
+[21:08:55.066] cycle 10: LAN 192.168.1.24/24
+[21:08:55.237] === done: 10 cycles

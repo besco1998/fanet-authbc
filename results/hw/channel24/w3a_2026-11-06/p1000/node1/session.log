@@ -1,0 +1,54 @@
+Running timer as unit: authbc-revert.timer
+Will run service as unit: authbc-revert.service
+Running timer as unit: authbc-reboot.timer
+Will run service as unit: authbc-reboot.service
+[2026-11-06T23:59:39+02:00] deadmen armed: revert 840 s, reboot 1140 s | node=1 nodes=1,2,3 freq=2462 windows=14 plan=plan_w3a.txt sha=39b7d4f8d064
+[2026-11-06T23:59:39+02:00] governor: ondemand -> performance; throttled 0x0
+[2026-11-06T23:59:56+02:00] type:  	type IBSS 	channel 11 (2462 MHz), width: 20 MHz, center1: 2462 MHz 
+[2026-11-06T23:59:58+02:00] peer 10.0.0.2 reachable
+[2026-11-07T00:00:00+02:00] peer 10.0.0.3 reachable
+{"sent": 11564, "achieved_fps": 522.2, "late": 9939}
+{"received_unique": 0, "senders": 0, "duplicates": 0}
+[2026-11-07T00:02:23+02:00] window 00_R1_600fps done (senders 1)
+{"sent": 1100, "achieved_fps": 50.0, "late": 0}
+{"received_unique": 0, "senders": 0, "duplicates": 0}
+[2026-11-07T00:02:54+02:00] window 01_S_50fps done (senders 1)
+{"sent": 1100, "achieved_fps": 50.0, "late": 0}
+{"received_unique": 0, "senders": 0, "duplicates": 0}
+[2026-11-07T00:03:24+02:00] window 02_A_50fps done (senders 1)
+{"sent": 1100, "achieved_fps": 50.0, "late": 0}
+{"received_unique": 0, "senders": 0, "duplicates": 0}
+[2026-11-07T00:03:54+02:00] window 03_L_50fps done (senders 1)
+{"sent": 1100, "achieved_fps": 50.0, "late": 0}
+{"received_unique": 0, "senders": 0, "duplicates": 0}
+[2026-11-07T00:04:24+02:00] window 04_S_50fps done (senders 1)
+{"sent": 1100, "achieved_fps": 50.0, "late": 0}
+{"received_unique": 0, "senders": 0, "duplicates": 0}
+[2026-11-07T00:04:54+02:00] window 05_A_50fps done (senders 1)
+{"sent": 1100, "achieved_fps": 50.0, "late": 0}
+{"received_unique": 0, "senders": 0, "duplicates": 0}
+[2026-11-07T00:05:24+02:00] window 06_L_50fps done (senders 1)
+{"sent": 1100, "achieved_fps": 50.0, "late": 0}
+{"received_unique": 0, "senders": 0, "duplicates": 0}
+[2026-11-07T00:05:53+02:00] window 07_S_50fps done (senders 1)
+{"sent": 1100, "achieved_fps": 50.0, "late": 0}
+{"received_unique": 0, "senders": 0, "duplicates": 0}
+[2026-11-07T00:06:24+02:00] window 08_A_50fps done (senders 1)
+{"sent": 1100, "achieved_fps": 50.0, "late": 0}
+{"received_unique": 0, "senders": 0, "duplicates": 0}
+[2026-11-07T00:06:54+02:00] window 09_L_50fps done (senders 1)
+{"sent": 1100, "achieved_fps": 50.0, "late": 0}
+{"received_unique": 0, "senders": 0, "duplicates": 0}
+[2026-11-07T00:07:24+02:00] window 10_S_50fps done (senders 1)
+{"sent": 1100, "achieved_fps": 50.0, "late": 0}
+{"received_unique": 0, "senders": 0, "duplicates": 0}
+[2026-11-07T00:07:54+02:00] window 11_A_50fps done (senders 1)
+{"sent": 1100, "achieved_fps": 50.0, "late": 0}
+{"received_unique": 0, "senders": 0, "duplicates": 0}
+[2026-11-07T00:08:23+02:00] window 12_L_50fps done (senders 1)
+{"sent": 11533, "achieved_fps": 519.9, "late": 9953}
+{"received_unique": 0, "senders": 0, "duplicates": 0}
+[2026-11-07T00:08:53+02:00] window 13_R1_600fps done (senders 1)
+[2026-11-07T00:08:53+02:00] revert: starting
+[2026-11-07T00:09:05+02:00] revert: finished, wlan0 = inet 192.168.1.25
+[2026-11-07T00:09:10+02:00] reverted OK, both deadmen disarmed

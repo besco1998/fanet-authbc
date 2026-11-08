@@ -173,7 +173,7 @@ main(int argc, char* argv[])
     // decentralised FANET, and a UAV peer has ONE radio and ONE demodulator; 8 paths across 3
     // channels models a ground gateway, which is a different question. Note also that a peer
     // listening on 868.1 cannot hear a frame sent on 868.3 — for broadcast, where every node must
-    // receive every record, all nodes must share one channel (docs/TRADEOFFS.md §1a).
+    // receive every record, all nodes must share one channel (docs/DECISIONS.md §1a).
     //
     // ⚠️ E11: the "aloha" preset sets the g1 sub-band duty cycle to 1 (i.e. 100%), so the MAC does
     // NOT enforce the regulatory 1 %. That limit is imposed here by appPeriodS instead. Changing

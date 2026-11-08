@@ -1,0 +1,25 @@
+# python=3.12.13
+# platform=Linux-6.12.93+rpt-rpi-v8-aarch64-with-glibc2.36
+# cpu=Raspberry Pi 4 Model B Rev 1.4
+# governor=performance
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.3
+# run=compiled_receiver
+# rustc=rustc 1.99.1 (58cf8f9c3 2026-10-13)
+# config_hash=1ec5278a54a83f56
+impl,metric,median_ns,lo_ns,hi_ns,n
+rust,receive_ns_per_frame,276698.0,276294.0,277136.0,5 runs x 20 reps x 10000 frames
+rust,decode_rebuild_ns_per_frame,7347.0,7344.0,7403.0,5 runs x 20 reps x 10000 frames
+rust,batch64_verify_ns_per_frame,117071.0,116893.0,117211.0,5 runs x 20 reps x 10000 frames
+rust,tier1_tag_decode_ns_per_frame,10197.0,10179.0,10232.0,5 runs x 20 reps x 10000 frames
+rust,tier2_batch64_ns_per_frame,117179.0,117030.0,117291.0,5 runs x 20 reps x 10000 frames
+python,receive_ns_per_frame,1408668.4,1408302.7,1409083.4,10000 frames (bootstrap 95 % interval)
+derived,python_over_rust_receive,5.091,,,
+derived,nodes_per_core_python,56.7912,,,Eq. (4)
+derived,nodes_per_core_rust,289.1239,,,Eq. (4)
+derived,nodes_per_core_rust_batch64,642.9938,,,Eq. (4)
+derived,nodes_per_core_lazy,628.0618,,,Eq. (4)
+derived,verify_share_of_receive,0.9734,,,
+derived,batch64_over_single_verify,0.4346,,,

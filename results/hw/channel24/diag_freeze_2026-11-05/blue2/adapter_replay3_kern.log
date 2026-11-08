@@ -1,0 +1,455 @@
+2026-11-05T20:52:53,000000+02:00 Booting Linux on physical CPU 0x0
+2026-11-05T20:52:53,000000+02:00 Linux version 5.10.168-ti-r84 (voodoo@rpi4b4g-01) (gcc (Debian 12.2.0-14+deb12u1) 12.2.0, GNU ld (GNU Binutils for Debian) 2.40) #1bookworm SMP PREEMPT Thu May 7 17:32:50 UTC 2026
+2026-11-05T20:52:53,000000+02:00 CPU: ARMv7 Processor [413fc082] revision 2 (ARMv7), cr=10c5387d
+2026-11-05T20:52:53,000000+02:00 CPU: PIPT / VIPT nonaliasing data cache, VIPT aliasing instruction cache
+2026-11-05T20:52:53,000000+02:00 OF: fdt: Machine model: TI AM335x BeagleBone Blue
+2026-11-05T20:52:53,000000+02:00 earlycon: omap8250 at MMIO 0x44e09000 (options '')
+2026-11-05T20:52:53,000000+02:00 printk: bootconsole [omap8250] enabled
+2026-11-05T20:52:53,000000+02:00 Memory policy: Data cache writeback
+2026-11-05T20:52:53,000000+02:00 efi: UEFI not found.
+2026-11-05T20:52:53,000000+02:00 cma: Reserved 48 MiB at 0x9c800000
+2026-11-05T20:52:53,000000+02:00 Zone ranges:
+2026-11-05T20:52:53,000000+02:00   Normal   [mem 0x0000000080000000-0x000000009fdfffff]
+2026-11-05T20:52:53,000000+02:00   HighMem  empty
+2026-11-05T20:52:53,000000+02:00 Movable zone start for each node
+2026-11-05T20:52:53,000000+02:00 Early memory node ranges
+2026-11-05T20:52:53,000000+02:00   node   0: [mem 0x0000000080000000-0x000000009fdfffff]
+2026-11-05T20:52:53,000000+02:00 Initmem setup node 0 [mem 0x0000000080000000-0x000000009fdfffff]
+2026-11-05T20:52:53,000000+02:00 On node 0 totalpages: 130560
+2026-11-05T20:52:53,000000+02:00   Normal zone: 1148 pages used for memmap
+2026-11-05T20:52:53,000000+02:00   Normal zone: 0 pages reserved
+2026-11-05T20:52:53,000000+02:00   Normal zone: 130560 pages, LIFO batch:31
+2026-11-05T20:52:53,000000+02:00 CPU: All CPU(s) started in SVC mode.
+2026-11-05T20:52:53,000000+02:00 AM335X ES2.1 (sgx neon)
+2026-11-05T20:52:53,000000+02:00 percpu: Embedded 21 pages/cpu s54604 r8192 d23220 u86016
+2026-11-05T20:52:53,000000+02:00 pcpu-alloc: s54604 r8192 d23220 u86016 alloc=21*4096
+2026-11-05T20:52:53,000000+02:00 pcpu-alloc: [0] 0 
+2026-11-05T20:52:53,000000+02:00 Built 1 zonelists, mobility grouping on.  Total pages: 129412
+2026-11-05T20:52:53,000000+02:00 Kernel command line: console=ttyS0,115200n8 root=/dev/mmcblk0p3 ro rootfstype=ext4 rootwait fsck.repair=yes earlycon coherent_pool=1M net.ifnames=0 lpj=1990656 rng_core.default_quality=100 omap_wdt.early_enable=1
+2026-11-05T20:52:53,000000+02:00 Dentry cache hash table entries: 65536 (order: 6, 262144 bytes, linear)
+2026-11-05T20:52:53,000000+02:00 Inode-cache hash table entries: 32768 (order: 5, 131072 bytes, linear)
+2026-11-05T20:52:53,000000+02:00 mem auto-init: stack:off, heap alloc:on, heap free:off
+2026-11-05T20:52:53,000000+02:00 Memory: 437564K/522240K available (15360K kernel code, 1426K rwdata, 3924K rodata, 1024K init, 450K bss, 35524K reserved, 49152K cma-reserved, 0K highmem)
+2026-11-05T20:52:53,000000+02:00 SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=1, Nodes=1
+2026-11-05T20:52:53,000000+02:00 ftrace: allocating 47537 entries in 140 pages
+2026-11-05T20:52:53,000000+02:00 ftrace: allocated 140 pages with 3 groups
+2026-11-05T20:52:53,000000+02:00 rcu: Preemptible hierarchical RCU implementation.
+2026-11-05T20:52:53,000000+02:00 rcu: 	RCU event tracing is enabled.
+2026-11-05T20:52:53,000000+02:00 rcu: 	RCU restricting CPUs from NR_CPUS=2 to nr_cpu_ids=1.
+2026-11-05T20:52:53,000000+02:00 	Trampoline variant of Tasks RCU enabled.
+2026-11-05T20:52:53,000000+02:00 	Rude variant of Tasks RCU enabled.
+2026-11-05T20:52:53,000000+02:00 	Tracing variant of Tasks RCU enabled.
+2026-11-05T20:52:53,000000+02:00 rcu: RCU calculated value of scheduler-enlistment delay is 25 jiffies.
+2026-11-05T20:52:53,000000+02:00 rcu: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=1
+2026-11-05T20:52:53,000000+02:00 NR_IRQS: 16, nr_irqs: 16, preallocated irqs: 16
+2026-11-05T20:52:53,000000+02:00 IRQ: Found an INTC at 0x(ptrval) (revision 5.0) with 128 interrupts
+2026-11-05T20:52:53,000000+02:00 TI gptimer clocksource: always-on /ocp/interconnect@44c00000/segment@200000/target-module@31000
+2026-11-05T20:52:53,000011+02:00 sched_clock: 32 bits at 24MHz, resolution 41ns, wraps every 89478484971ns
+2026-11-05T20:52:53,008076+02:00 clocksource: dmtimer: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 79635851949 ns
+2026-11-05T20:52:53,018038+02:00 TI gptimer clockevent: 24000000 Hz at /ocp/interconnect@48000000/segment@0/target-module@40000
+2026-11-05T20:52:53,029365+02:00 Console: colour dummy device 80x30
+2026-11-05T20:52:53,034096+02:00 Calibrating delay loop (skipped) preset value.. 995.32 BogoMIPS (lpj=1990656)
+2026-11-05T20:52:53,042553+02:00 pid_max: default: 32768 minimum: 301
+2026-11-05T20:52:53,047977+02:00 LSM: Security Framework initializing
+2026-11-05T20:52:53,052874+02:00 Yama: becoming mindful.
+2026-11-05T20:52:53,056789+02:00 AppArmor: AppArmor initialized
+2026-11-05T20:52:53,061039+02:00 TOMOYO Linux initialized
+2026-11-05T20:52:53,064931+02:00 Mount-cache hash table entries: 1024 (order: 0, 4096 bytes, linear)
+2026-11-05T20:52:53,072477+02:00 Mountpoint-cache hash table entries: 1024 (order: 0, 4096 bytes, linear)
+2026-11-05T20:52:53,082291+02:00 CPU: Testing write buffer coherency: ok
+2026-11-05T20:52:53,087461+02:00 CPU0: Spectre v2: using BPIALL workaround
+2026-11-05T20:52:53,116681+02:00 Setting up static identity map for 0x80100000 - 0x80100060
+2026-11-05T20:52:53,128045+02:00 rcu: Hierarchical SRCU implementation.
+2026-11-05T20:52:53,141334+02:00 EFI services will not be available.
+2026-11-05T20:52:53,156058+02:00 smp: Bringing up secondary CPUs ...
+2026-11-05T20:52:53,160777+02:00 smp: Brought up 1 node, 1 CPU
+2026-11-05T20:52:53,164925+02:00 SMP: Total of 1 processors activated (995.32 BogoMIPS).
+2026-11-05T20:52:53,171390+02:00 CPU: All CPU(s) started in SVC mode.
+2026-11-05T20:52:53,177204+02:00 devtmpfs: initialized
+2026-11-05T20:52:53,204483+02:00 VFP support v0.3: implementor 41 architecture 3 part 30 variant c rev 3
+2026-11-05T20:52:53,213004+02:00 clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645041785100000 ns
+2026-11-05T20:52:53,223108+02:00 futex hash table entries: 256 (order: 2, 16384 bytes, linear)
+2026-11-05T20:52:53,234092+02:00 pinctrl core: initialized pinctrl subsystem
+2026-11-05T20:52:53,241044+02:00 DMI not present or invalid.
+2026-11-05T20:52:53,246069+02:00 NET: Registered protocol family 16
+2026-11-05T20:52:53,255446+02:00 DMA: preallocated 1024 KiB pool for atomic coherent allocations
+2026-11-05T20:52:53,289729+02:00 l3-aon-clkctrl:0000:0: failed to disable
+2026-11-05T20:52:53,295623+02:00 audit: initializing netlink subsys (disabled)
+2026-11-05T20:52:53,302854+02:00 thermal_sys: Registered thermal governor 'fair_share'
+2026-11-05T20:52:53,302871+02:00 thermal_sys: Registered thermal governor 'bang_bang'
+2026-11-05T20:52:53,309263+02:00 audit: type=2000 audit(0.216:1): state=initialized audit_enabled=0 res=1
+2026-11-05T20:52:53,323455+02:00 thermal_sys: Registered thermal governor 'step_wise'
+2026-11-05T20:52:53,323463+02:00 thermal_sys: Registered thermal governor 'user_space'
+2026-11-05T20:52:53,329666+02:00 thermal_sys: Registered thermal governor 'power_allocator'
+2026-11-05T20:52:53,336440+02:00 cpuidle: using governor ladder
+2026-11-05T20:52:53,347479+02:00 cpuidle: using governor menu
+2026-11-05T20:52:55,232949+02:00 hw-breakpoint: debug architecture 0x4 unsupported.
+2026-11-05T20:52:55,273523+02:00 Kprobes globally optimized
+2026-11-05T20:52:55,304393+02:00 raid6: skip pq benchmark and using algorithm neonx8
+2026-11-05T20:52:55,310602+02:00 raid6: using neon recovery algorithm
+2026-11-05T20:52:55,320138+02:00 iommu: Default domain type: Translated 
+2026-11-05T20:52:55,327847+02:00 SCSI subsystem initialized
+2026-11-05T20:52:55,336216+02:00 libata version 3.00 loaded.
+2026-11-05T20:52:55,336632+02:00 usbcore: registered new interface driver usbfs
+2026-11-05T20:52:55,342461+02:00 usbcore: registered new interface driver hub
+2026-11-05T20:52:55,348018+02:00 usbcore: registered new device driver usb
+2026-11-05T20:52:55,354451+02:00 pps_core: LinuxPPS API ver. 1 registered
+2026-11-05T20:52:55,359621+02:00 pps_core: Software ver. 5.3.6 - Copyright 2005-2007 Rodolfo Giometti <giometti@linux.it>
+2026-11-05T20:52:55,369064+02:00 PTP clock support registered
+2026-11-05T20:52:55,377394+02:00 NetLabel: Initializing
+2026-11-05T20:52:55,381033+02:00 NetLabel:  domain hash size = 128
+2026-11-05T20:52:55,385534+02:00 NetLabel:  protocols = UNLABELED CIPSOv4 CALIPSO
+2026-11-05T20:52:55,391488+02:00 NetLabel:  unlabeled traffic allowed by default
+2026-11-05T20:52:55,398598+02:00 clocksource: Switched to clocksource dmtimer
+2026-11-05T20:52:56,485033+02:00 VFS: Disk quotas dquot_6.6.0
+2026-11-05T20:52:56,489348+02:00 VFS: Dquot-cache hash table entries: 1024 (order 0, 4096 bytes)
+2026-11-05T20:52:56,496910+02:00 FS-Cache: Loaded
+2026-11-05T20:52:56,500349+02:00 CacheFiles: Loaded
+2026-11-05T20:52:56,504816+02:00 AppArmor: AppArmor Filesystem Enabled
+2026-11-05T20:52:56,524715+02:00 NET: Registered protocol family 2
+2026-11-05T20:52:56,529617+02:00 IP idents hash table entries: 8192 (order: 4, 65536 bytes, linear)
+2026-11-05T20:52:56,538822+02:00 tcp_listen_portaddr_hash hash table entries: 512 (order: 0, 6144 bytes, linear)
+2026-11-05T20:52:56,547915+02:00 TCP established hash table entries: 4096 (order: 2, 16384 bytes, linear)
+2026-11-05T20:52:56,556076+02:00 TCP bind hash table entries: 4096 (order: 3, 32768 bytes, linear)
+2026-11-05T20:52:56,563547+02:00 TCP: Hash tables configured (established 4096 bind 4096)
+2026-11-05T20:52:56,570955+02:00 MPTCP token hash table entries: 512 (order: 1, 8192 bytes, linear)
+2026-11-05T20:52:56,578628+02:00 UDP hash table entries: 256 (order: 1, 8192 bytes, linear)
+2026-11-05T20:52:56,585399+02:00 UDP-Lite hash table entries: 256 (order: 1, 8192 bytes, linear)
+2026-11-05T20:52:56,592903+02:00 NET: Registered protocol family 1
+2026-11-05T20:52:56,610939+02:00 RPC: Registered named UNIX socket transport module.
+2026-11-05T20:52:56,617172+02:00 RPC: Registered udp transport module.
+2026-11-05T20:52:56,622043+02:00 RPC: Registered tcp transport module.
+2026-11-05T20:52:56,626905+02:00 RPC: Registered tcp NFSv4.1 backchannel transport module.
+2026-11-05T20:52:56,633563+02:00 NET: Registered protocol family 44
+2026-11-05T20:52:56,639139+02:00 Trying to unpack rootfs image as initramfs...
+2026-11-05T20:52:57,630989+02:00 Freeing initrd memory: 7652K
+2026-11-05T20:52:57,636078+02:00 hw perfevents: enabled with armv7_cortex_a8 PMU driver, 5 counters available
+2026-11-05T20:52:57,650938+02:00 Initialise system trusted keyrings
+2026-11-05T20:52:57,656261+02:00 workingset: timestamp_bits=14 max_order=17 bucket_order=3
+2026-11-05T20:52:57,672438+02:00 zbud: loaded
+2026-11-05T20:52:57,683804+02:00 NFS: Registering the id_resolver key type
+2026-11-05T20:52:57,689264+02:00 Key type id_resolver registered
+2026-11-05T20:52:57,693607+02:00 Key type id_legacy registered
+2026-11-05T20:52:57,697980+02:00 nfs4filelayout_init: NFSv4 File Layout Driver Registering...
+2026-11-05T20:52:57,704914+02:00 nfs4flexfilelayout_init: NFSv4 Flexfile Layout Driver Registering...
+2026-11-05T20:52:57,712597+02:00 jffs2: version 2.2. (NAND) (SUMMARY)  © 2001-2006 Red Hat, Inc.
+2026-11-05T20:52:57,721061+02:00 fuse: init (API version 7.32)
+2026-11-05T20:52:57,822533+02:00 NET: Registered protocol family 38
+2026-11-05T20:52:57,827273+02:00 xor: measuring software checksum speed
+2026-11-05T20:52:57,840224+02:00    arm4regs        :  1272 MB/sec
+2026-11-05T20:52:57,854859+02:00    8regs           :   989 MB/sec
+2026-11-05T20:52:57,869969+02:00    32regs          :   935 MB/sec
+2026-11-05T20:52:57,880149+02:00    neon            :  1743 MB/sec
+2026-11-05T20:52:57,884649+02:00 xor: using function: neon (1743 MB/sec)
+2026-11-05T20:52:57,889694+02:00 Key type asymmetric registered
+2026-11-05T20:52:57,893931+02:00 Asymmetric key parser 'x509' registered
+2026-11-05T20:52:57,899068+02:00 Block layer SCSI generic (bsg) driver version 0.4 loaded (major 244)
+2026-11-05T20:52:57,911155+02:00 io scheduler mq-deadline registered
+2026-11-05T20:52:58,381336+02:00 ti-sysc: probe of 44e31000.target-module failed with error -16
+2026-11-05T20:52:58,488190+02:00 ti-sysc: probe of 48040000.target-module failed with error -16
+2026-11-05T20:52:58,650171+02:00 omap-mailbox 480c8000.mailbox: omap mailbox rev 0x400
+2026-11-05T20:52:59,099082+02:00 debugfs: Directory '49000000.dma' with parent 'dmaengine' already present!
+2026-11-05T20:52:59,107323+02:00 edma 49000000.dma: TI EDMA DMA engine driver
+2026-11-05T20:52:59,157820+02:00 pinctrl-single 44e10800.pinmux: 142 pins, size 568
+2026-11-05T20:52:59,188962+02:00 Serial: 8250/16550 driver, 6 ports, IRQ sharing disabled
+2026-11-05T20:52:59,201052+02:00 printk: console [ttyS0] disabled
+2026-11-05T20:52:59,205749+02:00 44e09000.serial: ttyS0 at MMIO 0x44e09000 (irq = 20, base_baud = 3000000) is a 8250
+2026-11-05T20:52:59,214962+02:00 printk: console [ttyS0] enabled
+2026-11-05T20:52:59,223504+02:00 printk: bootconsole [omap8250] disabled
+2026-11-05T20:52:59,235945+02:00 48022000.serial: ttyS1 at MMIO 0x48022000 (irq = 27, base_baud = 3000000) is a 8250
+2026-11-05T20:52:59,247281+02:00 48024000.serial: ttyS2 at MMIO 0x48024000 (irq = 28, base_baud = 3000000) is a 8250
+2026-11-05T20:52:59,258757+02:00 481a6000.serial: ttyS3 at MMIO 0x481a6000 (irq = 40, base_baud = 3000000) is a 8250
+2026-11-05T20:52:59,267950+02:00 serial serial0: tty port ttyS3 registered
+2026-11-05T20:52:59,274941+02:00 481a8000.serial: ttyS4 at MMIO 0x481a8000 (irq = 41, base_baud = 3000000) is a 8250
+2026-11-05T20:52:59,285893+02:00 481aa000.serial: ttyS5 at MMIO 0x481aa000 (irq = 42, base_baud = 3000000) is a 8250
+2026-11-05T20:52:59,299890+02:00 omap_rng 48310000.rng: Random Number Generator ver. 20
+2026-11-05T20:52:59,306715+02:00 random: crng init done
+2026-11-05T20:52:59,422808+02:00 loop: module loaded
+2026-11-05T20:52:59,445722+02:00 usbcore: registered new interface driver smsc95xx
+2026-11-05T20:52:59,453782+02:00 am335x-phy-driver 47401300.usb-phy: supply vcc not found, using dummy regulator
+2026-11-05T20:52:59,462824+02:00 am335x-phy-driver 47401300.usb-phy: dummy supplies not allowed for exclusive requests
+2026-11-05T20:52:59,479860+02:00 am335x-phy-driver 47401b00.usb-phy: supply vcc not found, using dummy regulator
+2026-11-05T20:52:59,488816+02:00 am335x-phy-driver 47401b00.usb-phy: dummy supplies not allowed for exclusive requests
+2026-11-05T20:52:59,504903+02:00 ehci_hcd: USB 2.0 'Enhanced' Host Controller (EHCI) Driver
+2026-11-05T20:52:59,511710+02:00 ehci-platform: EHCI generic platform driver
+2026-11-05T20:52:59,517663+02:00 ehci-omap: OMAP-EHCI Host Controller driver
+2026-11-05T20:52:59,537526+02:00 musb-hdrc musb-hdrc.1: MUSB HDRC host driver
+2026-11-05T20:52:59,543251+02:00 musb-hdrc musb-hdrc.1: new USB bus registered, assigned bus number 1
+2026-11-05T20:52:59,551120+02:00 usb usb1: New USB device found, idVendor=1d6b, idProduct=0002, bcdDevice= 5.10
+2026-11-05T20:52:59,559468+02:00 usb usb1: New USB device strings: Mfr=3, Product=2, SerialNumber=1
+2026-11-05T20:52:59,566761+02:00 usb usb1: Product: MUSB HDRC host driver
+2026-11-05T20:52:59,571772+02:00 usb usb1: Manufacturer: Linux 5.10.168-ti-r84 musb-hcd
+2026-11-05T20:52:59,578002+02:00 usb usb1: SerialNumber: musb-hdrc.1
+2026-11-05T20:52:59,583581+02:00 hub 1-0:1.0: USB hub found
+2026-11-05T20:52:59,587549+02:00 hub 1-0:1.0: 1 port detected
+2026-11-05T20:52:59,605930+02:00 omap_rtc 44e3e000.rtc: registered as rtc0
+2026-11-05T20:52:59,612028+02:00 omap_rtc 44e3e000.rtc: setting system clock to 2000-01-01T00:00:00 UTC (946684800)
+2026-11-05T20:52:59,622877+02:00 i2c /dev entries driver
+2026-11-05T20:52:59,627570+02:00 Driver for 1-wire Dallas network protocol.
+2026-11-05T20:52:59,638374+02:00 omap_wdt: OMAP Watchdog Timer Rev 0x01: initial timeout 60 sec
+2026-11-05T20:52:59,647241+02:00 softdog: initialized. soft_noboot=0 soft_margin=60 sec soft_panic=0 (nowayout=0)
+2026-11-05T20:52:59,655776+02:00 softdog:              soft_reboot_cmd=<not set> soft_active_on_boot=0
+2026-11-05T20:52:59,665155+02:00 cpuidle: enable-method property 'ti,am3352' found operations
+2026-11-05T20:52:59,673844+02:00 sdhci: Secure Digital Host Controller Interface driver
+2026-11-05T20:52:59,680156+02:00 sdhci: Copyright(c) Pierre Ossman
+2026-11-05T20:52:59,684557+02:00 sdhci-pltfm: SDHCI platform and OF driver helper
+2026-11-05T20:52:59,692575+02:00 sdhci-omap 481d8000.mmc: supply vqmmc not found, using dummy regulator
+2026-11-05T20:52:59,702533+02:00 ledtrig-cpu: registered to indicate activity on CPUs
+2026-11-05T20:52:59,709597+02:00 sdhci-omap 47810000.mmc: supply vqmmc not found, using dummy regulator
+2026-11-05T20:52:59,720083+02:00 omap-aes 53500000.aes: OMAP AES hw accel rev: 3.2
+2026-11-05T20:52:59,732134+02:00 omap-aes 53500000.aes: will run requests pump with realtime priority
+2026-11-05T20:52:59,743839+02:00 omap-sham 53100000.sham: hw accel on OMAP rev 4.3
+2026-11-05T20:52:59,750198+02:00 omap-sham 53100000.sham: will run requests pump with realtime priority
+2026-11-05T20:52:59,758024+02:00 mmc1: SDHCI controller on 481d8000.mmc [481d8000.mmc] using External DMA
+2026-11-05T20:52:59,774993+02:00 hid: raw HID events driver (C) Jiri Kosina
+2026-11-05T20:52:59,781596+02:00 usbcore: registered new interface driver usbhid
+2026-11-05T20:52:59,787381+02:00 usbhid: USB HID core driver
+2026-11-05T20:52:59,791959+02:00 remoteproc remoteproc0: wkup_m3 is available
+2026-11-05T20:52:59,806293+02:00 NET: Registered protocol family 10
+2026-11-05T20:52:59,848580+02:00 mmc1: new high speed MMC card at address 0001
+2026-11-05T20:52:59,867580+02:00 mmcblk1: mmc1:0001 S10004 3.56 GiB 
+2026-11-05T20:52:59,876415+02:00 mmcblk1boot0: mmc1:0001 S10004 partition 1 4.00 MiB
+2026-11-05T20:52:59,887601+02:00 mmcblk1boot1: mmc1:0001 S10004 partition 2 4.00 MiB
+2026-11-05T20:52:59,903302+02:00 mmcblk1rpmb: mmc1:0001 S10004 partition 3 4.00 MiB, chardev (241:0)
+2026-11-05T20:52:59,921592+02:00  mmcblk1: p1
+2026-11-05T20:52:59,955185+02:00 Segment Routing with IPv6
+2026-11-05T20:52:59,959933+02:00 mip6: Mobile IPv6
+2026-11-05T20:52:59,963124+02:00 NET: Registered protocol family 17
+2026-11-05T20:52:59,972172+02:00 Key type dns_resolver registered
+2026-11-05T20:52:59,976750+02:00 mpls_gso: MPLS GSO support
+2026-11-05T20:52:59,980953+02:00 ThumbEE CPU extension supported.
+2026-11-05T20:52:59,985321+02:00 Registering SWP/SWPB emulation handler
+2026-11-05T20:52:59,990339+02:00 omap_voltage_late_init: Voltage driver support not added
+2026-11-05T20:52:59,997907+02:00 registered taskstats version 1
+2026-11-05T20:53:00,002123+02:00 Loading compiled-in X.509 certificates
+2026-11-05T20:53:00,007141+02:00 zswap: loaded using pool lzo/zbud
+2026-11-05T20:53:00,016561+02:00 Key type .fscrypt registered
+2026-11-05T20:53:00,020632+02:00 Key type fscrypt-provisioning registered
+2026-11-05T20:53:00,033250+02:00 Btrfs loaded, crc32c=crc32c-generic
+2026-11-05T20:53:00,046878+02:00 usb 1-1: new high-speed USB device number 2 using musb-hdrc
+2026-11-05T20:53:00,087936+02:00 Key type encrypted registered
+2026-11-05T20:53:00,092360+02:00 AppArmor: AppArmor sha1 policy hashing enabled
+2026-11-05T20:53:00,098211+02:00 ima: No TPM chip found, activating TPM-bypass!
+2026-11-05T20:53:00,103910+02:00 ima: Allocated hash algorithm: sha256
+2026-11-05T20:53:00,108811+02:00 ima: No architecture policies found
+2026-11-05T20:53:00,113550+02:00 evm: Initialising EVM extended attributes:
+2026-11-05T20:53:00,118911+02:00 evm: security.selinux
+2026-11-05T20:53:00,122245+02:00 evm: security.apparmor
+2026-11-05T20:53:00,125735+02:00 evm: security.ima
+2026-11-05T20:53:00,128903+02:00 evm: security.capability
+2026-11-05T20:53:00,132527+02:00 evm: HMAC attrs: 0x1
+2026-11-05T20:53:00,162461+02:00 OMAP GPIO hardware version 0.1
+2026-11-05T20:53:00,195458+02:00 tps65217-pmic: Failed to locate of_node [id: -1]
+2026-11-05T20:53:00,207191+02:00 usb 1-1: New USB device found, idVendor=2357, idProduct=010c, bcdDevice= 0.00
+2026-11-05T20:53:00,215676+02:00 usb 1-1: New USB device strings: Mfr=1, Product=2, SerialNumber=3
+2026-11-05T20:53:00,222967+02:00 usb 1-1: Product: 802.11n NIC
+2026-11-05T20:53:00,227107+02:00 usb 1-1: Manufacturer: Realtek
+2026-11-05T20:53:00,231332+02:00 usb 1-1: SerialNumber: 00E04C0001
+2026-11-05T20:53:00,241764+02:00 tps65217-bl: Failed to locate of_node [id: -1]
+2026-11-05T20:53:00,251374+02:00 tps6521x_pwrbutton tps65217-pwrbutton: DMA mask not set
+2026-11-05T20:53:00,259012+02:00 input: tps65217_pwr_but as /devices/platform/ocp/44c00000.interconnect/44c00000.interconnect:segment@200000/44e0b000.target-module/44e0b000.i2c/i2c-0/0-0024/tps65217-pwrbutton/input/input0
+2026-11-05T20:53:00,277639+02:00 tps65217 0-0024: TPS65217 ID 0xe version 1.2
+2026-11-05T20:53:00,283667+02:00 at24 0-0050: supply vcc not found, using dummy regulator
+2026-11-05T20:53:00,291052+02:00 at24 0-0050: 32768 byte 24c256 EEPROM, writable, 1 bytes/write
+2026-11-05T20:53:00,298215+02:00 omap_i2c 44e0b000.i2c: bus 0 rev0.11 at 400 kHz
+2026-11-05T20:53:00,306089+02:00 omap_i2c 4802a000.i2c: bus 1 rev0.11 at 100 kHz
+2026-11-05T20:53:00,316396+02:00 omap_i2c 4819c000.i2c: bus 2 rev0.11 at 400 kHz
+2026-11-05T20:53:00,324040+02:00 gpio-106 (ls-buf-en-hog): hogged as output/high
+2026-11-05T20:53:00,342181+02:00 omap_gpio 44e07000.gpio: Could not set line 6 debounce to 200000 microseconds (-22)
+2026-11-05T20:53:00,356627+02:00 sdhci-omap 47810000.mmc: supply vqmmc not found, using dummy regulator
+2026-11-05T20:53:00,366765+02:00 of_cfs_init
+2026-11-05T20:53:00,369306+02:00 of_cfs_init: OK
+2026-11-05T20:53:00,372741+02:00 sdhci-omap 48060000.mmc: Got CD GPIO
+2026-11-05T20:53:00,381408+02:00 sdhci-omap 48060000.mmc: supply vqmmc not found, using dummy regulator
+2026-11-05T20:53:00,419167+02:00 mmc0: SDHCI controller on 48060000.mmc [48060000.mmc] using External DMA
+2026-11-05T20:53:00,472380+02:00 mmc0: new high speed SDHC card at address b370
+2026-11-05T20:53:00,483481+02:00 mmcblk0: mmc0:b370 EZSD1 7.28 GiB 
+2026-11-05T20:53:00,490991+02:00  mmcblk0: p1 p2 p3
+2026-11-05T20:53:00,502676+02:00 mmc2: SDHCI controller on 47810000.mmc [47810000.mmc] using External DMA
+2026-11-05T20:53:00,519015+02:00 sdhci-omap 47810000.mmc: card claims to support voltages below defined range
+2026-11-05T20:53:00,528133+02:00 Freeing unused kernel memory: 1024K
+2026-11-05T20:53:00,533652+02:00 Run /init as init process
+2026-11-05T20:53:00,537429+02:00   with arguments:
+2026-11-05T20:53:00,537439+02:00     /init
+2026-11-05T20:53:00,537447+02:00   with environment:
+2026-11-05T20:53:00,537454+02:00     HOME=/
+2026-11-05T20:53:00,537462+02:00     TERM=linux
+2026-11-05T20:53:00,577605+02:00 mmc2: new high speed SDIO card at address 0001
+2026-11-05T20:53:08,104477+02:00 EXT4-fs (mmcblk0p3): INFO: recovery required on readonly filesystem
+2026-11-05T20:53:08,111982+02:00 EXT4-fs (mmcblk0p3): write access will be enabled during recovery
+2026-11-05T20:53:08,449023+02:00 EXT4-fs (mmcblk0p3): recovery complete
+2026-11-05T20:53:08,456320+02:00 EXT4-fs (mmcblk0p3): mounted filesystem with ordered data mode. Opts: (null)
+2026-11-05T20:53:08,729182+02:00 Not activating Mandatory Access Control as /sbin/tomoyo-init does not exist.
+2026-11-05T20:53:09,299932+02:00 systemd[1]: System time before build time, advancing clock.
+2026-11-05T20:53:09,439662+02:00 systemd[1]: systemd 254.16-1~bpo12+1bbbio0~bookworm+20240807 running in system mode (+PAM +AUDIT +SELINUX +APPARMOR +IMA +SMACK +SECCOMP +GCRYPT -GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 -IDN +IPTC +KMOD +LIBCRYPTSETUP +LIBFDISK +PCRE2 -PWQUALITY +P11KIT +QRENCODE +TPM2 +BZIP2 +LZ4 +XZ +ZLIB +ZSTD -BPF_FRAMEWORK -XKBCOMMON +UTMP +SYSVINIT default-hierarchy=unified)
+2026-11-05T20:53:09,474961+02:00 systemd[1]: Detected architecture arm.
+2026-11-05T20:53:09,503283+02:00 systemd[1]: Hostname set to <bbb2>.
+2026-11-05T20:53:09,549778+02:00 systemd[1]: Using hardware watchdog 'OMAP Watchdog', version 0, device /dev/watchdog0
+2026-11-05T20:53:09,564022+02:00 systemd[1]: Watchdog running with a hardware timeout of 30s.
+2026-11-05T20:53:10,663623+02:00 zram: Added device: zram0
+2026-11-05T20:53:11,923873+02:00 systemd[1]: Queued start job for default target graphical.target.
+2026-11-05T20:53:11,952260+02:00 systemd[1]: Created slice system-getty.slice - Slice /system/getty.
+2026-11-05T20:53:11,980045+02:00 systemd[1]: Created slice system-modprobe.slice - Slice /system/modprobe.
+2026-11-05T20:53:12,008371+02:00 systemd[1]: Created slice system-serial\x2dgetty.slice - Slice /system/serial-getty.
+2026-11-05T20:53:12,040049+02:00 systemd[1]: Created slice system-systemd\x2dfsck.slice - Slice /system/systemd-fsck.
+2026-11-05T20:53:12,072027+02:00 systemd[1]: Created slice system-systemd\x2dzram\x2dsetup.slice - Slice /system/systemd-zram-setup.
+2026-11-05T20:53:12,102236+02:00 systemd[1]: Created slice user.slice - User and Session Slice.
+2026-11-05T20:53:12,127994+02:00 systemd[1]: Started systemd-ask-password-console.path - Dispatch Password Requests to Console Directory Watch.
+2026-11-05T20:53:12,155828+02:00 systemd[1]: Started systemd-ask-password-wall.path - Forward Password Requests to Wall Directory Watch.
+2026-11-05T20:53:12,185433+02:00 systemd[1]: Set up automount proc-sys-fs-binfmt_misc.automount - Arbitrary Executable File Formats File System Automount Point.
+2026-11-05T20:53:12,215281+02:00 systemd[1]: Expecting device dev-mmcblk0p1.device - /dev/mmcblk0p1...
+2026-11-05T20:53:12,238951+02:00 systemd[1]: Expecting device dev-mmcblk0p2.device - /dev/mmcblk0p2...
+2026-11-05T20:53:12,262969+02:00 systemd[1]: Expecting device dev-ttyS0.device - /dev/ttyS0...
+2026-11-05T20:53:12,286963+02:00 systemd[1]: Expecting device dev-zram0.device - /dev/zram0...
+2026-11-05T20:53:12,310947+02:00 systemd[1]: Expecting device sys-subsystem-net-devices-wlan0.device - /sys/subsystem/net/devices/wlan0...
+2026-11-05T20:53:12,339056+02:00 systemd[1]: Reached target cryptsetup.target - Local Encrypted Volumes.
+2026-11-05T20:53:12,363201+02:00 systemd[1]: Reached target integritysetup.target - Local Integrity Protected Volumes.
+2026-11-05T20:53:12,387499+02:00 systemd[1]: Reached target paths.target - Path Units.
+2026-11-05T20:53:12,411132+02:00 systemd[1]: Reached target remote-fs.target - Remote File Systems.
+2026-11-05T20:53:12,435055+02:00 systemd[1]: Reached target slices.target - Slice Units.
+2026-11-05T20:53:12,459488+02:00 systemd[1]: Reached target veritysetup.target - Local Verity Protected Volumes.
+2026-11-05T20:53:12,484082+02:00 systemd[1]: Listening on systemd-initctl.socket - initctl Compatibility Named Pipe.
+2026-11-05T20:53:12,513016+02:00 systemd[1]: Listening on systemd-journald-dev-log.socket - Journal Socket (/dev/log).
+2026-11-05T20:53:12,541004+02:00 systemd[1]: Listening on systemd-journald.socket - Journal Socket.
+2026-11-05T20:53:12,569299+02:00 systemd[1]: Listening on systemd-networkd.socket - Network Service Netlink Socket.
+2026-11-05T20:53:12,599909+02:00 systemd[1]: Listening on systemd-udevd-control.socket - udev Control Socket.
+2026-11-05T20:53:12,624726+02:00 systemd[1]: Listening on systemd-udevd-kernel.socket - udev Kernel Socket.
+2026-11-05T20:53:12,652990+02:00 systemd[1]: dev-hugepages.mount - Huge Pages File System was skipped because of an unmet condition check (ConditionPathExists=/sys/kernel/mm/hugepages).
+2026-11-05T20:53:12,677716+02:00 systemd[1]: Mounting dev-mqueue.mount - POSIX Message Queue File System...
+2026-11-05T20:53:12,725817+02:00 systemd[1]: Mounting sys-kernel-debug.mount - /sys/kernel/debug...
+2026-11-05T20:53:12,801104+02:00 systemd[1]: Mounting sys-kernel-tracing.mount - Kernel Trace File System...
+2026-11-05T20:53:12,848199+02:00 systemd[1]: Starting keyboard-setup.service - Set the console keyboard layout...
+2026-11-05T20:53:12,902337+02:00 systemd[1]: Starting kmod-static-nodes.service - Create List of Static Device Nodes...
+2026-11-05T20:53:12,972912+02:00 systemd[1]: Starting modprobe@configfs.service - Load Kernel Module configfs...
+2026-11-05T20:53:13,060284+02:00 systemd[1]: Starting modprobe@dm_mod.service - Load Kernel Module dm_mod...
+2026-11-05T20:53:13,148101+02:00 systemd[1]: Starting modprobe@drm.service - Load Kernel Module drm...
+2026-11-05T20:53:13,252091+02:00 systemd[1]: Starting modprobe@efi_pstore.service - Load Kernel Module efi_pstore...
+2026-11-05T20:53:13,352288+02:00 systemd[1]: Starting modprobe@fuse.service - Load Kernel Module fuse...
+2026-11-05T20:53:13,363947+02:00 device-mapper: uevent: version 1.0.3
+2026-11-05T20:53:13,375715+02:00 device-mapper: ioctl: 4.43.0-ioctl (2020-10-01) initialised: dm-devel@redhat.com
+2026-11-05T20:53:13,467549+02:00 systemd[1]: Starting modprobe@loop.service - Load Kernel Module loop...
+2026-11-05T20:53:13,541282+02:00 systemd[1]: Starting systemd-fsck-root.service - File System Check on Root Device...
+2026-11-05T20:53:13,644435+02:00 systemd[1]: Starting systemd-journald.service - Journal Service...
+2026-11-05T20:53:13,744345+02:00 systemd[1]: Starting systemd-modules-load.service - Load Kernel Modules...
+2026-11-05T20:53:13,899152+02:00 systemd[1]: Starting systemd-network-generator.service - Generate network units from Kernel command line...
+2026-11-05T20:53:13,968768+02:00 systemd[1]: systemd-pcrmachine.service - TPM2 PCR Machine ID Measurement was skipped because of an unmet condition check (ConditionPathExists=/sys/firmware/efi/efivars/StubPcrKernelImage-4a67b082-0a4c-41cf-b6c7-440b29bb8c4f).
+2026-11-05T20:53:14,220921+02:00 Asymmetric key parser 'pkcs8' registered
+2026-11-05T20:53:14,234930+02:00 systemd[1]: Starting systemd-udev-trigger.service - Coldplug All udev Devices...
+2026-11-05T20:53:14,381076+02:00 systemd[1]: Mounted dev-mqueue.mount - POSIX Message Queue File System.
+2026-11-05T20:53:14,420291+02:00 systemd-journald[340]: Collecting audit messages is disabled.
+2026-11-05T20:53:14,445146+02:00 systemd[1]: Mounted sys-kernel-debug.mount - /sys/kernel/debug.
+2026-11-05T20:53:14,497024+02:00 systemd[1]: Mounted sys-kernel-tracing.mount - Kernel Trace File System.
+2026-11-05T20:53:14,554946+02:00 systemd[1]: Finished kmod-static-nodes.service - Create List of Static Device Nodes.
+2026-11-05T20:53:14,612451+02:00 systemd[1]: modprobe@configfs.service: Deactivated successfully.
+2026-11-05T20:53:14,659532+02:00 systemd[1]: Finished modprobe@configfs.service - Load Kernel Module configfs.
+2026-11-05T20:53:14,716066+02:00 systemd[1]: modprobe@dm_mod.service: Deactivated successfully.
+2026-11-05T20:53:14,759344+02:00 systemd[1]: Finished modprobe@dm_mod.service - Load Kernel Module dm_mod.
+2026-11-05T20:53:14,820156+02:00 systemd[1]: modprobe@drm.service: Deactivated successfully.
+2026-11-05T20:53:14,863253+02:00 systemd[1]: Finished modprobe@drm.service - Load Kernel Module drm.
+2026-11-05T20:53:14,920023+02:00 systemd[1]: modprobe@efi_pstore.service: Deactivated successfully.
+2026-11-05T20:53:14,963287+02:00 systemd[1]: Finished modprobe@efi_pstore.service - Load Kernel Module efi_pstore.
+2026-11-05T20:53:15,028373+02:00 systemd[1]: modprobe@fuse.service: Deactivated successfully.
+2026-11-05T20:53:15,063334+02:00 systemd[1]: Finished modprobe@fuse.service - Load Kernel Module fuse.
+2026-11-05T20:53:15,123918+02:00 systemd[1]: modprobe@loop.service: Deactivated successfully.
+2026-11-05T20:53:15,163480+02:00 systemd[1]: Finished modprobe@loop.service - Load Kernel Module loop.
+2026-11-05T20:53:15,221281+02:00 systemd[1]: Finished systemd-fsck-root.service - File System Check on Root Device.
+2026-11-05T20:53:15,280616+02:00 systemd[1]: Finished keyboard-setup.service - Set the console keyboard layout.
+2026-11-05T20:53:15,331932+02:00 systemd[1]: Finished systemd-modules-load.service - Load Kernel Modules.
+2026-11-05T20:53:15,383948+02:00 systemd[1]: Finished systemd-network-generator.service - Generate network units from Kernel command line.
+2026-11-05T20:53:15,475809+02:00 systemd[1]: Mounting sys-fs-fuse-connections.mount - FUSE Control File System...
+2026-11-05T20:53:15,611710+02:00 systemd[1]: Mounting sys-kernel-config.mount - Kernel Configuration File System...
+2026-11-05T20:53:15,727130+02:00 systemd[1]: Starting systemd-remount-fs.service - Remount Root and Kernel File Systems...
+2026-11-05T20:53:15,775837+02:00 systemd[1]: systemd-repart.service - Repartition Root Disk was skipped because no trigger condition checks were met.
+2026-11-05T20:53:15,844348+02:00 systemd[1]: Starting systemd-sysctl.service - Apply Kernel Variables...
+2026-11-05T20:53:15,956257+02:00 systemd[1]: Starting systemd-tmpfiles-setup-dev-early.service - Create Static Device Nodes in /dev gracefully...
+2026-11-05T20:53:16,065520+02:00 EXT4-fs (mmcblk0p3): re-mounted. Opts: errors=remount-ro
+2026-11-05T20:53:16,080500+02:00 systemd[1]: Started systemd-journald.service - Journal Service.
+2026-11-05T20:53:16,984155+02:00 systemd-journald[340]: Received client request to flush runtime journal.
+2026-11-05T20:53:17,019657+02:00 systemd-journald[340]: File /var/log/journal/e22b8241a9f44c17a86f1674c931196e/system.journal corrupted or uncleanly shut down, renaming and replacing.
+2026-11-05T20:53:20,225660+02:00 zram0: detected capacity change from 0 to 253231104
+2026-11-05T20:53:20,675035+02:00 Adding 247292k swap on /dev/zram0.  Priority:100 extents:1 across:247292k SSDscFS
+2026-11-05T20:53:23,787699+02:00 Adding 524284k swap on /dev/mmcblk0p2.  Priority:-2 extents:1 across:524284k SSFS
+2026-11-05T20:53:28,014315+02:00 cfg80211: Loading compiled-in X.509 certificates for regulatory database
+2026-11-05T20:53:28,067797+02:00 cfg80211: Loaded X.509 cert 'sforshee: 00b28ddf47aef9cea7'
+2026-11-05T20:53:28,103401+02:00 cfg80211: loaded regulatory.db is malformed or signature is missing/invalid
+2026-11-05T20:53:29,605760+02:00 systemd-journald[340]: Failed to read journal file /var/log/journal/e22b8241a9f44c17a86f1674c931196e/user-1000.journal for rotation, trying to move it out of the way: Device or resource busy
+2026-11-05T20:53:33,628097+02:00 using random self ethernet address
+2026-11-05T20:53:33,658806+02:00 using random host ethernet address
+2026-11-05T20:53:34,159306+02:00 usb0: HOST MAC f4:5e:ab:3c:b9:37
+2026-11-05T20:53:34,193022+02:00 usb0: MAC f4:5e:ab:3c:b9:38
+2026-11-05T20:53:36,350876+02:00 remoteproc remoteproc0: powering up wkup_m3
+2026-11-05T20:53:36,362740+02:00 remoteproc remoteproc0: Booting fw image am335x-pm-firmware.elf, size 217148
+2026-11-05T20:53:36,379115+02:00 remoteproc remoteproc0: remote processor wkup_m3 is now up
+2026-11-05T20:53:36,379142+02:00 wkup_m3_ipc 44e11324.wkup_m3_ipc: CM3 Firmware Version = 0x192
+2026-11-05T20:53:38,894556+02:00 inv-mpu6050-i2c 2-0068: mounting matrix not found: using identity...
+2026-11-05T20:53:38,898453+02:00 bmp280 2-0076: supply vddd not found, using dummy regulator
+2026-11-05T20:53:38,942934+02:00 inv-mpu6050-i2c 2-0068: supply vdd not found, using dummy regulator
+2026-11-05T20:53:39,028152+02:00 inv-mpu6050-i2c 2-0068: supply vddio not found, using dummy regulator
+2026-11-05T20:53:39,079992+02:00 CAN device driver interface
+2026-11-05T20:53:39,085348+02:00 bmp280 2-0076: supply vdda not found, using dummy regulator
+2026-11-05T20:53:39,350918+02:00 c_can_platform 481d0000.can: c_can_platform device registered (regs=6df4853f, irq=45)
+2026-11-05T20:53:39,828489+02:00 inv-mpu6050-i2c 2-0068: disable internal use of magnetometer
+2026-11-05T20:53:39,926124+02:00 i2c i2c-2: Added multiplexed i2c bus 3
+2026-11-05T20:53:40,892755+02:00 Bluetooth: Core ver 2.22
+2026-11-05T20:53:40,960575+02:00 NET: Registered protocol family 31
+2026-11-05T20:53:41,013745+02:00 Bluetooth: HCI device and connection manager initialized
+2026-11-05T20:53:41,056664+02:00 8188eu: loading out-of-tree module taints kernel.
+2026-11-05T20:53:41,094861+02:00 Bluetooth: HCI socket layer initialized
+2026-11-05T20:53:41,146798+02:00 Bluetooth: L2CAP socket layer initialized
+2026-11-05T20:53:41,262822+02:00 Bluetooth: SCO socket layer initialized
+2026-11-05T20:53:42,081849+02:00 Bluetooth: HCI UART driver ver 2.3
+2026-11-05T20:53:42,123043+02:00 PM: bootloader does not support rtc-only!
+2026-11-05T20:53:42,128635+02:00 Bluetooth: HCI UART protocol H4 registered
+2026-11-05T20:53:42,148244+02:00 bFWReady == _FALSE call reset 8051...
+2026-11-05T20:53:42,185842+02:00 Bluetooth: HCI UART protocol BCSP registered
+2026-11-05T20:53:42,269894+02:00 Bluetooth: HCI UART protocol LL registered
+2026-11-05T20:53:42,324953+02:00 Bluetooth: HCI UART protocol ATH3K registered
+2026-11-05T20:53:42,397693+02:00 Bluetooth: hci0: change remote baud rate command in firmware
+2026-11-05T20:53:42,419035+02:00 Bluetooth: HCI UART protocol Three-wire (H5) registered
+2026-11-05T20:53:42,465778+02:00 usbcore: registered new interface driver 8188eu
+2026-11-05T20:53:42,504211+02:00 Bluetooth: HCI UART protocol Intel registered
+2026-11-05T20:53:42,533239+02:00 Bluetooth: HCI UART protocol Broadcom registered
+2026-11-05T20:53:42,540613+02:00 [drm] Initialized pvr 1.17.4948957 20110701 for 56000000.gpu on minor 0
+2026-11-05T20:53:42,556103+02:00 Bluetooth: HCI UART protocol QCA registered
+2026-11-05T20:53:42,572044+02:00 Bluetooth: HCI UART protocol AG6XX registered
+2026-11-05T20:53:42,645377+02:00 Bluetooth: HCI UART protocol Marvell registered
+2026-11-05T20:53:45,313172+02:00 ak8975 3-000c: mounting matrix not found: using identity...
+2026-11-05T20:53:45,565983+02:00 ak8975 3-000c: supply vdd not found, using dummy regulator
+2026-11-05T20:53:45,711882+02:00 ak8975 3-000c: supply vid not found, using dummy regulator
+2026-11-05T20:53:46,836440+02:00 Bluetooth: BNEP (Ethernet Emulation) ver 1.3
+2026-11-05T20:53:46,854092+02:00 Bluetooth: BNEP filters: protocol multicast
+2026-11-05T20:53:46,866879+02:00 Bluetooth: BNEP socket layer initialized
+2026-11-05T20:53:48,796806+02:00 cryptd: max_cpu_qlen set to 1000
+2026-11-05T20:53:49,083025+02:00 wlcore: wl18xx HW: 183x or 180x, PG 2.2 (ROM 0x11)
+2026-11-05T20:53:49,099573+02:00 wlcore: WARNING Detected unconfigured mac address in nvs, derive from fuse instead.
+2026-11-05T20:53:49,118916+02:00 wlcore: WARNING This default nvs file can be removed from the file system
+2026-11-05T20:53:49,156462+02:00 wlcore: loaded
+2026-11-05T20:53:50,123834+02:00 wlcore: PHY firmware version: Rev 8.2.0.0.243
+2026-11-05T20:53:50,218886+02:00 wlcore: firmware booted (Rev 8.9.0.0.83)
+2026-11-05T20:53:50,738293+02:00 wlcore: down
+2026-11-05T20:53:51,481840+02:00 wlcore: PHY firmware version: Rev 8.2.0.0.243
+2026-11-05T20:53:51,703168+02:00 wlcore: firmware booted (Rev 8.9.0.0.83)
+2026-11-05T20:53:52,100149+02:00 wlan0: authenticate with 62:02:71:a0:ba:f6
+2026-11-05T20:53:52,178011+02:00 wlan0: send auth to 62:02:71:a0:ba:f6 (try 1/3)
+2026-11-05T20:53:52,213476+02:00 wlan0: authenticated
+2026-11-05T20:53:52,227600+02:00 wlan0: associate with 62:02:71:a0:ba:f6 (try 1/3)
+2026-11-05T20:53:52,260597+02:00 wlan0: RX AssocResp from 62:02:71:a0:ba:f6 (capab=0x411 status=0 aid=5)
+2026-11-05T20:53:52,388494+02:00 wlan0: associated
+2026-11-05T20:53:52,707727+02:00 wlcore: Association completed.
+2026-11-05T20:53:52,755369+02:00 IPv6: ADDRCONF(NETDEV_CHANGE): wlan0: link becomes ready
+2026-11-05T20:55:54,251405+02:00 wlan0: deauthenticating from 62:02:71:a0:ba:f6 by local choice (Reason: 3=DEAUTH_LEAVING)
+2026-11-05T20:55:54,351571+02:00 wlcore: down
+2026-11-05T20:55:55,772352+02:00 ==> rtl8188e_iol_efuse_patch
+2026-11-05T20:58:32,071082+02:00 wlcore: PHY firmware version: Rev 8.2.0.0.243
+2026-11-05T20:58:32,151480+02:00 wlcore: firmware booted (Rev 8.9.0.0.83)
+2026-11-05T20:58:32,787066+02:00 wlcore: down
+2026-11-05T20:58:33,302992+02:00 wlcore: PHY firmware version: Rev 8.2.0.0.243
+2026-11-05T20:58:33,385694+02:00 wlcore: firmware booted (Rev 8.9.0.0.83)
+2026-11-05T20:58:46,420770+02:00 wlan0: authenticate with 62:02:71:a0:ba:f6
+2026-11-05T20:58:46,438086+02:00 wlan0: send auth to 62:02:71:a0:ba:f6 (try 1/3)
+2026-11-05T20:58:46,466500+02:00 wlan0: authenticated
+2026-11-05T20:58:46,475029+02:00 wlan0: associate with 62:02:71:a0:ba:f6 (try 1/3)
+2026-11-05T20:58:46,545440+02:00 wlan0: RX AssocResp from 62:02:71:a0:ba:f6 (capab=0x411 status=0 aid=5)
+2026-11-05T20:58:46,596762+02:00 wlan0: associated
+2026-11-05T20:58:46,738878+02:00 wlcore: Association completed.
+2026-11-05T20:58:46,751195+02:00 IPv6: ADDRCONF(NETDEV_CHANGE): wlan0: link becomes ready

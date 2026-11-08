@@ -1,4 +1,4 @@
-"""Bianchi DCF saturation model for 802.11 (implements docs/02 §6, docs/03 §3 models/).
+"""Bianchi DCF saturation model for 802.11 (implements docs/02 §6, docs/archive/03 §3 models/).
 
 The saturated-node distributed-coordination-function (DCF) fixed point of Bianchi (2000):
 

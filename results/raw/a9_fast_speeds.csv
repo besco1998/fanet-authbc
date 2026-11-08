@@ -1,0 +1,30 @@
+# python=3.12.3
+# platform=Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=sih_speed_limit
+flight,airframe,mission,completed,speed_drawn_mps,cruise_commanded_mps,extra_params,level_airspeed_p50,airspeed_p99,airspeed_max,level_throttle_p50,cruise_airspeed_p50,cruise_throttle_p50,touchdown_after_takeoff,full_throttle_share,log,sha256
+airplane-01,airplane,1,1,15.7,15.7,SIH_KDV=0.0;SIH_T_MAX=12.0,16.37,28.64,29.09,0.295,16.37,0.295,0,0.039,flight.ulg,56a5b5b2adb663a86b89d9969ea36b375ac9671bbd1f889d95bf42dc8e60252d
+airplane-02,airplane,2,1,20.2,20.2,SIH_KDV=0.0;SIH_T_MAX=12.0,20.82,28.7,29.22,0.487,20.82,0.487,0,0.033,flight.ulg,7e94900bf0a0094b1f5ff9277f8ed452500ec289dd64ed66a4fd216ba3997f5d
+airplane-03,airplane,3,1,24.7,24.7,SIH_KDV=0.0;SIH_T_MAX=12.0,24.41,28.92,29.21,0.668,24.42,0.669,0,0.098,flight.ulg,4d23e688203121928508902b82cf143b936cf6287b558b8c088287b96c394679
+airplane-04,airplane,4,1,24.6,24.6,SIH_KDV=0.0;SIH_T_MAX=12.0,25.08,28.77,29.13,0.713,25.08,0.713,0,0.05,flight.ulg,760fcaaa1ac4f6dedc85ebf8515f8ca0aa9a9064835045a42d75cab2ddee23af
+airplane-05,airplane,5,1,20.2,20.2,SIH_KDV=0.0;SIH_T_MAX=12.0,20.77,28.77,29.21,0.484,20.77,0.484,0,0.038,flight.ulg,7e682736dd55130fbcf23810a2c989fbb2608b142aeb5d35126816c0cca4d776
+airplane-06,airplane,6,1,19.1,19.1,SIH_KDV=0.0;SIH_T_MAX=12.0,19.67,28.87,29.12,0.433,19.67,0.433,0,0.052,flight.ulg,f84dc13ac337820a3085f941f39565b5d7a0671bcf3b4c699826c3223f0833c7
+airplane-07,airplane,7,1,16.7,16.7,SIH_KDV=0.0;SIH_T_MAX=12.0,17.3,28.75,29.04,0.33,17.3,0.33,0,0.069,flight.ulg,ccc885a9bd2dce7f20d7def1dbf14da7407e4bf27e93d8821af5d404005d372c
+airplane-08,airplane,8,1,17.1,17.1,SIH_KDV=0.0;SIH_T_MAX=12.0,17.75,28.74,29.17,0.349,17.75,0.349,0,0.053,flight.ulg,b477d190d2e2bb4178c0a7521cf66034d5f8818ea47c517a0c16cad9bedd2941
+airplane-09,airplane,9,1,17.4,17.4,SIH_KDV=0.0;SIH_T_MAX=12.0,18.02,28.72,29.17,0.361,18.02,0.361,0,0.032,flight.ulg,5a18959811eca0452b535693e00384e797055d58609cd2b838b231d59e72dd4a
+airplane-10,airplane,10,1,20.7,20.7,SIH_KDV=0.0;SIH_T_MAX=12.0,21.25,28.83,29.24,0.508,21.25,0.508,0,0.049,flight.ulg,f111348b37f62cb4960b54f222dc553f5b00c773089701e9110adaf4d2aa67a5
+vtol-01,vtol,1,1,21.2,21.2,SIH_KDV=0.0,20.73,21.26,21.57,1.0,20.73,1.0,0,0.751,flight.ulg,a3def9afae01b15b6daa478ff678b806c802de978854c3ea637dc7b6d663f798
+vtol-02,vtol,2,1,21.1,21.1,SIH_KDV=0.0,20.68,21.22,21.4,1.0,20.68,1.0,0,0.57,flight.ulg,5069ea76b44f1f5b5ab5ae22a494ea6f8182560c37c5b160f929986bb6de59a2
+vtol-03,vtol,3,1,20.2,20.2,SIH_KDV=0.0,19.77,20.61,20.83,0.908,19.77,0.908,0,0.0,flight.ulg,d29004a5aea69c26a617389240decb68c6c2f2db695128a45cde3391ba999989
+vtol-04,vtol,4,1,19.1,19.1,SIH_KDV=0.0,19.3,20.0,20.33,0.861,19.3,0.861,0,0.0,flight.ulg,e9f419546977c5934412c9702d81543f069cf49af2a31208390e098498748b27
+vtol-05,vtol,5,1,20.6,20.6,SIH_KDV=0.0,20.64,21.21,21.5,0.998,20.64,0.998,0,0.536,flight.ulg,5bd3c81d83eb09f9bf5a75e0a855a65ca1820b5b1e89d99cc8c4498323cd342a
+vtol-06,vtol,6,1,19.5,19.5,SIH_KDV=0.0,19.52,20.26,20.55,0.882,19.52,0.882,0,0.0,flight.ulg,16bb32a42e2206ba26edc795b35322d906c7fa18c680373db4799ab84efb9090
+vtol-07,vtol,7,1,15.2,15.2,SIH_KDV=0.0,15.76,16.42,16.9,0.565,15.76,0.565,0,0.0,flight.ulg,7396b33a4f10a3c31df9df0d406fadc93b084158ee94246ef0abde71edea081c
+vtol-08,vtol,8,1,19.2,19.2,SIH_KDV=0.0,19.22,19.97,20.22,0.855,19.22,0.855,0,0.0,flight.ulg,4dc8374310db611d9acbd3cb3b160664fbfa97407aaee84ca272a16f1daea024
+vtol-09,vtol,9,1,20.4,20.4,SIH_KDV=0.0,20.58,21.19,21.53,0.987,20.58,0.987,0,0.416,flight.ulg,2151301b92d34ce8522cd3451fa87eefdf69cefa8696e1fa14616b6a79f10784
+vtol-10,vtol,10,1,20.2,20.2,SIH_KDV=0.0,20.22,21.05,21.32,0.946,20.22,0.946,0,0.116,flight.ulg,58a5adabc9b6bff6f61b507d7cda9fa9d71427b2080836b85d40fe15d9d21719

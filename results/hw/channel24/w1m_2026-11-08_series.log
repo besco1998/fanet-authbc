@@ -1,0 +1,35 @@
+02:16:58 session 1: preflight 1 at 1:600,2:auto,3:1100 (1.5x)
+  s1 |   [6] NO  senders within 1.5x | G31 | 1.524 | pi-A=4.01% pi-B=6.05% Pi=4.49% TP-Link=6.12%; usable 2/2
+  s1 | NO-GO
+02:25:17 session 1: preflight NO-GO on balance alone: tuning from 1:600,2:auto,3:1100
+  s1 |   [6] NO  senders within 1.25x | G31 | 1.524 | pi-A=4.01% pi-B=6.05% Pi=4.49% TP-Link=6.12%; usable 2/2
+  s1 |   [tune] ok  ADJUST: node1 down to 500; node3 down to 1000 | 1:500,2:auto,3:1000 |  
+  s1 | ADJUST POWERS=1:500,2:auto,3:1000
+02:25:18 session 1: tuning step 1 ADJUST -> 1:500,2:auto,3:1000
+02:25:18 session 1: tuning preflight (step 2) at 1:500,2:auto,3:1000
+  s1 |   [6] NO  senders within 1.25x | G31 | 1.584 | pi-A=4.04% pi-B=6.39% Pi=4.28% TP-Link=6.20%; usable 2/2
+  s1 |   [tune] ok  ADJUST: node1 down to 400; node3 down to 900 | 1:400,2:auto,3:900 |  
+  s1 | ADJUST POWERS=1:400,2:auto,3:900
+02:33:32 session 1: tuning step 2 ADJUST -> 1:400,2:auto,3:900
+02:33:32 session 1: tuning preflight (step 3) at 1:400,2:auto,3:900
+  s1 |   [6] NO  senders within 1.25x | G31 | 1.582 | pi-A=3.93% pi-B=6.21% Pi=4.92% TP-Link=5.69%; usable 2/2
+  s1 |   [tune] ok  ADJUST: node3 down to 800 | 1:400,2:auto,3:800 |  
+  s1 | ADJUST POWERS=1:400,2:auto,3:800
+02:41:38 session 1: tuning step 3 ADJUST -> 1:400,2:auto,3:800
+02:41:38 session 1: tuning preflight (step 4) at 1:400,2:auto,3:800
+  s1 |   [6] NO  senders within 1.25x | G31 | 2.216 | pi-A=3.51% pi-B=5.52% Pi=7.78% TP-Link=5.99%; usable 2/2
+  s1 |   [tune] ok  ADJUST: node2 down to 1400; node3 up to 900 | 1:400,2:1400,3:900 |  
+  s1 | ADJUST POWERS=1:400,2:1400,3:900
+02:49:53 session 1: tuning step 4 ADJUST -> 1:400,2:1400,3:900
+02:49:53 session 1: tuning preflight (step 5) at 1:400,2:1400,3:900
+  s1 |   [6] NO  senders within 1.25x | G31 | 1.697 | pi-A=4.27% pi-B=7.24% Pi=5.49% TP-Link=5.64%; usable 2/2
+  s1 |   [tune] ok  ADJUST: node3 down to 800; node2 up to auto | 1:400,2:auto,3:800 |  
+  s1 | ADJUST POWERS=1:400,2:auto,3:800
+02:58:09 session 1: tuning step 5 ADJUST -> 1:400,2:auto,3:800
+02:58:09 session 1: tuning preflight (step 6) at 1:400,2:auto,3:800
+  s1 |   [6] NO  senders within 1.25x | G31 | 2.037 | pi-A=3.11% pi-B=4.96% Pi=6.31% TP-Link=6.33%; usable 2/2
+  s1 |   [tune] ok  ADJUST: node2 down to 1400 | 1:400,2:1400,3:800 |  
+  s1 | ADJUST POWERS=1:400,2:1400,3:800
+03:06:24 session 1: tuning step 6 ADJUST -> 1:400,2:1400,3:800
+03:06:24 session 1: not TUNED in six steps: the series ends
+03:06:24 series ended

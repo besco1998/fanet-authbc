@@ -1,4 +1,5 @@
-"""NS-3 DCF PHY-trace analysis for the broadcast-residual study (docs/02 §6, docs/audits/p7.md).
+"""NS-3 DCF PHY-trace analysis for the broadcast-residual study (docs/02 §6,
+docs/audits/AUDIT_HISTORY.md).
 
 `ns3/authbc-dcf-trace.cc` logs every PHY transmission start/end on every station. This module
 turns that event stream into the quantities Bianchi's model actually predicts, so the model can be

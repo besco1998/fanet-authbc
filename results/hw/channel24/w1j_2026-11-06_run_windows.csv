@@ -1,0 +1,63 @@
+# python=3.12.3
+# platform=Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=w1i_windows
+# config_hash=b1494d53bcbbc733
+window,label,senders,rate_fps,power_ok,sent,received_mean,loss,cycle_us,complete,boot_before,boot_after,bssid,rate_ctl,node4_ok,delivered_frac,achieved_fps_min,late_frames,tx_dropped,usable
+00_R1_600fps,R1,1,600.0,True,11533,11454.666666666666,0.006792,1944.4,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,,,,,
+01_R2_600fps,R2,2,600.0,True,11203,11128.666666666666,0.006635,1996.2,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,,,,,
+02_R3_600fps,R3,3,600.0,True,9561,9545,0.001673,2344.9,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,,,,,
+03_R4_600fps,R4,4,600.0,True,11404,11349.333333333334,0.004794,1961.6,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,,,,,
+04_G31_125fps,G31,"1,2,3,4",125.0,True,11000,,,,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,0.942636,125.0,0,0,True
+05_G31_125fps,G31,"1,2,3,4",125.0,True,11000,,,,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,0.940909,125.02,0,0,True
+06_G31_125fps,G31,"1,2,3,4",125.0,True,11000,,,,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,0.946182,125.0,0,0,True
+07_G31_125fps,G31,"1,2,3,4",125.0,True,11000,,,,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,0.941333,125.03,0,0,True
+08_A29_116.667fps,A29,"1,2,3,4",116.667,True,10264,,,,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,0.960509,116.66,0,0,True
+09_A29_116.667fps,A29,"1,2,3,4",116.667,True,10264,,,,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,0.959373,116.66,0,0,True
+10_A29_116.667fps,A29,"1,2,3,4",116.667,True,10264,,,,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,0.96301,116.67,0,0,True
+11_A29_116.667fps,A29,"1,2,3,4",116.667,True,10264,,,,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,0.968206,116.67,0,0,True
+12_B1_50fps,B1,1,50.0,True,1100,1098,0.001818,,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,,,,,
+13_P9_133.333fps,P9,"1,2,3,4",133.333,True,11732,,,,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,0.958603,133.33,0,0,True
+14_P9_133.333fps,P9,"1,2,3,4",133.333,True,11732,,,,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,0.960791,133.33,0,0,True
+15_P9_133.333fps,P9,"1,2,3,4",133.333,True,11732,,,,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,0.955393,133.35,0,0,True
+16_P9_133.333fps,P9,"1,2,3,4",133.333,True,11732,,,,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,0.954824,133.33,0,0,True
+17_B2_50fps,B2,2,50.0,True,1100,1098.3333333333333,0.001515,,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,,,,,
+18_A30_120.833fps,A30,"1,2,3,4",120.833,True,10632,,,,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,0.949931,120.83,0,0,True
+19_A30_120.833fps,A30,"1,2,3,4",120.833,True,10632,,,,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,0.953286,120.84,0,0,True
+20_A30_120.833fps,A30,"1,2,3,4",120.833,True,10632,,,,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,0.953599,120.83,0,0,True
+21_A30_120.833fps,A30,"1,2,3,4",120.833,True,10632,,,,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,0.950433,120.83,0,0,True
+22_B3_50fps,B3,3,50.0,True,1100,1099.3333333333333,0.000606,,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,,,,,
+23_P9.25_137.5fps,P9.25,"1,2,3,4",137.5,True,12100,,,,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,0.948815,137.5,0,0,True
+24_P9.25_137.5fps,P9.25,"1,2,3,4",137.5,True,12100,,,,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,0.950248,137.5,0,0,True
+25_P9.25_137.5fps,P9.25,"1,2,3,4",137.5,True,12100,,,,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,0.949008,137.5,0,0,True
+26_P9.25_137.5fps,P9.25,"1,2,3,4",137.5,True,12100,,,,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,0.952755,137.51,0,0,True
+27_B4_50fps,B4,4,50.0,True,1100,1094.6666666666667,0.004848,,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,,,,,
+28_A31_125fps,A31,"1,2,3,4",125.0,True,11000,,,,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,0.941818,125.02,0,0,True
+29_A31_125fps,A31,"1,2,3,4",125.0,True,11000,,,,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,0.951091,125.02,0,0,True
+30_A31_125fps,A31,"1,2,3,4",125.0,True,11000,,,,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,0.940242,125.0,0,0,True
+31_A31_125fps,A31,"1,2,3,4",125.0,True,11000,,,,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,0.941879,125.0,0,0,True
+32_B1_50fps,B1,1,50.0,True,1100,1098.3333333333333,0.001515,,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,,,,,
+33_P9.5_141.667fps,P9.5,"1,2,3,4",141.667,True,12464,,,,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,0.935895,141.67,0,0,True
+34_P9.5_141.667fps,P9.5,"1,2,3,4",141.667,True,12464,,,,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,0.936323,141.67,0,0,True
+35_P9.5_141.667fps,P9.5,"1,2,3,4",141.667,True,12464,,,,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,0.93651,141.67,0,0,True
+36_P9.5_141.667fps,P9.5,"1,2,3,4",141.667,True,12464,,,,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,0.940067,141.67,0,0,True
+37_B2_50fps,B2,2,50.0,True,1100,1099,0.000909,,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,,,,,
+38_A32_129.167fps,A32,"1,2,3,4",129.167,True,11364,,,,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,0.933386,129.17,0,0,True
+39_A32_129.167fps,A32,"1,2,3,4",129.167,True,11364,,,,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,0.934941,129.18,0,0,True
+40_A32_129.167fps,A32,"1,2,3,4",129.167,True,11364,,,,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,0.930453,129.17,0,0,True
+41_A32_129.167fps,A32,"1,2,3,4",129.167,True,11364,,,,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,0.931186,129.18,0,0,True
+42_B3_50fps,B3,3,50.0,True,1100,1098,0.001818,,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,,,,,
+43_P9.75_145.833fps,P9.75,"1,2,3,4",145.833,True,12832,,,,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,0.934876,145.83,0,0,True
+44_P9.75_145.833fps,P9.75,"1,2,3,4",145.833,True,12832,,,,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,0.927551,145.84,0,0,True
+45_P9.75_145.833fps,P9.75,"1,2,3,4",145.833,True,12832,,,,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,0.93298,145.84,0,0,True
+46_P9.75_145.833fps,P9.75,"1,2,3,4",145.833,True,12832,,,,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,0.929032,145.84,0,0,True
+47_B4_50fps,B4,4,50.0,True,1100,1095,0.004545,,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,,,,,
+48_R1_600fps,R1,1,600.0,True,11546,11470.333333333334,0.006553,1940.9,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,,,,,
+49_R2_600fps,R2,2,600.0,True,11078,11007.666666666666,0.006349,2021.4,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,,,,,
+50_R3_600fps,R3,3,600.0,True,9809,9787.333333333334,0.002209,2286.9,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,,,,,
+51_R4_600fps,R4,4,600.0,True,11408,11323.666666666666,0.007392,1962.2,True,5ad256eb,5ad256eb,2a:e2:ae:2d:71:69,FIXED CCK_1M 0x00 0,True,,,,,

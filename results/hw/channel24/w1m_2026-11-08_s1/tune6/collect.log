@@ -1,0 +1,5 @@
+node1: 17 files; windows done 6; [2026-11-08T03:05:40+02:00] reverted OK, both deadmen disarmed
+node2: 16 files; windows done 6; [2026-11-08T03:05:41+02:00] reverted OK, both deadmen disarmed
+node3: 17 files; windows done 6; [2026-11-08T03:05:40+02:00] reverted OK, both deadmen disarmed
+node4: 18 files; windows done 6; [2026-11-08T03:05:52+02:00] reverted OK: back on the home Wi-Fi, deadman disarmed
+node 4 join: {"bssid":"32:25:6e:d5:89:51","rate_ctl":"FIXED CCK_1M 0x00 0","boot":"f950e215","peers_reachable":[1,2,3]}; boot now f950e215

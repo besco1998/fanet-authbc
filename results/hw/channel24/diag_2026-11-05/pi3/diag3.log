@@ -1,0 +1,10 @@
+start 2026-11-05T04:20:54+02:00 temp=43.5'C throttled=0x0
+run1 04:21:04 temp=45.1'C {"sent": 2667, "elapsed_s": 10.019408745999499, "achieved_fps": 266.1833714554132, "bytes": 145, "rate": 600.0, "redraw": true, "seed": 1, "late": 2165}
+run2 04:21:15 temp=45.1'C {"sent": 2336, "elapsed_s": 10.071706987999278, "achieved_fps": 231.93685070300492, "bytes": 145, "rate": 600.0, "redraw": true, "seed": 1, "late": 1930}
+run3 04:21:27 temp=46.2'C {"sent": 2224, "elapsed_s": 10.305137757000011, "achieved_fps": 215.81467928357335, "bytes": 145, "rate": 600.0, "redraw": true, "seed": 1, "late": 1816}
+run4 04:21:38 temp=46.2'C {"sent": 2109, "elapsed_s": 10.158961400999942, "achieved_fps": 207.59996192055735, "bytes": 145, "rate": 600.0, "redraw": true, "seed": 1, "late": 1703}
+run5 04:21:50 temp=46.7'C {"sent": 2085, "elapsed_s": 10.590129017000436, "achieved_fps": 196.88145410248822, "bytes": 145, "rate": 600.0, "redraw": true, "seed": 1, "late": 1709}
+run6 04:22:01 temp=47.2'C {"sent": 1957, "elapsed_s": 10.136529144000633, "achieved_fps": 193.06411220237672, "bytes": 145, "rate": 600.0, "redraw": true, "seed": 1, "late": 1594}
+run7 04:22:13 temp=47.2'C {"sent": 1965, "elapsed_s": 10.363833116999558, "achieved_fps": 189.60166357530937, "bytes": 145, "rate": 600.0, "redraw": true, "seed": 1, "late": 1581}
+run8 04:22:25 temp=47.2'C {"sent": 1952, "elapsed_s": 10.66250779099937, "achieved_fps": 183.07137854077422, "bytes": 145, "rate": 600.0, "redraw": true, "seed": 1, "late": 1589}
+end throttled=0x0

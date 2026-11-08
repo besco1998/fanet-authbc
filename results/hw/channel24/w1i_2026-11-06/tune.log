@@ -1,0 +1,20 @@
+=== tuning preflight 1 at 1:800,2:800,3:auto (16:34:16)
+  [6] NO  senders within 1.25x | G31 | 1.442 | pi-A=5.77% pi-B=4.53% Pi=6.53% TP-Link=6.08%; usable 2/2
+NO-GO POWERS=1:800,2:800,3:auto
+STOPPED (exit 3) at preflight 1, 16:42:18: no long run
+=== tuning preflight 2 at 1:800,2:800,3:auto (16:49:35)
+  [6] NO  senders within 1.25x | G31 | 1.32 | pi-A=4.22% pi-B=5.13% Pi=5.39% TP-Link=5.57%; usable 2/2
+  [tune] ok  ADJUST: node1 down to 600 | 1:600,2:800,3:auto |  
+ADJUST POWERS=1:600,2:800,3:auto
+=== tuning preflight 3 at 1:600,2:800,3:auto (16:57:49)
+  [6] NO  senders within 1.25x | G31 | 1.411 | pi-A=4.24% pi-B=5.04% Pi=5.98% TP-Link=5.72%; usable 2/2
+  [tune] ok  ADJUST: node1 down to 400 | 1:400,2:800,3:auto |  
+ADJUST POWERS=1:400,2:800,3:auto
+=== tuning preflight 4 at 1:400,2:800,3:auto (17:05:59)
+  [6] NO  senders within 1.25x | G31 | 1.488 | pi-A=4.62% pi-B=4.52% Pi=6.73% TP-Link=5.73%; usable 2/2
+  [tune] ok  ADJUST: node2 down to 600 | 1:400,2:600,3:auto |  
+ADJUST POWERS=1:400,2:600,3:auto
+=== tuning preflight 5 at 1:400,2:600,3:auto (17:13:56)
+  [6] ok  senders within 1.25x | G31 | 1.239 | pi-A=5.00% pi-B=5.24% Pi=5.98% TP-Link=6.19%; usable 2/2
+NO-GO POWERS=1:400,2:600,3:auto
+STOPPED (exit 3) at preflight 5, 17:22:19: no long run

@@ -1,0 +1,6 @@
+in cell: 	type IBSS 	channel 11 (2462 MHz), width: 20 MHz, center1: 2462 MHz  ps=Power save: on
+A0 ps= on bt=0 nic=3922 {"sent": 3922, "elapsed_s": 15.444480242999816, "achieved_fps": 253.94185743334677, "bytes": 145, "rate": 600.0, "redraw": true, "seed": 1, "late": 3417}
+P ps= off bt=0 nic=3380 {"sent": 3380, "elapsed_s": 15.458662132999962, "achieved_fps": 218.6476404568437, "bytes": 145, "rate": 600.0, "redraw": true, "seed": 1, "late": 2952}
+PB ps= off bt=1 nic=3133 {"sent": 3133, "elapsed_s": 15.024867170000107, "achieved_fps": 208.52097822572483, "bytes": 145, "rate": 600.0, "redraw": true, "seed": 1, "late": 2729}
+A1 ps= on bt=0 nic=3115 {"sent": 3115, "elapsed_s": 15.450084825999511, "achieved_fps": 201.61701602816163, "bytes": 145, "rate": 600.0, "redraw": true, "seed": 1, "late": 2711}
+bt after: 	Soft blocked: no

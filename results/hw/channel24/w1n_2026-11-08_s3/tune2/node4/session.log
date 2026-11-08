@@ -1,0 +1,22 @@
+[2026-11-08T10:38:34+02:00] deadman armed: revert in 600 s | start=1794127258 windows=6 plan sha=50f4887e2a3d | tplink=tplink0 driver=8188eu boot=d50289c9 uptime=87.06s
+[2026-11-08T10:40:34+02:00] peer 10.0.0.1 reachable
+[2026-11-08T10:40:36+02:00] peer 10.0.0.2 reachable
+[2026-11-08T10:40:38+02:00] peer 10.0.0.3 reachable
+[2026-11-08T10:40:38+02:00] after join: {"bssid":"8a:99:5c:ca:e6:50","rate_ctl":"FIXED CCK_1M 0x00 0","boot":"d50289c9","peers_reachable":[1,2,3]}
+{"received_unique": 10989, "senders": 1, "duplicates": 0}
+[2026-11-08T10:41:24+02:00] window 00_R1_600fps done (senders 1)
+{"received_unique": 11357, "senders": 1, "duplicates": 0}
+[2026-11-08T10:41:55+02:00] window 01_R2_600fps done (senders 2)
+{"received_unique": 7862, "senders": 1, "duplicates": 0}
+[2026-11-08T10:42:24+02:00] window 02_R3_600fps done (senders 3)
+{"sent": 11081, "achieved_fps": 500.9, "late": 9726}
+{"received_unique": 0, "senders": 0, "duplicates": 0}
+[2026-11-08T10:42:54+02:00] window 03_R4_600fps done (senders 4)
+{"sent": 2750, "achieved_fps": 125.0, "late": 0}
+{"received_unique": 7290, "senders": 3, "duplicates": 0}
+[2026-11-08T10:43:24+02:00] window 04_G31_125fps done (senders 1,2,3,4)
+{"sent": 2750, "achieved_fps": 125.0, "late": 0}
+{"received_unique": 7332, "senders": 3, "duplicates": 0}
+[2026-11-08T10:43:55+02:00] window 05_G31_125fps done (senders 1,2,3,4)
+[2026-11-08T10:43:55+02:00] at end: bssid=8a:99:5c:ca:e6:50 rate_ctl=FIXED CCK_1M 0x00 0 boot=d50289c9
+[2026-11-08T10:44:21+02:00] reverted OK: back on the home Wi-Fi, deadman disarmed

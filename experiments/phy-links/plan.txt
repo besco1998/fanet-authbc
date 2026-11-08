@@ -1,0 +1,14 @@
+# Revision A11 (predictions/A11.md): the paper's two frames at other 802.11 PHYs and rates,
+# 30 seeds, the registered grids of results/raw/phy_links_predictions.csv. Costliest first.
+Pa24D 232 238 244 250 256 262 268
+Pa12D 171 176 181 186 191 196 201
+Pp12D 146 150 154 158 162 166 170
+Pa24B 60 62 64 66 68 70 72
+Pa6D 115 118 121 124 127 130 133
+Pp6D 101 104 107 110 113 116 119
+Pa12B 48 49 50 51 52 53 54
+Pp12B 39 40 41 42 43 44 45
+Pa6B 32 33 34 35 36 37 38
+Pp3D 63 65 67 69 71 73 75
+Pp6B 28 29 30 31 32 33 34
+Pp3B 17 18 19 20 21 22 23

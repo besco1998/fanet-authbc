@@ -1,0 +1,17 @@
+# host=authbc-pi4b
+# run_utc=20261009T053658Z
+# platform=Linux-6.12.93+rpt-rpi-v8-aarch64-with-glibc2.36
+# python=3.12.13
+# gpio_backend=gpiod
+# duration_s=60.0
+# reps=5
+# manifest=manifest_lean_b4.json
+# samples=samples_lean_b4.csv
+# channel=P2
+# reduced_utc=2026-10-09T05:37:49.764476+00:00
+op,rep,p_idle_w,p_loop_w,delta_p_w,t_loop_s,n_ops,energy_per_op_j,energy_per_op_uj
+e2e_frame_pipeline,1,2.21355,2.94664,0.73309,60.00126603600006,70743,0.0006217792617213187,621.779262
+e2e_frame_pipeline,2,2.21169,2.95013,0.73844,60.00093165200019,71424,0.0006203356234800964,620.335623
+e2e_frame_pipeline,3,2.21335,2.9505,0.73715,60.001223183999855,71241,0.0006208528394435734,620.852839
+e2e_frame_pipeline,4,2.21477,2.95494,0.74017,60.001501061,71243,0.0006233784762988569,623.378476
+e2e_frame_pipeline,5,2.21802,2.95896,0.74095,60.00153047799995,71402,0.0006226429048780022,622.642905

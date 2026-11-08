@@ -1,0 +1,11 @@
+node 1: kit=[c42010127374 30c333bce0df 2b8ab3d2f89a edf4de1e97f4 ] plan=50f4887e2a3d throttled=0x0 ntp=yes running=0
+node 2: kit=[c42010127374 30c333bce0df 2b8ab3d2f89a edf4de1e97f4 ] plan=50f4887e2a3d throttled=0x0 ntp=yes running=0
+node 3: kit=[c42010127374 30c333bce0df 2b8ab3d2f89a edf4de1e97f4 ] plan=50f4887e2a3d throttled=0x0 ntp=yes running=0
+Blue 2 rebooting at 18:59:51
+Blue 2 ready 19:01:12: boot=663070cf uptime=66.55s watchdog=active
+node 4: [1e35e61fbcac 2b8ab3d2f89a edf4de1e97f4 50f4887e2a3d]
+Running as unit: authbc-preflight.service
+node 4: authbc-preflight active
+node 1: set_txpower_window.sh (bd86ef80c307) started, 1000 mBm
+node 3: set_txpower_window.sh (bd86ef80c307) started, 1000 mBm
+START=1793984630 (19:03:50); 6 windows; last ends about 19:06:50

@@ -1,7 +1,8 @@
 """Slot-exact DCF backoff reference simulator — the third implementation (docs/02 §6).
 
 Bianchi's model and NS-3 disagree by 14× on 802.11 BROADCAST saturation throughput while agreeing
-to ±5 % on unicast (docs/audits/p7.md). This module isolates the single assumption responsible, by
+to ±5 % on unicast (docs/audits/AUDIT_HISTORY.md). This module isolates the single assumption
+responsible, by
 simulating the backoff *slot process* alone: no PHY, no channel, no packets — just counters. It is
 therefore independent of both NS-3 (which it must reproduce) and of `models.bianchi` (whose
 assumption it tests).

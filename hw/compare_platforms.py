@@ -167,8 +167,8 @@ def main() -> None:
     print(f"ARM run      : {crypto}")
     compare_sizes(sizes)
     compare_crypto(crypto)
-    print("\nNext: record this table in docs/audits/p7.md, then feed the measured timings + the "
-          "INA219 powers into experiments/e5/config.yaml and re-freeze.")
+    print("\nNext: record this table in docs/audits/AUDIT_HISTORY.md, then feed the measured "
+          "timings + the INA219 powers into experiments/e5/config.yaml and re-freeze.")
 
 
 if __name__ == "__main__":

@@ -1,7 +1,8 @@
 """Measure NS-3's DCF slot statistics directly → results/raw/ns3_dcf_residual.csv.
 
 Answers the P6/P7 open question "why does NS-3 broadcast beat the no-ACK Bianchi prediction by 14×
-at N=50?" by instrumenting the access process instead of inferring from goodput (docs/audits/p7.md).
+at N=50?" by instrumenting the access process instead of inferring from goodput
+(docs/audits/AUDIT_HISTORY.md).
 
 For each run it reports what Bianchi's model predicts internally and what NS-3 actually does:
   busy_per_s        virtual-slot rate — tests the model's channel-time arithmetic

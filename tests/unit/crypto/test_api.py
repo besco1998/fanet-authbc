@@ -1,4 +1,4 @@
-"""Uniform scheme API contract across ECDSA-P256, Ed25519, BLS (docs/03 §3 crypto/)."""
+"""Uniform scheme API contract across ECDSA-P256, Ed25519, BLS (docs/archive/03 §3 crypto/)."""
 
 from __future__ import annotations
 

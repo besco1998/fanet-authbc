@@ -1,0 +1,16 @@
+node1: 145 files; windows done 52; 
+node2: 146 files; windows done 52; 
+node3: 145 files; windows done 52; 
+node4: 147 files; windows done 52; 
+node 4 join: {"bssid":"22:37:7b:21:13:7b","rate_ctl":"FIXED CCK_1M 0x00 0","boot":"2f39ecd8","peers_reachable":[1,2,3]}; boot now 2f39ecd8
+node 2 power: 2026-11-06T13:30:50+02:00 set 800: txpower 8.00 dBm
+  what=node 4 joined the Pis' cell  group=22:37:7b:21:13:7b  measured=reached [1, 2, 3]  held=True
+  what=node 4 rate fixed at join  group=FIXED CCK_1M 0x00 0  predicted=FIXED CCK_1M  held=True
+  what=rate check before  group=pi-A (BCM4345/6)  measured=1942.3  predicted=2224.0  band_lo=1900.0  band_hi=2600.0  held=True  windows=1
+  what=rate check before  group=pi-B (BCM4345/6)  measured=1947.7  predicted=2224.0  band_lo=1900.0  band_hi=2600.0  held=True  windows=1
+  what=rate check before  group=Pi 3 (BCM43430/1)  measured=2613.4  predicted=2224.0  band_lo=1900.0  band_hi=2600.0  held=False  windows=1
+  what=rate check before  group=TP-Link on Blue 2 (RTL8188EUS)  measured=1962.8  predicted=2224.0  band_lo=1900.0  band_hi=2600.0  held=True  windows=1
+  what=gate: windows usable  group=G31  measured=4/4  held=True
+  what=gate: senders balanced  group=G31  measured=5.233  band_hi=1.5  held=False  windows=pi-A=2.95% pi-B=5.50% Pi=6.12% TP-Link=1.17%
+ABORT
+gate exit 3

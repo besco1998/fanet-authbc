@@ -1,0 +1,27 @@
+  what=gate (reported, not scored)  group=GO  measured=1.478  band_hi=1.5  held=True  windows=pi-A=4.26% pi-B=6.30% Pi=5.82% TP-Link=5.86%
+  what=session  group=VOID  held=False  windows=52
+  what=node 4 joined the Pis' cell  group=5a:3b:c1:d9:07:66  measured=reached [1, 2, 3]  held=True
+  what=node 4 rate fixed at join  group=FIXED CCK_1M 0x00 0  predicted=FIXED CCK_1M  held=True
+  what=senders balanced (V5)  group=A31  measured=1.643  band_hi=1.5  held=False  windows=pi-A=3.84% pi-B=6.24% Pi=5.40% TP-Link=6.31%
+  what=node1 at 6 dBm (V6)  group=node1 txpower.log  measured=2026-11-08T09:12:44+02:00 set 600: txpower 6.00 dBm | 2026-11-08T09:39:39+02:00 auto: txpower 31.00 dBm  held=True
+  what=node3 at 11 dBm (V6)  group=node3 txpower.log  measured=2026-11-08T09:12:44+02:00 set 1100: txpower 11.00 dBm | 2026-11-08T09:39:39+02:00 auto: txpower 31.00 dBm  held=True
+  what=rate check before  group=pi-A (BCM4345/6)  measured=1941.4  predicted=2224.0  band_lo=1900.0  band_hi=2600.0  held=True  windows=1
+  what=rate check before  group=pi-B (BCM4345/6)  measured=2013.2  predicted=2224.0  band_lo=1900.0  band_hi=2600.0  held=True  windows=1
+  what=rate check before  group=Pi 3 (BCM43430/1)  measured=2225.5  predicted=2224.0  band_lo=1900.0  band_hi=2600.0  held=True  windows=1
+  what=rate check before  group=TP-Link on Blue 2 (RTL8188EUS)  measured=1970.0  predicted=2224.0  band_lo=1900.0  band_hi=2600.0  held=True  windows=1
+  what=rate check after  group=pi-A (BCM4345/6)  measured=1938.4  predicted=2224.0  band_lo=1900.0  band_hi=2600.0  held=True  windows=1
+  what=rate check after  group=pi-B (BCM4345/6)  measured=2008.4  predicted=2224.0  band_lo=1900.0  band_hi=2600.0  held=True  windows=1
+  what=rate check after  group=Pi 3 (BCM43430/1)  measured=2210.2  predicted=2224.0  band_lo=1900.0  band_hi=2600.0  held=True  windows=1
+  what=rate check after  group=TP-Link on Blue 2 (RTL8188EUS)  measured=1964.3  predicted=2224.0  band_lo=1900.0  band_hi=2600.0  held=True  windows=1
+  what=background  group=controls  measured=0.003864  band_hi=0.01  held=True  windows=8
+  what=capacity-equivalent  group=A29  measured=0.96329  held=void (session): scored  windows=4/4
+  what=capacity-equivalent  group=A30  measured=0.95592  held=void (session): scored  windows=4/4
+  what=capacity-equivalent  group=A31  measured=0.94918  held=void (session): scored  windows=4/4
+  what=capacity-equivalent  group=A32  measured=0.93447  held=void (session): scored  windows=4/4
+  what=crossing  group=AUTHBC  measured=30.879  predicted=29.502  band_lo=26.552  band_hi=32.452  held=void (session): True  windows=95% CI 30.83-30.92 (100% bracketed)
+  what=capacity-equivalent  group=P9  measured=0.96018  held=void (session): scored  windows=4/4
+  what=capacity-equivalent  group=P9.25  measured=0.95746  held=void (session): scored  windows=4/4
+  what=capacity-equivalent  group=P9.5  measured=0.94473  held=void (session): scored  windows=4/4
+  what=capacity-equivalent  group=P9.75  measured=0.93519  held=void (session): scored  windows=4/4
+  what=crossing  group=per-record  measured=9.397  predicted=8.929  band_lo=8.036  band_hi=9.822  held=void (session): True  windows=95% CI 9.36-9.42 (100% bracketed)
+  what=ratio  group=AUTHBC/per-record  measured=3.2862  predicted=3.3041  band_lo=2.9737  band_hi=3.6345  held=void (session): True

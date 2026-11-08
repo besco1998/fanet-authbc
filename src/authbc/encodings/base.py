@@ -1,4 +1,4 @@
-"""Encoder ABC + shared record⇄object mapping and varint helpers (docs/03 §3 encodings/).
+"""Encoder ABC + shared record⇄object mapping and varint helpers (docs/archive/03 §3 encodings/).
 
 Every encoder converts a :class:`~authbc.bench.telemgen.TelemetryRecord` to/from ``bytes``.
 Stateless encoders (JSON/CBOR/MessagePack) implement pure ``encode``/``decode``; the delta
@@ -115,7 +115,7 @@ def svarint_decode(data: bytes, pos: int = 0) -> tuple[int, int]:
 
 
 class Encoder(ABC):
-    """Record encoder (docs/03 §3). Subclasses set ``name`` and ``deterministic``."""
+    """Record encoder (docs/archive/03 §3). Subclasses set ``name`` and ``deterministic``."""
 
     name: str
     deterministic: bool

@@ -11,7 +11,7 @@ Writes fig_ns3_bianchi.png (byte-stable), results/raw/ns3_contention.csv, and a 
 The figure also plots the **naive reduction** (unicast Bianchi with the ACK removed, τ = 2/(W+1)).
 That is NOT a published model — it is the in-house adaptation this project used until P7, and it
 under-predicts NS-3 by 16× at N=50. It is drawn only to show that failure explicitly; Ma & Chen
-warned against exactly this reduction (docs/audits/p7.md F9, docs/literature/f9_broadcast_dcf.md).
+warned against exactly this reduction (docs/audits/AUDIT_HISTORY.md F9, docs/literature/README.md).
 """
 
 from __future__ import annotations

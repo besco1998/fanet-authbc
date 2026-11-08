@@ -1,0 +1,64 @@
+node 1: kit=[c42010127374 30c333bce0df 2b8ab3d2f89a edf4de1e97f4 ] plan=50f4887e2a3d throttled=0x0 ntp=yes running=0
+node 2: kit=[c42010127374 30c333bce0df 2b8ab3d2f89a edf4de1e97f4 ] plan=50f4887e2a3d throttled=0x0 ntp=yes running=0
+node 3: kit=[c42010127374 30c333bce0df 2b8ab3d2f89a edf4de1e97f4 ] plan=50f4887e2a3d throttled=0x0 ntp=yes running=0
+Blue 2 rebooting at 15:14:49
+Blue 2 ready 15:16:12: boot=a3088f70 uptime=67.92s watchdog=active
+node 4: [1e35e61fbcac 2b8ab3d2f89a edf4de1e97f4 50f4887e2a3d]
+Running as unit: authbc-preflight.service
+node 4: authbc-preflight active
+node 2: set_txpower_window.sh (bd86ef80c307) started, 800 mBm
+node 1: set_txpower_window.sh (bd86ef80c307) started, 800 mBm
+START=1793971130 (15:18:50); 6 windows; last ends about 15:21:50
+boards on the LAN: 4/4 at 15:22:24
+boards finished (reverted, pi-B auto): 4/4 at 15:22:31
+node1: 17 files; windows done 6; [2026-11-06T15:22:00+02:00] reverted OK, both deadmen disarmed
+node2: 17 files; windows done 6; [2026-11-06T15:22:04+02:00] reverted OK, both deadmen disarmed
+node3: 16 files; windows done 6; [2026-11-06T15:22:01+02:00] reverted OK, both deadmen disarmed
+node4: 18 files; windows done 6; [2026-11-06T15:22:13+02:00] reverted OK: back on the home Wi-Fi, deadman disarmed
+node 4 join: {"bssid":"6e:ad:82:91:14:8b","rate_ctl":"FIXED CCK_1M 0x00 0","boot":"a3088f70","peers_reachable":[1,2,3]}; boot now a3088f70
+node 2 power: 2026-11-06T15:18:00+02:00 set 800: txpower 8.00 dBm
+node 2 power: 2026-11-06T15:21:55+02:00 auto: txpower 31.00 dBm
+  [1] ok  rate check | pi-A (BCM4345/6) | 1941.3 
+  [1] ok  rate check | pi-B (BCM4345/6) | 1957.3 
+  [1] ok  rate check | Pi 3 (BCM43430/1) | 2192.2 
+  [2] ok  rate check | TP-Link on Blue 2 (RTL8188EUS) | 1962.4 
+  [2] ok  rate_ctl at join | TP-Link | FIXED CCK_1M 0x00 0 
+  [3] ok  held at 8 dBm, then auto | node1 txpower.log | 2026-11-06T15:18:00+02:00 set 800: txpower 8.00 dBm | 2026-11-06T15:21:56+02:00 auto: txpower 31.00 dBm 
+  [3] ok  held at 8 dBm, then auto | node2 txpower.log | 2026-11-06T15:18:00+02:00 set 800: txpower 8.00 dBm | 2026-11-06T15:21:55+02:00 auto: txpower 31.00 dBm 
+  [4] ok  node 4 in the Pis' cell | 6e:ad:82:91:14:8b | reached [1, 2, 3] 
+  [4] ok  Blue 2 on one boot, every window complete | a3088f70 | 6/6 
+  [5] ok  no Pi under-voltage | all windows | 0 
+  [6] ok  senders within 1.5x | G31 | 1.499 | pi-A=4.22% pi-B=5.06% Pi=6.32% TP-Link=5.98%; usable 2/2
+GO
+PREFLIGHT GO (1) at 15:22:39: starting the long run
+node 1: kit=[c42010127374 30c333bce0df 2b8ab3d2f89a edf4de1e97f4 ] plan=e1c02ea05072 throttled=0x0 ntp=yes running=0
+node 2: kit=[c42010127374 30c333bce0df 2b8ab3d2f89a edf4de1e97f4 ] plan=e1c02ea05072 throttled=0x0 ntp=yes running=0
+node 3: kit=[c42010127374 30c333bce0df 2b8ab3d2f89a edf4de1e97f4 ] plan=e1c02ea05072 throttled=0x0 ntp=yes running=0
+Blue 2 rebooting at 15:22:48
+Blue 2 ready 15:24:09: boot=ca461667 uptime=67.66s watchdog=active
+node 4: [1e35e61fbcac 2b8ab3d2f89a edf4de1e97f4 e1c02ea05072]
+Running as unit: authbc-w1h.service
+node 4: authbc-w1h active
+node 2: set_txpower_window.sh (bd86ef80c307) started, 800 mBm
+node 1: set_txpower_window.sh (bd86ef80c307) started, 800 mBm
+START=1793971608 (15:26:48); 52 windows; last ends about 15:52:48
+waiting 1757s for the plan to end and the boards to revert
+boards on the LAN: 4/4 at 15:52:53
+boards finished (reverted, pi-B auto): 4/4 at 15:53:16
+node1: 146 files; windows done 52; [2026-11-06T15:52:58+02:00] reverted OK, both deadmen disarmed
+node2: 146 files; windows done 52; [2026-11-06T15:53:02+02:00] reverted OK, both deadmen disarmed
+node3: 145 files; windows done 52; [2026-11-06T15:52:59+02:00] reverted OK, both deadmen disarmed
+node4: 147 files; windows done 52; [2026-11-06T15:53:11+02:00] reverted OK: back on the home Wi-Fi, deadman disarmed
+node 4 join: {"bssid":"ca:96:4c:b4:cd:2e","rate_ctl":"FIXED CCK_1M 0x00 0","boot":"ca461667","peers_reachable":[1,2,3]}; boot now ca461667
+node 2 power: 2026-11-06T15:25:58+02:00 set 800: txpower 8.00 dBm
+node 2 power: 2026-11-06T15:52:53+02:00 auto: txpower 31.00 dBm
+  what=node 4 joined the Pis' cell  group=ca:96:4c:b4:cd:2e  measured=reached [1, 2, 3]  held=True
+  what=node 4 rate fixed at join  group=FIXED CCK_1M 0x00 0  predicted=FIXED CCK_1M  held=True
+  what=rate check before  group=pi-A (BCM4345/6)  measured=1941.4  predicted=2224.0  band_lo=1900.0  band_hi=2600.0  held=True  windows=1
+  what=rate check before  group=pi-B (BCM4345/6)  measured=1940.7  predicted=2224.0  band_lo=1900.0  band_hi=2600.0  held=True  windows=1
+  what=rate check before  group=Pi 3 (BCM43430/1)  measured=2592.3  predicted=2224.0  band_lo=1900.0  band_hi=2600.0  held=True  windows=1
+  what=rate check before  group=TP-Link on Blue 2 (RTL8188EUS)  measured=1968.1  predicted=2224.0  band_lo=1900.0  band_hi=2600.0  held=True  windows=1
+  what=gate: windows usable  group=G31  measured=4/4  held=True
+  what=gate: senders balanced  group=G31  measured=1.433  band_hi=1.5  held=True  windows=pi-A=5.18% pi-B=4.76% Pi=6.82% TP-Link=5.18%
+GO
+gate exit 0

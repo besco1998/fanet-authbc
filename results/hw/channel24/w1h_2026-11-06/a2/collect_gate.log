@@ -1,0 +1,17 @@
+node1: 146 files; windows done 52; [2026-11-06T15:52:58+02:00] reverted OK, both deadmen disarmed
+node2: 146 files; windows done 52; [2026-11-06T15:53:02+02:00] reverted OK, both deadmen disarmed
+node3: 145 files; windows done 52; [2026-11-06T15:52:59+02:00] reverted OK, both deadmen disarmed
+node4: 147 files; windows done 52; [2026-11-06T15:53:11+02:00] reverted OK: back on the home Wi-Fi, deadman disarmed
+node 4 join: {"bssid":"ca:96:4c:b4:cd:2e","rate_ctl":"FIXED CCK_1M 0x00 0","boot":"ca461667","peers_reachable":[1,2,3]}; boot now ca461667
+node 2 power: 2026-11-06T15:25:58+02:00 set 800: txpower 8.00 dBm
+node 2 power: 2026-11-06T15:52:53+02:00 auto: txpower 31.00 dBm
+  what=node 4 joined the Pis' cell  group=ca:96:4c:b4:cd:2e  measured=reached [1, 2, 3]  held=True
+  what=node 4 rate fixed at join  group=FIXED CCK_1M 0x00 0  predicted=FIXED CCK_1M  held=True
+  what=rate check before  group=pi-A (BCM4345/6)  measured=1941.4  predicted=2224.0  band_lo=1900.0  band_hi=2600.0  held=True  windows=1
+  what=rate check before  group=pi-B (BCM4345/6)  measured=1940.7  predicted=2224.0  band_lo=1900.0  band_hi=2600.0  held=True  windows=1
+  what=rate check before  group=Pi 3 (BCM43430/1)  measured=2592.3  predicted=2224.0  band_lo=1900.0  band_hi=2600.0  held=True  windows=1
+  what=rate check before  group=TP-Link on Blue 2 (RTL8188EUS)  measured=1968.1  predicted=2224.0  band_lo=1900.0  band_hi=2600.0  held=True  windows=1
+  what=gate: windows usable  group=G31  measured=4/4  held=True
+  what=gate: senders balanced  group=G31  measured=1.433  band_hi=1.5  held=True  windows=pi-A=5.18% pi-B=4.76% Pi=6.82% TP-Link=5.18%
+GO
+gate exit 0

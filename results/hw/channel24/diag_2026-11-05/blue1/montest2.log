@@ -1,0 +1,13 @@
+Interface mon0
+	ifindex 7
+	wdev 0x6
+	addr 38:d2:69:dc:e6:07
+	type monitor
+	wiphy 0
+	txpower 0.00 dBm
+tcpdump: listening on mon0, link-type IEEE802_11_RADIO (802.11 plus radiotap header), snapshot length 160 bytes
+0 packets captured
+0 packets received by filter
+0 packets dropped by kernel
+frames: 0
+wlan0 after: wlan0            UP             192.168.1.23/24 metric 1024 

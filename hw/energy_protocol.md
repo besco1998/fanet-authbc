@@ -38,6 +38,10 @@ model layers → the hardware-grounded tables. The auth-byte headline is power-f
 - Headless (no desktop), Wi-Fi power-save off, screen blank — the idle draw must be steady.
 - Let the board sit idle ~3 min to reach thermal steady state before the first idle window.
 - Log `vcgencmd measure_temp` every 5 s and `vcgencmd get_throttled` before+after **every** window.
+- **The rig check has passed today, and since any wire was last touched** (`hw/RIG.md` §8,
+  item 7: `hw/rig_selftest.py` on the board, `hw/rig_check.py` here). A rig that fails is not
+  measured on. ⚠️ Added 2026-10-09 after a loose ground and then a weak feed, on one morning,
+  each of which an energy run would have turned into a tidy wrong number (finding F78).
 
 ## Step 2 — idle baseline `P_idle`
 With no benchmark running, sample meter power for **60 s**; `P_idle` = mean over the window.

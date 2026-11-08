@@ -9,8 +9,11 @@ composition is where the assumptions live (per-record attribution, the airtime t
 "incremental" power).
 
 **What this does.** Runs the *actual* optimized configuration end to end — stateful delta encode →
-SHA-256 chain link → Ed25519 sign once per b=4 records → frame assembly — at a fixed record rate
-inside a GPIO-marked window, exactly like `energy_loop.py`'s per-op windows. The INA219 rig then
+SHA-256 chain link → Ed25519 sign once per b=4 records → frame assembly — back to back, as fast
+as one core produces frames, inside a GPIO-marked window, exactly like `energy_loop.py`'s per-op
+windows. ⚠️ Until 2026-10-09 this sentence said "at a fixed record rate". It never was: the
+window is a tight loop, and what is measured is the energy of the work itself, not of a board
+that wakes fifty times a second to do it. The INA219 rig then
 reduces the window to an incremental power, and this script converts that to µJ/record and compares
 it against `models.energy.per_record` under the *same* configuration.
 
@@ -35,6 +38,7 @@ import argparse
 import gc
 import hashlib
 import json
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -94,6 +98,66 @@ def build_pipeline():
     return one_frame
 
 
+def build_lean_pipeline():
+    """One zero-arg callable that produces ONE lean frame of `BATCH` records (OPEN_ITEMS G9).
+
+    The sender as it runs: `LeanSender.frame` on chained ledger records — the SHA-256 link of
+    each record, delta coding, one Ed25519 signature, CBOR framing. The records are a real
+    stream, built before any window so that only the sender's own work is metered.
+    """
+    from authbc.bench import leanframes
+    from authbc.placement.session_v2 import LeanSender
+
+    scheme = get_scheme(SCHEME)
+    sk, _pk = scheme.keygen(seed=hashlib.sha256(b"g9:lean").digest())
+    recs = leanframes.chained_records(1, 4000)
+    groups = [recs[i:i + BATCH] for i in range(0, len(recs) - BATCH + 1, BATCH)]
+    sender = LeanSender(sk)
+    state = {"i": 0}
+
+    def one_frame() -> object:
+        state["i"] = (state["i"] + 1) % len(groups)
+        return len(sender.frame(groups[state["i"]]))
+
+    return one_frame
+
+
+RUST_EXE = REPO / "hw" / "rust_receiver" / "target" / "release" / "authbc-rx"
+LEAN_KEY_SEED = hashlib.sha256(b"g9:lean").digest()      # the Python lean pipeline's key
+
+
+def rust_records(path: Path) -> Path:
+    """The Python lean pipeline's records (seed 1, 4 000, chained), as `authbc-rx` reads them.
+
+    The compiled sender (revision A8) is metered on the same stream and key as the Python lean
+    rows, so the two differ in the implementation only.
+    """
+    from authbc.bench import leanframes
+    from authbc.placement import wire_v2
+
+    lines = [json.dumps({"src": r.src, "seq": r.seq, "ts": r.ts, "ph": r.prev_hash.hex(),
+                         "pl": [r.pl[f] for f in wire_v2.PAYLOAD_FIELDS]})
+             for r in leanframes.chained_records(1, 4000)]
+    path.write_text("\n".join(lines) + "\n")
+    return path
+
+
+def run_rust_window(exe: Path, records: Path, batch: int, seconds: float) -> tuple[int, int]:
+    """One load window of the compiled sender: `authbc-rx sendloop` sends frames back to back
+    for `seconds` (its start-up, a few ms, falls inside the window and is stated as such)."""
+    out = subprocess.run([str(exe), "sendloop", str(records), LEAN_KEY_SEED.hex(), str(batch),
+                          f"{seconds}"], check=True, capture_output=True, text=True).stdout
+    kv = dict(line.split(",", 1) for line in out.split())
+    return int(kv["frames"]), int(kv["checksum"]) & 0xFFFFFFFFFFFFFFFF
+
+
+def predicted_lean_uj_per_record(p_cpu_w: float, t_frame_s: float, batch: int) -> float:
+    """Sender CPU energy per record of the lean format: one timed frame, shared by `batch`."""
+    if min(p_cpu_w, t_frame_s) <= 0 or batch < 1:
+        raise ValueError("need p_cpu_w > 0, t_frame_s > 0, batch ≥ 1")
+    return p_cpu_w * t_frame_s / batch * 1e6
+
+
 def predicted_cpu_uj_per_record(p_cpu_w: float, t_enc_s: float, t_sign_s: float,
                                 t_verify_s: float) -> float:
     """What the model says the CPU costs per record, in µJ, for this configuration."""
@@ -131,13 +195,17 @@ def main() -> None:
                     help="measured incremental CPU power (P7b default)")
     ap.add_argument("--t-enc-ns", type=float, default=47759.0, help="measured delta encode (ARM)")
     ap.add_argument("--t-sign-ns", type=float, default=88120.2, help="measured Ed25519 sign (ARM)")
-    ap.add_argument("--t-verify-ns", type=float, default=259498.7,
-                    help="measured Ed25519 verify (ARM)")
     ap.add_argument("--batch", type=int, help="override b (use 1 for the A+CBOR baseline)")
     ap.add_argument("--encoding", help="override the encoding (cbor for the baseline)")
     ap.add_argument("--record-bytes", type=float, help="override s for the model prediction")
-    ap.add_argument("--no-verify", action="store_true", default=True,
-                    help="the pipeline signs but does not verify; predict the sender side only")
+    ap.add_argument("--format", choices=("first", "lean", "rust"), default="first",
+                    help="lean: meter LeanSender.frame; needs --t-frame-ns from this board's "
+                         "p1_lean file (frame_send at the same --batch). rust: the compiled "
+                         "sender (authbc-rx sendloop, revision A8); --t-frame-ns from "
+                         "`authbc-rx sendbench` on this board")
+    ap.add_argument("--rx-exe", type=Path, default=RUST_EXE, help="authbc-rx, for --format rust")
+    ap.add_argument("--t-frame-ns", type=float,
+                    help="measured LeanSender.frame time on THIS board, for the prediction")
     args = ap.parse_args()
     global ENCODING, BATCH, RECORD_BYTES
     if args.batch:
@@ -150,10 +218,19 @@ def main() -> None:
 
     # ⚠️ The pipeline SIGNS but does not VERIFY. Predicting with t_verify included compared a
     # sender-side measurement against a sender+receiver model and inflated the prediction ~1.9x.
-    # Found 2026-07-29 on the first real run; predict the sender side only.
-    t_verify_for_prediction = 0.0 if args.no_verify else args.t_verify_ns * 1e-9
-    predicted = predicted_cpu_uj_per_record(args.p_cpu_w, args.t_enc_ns * 1e-9,
-                                            args.t_sign_ns * 1e-9, t_verify_for_prediction)
+    # Found 2026-07-29 on the first real run; the prediction is of the sender side only. (A
+    # `--no-verify` flag stood here until 2026-10-09; it could not be switched off.)
+    t_verify_for_prediction = 0.0
+    if args.format in ("lean", "rust"):
+        if not args.t_frame_ns:
+            ap.error(f"--format {args.format} needs --t-frame-ns: time the sender on this board "
+                     "first (hw/run_micro.sh, or authbc-rx sendbench), so that the expectation "
+                     "exists before the meter is read")
+        ENCODING = "lean" if args.format == "lean" else "lean-compiled"
+        predicted = predicted_lean_uj_per_record(args.p_cpu_w, args.t_frame_ns * 1e-9, BATCH)
+    else:
+        predicted = predicted_cpu_uj_per_record(args.p_cpu_w, args.t_enc_ns * 1e-9,
+                                                args.t_sign_ns * 1e-9, t_verify_for_prediction)
     # Law 6: state the expectation BEFORE reading the meter.
     print("=" * 72)
     print("D1 end-to-end energy validation — EXPECTED VALUE, stated before measurement")
@@ -168,9 +245,14 @@ def main() -> None:
     print("                      a larger gap is a FINDING to explain in writing (Law 7),")
     print("                      never a tolerance to widen (Law 3).\n")
 
-    pipeline = build_pipeline()
-    for _ in range(WARMUP):                       # outside every window, per energy_loop.warmup
-        pipeline()
+    records = rust_records(args.out / "records.jsonl") if args.format == "rust" else None
+    if records is not None:
+        pipeline = None                           # one sendloop process per load window
+        run_rust_window(args.rx_exe, records, BATCH, 2.0)    # warm-up, outside every window
+    else:
+        pipeline = build_lean_pipeline() if args.format == "lean" else build_pipeline()
+        for _ in range(WARMUP):                   # outside every window, per energy_loop.warmup
+            pipeline()
 
     sync = SyncLine()
     if not sync.available:
@@ -179,23 +261,26 @@ def main() -> None:
 
     windows = []
     for rep in range(1, args.reps + 1):
-        for label, fn in (("idle", None), ("e2e_frame_pipeline", pipeline)):
+        for label, load in (("idle", False), ("e2e_frame_pipeline", True)):
             time.sleep(GAP_S)
             before = device_state()
             t0 = time.perf_counter()
             with sync.window():
-                if fn is None:
+                if not load:
                     time.sleep(args.seconds)
                     n_ops, checksum = 0, 0
+                elif records is not None:
+                    n_ops, checksum = run_rust_window(args.rx_exe, records, BATCH, args.seconds)
                 else:
-                    n_ops, checksum = run_window(fn, args.seconds)
+                    n_ops, checksum = run_window(pipeline, args.seconds)
             duration = time.perf_counter() - t0
             after = device_state()
-            clean = window_is_clean(before["throttled"], after["throttled"])
+            clean = window_is_clean(before["throttled"], after["throttled"],
+                                    before["undervoltage_events"], after["undervoltage_events"])
             # Schema must match what `ina219_capture.reduce` consumes: idle/load `kind` pairs
             # with an `op` name, not a bare label — otherwise the reducer cannot pair windows.
             windows.append({
-                "rep": rep, "kind": "idle" if fn is None else "load", "op": label,
+                "rep": rep, "kind": "load" if load else "idle", "op": label,
                 "n_ops": n_ops, "checksum": checksum,
                 "duration_s": duration, "records": n_ops * BATCH,
                 "throttle_clean": clean, "before": before, "after": after,
@@ -209,12 +294,15 @@ def main() -> None:
         "experiment": "d1_energy_e2e",
         "host": _plat.node(), "run_utc": time.strftime("%Y%m%dT%H%M%SZ", time.gmtime()),
         "platform": _plat.platform(), "python": _plat.python_version(),
-        "gpio_backend": "gpiod" if sync.available else "none",
+        # the backend that drove the line, as SyncLine names it. Until 2026-10-09 this wrote
+        # "gpiod" whenever any backend worked, including when the line was driven through sysfs.
+        "gpio_backend": sync.backend,
         "duration_s": args.seconds, "reps": args.reps,
         "configuration": {"encoding": ENCODING, "scheme": SCHEME, "placement": "B",
                           "batch": BATCH, "h_f": H_F, "g_a": G_A},
         "model_inputs": {"p_cpu_w": args.p_cpu_w, "t_enc_ns": args.t_enc_ns,
-                         "t_sign_ns": args.t_sign_ns, "t_verify_ns": args.t_verify_ns},
+                         "t_sign_ns": args.t_sign_ns, "verify": "not run, not predicted",
+                         "format": args.format, "t_frame_ns": args.t_frame_ns},
         "predicted_cpu_uj_per_record": predicted,
         "windows": windows,
         "note": ("Reduce with hw/ina219_capture.py --reduce <this> <samples.csv> --channel 1. "

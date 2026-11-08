@@ -1,0 +1,6 @@
+# nodes: 1,2
+# probe 3 (disclosed, not scored): node 4 = the TP-Link, community driver, rate_ctl 1 Mb/s; its pace saturated (twice), its loss at 50/s, its reception of pi-A
+F4 1000 145 4
+F4 1000 145 4
+B4 50 145 4
+R1 600 145 1

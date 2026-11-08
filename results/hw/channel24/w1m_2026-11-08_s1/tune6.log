@@ -1,0 +1,35 @@
+node 1: kit=[c42010127374 30c333bce0df 2b8ab3d2f89a a2aa8cfaf0cf ] plan=50f4887e2a3d throttled=0x0 ntp=yes running=0
+node 2: kit=[c42010127374 30c333bce0df 2b8ab3d2f89a a2aa8cfaf0cf ] plan=50f4887e2a3d throttled=0x0 ntp=yes running=0
+node 3: kit=[c42010127374 30c333bce0df 2b8ab3d2f89a a2aa8cfaf0cf ] plan=50f4887e2a3d throttled=0x0 ntp=yes running=0
+Blue 2 rebooting at 02:58:18
+Blue 2 ready 02:59:51: boot=f950e215 uptime=75.93s watchdog=active
+node 4: [1e35e61fbcac 2b8ab3d2f89a a2aa8cfaf0cf 50f4887e2a3d]
+Running as unit: authbc-preflight.service
+node 4: authbc-preflight active
+node 1: set_txpower_window.sh (bd86ef80c307) started, 400 mBm
+node 3: set_txpower_window.sh (bd86ef80c307) started, 800 mBm
+START=1794099749 (03:02:29); 6 windows; last ends about 03:05:29
+boards on the LAN: 4/4 at 03:06:07
+boards finished (reverted, pi-B auto): 4/4 at 03:06:15
+node1: 17 files; windows done 6; [2026-11-08T03:05:40+02:00] reverted OK, both deadmen disarmed
+node2: 16 files; windows done 6; [2026-11-08T03:05:41+02:00] reverted OK, both deadmen disarmed
+node3: 17 files; windows done 6; [2026-11-08T03:05:40+02:00] reverted OK, both deadmen disarmed
+node4: 18 files; windows done 6; [2026-11-08T03:05:52+02:00] reverted OK: back on the home Wi-Fi, deadman disarmed
+node 4 join: {"bssid":"32:25:6e:d5:89:51","rate_ctl":"FIXED CCK_1M 0x00 0","boot":"f950e215","peers_reachable":[1,2,3]}; boot now f950e215
+  [1] ok  rate check | pi-A (BCM4345/6) | 1944.9 
+  [1] ok  rate check | pi-B (BCM4345/6) | 1964.3 
+  [1] ok  rate check | Pi 3 (BCM43430/1) | 2268.1 
+  [2] ok  rate check | TP-Link on Blue 2 (RTL8188EUS) | 1977.5 
+  [2] ok  rate_ctl at join | TP-Link | FIXED CCK_1M 0x00 0 
+  [3] ok  held at 4 dBm, then auto | node1 txpower.log | 2026-11-08T03:01:39+02:00 set 400: txpower 4.00 dBm | 2026-11-08T03:05:34+02:00 auto: txpower 31.00 dBm 
+  [3] ok  held at 8 dBm, then auto | node3 txpower.log | 2026-11-08T03:01:39+02:00 set 800: txpower 8.00 dBm | 2026-11-08T03:05:34+02:00 auto: txpower 31.00 dBm 
+  [4] ok  node 4 in the Pis' cell | 32:25:6e:d5:89:51 | reached [1, 2, 3] 
+  [4] ok  Blue 2 on one boot, every window complete | f950e215 | 6/6 
+  [5] ok  no Pi under-voltage | all windows | 0 
+  [6] NO  senders within 1.25x | G31 | 2.037 | pi-A=3.11% pi-B=4.96% Pi=6.31% TP-Link=6.33%; usable 2/2
+  [7] ok  alone, every receiver >= 97 % | pi-A (BCM4345/6) | 0.991 
+  [7] ok  alone, every receiver >= 97 % | pi-B (BCM4345/6) | 0.99 
+  [7] ok  alone, every receiver >= 97 % | Pi 3 (BCM43430/1) | 0.9956 
+  [7] ok  alone, every receiver >= 97 % | TP-Link on Blue 2 (RTL8188EUS) | 0.9926 
+  [tune] ok  ADJUST: node2 down to 1400 | 1:400,2:1400,3:800 |  
+ADJUST POWERS=1:400,2:1400,3:800

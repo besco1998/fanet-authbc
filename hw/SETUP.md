@@ -256,7 +256,7 @@ Confirm with `iw dev wlan0 link` / `iw dev wlan0 station dump`.
 3. **The reproduction gate will now fail** (`make verify-frozen`) because the derived numbers changed
    — that is expected and correct. Review the diff, then **commit the new frozen CSVs** as a
    deliberate re-freeze (docs/DECISIONS.md); the gate goes green on the new baseline.
-4. Write `docs/audits/p7.md` with the Law-6 validation (expected ranges, thermal-clean runs, meter
+4. Write `docs/audits/AUDIT_HISTORY.md` with the Law-6 validation (expected ranges, thermal-clean runs, meter
    calibration, x86↔ARM ratios). Tag `p7-done`.
 
 ---

@@ -2,9 +2,10 @@
 
 *Every source consulted for AUTHBC, with **why it matters to this thesis** stated explicitly. A
 citation with no stated role is a citation nobody will check. PDFs are stored beside this file where
-licensing allows. **50 PDFs; every source cited in the paper is held and has been read.** ⚠️ The count read *49* until 2026-08-27 while the Mehta et al. 2020 entry below already claimed “PDF here” — the file had never been committed, so the promise in this sentence was false for anyone cloning. It is committed now. ⚠️ The header said *20* until 2026-08-07 while 25 sat on disk, and **five held PDFs had no register entry at all** despite the promise above — they are added at the end of this file. A register that silently omits a fifth of its corpus is not a register. The one
-exception is Gündoğan et al. (ACM DL only) — its DOI is recorded instead. See
-[`A3_CITATION_VERIFICATION.md`](A3_CITATION_VERIFICATION.md) for how each citation was checked.*
+licensing allows. **58 PDFs are in this repository; every source cited in the paper is held and has been read.** ⚠️ **31 more** are held on the author's machine and are **not redistributed here** (decision of 2026-10-07): [`HELD_LOCALLY.csv`](HELD_LOCALLY.csv) lists each with its SHA-256, its size and where to obtain it, so anyone holding the document can confirm it is the one that was read. ⚠️ Until 2026-10-09 one source cited in the *methods* paper was **not** held at all — Kurkowski et al. 2005, quoted only through a held paper that reports it (the 2026-10-06 section at the end keeps that record). It is held now and cited directly. ⚠️ The count read *49* until 2026-08-27 while the Mehta et al. 2020 entry below already claimed “PDF here” — the file had never been committed, so the promise in this sentence was false for anyone cloning. It is committed now. ⚠️ The header said *20* until 2026-08-07 while 25 sat on disk, and **five held PDFs had no register entry at all** despite the promise above — they are added at the end of this file. A register that silently omits a fifth of its corpus is not a register. The one
+exception was Gündoğan et al. (ACM DL only, DOI recorded instead) until 2026-10-06; the authors' arXiv version is now held. See
+the section "How the citations were verified" at the end of this file for how each citation was
+checked.*
 
 **Status key:** `USED` — cited in the paper · `VALIDATES` — an independent check on one of our
 results · `PRIOR ART` — establishes something we must *not* claim · `POSITIONING` — related work,
@@ -19,6 +20,16 @@ not a comparator · `TO READ` — identified but not yet studied in full.
 | **Bianchi, *Performance analysis of the IEEE 802.11 DCF*, IEEE JSAC 18(3), 2000** | `USED` | The unicast saturation model our airtime layer implements. Validated against NS-3 3.48 to **+1.29/−0.40 %** (mean, 30 seeds) |
 | **Ma & Chen, *Saturation Performance of IEEE 802.11 Broadcast Networks*, IEEE Comm. Lett. 11(8), 2007** — PDF here | `USED` `PRIOR ART` | **Cost us a novelty claim (F9).** We independently rediscovered the backoff-counter freeze that makes broadcast differ from unicast; they published it in 2007. Their abstract explicitly warns unicast models "cannot simply be reduced" to broadcast — which is exactly what we had done, wrong by 17.3× at N=50. Now implemented and cited; no novelty claimed |
 | **Ma & Chen, *Performance Analysis of IEEE 802.11 Broadcast Scheme in Ad Hoc Wireless LANs*, IEEE TVT 57(6), 2008** — PDF here | `USED` | The journal version. **Use its eq. (8), not the letter's eq. (6)**, which misprints p_ss |
+| Wang, Wang, Zhang, Li & Luo, *A Conditional Privacy-Preserving Certificateless Aggregate Signature Scheme in the Standard Model for VANETs*, IEEE Access 10, 2022 (CC BY-NC-ND; on the author's machine, **not in this repository**) | `READ 2026-10-09` `POSITIONING` | **One of the four schemes known until now only through Li et al.'s table — and reading it corrected a claim (F68).** Vehicles sign, a roadside unit aggregates, a traffic management centre verifies. Its own figures: a group element is 128 B; one signature is three elements and a 4 B timestamp, **388 B**; the aggregate of n is 3 × 128 + 4n, **784 B for a hundred**. So the aggregate an intermediary forwards is compact, and "the cost of n messages is n times the cost of one" is true only of what the signers send. ⚠️ **Read in part:** the system model, the algorithm list and §VII (performance) were read; the security proofs were not. ⚠️ Li et al.'s 859 B for this scheme is *their* total for a whole message with a 67 B payload, not a number this paper states. |
+| Gupta, Jain & Vaszkun, *Survey of Important Issues in UAV Communication Networks*, IEEE COMST 18(2), 2016 — authors' arXiv version, arXiv:1603.08462 (on the author's machine, **not in this repository**) | `READ 2026-10-09` `POSITIONING` | **The general survey the thesis lacked (OPEN_ITEMS G24).** Sets UAV networks beside MANETs and VANETs (its Table I) and organises the open problems around architecture, routing, handover and energy. Cited in thesis ch. 2 for what distinguishes these networks and for what the survey does *not* take up: the words "authentication", "signature" and "telemetry" do not occur in its 25,000 words (checked by search). ⚠️ **Read in part:** abstract, §I–§II with Table I, and the conclusions were read; §III–§V (routing, handover, energy) were searched by keyword and not read through. Nothing is quoted from the parts not read. |
+| IETF RFC 9575, Wiethuechter (ed.), Card & Moskowitz, *DRIP Entity Tag (DET) Authentication Formats and Protocols for Broadcast Remote Identification (RID)*, June 2024 — web: rfc-editor.org/rfc/rfc9575.txt, read 2026-10-08 (§1–§6 and §9 in full; Appendix B for the overhead figures; the IANA section and the remaining appendices not read) | `READ 2026-10-08` `POSITIONING` | **The nearest standard to this work, and it takes the road our exclusion bound rules out.** A 64-octet signature against 25-octet Bluetooth 4 Remote ID frames: authentication messages are *paged* (23 octets a page, signed content limited to nine pages), one XOR parity page recovers a single lost page, and a signed *Manifest* carries 8-octet hashes of up to 11 messages already sent plus the previous manifest's hash. Cited in the paper (one sentence) and the thesis (ch. 2, ch. 10) as the system that relaxes conditions (iii) and (iv). ⚠️ Remote ID is sent about once a second; nothing in it is comparable to a 50 records/s stream under a 100 ms deadline, and no number of ours is set against one of theirs. |
+| Xu, He, Kumar & Choo, *Efficient Certificateless Aggregate Signature Scheme for Performing Secure Routing in VANETs*, Security and Communication Networks 2020 (CC BY; downloaded by Mohamed, **not in this repository**) | `READ 2026-10-09` `POSITIONING` | One of the four. An aggregator compresses n signatures of n signers into one; its evaluation is of computation, and **it states no size in bytes** (searched), so the 596 B quoted for it is Li et al.'s count. ⚠️ **Read in part:** the introduction and the performance evaluation. |
+| Liang & Liu, *Analysis and Improvement of an Efficient Certificateless Aggregate Signature With Conditional Privacy Preservation in VANETs*, IEEE Systems Journal 17(1), 2023 (downloaded by Mohamed, **not in this repository**) | `READ 2026-10-09` `POSITIONING` | One of the four. Pairing-based; a 64 B prime and **128 B group elements**, as in Wang et al.; vehicles, roadside units and a traffic management centre. Its communication figures are in a table that did not survive text extraction, so the 735 B quoted for it remains Li et al.'s. ⚠️ **Read in part:** the overhead section only. |
+| Cahyadi, Su, Yang & Hwang, *A certificateless aggregate signature scheme for security and privacy protection in VANET*, IJDSN 18(5), 2022 (CC BY; downloaded by Mohamed, **not in this repository**) | `READ 2026-10-09` `POSITIONING` | One of the four schemes of Li et al.'s table. **States its own communication cost: 583 bytes for one message and 583n for n** — so Li et al.'s figure for it is the paper's own, and the linearity in n is the authors' statement, not our inference. ⚠️ **Read in part:** the comparison of communication cost and the roles; the scheme's algebra and proofs were not read. |
+| Kurkowski, Camp & Colagrosso, *MANET Simulation Studies: The Incredibles*, ACM SIGMOBILE MC2R 9(4), 2005 (downloaded by Mohamed 2026-10-09, **not in this repository**) | `READ 2026-10-09` `POSITIONING` | **The survey the credibility literature starts from — until today cited through Cavalcanti et al. (OPEN_ITEMS G8, now closed).** 151 MobiHoc papers of 2000–2005 against four criteria. Its own figures, from its Table 1: 114 of 151 used simulation; 0 of 114 said the code was available; 34 of 114 did not name the simulator; 98 of the 112 with plots (87.5 %) showed no confidence intervals; of 42 with mobility, 21 stated the mean pause time; "less than 15 %" repeatable is its conclusion. Cited directly in thesis ch. 2 and ch. 11 and in the methods paper. The two figures quoted through Cavalcanti were right. |
+| Ma, Chen & Refai, *Performance and Reliability of DSRC Vehicular Safety Communication: A Formal Analysis*, EURASIP JWCN 2009, art. 969164 (CC BY; downloaded by Mohamed 2026-10-09, on the author's machine, **not in this repository**) | `READ 2026-10-09` `PRIOR ART` | **The non-saturated extension of the broadcast model we use, by its own authors — and prior art for the first loss mechanism of `docs/02` §6g.** Vehicles on a highway placed by a Poisson process, random message arrivals in two priority classes, a queue per vehicle, hidden terminals with a vulnerable period of twice the frame time, fading, and vehicles moving out of range. Gives throughput, delay and the share of receivers in range that get a packet; one loss term is the simultaneous transmission of stations within range. Checked against an event-driven simulation the authors wrote in MATLAB. ⚠️ **No term for the time in which a transmission that has begun cannot yet be sensed** (searched: no "detection", no sensing delay; its "vulnerable period" is the hidden-terminal one). ⚠️ **Read in part:** the abstract, the model assumptions, the reception-rate terms and the validation section; the delay derivation was not read through. |
+| Bianchi, Di Stefano, Giaconia, Scalia, Terrazzino & Tinnirello, *Experimental Assessment of the Backoff Behavior of Commercial IEEE 802.11b Network Cards*, IEEE INFOCOM 2007, pp. 1181–1189 (fetched 2026-10-09 from the authors' university mailing-list archive, on the author's machine, **not in this repository**) | `READ 2026-10-09` `PRIOR ART` | **Prior work for measuring a card's own frame spacing, and for finding it is not the standard's (findings F74–F75).** Six commercial cards, one of them Broadcom; a programmable card built as the instrument. Measures the time between a saturated card's consecutive frames and, separately, its backoff after a busy period. "None of the six commercial cards behaves as expected from the standard specification": contention windows of 7 and 15 where 31 is required, frames sent with no backoff after a forwarding delay, EIFS ignored. **Found by searching after our own anomaly and before writing the explanation.** What it does not have: 802.11a, broadcast frames, or frame burst. ⚠️ **Read in part:** sections I–IV-B in full; the EIFS section (IV-C) and the conclusions skimmed. |
+| Cao, Yin, Hu & Zhang, *Performance Analysis and Improvement on DSRC Application for V2V Communication*, arXiv:2102.07023, 2021 (on the author's machine, **not in this repository**) | `READ 2026-10-08` `PRIOR ART` | **Prior art for the first of the two loss mechanisms of `docs/02` §6g.** A fixed-point model of *periodic* 802.11p broadcast in a fully connected network with a perfect physical layer: a packet that finds the medium idle is sent at once, one that finds it busy backs off in a fixed window, and collisions arise only among packets that backed off. Delivery ratio and mean delay; checked against the authors' own Monte Carlo simulation, not against ns-3. ⚠️ It has **no detection-window term** — which is 15–49 % of the loss at our crossings — and its fixed point uses a quantity (the mean number of packets in a collision) whose formula the paper does not give, so it was **not** evaluated at our configurations. Found on 2026-10-08 while auditing the thesis: the derivation had been written without a search for prior work, the defect F9 was supposed to have ended. The earlier analyses it cites (Chen, Refai & Ma 2007; Hassan, Vu & Sakurai 2011) and Ma, Chen & Refai 2009 were **not obtained** (the publisher's site refuses scripted access) and are not cited. |
 | **Tinnirello, Bianchi & Xiao, *Refinements on IEEE 802.11 DCF Modeling Approaches*, IEEE TVT 59(3), 2010** — PDF here | `VALIDATES` | "Anomalous slots": the post-success slot is available only to the station that just transmitted. Our unicast traces confirm it independently (94 µs floor seen 220×) |
 
 ## 2. The payload-exclusion bound — prior art we found before claiming
@@ -41,16 +52,18 @@ not a comparator · `TO READ` — identified but not yet studied in full.
 
 | source | status | role |
 |---|---|---|
-| **Semtech SX1276/77/78/79 datasheet, Rev. 7, 2020** | `USED` | §4.1.1.5 symbol rate, §4.1.1.7 time-on-air. Every LoRa timing constant transcribed from here |
+| **Semtech SX1276/77/78/79 datasheet** — constants transcribed from Rev. 7 (2020); ⚠️ **the PDF held here is Rev. 4, March 2015** (`semtech_sx1276_datasheet_rev4.pdf`), and every value the model uses was re-checked against it on 2026-10-06 and is identical (formulas p. 28 and p. 31, sensitivity table p. 20) | `USED` | §4.1.1.5 symbol rate, §4.1.1.7 time-on-air. Every LoRa timing constant transcribed from here |
 | **LoRa Alliance RP002-1.0.3 Regional Parameters, 2021** | `USED` | EU868 Table 8 (data rates), **Table 13** (max payload, non-repeater), duty cycle < 1 %. ⚠️ The NS-3 module enforces **Table 12** (repeater-compatible, 222 B) instead — a defensible alternative reading, recorded in TRADEOFFS |
-| **Bor, Roedig, Voigt & Alonso, *LoRa Scalability: A Simulation Model Based on Interference Measurements*, Sensors 17(6), 2017** — PDF here | `USED` `VALIDATES` | **Not just quoted — IMPLEMENTED.** Their Eq. (8) is now `lora.bor2017_loss_pct()`, validated against the four loss figures their own text states, and run at our operating point via `make exp-lora-external` (F20). **It gives N_max = 4 against our corrected 3** — the LoRa arm's external baseline. ⚠️ Always note which FIGURE a number comes from: collapsing Fig. 6/14/15 produced the retracted F18 |
+| **Haxhibeqiri, Van den Abeele, Moerman & Hoebeke, *LoRa Scalability: A Simulation Model Based on Interference Measurements*, Sensors 17(6), 2017** — PDF here | `USED` `VALIDATES` | **Not just quoted — IMPLEMENTED.** Their Eq. (8) is now `lora.haxhibeqiri2017_loss_pct()`, validated against the four loss figures their own text states, and run at our operating point via `make exp-lora-external` (F20). **It gives N_max = 4 against our corrected 3** — the LoRa arm's external baseline. ⚠️ Always note which FIGURE a number comes from: collapsing Fig. 6/14/15 produced the retracted F18 |
 | **Magrin et al., signetlabdei/lorawan ns-3 module** | `USED` | The simulator behind our capacity result. Requires our `patch_lorawan.py`. ⚠️ **Its `ALOHA` region preset = 1 channel + 1 demodulation path**; the `EU` preset = 3 channels + 8 paths. We used `ALOHA`. The preset choice dominates the capacity number — see §5 |
 
-## 4a. Sources added by the A3 citation pass (see `A3_CITATION_VERIFICATION.md`)
+## 4a. Sources added by the A3 citation pass (see "How the citations were verified", at the end of this file)
 
 | source | status | role |
 |---|---|---|
 | **Zhang, Lu, Lin, Ho & Shen, *An Efficient Identity-Based Batch Verification Scheme for Vehicular Sensor Networks*, IEEE INFOCOM 2008** — PDF here | `USED` `POSITIONING` | Related work (b). **Quoted from the PDF:** an RSU can *"verify multiple received signatures at the same time"*. The useful contrast: their deadline is DSRC's **300 ms** and their batching is **receiver-side** (V2I); ours is **sender-side** and buys airtime. Complementary, not competing |
+| **Rajasekaran, Maria, Al-Turjman, Altrjman & Mostarda, *Anonymous Mutual and Batch Authentication with Location Privacy of UAV in FANET*, Drones 6(1):14, 2022** — PDF here (CC BY 4.0; obtained 2026-10-07 from the publisher's static server, the article page being behind a script check) | `USED` `POSITIONING` | The FANET-specific batch-authentication comparator the checklist had listed as missing since August. **Read in full.** A pairing-based scheme between a user and drones (not broadcast telemetry): a user checks j drones in one equation, `F/e = UBK^j` (§4.6). ⚠️ **What it supports is the axis, as with CLAS:** its Table 5 gives the communication cost as **1184 bits for one authentication and 1184·n for n** — batching shares the verifier's work, not the bytes. ⚠️ Its Table 5 labels the proposed scheme's row "Singh et al. [30]" (a second time); the 1184 bits are derived in the text of §6.2 for the proposed scheme. ⚠️ Five authors — the checklist had listed four |
+| Al Majmaie, Ghajari, Bhatta, Ibrahem & Amsaad, *SSDBFAN: Scalable and Secure Cluster-Based Data Aggregation with Blockchain for Flying Ad Hoc Networks*, Sensors 26(9):2585, 2026 (CC BY; on the author's machine, **not in this repository and not cited**) | `READ 2026-10-08` **not a baseline** | Read to decide whether it had to be cited (`OPEN_ITEMS` G21). Cluster-based **data** aggregation: lattice homomorphic encryption and the Chinese Remainder Theorem at cluster heads, online/offline signatures with a BLS batch check, a blockchain among cluster heads; ns-3 with 802.11b, 512 B packets, Random Waypoint, 50–500 nodes. ⚠️ Its "communication overhead" is plotted in milliseconds, and the text contains no per-message byte budget (the only byte figures are the packet size and block sizes of 16–128 B). Nothing in it bears on what authentication costs per record on air. ⚠️ Five authors — the checklist had listed four |
 | **Mehta, Gupta & Tanwar, *Blockchain Envisioned UAV Networks*, Computer Communications 151, 2020** — PDF here | `USED` | Related work (c): a survey pointer to the UAV-blockchain subfield. Nothing load-bearing rests on it |
 | **Pelkonen et al., *Gorilla: A Fast, Scalable, In-Memory Time Series Database*, PVLDB 8(12), 2015** — PDF here | `USED` `PRIOR ART` | Related work (d): delta coding of telemetry. **Quoted from the PDF:** *"delta-of-delta timestamps and XOR'd floating point values … 10x"*. Prior art for delta coding, **not** for our keyframe scheme — Gorilla is a database and never loses a record, so it needs no re-anchoring |
 
@@ -144,7 +157,7 @@ exclusion result is untouched and remains ours.
 ⚠️ **This section previously said the opposite. It was wrong (F18, retracted). Read the correction,
 not the memory of it.**
 
-**What Bor et al. actually report**, by figure — the distinction that I collapsed and must not be
+**What Haxhibeqiri et al. actually report**, by figure — the distinction that I collapsed and must not be
 collapsed again:
 
 | figure | configuration | access scheme | loss at 1000 nodes |
@@ -166,7 +179,7 @@ RP002-provisioned gateway (`EU` region: 3 channels, 8 demodulation paths).
 
 **The like-for-like comparison, and it does not flatter us.** Both studies transmit at the 1 %
 duty-cycle ceiling, so per-node channel occupancy is 1 % in both and offered load scales identically
-as `G = N × 0.01`. Bor's own curve fit, `f_MCH_MSF(x) = f_SCH_SSF(x/18)`, maps their multi-channel
+as `G = N × 0.01`. Haxhibeqiri et al.'s own curve fit, `f_MCH_MSF(x) = f_SCH_SSF(x/18)`, maps their multi-channel
 1000-node point onto **56 nodes on one channel with one SF, at ~32 % loss**. We measure **74.7 % loss
 at N = 50** in that configuration.
 
@@ -232,7 +245,7 @@ security surface in its own right, not merely a byte-accounting change.
 ### Bhatt, Penumatsa & Kumar 2025 — *Hybrid MAC Protocol with Integrated Multi-Layered Security for Resource-Constrained UAV Swarm Communications*
 `arxiv2510.10236_uav_swarm_hybrid_mac.pdf` · arXiv:2510.10236 · **USED / POSITIONING**
 Current NS-3 UAV-swarm practice: 20–100 nodes, 400 × 400 × 1000 m, Random Waypoint, Nakagami,
-802.11ah. Also the anchor in `MOBILITY_SURVEY.md` for RWP being standard practice.
+802.11ah. Also the anchor in the mobility survey (`docs/DEFERRED_PLANS.md`) for RWP being standard practice.
 ⚠️ It states node count, area, path loss, PHY, MAC and energy — and **never states the RWP speed
 range or pause time**, the two parameters that define what its mobility model did.
 
@@ -299,7 +312,7 @@ complementary to — not a comparator for — the airtime constraint that binds 
 
 ⚠️ **The "9 of 9" tally previously recorded here was inflated** and is retracted. It counted papers
 that do not meet the inclusion criteria later fixed in
-`docs/DIRECTION_C_SURVEY_PROTOCOL.md` §2 — Bor et al. used **LoRaSim, not ns-3** (its lone ns-3
+`predictions/DIRECTION_C_SURVEY_PROTOCOL.md` §2 — Haxhibeqiri et al. used **their own simulator, not ns-3** (its lone ns-3
 mention is future work); Mehta et al. is a **survey**; Bhatt et al. is ns-3 but **802.11ah, not
 LoRa**. Applying the criteria strictly leaves **4** qualifying papers, all `NONE`.
 
@@ -314,3 +327,473 @@ The live tally now lives in `results/raw/direction_c_survey.csv`, generated by
 | source | status | role |
 |---|---|---|
 | **Klimiashvili, Tapparello & Heinzelman, *LoRa vs. WiFi Ad Hoc: A Performance Analysis and Comparison*, IEEE ICNC 2020, pp. 654–660** — PDF here, DOI `10.1109/ICNC47757.2020.9049724` (Crossref-verified) | `USED` `VALIDATES` `PRIOR ART` | Does **three** jobs, and one of them cost us a claim. **(1) Corroborates the two-regime framing** — an independent ns-3 study finds neither technology uniformly better (WiFi ad hoc wins delay while single-hop; LoRa wins energy only once WiFi degrades to multi-hop) and recommends *selecting between* them, which is our §VI conclusion reached from the other side. ⚠️ **Qualitative only**: their "almost 5000×" is a PHY bit-rate ratio against DR6's 11 kb/s with no duty cycle, framing or authentication; our ≈4200× is an application-level aggregate. Close in magnitude, **not the same quantity** — recorded so nobody later presents one as confirming the other. **(2) A counter-example to Direction C's H1** — the first paper in the corpus that *does* report replication ("the average of 50 independent runs"), taking the sweep to 4/5 NONE, REPORTS 20 % against a pre-registered 25 % falsification threshold. **(3) Forced us to say which payload column we read** — their Table I lists DR3 at 123 B where we use 115 B. Both are RP002-1.0.3: 123 is *M* (MACPayload), 115 is *N* (application payload), differing by the 8 B FHDR+FPort. ⚠️ **The distinction decides the DR3 verdict** — at 123 B the residual is 15 B and DR3 would be *feasible*. Now argued explicitly in §VI-A. |
+
+---
+
+## Added 2026-10-06 — twelve sources for the revision, and two corrections to this register
+
+*Each was obtained and read before it was cited; each bibliography entry is compared with its
+registry record by `analysis/verify_citations.py` (`results/raw/citation_check.csv`).*
+
+> ⚠️ **Eleven of the twelve are not in this repository** (Mohamed, 2026-10-07, before the branch
+> was first published): every file named below except `li2025_clas_vanet_plosone.pdf`, which is
+> CC BY. They are publishers' PDFs, two LoRa Alliance specifications and a vendor datasheet. They
+> are held and were read; [`HELD_LOCALLY.csv`](HELD_LOCALLY.csv) gives each one's SHA-256 and
+> where to obtain it. The 50 PDFs that were here before stay under the August decision.
+
+### Stream signing and per-message practice — the related work the paper lacked
+
+| source (file) | status | role |
+|---|---|---|
+| **Wong & Lam, *Digital Signatures for Flows and Multicasts*, IEEE/ACM ToN 7(4), 1999** (`wong1999_flow_signatures_ton.pdf`) | `USED` `POSITIONING` | Tree and star chaining: a packet carries the block signature, its position and the sibling digests on its path (§II). Source of the Wong–Lam row of E17. **Each packet verifies alone** — the one classical scheme that keeps that and attribution, at 129 B per packet for a block of four |
+| **Gennaro & Rohatgi, *How to Sign Digital Streams*, CRYPTO '97** (`gennaro1997_sign_digital_streams.pdf`) | `USED` `POSITIONING` | Sign the first block, authenticate each next block by a digest carried in the one before. Source of the E17 row. ⚠️ The paper does not discuss loss; "one lost packet breaks the chain" is our reading of the construction, not a quotation |
+| **Perrig, Canetti, Tygar & Song, *Efficient Authentication and Signing of Multicast Streams over Lossy Channels*, IEEE S&P 2000** (`perrig2000_emss_tesla_sp.pdf`) | `USED` `POSITIONING` | Defines **both** TESLA and EMSS. Quoted for: TESLA prototype overhead **24 B** per packet (10 B MAC + 10 B disclosed key + 4 B interval index); EMSS "20 to 50 bytes per packet", example of two 80-bit hashes per packet and a signature packet every 100; TESLA "does not provide non-repudiation". ⚠️ E17 instantiates EMSS with 32 B digests, not the paper's 80-bit ones |
+| **Perrig, Canetti, Tygar & Song, *The TESLA Broadcast Authentication Protocol*, RSA CryptoBytes 5(2), 2002** (`perrig2002_tesla_cryptobytes.pdf`) | `POSITIONING` | Already registered in §3; the PDF is now held. No DOI — the bibliography names this file |
+| **Haber & Stornetta, *How to Time-Stamp a Digital Document*, J. Cryptology 3(2), 1991** (`haber1991_timestamp_digital_document.pdf`) | `POSITIONING` | Prior art for linking each record to the digest of its predecessor. Cited so the hash chain is not presented as ours |
+| **Bernstein, Duif, Lange, Schwabe & Yang, *High-Speed High-Security Signatures*, CHES 2011** (`bernstein2011_ed25519.pdf`) | `USED` | The Ed25519 paper: 64 B signatures, 32 B keys |
+
+### The comparator and the standards
+
+| source (file) | status | role |
+|---|---|---|
+| **Li, Shen, Huang & Wu, *A Certificateless Aggregate Signature Scheme for VANETs with Privacy Protection Properties*, PLOS ONE 20(2), 2025** (`li2025_clas_vanet_plosone.pdf`) | `USED` | Its Table 2 is the source of all five CLAS sizes in the paper (583–859 B). ⚠️ **Corrected attribution (F49):** this register and the paper had credited those figures to authors of two of the compared schemes. Four of the five rows are *as reported by Li et al.*, not read at source, and the paper says so in the table |
+| **LoRa Alliance, *RP002-1.0.3 LoRaWAN Regional Parameters*, 2021** (`lora_alliance_rp002-1.0.3_regional_parameters.pdf`) | `USED` | Registered in §4; the PDF is now held. Tables 12 and 13 give the payload limits of **all twelve** EU863-870 data rates — the earlier work read seven of them (F47) |
+| **LoRa Alliance, *TS001-1.0.4 LoRaWAN L2 Specification*, 2020** (`lora_alliance_ts001-1.0.4_l2_specification.pdf`) | `USED` | The frame overhead between application payload and PHY payload (MHDR, FHDR, FPort, MIC). **Also the source for a claim this project made for two months without one:** the specification's transmission rules say an end-device *"pseudo-randomly changes its transmit periodicity to prevent systematic synchronization of populations of end-device transmissions"*, and Class A is described as an *"ALOHA-type protocol"* with *"a small variation based on a random time basis"*. That is the standard's own statement of the frozen-phase problem (F28, F42, F51) and what justifies a jittered sender |
+| **Semtech SX1276 datasheet, Rev. 4, 2015** (`semtech_sx1276_datasheet_rev4.pdf`) | `USED` | See §4: the model's comments name Rev. 7; this is the revision held, and every value used was re-checked against it |
+
+### Corrections to earlier entries
+
+| source (file) | status | role |
+|---|---|---|
+| **Gündoğan, Amsüss, Schmidt & Wählisch, *Reliable Firmware Updates for the Information-Centric Internet of Things*, ACM ICN 2021** (`gundogan2021_firmware_updates_icn_arxiv.pdf`) | `PRIOR ART` | ⚠️ The header of this register said this source was "ACM DL only", with its DOI recorded instead of a file. The authors' arXiv version is now held, so the statement it supports (§2) can be checked by a reader |
+| **Cavalcanti, de Souza, Spohn, Gomes & Costa, *VANETs' Research over the Past Decade: Overview, Credibility, and Trends*, ACM SIGCOMM CCR 48(2), 2018** (`cavalcanti2018_vanet_research_credibility_ccr.pdf`) | `USED` (methods paper) | The credibility survey the methods paper builds on. ⚠️ Its first page states it is **an editorial note that was not peer reviewed**. It is also our only held source for what **Kurkowski, Camp & Colagrosso 2005** found (151 MobiHoc papers, 2000–2005; fewer than 15 % repeatable; 87.5 % without confidence intervals) |
+| **Kurkowski, Camp & Colagrosso, *MANET Simulation Studies: The Incredibles*, ACM MC2R 9(4), 2005** — ⚠️ **NOT HELD on 2026-10-06; obtained by Mohamed and read on 2026-10-09 — see its own row in the first table** | `USED` (methods paper), through Cavalcanti et al. | ⚠️ **Found 2026-10-06:** the methods paper had quoted this source for two months with the wrong survey years, one figure attributed to the wrong paper, and one figure nothing held supports (F53.6). The text now says only what Cavalcanti et al. report, with that attribution. The publisher's abstract (via Crossref) confirms the years. Open copies were looked for and not found — `docs/OPEN_ITEMS.md` G8 |
+
+**"Haxhibeqiri et al.", not "Bor et al."** The LoRa scalability model of §4 was registered,
+cited and named in code under the wrong authors until 2026-10-06 (F49). The file is now
+`haxhibeqiri2017_lora_scalability.pdf`. Bor et al. is a different paper, which this project
+does not hold and does not cite.
+
+## Added 2026-10-09 — four sources for the related-work gaps a review of the paper named (F80, G34)
+
+*A review of the paper said a networking reviewer would look for four bodies of work and not
+find them. Each source below was located in an open registry, fetched from a legitimately open
+copy, read, and only then cited. All four are on the author's machine and **not in this
+repository** (`HELD_LOCALLY.csv`).*
+
+| source | status | what it does for us, and what was read |
+|---|---|---|
+| Skordoulis, Ni, Chen, Stephens, Liu & Jamalipour, *IEEE 802.11n MAC Frame Aggregation Mechanisms for Next-Generation High-Throughput WLANs*, IEEE Wireless Communications 15(1):40–47, 2008 (the copy in Brunel University's research archive) | `READ 2026-10-09` `PRIOR ART` | **Read in full (8 pp.).** Amortising a frame's fixed cost over several payloads is 802.11n's frame aggregation; this is prior art for the larger part of our capacity gain (sharing a frame takes 35 → 76 nodes before any signature is shared). **What lets us say batching at the application is not redundant:** an A-MSDU's subframes must share the receiver's address — "Thus, broadcasting or multicasting is not allowed" (p. 44) — and "all the MPDUs within an A-MPDU must be addressed to the same receiver address" (p. 44). Also quoted: aggregation gives about 4.5 times the no-aggregation throughput after saturation for 1000 B packets (p. 46), and an A-MSDU is closed when full **or when "the maximal delay of the oldest packet reaches a pre-assigned value"** (p. 43) — our freshness constraint in another setting. ⚠️ Do not claim the fixed-cost argument as ours |
+| Pannetrat & Molva, *Efficient Multicast Packet Authentication*, NDSS 2003 (the symposium's own site) | `READ 2026-10-09` `POSITIONING` | **Read in full (12 pp.).** The loss recovery that scope condition (iii) of the exclusion sets aside: hashes and signature of a block spread over its packets with two erasure codes, so the block verifies if at most a share p of its packets is lost. Overhead from its Table 1, with a 128 B signature and 16 B hashes: **10 B per packet for blocks of 16 at p = 0.05**, 2 B for blocks of 128. Price: latency of one block at the receiver or a buffer of one block at the sender (its EC1 variant), and no packet verifies alone. It names SAIDA (Park, Chong & Siegel) as the nearest earlier scheme; **SAIDA itself is not held** (closed access) and is not cited |
+| Strohmeier, Lenders & Martinovic, *On the Security of the Automatic Dependent Surveillance-Broadcast Protocol*, IEEE Communications Surveys & Tutorials 17(2):1066–1087, 2015 (read as arXiv:1307.3664, 22 pp.) | `READ 2026-10-09` `POSITIONING` | **Read: §II-B (message format) and the cryptography part of §IV (pp. 9–12); the rest skimmed.** The extreme case of a payload too small for a signature: 1090ES messages are 112 bits and "only the 56 bit ME field can be used to transmit arbitrary data" (p. 2). Public-key proposals transmit "the signature distributed over a number N of ADS-B messages", buffered by recipients "until the full signature has been transmitted" (pp. 9–10); another needs five messages. That is spreading, which our exclusion's scope sets aside |
+| Yates, Sun, Brown, Kaul, Modiano & Ulukus, *Age of Information: An Introduction and Survey*, IEEE JSAC 39(5):1183–1210, 2021 (read as arXiv:2007.08564v1, 30 pp.) | `READ 2026-10-09` `POSITIONING` | **Read: §I, §II-A/B (age and peak age), the opening of §III, §VII-A (wireless); the rest not read.** Its peak age, A_n = T_{n−1} + D_n (Eq. 6: delay of the previous update plus the interval between deliveries), **is our D(b) = b/Λ + T_ch + t_v when no frame is lost** — so the freshness constraint is a bound on peak age, and the `b/Λ` convention (F43a) is what a peak-age bound requires. It lists the peak-age violation probability Pr[A_n > d] as a metric (Eq. 20). ⚠️ The identity is an observation from its definition, found after the convention was chosen; it is not a result of ours and the AoI literature on batching was **not** surveyed |
+
+**Wanted, closed access, not obtained — and so not cited:** Kaul, Yates & Gruteser, *Real-Time
+Status: How Often Should One Update?*, IEEE INFOCOM 2012, doi:10.1109/INFCOM.2012.6195689 (the
+paper the survey above calls the start of the field); Park, Chong & Siegel, *Efficient Multicast
+Stream Authentication Using Erasure Codes*, ACM TISSEC 6(2), 2003, doi:10.1145/762476.762480
+(SAIDA). The survey and Pannetrat & Molva stand in their place.
+
+## Added 2026-10-20 — hidden-terminal broadcast models (revision item H5; A1, A4)
+
+*Named in `predictions/A1.md` before any A1 run, to be read before any A1 mechanism enters the
+paper. A1 claims no mechanism as new; what it adds is the comparison of two frames under one
+channel.*
+
+| source | status | what it does for us, and what was read |
+|---|---|---|
+| **Hu & Dai, *Performance and Reliability Analysis of Prioritized Safety Messages Broadcasting in DSRC With Hidden Terminals*, IEEE Access 8:177112–177124, 2020**, doi:10.1109/ACCESS.2020.3027550 — PDF here (`hu2020_dsrc_edca_hidden_terminals_access.pdf`, CC BY 4.0, from the publisher's file server) | `READ 2026-10-20` `PRIOR ART` | **Read in full (13 pp.; the tables and figures are images, not read as values).** A semi-Markov model of 802.11p EDCA broadcast with unsaturated arrivals, an M/G/1/K queue, Nakagami-m fading with path loss and **distinct transmission (R), carrier-sensing (L_cs) and interference (L_int) ranges**, on a 1-D Poisson highway. ⚠️ **Prior art for A1's mechanism:** a node's busy-channel probability is set by the "2βL_cs − 1" nodes inside its *carrier-sensing* range (Eq. 22), not by those within R — which is why our capacity counted in neighbours (215 m) falls while the count in nodes rises. Do not claim that mechanism. Hidden terminals are the nodes in [L_cs, r₀ + L_int] starting within a vulnerable period of two frame times (Eq. 35); in their setting they "dominated" over concurrent-transmission collisions (Figs. 13–14). In our channel L_cs ≈ 582 m exceeds d_ref + the capture-interference distance (215 + ≈ 341 m), so hidden stations arise only through fading — consistent with A1's measured share of at most 0.11. They omit mobility because "vehicular nodes are almost stationary during one packet transmission time" (assumption 6), the plan's own argument for S3. It builds on Ma & Chen 2008 (held, F9) and on Ma & Trivedi's two-dimensional broadcast model (Perform. Eval. 95, 2016; not held) |
+| **Kumar, Choi & Kim, *Analysis of hidden terminal's effect on the performance of vehicular ad-hoc networks*, EURASIP J. Wireless Commun. Netw. 2019:240**, doi:10.1186/s13638-019-1548-4 — PDF here (`kumar2019_hidden_terminal_vanet_jwcn.pdf`, CC BY 4.0; downloaded by Mohamed in a browser, 2026-10-21) | `READ 2026-10-21` `PRIOR ART` `USED` (cited 2026-11-07: paper §3.5, thesis ch. 9) | **Read: §§1–6 (model, ns-3 and hardware validation); the appendix derivations skimmed.** A 2-D multi-lane analytical model of hidden-terminal collisions in 802.11p broadcast: hidden terminals are the nodes beyond the carrier-sensing range of the sender but within that of the receiver (Eq. 8, with R_cs = 1.5 R_c), and the vulnerable period of a broadcast is 3·T_DATA (Eq. 10). Shorter packets and lower packet rates raise reception under hidden terminals (Figs. 13, 14) — consistent with batching's mechanism. ⚠️ **Prior art for A12's method:** with four Cohda MK5 radios they made two transmitters send every 1 ms "to emulate 100 vehicles in each transmitter … our network emulation technique can effectively measure the performance in a larger network using limited resources" (§6.2). Their two transmitters were hidden from each other ("there are no access collisions"); what A12 adds is the equivalence **under carrier-sensing contention**, with the (N − 1)/N correction. Credit it wherever A12 or B2 is described |
+| **Huang, Liu, Zhou, Yu, Wang & Shen, *FMAC: A Self-Adaptive MAC Protocol for Flocking of Flying Ad Hoc Network*, IEEE Internet of Things J. 8(1):610–625, 2021**, doi:10.1109/JIOT.2020.3007071 — **held locally, not redistributed** (`huang2021_fmac_flocking_mac_iotj.pdf`, the accepted manuscript, 17 pp., IEEE copyright, SHA-256 d9bf4de2…e50a8; git-ignored; its `HELD_LOCALLY.csv` row is added when it is cited, because a row names a bibliography key) | `READ 2026-10-21` `POSITIONING` | **Read in full.** The nearest work to A4: a UAV flock adapts its CSMA/CA **contention window** to density, where A4 adapts the **batch** — what the application offers, not how the MAC contends; the two are complementary. Its critique of reactive triggers is A4's failure in other words: a reception-ratio rule "will take too much time … to converge", and counting neighbours undercounts when packets collide (§V-D). Its answer is **prediction** — each UAV predicts the next period's neighbour potential from the neighbours' announced position, velocity and control input (Eqs. 21, 25, 26) — precedent for the growth term of A4's second controller (H9), which must cite it. Its own adaptive scheme also lags a densifying flock ("the increase of CW size cannot fulfill the performance deterioration", §VI-B). 150 UAVs, 10 Hz, 64 B packets, ideal channel, hidden terminals noted, not modelled |
+
+## Added 2026-10-21 — mobility in FANET simulation (H8) and the bootstrap's coverage (H2)
+
+| source | status | what it does for us, and what was read |
+|---|---|---|
+| **Bujari, Calafate, Cano, Manzoni, Palazzi & Ronzani, *Flying ad-hoc network application scenarios and mobility models*, IJDSN 13(10), 2017**, doi:10.1177/1550147717738192 — PDF here (`bujari2017_fanet_mobility_models_ijdsn.pdf`, CC BY 4.0, the author's copy) | `READ 2026-10-21` `USED` | **Read: the model descriptions, Tables 1–3, the scenario mapping.** The basis of A1-motion's parameters: Random Walk / Waypoint / Direction excluded from every FANET application (Table 3); Gauss–Markov example at 10 m/s, speed σ 1 m/s, heading σ 45°, α 0.8 (Fig. 6); ns-3 implements GM and reference-point group mobility (Table 2). `docs/DEFERRED_PLANS.md` §6 |
+| **Guillen-Perez & Cano, *Flying Ad Hoc Networks: A New Domain for Network Communications*, Sensors 18(10):3571, 2018**, doi:10.3390/s18103571 — PDF here (`guillenperez2018_fanet_new_domain_sensors.pdf`, CC BY 4.0) | `READ 2026-10-21` `POSITIONING` | **Read: §1–2 (classification, comparison, mobility models).** Rotary-wing ~50 km/h, fixed-wing ~100 km/h (Table 2) |
+| **Wheeb, Nordin, Samah, Alsharif & Khan, *Topology-Based Routing Protocols and Mobility Models for Flying Ad Hoc Networks: A Contemporary Review and Future Research Directions*, Drones 6(1):9, 2022**, doi:10.3390/drones6010009 — PDF here (`wheeb2022_fanet_routing_mobility_review_drones.pdf`, CC BY 4.0) | `READ 2026-10-21` `POSITIONING` | **Read: §2 (mobility models) and its Table 2.** Its "30–60 m/s … suitable for quadcopter UAVs" for Enhanced GM (§2.3.4) is high for small quadcopters; quoted as written, not used |
+| **Yang, Zhao, Wang, Dong & Ju, *Betweenness Centrality Based Dynamic Source Routing for Flying Ad Hoc Networks in Marching Formation*, arXiv:2503.16834, 2025** — **held locally, not redistributed** (`yang2025_gmg_marching_formation_arxiv.pdf`, IEEE copyright, arXiv non-exclusive licence; git-ignored) | `READ 2026-10-21` `POSITIONING` | **Read: §II (the GM group model) and Table I.** ns-3, 36–144 nodes, GM leaders at 200 m/s, 100 s — the formation end of the envelope |
+| **Hesterberg, *What Teachers Should Know About the Bootstrap: Resampling in the Undergraduate Statistics Curriculum*, The American Statistician 69(4):371–386, 2015**, doi:10.1080/00031305.2015.1089789 — **held locally** (`hesterberg2015_bootstrap_teachers_arxiv.pdf`, arXiv:1411.5279, non-exclusive licence; git-ignored) | `READ 2026-10-21` `USED` (H2) | **Read: §5 (confidence intervals), §5.3 and the coverage comparison.** The cause F86 measured — the percentile interval's "narrowness bias" and missing small-sample "fudge factor" (§5.3) — and the remedy proposed for the crossing intervals: the expanded percentile interval, (q_{α′/2}, q_{1−α′/2}) with α′/2 = Φ(−√(n/(n−1)) t_{α/2,n−1}) (p. 4). Measured on our crossings in `analysis/interval_coverage.py` |
+
+## Added 2026-10-27 — the review of the paper of 2026-10-27 (items S-12, S-22, S-30, S-31, S-34)
+
+*One source is new: the review named it, it was located through Crossref, fetched from its first
+author's own site, read, and only then entered in the bibliography. It is on the author's machine
+and **not in this repository** (`HELD_LOCALLY.csv`). The other rows are re-readings of sources
+already held, made to answer the review.*
+
+| source | status | what it does for us, and what was read |
+|---|---|---|
+| **Kleinrock & Tobagi, *Packet Switching in Radio Channels: Part I — Carrier Sense Multiple-Access Modes and Their Throughput-Delay Characteristics*, IEEE Trans. Commun. 23(12):1400–1416, 1975**, doi:10.1109/TCOM.1975.1092768 (Crossref-verified) — **held locally, not redistributed** (`kleinrock1975_csma_part1_tcom.pdf`, 17 pp., from L. Kleinrock's site at lk.cs.ucla.edu, IEEE copyright, SHA-256 08954dbf…284a6c; git-ignored) | `READ 2026-10-27` `PRIOR ART` (S-12) | **Read: §I (the parameter a), the ALOHA vulnerable intervals (p. 1403), §IV-B nonpersistent CSMA with its proof (p. 1404) and Table I; the delay analysis and the appendices were not read.** The vulnerable period of carrier sensing is theirs: "any other packet arriving between t and t + a will find (sense) the channel as unused, will transmit, and hence will cause a conflict. If no other terminal transmits a packet during these a seconds (the "vulnerable" period), then the first packet will be successful" (p. 1404), with a the propagation delay in units of the packet's transmission time (p. 1401). The second loss mechanism of `docs/02` §6g — a station decides to send within the 4 µs in which it cannot yet sense another — **is this vulnerable period**, with the detection time where they have the propagation delay. ⚠️ **The paper must not call the mechanism new.** What it may say is narrower and checked: the DCF broadcast analyses it builds on leave the term out (Ma, Chen & Refai 2009: no term for a transmission that has begun but cannot yet be sensed; Cao et al. 2021: no detection-window term — both entries above), and at our crossings it is 15–49 % of the loss |
+| Skordoulis et al. 2008 — re-read for S-22 | `READ 2026-10-27` `PRIOR ART` (S-22) | The sentence "letting several records share one frame … is an established alternative, and its price is known in kind" had no citation. Both halves of the price are in this source: an A-MSDU is closed when full or when "the maximal delay of the oldest packet reaches a pre-assigned value" (p. 43) — records wait for the frame to fill — and "for any subframes that are corrupted, the entire A-MSDU must be retransmitted" (p. 44) — a lost frame loses all of them; on a broadcast, with no retransmission, they are lost. ⚠️ It shares a frame, not a signature: sharing one signature across packets is the stream-signing work already cited beside it (Wong & Lam), which does not reduce the number of frames |
+| RFC 9575 (DRIP Authentication Formats for Broadcast Remote ID) — re-read for S-34 | `READ 2026-10-27` `USED` (S-34) | The Remote ID sizes of the paper's table of other broadcast systems: Bluetooth 4.x "can only transmit 25 octets of payload per frame" (§3.2.4.1); a Message Pack carries "up to 9 single-frame equivalent messages under Legacy Transports" (§6.2), so 9 × 25 = 225 B under Bluetooth 5 — the product is ours. The ADS-B 7 B is the 56-bit ME field of Strohmeier et al. (above) |
+| ETSI TS 103 097 — re-checked for S-30 | `READ 2026-10-27` (S-30) | The held file's first page reads "ETSI TS 103 097 V1.2.1 (2015-06)", and the bibliography cites V1.2.1, June 2015: the entry names the version that was read. The 2021 edition, cited by an earlier version of the paper, was not read and is not cited |
+| Tamarin — re-checked for S-31 | `READ 2026-10-27` (S-31) | The proofs in `formal/proofs/` were generated by "Tamarin version 1.12.0"; that release is dated 2026-03-07 on the project's GitHub releases page. The entry said 2023; it now says 2026 |
+
+**Wanted, not obtained — and so not cited:** ASTM F3411-22a, *Standard Specification for Remote ID
+and Tracking* (a priced standard; RFC 9575 above stands in for the sizes the paper uses); IEEE Std
+1609.2-2022 and ETSI TS 103 097 V2.1.1 (2021), cited by an earlier version of the paper and not read
+for this one.
+
+## Added 2026-11-07 — the novelty framing (message chaining in V2X; relay aggregation)
+
+*Mohamed asked for IACR ePrint 2022/133 to be read and the novelty framed against it. Its direct
+link was behind a browser check; the ePrint page and the PDF were taken from the Internet Archive's
+copies, and the published version's metadata from Crossref by DOI (no personal identifier sent).
+The ePrint is **CC BY**, so it is held in this repository, as precedent allows.*
+
+| source | status | what it does for us, and what was read |
+|---|---|---|
+| **Cominetti, Silva, Simplicio Jr., Kupwade Patil & Ricardini, *Faster verification of V2X BSM messages via Message Chaining*, Cryptology ePrint Archive 2022/133** (received 2022-02-09, one version, CC BY), `cominetti2022_v2x_message_chaining.pdf` | `READ 2026-11-07` `PRIOR ART (positioning)` | The nearest recent work on amortizing signatures over a broadcast stream, in V2X. **Every message keeps its own ECDSA signature**; it also carries the hashes of one to three predecessors, so *"the signature of one BSM can, thus, validate a series of previously received BSMs"*. The abstract: *"reduce the number of verified signatures by around 90% for reliable communication channels, and by more than 65% for a maximum packet loss rate of 20%"*, for its two mechanisms (chaining and a TESLA variant, TADS). The bytes **rise**: *"the overhead of this approach is 16, 32 and 48 bytes"* per message for one, two and three hashes, each *"around 8.3%"* of a message. On TADS they note *"the additional bandwidth required to transmit digital signatures with every message"*. **What it does for us:** it is the verifier's-work axis of the paper's Table `tab:position`, beside CLAS. It optimizes the cost that does not bind on a contended channel, and it adds bytes there. Its rate of *"10 messages per second"*, with messages to be verified *"within tens of milliseconds"*, puts Λ·D_max below 1, where the paper's rule admits no batch. That is consistent with it keeping a signature per message; the paper does not offer it as their reason. **Not cited:** the journal version, *Faster verification of V2X basic safety messages via Message Chaining*, Vehicular Communications 44 (2023) 100662, doi:10.1016/j.vehcom.2023.100662 (Crossref). Its title changed, it is not open access, and it was not read: its numbers may differ, so the version read is the one cited |
+| Rotta & Mykytyn 2024 — re-read for the relay aggregation | `READ 2026-11-07` `PRIOR ART` | §III: *"Typically, telemetry messages in the MAVLink protocol are much smaller than 256 bytes. Thus, during forwarding, multiple messages from different sources can be aggregated into a single IEEE 802.11 frame."* Each message keeps its own tag (*"each broadcast message includes a HMAC-256 signature with a timestamp"*; *"appending the first 16 bytes of the hash to the end of the message"*). **What it does for us:** it is row 6 of the paper's Table 2 (the frame shared, the authenticator not) at a relay, with a tag in place of a signature, and it is now cited as such. The larger step of the capacity gain, sharing the frame, is therefore credited to frame aggregation (Skordoulis et al.) and to this design. What AUTHBC adds is one signature per frame with every frame verifying alone, and the accounting |
+
+## Added 2026-11-07 (evening) — prior work and official counterparts of the two capacity models
+
+*Mohamed, reviewing the seminar deck: "find if the airtime capacity law has any prior work or
+official law, apply it also for contention model". No search had been recorded for the law itself
+(F54 calls its form a hypothesis read off six cells). Searched the same evening; each source below
+was read from its own text, and none was summarized from a search snippet. The PDFs were fetched
+without any personal identifier.*
+
+| source | status | what it does for us, and what was read |
+|---|---|---|
+| **Bazzi, Masini, Zanella & Thibault, *Beaconing from Connected Vehicles: IEEE 802.11p vs. LTE-V2V*, IEEE PIMRC 2016 (VENITS workshop), pp. 1–6**, doi:10.1109/PIMRC.2016.7794598 (Crossref) — **held locally, not redistributed** (`bazzi2016_beaconing_80211p_ltev2v_pimrc.pdf`, 6 pp., from a Clemson University course page, IEEE copyright; git-ignored) | `READ 2026-11-07` `PRIOR ART` | **Read: §§I–III (the 802.11p model, Eqs. 1–18) and the validation sentence of the results section; the LTE-V2V model (§IV) skimmed.** **The capacity question of the airtime law is theirs, for vehicles:** they compute *"the maximum BP compatible with the given QoS requirements"*, the highest beacon rate whose collision probability stays below a target; *"numerically inverting the relationship and setting pc = p̂BE, the searched f̂B is obtained"* (§III). **The first loss mechanism is theirs too**, after Hassan, Vu & Sakurai 2011: *"the considered SV collides if it senses the channel as busy and selects a slot for its transmission that is also selected by at least another SV"* (Eq. 13), with the busy probability (N_tr − 1)·f_B·(t_DIFS + t_pk)·(1 − p_c-vis/2) (Eq. 14): our occupancy, with our T (airtime plus DIFS). Hidden terminals are added (Eqs. 15–17). **No detection-window term.** Validated against *"a simulator written in Matlab"* of their own. **What it does for us:** cited in the paper (§3.5) and the thesis (ch02, ch08 §why) for the question and the mechanism. What the airtime law adds is the closed form, in airtime, that compares frames of different size and rate, and what the contention model adds is the detection window. ⚠️ **Hassan, Vu & Sakurai, *Performance Analysis of the IEEE 802.11 MAC Protocol for DSRC Safety Applications*, IEEE TVT 60(8):3882–3896, 2011** (doi:10.1109/TVT.2011.2162755), the origin they credit, was **not obtained** (CORE refused the request) and is not cited. The journal extension (Bazzi et al., IEEE TVT 66(11), 2017, doi:10.1109/TVT.2017.2750803) was not read |
+| **ETSI TS 102 687 V1.2.1 (2018-04), *Intelligent Transport Systems (ITS); Decentralized Congestion Control Mechanisms for Intelligent Transport Systems operating in the 5 GHz range; Access layer part*** — held locally in `docs/literature/uncited/` (git-ignored; free from etsi.org; SHA-256 ed5a927f…99b21) | `READ 2026-11-07` `POSITIONING` (seminar only, not cited) | **Read: §3 (definitions, symbols) and the adaptive approach with its Table 3.** The official counterpart of the law's *quantity*: §3.1 *"channel busy ratio (CBR): time-dependent value between zero and one representing the fraction of time that a single radio channel is busy with transmissions"*; δ *"represents the maximum fraction of time that this ITS-S is allowed to transmit on the wireless medium"*; Table 3: CBR_target **0,68**, δ_max **0,03** (from EN 302 571). V2X congestion control budgets the channel in **airtime**, as the law does. ⚠️ **No numerical equivalence may be claimed:** the CBR is sensed busy time, our occupancy counts DIFS in T |
+| **IEEE Std 802.11-2012 §13.9, the airtime link metric** (read in ns-3.48's `src/mesh/model/dot11s/airtime-metric.cc`, which quotes it; the standard itself was not opened) | `READ 2026-11-07` `POSITIONING` (seminar only) | *"airtime = (O + Bt/r) / (1 - frame error rate)"*, O the PHY-dependent channel-access overhead. The standard's own cost of a frame is a fixed overhead plus bits over rate: the structure of our T. Quoted on the seminar slide as "the same form", not cited in the paper |
+| Li, Sutton, Hu, Liu & Chen, *Modeling and QoS Analysis of the IEEE 802.11p Broadcast Scheme in Vehicular Ad Hoc Networks* (accepted manuscript, UTS repository) — held locally in `docs/literature/uncited/` (git-ignored) | `READ IN PART 2026-11-07` — not used | **Read: the abstract and a keyword search of the text.** A 2-D Markov chain of 802.11p broadcast with a finite queue, validated against the authors' simulations. **No capacity law, no detection term, no Hassan or Bazzi.** Nothing to credit |
+
+---
+
+## Added 2026-11-08 — support for the derivation, and Tamarin in published work
+
+*Mohamed: the airtime law and the contention model "look not professional"; there were no stated
+assumptions and a table where a derivation belonged. He asked for work that strengthens them, for
+recent work (≤ 5 years) and for prior use of Tamarin. Each source below was read from its own text;
+the PDFs and abstract pages were fetched without any personal identifier.*
+
+| source | status | what it does for us, and what was read |
+|---|---|---|
+| **Sepulcre, Gonzalez-Martin, Gozalvez, Molina-Masegosa & Coll-Perales, *Analytical Models of the Performance of IEEE 802.11p Vehicle to Vehicle Communications*, IEEE TVT 71(1):713–724, 2022**, doi:10.1109/TVT.2021.3124708 (Crossref) — **held locally** (`sepulcre2022_analytical_80211p_v2v_tvt_arxiv.pdf`, the accepted version arXiv:2104.07923v2, IEEE copyright; git-ignored) | `READ 2026-11-08` `USED` (paper appendix, thesis ch. 2 and 8) | **Read: §III, §IV-B (RXB and concurrent transmissions, Eqs. 16–22), §IV-D (COL, Eq. 26), the state of the art (Table I) and the validation in Veins.** Supports each step of the derivation from a recent IEEE TVT model: concurrent transmissions arise when backoffs *"expire with a time difference below aSlotTime"*; *"λ·T represents the fraction of time consumed by the transmissions"* of a vehicle (Eq. 18), and the CBR, the busy share, enters the collision probability (Eq. 19); the broadcast models it reviews *"assume that all vehicles can communicate with each other (i.e., no hidden vehicles) and that a packet collision always results in a packet loss"*, our A1–A2. Its receiver *"starts decoding the packet received with higher power and discards the other one"*, which is the capture the four-radio sessions show. ⚠️ Read in part; the propagation sections (SEN, PRO) were skimmed |
+| Basin, Dreier, Hirschi, Radomirović, Sasse & Stettler, *A Formal Analysis of 5G Authentication*, ACM CCS 2018 (arXiv:1806.10360; ACM doi:10.1145/3243734.3243846 from the arXiv page) | `READ (abstract) 2026-11-08` `POSITIONING` (seminar only) | *"Using the security protocol verification tool Tamarin, we conduct a full, systematic, security evaluation"*; *"some critical security goals are not met, except under additional assumptions missing from the standard"* |
+| Basin, Sasse & Toro-Pozo, *The EMV Standard: Break, Fix, Verify*, IEEE S&P 2021 (arXiv:2006.08249) | `READ (abstract) 2026-11-08` `POSITIONING` (seminar only) | *"We formalize a comprehensive symbolic model of EMV in Tamarin"*; it found *"two critical attacks"* |
+| Song, Reiter & Kwon, *TESLA-for-5G: Broadcast Authentication for 5G Networks Using TESLA*, arXiv:2606.26528 (v2, Oct 2026; preprint) | `READ (abstract, §3) 2026-11-08` `POSITIONING` (seminar only) | Broadcast authentication verified in Tamarin under a Dolev–Yao adversary: source authentication, integrity and replay protection, and by its own statement **no non-repudiation**. The nearest Tamarin use to ours; a preprint |
+| de Meneses, Teixeira & Henriques, *Design, Formal Verification, and Evaluation of a Post-Quantum EDHOC Variant for UAV Communications*, SBSeg 2026, pp. 488–503, doi:10.5753/sbseg.2026.27127 | `READ (abstract) 2026-11-08` `POSITIONING` (seminar only) | A UAV protocol *"modeled in SAPIC+ and verified in the Tamarin Prover under a Dolev–Yao adversary"*: executability, mutual authentication, key secrecy, forward secrecy |
+| Three 2025 swarm-authentication papers in *Drones* (MDPI): doi:10.3390/drones9090654, 10.3390/drones9020139, and *Drones* 9(10):693 | `NOT OBTAINED` | The publisher refused the scripted fetch (HTTP 403) and the request through its file server was refused as a bot check; not worked around. **Not cited anywhere.** To be read if Mohamed downloads them |
+| A Tamarin analysis of the drone Remote ID protocol (DRIP), 2024 (seen as a search hit only) | `NOT OBTAINED` | No readable copy found; not cited. The TLS 1.3 analysis of Cremers et al. was likewise left out: its venue could not be confirmed from a page that could be read |
+
+## How the citations were verified, and the F9 positioning
+
+*Two notes merged here on 2026-11-01: the verification of every citation that was once a
+placeholder (formerly `A3_CITATION_VERIFICATION.md`), and how the broadcast head start of finding F9
+was placed in the literature (formerly `f9_broadcast_dcf.md`).*
+
+### A3 — citation verification report
+
+*Formerly `docs/literature/A3_CITATION_VERIFICATION.md`, last changed 2026-08-07. Copied verbatim on 2026-11-01; headings moved down one level and relative links re-pointed.*
+
+*Every `[VERIFY]` placeholder in `paper/refs.bib` is now a real source. This file records **how each
+was verified**, and it is complete: the two paywalled sources it originally flagged were supplied by
+Mohamed and have since been read.*
+
+Date: 2026-07-30. Result: **`paper/refs.bib` contains 0 `[PLACEHOLDER]` entries and the compiled PDF
+contains 0 `[VERIFY]` markers.** Paper builds at 10 pages, 0 undefined references. **Every source
+cited is held in this directory and has been read.**
+
+---
+
+#### Method
+
+For each placeholder I found a candidate primary source, then confirmed its bibliographic fields
+against the **Crossref record for its DOI** — not against a search-engine summary. Crossref is the
+registrar's own metadata, so author list, venue, volume, page range and year come from the publisher
+rather than from a third-party description. The exact query used was:
+
+```bash
+curl -s -H "Accept: application/json" "https://api.crossref.org/works/<DOI>"
+```
+
+This matters because of the error recorded in F18 the same day: a sentence quoted correctly from a
+PDF was attributed to the wrong figure, and the conclusion inverted. Metadata from the registrar
+removes that class of mistake for the *bibliographic* fields. It does **not** remove it for the
+*claims*, which is why the third column below says whether I have read the source.
+
+---
+
+#### The three replacements
+
+##### 1. `verify_batch_verify` → `zhang2008batch`
+
+**Zhang, Lu, Lin, Ho & Shen, "An Efficient Identity-Based Batch Verification Scheme for Vehicular
+Sensor Networks", IEEE INFOCOM 2008, pp. 246–250.** DOI `10.1109/INFOCOM.2008.58`
+
+| | |
+|---|---|
+| Crossref | ✅ all fields confirmed — authors, venue, pages 246–250, year 2008 |
+| PDF held | ✅ **yes** — `zhang2008_ib_batch_verification_vanet.pdf`, supplied by Mohamed (institutional access) after this report first flagged it |
+| Claim verified **from the PDF** | *"an RSU can verify multiple received signatures at the same time such that the total verification time can be dramatically reduced"* — quoted directly |
+| Confidence | **Verified.** The abstract also supplies a sharper contrast we now use: their deadline is DSRC's **300 ms**, and their batching is **receiver-side** (V2I, the RSU verifies) where ours is **sender-side**. Complementary, not competing |
+
+✅ **Resolved.** The paper is held and the abstract read; the Related Work sentence now quotes it and
+states the receiver-vs-sender distinction explicitly.
+
+##### 2. `verify_uav_blockchain` → `mehta2020blockchainuav`
+
+**Mehta, Gupta & Tanwar, "Blockchain Envisioned UAV Networks: Challenges, Solutions, and
+Comparisons", Computer Communications 151:518–538, 2020.** DOI `10.1016/j.comcom.2020.01.023`
+
+| | |
+|---|---|
+| Crossref | ✅ all fields confirmed — 3 authors, vol. 151, pp. 518–538, 2020 |
+| PDF held | ✅ **yes** — `mehta2020_blockchain_uav_survey.pdf`, supplied by Mohamed. Front matter confirms *Computer Communications 151 (2020) 518–538*, matching Crossref exactly |
+| Claim in our paper | cited as a **survey**: *"UAV-blockchain systems, surveyed in [x], place telemetry or attestations on such a chain"* |
+| Confidence | **High.** It is cited only as a pointer to the subfield, which is what a survey is for — the weakest possible use of a citation, deliberately |
+
+✅ **Held.** Nothing load-bearing rests on it — it is a subfield pointer. If you prefer a different
+survey, swapping it changes no result.
+
+##### 3. `verify_delta_telemetry` → `pelkonen2015gorilla`
+
+**Pelkonen, Franklin, Teller, Cavallaro, Huang, Meza & Veeraraghavan, "Gorilla: A Fast, Scalable,
+In-Memory Time Series Database", PVLDB 8(12):1816–1827, 2015.** DOI `10.14778/2824032.2824078`
+
+| | |
+|---|---|
+| Crossref | ✅ all fields confirmed — 7 authors, vol. 8, pp. 1816–1827, 2015 |
+| PDF held | ✅ **yes** — `pelkonen2015_gorilla_tsdb.pdf` (open access from vldb.org) |
+| Claim verified **from the PDF** | *"we aggressively leverage compression techniques such as delta-of-delta timestamps and XOR'd floating point values to reduce Gorilla's storage footprint by 10x"* — quoted directly |
+| Confidence | **Verified.** Read, quoted, and stored |
+
+**One honest difference stated in the paper** rather than glossed: Gorilla is a database and can
+chain deltas indefinitely; a lossy broadcast link cannot, so we re-anchor on a keyframe every K
+records and pay the size for loss independence. Gorilla does not face that constraint, so it is
+prior art for *delta coding of telemetry*, not for our keyframe scheme.
+
+##### 4. `verify_fanet_auth` → **deleted**
+
+An orphan: it was defined in `refs.bib` and **cited nowhere** in `main.tex`. Removed rather than
+filled, because inventing a use for a citation is worse than not having it.
+
+---
+
+#### What you need to check yourself
+
+**Nothing outstanding.** Both paywalled sources were supplied by Mohamed after this report first
+flagged them, verified against their Crossref records, and the Zhang claim is now quoted from the
+PDF rather than paraphrased from the title. Every source cited in the paper is now held and read.
+
+Two sources were added later by the CLAS comparison (F34) and are held and read:
+`plos2025clas` (DOI 10.1371/journal.pone.0317047, its Table 2 read directly) and `ndss2024pqv2v`
+(NDSS 2024, source of the 162 B ECDSA certificate and the every-5th-message policy).
+
+Everything else in `paper/refs.bib` is either a standard (RFC/3GPP/IEEE/Semtech), a source whose PDF
+is in this directory and has been read, or a foundational paper whose cited content is
+title-level (Bianchi, Nakamoto, BLS).
+
+---
+
+#### What is still not a citation problem but looks like one
+
+**T6 and T2a carry no novelty claim**, so they need no supporting citation beyond the prior art that
+demoted them (`gundogan2021firmware` for T6; for T2a the disposition is recorded in `OPEN_ITEMS` A6
+with no citation, because the finding is that the result is *standard*, and standard results are
+attributed to the field, not to a paper).
+
+---
+
+#### Added 2026-08-07 — `klimiashvili2020loravswifi`
+
+| field | value | how checked |
+|---|---|---|
+| DOI | `10.1109/ICNC47757.2020.9049724` | Crossref API, queried by full title |
+| title | LoRa vs. WiFi Ad Hoc: A Performance Analysis and Comparison | Crossref record matches the PDF title page exactly |
+| authors | Klimiashvili, Tapparello, Heinzelman | Crossref; matches the PDF byline (U. Rochester) |
+| venue / year | 2020 International Conference on Computing, Networking and Communications (ICNC) | Crossref; corroborated by the PDF's own `/Subject` metadata |
+| pages | 654–660 | Crossref; the PDF's page furniture shows 654 |
+
+**Every claim we attribute to it was read in the PDF, not inferred from the abstract:**
+
+* *"the average of 50 independent runs over channel realization and nodes' position"* — §V, opening
+  of the numerical results. This is the Direction C `REPORTS` adjudication and it is a **direct
+  quotation**, because it is the sentence that makes them a counter-example to our own hypothesis.
+* *"the theoretical throughput of WiFi is almost 5000 times higher than that of LoRa's"* — §V-C.
+  ⚠️ Read **in context**: the surrounding text fixes their LoRa configuration at data rate 6
+  (SF7/250 kHz, 11 kb/s, their Table I), so this is a PHY bit-rate ratio, not a delivered-throughput
+  or application-level one. The paper says so explicitly rather than letting the number stand
+  next to our ≈4200× and imply agreement. *This is the F18 discipline applied on purpose:
+  quoting the sentence was not enough; the configuration it depends on had to be read too.*
+* DR3 = 123 B — their Table I ("DATA RATE FOR LORA IN EU REGION"). Checked against RP002-1.0.3:
+  it is *M* (MACPayload), where our table records *N* (application payload). **Not an error in
+  either source**, and the resolution is now in the paper because it decides the DR3 verdict.
+
+### F9 — literature positioning of the broadcast DCF head start
+
+*Formerly `docs/literature/f9_broadcast_dcf.md`, last changed 2026-07-28. Copied verbatim on 2026-11-01; headings moved down one level and relative links re-pointed.*
+
+**RESOLVED 2026-07-28 — outcome (a): the mechanism is published. F9 is a rediscovery.**
+All three papers were obtained by Mohamed and read in full; the Ma & Chen letter's bibliographic
+record was confirmed from IEEE Xplore. Ma & Chen's closed form reproduces our NS-3 measurement to
+**≤0.36 %** at every N. No novelty is claimed for the mechanism; see §2.3 and §3 below.
+
+---
+
+#### 1. The mechanism, stated for a literature search
+
+In saturated 802.11 DCF, after a busy period ends a station transmits at `DIFS + index·slot`, where
+
+* **index = a fresh draw from {0 … CW}** if the station transmitted in that busy period, and
+* **index = its residual counter, necessarily ≥ 1**, if the station deferred — a counter of 0 would
+  already have fired.
+
+A station that has just transmitted, and only such a station, can therefore hold index 0 and seize
+the medium **one slot ahead of the entire field**. Consecutive channel slots are consequently
+*correlated*, and the stations are *not* statistically homogeneous — which is exactly the pair of
+assumptions Bianchi's decoupling approximation makes.
+
+**The broadcast-specific amplification.** Broadcast is never acknowledged, so there is no
+retransmission and **no contention-window doubling**: CW is frozen at CW_min. N stations stay packed
+into CW_min+1 counter values indefinitely, collisions become near-certain, and the one-slot head
+start becomes the *dominant* channel through which any transmission ever succeeds alone.
+
+Closed form for the resulting conditional success probability, where k is the number of colliders:
+
+```
+P(next busy period succeeds | previous was a k-way collision) = k · (1/W) · (1 − 1/W)^(k−1)
+```
+
+Measured at N=50, W=16, k̄=6.108: predicted **0.2745**, measured **0.2679** — 2.4 %, nothing fitted.
+
+##### Measured signature (search terms a matching paper should exhibit)
+
+| observable | measured (NS-3 3.41, N=50, 802.11a 6 Mb/s, L=1400 B) |
+|---|---|
+| p_s, textbook no-ACK Bianchi | 0.0128 |
+| p_s, measured | **0.2234** (17.5×) |
+| p_s for independent stations at the *measured* mean multiplicity | 0.0308 → the residual is **correlation**, not access rate |
+| idle slots per busy period, model / measured | 0.0019 / **0.741** (386×) |
+| gap after a collision, winner **was** a collider | **DIFS + 0 slots** |
+| gap after a collision, winner was **not** | **DIFS + 1 slot** (hard floor) |
+| P(winner ∈ previous busy period), measured / uniform | **0.9645 / 0.1272** (7.58×) |
+| throughput error of the textbook no-ACK variant at N=50 | **+1654 %** |
+
+---
+
+#### 2. What was found
+
+##### 2.1 The mechanism IS published — for unicast [VERIFIED-PRIMARY]
+
+> **I. Tinnirello, G. Bianchi, and Y. Xiao, "Refinements on IEEE 802.11 Distributed Coordination
+> Function Modeling Approaches," IEEE Transactions on Vehicular Technology, vol. 59, no. 3,
+> pp. 1055–1067, March 2010.**
+> Retrieved and read in full from `https://yangxiao.cs.ua.edu/IEEE_TVT_New_802.11Model.pdf`.
+
+Verbatim from the abstract:
+
+> "a careful look at backoff counter decrement rules allows us to conclude that, under saturation
+> conditions, **the slot immediately following a successful transmission can be accessed only by the
+> station (STA) that has successfully transmitted in the previous channel access**. Moreover, due to
+> the specific acknowledgment (ACK) timeout setting adopted in the standard, **the slot immediately
+> following a collision cannot be accessed by any STA**. Thus, **the hypothesis of uncorrelation
+> between consecutive channel slots and statistical homogeneity is not generally true.**"
+
+Section III is titled **"Backoff Decrement and Anomalous Slots"**. The paper gives
+`ACKTimeout = SIFS + T_Ack + δ` and `EIFS = SIFS + T_Ack + DIFS`.
+
+Note the third author is **Bianchi himself** — this is the original model's author publishing the
+refinement, which makes it the authoritative statement of the effect.
+
+**Scope check: the paper is unicast-only.** A full-text search returns **zero** occurrences of
+"broadcast", "multicast", "no ACK", "fixed/constant contention window".
+
+**Our unicast measurements independently confirm both of its claims** (audit A10, N=50 unicast):
+
+| their claim | our measurement |
+|---|---|
+| post-success slot accessible only to the successful STA | gap floor **94 µs = SIFS + T_Ack + DIFS**, taken 220×; everyone else at 103 µs (+1 slot) ✓ |
+| post-collision slot accessible to nobody (ACK timeout) | only **30 of 1099** transitions took the immediate slot; 1069 at DIFS+1 ✓ |
+
+##### 2.2 Why broadcast is a different regime (Ma & Chen reach the same conclusion, §2.3)
+
+Their post-collision result depends entirely on the **ACK timeout** holding the colliders back.
+**Broadcast has no ACK and therefore no ACK timeout.** The colliders resume after DIFS like everyone
+else, except that they alone can hold index 0. So in broadcast the post-collision slot is not
+inaccessible — it is *exclusively* accessible to the stations that just collided. That is the
+opposite of the unicast conclusion, and it is the regime that produces the 16× error. Ma & Chen
+state exactly this in §II-C of their 2008 paper; the derivation below was ours, the result was not.
+
+Our broadcast measurement: **1315** post-collision winners at DIFS+0 (all previous colliders) against
+a hard **DIFS+1** floor for everyone else.
+
+##### 2.3 The broadcast model was already published — and warns against our exact error
+
+> **X. Ma and X. Chen, "Saturation Performance of IEEE 802.11 Broadcast Networks," IEEE
+> Communications Letters, vol. 11, no. 8, pp. 686–688, Aug. 2007,
+> doi:10.1109/LCOMM.2007.070040.** [VERIFIED-PRIMARY + Xplore record]
+> **X. Ma and X. Chen, "Performance Analysis of IEEE 802.11 Broadcast Scheme in Ad Hoc Wireless
+> LANs," IEEE Trans. Veh. Technol., vol. 57, no. 6, pp. 3757–3768, Nov. 2008,
+> doi:10.1109/TVT.2008.918731.** [VERIFIED-PRIMARY]
+
+*(Note: the author-copy PDF of the letter carries a placeholder header "vol. 11, no. 5, May 2007".
+The Xplore record — vol. 11, no. 8, pp. 686–688, August 2007 — is authoritative.)*
+
+Verbatim from the abstract: analytic models for unicast *"**cannot simply be reduced** for the
+analysis of broadcast service."* They name the mechanism the **backoff counter Consecutive Freeze
+Process (CFP)** and state the unicast/broadcast asymmetry in §II-C of the journal version. Their
+model splits the backoff counter into the sequential backoff process and the CFP, and yields a
+closed form for saturation throughput and packet delivery ratio.
+
+**Their closed form vs our NS-3 measurement: ≤0.36 % on p_s, idle-slots-per-busy-period and
+throughput at N = 5, 10, 20, 35, 50.** Implemented in `models/broadcast_dcf.py`. Their
+τ_s = 2/W₀ = 0.125; our discarded reduction used 2/(W+1) = 0.1176.
+
+**Caution for implementers:** the 2007 letter's eq. (6) prints `pss = 1−(1−τs)^(n−1)`, which is a
+collision probability and cannot be a success probability. The 2008 journal eq. (8) gives the
+correct `pss = n·τs·(1−τs)^(n−1)`. Use the journal.
+
+**That is precisely the error this project made**: `analysis/figures_ns3.py` reduced the unicast
+model to broadcast by setting τ = 2/(W+1), and it failed by 16×. It has been replaced by
+`models/broadcast_dcf.py`.
+
+Also surfaced, unread: *"Comments on IEEE 802.11 saturation throughput analysis with freezing of
+backoff counters"* (IEEE Xplore doc 1388729) — part of the backoff-freezing debate that Tinnirello
+et al. resolve. **[VERIFY]**
+
+---
+
+#### 3. Resolution
+
+**The question was:** does Ma & Chen's broadcast backoff model treat consecutive channel slots as
+*independent*, or does it carry the anomalous-slot correlation? (Chronology suggested independence —
+Ma & Chen 2007 predates Tinnirello et al. 2010 — which turned out to be wrong.)
+
+**ANSWERED: outcome (a).** Ma & Chen's model carries the correlation explicitly — the CFP *is*
+the correlation. Actions taken: `models/broadcast_dcf.py` implements their equations with citation;
+our in-house reduction is deleted from the analysis path and kept only as a labelled failure curve;
+`sim/dcf_ladder.py` is retained as an independent cross-check (agrees to <2 %); docs/02 §6a now
+specifies the broadcast model normatively.
+
+**What remains ours, stated conservatively:** independent validation at W₀=16 / 802.11a / 6 Mb/s
+(they tested W₀=32 and 128 at 1 Mb/s — and they conclude CFP matters *most* at small W₀); direct
+PHY-trace measurement of the mechanism rather than curve-fitting; and reproduction of the
+non-monotonic throughput reversal near N≈40 that the naive reduction cannot produce.
+
+The superseded framing follows, kept visible:
+
+> Tinnirello et al. showed that DCF's backoff decrement rules make consecutive slots correlated, and
+> that in unicast the ACK timeout blocks the post-collision slot. We show that in **broadcast**,
+> where no ACK timeout exists and the contention window never doubles, the same rules produce the
+> opposite effect — the post-collision slot is seized exclusively by the colliders — and that this,
+> not capture, accounts for a **16×** discrepancy between the standard no-ACK Bianchi adaptation and
+> a reference simulator. A slot-exact model carrying only this asymmetry matches NS-3 to ≤0.40 %
+> across N=5–50.
+
+---
+
+#### 4. Regardless of outcome — one correction is already owed to the docs
+
+`docs/02 §6` cites Bianchi without the 2010 refinement, and the project's broadcast variant was
+derived in-house rather than cited. Both should change:
+
+* add Tinnirello et al. (2010) as the refinement of the unicast model **[VERIFIED-PRIMARY]**;
+* stop presenting τ = 2/(W+1) as *the* broadcast model — it is our own reduction, and it is wrong.
+

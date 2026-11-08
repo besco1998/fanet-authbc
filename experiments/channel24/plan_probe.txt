@@ -1,0 +1,3 @@
+# nodes: 1,2,3
+# W1d probe (disclosed): one window of the trio, to check the kit on channel 11
+ABC 87 145 1,2,3

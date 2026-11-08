@@ -1,5 +1,9 @@
 # 00 — PROJECT CHARTER
 
+> **Current state (2026-11-01).** This is the charter as written on 2026-07-03, with dated
+> restatements where the work moved it (items 5 and 6 below). What the project is now, and why each
+> choice was made: [`PROJECT_GUIDE.md`](PROJECT_GUIDE.md). Decisions since: [`DECISIONS.md`](DECISIONS.md).
+
 ## 1. One-paragraph statement
 Payload compression (Pillar 1, published) shifts the dominant on-air cost of an
 authenticated blockchain telemetry ledger from data to cryptography: a fixed 64 B
@@ -48,6 +52,14 @@ extends the same framework to low-rate links afterward.
 6. **Authentication-exclusion threshold (T6)**: a link admits per-frame-verifiable telemetry only if
    M ≥ H_f + g_a + s_min, and T3 (n_max = 1 at ε ≤ p) closes the fragmentation escape — bounding
    where co-design is possible at all, and excluding the four longest-range LoRa modes outright.
+
+   > ⚠️ **Items 5 and 6 as restated on 2026-10-06** (findings F45–F50; the text above is kept as
+   > chartered). **5:** the envelope came from one load ceiling, which a direct search showed is
+   > not invariant; capacities are now simulated per configuration with intervals, on a design
+   > that is built as one frame — `results/raw/design_ladder.csv`, not the figures above.
+   > **6:** a frame that verifies alone must also carry its chain link and a record that decodes
+   > alone, and the standard defines twelve data rates: **eight of twelve** are excluded, under
+   > four stated conditions (docs/02 T6′).
 7. **Reproducible open testbed + dataset** (repo, seeds, raw CSVs, figures pipeline).
 
 Target venues: Ad Hoc Networks / MDPI Drones primary; IEEE IoT Journal if results are strong.
@@ -78,7 +90,7 @@ if time allows, else becomes the journal extension.
 - ⚠️ D0: one-time GitHub authentication (`gh auth login`) and git identity — the ONLY
   manual setup step; everything after (including repo creation) is agent-executed.
 - ⚠️ D7: execution mode after P0 — serial, 2-lane, or 3-lane parallel (see
-  docs/07_PARALLEL_EXECUTION_PLAN.md; parallel compresses ~8 weeks to ~5).
+  docs/archive/PLANNING_HISTORY.md; parallel compresses ~8 weeks to ~5).
 - D1 (settled, **amended 2026-07-28**): 802.11 arm first; the LoRa arm ships as a scoped modelling
   chapter in this thesis (not deferred to doc 30). See DECISIONS.md.
 - D2 (settled): Ed25519 self-batch is the frame-batching default; BLS reserved for

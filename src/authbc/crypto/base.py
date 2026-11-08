@@ -1,4 +1,4 @@
-"""Uniform signature-scheme interface (docs/03 §3 crypto/, docs/06 §4).
+"""Uniform signature-scheme interface (docs/archive/03 §3 crypto/, docs/06 §4).
 
 Every scheme exposes ``keygen``/``sign``/``verify`` over raw ``bytes`` messages and raw
 ``bytes`` signatures so the benchmark harness (P1b) and placements (P3) treat schemes

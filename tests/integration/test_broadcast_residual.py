@@ -1,4 +1,4 @@
-"""Gate on the P7 broadcast finding (docs/audits/p7.md F9, docs/literature/f9_broadcast_dcf.md).
+"""Gate on the P7 broadcast finding (docs/audits/AUDIT_HISTORY.md F9, docs/literature/README.md).
 
 Guards the conclusion, not just the code. NS-3's measured DCF internals must keep agreeing with
 **Ma & Chen's published broadcast model** (IEEE TVT 57(6):3757-3768, 2008) and keep disagreeing
