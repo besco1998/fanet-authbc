@@ -345,10 +345,13 @@ network: a packet is sent at once if it finds the medium idle and after a backof
 window if it does not, and a fixed point gives the delivery ratio~\cite{cao2021dsrc}. Bazzi
 \emph{et al.} use the same mechanism, with hidden terminals, to find the highest beacon rate
 whose collision probability stays below a target~\cite{bazzi2016beaconing}: the capacity
-question of this thesis, asked for vehicles. All three check the analysis against a simulation
-the authors wrote. \Cref{sec:why} builds on the same mechanism and adds a second, which none
-has: the few microseconds in which a transmission
-that has begun cannot yet be sensed. Two further analyses that Cao \emph{et al.} cite were not
+question of this thesis, asked for vehicles. Sepulcre \emph{et al.} model the four kinds of
+packet error of IEEE 802.11p, among them concurrent transmissions whose backoffs end less than a
+slot apart, together with the channel busy ratio, and check them in the Veins
+simulator~\cite{sepulcre2022analytical}. Ma, Chen and Refai, Cao \emph{et al.} and Bazzi
+\emph{et al.} check their analyses against simulations they wrote. \Cref{sec:why} builds on the
+same mechanism and adds a second, which none of those three has: the few microseconds in which a
+transmission that has begun cannot yet be sensed. Two further analyses that Cao \emph{et al.} cite were not
 obtained.
 
 When stations do not all hear one another, a further loss appears: a receiver can be reached by

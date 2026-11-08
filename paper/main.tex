@@ -902,7 +902,8 @@ The other five, the one-record frames of the stream-signing schemes in
 Table~\ref{tab:stream}, lie \lineStreamLeast--\lineStreamWorst\% above the law's prediction.
 A single utilization ceiling, measured at one point and applied to all, misses the first thirteen
 (six fitted, seven predicted) by up to \lineCeilWorst\%, in both directions.
-Equation~\eqref{eq:line} is a fit at one loss level and one PHY rate, checked for frames of
+Appendix~\ref{app:mechanism} states its assumptions and derives it as the tangent of a closed
+form. Equation~\eqref{eq:line} is a fit at one loss level and one PHY rate, checked for frames of
 \lineFrameLo--\lineFrameHi\,B, \lineFpsLo--\lineFpsHi~frames/s and \lineNlo--\lineNhi{} nodes;
 the tables quote simulated values, not the law.
 
@@ -1718,18 +1719,76 @@ ledger records, not the record stream.
 \end{itemize}
 
 \section{Why capacity is where it is: the derivation}\label{app:mechanism}
-A frame is lost in this scenario in two ways. In the first, two stations that found the medium
-busy draw the same backoff slot. With occupancy $\rho \approx N f T$ and a contention window of
-$W = 16$ slots, counting the stations that wait together gives a loss of about
-$\rho^2/(W(1-\rho))$. Hence $a = \rho/(W(1-\rho))$, which is \modelSlope{} at $\rho = \modelRho$,
-the mean occupancy at which loss reaches 5\%. In the second, a station decides to send within the
-4\us{} in which it cannot yet sense another: that is $c$, the vulnerable period
-of~\cite{kleinrock1975csma}. Without the first-order step, the count
-is $\rho\,[1-(1-1/W)^{\rho/(1-\rho)}]$; with the detection term and nothing fitted, solving it for
-5\% gives the \modelCells{} capacities within \closedWorst\% (mean \closedMean\%).
+\runin{Assumptions} The derivation below, the contention model and the simulated capacities of
+Section~\ref{sec:capacity} rest on the same assumptions. Published analyses of IEEE 802.11
+broadcast make them too~\cite{bazzi2016beaconing,sepulcre2022analytical}.
+\begin{itemize}
+\item[A1] One collision domain: every station senses every other, so there are no hidden stations.
+\item[A2] A frame that overlaps another is lost at every receiver: equal received power, no
+capture.
+\item[A3] No bit errors: frames are lost only by collision.
+\item[A4] Broadcast access: no acknowledgement, no retransmission, and a contention window of
+$W = 16$ slots that never grows.
+\item[A5] Each of $N$ stations sends one frame per period $1/f$, at an instant drawn uniformly in
+the period.
+\item[A6] Every frame holds the medium for the same time $T$, its airtime and DIFS.
+\item[A7] A station cannot sense a transmission during its first $\delta = 4$\us, the
+preamble-detection time of the simulator.
+\end{itemize}
+Section~\ref{sec:robust} relaxes A1 and A2 with spread and moving swarms, fading and capture.
+On the radios of Section~\ref{sec:mechanism}, A2 and A7 do not hold: a radio often receives the
+stronger of two colliding frames, and it detects preambles with its own timing. The loss on
+air of Section~\ref{sec:loss} departs from A3. Let $\rho = (N-1) f T$, the share of time the
+other stations hold the medium: the channel busy ratio of~\cite{sepulcre2022analytical}.
 
-The contention model is an event simulation of the access procedure alone, with nothing fitted
-and none of the code of the simulator. Doubling the contention window moves the capacity of
+\runin{Lemma 1 (Tie)} Two stations that wait at the same moment choose the same slot with
+probability $1/W$. \emph{Proof.} A deferring station draws its counter uniformly from
+$\{0,\dots,W-1\}$. The other station has either drawn in the same way or holds a counter frozen
+from an earlier round; in both cases the two are equal with probability $1/W$. $\square$ This is
+the collision counted by Bazzi \emph{et al.}~\cite{bazzi2016beaconing}, and the concurrent
+transmission of~\cite{sepulcre2022analytical}.
+
+\runin{Lemma 2 (Waiting Together)} Under A1 and A5, a frame defers with probability $\rho$, and
+a deferring frame shares its wait with $K = \rho/(1-\rho)$ others, so that it is lost to a tie
+with probability
+\begin{equation}
+P_{\mathrm{tie}} \approx \rho\left[1-\left(1-\tfrac{1}{W}\right)^{K}\right].
+\label{eq:tie}
+\end{equation}
+\emph{Derivation.} A frame arriving at a uniformly random instant finds the medium held for the
+share of time it is held, $\rho$. Taking the deferred frames as an M/D/1 queue with service time
+$T$, a deferring frame finds $\rho/(2(1-\rho))$ frames already waiting and as many arrive while
+it waits. By Lemma~1 it escapes a tie with each of the $K$ with probability $1-1/W$. $\square$
+
+\runin{Lemma 3 (Detection Window)} A frame is lost to the detection window with probability
+$P_{\mathrm{win}} \approx (N-1)\,f\,2\delta$. \emph{Derivation.} The other stations start
+$(N-1)f$ frames per second. By A7 a start within $\delta$ before or after the frame's own start
+is not sensed, both frames are sent, and both are lost by A2. This is the vulnerable period of
+carrier sensing~\cite{kleinrock1975csma}, with the detection time in place of the propagation
+delay; while $(N-1)f\,2\delta$ is small it is the probability that such a start occurs. $\square$
+
+\runin{Proposition 1 (Loss)} Under A1--A7, and to first order in the two rare events, a frame is
+lost with probability
+\begin{equation}
+L(N) \approx \rho\left[1-\left(1-\tfrac{1}{W}\right)^{\rho/(1-\rho)}\right] + (N-1)\,f\,2\delta,
+\qquad \rho = (N-1)\,f\,T.
+\label{eq:closed}
+\end{equation}
+Solved for $L = 0.05$ with nothing fitted, Eq.~\eqref{eq:closed} gives the \modelCells{} simulated
+capacities within \closedWorst\% (mean \closedMean\%).
+
+\runin{Corollary 1 (Airtime Capacity Law)} With $1-(1-1/W)^{K} \approx K/W$, the tie term is
+$\rho^2/(W(1-\rho)) = a(\rho)\,\rho$ with $a(\rho) = \rho/(W(1-\rho))$, so that
+$L(N) \approx (N-1)\,f\,(aT + c)$ with $c = 2\delta$. Setting $L = 0.05$ and taking $N-1 \approx
+N$ gives Eq.~\eqref{eq:line}. At the mean occupancy of the crossings, $\rho = \modelRho$, the
+slope is $a = \modelSlope$, the value fitted in Section~\ref{sec:mechanism}, and $c = 8$\us{} is
+$2\delta$. Since $a$ depends on $\rho$, Eq.~\eqref{eq:line} is the tangent of
+Eq.~\eqref{eq:closed} at the 5\% level. It serves where the occupancy at the crossing varies
+little; here it lies in \modelRhoLo--\modelRhoHi. $\square$
+
+\runin{The Contention Model} The contention model keeps A1--A7 and drops the first-order steps:
+it is an event simulation of the access procedure alone, with nothing fitted and none of the
+code of the simulator. Doubling the contention window moves the capacity of
 per-record signing only from \modelBaseC{} to \modelNsWindowC{} nodes (predicted
 \modelPredWindowC): stations that count down for longer wait together more often.
 

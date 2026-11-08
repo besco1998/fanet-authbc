@@ -13,6 +13,26 @@ Every chapter is written and was read end to end in the built PDF on 2026-10-08.
 are yours:** the declaration and the acknowledgements — with the degree and the department on the
 title page. The statement on generative AI was removed on your decision of 2026-10-24.
 
+⚠️ **On 2026-11-08 the derivation of the two capacity models was restated as mathematics, and
+you have not read it.** You asked for the assumptions to be defined and for a proof in place of a
+table, in the deck, the paper and the thesis ("Deck, paper and thesis").
+* **Paper, Appendix "Why capacity is where it is":** rewritten as:
+  * Assumptions A1–A7;
+  * Lemma 1 (Tie), Lemma 2 (Waiting Together, Eq. B1), Lemma 3 (Detection Window);
+  * Proposition 1 (Loss, Eq. B2, the closed form);
+  * Corollary 1 (the airtime capacity law as its tangent, a = ρ/(W(1−ρ)), c = 2δ);
+  * the contention model as the same rules without the first-order steps.
+  * New citation: Sepulcre *et al.*, IEEE TVT 2022 (the CBR, concurrent transmissions, the
+    same assumptions in published models).
+  * §3.5 gains one sentence pointing to the appendix.
+  * **The paper is 43 pp (was 42).**
+* **Thesis ch. 8 §"Why the crossing is where it is":** a paragraph "Assumptions" (A1–A7); the
+  two mechanisms are labelled Lemma 1 and Lemma 3, the closed form Lemma 2 and Proposition 1,
+  and the slope Corollary 1.
+* **Thesis ch. 2:** one sentence on Sepulcre *et al.*, and the sentence on who checks against
+  what made exact.
+* **Thesis:** 160 pp.
+
 ⚠️ **Later on 2026-11-07 ("Continue") a second source was credited: Kumar, Choi & Kim, EURASIP
 JWCN 2019.** Their four-device 802.11p testbed let each transmitter send for a hundred vehicles,
 which is the device by which our four boards stand for many drones. The paper and the thesis

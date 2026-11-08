@@ -150,6 +150,88 @@ excecute the plan and give me the results". The plan was approved in plan mode. 
 * A `pgrep` check matched its own command line, twice. A pattern only a running session can
   match is now used.
 
+# 2026-11-08 — the models as mathematics (paper, thesis, deck); recent work; W1l started
+
+**Asked:**
+* "the proves and theory looks like not professional": no stated assumptions, and a table where
+  a derivation belonged;
+* recent (≤ 5 years) prior work, also in the results;
+* each validation point explained, and the four-radio gap;
+* Tamarin's prior use, its three models and its real results;
+* the defenses illustrated;
+* a new future-work point.
+
+Decided: deck, paper and thesis; recent schemes modeled; swarm key management.
+
+**The derivation, restated** (paper Appendix B; thesis ch. 8 §why; deck slides 25–34):
+* Assumptions A1–A7.
+* Lemma 1 (a tie, 1/W).
+* Lemma 2 (deferral with probability ρ; K = ρ/(1−ρ) waiting together, M/D/1).
+* Lemma 3 (the detection window, (N−1)f·2δ).
+* Proposition 1 (the closed form, 18 capacities within 5.5 %).
+* Corollary 1 (the airtime law as its tangent: a = ρ/(W(1−ρ)) = 0.071 at ρ = 0.533, c = 2δ).
+* New support: **Sepulcre et al., IEEE TVT 2022.** Concurrent transmissions within a slot; λ·T
+  and the CBR; earlier models assuming A1–A2; a receiver that decodes the stronger packet. Read
+  from the accepted version and cited. The paper is 43 pp, the thesis 160.
+
+**Recent schemes modeled** (`scratchpad/recent_schemes.py`):
+* The contention model reproduced its six stored crossings exactly first (SM, ST, SG, SE, SW, C).
+* Then: Rotta 2024 (16 B tag, 98 B) 41.9; TBRD 2025 (68 B message, 150 B) 34.7; Cominetti 2022
+  (+16/+32/+48 B) 33.5/31.7/30.3 drones.
+* Deck only, labelled MODELED.
+
+**The four-radio gap of slide 44:** capture.
+* At four boards and 111 frames/s, each sender's loss: pi-A 3.09, pi-B 2.92, Pi 3 1.64, TP-Link
+  0.96 %, against 3.18 % predicted for all.
+* Loss follows the sender, not the receiver (F127, read from `sender_receiver.txt`).
+
+**Tamarin in published work** (abstracts read):
+* 5G AKA (CCS 2018), EMV (S&P 2021), a post-quantum EDHOC for UAVs (SBSeg 2026), TESLA-for-5G
+  (2026 preprint).
+* Real verdicts and step counts taken from `formal/proofs/authbc_counters.out` and registration
+  A6.
+
+**Not obtained:**
+* three 2025 *Drones* papers: MDPI refused, and the static-server route was refused as a bot check
+  and not worked around;
+* a DRIP-in-Tamarin paper;
+* Hassan et al. 2011.
+
+**Slips:**
+* My ch. 2 sentence first said all four analyses check against simulations "not taken from the
+  standard's reference implementation", and that none has a detection term. Sepulcre used
+  Veins, and has a slot-time window. Corrected before any build.
+* A paper sentence said the radios meet "none of A1–A7". Corrected: A2 and A7 do not hold on
+  them.
+* A name collision (`STEPS`) in the deck build; renamed.
+* A deck note first said the model reproduces the published schemes "exactly". That held for its
+  own stored values; against ns-3 it is within 0.9 %, and the note says so.
+
+**W1l started 01:12** (Mohamed: "take as measurments as you can till i say stop"):
+* registered at `prereg-W1l` before any session;
+* a series driver that repeats W1k's chain until a STOP file exists;
+* the outcome is appended to `predictions/W1l.md` when it ends.
+
+**W1l ended with no session (01:29).**
+* Preflight 1 RETRY (6 Mb/s, F129).
+* Preflight 2 NO-GO on balance alone: 1.769×. pi-A (3.49 %) and the Pi 3 (4.06 %) are now the
+  strong senders; pi-B (6.18 %) is the weakest.
+
+**W1m registered (`prereg-W1m`, 02:16).**
+* Mohamed chose to auto-tune, then: "use the same power rules as session 1 and 2 registered".
+* W1i's ladder (auto/1000/800/600/400) has no rung at 1100 mBm, the Pi 3's power in W1j and W1k:
+  `dsss_w1i.py --step` raised `ValueError` on W1l's reading.
+* **So:** W1j's powers and W1k's preflight per session. Only a balance NO-GO starts a tuning, by
+  W1i's rule word for word on the 1 dB grid W1j chose from. `dsss_w1m.py`, 18 tests.
+* **A toy plant was tried and dropped.** A smooth power-share plant fitted to W1l's reading does
+  not converge under the rule. But W1j's own preflights show a threshold instead: 1 dB of the
+  Pi 3 moved the spread 0.1–0.2×, and 2 dB flipped it from weakest to strongest. No convergence is
+  claimed; there is a limit of six steps.
+* **The driver was dry-run on stubs** fed W1l's real NO-GO preflight. It took every branch as
+  registered: NO-GO on balance → ADJUST to 500/auto/1000 → TUNED → long run.
+  * The stub score wrote two files into `results/` under session 1's names. Deleted before the
+    launch.
+
 # 2026-11-07, evening — the deck's third revision; Kumar et al. 2019 credited
 
 **The deck, revision 3** (Mohamed's slide-by-slide review; plan approved; 61 slides, git-excluded):

@@ -1,5 +1,5 @@
 # run=citation_check
-# checked=2026-11-07
+# checked=2026-11-08
 # bib=paper/refs.bib
 key,kind,identifier,registry,authors_bib,authors_registry,authors_match,title_match,year_bib,years_registry,year_match,status,fingerprint
 bianchi2000,doi,10.1109/49.840210,crossref,bianchi,G. Bianchi,1,1.00,2000,2000,1,ok,c1cc699a34bca9c9
@@ -73,6 +73,7 @@ kurkowski2005incredibles,doi,10.1145/1096166.1096174,crossref,kurkowski; camp; c
 bianchi2007cards,doi,10.1109/INFCOM.2007.141,crossref,bianchi; di stefano; giaconia; scalia; terrazzino; tinnirello,G. Bianchi; A. Di Stefano; C. Giaconia; L. Scalia; G. Terrazzino; I. Tinnirello,1,1.00,2007,2007,1,ok,c74b090997ec7b2d
 bazzi2016beaconing,doi,10.1109/PIMRC.2016.7794598,crossref,bazzi; masini; zanella; thibault,Alessandro Bazzi; Barbara M. Masini; Alberto Zanella; Ilaria Thibault,1,1.00,2016,2016,1,ok,ed5954d61a45920b
 kumar2019hidden,doi,10.1186/s13638-019-1548-4,crossref,kumar; choi; kim,Saurabh Kumar; Sunghyun Choi; HyungWon Kim,1,0.92,2019,2019,1,ok,1757addf68ebaa0c
+sepulcre2022analytical,doi,10.1109/TVT.2021.3124708,crossref,sepulcre; gonzalez martin; gozalvez; molina masegosa; coll perales,Miguel Sepulcre; Manuel Gonzalez-Martin; Javier Gozalvez; Rafael Molina-Masegosa; Baldomero Coll-Perales,1,1.00,2022,2022,1,ok,5d4e0fb003071901
 linuxframeburst,document,"software: torvalds/linux, commit a3bdc6deb60bf6be4405058ca49a686c4db08c39 and drivers/net/wireless/broadcom/brcm80211/brcmfmac/cfg80211.c (brcmf_config_dongle), read 2026-10-09",,feng,,,,2018,,,document,169fffb8f75d506d
 cavalcanti2018vanet,doi,10.1145/3213232.3213237,crossref,cavalcanti; de souza; spohn; gomes; costa,Elmano Ramalho Cavalcanti; Jose Anderson Rodrigues de Souza; Marco Aurelio Spohn; Reinaldo Cezar de Morais Gomes; Anderson Fabiano Batista Ferreira da Costa,1,1.00,2018,2018,1,ok,bca8b8a6c9e179da
 skordoulis2008aggregation,doi,10.1109/MWC.2008.4454703,crossref,skordoulis; ni; chen; stephens; liu; jamalipour,D. Skordoulis; Qiang Ni; Hsiao-Hwa Chen; A.P. Stephens; Changwen Liu; A. Jamalipour,1,1.00,2008,2008,1,ok,94fcf40b9497acf6

@@ -595,23 +595,42 @@ shares the model's assumptions, and predictions written down before their runs. 
 point of Cao \emph{et al.} was not evaluated at these configurations: it uses the mean number
 of packets in a collision, for which the paper gives no expression.
 
-In this scenario --- broadcast, so no acknowledgement, no retransmission and a contention window
-that never grows --- a frame is lost in exactly two ways.
+\paragraph{Assumptions.} What follows, the event model below and the simulated capacities of this
+chapter rest on the same assumptions, which published analyses of IEEE 802.11 broadcast make
+too~\cite{bazzi2016beaconing,sepulcre2022analytical}:
+\begin{description}
+\item[A1] one collision domain: every station senses every other, so there are no hidden stations;
+\item[A2] a frame that overlaps another is lost at every receiver: equal received power, no
+capture;
+\item[A3] no bit errors: frames are lost only by collision;
+\item[A4] broadcast access: no acknowledgement, no retransmission, and a contention window of
+$W = 16$ slots that never grows;
+\item[A5] each of $N$ stations sends one frame per period $1/f$, at an instant drawn uniformly in
+the period;
+\item[A6] every frame holds the medium for the same time $T$, its airtime and DIFS;
+\item[A7] a station cannot sense a transmission during its first $\delta = 4$\,\si{\micro\second},
+the simulator's preamble-detection time.
+\end{description}
+\Cref{sec:spread} relaxes A1 and A2; on the radios of \Cref{sec:hardware}, A2 and A7 do not hold,
+and the loss on air of \Cref{sec:loss-air} departs from A3. Under A1--A7 a frame is lost in
+exactly two ways.
 
 \begin{enumerate}
-\item \textbf{A tie.} A frame that arrives while the medium is held, by another frame or by the
+\item \textbf{A tie (Lemma 1).} A frame that arrives while the medium is held, by another frame or by the
 DIFS after it, draws a counter uniformly from $\{0,\dots,W-1\}$, counts idle slots and is sent
 at zero. Two stations whose counters reach zero in the same slot send together. Any two stations
 that wait at the same moment tie with probability $1/W$, whether both have just drawn or one
 holds a counter frozen from an earlier round.
-\item \textbf{The detection window.} A station cannot sense a transmission during its first
+\item \textbf{The detection window (Lemma 3).} A station cannot sense a transmission during its first
 $\delta = 4$\,\si{\micro\second}, the simulator's preamble-detection time. Whoever decides to
 send inside that window --- a frame arriving on an apparently idle medium, or a counter running
 out --- sends as well.
 \end{enumerate}
 
-\paragraph{A closed form with nothing fitted.} Let $\rho = (N-1)\,f\,T$ be the share of time
-the other stations hold the medium. A frame defers with probability $\rho$. Treating the
+\paragraph{A closed form with nothing fitted (Lemma 2 and Proposition 1).} Let
+$\rho = (N-1)\,f\,T$ be the share of time the other stations hold the medium, the channel busy
+ratio of Sepulcre \emph{et al.}~\cite{sepulcre2022analytical}. A frame arriving at a uniformly
+random instant defers with probability $\rho$. Treating the
 deferring frames as a queue with deterministic service, a deferring frame finds
 $\rho/(2(1-\rho))$ others waiting and as many again arrive while it waits, so it shares its
 wait with $K = \rho/(1-\rho)$ others; and another station starts within $\pm\delta$ of any
@@ -625,7 +644,7 @@ With $W = 16$ and no free constant this puts the \modelCells{} simulated crossin
 \closedWorst\% (mean \closedMean\%), its error ordered by frame length: the time counters take to run down, which the queue
 ignores, is a larger share of a short frame.
 
-\paragraph{What the fitted slope was.} To first order the tie term of \Cref{eq:why} is
+\paragraph{What the fitted slope was (Corollary 1).} To first order the tie term of \Cref{eq:why} is
 $\rho^2/(W(1-\rho))$, so the line's slope is $a = \rho/(W(1-\rho))$. The configurations reach
 $5\%$ loss at occupancies of \modelRhoLo--\modelRhoHi, \modelRho{} on average, and at that
 average the expression is \modelSlope{} --- the value the fit found. One constant served
