@@ -95,3 +95,116 @@ W1j's and W1k's, their mean, spread and range; how many fall inside W1n-6.
 * **The launch and tuning tools hold credentials** and are not in the repo. They do only what this
   file states.
 * **No preflight or window of W1n has been run.**
+
+---
+
+## Outcome — added 2026-11-08, 11:05, after the series ended; nothing above this line was changed
+
+**Correction to the header above.** It says "Registered 2026-11-08 at 09:05". That time was my
+estimate, not a reading. The registration commit (`402864a1`) and the tag `prereg-W1n` are at
+**09:00:36**. The series started at 09:00:50, and the first preflight's windows at 09:05:14. The
+order, registration before any preflight, holds.
+
+**Three sessions were started: one VALID, one VOID, one ended in tuning.** The series then ended
+as registered, on a NO-GO other than balance.
+
+| | windows | powers pi-A / pi-B / Pi 3 (mBm) | what happened |
+|---|---|---|---|
+| s1 preflight | 09:05–09:08 | 600 / auto / 1100 | **GO**, 1.410× |
+| **s1 long run** | 09:13–09:39 | 600 / auto / 1100 | gate GO (1.478×); **VOID: V5 1.643×** |
+| s2 preflight | 09:45–09:48 | 600 / auto / 1100 | NO-GO on balance alone, 1.558× → tuning step 1: pi-A down |
+| s2 tuning step 2 | 09:53–09:56 | 500 / auto / 1100 | **TUNED**, 1.218× |
+| **s2 long run** | 10:01–10:27 | 500 / auto / 1100 | gate GO (1.410×); **VALID** (V5 1.495×) |
+| s3 preflight | 10:33–10:36 | 500 / auto / 1100 | NO-GO on balance alone, 1.619× → step 1: pi-A and the Pi 3 down |
+| s3 tuning step 2 | 10:41–10:44 | 400 / auto / 1000 | **NO-GO on check 7**: links into node 4 at 95.2 % and 76.7 % → **the series ends** |
+
+The window times are from each run's own log. Every Pi's rate was in band in every run, node 4
+joined at `FIXED CCK_1M` every time, and every held power read back, then auto.
+
+### Session 1 — VOID on V5 alone
+
+* **V5:** the A31 spread was **1.643×** against 1.5×. pi-A 3.84 %, pi-B 6.24 %, the Pi 3 5.40 %,
+  TP-Link 6.31 %.
+* **Everything else held:**
+  * V1: rates 1 938–2 226 µs;
+  * V2: b = 0.39 %;
+  * V3, V4;
+  * V6: pi-A 6.00 dBm, the Pi 3 11.00 dBm.
+* **Reported, not scored** (as W1h's were): crossings 30.88 / 9.40, ratio 3.286. ⚠️ Never quote
+  this as measured.
+* pi-A strengthened through the session: its loss was 4.56 % at the preflight, 4.26 % at the gate
+  and 3.84 % over A31.
+
+### Session 2 — VALID; every scored claim held
+
+Tuned in two steps, at 500 / auto / 1100. Scored by `dsss_w1i.py --score … --powers
+1:500,2:auto,3:1100`; the registered code is unchanged since `prereg-W1n`.
+
+**Validity:**
+* V1: all eight rate checks in band (1 938–2 218 µs);
+* V2: b = 0.44 %;
+* V3, V4: node 4 in the cell at `FIXED CCK_1M`;
+* **V5: 1.495× — inside 1.5× by 0.005×**;
+* V6: pi-A at 5.00 dBm and the Pi 3 at 11.00 dBm read back, then auto.
+
+| | measured | registered model | band | held |
+|---|---|---|---|---|
+| W1n-1 the bracket | 8/8 in band | | 1.9–2.6 ms | **yes** |
+| W1n-2 the background | 0.44 % | | ≤ 1 % | **yes** |
+| W1n-3 AUTHBC crossing | **31.11** (95 % CI 30.93–31.19) | 29.50 | 26.55–32.45 | **yes** (+5.4 %) |
+| W1n-4 per-record crossing | **9.43** (95 % CI 9.37–9.51) | 8.93 | 8.04–9.82 | **yes** (+5.7 %) |
+| **W1n-5 the ratio** | **3.297** | **3.304** | 2.974–3.635, > 2.5 | **yes** (−0.2 %) |
+| **W1n-6 repeat**, ±5 % of W1j's 3.280 | **+0.53 %** | | 3.116–3.444 | **yes** |
+
+**The points** (V/(1 − b), four windows each):
+* AUTHBC A29–A32: 0.9649 / 0.9608 / 0.9516 / 0.9369;
+* per-record P9–P9.75: 0.9640 / 0.9566 / 0.9477 / 0.9358.
+
+Outputs: `results/raw/w1i_w1n_2026-11-08_s2_run.csv`,
+`results/hw/channel24/w1n_2026-11-08_s2_run_windows.csv`.
+
+**An independent script** (`crosscheck_w1g.py`, plain Python on the raw JSON) agrees exactly on
+b, all eight points, both crossings, the ratio and the A31 spread, for sessions 1 and 2.
+
+### Session 3 — ended in tuning, on check 7
+
+* The preflight at 500 / auto / 1100 read 1.619× (pi-A 4.16, pi-B 5.93, the Pi 3 5.09, TP-Link
+  6.74 %). The setting that tuned at 1.218× at 09:56 had drifted out by 10:36.
+* Step 1 moved pi-A and the Pi 3 down 1 dB, to 400 / auto / 1000.
+* **Step 2's balance was close, 1.299×. Check 7 failed:** two of the twelve alone-links fell
+  below 97 %, both into node 4 (the TP-Link on Blue 2):
+  * pi-A at 4 dBm → node 4: **95.18 %**;
+  * the Pi 3 at 10 dBm → node 4: **76.72 %**.
+* The other ten links were at 98.75–99.90 %.
+* In every earlier W1n run (pi-A at 5–6 dBm, the Pi 3 at 11 dBm), node 4 received 98.46–100 % from
+  both.
+* By the registered rule, a NO-GO on any check but balance ends the series.
+
+### Across the series (as registered)
+
+* **Sessions run: two.** One valid (s2) and one void (s1, V5). A third (s3) ended in tuning,
+  before its long run.
+* **The valid ratios with W1j's and W1k's** (full precision, from the raw files):
+  * W1j 3.2799, W1k 3.2716, W1n-s2 3.2973;
+  * **mean 3.283, standard deviation 0.013, range 3.272–3.297** (0.026 wide);
+  * the mean is 0.64 % below the model's 3.304.
+* **Inside W1n-6:** 3 of 3.
+
+### Against the expectations
+
+* "The first preflight GO, or a balance NO-GO that tunes in one or two steps": **held** (s1 GO;
+  s2 tuned in two). Session 3 did not tune; it ended on check 7.
+* "V5 holds": **missed once** (s1, 1.643×). It held in s2, by 0.005×.
+* "The ratio within 3.15–3.40": **held** (3.297).
+
+### What it means
+
+* **The hardware ratio repeats a third time, on a re-set layout and at a re-tuned power: 3.297,
+  within 0.2 % of the model's 3.304.** The three valid sessions agree to within 0.026.
+* **The balance does not hold still.** The same setting read 1.22× and then 1.62×, 40 minutes
+  apart. A session can pass its gate and fail V5 (s1), or pass V5 by 0.005× (s2).
+* **The ratio moved much less than the balance.** The void s1's reported ratio (3.286) and the
+  valid ones (3.272–3.297) lie within 0.026 of each other, while V5 ran from 1.15× to 1.64×. That
+  is an observation from four sessions, not a scored claim.
+* **Lowering power has a floor set by the weakest link, not only by the grid.** In one reading,
+  the TP-Link's corner lost 23 % of the Pi 3's frames at 10 dBm, against at most 1.54 % at 11 dBm.

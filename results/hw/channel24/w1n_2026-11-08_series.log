@@ -1,0 +1,55 @@
+09:00:50 session 1: preflight 1 at 1:600,2:auto,3:1100 (1.5x)
+  s1 |   [6] ok  senders within 1.5x | G31 | 1.41 | pi-A=4.56% pi-B=6.42% Pi=5.86% TP-Link=5.75%; usable 2/2
+  s1 | GO
+09:09:13 session 1: preflight GO
+09:09:13 session 1: long run at 1:600,2:auto,3:1100 starts
+  s1 | START=1794122014 (09:13:34); 52 windows; last ends about 09:39:34
+  s1 |   what=gate: windows usable  group=G31  measured=4/4  held=True
+  s1 |   what=gate: senders balanced  group=G31  measured=1.478  band_hi=1.5  held=True  windows=pi-A=4.26% pi-B=6.30% Pi=5.82% TP-Link=5.86%
+  s1 | GO
+  s1 | gate exit 0
+09:40:32 session 1: run exit 0, scored at 1:600,2:auto,3:1100 (score exit 0)
+  s1 |   what=gate (reported, not scored)  group=GO  measured=1.478  band_hi=1.5  held=True  windows=pi-A=4.26% pi-B=6.30% Pi=5.82% TP-Link=5.86%
+  s1 |   what=session  group=VOID  held=False  windows=52
+  s1 |   what=crossing  group=AUTHBC  measured=30.879  predicted=29.502  band_lo=26.552  band_hi=32.452  held=void (session): True  windows=95% CI 30.83-30.92 (100% bracketed)
+  s1 |   what=crossing  group=per-record  measured=9.397  predicted=8.929  band_lo=8.036  band_hi=9.822  held=void (session): True  windows=95% CI 9.36-9.42 (100% bracketed)
+  s1 |   what=ratio  group=AUTHBC/per-record  measured=3.2862  predicted=3.3041  band_lo=2.9737  band_hi=3.6345  held=void (session): True
+09:40:32 session 2: preflight 1 at 1:600,2:auto,3:1100 (1.5x)
+  s2 |   [6] NO  senders within 1.5x | G31 | 1.558 | pi-A=3.96% pi-B=5.96% Pi=5.42% TP-Link=6.18%; usable 2/2
+  s2 | NO-GO
+09:48:53 session 2: preflight NO-GO on balance alone: tuning from 1:600,2:auto,3:1100
+  s2 |   [6] NO  senders within 1.25x | G31 | 1.558 | pi-A=3.96% pi-B=5.96% Pi=5.42% TP-Link=6.18%; usable 2/2
+  s2 |   [tune] ok  ADJUST: node1 down to 500 | 1:500,2:auto,3:1100 |  
+  s2 | ADJUST POWERS=1:500,2:auto,3:1100
+09:48:53 session 2: tuning step 1 ADJUST -> 1:500,2:auto,3:1100
+09:48:53 session 2: tuning preflight (step 2) at 1:500,2:auto,3:1100
+  s2 |   [6] ok  senders within 1.25x | G31 | 1.218 | pi-A=6.29% pi-B=7.08% Pi=6.59% TP-Link=5.82%; usable 2/2
+  s2 | TUNED POWERS=1:500,2:auto,3:1100
+09:57:11 session 2: TUNED at 1:500,2:auto,3:1100 after 2 step(s)
+09:57:11 session 2: long run at 1:500,2:auto,3:1100 starts
+  s2 | START=1794124885 (10:01:25); 52 windows; last ends about 10:27:25
+  s2 |   what=gate: windows usable  group=G31  measured=4/4  held=True
+  s2 |   what=gate: senders balanced  group=G31  measured=1.41  band_hi=1.5  held=True  windows=pi-A=4.51% pi-B=6.24% Pi=5.34% TP-Link=6.36%
+  s2 | GO
+  s2 | gate exit 0
+10:28:23 session 2: run exit 0, scored at 1:500,2:auto,3:1100 (score exit 0)
+  s2 |   what=gate (reported, not scored)  group=GO  measured=1.41  band_hi=1.5  held=True  windows=pi-A=4.51% pi-B=6.24% Pi=5.34% TP-Link=6.36%
+  s2 |   what=session  group=valid  held=True  windows=52
+  s2 |   what=crossing  group=AUTHBC  measured=31.108  predicted=29.502  band_lo=26.552  band_hi=32.452  held=True  windows=95% CI 30.93-31.19 (100% bracketed)
+  s2 |   what=crossing  group=per-record  measured=9.434  predicted=8.929  band_lo=8.036  band_hi=9.822  held=True  windows=95% CI 9.37-9.51 (100% bracketed)
+  s2 |   what=ratio  group=AUTHBC/per-record  measured=3.2973  predicted=3.3041  band_lo=2.9737  band_hi=3.6345  held=True
+10:28:23 session 3: preflight 1 at 1:500,2:auto,3:1100 (1.5x)
+  s3 |   [6] NO  senders within 1.5x | G31 | 1.619 | pi-A=4.16% pi-B=5.93% Pi=5.09% TP-Link=6.74%; usable 2/2
+  s3 | NO-GO
+10:36:42 session 3: preflight NO-GO on balance alone: tuning from 1:500,2:auto,3:1100
+  s3 |   [6] NO  senders within 1.25x | G31 | 1.619 | pi-A=4.16% pi-B=5.93% Pi=5.09% TP-Link=6.74%; usable 2/2
+  s3 |   [tune] ok  ADJUST: node1 down to 400; node3 down to 1000 | 1:400,2:auto,3:1000 |  
+  s3 | ADJUST POWERS=1:400,2:auto,3:1000
+10:36:43 session 3: tuning step 1 ADJUST -> 1:400,2:auto,3:1000
+10:36:43 session 3: tuning preflight (step 2) at 1:400,2:auto,3:1000
+  s3 |   [6] NO  senders within 1.25x | G31 | 1.299 | pi-A=6.88% pi-B=7.85% Pi=6.92% TP-Link=6.05%; usable 2/2
+  s3 |   [7] NO  alone, every receiver >= 97 % | pi-A (BCM4345/6) | 0.9518 
+  s3 |   [7] NO  alone, every receiver >= 97 % | Pi 3 (BCM43430/1) | 0.7672 
+  s3 | NO-GO POWERS=1:400,2:auto,3:1000
+10:45:06 session 3: tuning step 2 ended (exit 3): the series ends
+10:45:06 series ended

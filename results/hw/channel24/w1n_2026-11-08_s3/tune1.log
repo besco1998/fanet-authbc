@@ -1,0 +1,17 @@
+  [1] ok  rate check | pi-A (BCM4345/6) | 1940.6 
+  [1] ok  rate check | pi-B (BCM4345/6) | 2010.7 
+  [1] ok  rate check | Pi 3 (BCM43430/1) | 2215.8 
+  [2] ok  rate check | TP-Link on Blue 2 (RTL8188EUS) | 1968.8 
+  [2] ok  rate_ctl at join | TP-Link | FIXED CCK_1M 0x00 0 
+  [3] ok  held at 5 dBm, then auto | node1 txpower.log | 2026-11-08T10:31:57+02:00 set 500: txpower 5.00 dBm | 2026-11-08T10:35:52+02:00 auto: txpower 31.00 dBm 
+  [3] ok  held at 11 dBm, then auto | node3 txpower.log | 2026-11-08T10:31:57+02:00 set 1100: txpower 11.00 dBm | 2026-11-08T10:35:52+02:00 auto: txpower 31.00 dBm 
+  [4] ok  node 4 in the Pis' cell | 96:3a:a1:d3:78:b1 | reached [1, 2, 3] 
+  [4] ok  Blue 2 on one boot, every window complete | 934a1b56 | 6/6 
+  [5] ok  no Pi under-voltage | all windows | 0 
+  [6] NO  senders within 1.25x | G31 | 1.619 | pi-A=4.16% pi-B=5.93% Pi=5.09% TP-Link=6.74%; usable 2/2
+  [7] ok  alone, every receiver >= 97 % | pi-A (BCM4345/6) | 0.9867 
+  [7] ok  alone, every receiver >= 97 % | pi-B (BCM4345/6) | 0.9898 
+  [7] ok  alone, every receiver >= 97 % | Pi 3 (BCM43430/1) | 0.9871 
+  [7] ok  alone, every receiver >= 97 % | TP-Link on Blue 2 (RTL8188EUS) | 0.994 
+  [tune] ok  ADJUST: node1 down to 400; node3 down to 1000 | 1:400,2:auto,3:1000 |  
+ADJUST POWERS=1:400,2:auto,3:1000

@@ -1,0 +1,29 @@
+node 1: kit=[c42010127374 30c333bce0df 2b8ab3d2f89a a2aa8cfaf0cf ] plan=e1c02ea05072 throttled=0x0 ntp=yes running=0
+node 2: kit=[c42010127374 30c333bce0df 2b8ab3d2f89a a2aa8cfaf0cf ] plan=e1c02ea05072 throttled=0x0 ntp=yes running=0
+node 3: kit=[c42010127374 30c333bce0df 2b8ab3d2f89a a2aa8cfaf0cf ] plan=e1c02ea05072 throttled=0x0 ntp=yes running=0
+Blue 2 rebooting at 09:09:22
+Blue 2 ready 09:10:55: boot=028a6b88 uptime=76.94s watchdog=active
+node 4: [1e35e61fbcac 2b8ab3d2f89a a2aa8cfaf0cf e1c02ea05072]
+Running as unit: authbc-w1h.service
+node 4: authbc-w1h active
+node 1: set_txpower_window.sh (bd86ef80c307) started, 600 mBm
+node 3: set_txpower_window.sh (bd86ef80c307) started, 1100 mBm
+START=1794122014 (09:13:34); 52 windows; last ends about 09:39:34
+waiting 1758s for the plan to end and the boards to revert
+boards on the LAN: 4/4 at 09:40:08
+boards finished (reverted, pi-B auto): 4/4 at 09:40:15
+node1: 146 files; windows done 52; [2026-11-08T09:39:44+02:00] reverted OK, both deadmen disarmed
+node2: 145 files; windows done 52; [2026-11-08T09:39:47+02:00] reverted OK, both deadmen disarmed
+node3: 146 files; windows done 52; [2026-11-08T09:39:45+02:00] reverted OK, both deadmen disarmed
+node4: 147 files; windows done 52; [2026-11-08T09:39:57+02:00] reverted OK: back on the home Wi-Fi, deadman disarmed
+node 4 join: {"bssid":"5a:3b:c1:d9:07:66","rate_ctl":"FIXED CCK_1M 0x00 0","boot":"028a6b88","peers_reachable":[1,2,3]}; boot now 028a6b88
+  what=node 4 joined the Pis' cell  group=5a:3b:c1:d9:07:66  measured=reached [1, 2, 3]  held=True
+  what=node 4 rate fixed at join  group=FIXED CCK_1M 0x00 0  predicted=FIXED CCK_1M  held=True
+  what=rate check before  group=pi-A (BCM4345/6)  measured=1941.4  predicted=2224.0  band_lo=1900.0  band_hi=2600.0  held=True  windows=1
+  what=rate check before  group=pi-B (BCM4345/6)  measured=2013.2  predicted=2224.0  band_lo=1900.0  band_hi=2600.0  held=True  windows=1
+  what=rate check before  group=Pi 3 (BCM43430/1)  measured=2225.5  predicted=2224.0  band_lo=1900.0  band_hi=2600.0  held=True  windows=1
+  what=rate check before  group=TP-Link on Blue 2 (RTL8188EUS)  measured=1970.0  predicted=2224.0  band_lo=1900.0  band_hi=2600.0  held=True  windows=1
+  what=gate: windows usable  group=G31  measured=4/4  held=True
+  what=gate: senders balanced  group=G31  measured=1.478  band_hi=1.5  held=True  windows=pi-A=4.26% pi-B=6.30% Pi=5.82% TP-Link=5.86%
+GO
+gate exit 0

@@ -251,6 +251,38 @@ Decided: deck, paper and thesis; recent schemes modeled; swarm key management.
   Each was corrected from the logs. The slip: a pattern read by eye and written down without being
   checked against every row.
 
+**W1n (`prereg-W1n`, 09:00): W1j's layout re-measured with a tape; W1m's rules.**
+* Mohamed chose to re-measure W1j's layout.
+* **No measured distances were reported**, and none are stated.
+* No board rebooted in the move.
+* **s1:**
+  * the preflight GO at 1.410×;
+  * gate GO at 1.478×;
+  * **VOID on V5, 1.643×**: pi-A strengthened through the session, 4.56 → 4.26 → 3.84 %;
+  * reported, not scored, ratio 3.286.
+* **s2:**
+  * NO-GO at 1.558×;
+  * pi-A down 1 dB, then TUNED at 1.218× (500 / auto / 1100);
+  * **VALID; ratio 3.297 (model 3.304)**;
+  * V5 passed at 1.495×.
+* **s3:**
+  * NO-GO at 1.619× at the tuned setting, 40 minutes later;
+  * step 1 to 400 / auto / 1000;
+  * step 2 balanced better (1.299×), but **check 7 failed: the Pi 3 at 10 dBm reached node 4 at
+    76.7 %**, pi-A at 4 dBm at 95.2 %;
+  * the series ended as registered.
+* **The cross-check:** the independent script agrees exactly on s1 and s2. The three valid
+  hardware ratios have mean 3.283 and SD 0.013.
+* **The registration's header says 09:05; the commit is 09:00:36.** I wrote an estimate as a time.
+  Corrected below the outcome line, since the header is frozen.
+* **On rereading the outcome row by row, before the commit, four more slips:**
+  * a top rate of 2 219 µs (2 218.3);
+  * "2.6 thousandths" for 0.026;
+  * "about an hour" for 40 minutes;
+  * "at most 1.5 %" for 1.54 %.
+
+  The habit works only when it is done every time.
+
 # 2026-11-07, evening — the deck's third revision; Kumar et al. 2019 credited
 
 **The deck, revision 3** (Mohamed's slide-by-slide review; plan approved; 61 slides, git-excluded):
