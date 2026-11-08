@@ -85,3 +85,34 @@ Each valid session is scored against W1f's bands:
 
 * Known: W1j (3.280) and W1k (3.272), with everything before them (F124–F133).
 * **No window of W1l has been run.**
+
+---
+
+## Outcome — added 2026-11-08, 02:20, after the series ended; nothing above this line was changed
+
+**No session was run. The series ended at session 1's preflight, as registered.**
+
+* **Preflight 1 (01:16:48–01:19:48): RETRY, as expected.** The three Pis ran at 6 Mb/s
+  (1 666 µs, F129), the first ad-hoc session after a boot. The other checks held.
+* **Preflight 2 (01:25:04–01:28:04): NO-GO on check 6 alone.**
+  * G31 spread **1.769×**, over the 1.5× limit: pi-A 3.49 %, pi-B 6.18 %, the Pi 3 4.06 %,
+    TP-Link 5.63 %; both G31 windows usable.
+  * Every other check held:
+    * the rate checks at 1 942 / 1 992 / 2 243 / 1 961 µs;
+    * node 4 at `FIXED CCK_1M`, in the Pis' cell, every Pi reached;
+    * pi-A at 6.00 and the Pi 3 at 11.00 dBm, read back, then auto;
+    * no under-voltage;
+    * each sender alone ≥ 98.5 %.
+* So the long run was not started. As registered, nothing was re-tuned.
+* Files: `results/hw/channel24/w1l_2026-11-08_s1/` and `…/w1l_2026-11-08_series.log`.
+
+**Against the expectations:**
+* "The first preflight RETRY, the second GO": the RETRY held, **the GO did not**.
+* "V5 the least sure … a NO-GO on balance is possible": **that happened.**
+* pi-A and the Pi 3 now lose fewer frames than pi-B and the TP-Link: they are the strong
+  senders at W1j's powers in the rebuilt square. W1j's own gate read 1.092× with all four within
+  5.48–5.98 %.
+
+**What it means.** The square, rebuilt by eye, does not balance at W1j's powers. The setup has
+moved since W1j and W1k; their powers were selected on that earlier placement. Nothing about the
+ratio was measured. Mohamed chose to re-tune (W1m).

@@ -1,0 +1,11 @@
+01:12:24 session 1: preflight and long run start
+  s1 | START=1794093408 (01:16:48); 6 windows; last ends about 01:19:48
+  s1 |   [6] NO  senders within 1.5x | G31 | 3.358 | pi-A=1.24% pi-B=1.65% Pi=1.00% TP-Link=0.49%; usable 2/2
+  s1 | RETRY
+  s1 | PREFLIGHT RETRY: the Pis' first session after a boot; once more
+  s1 | START=1794093904 (01:25:04); 6 windows; last ends about 01:28:04
+  s1 |   [6] NO  senders within 1.5x | G31 | 1.769 | pi-A=3.49% pi-B=6.18% Pi=4.06% TP-Link=5.63%; usable 2/2
+  s1 | NO-GO
+  s1 | PREFLIGHT NO-GO (2, exit 3) at 01:28:58: the long run is NOT started
+01:28:58 session 1: preflight NO-GO, the series ends (W1l: no re-tuning)
+01:28:58 series ended
