@@ -248,8 +248,8 @@ Decided: deck, paper and thesis; recent schemes modeled; swarm key management.
   * "the Pi 3 the weakest at 8 dBm" (only in one of the two steps);
   * "1.52× is pi-A against pi-B" (it is the TP-Link, pi-B 0.07 behind).
 
-  Each was corrected from the logs. The same kind of slip as F114's: read a pattern by eye, then
-  write it down without checking it against every row.
+  Each was corrected from the logs. The slip: a pattern read by eye and written down without being
+  checked against every row.
 
 # 2026-11-07, evening — the deck's third revision; Kumar et al. 2019 credited
 
