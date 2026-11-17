@@ -196,8 +196,9 @@ branch `p12-unified-model`.
 * "90 %" should have read 89–94 %;
 * a law range typed by eye ("−4.4 … +1.6 %") should have read −4.55 … −0.01 %;
 * a memory figure was stated without being measured;
-* a test file of Mohamed's, not committed, skews the local count of the fast suite (CI counts
-  2 805).
+* two test files of Mohamed's, not committed (`test_figures_hw_simulation.py`,
+  `test_ns3_presentation_curves.py`), skew the local count of the fast suite. A clean worktree
+  collects 2 804, which is what CI sees.
 
 # 2026-11-08 — the models as mathematics (paper, thesis, deck); recent work; W1l started
 
