@@ -210,6 +210,25 @@ branch `p12-unified-model`.
   before the scorer ran, and agreed to the digits shown. The scorer's model values are tested
   against the registered ones. The fast suite is now 2 809.
 
+**Then U-D, the 802.11b arm** (`predictions/UD.md`, `analysis/unified_d.py`; D3 by
+`analysis/unified_c1.py` with U-C1's rules):
+* 80 traced runs, 600 pilot runs and 2 520 measurement runs.
+* All 24 crossings were recomputed from the raw counts before scoring.
+* **D1: Pb1B 10 / 10 held, Pb1D 1 / 18.** At 15–37 stations the law and root lie 4.97–6.34 %
+  below ns-3, outside the registered ±5 %.
+* **D2: 12 / 12** (−2.78 … −4.76 %). **D3: 18 / 48**: a 8 / 8; p, K and tie 0 / 8.
+* **The model is below ns-3 at all 24 crossings.** Work package A's event models point to the
+  Poisson assumption. No bug found. The tolerance was not widened; raised to Mohamed.
+* **Slips caught before commit:**
+  * a 3-decimal CSV value re-rounded to 2 decimals gave 8.38 and 399.86 where the registration
+    has 8.39 and 399.85. Fixed: the tables are generated from the model functions, rounded once;
+  * a range typed by eye ("−7.8 … −10.8 % at Pb1B") should have read −4.75 … −10.79 %;
+  * a wait on `authbc-twin-gate` ended at once: `capped.sh` names the unit `authbc-<NAME>`, and
+    `systemctl show` of a missing unit prints Result=success. The gate's file had not changed,
+    which is how it was caught;
+  * a clean-worktree "pass" read `tail`'s exit code, not pytest's. It was re-run: 2 807 passed,
+    2 skipped.
+
 # 2026-11-08 — the models as mathematics (paper, thesis, deck); recent work; W1l started
 
 **Asked:**
