@@ -1,0 +1,23 @@
+# python=3.12.3
+# platform=Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=unified_c2
+# config_hash=350a0b343d1d3557
+# design law: N_inf=1016.8517 beta=29.2403
+kind,b,frame_bytes,frames_per_s,tf_us,ns3,ci_lo,ci_hi,law,root,design,law_err_pct,root_err_pct,law_held,root_held,ns3_gain,design_gain,gain_err_pct
+crossing,16,281,3.125,448.0,366.718,364.991,368.571,359.526,356.308,360.627,-1.96,-2.84,True,True,,,
+crossing,32,425,1.5625,640.0,547.147,543.193,549.634,531.135,528.716,532.337,-2.93,-3.37,True,True,,,
+crossing,64,713,0.78125,1024.0,717.272,708.407,726.845,697.927,696.652,698.965,-2.7,-2.87,True,True,,,
+"gain (reported, not scored)",1,,,,35.26,,,,,,,,,,1.0,1.0,0.0
+"gain (reported, not scored)",2,,,,66.73,,,,,,,,,,1.9186,1.936,0.91
+"gain (reported, not scored)",3,,,,96.51,,,,,,,,,,2.7878,2.8139,0.94
+"gain (reported, not scored)",4,,,,124.55,,,,,,,,,,3.6062,3.639,0.91
+"gain (reported, not scored)",8,,,,222.33,,,,,,,,,,6.4603,6.4963,0.56
+"gain (reported, not scored)",16,,,,366.718,,,,,,,,,,10.6748,10.695,0.19
+"gain (reported, not scored)",32,,,,547.147,,,,,,,,,,15.9412,15.8015,-0.88
+"gain (reported, not scored)",64,,,,717.272,,,,,,,,,,20.9069,20.7569,-0.72

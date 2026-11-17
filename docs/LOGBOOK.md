@@ -200,6 +200,16 @@ branch `p12-unified-model`.
   `test_ns3_presentation_curves.py`), skew the local count of the fast suite. A clean worktree
   collects 2 804, which is what CI sees.
 
+**Later the same day: U-C2 scored, 6 of 6 held** (`predictions/UC2.md`, `analysis/unified_c2.py`).
+* 630 runs at b = 16, 32 and 64, 30 seeds each; ns-3 crosses at 366.72 / 547.15 / 717.27.
+* The law lies −1.96 / −2.93 / −2.70 % from ns-3 and the root −2.84 / −3.37 / −2.87 %: the
+  same side and size as the 40 stored crossings at 6 Mb/s.
+* Not scored: the gain bends away from b, 20.91 at b = 64, and the design law follows it within
+  0.95 % at every b from 2 to 64.
+* **Method.** The three crossings were recomputed from the raw counts by a separate script
+  before the scorer ran, and agreed to the digits shown. The scorer's model values are tested
+  against the registered ones. The fast suite is now 2 809.
+
 # 2026-11-08 — the models as mathematics (paper, thesis, deck); recent work; W1l started
 
 **Asked:**

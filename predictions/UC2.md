@@ -52,3 +52,55 @@ ns-3's. A crossing outside fails. The tolerance is not widened after the runs.
 * **Memory.** A run's memory at N ≈ 700 is not yet measured. The pilot's peak is read first, and
   the measurement's workers are set from it.
 * **No U-C2 run has been made.**
+
+---
+
+## Outcome — added 2026-11-17, after the runs; nothing above this line was changed
+
+**The runs.** As registered, through the audit twin (`ns3/run_unified.py`, config hash
+`26f97d469287c167`):
+* pilots of 5 seeds (`results/raw/unified_c2_pilot{,32,64}{,_runs}.csv`), which put the
+  crossings at 367.47 / 546.21 / 710.86;
+* then 30 seeds at seven node counts around each pilot crossing, 210 runs per cell, 630 in all
+  (`results/raw/unified_c2_b{16,32,64}{,_runs}.csv`).
+
+Every unit ended `Result=success` under the 8 GB cap (6, 5 and 5 workers). Their memory peak was
+not logged.
+
+**Checked before scoring.** An independent script on the raw counts agrees with the driver to the
+digits shown:
+* every node count has seeds 1–30;
+* each delivered fraction equals rx / (tx (N − 1));
+* the mean curves fall monotonically, so each crossing is unique.
+
+**Scored** by `analysis/unified_c2.py` → `results/raw/unified_c2_scored.csv`. Its model values are
+the registered ones (`tests/test_unified_c2.py`).
+
+**Scored: 6 of 6 held.**
+
+| cell | b | ns-3 crossing (95 % CI) | law (G9) | error | root of (G5) | error | held |
+|---|---|---|---|---|---|---|---|
+| UB16 | 16 | **366.72** (364.99–368.57) | 359.53 | −1.96 % | 356.31 | −2.84 % | **yes, yes** |
+| UB32 | 32 | **547.15** (543.19–549.63) | 531.13 | −2.93 % | 528.72 | −3.37 % | **yes, yes** |
+| UB64 | 64 | **717.27** (708.41–726.85) | 697.93 | −2.70 % | 696.65 | −2.87 % | **yes, yes** |
+
+**Reported, not scored: the gain.** Γ(b) = (N(b) − 1)/(N(1) − 1), with N(1) = 35.26 and
+b ≤ 8 taken from the stored crossings, against the design law's b(1 + β)/(b + β), β = 29.24:
+
+| b | 1 | 2 | 3 | 4 | 8 | 16 | 32 | 64 |
+|---|---|---|---|---|---|---|---|---|
+| ns-3 | 1 | 1.919 | 2.788 | 3.606 | 6.460 | 10.675 | 15.941 | 20.907 |
+| design law | 1 | 1.936 | 2.814 | 3.639 | 6.496 | 10.695 | 15.801 | 20.757 |
+| law − ns-3 | 0 | +0.91 % | +0.94 % | +0.91 % | +0.56 % | +0.19 % | −0.88 % | −0.72 % |
+
+**The question, answered.** Yes, ns-3's gain bends away from b, as the law says:
+* at b = 64, 64 records to a frame buy 20.9 times the one-record capacity, a third of b;
+* it stays below 1 + β = 30.24;
+* the design law follows ns-3's gain within 0.95 % at every b from 2 to 64.
+
+**What it means.** At 360–720 stations, the two-constant law and the full loss expression each
+lie 2–3.4 % below ns-3. That is the same side and size as the 40 stored crossings at 6 Mb/s
+(−4.55 … −0.01 %). The law does not drift as b grows from 16 to 64: its error at b = 64 lies
+between its errors at b = 16 and b = 32. **C2 does not falsify the model.**
+
+**Expectations.** "All six within ±5 %, the law slightly below ns-3": held, at all six.
