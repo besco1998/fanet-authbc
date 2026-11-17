@@ -15,7 +15,7 @@ its end), and **K**, for each such frame, the number of other stations holding a
 busy period ends. Shares are per seed; the mean and a bootstrap 95 % interval over seeds are
 reported, and each prediction scored as held (within ±10 % of the mean, or inside the interval).
 
-    python analysis/unified_c1.py DIR      -> results/raw/unified_c1.csv
+    python analysis/unified_c1.py DIR      -> results/raw/unified_c1_scored.csv
 """
 from __future__ import annotations
 
@@ -38,7 +38,7 @@ from authbc.bench.stats import bootstrap_ci  # noqa: E402
 from authbc.models import phy  # noqa: E402
 from authbc.models import unified_capacity as uc  # noqa: E402
 
-OUT = REPO / "results" / "raw" / "unified_c1.csv"
+OUT = REPO / "results" / "raw" / "unified_c1_scored.csv"   # unified_c1.csv is the driver's summary
 DETECT_NS = 4_000
 CELLS = {"C": (146, 50.0), "D": (173, 12.5)}
 TOL = 0.10
@@ -119,6 +119,40 @@ def classify(fr: dict[tuple[int, int], dict[str, int]],
             "a": arrived_busy / n, "K": st.mean(k_counts) if k_counts else 0.0}
 
 
+def diagnose(fr: dict[tuple[int, int], dict[str, int]],
+             draws: dict[int, list[int]]) -> dict[str, float]:
+    """Not scored (added after the U-C1 scoring): each collision split by start spread (one
+    instant or not) and by how many of its frames drew a backoff. In ns-3 a station counts slots
+    from its own backoff start, so two counters that expire in the same slot can start a few µs
+    apart; such a group is "spread > 0, all drew"."""
+    tx = sorted((v["B"], v["F"], node, v.get("E", v["B"]))
+                for (node, _u), v in fr.items() if "B" in v and "F" in v)
+
+    def drew(node: int, e: int, b: int) -> bool:
+        times = draws.get(node, [])
+        i = bisect_right(times, b)
+        return i > 0 and times[i - 1] >= e
+
+    groups: list[list[tuple[int, int, int, int]]] = []
+    reach = -1
+    for t in tx:
+        if groups and t[0] < reach:
+            groups[-1].append(t)
+            reach = max(reach, t[1])
+        else:
+            groups.append([t])
+            reach = t[1]
+    out = {f"{sp}_{who}": 0.0 for sp in ("instant", "spread") for who in ("all", "mixed", "none")}
+    for g in groups:
+        if len(g) < 2:
+            continue
+        sp = "instant" if len({b for b, _f, _n, _e in g}) == 1 else "spread"
+        k = sum(drew(n, e, b) for b, _f, n, e in g)
+        who = "all" if k == len(g) else "none" if k == 0 else "mixed"
+        out[f"{sp}_{who}"] += len(g) / len(tx)
+    return out
+
+
 def predictions(cell: str, n: int) -> dict[str, float]:
     size, f = CELLS[cell]
     acc, tf = uc.A80211A, uc.airtime_s(phy.OFDM_20MHZ_6M, size)
@@ -130,7 +164,36 @@ def predictions(cell: str, n: int) -> dict[str, float]:
             "K": a * (1 + gam + 2 * eta) / (1 - gam - a)}
 
 
+def main_diagnose(d: Path) -> None:
+    per: dict[tuple[str, int], list[dict[str, float]]] = defaultdict(list)
+    for path in sorted(d.glob("*_mac.csv")):
+        m = re.fullmatch(r"(\w+?)_n(\d+)_s(\d+)_mac\.csv", path.name)
+        if m and m.group(1) in CELLS:
+            per[(m.group(1), int(m.group(2)))].append(diagnose(*read_trace(path)))
+    rows = []
+    for (cell, n), runs in sorted(per.items()):
+        mean = {k: st.mean(r[k] for r in runs) for k in runs[0]}
+        pred = predictions(cell, n)
+        rows.append({"cell": cell, "n_nodes": n, "seeds": len(runs),
+                     **{k: round(v, 6) for k, v in mean.items()},
+                     "ties_any_spread": round(mean["instant_all"] + mean["spread_all"], 6),
+                     "model_tie": round(pred["tie"], 6)})
+    buf = io.StringIO()
+    for k, v in {**provenance.env_block(), "run": "unified_c1_diagnostic (not scored)",
+                 "config_hash": provenance.config_hash({"cells": CELLS})}.items():
+        buf.write(f"# {k}={v}\n")
+    w = csv.DictWriter(buf, fieldnames=list(rows[0]), lineterminator="\n")
+    w.writeheader()
+    w.writerows(rows)
+    (OUT.parent / "unified_c1_diagnostic.csv").write_text(buf.getvalue())
+    for r in rows:
+        print(r)
+
+
 def main() -> None:
+    if sys.argv[1] == "--diagnose":
+        main_diagnose(Path(sys.argv[2]))
+        return
     d = Path(sys.argv[1])
     per: dict[tuple[str, int], list[dict[str, float]]] = defaultdict(list)
     for path in sorted(d.glob("*_mac.csv")):
