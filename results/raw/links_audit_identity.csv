@@ -1,0 +1,20 @@
+# python=3.12.3
+# platform=Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=links_audit_identity
+# config_hash=4c4c748db39ed436
+cell,seed,identical,delivered_twin,delivered_stored
+C,1,True,0.949218,0.949218
+C,2,True,0.95158,0.95158
+C,3,True,0.950773,0.950773
+D,1,True,0.94963,0.94963
+D,2,True,0.951468,0.951468
+D,3,True,0.949379,0.949379
+Pb1D,1,True,0.947601,0.947601
+Pb1D,2,True,0.957955,0.957955
+Pb1D,3,True,0.946616,0.946616

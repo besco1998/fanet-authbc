@@ -1,0 +1,19 @@
+# python=3.12.3
+# platform=Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=ns3_audit_seedset2
+# config_hash=05387f09a89505dd
+cell,config,frame_bytes,batch,lambda_rec_per_s,jitter_ms,skew_ppm,n_nodes,delivered_mean,delivered_min,delivered_max,delivered_stdev,seeds_failing_v,seeds,model_util,airtime_occupancy,n_max_mean,n_max_ci_lo,n_max_ci_hi,n_max_per_run,model_n_max,deviation_pct,grid,bracketed,n_cross_interp,n_cross_interp_lo,n_cross_interp_hi,interp_share_bracketed,deviation_interp_pct
+C,lean/inline-1,146,1,50.0,20,0,31,0.96163,0.95765,0.96568,0.00169,0,30,2.0984,0.4681,,,,,,,,,,,,,
+C,lean/inline-1,146,1,50.0,20,0,32,0.95905,0.95613,0.96235,0.00155,0,30,2.1945,0.4832,,,,,,,,,,,,,
+C,lean/inline-1,146,1,50.0,20,0,33,0.95665,0.95351,0.96106,0.00177,0,30,2.2878,0.4983,,,,,,,,,,,,,
+C,lean/inline-1,146,1,50.0,20,0,34,0.95346,0.9501,0.9572,0.00171,0,30,2.3782,0.5134,,,,,,,,,,,,,
+C,lean/inline-1,146,1,50.0,20,0,35,0.95021,0.94801,0.95457,0.00158,13,30,2.4656,0.5285,,,,,,,,,,,,,
+C,lean/inline-1,146,1,50.0,20,0,36,0.94748,0.94478,0.9508,0.00154,29,30,2.5499,0.5436,,,,,,,,,,,,,
+C,lean/inline-1,146,1,50.0,20,0,37,0.9445,0.94202,0.94708,0.00141,30,30,2.6311,0.5587,,,,,,,,,,,,,
+C,lean/inline-1,146,1,50.0,20,0,CROSSING,,,,,,30,,,35,34,35,34,34,2.9,31 32 33 34 35 36 37,1,35.08,34.91,35.24,1.0,3.2

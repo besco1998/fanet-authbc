@@ -1,0 +1,148 @@
+# python=3.12.3
+# platform=Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=unified_trace_claims
+# config_hash=92bf26fc40254f0b
+claim,case,predicted,measured,lo,hi,extra,held
+aoi_tail,b=4 p=0,0.0,0.0,0.0,0.000514,k=1 updates=7170 exceedances=0,True
+aoi_tail,b=4 p=0.01,0.01,0.00958,0.007446,0.012128,k=1 updates=7099 exceedances=68,True
+aoi_tail,b=4 p=0.05,0.05,0.04733,0.04241,0.052634,k=1 updates=6825 exceedances=323,True
+aoi_tail,b=4 p=0.1,0.1,0.09604,0.088974,0.103468,k=1 updates=6487 exceedances=623,True
+aoi_tail,b=1 p=0,0.0,0.0,0.0,0.000514,k=4 updates=7170 exceedances=0,True
+aoi_tail,b=1 p=0.01,1e-08,0.0,0.0,0.00052,k=4 updates=7097 exceedances=0,True
+aoi_tail,b=1 p=0.05,6.250000000000001e-06,0.0,0.0,0.000537,k=4 updates=6863 exceedances=0,True
+aoi_tail,b=1 p=0.1,0.00010000000000000002,0.00015,4e-06,0.000854,k=4 updates=6520 exceedances=1,True
+access_delay_registered,N=50 f=1 rho_Tf=0.022,0.00672,0.0084,0.0034,0.0134,"rho=nu*Tf, T=Tf; measured = access_delay_ms (delay - model_non_fill); delivered 0.99986; p99 access (ns-3) 0.2785 ms",True
+access_delay_M16,N=50 f=1 rho_Tf=0.022,0.00765,0.0086,0.0036,0.0136,"rho=nu*(Tf+DIFS), T=Tf+DIFS; measured = delay - (Tf+DIFS); delivered 0.99986; p99 access (ns-3) 0.2785 ms; vs access_delay_ms -9.0% (within tolerance)",True
+access_delay_registered,N=50 f=2 rho_Tf=0.045,0.01368,0.0176,0.0126,0.0226,"rho=nu*Tf, T=Tf; measured = access_delay_ms (delay - model_non_fill); delivered 0.99959; p99 access (ns-3) 0.4342 ms",True
+access_delay_M16,N=50 f=2 rho_Tf=0.045,0.0156,0.0181,0.0131,0.0231,"rho=nu*(Tf+DIFS), T=Tf+DIFS; measured = delay - (Tf+DIFS); delivered 0.99959; p99 access (ns-3) 0.4342 ms; vs access_delay_ms -11.4% (within tolerance)",True
+access_delay_registered,N=50 f=3 rho_Tf=0.067,0.02091,0.0266,0.0216,0.0316,"rho=nu*Tf, T=Tf; measured = access_delay_ms (delay - model_non_fill); delivered 0.99906; p99 access (ns-3) 0.5300 ms",False
+access_delay_M16,N=50 f=3 rho_Tf=0.067,0.02388,0.0273,0.0223,0.0323,"rho=nu*(Tf+DIFS), T=Tf+DIFS; measured = delay - (Tf+DIFS); delivered 0.99906; p99 access (ns-3) 0.5300 ms; vs access_delay_ms -10.2% (within tolerance)",True
+access_delay_registered,N=50 f=5 rho_Tf=0.112,0.03622,0.0456,0.0406,0.0506,"rho=nu*Tf, T=Tf; measured = access_delay_ms (delay - model_non_fill); delivered 0.99529; p99 access (ns-3) 0.6555 ms",False
+access_delay_M16,N=50 f=5 rho_Tf=0.112,0.04153,0.0468,0.0418,0.0518,"rho=nu*(Tf+DIFS), T=Tf+DIFS; measured = delay - (Tf+DIFS); delivered 0.99529; p99 access (ns-3) 0.6555 ms; vs access_delay_ms -8.9% (within tolerance)",False
+access_delay_registered,N=50 f=7 rho_Tf=0.156,0.05283,0.0661,0.05949,0.07271,"rho=nu*Tf, T=Tf; measured = access_delay_ms (delay - model_non_fill); delivered 0.99144; p99 access (ns-3) 0.7940 ms",False
+access_delay_M16,N=50 f=7 rho_Tf=0.156,0.06084,0.0678,0.06102,0.07458,"rho=nu*(Tf+DIFS), T=Tf+DIFS; measured = delay - (Tf+DIFS); delivered 0.99144; p99 access (ns-3) 0.7940 ms; vs access_delay_ms -8.0% (within tolerance)",False
+access_delay_registered,N=50 f=9 rho_Tf=0.201,0.07096,0.0889,0.08001,0.09779,"rho=nu*Tf, T=Tf; measured = access_delay_ms (delay - model_non_fill); delivered 0.98896; p99 access (ns-3) 0.9543 ms",False
+access_delay_M16,N=50 f=9 rho_Tf=0.201,0.08212,0.091,0.0819,0.1001,"rho=nu*(Tf+DIFS), T=Tf+DIFS; measured = delay - (Tf+DIFS); delivered 0.98896; p99 access (ns-3) 0.9543 ms; vs access_delay_ms -7.6% (within tolerance)",True
+access_delay_registered,N=50 f=12 rho_Tf=0.268,0.10163,0.1256,0.11304,0.13816,"rho=nu*Tf, T=Tf; measured = access_delay_ms (delay - model_non_fill); delivered 0.98435; p99 access (ns-3) 1.1717 ms",False
+access_delay_M16,N=50 f=12 rho_Tf=0.268,0.11861,0.1285,0.11565,0.14135,"rho=nu*(Tf+DIFS), T=Tf+DIFS; measured = delay - (Tf+DIFS); delivered 0.98435; p99 access (ns-3) 1.1717 ms; vs access_delay_ms -5.6% (within tolerance)",True
+access_delay_registered,N=50 f=15 rho_Tf=0.335,0.13756,0.168,0.1512,0.1848,"rho=nu*Tf, T=Tf; measured = access_delay_ms (delay - model_non_fill); delivered 0.97814; p99 access (ns-3) 1.3881 ms",False
+access_delay_M16,N=50 f=15 rho_Tf=0.335,0.16221,0.1717,0.15453,0.18887,"rho=nu*(Tf+DIFS), T=Tf+DIFS; measured = delay - (Tf+DIFS); delivered 0.97814; p99 access (ns-3) 1.3881 ms; vs access_delay_ms -3.4% (within tolerance)",True
+access_delay_registered,N=50 f=20 rho_Tf=0.447,0.21437,0.2611,0.23499,0.28721,"rho=nu*Tf, T=Tf; measured = access_delay_ms (delay - model_non_fill); delivered 0.96246; p99 access (ns-3) 1.9077 ms",False
+access_delay_M16,N=50 f=20 rho_Tf=0.447,0.25875,0.266,0.2394,0.2926,"rho=nu*(Tf+DIFS), T=Tf+DIFS; measured = delay - (Tf+DIFS); delivered 0.96246; p99 access (ns-3) 1.9077 ms; vs access_delay_ms -0.9% (within tolerance)",True
+access_delay_registered,N=50 f=30 rho_Tf=0.670,0.50883,0.5159,0.46431,0.56749,"rho=nu*Tf, T=Tf; measured = access_delay_ms (delay - model_non_fill); delivered 0.89479; p99 access (ns-3) 2.9691 ms",out_of_range
+access_delay_M16,N=50 f=30 rho_Tf=0.670,0.67956,0.5232,0.47088,0.57552,"rho=nu*(Tf+DIFS), T=Tf+DIFS; measured = delay - (Tf+DIFS); delivered 0.89479; p99 access (ns-3) 2.9691 ms; vs access_delay_ms +31.7% (outside tolerance)",out_of_range
+access_delay_registered,N=50 f=40 rho_Tf=0.894,1.97841,0.9428,0.84852,1.03708,"rho=nu*Tf, T=Tf; measured = access_delay_ms (delay - model_non_fill); delivered 0.78068; p99 access (ns-3) 4.3403 ms",out_of_range
+access_delay_M16,N=50 f=40 rho_Tf=0.894,6.0067,0.9525,0.85725,1.04775,"rho=nu*(Tf+DIFS), T=Tf+DIFS; measured = delay - (Tf+DIFS); delivered 0.78068; p99 access (ns-3) 4.3403 ms; vs access_delay_ms +537.1% (outside tolerance)",out_of_range
+access_delay_registered,N=50 f=60 rho_Tf=1.341,-0.80684,2.18,1.962,2.398,"rho=nu*Tf, T=Tf; measured = access_delay_ms (delay - model_non_fill); delivered 0.42267; p99 access (ns-3) 7.4857 ms",out_of_range
+access_delay_M16,N=50 f=60 rho_Tf=1.341,-0.70382,2.1948,1.97532,2.41428,"rho=nu*(Tf+DIFS), T=Tf+DIFS; measured = delay - (Tf+DIFS); delivered 0.42267; p99 access (ns-3) 7.4857 ms; vs access_delay_ms -132.3% (outside tolerance)",out_of_range
+v_gilbert_ns3,s1-r1000.design.217 b=1 r=1,0.94814,0.94814,0.94665,0.94958,p=0.05186 alpha=0.05167 iid=0.94814,True
+v_gilbert_ns3,s3-v15.design.142 b=1 r=1,0.94804,0.94804,0.94697,0.94915,p=0.05196 alpha=0.05184 iid=0.94804,True
+v_gilbert_ns3,s1-r1000.design.217 b=1 r=2,0.92364,0.92358,0.92141,0.92565,p=0.05186 alpha=0.05167 iid=0.92355,True
+v_gilbert_ns3,s3-v15.design.142 b=1 r=2,0.92347,0.92371,0.92214,0.92531,p=0.05196 alpha=0.05184 iid=0.92341,True
+v_gilbert_ns3,s1-r1000.design.217 b=1 r=4,0.87716,0.87783,0.87439,0.88116,p=0.05186 alpha=0.05167 iid=0.87690,True
+v_gilbert_ns3,s3-v15.design.142 b=1 r=4,0.87683,0.87645,0.87369,0.87918,p=0.05196 alpha=0.05184 iid=0.87668,True
+v_gilbert_ns3,s1-r1000.design.217 b=2 r=1,0.94814,0.94814,0.94665,0.94958,p=0.05186 alpha=0.05167 iid=0.94814,True
+v_gilbert_ns3,s3-v15.design.142 b=2 r=1,0.94804,0.94804,0.94697,0.94915,p=0.05196 alpha=0.05184 iid=0.94804,True
+v_gilbert_ns3,s1-r1000.design.217 b=2 r=2,0.92364,0.92358,0.92141,0.92565,p=0.05186 alpha=0.05167 iid=0.92355,True
+v_gilbert_ns3,s3-v15.design.142 b=2 r=2,0.92347,0.92371,0.92214,0.92531,p=0.05196 alpha=0.05184 iid=0.92341,True
+v_gilbert_ns3,s1-r1000.design.217 b=2 r=4,0.87716,0.87783,0.87439,0.88116,p=0.05186 alpha=0.05167 iid=0.87690,True
+v_gilbert_ns3,s3-v15.design.142 b=2 r=4,0.87683,0.87645,0.87369,0.87918,p=0.05196 alpha=0.05184 iid=0.87668,True
+v_gilbert_ns3,s1-r1000.design.217 b=3 r=1,0.94814,0.94814,0.94665,0.94958,p=0.05186 alpha=0.05167 iid=0.94814,True
+v_gilbert_ns3,s3-v15.design.142 b=3 r=1,0.94804,0.94804,0.94697,0.94915,p=0.05196 alpha=0.05184 iid=0.94804,True
+v_gilbert_ns3,s1-r1000.design.217 b=3 r=2,0.92364,0.92358,0.92141,0.92565,p=0.05186 alpha=0.05167 iid=0.92355,True
+v_gilbert_ns3,s3-v15.design.142 b=3 r=2,0.92347,0.92371,0.92214,0.92531,p=0.05196 alpha=0.05184 iid=0.92341,True
+v_gilbert_ns3,s1-r1000.design.217 b=3 r=4,0.87716,0.87783,0.87439,0.88116,p=0.05186 alpha=0.05167 iid=0.87690,True
+v_gilbert_ns3,s3-v15.design.142 b=3 r=4,0.87683,0.87645,0.87369,0.87918,p=0.05196 alpha=0.05184 iid=0.87668,True
+v_gilbert_ns3,s1-r1000.design.217 b=4 r=1,0.94814,0.94814,0.94665,0.94958,p=0.05186 alpha=0.05167 iid=0.94814,True
+v_gilbert_ns3,s3-v15.design.142 b=4 r=1,0.94804,0.94804,0.94697,0.94915,p=0.05196 alpha=0.05184 iid=0.94804,True
+v_gilbert_ns3,s1-r1000.design.217 b=4 r=2,0.92364,0.92358,0.92141,0.92565,p=0.05186 alpha=0.05167 iid=0.92355,True
+v_gilbert_ns3,s3-v15.design.142 b=4 r=2,0.92347,0.92371,0.92214,0.92531,p=0.05196 alpha=0.05184 iid=0.92341,True
+v_gilbert_ns3,s1-r1000.design.217 b=4 r=4,0.87716,0.87783,0.87439,0.88116,p=0.05186 alpha=0.05167 iid=0.87690,True
+v_gilbert_ns3,s3-v15.design.142 b=4 r=4,0.87683,0.87645,0.87369,0.87918,p=0.05196 alpha=0.05184 iid=0.87668,True
+v_gilbert_w3a,p100 A rx2 r=1,0.83477,0.83477,0.80659,0.86409,p=0.16523 alpha=0.11992 windows=4,True
+v_gilbert_w3a,p100 A rx2 r=2,0.78472,0.78773,0.75091,0.82455,p=0.16523 alpha=0.11992 windows=4,True
+v_gilbert_w3a,p100 A rx2 r=4,0.69625,0.69432,0.64409,0.74455,p=0.16523 alpha=0.11992 windows=4,True
+v_gilbert_w3a,p100 A rx3 r=1,0.95295,0.95295,0.92818,0.97773,p=0.04705 alpha=0.04321 windows=4,True
+v_gilbert_w3a,p100 A rx3 r=2,0.93237,0.93341,0.89636,0.97045,p=0.04705 alpha=0.04321 windows=4,True
+v_gilbert_w3a,p100 A rx3 r=4,0.89295,0.88818,0.82909,0.94727,p=0.04705 alpha=0.04321 windows=4,True
+v_gilbert_w3a,p100 A rx4 r=1,0.87227,0.87227,0.83273,0.91182,p=0.12773 alpha=0.10485 windows=4,True
+v_gilbert_w3a,p100 A rx4 r=2,0.82654,0.83182,0.78182,0.88182,p=0.12773 alpha=0.10485 windows=4,True
+v_gilbert_w3a,p100 A rx4 r=4,0.74442,0.74636,0.68182,0.81091,p=0.12773 alpha=0.10485 windows=4,True
+v_gilbert_w3a,p100 L rx2 r=1,0.70273,0.70273,0.61818,0.78727,p=0.29727 alpha=0.23956 windows=4,True
+v_gilbert_w3a,p100 L rx2 r=2,0.61855,0.61795,0.515,0.72091,p=0.29727 alpha=0.23956 windows=4,True
+v_gilbert_w3a,p100 L rx2 r=4,0.48812,0.49341,0.375,0.61182,p=0.29727 alpha=0.23956 windows=4,True
+v_gilbert_w3a,p100 L rx3 r=1,0.87432,0.87432,0.78727,0.96136,p=0.12568 alpha=0.11111 windows=4,True
+v_gilbert_w3a,p100 L rx3 r=2,0.82574,0.82273,0.70091,0.94455,p=0.12568 alpha=0.11111 windows=4,True
+v_gilbert_w3a,p100 L rx3 r=4,0.73909,0.74318,0.57136,0.915,p=0.12568 alpha=0.11111 windows=4,True
+v_gilbert_w3a,p100 L rx4 r=1,0.76545,0.76545,0.64727,0.88364,p=0.23455 alpha=0.18430 windows=4,True
+v_gilbert_w3a,p100 L rx4 r=2,0.69492,0.69114,0.54409,0.83818,p=0.23455 alpha=0.18430 windows=4,True
+v_gilbert_w3a,p100 L rx4 r=4,0.57864,0.5875,0.39955,0.77545,p=0.23455 alpha=0.18430 windows=4,True
+v_gilbert_w3a,p100 S rx2 r=1,0.86977,0.86977,0.85477,0.88045,p=0.13023 alpha=0.09207 windows=4,True
+v_gilbert_w3a,p100 S rx2 r=2,0.82973,0.83,0.81545,0.84409,p=0.13023 alpha=0.09207 windows=4,True
+v_gilbert_w3a,p100 S rx2 r=4,0.75685,0.76364,0.74682,0.78045,p=0.13023 alpha=0.09207 windows=4,True
+v_gilbert_w3a,p100 S rx3 r=1,0.96886,0.96886,0.94818,0.98955,p=0.03114 alpha=0.02841 windows=4,True
+v_gilbert_w3a,p100 S rx3 r=2,0.9551,0.95432,0.92318,0.98545,p=0.03114 alpha=0.02841 windows=4,True
+v_gilbert_w3a,p100 S rx3 r=4,0.92835,0.93045,0.88136,0.97955,p=0.03114 alpha=0.02841 windows=4,True
+v_gilbert_w3a,p100 S rx4 r=1,0.89114,0.89114,0.86818,0.91409,p=0.10886 alpha=0.08527 windows=4,True
+v_gilbert_w3a,p100 S rx4 r=2,0.85314,0.85409,0.82091,0.88727,p=0.10886 alpha=0.08527 windows=4,True
+v_gilbert_w3a,p100 S rx4 r=4,0.7835,0.78636,0.74545,0.82727,p=0.10886 alpha=0.08527 windows=4,True
+v_gilbert_w3a,p1000 A rx2 r=1,0.96568,0.96568,0.96114,0.97045,p=0.03432 alpha=0.03439 windows=4,True
+v_gilbert_w3a,p1000 A rx2 r=2,0.94908,0.94977,0.94364,0.95591,p=0.03432 alpha=0.03439 windows=4,True
+v_gilbert_w3a,p1000 A rx2 r=4,0.91699,0.91795,0.90659,0.93409,p=0.03432 alpha=0.03439 windows=4,True
+v_gilbert_w3a,p1000 A rx3 r=1,0.99932,0.99932,0.99909,0.99977,p=0.00068 alpha=0.00068 windows=4,True
+v_gilbert_w3a,p1000 A rx3 r=2,0.99898,0.99909,0.99841,0.99977,p=0.00068 alpha=0.00068 windows=4,True
+v_gilbert_w3a,p1000 A rx3 r=4,0.99829,0.99818,0.99682,0.99955,p=0.00068 alpha=0.00068 windows=4,True
+v_gilbert_w3a,p1000 A rx4 r=1,0.9625,0.9625,0.96045,0.965,p=0.03750 alpha=0.03615 windows=4,True
+v_gilbert_w3a,p1000 A rx4 r=2,0.9451,0.94591,0.94,0.95182,p=0.03750 alpha=0.03615 windows=4,True
+v_gilbert_w3a,p1000 A rx4 r=4,0.91155,0.91591,0.90727,0.92227,p=0.03750 alpha=0.03615 windows=4,True
+v_gilbert_w3a,p1000 L rx2 r=1,0.95545,0.95545,0.95182,0.95909,p=0.04455 alpha=0.04476 windows=4,True
+v_gilbert_w3a,p1000 L rx2 r=2,0.93407,0.93364,0.92909,0.93818,p=0.04455 alpha=0.04476 windows=4,True
+v_gilbert_w3a,p1000 L rx2 r=4,0.8932,0.88864,0.88136,0.89591,p=0.04455 alpha=0.04476 windows=4,True
+v_gilbert_w3a,p1000 L rx3 r=1,0.99773,0.99773,0.99659,0.99932,p=0.00227 alpha=0.00228 windows=4,True
+v_gilbert_w3a,p1000 L rx3 r=2,0.99659,0.99682,0.995,0.99909,p=0.00227 alpha=0.00228 windows=4,True
+v_gilbert_w3a,p1000 L rx3 r=4,0.99432,0.99455,0.99182,0.99818,p=0.00227 alpha=0.00228 windows=4,True
+v_gilbert_w3a,p1000 L rx4 r=1,0.96023,0.96023,0.94955,0.9675,p=0.03977 alpha=0.03743 windows=4,True
+v_gilbert_w3a,p1000 L rx4 r=2,0.94226,0.94227,0.9275,0.95136,p=0.03977 alpha=0.03743 windows=4,True
+v_gilbert_w3a,p1000 L rx4 r=4,0.90765,0.90227,0.88136,0.91591,p=0.03977 alpha=0.03743 windows=4,True
+v_gilbert_w3a,p1000 S rx2 r=1,0.96864,0.96864,0.95841,0.97659,p=0.03136 alpha=0.03217 windows=4,True
+v_gilbert_w3a,p1000 S rx2 r=2,0.95305,0.95205,0.93636,0.96432,p=0.03136 alpha=0.03217 windows=4,True
+v_gilbert_w3a,p1000 S rx2 r=4,0.92288,0.9225,0.89659,0.94455,p=0.03136 alpha=0.03217 windows=4,True
+v_gilbert_w3a,p1000 S rx3 r=1,0.99864,0.99864,0.99818,0.99909,p=0.00136 alpha=0.00137 windows=4,True
+v_gilbert_w3a,p1000 S rx3 r=2,0.99795,0.99818,0.99705,0.99909,p=0.00136 alpha=0.00137 windows=4,True
+v_gilbert_w3a,p1000 S rx3 r=4,0.99659,0.99773,0.99568,0.99909,p=0.00136 alpha=0.00137 windows=4,True
+v_gilbert_w3a,p1000 S rx4 r=1,0.96341,0.96341,0.95886,0.96773,p=0.03659 alpha=0.03589 windows=4,True
+v_gilbert_w3a,p1000 S rx4 r=2,0.94612,0.94705,0.93795,0.95455,p=0.03659 alpha=0.03589 windows=4,True
+v_gilbert_w3a,p1000 S rx4 r=4,0.91277,0.91682,0.90818,0.92545,p=0.03659 alpha=0.03589 windows=4,True
+v_gilbert_w3a,p400 A rx2 r=1,0.95909,0.95909,0.9475,0.96773,p=0.04091 alpha=0.04032 windows=4,True
+v_gilbert_w3a,p400 A rx2 r=2,0.93975,0.94023,0.92523,0.95,p=0.04091 alpha=0.04032 windows=4,True
+v_gilbert_w3a,p400 A rx2 r=4,0.90263,0.9025,0.87841,0.92091,p=0.04091 alpha=0.04032 windows=4,True
+v_gilbert_w3a,p400 A rx3 r=1,0.99545,0.99545,0.99318,0.99773,p=0.00455 alpha=0.00434 windows=4,True
+v_gilbert_w3a,p400 A rx3 r=2,0.99329,0.99318,0.98955,0.99682,p=0.00455 alpha=0.00434 windows=4,True
+v_gilbert_w3a,p400 A rx3 r=4,0.98899,0.98955,0.98409,0.995,p=0.00455 alpha=0.00434 windows=4,True
+v_gilbert_w3a,p400 A rx4 r=1,0.93273,0.93273,0.91023,0.94909,p=0.06727 alpha=0.05195 windows=4,True
+v_gilbert_w3a,p400 A rx4 r=2,0.9085,0.90818,0.88886,0.92614,p=0.06727 alpha=0.05195 windows=4,True
+v_gilbert_w3a,p400 A rx4 r=4,0.86253,0.86182,0.84455,0.88295,p=0.06727 alpha=0.05195 windows=4,True
+v_gilbert_w3a,p400 L rx2 r=1,0.94523,0.94523,0.93977,0.95409,p=0.05477 alpha=0.05054 windows=4,True
+v_gilbert_w3a,p400 L rx2 r=2,0.92134,0.92227,0.91364,0.93182,p=0.05477 alpha=0.05054 windows=4,True
+v_gilbert_w3a,p400 L rx2 r=4,0.87595,0.87955,0.86182,0.89727,p=0.05477 alpha=0.05054 windows=4,True
+v_gilbert_w3a,p400 L rx3 r=1,0.99318,0.99318,0.99114,0.995,p=0.00682 alpha=0.00687 windows=4,True
+v_gilbert_w3a,p400 L rx3 r=2,0.98977,0.98977,0.98591,0.99318,p=0.00682 alpha=0.00687 windows=4,True
+v_gilbert_w3a,p400 L rx3 r=4,0.98299,0.98341,0.97773,0.98864,p=0.00682 alpha=0.00687 windows=4,True
+v_gilbert_w3a,p400 L rx4 r=1,0.95114,0.95114,0.94682,0.955,p=0.04886 alpha=0.04712 windows=4,True
+v_gilbert_w3a,p400 L rx4 r=2,0.92873,0.92773,0.92227,0.93318,p=0.04886 alpha=0.04712 windows=4,True
+v_gilbert_w3a,p400 L rx4 r=4,0.886,0.88227,0.87795,0.88705,p=0.04886 alpha=0.04712 windows=4,True
+v_gilbert_w3a,p400 S rx2 r=1,0.96727,0.96727,0.96409,0.97205,p=0.03273 alpha=0.03316 windows=4,True
+v_gilbert_w3a,p400 S rx2 r=2,0.95123,0.95182,0.94773,0.95727,p=0.03273 alpha=0.03316 windows=4,True
+v_gilbert_w3a,p400 S rx2 r=4,0.92021,0.91886,0.90932,0.93091,p=0.03273 alpha=0.03316 windows=4,True
+v_gilbert_w3a,p400 S rx3 r=1,0.99727,0.99727,0.99659,0.99795,p=0.00273 alpha=0.00274 windows=4,True
+v_gilbert_w3a,p400 S rx3 r=2,0.99591,0.99659,0.99568,0.99773,p=0.00273 alpha=0.00274 windows=4,True
+v_gilbert_w3a,p400 S rx3 r=4,0.99319,0.99432,0.99182,0.99705,p=0.00273 alpha=0.00274 windows=4,True
+v_gilbert_w3a,p400 S rx4 r=1,0.95227,0.95227,0.94682,0.96159,p=0.04773 alpha=0.04706 windows=4,True
+v_gilbert_w3a,p400 S rx4 r=2,0.92986,0.93136,0.9225,0.94523,p=0.04773 alpha=0.04706 windows=4,True
+v_gilbert_w3a,p400 S rx4 r=4,0.88713,0.88341,0.87136,0.9,p=0.04773 alpha=0.04706 windows=4,True

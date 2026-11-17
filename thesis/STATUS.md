@@ -13,6 +13,13 @@ Every chapter is written and was read end to end in the built PDF on 2026-10-08.
 are yours:** the declaration and the acknowledgements — with the degree and the department on the
 title page. The statement on generative AI was removed on your decision of 2026-10-24.
 
+**2026-11-17: no thesis text changed; one guard moved, by your decision.** Ch. 5 says "a Python
+library of about nine thousand lines". The unified-model task added its model module and an
+event model with ns-3's access rule, so the library is now 9 263 lines. You chose to keep the
+wording, since that is within 3 % of nine thousand. The guard test
+(`test_about_nine_thousand_lines`) now allows up to 9 500. Reword ch. 5 if the library grows
+further.
+
 ⚠️ **Later on 2026-11-08 a third valid hardware session was written in, and you have not read
 it.** You chose "Deck, paper and thesis". The session is W1n's second (`prereg-W1n`): ratio 3.297.
 * **New macros**, generated from `results/raw/w1i_w1n_2026-11-08_s2_run.csv`:

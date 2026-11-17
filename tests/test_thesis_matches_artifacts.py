@@ -501,7 +501,9 @@ class TestTheWorkedFrame:
 # W1l-W1o (2026-11-08): each goes into Appendix B, with the chapter counts, when Mohamed has the
 # wording; W1o is still running
 NOT_YET_IN_THE_THESIS: frozenset[str] = frozenset(
-    {"prereg-W1l", "prereg-W1m", "prereg-W1n", "prereg-W1o"})
+    {"prereg-W1l", "prereg-W1m", "prereg-W1n", "prereg-W1o",
+     # the unified-model task (2026-11-17): ns-3 and analysis only, not yet in the thesis
+     "prereg-UC1", "prereg-UC2"})
 
 
 class TestTheRegistrationsOfAppendixB:
@@ -578,9 +580,12 @@ class TestTheLibraryIsTheSizeTheChapterSays:
         # The revision (2026-10) added the freshness rule, admission, stream schemes and the
         # ledger audit: 8617 lines, past the 8000 the chapter's "nearly eight thousand" allowed.
         # G27 (2026-11-03) added the own-queue rules: 8924, past "eight and a half thousand".
+        # The unified-model task (2026-11-17) added its model and the ns-3-rule event model: 9263.
+        # Mohamed (2026-11-17): within 3 % of nine thousand the sentence stays true; the guard's
+        # upper bound moves to 9500 and the thesis is not touched.
         lines = sum(len(p.read_text().splitlines())
                     for p in (REPO / "src" / "authbc").rglob("*.py"))
-        assert 8750 <= lines < 9250, (
+        assert 8750 <= lines < 9500, (
             f"ch. 5 says 'about nine thousand lines'; it is {lines}")
         assert "library of about nine thousand lines" in _text("ch05_implementation.tex")
 

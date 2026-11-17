@@ -1,0 +1,59 @@
+# python=3.12.3
+# platform=Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=ns3_audit_items
+# ns3=3.48
+# config_hash=1a6371634a5700a3
+run,item,frames,arrived_idle,arrived_gap,arrived_busy,idle_sent_at_difs_after_arrival,idle_sent_at_once,gap_sent_at_difs_after_arrival,gap_sent_at_once,difs_us,collided_periods,collided_ns_observed,idle_ns_during_collisions,rx_error_ends,rx_error_per_frame_per_receiver,drops_by_reason,enqueued_within_post_backoff_bound,bound_us,frames_enqueued,queued_behind_own,never_sent,collisions,same_instant,max_spread_ns,spread_us_hist,standard,mode,nodes,frame_bytes,rx_modes,rx_preamble_types,tx_duration_ns,model_airtime_ns,bianchi_minus_difs_ns,signal_dbm_min,signal_dbm_max,collided_frames,ok_receptions_of_collided,data_mode,qos_supported,cw_min,cw_max,aifsn,slot_ns,sifs_ns,difs_ns,eifs_no_difs_ns_at_data_mode,preamble_detection_duration_ns,preamble_detection_model,frame_capture_model,error_rate_model,cca_ed_threshold_dbm,cca_sensitivity_dbm,rx_sensitivity_dbm,tx_power_start_dbm,tx_power_end_dbm,channel_number,channel_width_mhz,queue_max_size,queue_max_delay_ms
+C_cross,1,34953,17548,2048,15357,15855,0,1760,0,34.0,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+C_cross,2,,,,,,,,,,833,220564796,509,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+C_cross,3,34953,,,,,,,,,,,,0,0.0,24:454 4:1372 8:1500 9:57024,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+C_cross,4,34918,,,,,,,,,,,,,,,6,169.0,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+C_cross,9,,,,,,,,,,,,,,,,,,34953,5,0,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+C_cross,11,,,,,,,,,,,,,,,,,,,,,879,304,3996,0:617 1:98 2:86 3:78,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+D_cross,1,30812,15351,1554,13907,14025,0,1338,0,34.0,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+D_cross,2,,,,,,,,,,744,223722428,1571,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+D_cross,3,30812,,,,,,,,,,,,0,0.0,24:321 4:1303 8:6228 9:182798,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+D_cross,4,30688,,,,,,,,,,,,,,,1,169.0,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+D_cross,9,,,,,,,,,,,,,,,,,,30812,0,0,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+D_cross,11,,,,,,,,,,,,,,,,,,,,,763,119,3978,0:566 1:56 2:78 3:63,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Pb1D_cross,1,7710,2306,165,5239,2170,0,148,0,50.0,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Pb1D_cross,2,,,,,,,,,,187,347870337,114,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Pb1D_cross,3,7710,,,,,,,,,,,,0,0.0,24:55 4:365 8:383 9:11167,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Pb1D_cross,4,7679,,,,,,,,,,,,,,,3,670.0,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Pb1D_cross,9,,,,,,,,,,,,,,,,,,7710,7,0,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Pb1D_cross,11,,,,,,,,,,,,,,,,,,,,,196,104,3958,0:179 1:3 2:6 3:8,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Pb1B_cross,1,9984,2206,231,7547,1958,0,196,0,50.0,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Pb1B_cross,2,,,,,,,,,,223,363366139,0,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Pb1B_cross,3,9984,,,,,,,,,,,,0,0.0,24:30 4:556 9:4526,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Pb1B_cross,4,9974,,,,,,,,,,,,,,,72,670.0,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Pb1B_cross,9,,,,,,,,,,,,,,,,,,9984,119,0,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Pb1B_cross,11,,,,,,,,,,,,,,,,,,,,,281,252,3845,0:261 1:10 2:5 3:5,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+phy_80211a_OfdmRate6Mbps_146,5/6/8,145,,,,,,,,,,,,,,,,,,,,,,,,80211a,OfdmRate6Mbps,3,146,OfdmRate6Mbps:290,0:290,268000:145,268000,268000,-30.6571,-30.6571,0,0,,,,,,,,,,,,,,,,,,,,,,
+phy_80211a_OfdmRate6Mbps_173,5/6/8,145,,,,,,,,,,,,,,,,,,,,,,,,80211a,OfdmRate6Mbps,3,173,OfdmRate6Mbps:290,0:290,304000:145,304000,304000,-30.6571,-30.6571,0,0,,,,,,,,,,,,,,,,,,,,,,
+phy_80211a_OfdmRate12Mbps_146,5/6/8,145,,,,,,,,,,,,,,,,,,,,,,,,80211a,OfdmRate12Mbps,3,146,OfdmRate12Mbps:290,0:290,144000:145,144000,,-30.6571,-30.6571,0,0,,,,,,,,,,,,,,,,,,,,,,
+phy_80211a_OfdmRate12Mbps_173,5/6/8,145,,,,,,,,,,,,,,,,,,,,,,,,80211a,OfdmRate12Mbps,3,173,OfdmRate12Mbps:290,0:290,164000:145,164000,,-30.6571,-30.6571,0,0,,,,,,,,,,,,,,,,,,,,,,
+phy_80211a_OfdmRate24Mbps_146,5/6/8,145,,,,,,,,,,,,,,,,,,,,,,,,80211a,OfdmRate24Mbps,3,146,OfdmRate24Mbps:290,0:290,84000:145,84000,,-30.6571,-30.6571,0,0,,,,,,,,,,,,,,,,,,,,,,
+phy_80211a_OfdmRate24Mbps_173,5/6/8,145,,,,,,,,,,,,,,,,,,,,,,,,80211a,OfdmRate24Mbps,3,173,OfdmRate24Mbps:290,0:290,92000:145,92000,,-30.6571,-30.6571,0,0,,,,,,,,,,,,,,,,,,,,,,
+phy_80211p_OfdmRate3MbpsBW10MHz_146,5/6/8,145,,,,,,,,,,,,,,,,,,,,,,,,80211p,OfdmRate3MbpsBW10MHz,3,146,OfdmRate3MbpsBW10MHz:290,0:290,536000:145,536000,,-30.6571,-30.6571,0,0,,,,,,,,,,,,,,,,,,,,,,
+phy_80211p_OfdmRate3MbpsBW10MHz_173,5/6/8,145,,,,,,,,,,,,,,,,,,,,,,,,80211p,OfdmRate3MbpsBW10MHz,3,173,OfdmRate3MbpsBW10MHz:290,0:290,608000:145,608000,,-30.6571,-30.6571,0,0,,,,,,,,,,,,,,,,,,,,,,
+phy_80211p_OfdmRate6MbpsBW10MHz_146,5/6/8,145,,,,,,,,,,,,,,,,,,,,,,,,80211p,OfdmRate6MbpsBW10MHz,3,146,OfdmRate6MbpsBW10MHz:290,0:290,288000:145,288000,,-30.6571,-30.6571,0,0,,,,,,,,,,,,,,,,,,,,,,
+phy_80211p_OfdmRate6MbpsBW10MHz_173,5/6/8,145,,,,,,,,,,,,,,,,,,,,,,,,80211p,OfdmRate6MbpsBW10MHz,3,173,OfdmRate6MbpsBW10MHz:290,0:290,324000:145,328000,,-30.6571,-30.6571,0,0,,,,,,,,,,,,,,,,,,,,,,
+phy_80211p_OfdmRate12MbpsBW10MHz_146,5/6/8,145,,,,,,,,,,,,,,,,,,,,,,,,80211p,OfdmRate12MbpsBW10MHz,3,146,OfdmRate12MbpsBW10MHz:290,0:290,164000:145,168000,,-30.6571,-30.6571,0,0,,,,,,,,,,,,,,,,,,,,,,
+phy_80211p_OfdmRate12MbpsBW10MHz_173,5/6/8,145,,,,,,,,,,,,,,,,,,,,,,,,80211p,OfdmRate12MbpsBW10MHz,3,173,OfdmRate12MbpsBW10MHz:290,0:290,184000:145,184000,,-30.6571,-30.6571,0,0,,,,,,,,,,,,,,,,,,,,,,
+phy_80211b_DsssRate1Mbps_146,5/6/8,145,,,,,,,,,,,,,,,,,,,,,,,,80211b,DsssRate1Mbps,3,146,DsssRate1Mbps:290,0:290,1648000:145,1648000,,-30.6571,-30.6571,0,0,,,,,,,,,,,,,,,,,,,,,,
+phy_80211b_DsssRate1Mbps_173,5/6/8,145,,,,,,,,,,,,,,,,,,,,,,,,80211b,DsssRate1Mbps,3,173,DsssRate1Mbps:290,0:290,1864000:145,1864000,,-30.6571,-30.6571,0,0,,,,,,,,,,,,,,,,,,,,,,
+pwr_n2,5/6/8,198,,,,,,,,,,,,,,,,,,,,,,,,80211a,OfdmRate6Mbps,2,173,OfdmRate6Mbps:198,0:198,304000:198,304000,304000,-30.6571,-30.6571,0,0,,,,,,,,,,,,,,,,,,,,,,
+pwr_n609,5/6/8,2136,,,,,,,,,,,,,,,,,,,,,,,,80211a,OfdmRate6Mbps,609,176,OfdmRate6Mbps:1239104,0:1239104,308000:2136,308000,308000,-30.6571,-30.6571,98,0,,,,,,,,,,,,,,,,,,,,,,
+phy_80211a_OfdmRate12Mbps_146,7,,,,,,,,,,,,,,,,,,,,,,,,,80211a,,,,,,,,,,,,,OfdmRate12Mbps,0,15,1023,2,9000,16000,34000,48000,4000,ns3::ThresholdPreambleDetectionModel,none,ns3::TableBasedErrorRateModel,-62,-82,-101,16.0206,16.0206,36,20,500p,500
+phy_80211a_OfdmRate24Mbps_146,7,,,,,,,,,,,,,,,,,,,,,,,,,80211a,,,,,,,,,,,,,OfdmRate24Mbps,0,15,1023,2,9000,16000,34000,44000,4000,ns3::ThresholdPreambleDetectionModel,none,ns3::TableBasedErrorRateModel,-62,-82,-101,16.0206,16.0206,36,20,500p,500
+phy_80211a_OfdmRate6Mbps_146,7,,,,,,,,,,,,,,,,,,,,,,,,,80211a,,,,,,,,,,,,,OfdmRate6Mbps,0,15,1023,2,9000,16000,34000,60000,4000,ns3::ThresholdPreambleDetectionModel,none,ns3::TableBasedErrorRateModel,-62,-82,-101,16.0206,16.0206,36,20,500p,500
+phy_80211b_DsssRate1Mbps_146,7,,,,,,,,,,,,,,,,,,,,,,,,,80211b,,,,,,,,,,,,,DsssRate1Mbps,0,31,1023,2,20000,10000,50000,314000,4000,ns3::ThresholdPreambleDetectionModel,none,ns3::TableBasedErrorRateModel,-62,-82,-101,16.0206,16.0206,1,22,500p,500
+phy_80211p_OfdmRate12MbpsBW10MHz_146,7,,,,,,,,,,,,,,,,,,,,,,,,,80211p,,,,,,,,,,,,,OfdmRate12MbpsBW10MHz,0,15,1023,2,13000,32000,58000,60000,4000,ns3::ThresholdPreambleDetectionModel,none,ns3::TableBasedErrorRateModel,-62,-82,-101,16.0206,16.0206,172,10,500p,500
+phy_80211p_OfdmRate3MbpsBW10MHz_146,7,,,,,,,,,,,,,,,,,,,,,,,,,80211p,,,,,,,,,,,,,OfdmRate3MbpsBW10MHz,0,15,1023,2,13000,32000,58000,76000,4000,ns3::ThresholdPreambleDetectionModel,none,ns3::TableBasedErrorRateModel,-62,-82,-101,16.0206,16.0206,172,10,500p,500
+phy_80211p_OfdmRate6MbpsBW10MHz_146,7,,,,,,,,,,,,,,,,,,,,,,,,,80211p,,,,,,,,,,,,,OfdmRate6MbpsBW10MHz,0,15,1023,2,13000,32000,58000,64000,4000,ns3::ThresholdPreambleDetectionModel,none,ns3::TableBasedErrorRateModel,-62,-82,-101,16.0206,16.0206,172,10,500p,500

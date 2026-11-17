@@ -150,6 +150,55 @@ excecute the plan and give me the results". The plan was approved in plan mode. 
 * A `pgrep` check matched its own command line, twice. A pattern only a running session can
   match is now used.
 
+# 2026-11-17 — the unified closed-form model: stored runs scored, ns-3 audited, C1/C2 registered
+
+**Asked:** Mohamed's task: validate the unified closed-form model in ns-3, audit the ns-3 arm, and
+add an 802.11b arm. The plan was approved with his defaults on six questions. The work is on
+branch `p12-unified-model`.
+
+**What happened.**
+* **The model.** `src/authbc/models/unified_capacity.py`, with every test vector of the spec
+  (`docs/revision/2026-11-17_unified_model_spec.md`) reproduced to the digits shown. It agrees
+  with Mohamed's reference `analysis/closed_form_model.py`, committed unchanged.
+* **74 stored crossings scored** (`unified_model_vs_ns3.csv`):
+  * every exception the author named reproduces: 24 Mb/s law +8.4 / +8.9 %; 802.11b −8.2 / −5.5 %;
+    the Falcon frame −7.8 %;
+  * **the law is outside ±5 % in two unnamed rows:** cell C with the strictly periodic source
+    (+6.36 %) and cell C at window 4 (−5.06 %);
+  * the root is outside ±5 % in six unnamed rows.
+* **The 802.11b −5.5 % is the Poisson assumption** (`unified_gap_event.csv`). Every periodic event
+  model lands within 0.4 % of ns-3, and Poisson rule A at −6.9 %. **Pb1B hides two errors that
+  partly cancel:** the expression is 11.6 % above its own Poisson simulator.
+* **Trace claims** (`unified_trace_claims.csv`):
+  * the age-of-information tail held 8 / 8; Gilbert verifiability held 24 / 24 on ns-3 traces and
+    81 / 81 on W3a's;
+  * **mean access delay failed as registered:** the registration defined ρ = ν·T_f and left T
+    undefined.
+  * **Mohamed: T is T_f + DIFS, as in (M16), in ρ too.** That reading holds 7 / 9 in-range rows
+    measured as delay − (T_f + DIFS), and 9 / 9 against the file's column. It is not adopted
+    after the fact. A corrected formula is to be registered and tested on new runs.
+* **The ns-3 audit, 13 items** (`docs/audits/2026-11-17_ns3_implementation_audit.md`):
+  * the audit twin is byte-identical to the published scenario (9 / 9);
+  * **ns-3 sends an idle arrival DIFS after it arrives, not at once (rule A)**, but the two rules
+    give the same 18 capacities within 0.40 %;
+  * **EIFS never starts:** no reception ends in error, because every collision's starts fall
+    within 4 µs;
+  * **at 802.11p, ns-3 rounds payloads to 4 µs:** 2 of 6 frames are 4 µs short of the standard;
+  * everything else: no effect. That includes an asserts-on build (9 / 9 identical) and a second
+    seed set (35.08 against 35.26).
+* **U-C1 and U-C2 registered.** The C1 classifier was built and tested on a hand trace and on
+  the audit's one trace, which is not a registered load.
+
+**Decisions (Mohamed).** The library-size guard moves to 9 500, with the thesis untouched.
+
+**Slips, caught before commit:**
+* "0 of 41 205" should have read 41 409;
+* "90 %" should have read 89–94 %;
+* a law range typed by eye ("−4.4 … +1.6 %") should have read −4.55 … −0.01 %;
+* a memory figure was stated without being measured;
+* a test file of Mohamed's, not committed, skews the local count of the fast suite (CI counts
+  2 805).
+
 # 2026-11-08 — the models as mathematics (paper, thesis, deck); recent work; W1l started
 
 **Asked:**
