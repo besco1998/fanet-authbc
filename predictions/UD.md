@@ -229,3 +229,8 @@ stations" (D1):
 * the direction and the ordering held;
 * the law lies within 5–9 % at 14 of 18 crossings. The four outside are the unscored ones below
   8 stations, at −9.42 … −10.69 %.
+
+**Decision (Mohamed, 2026-11-18), added below the outcome.** The Pb1D result is recorded as
+failed, on the conservative side. The tolerance is not widened and the model is not changed. A
+finite-station, periodic-source loss expression is open item U1 (`docs/OPEN_ITEMS.md`). It is
+not started and waits for his go-ahead after C3–C5.

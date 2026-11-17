@@ -9,7 +9,8 @@ ns-3 run of the task goes through the audit twin `authbc-links-audit.cc`, which 
     python ns3/run_unified.py --cells C --n 14 --seeds 10 --trace DIR    # keep the traces
 
 Raw runs go to results/raw/<stem>_runs.csv (one row per cell, N and seed, appended, resumable);
-the summary to results/raw/<stem>.csv: per node count the mean, spread and seeds, then one
+the summary to results/raw/<stem>.csv: per node count the mean, spread and seeds (for a C3/C4
+cell, of the verified fraction — the columns keep their delivered_* names), then one
 CROSSING row per cell — the straight-line crossing of the mean delivered fraction and its
 bootstrap interval over seeds, as the frozen campaign computes them (`authbc.bench.stats`).
 """
@@ -36,6 +37,7 @@ from ns3_paths import ns3_root  # noqa: E402
 
 from authbc.bench import provenance  # noqa: E402
 from authbc.bench.stats import interpolated_crossing, interpolated_crossing_ci  # noqa: E402
+from authbc.sim.verified import read_allrx, verified_key_chain, verified_units  # noqa: E402
 
 RAW = REPO / "results" / "raw"
 SIM_TIME = 20.0
@@ -49,6 +51,7 @@ class Cell:
     standard: str = "80211a"
     mode: str = "OfdmRate6Mbps"
     extra: tuple[str, ...] = ()           # further audit-twin options
+    verify: str = ""                      # "key:r" or "unit:n": score verified records (C3, C4)
 
     def args(self) -> list[str]:
         a = [f"--frameSize={self.frame_bytes}", f"--framesPerSec={self.fps!r}",
@@ -84,6 +87,17 @@ for _name, (_bytes, _fps) in {"Pb1B": (146, 50.0), "Pb1D": (173, 12.5)}.items():
 # D2: the batch sweep at 10 records/s, ℓ(b) = 137 + 9b, f = 10/b
 for _b in (1, 2, 4, 8, 16, 32):
     CELLS[f"DB{_b}"] = Cell(137 + 9 * _b, 10.0 / _b, **_B)
+# C3: cell D with a key record once in r frames — a 173 B key frame, then r − 1 frames of 158 B,
+# all with b = 4 records; a frame verifies only with every earlier frame of its group.
+CELLS["K2"] = Cell(173, 12.5, extra=("--sizePattern=173,158",), verify="key:2")
+CELLS["K4"] = Cell(173, 12.5, extra=("--sizePattern=173,158,158,158",), verify="key:4")
+# C4: cell D's 173 B signed unit as n frames handed to the MAC together, each with its own 23 B
+# header (98 B, 73 B); frames_per_s is the unit rate, the frame rate is n times it.
+CELLS["F2"] = Cell(98, 12.5, extra=("--burst=2",), verify="unit:2")
+CELLS["F3"] = Cell(73, 12.5, extra=("--burst=3",), verify="unit:3")
+# Tooling checks, not registered: cell D with r = 1 and n = 1 must give the delivered fraction.
+CELLS["DK1"] = Cell(173, 12.5, verify="key:1")
+CELLS["DU1"] = Cell(173, 12.5, verify="unit:1")
 
 
 def run_one(cell: str, n: int, seed: int, trace_dir: Path | None,
@@ -97,10 +111,13 @@ def run_one(cell: str, n: int, seed: int, trace_dir: Path | None,
                 f"--outPrefix={prefix}", *CELLS[cell].args()]
         if trace_dir is not None:
             args += list(trace_opts)
+        if CELLS[cell].verify:
+            args.append("--traceAllRx=1")
         subprocess.run(args, check=True, env=env, capture_output=True)
         kv = dict(csv.reader(prefix.with_suffix(".csv").read_text().splitlines()[1:]))
+        extra = verified(cell, n, int(kv["tx_frames"]), Path(f"{prefix}_allrx.csv"))
     c = CELLS[cell]
-    return {"cell": cell, "frame_bytes": str(c.frame_bytes), "frames_per_s": repr(c.fps),
+    return {**extra, "cell": cell, "frame_bytes": str(c.frame_bytes), "frames_per_s": repr(c.fps),
             "standard": c.standard, "mode": c.mode, "extra": " ".join(c.extra),
             "n_nodes": str(n), "seed": str(seed), "sim_time_s": repr(SIM_TIME),
             "tx_frames": kv["tx_frames"], "rx_frames": kv["rx_frames"],
@@ -111,6 +128,27 @@ def run_one(cell: str, n: int, seed: int, trace_dir: Path | None,
 FIELDS = ["cell", "frame_bytes", "frames_per_s", "standard", "mode", "extra", "n_nodes", "seed",
           "sim_time_s", "tx_frames", "rx_frames", "delivered_frac", "delay_mean_ms",
           "delay_p99_ms"]
+VERIFIED_FIELDS = [*FIELDS, "verified", "verified_of", "verified_frac"]
+
+
+def verified(cell: str, n: int, tx_frames: int, allrx: Path) -> dict[str, str]:
+    """For a C3/C4 cell: the (receiver, frame or unit) pairs that verify, out of all sent, from
+    the run's full reception trace (`authbc.sim.verified`). The trace is a temporary file, unless
+    --trace keeps it."""
+    rule = CELLS[cell].verify
+    if not rule:
+        return {}
+    kind, k = rule.split(":")
+    got = read_allrx(str(allrx))
+    if kind == "key":
+        ok, of = verified_key_chain(got, int(k)), tx_frames * (n - 1)
+    elif kind == "unit":
+        if tx_frames % int(k):
+            raise ValueError(f"{cell}: {tx_frames} frames sent is not whole units of {k}")
+        ok, of = verified_units(got, int(k)), tx_frames // int(k) * (n - 1)
+    else:
+        raise ValueError(f"{cell}: unknown verification rule {rule!r}")
+    return {"verified": str(ok), "verified_of": str(of), "verified_frac": f"{ok / of:.6f}"}
 
 
 def read_runs(path: Path) -> list[dict[str, str]]:
@@ -129,11 +167,17 @@ def _header(run: str, config: dict) -> str:
 
 def append_runs(path: Path, rows: list[dict[str, str]], stem: str) -> None:
     new = not path.exists()
+    fields = VERIFIED_FIELDS if "verified_frac" in rows[0] else FIELDS
+    if not new:                         # never append rows of another shape to a file
+        with path.open(encoding="utf-8") as fh:
+            header = next(ln for ln in fh if not ln.startswith("#")).rstrip("\n").split(",")
+        if header != fields:
+            raise SystemExit(f"{path.name}: its columns are not this run's; use another --stem")
     with path.open("a", encoding="utf-8", newline="") as fh:
         if new:
             fh.write(_header(f"{stem}_runs", {"cells": {k: str(v) for k, v in CELLS.items()},
                                               "sim_time": SIM_TIME}))
-        w = csv.DictWriter(fh, fieldnames=FIELDS, lineterminator="\n")
+        w = csv.DictWriter(fh, fieldnames=fields, lineterminator="\n")
         if new:
             w.writeheader()
         w.writerows(rows)
@@ -142,9 +186,9 @@ def append_runs(path: Path, rows: list[dict[str, str]], stem: str) -> None:
 def summarise(runs: list[dict[str, str]], seeds: int, levels: tuple[float, ...]) -> list[dict]:
     """Per (cell, N) dispersion over exactly `seeds` runs, then a CROSSING row per level."""
     by: dict[str, dict[int, list[float]]] = {}
-    for r in runs:
-        by.setdefault(r["cell"], {}).setdefault(int(r["n_nodes"]), []).append(
-            float(r["delivered_frac"]))
+    for r in runs:                      # C3/C4 cells cross on verified records, the rest on frames
+        metric = "verified_frac" if r.get("verified_frac") else "delivered_frac"
+        by.setdefault(r["cell"], {}).setdefault(int(r["n_nodes"]), []).append(float(r[metric]))
     out: list[dict] = []
     for cell, per_n in sorted(by.items()):
         full = {n: v for n, v in sorted(per_n.items()) if len(v) == seeds}

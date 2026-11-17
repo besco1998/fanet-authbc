@@ -49,7 +49,7 @@ Every document: [`README.md`](README.md).
 * The documents were tidied on 2026-11-01: about 70 became about 25, nothing lost
   ([`README.md`](README.md) has the map of where each old file went).
 
-**The gate.** `make all` = lint + mypy + 2828 fast tests + the 43-test frozen gate. The paper has
+**The gate.** `make all` = lint + mypy + 2835 fast tests + the 43-test frozen gate. The paper has
 References **55** rendered (85 in the shared bibliography).
 
 **How to edit the paper.** Edit `paper/main.tex` directly. Every number is a macro from
@@ -79,6 +79,7 @@ index in `predictions/README.md`).
 | G15 | Crypto timing on the Pi 3B+ and BeagleBone | optional | register §G |
 | G37 | Why four cores give 3.36 times one | optional | register §G |
 | Q1–Q14 | Questions below (Q8–Q10 from G27, 2026-11-03; Q11–Q14 from the desk work) | Mohamed | §3 |
+| U1 | **A finite-station, periodic-source version of the loss expression.** It is to serve both the ns-3 small-swarm cells (802.11b Pb1B/Pb1D, where the Poisson form errs 5–11 % low, `predictions/UD.md`) and the 2–5-station hardware sessions. To be registered and tested on new cells only. **Not started: waits for Mohamed's go-ahead after C3–C5** (decided 2026-11-18) | Mohamed (go-ahead) | `predictions/UD.md` outcome; `docs/DECISIONS.md` 2026-11-18 |
 
 ## 2a. The main open items: the work's weaknesses (set by Mohamed, 2026-11-04)
 

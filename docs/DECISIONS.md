@@ -233,6 +233,18 @@ and #2, thesis markers, hardware, deferred studies) waits.
 | **Springer template files** | Kept local and git-ignored | A fresh clone downloads the template before `make paper` |
 | **The review folder** | Not decided (the recommendation covered only the template files) | Stays out of git |
 
+## Decided by Mohamed, 2026-11-18 — the 802.11b arm's failed test (U-D)
+
+The registered test of the 15–37-station 802.11b cell (Pb1D) failed: 17 of 18 cases, with the
+model 4.97–6.34 % below ns-3, outside the registered ±5 % (`predictions/UD.md`). No bug was found.
+
+| decision | chosen | what it costs, or leaves open |
+|---|---|---|
+| **The failure** | Recorded as failed, on the conservative side. The tolerance is not widened and the model is not changed | The model's ±5 % claim does not hold at 802.11b for 15–37 stations |
+| **Next work** | Go on with C3–C5, then the validation document | — |
+| **The validation document** | (1) Pb1D stated as failed by 4.97–6.34 %, conservative side, with the periodic-source event model (within 0.4 % of ns-3) as the evidence for the cause, linked to the model's stated Poisson limit. (2) The three-term split (18 of 48 held at 802.11b; 17 of 48 at 802.11a) as its own finding: measured against predicted share per term, which term fails where, and whether the failure is in the DIFS-gap term under ns-3's rule, as the C1 note anticipated | — |
+| **A corrected loss expression** | Open item U1: a finite-station, periodic-source version, for the ns-3 small-swarm cells and the 2–5-station hardware sessions; registered and tested on new cells only | Not started; waits for his go-ahead after C3–C5 |
+
 > **Open items live in [`OPEN_ITEMS.md`](OPEN_ITEMS.md)** — the single tracked list of
 > everything assumed, deferred, unvalidated or accepted-as-a-limitation. Decisions live here.
 > **What each decision COST is in the trade-off register at the end of this file** (formerly
