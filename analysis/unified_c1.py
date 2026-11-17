@@ -16,6 +16,7 @@ busy period ends. Shares are per seed; the mean and a bootstrap 95 % interval ov
 reported, and each prediction scored as held (within ±10 % of the mean, or inside the interval).
 
     python analysis/unified_c1.py DIR      -> results/raw/unified_c1_scored.csv
+    python analysis/unified_c1.py DIR OUT  -> OUT (U-D's D3: the same rules at 802.11b)
 """
 from __future__ import annotations
 
@@ -40,7 +41,10 @@ from authbc.models import unified_capacity as uc  # noqa: E402
 
 OUT = REPO / "results" / "raw" / "unified_c1_scored.csv"   # unified_c1.csv is the driver's summary
 DETECT_NS = 4_000
-CELLS = {"C": (146, 50.0), "D": (173, 12.5)}
+CELLS = {"C": (146, 50.0), "D": (173, 12.5),          # U-C1, 802.11a at 6 Mb/s
+         "Pb1B": (146, 50.0), "Pb1D": (173, 12.5)}    # U-D's D3, 802.11b at 1 Mb/s
+STANDARD = {"C": "80211a", "D": "80211a", "Pb1B": "80211b", "Pb1D": "80211b"}
+PHY_ACCESS = {"80211a": (phy.OFDM_20MHZ_6M, uc.A80211A), "80211b": (phy.DSSS_1M, uc.A80211B)}
 TOL = 0.10
 QUANTITIES = ("tie", "zero_backoff_after_busy", "detection_window", "p", "a", "K")
 
@@ -155,7 +159,8 @@ def diagnose(fr: dict[tuple[int, int], dict[str, int]],
 
 def predictions(cell: str, n: int) -> dict[str, float]:
     size, f = CELLS[cell]
-    acc, tf = uc.A80211A, uc.airtime_s(phy.OFDM_20MHZ_6M, size)
+    p_hy, acc = PHY_ACCESS[STANDARD[cell]]
+    tf = uc.airtime_s(p_hy, size)
     nu = (n - 1) * f
     p = uc.loss(nu, tf, acc)
     a = nu * (tf - acc.delta_s) * (1 - p / 2)
@@ -164,7 +169,7 @@ def predictions(cell: str, n: int) -> dict[str, float]:
             "K": a * (1 + gam + 2 * eta) / (1 - gam - a)}
 
 
-def main_diagnose(d: Path) -> None:
+def main_diagnose(d: Path, out: Path = OUT.parent / "unified_c1_diagnostic.csv") -> None:
     per: dict[tuple[str, int], list[dict[str, float]]] = defaultdict(list)
     for path in sorted(d.glob("*_mac.csv")):
         m = re.fullmatch(r"(\w+?)_n(\d+)_s(\d+)_mac\.csv", path.name)
@@ -185,16 +190,18 @@ def main_diagnose(d: Path) -> None:
     w = csv.DictWriter(buf, fieldnames=list(rows[0]), lineterminator="\n")
     w.writeheader()
     w.writerows(rows)
-    (OUT.parent / "unified_c1_diagnostic.csv").write_text(buf.getvalue())
+    out.write_text(buf.getvalue())
     for r in rows:
         print(r)
 
 
 def main() -> None:
+    # unified_c1.py [--diagnose] DIR [OUT]: OUT defaults to U-C1's files; U-D's D3 names its own.
     if sys.argv[1] == "--diagnose":
-        main_diagnose(Path(sys.argv[2]))
+        main_diagnose(*(Path(a) for a in sys.argv[2:4]))
         return
     d = Path(sys.argv[1])
+    out = Path(sys.argv[2]) if len(sys.argv) > 2 else OUT
     per: dict[tuple[str, int], list[dict[str, float]]] = defaultdict(list)
     for path in sorted(d.glob("*_mac.csv")):
         m = re.fullmatch(r"(\w+?)_n(\d+)_s(\d+)_mac\.csv", path.name)
@@ -223,7 +230,7 @@ def main() -> None:
     w = csv.DictWriter(buf, fieldnames=list(rows[0]), lineterminator="\n")
     w.writeheader()
     w.writerows(rows)
-    OUT.write_text(buf.getvalue())
+    out.write_text(buf.getvalue())
     for r in rows:
         print(r)
 

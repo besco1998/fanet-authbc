@@ -61,3 +61,22 @@ def test_a_and_k() -> None:
     r = c1.classify(fr, {1: [100 * US], 2: [200 * US]})
     assert r["a"] == pytest.approx(2 / 3)
     assert r["K"] == pytest.approx(1.0)                  # each waits alongside one other
+
+
+# U-D's D3 table (predictions/UD.md): the classifier's predictions at 802.11b, 1 Mb/s.
+D3 = {("Pb1B", 5): (0.00564, 0.00030, 0.00212, 0.00807, 0.3275, 0.5605),
+      ("Pb1B", 11): (0.10730, 0.00183, 0.00710, 0.11623, 0.7742, 5.1482),
+      ("Pb1D", 17): (0.00767, 0.00033, 0.00219, 0.01019, 0.3701, 0.6770),
+      ("Pb1D", 35): (0.08866, 0.00145, 0.00596, 0.09607, 0.7525, 4.2737)}
+
+
+@pytest.mark.parametrize(("cell", "n"), sorted(D3))
+def test_predictions_at_80211b_are_the_registered_ones(cell: str, n: int) -> None:
+    got = c1.predictions(cell, n)
+    for q, want in zip(c1.QUANTITIES, D3[(cell, n)], strict=True):
+        assert round(got[q], 5 if q not in ("a", "K") else 4) == want, q
+
+
+def test_80211a_predictions_unchanged() -> None:
+    got = c1.predictions("C", 34)                       # predictions/UC1.md, row C 34
+    assert round(got["tie"], 5) == 0.02603 and round(got["K"], 4) == 1.0452

@@ -11,6 +11,10 @@
 //   --traceStateNode  <out>_state.csv: one station's PHY state timeline (start, duration, state)
 //   --traceAllRx      <out>_allrx.csv: every application reception, with source and sequence
 //   --constants       <out>_constants.csv: MAC/PHY constants read back from the live objects
+//   --sizePattern=a,b,…  frame sizes in bytes, cycled frame by frame (key/dependent frames)
+//   --burst=n         n frames handed to the MAC together at each instant (fragments of a unit)
+//   --rxPowerDbm=x    every link received at x dBm (FixedRssLossModel after the usual loss)
+//   (the last three need the jittered source; at their defaults nothing changes)
 //
 // (The text below is authbc-links.cc's, unchanged.)
 // authbc-links.cc — the published scenario (authbc-delay.cc) with three options, absent by
@@ -87,6 +91,8 @@ static std::ofstream g_rxOut;
 static std::ofstream g_stateOut;
 static std::ofstream g_allRxOut;
 static bool g_seqOn = false;                       // --traceAllRx: number each source's frames
+static std::vector<uint32_t> g_sizePattern;       // --sizePattern: sizes cycled per frame
+static uint32_t g_burst = 1;                      // --burst: frames per instant
 static std::map<uint64_t, uint32_t> g_seqOf;       // uid -> that source's sequence number
 static std::vector<uint32_t> g_nextSeq;
 
@@ -281,15 +287,25 @@ class JitteredPeriodicSource : public Application
     void Send()
     {
         m_pending.pop_front();          // jitter <= period, so frames leave in grid order
+        if (!g_sizePattern.empty()) m_pktSize = g_sizePattern[m_count++ % g_sizePattern.size()];
         Ptr<Packet> p = Create<Packet>(m_pktSize);
         AppTxTraceFrom(m_node, p);
         m_socket->Send(p);
+        for (uint32_t k = 1; k < g_burst; ++k)      // the rest of the unit, at the same instant
+        {
+            if (!g_sizePattern.empty())
+                m_pktSize = g_sizePattern[m_count++ % g_sizePattern.size()];
+            Ptr<Packet> q = Create<Packet>(m_pktSize);
+            AppTxTraceFrom(m_node, q);
+            m_socket->Send(q);
+        }
     }
 
     Address m_dest;
     Time m_period;
     Time m_jitter;
     uint32_t m_pktSize;
+    uint32_t m_count = 0;                           // frames sent, for --sizePattern
     uint32_t m_node;
     Ptr<UniformRandomVariable> m_rand;
     Ptr<Socket> m_socket;
@@ -335,6 +351,9 @@ main(int argc, char* argv[])
     int32_t traceStateNode = -1;
     bool traceAllRx = false;
     bool constants = false;
+    std::string sizePattern;
+    uint32_t burst = 1;
+    double rxPowerDbm = 0.0;                        // 0 = the usual loss (an rx power is < 0 dBm)
 
     CommandLine cmd(__FILE__);
     cmd.AddValue("nNodes", "number of nodes in the collision domain", nNodes);
@@ -367,9 +386,24 @@ main(int argc, char* argv[])
     cmd.AddValue("traceAllRx", "audit: every application reception with source and sequence",
                  traceAllRx);
     cmd.AddValue("constants", "audit: write the live MAC/PHY constants", constants);
+    cmd.AddValue("sizePattern", "frame sizes cycled frame by frame, e.g. 173,158", sizePattern);
+    cmd.AddValue("burst", "frames handed to the MAC together at each instant", burst);
+    cmd.AddValue("rxPowerDbm", "fixed received power on every link, dBm; 0 = usual loss",
+                 rxPowerDbm);
     cmd.Parse(argc, argv);
     NS_ABORT_MSG_IF(traceAllRx && txJitterMs <= 0.0,
                     "traceAllRx numbers frames at the jittered source: needs txJitterMs > 0");
+    NS_ABORT_MSG_IF((!sizePattern.empty() || burst != 1) && txJitterMs <= 0.0,
+                    "sizePattern and burst act on the jittered source: need txJitterMs > 0");
+    NS_ABORT_MSG_IF(burst < 1 || rxPowerDbm > 0.0, "burst >= 1; rxPowerDbm < 0 (or 0 = off)");
+    for (size_t at = 0; !sizePattern.empty() && at != std::string::npos;)
+    {
+        const size_t comma = sizePattern.find(',', at);
+        g_sizePattern.push_back(static_cast<uint32_t>(
+            std::stoul(sizePattern.substr(at, comma == std::string::npos ? comma : comma - at))));
+        at = comma == std::string::npos ? comma : comma + 1;
+    }
+    g_burst = burst;
     NS_ABORT_MSG_IF(txJitterMs < 0.0 || txJitterMs * 1e-3 > 1.0 / framesPerSec,
                     "txJitterMs must lie in [0, one period]");
     NS_ABORT_MSG_IF(txSkewPpm < 0.0 || (txSkewPpm > 0.0 && txJitterMs <= 0.0),
@@ -406,6 +440,8 @@ main(int argc, char* argv[])
     channel.SetPropagationDelay("ns3::ConstantSpeedPropagationDelayModel");
     channel.AddPropagationLoss("ns3::LogDistancePropagationLossModel",
                                "Exponent", DoubleValue(pathLossExp));
+    if (rxPowerDbm < 0.0)       // replaces whatever the chain before it computed
+        channel.AddPropagationLoss("ns3::FixedRssLossModel", "Rss", DoubleValue(rxPowerDbm));
     YansWifiPhyHelper phy;
     phy.SetChannel(channel.Create());
 

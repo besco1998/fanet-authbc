@@ -74,6 +74,16 @@ CELLS: dict[str, Cell] = {
     "UB32": Cell(137 + 9 * 32, 50.0 / 32),
     "UB64": Cell(137 + 9 * 64, 50.0 / 64),
 }
+# U-D (predictions/UD.md): standard 802.11b, 1 Mb/s, long preamble. D1 and D3: the base and
+# design frames at W = 32 (the standard's) and, by --cwMin = W − 1, at W = 16 and 8.
+_B = {"standard": "80211b", "mode": "DsssRate1Mbps"}
+for _name, (_bytes, _fps) in {"Pb1B": (146, 50.0), "Pb1D": (173, 12.5)}.items():
+    CELLS[_name] = Cell(_bytes, _fps, **_B)
+    for _w in (16, 8):
+        CELLS[f"{_name}W{_w}"] = Cell(_bytes, _fps, extra=(f"--cwMin={_w - 1}",), **_B)
+# D2: the batch sweep at 10 records/s, ℓ(b) = 137 + 9b, f = 10/b
+for _b in (1, 2, 4, 8, 16, 32):
+    CELLS[f"DB{_b}"] = Cell(137 + 9 * _b, 10.0 / _b, **_B)
 
 
 def run_one(cell: str, n: int, seed: int, trace_dir: Path | None,
