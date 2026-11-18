@@ -8,6 +8,9 @@
   172 µs on air;
 * `--rxPowerDbm=-80`: every frame the PHY delivers is received at −80 dBm; without the option at
   the published −30.6571 dBm (audit item 8);
+* `--nakagamiM=1` at a mean of −60 dBm: received powers vary frame by frame, and their linear
+  mean is within 10 % of 1 nW. Only 0.6 % of draws fall below the −82 dBm detection floor and go
+  unseen, so they bias the mean by less than 1 %;
 * the driver's verification (`authbc.sim.verified`, `ns3/run_unified.py`): with r = 1 and n = 1
   the verified fraction equals the delivered fraction, on a real run of cell D.
 
@@ -101,6 +104,20 @@ def check_rx_power(td: Path) -> list[dict[str, object]]:
              "passed": got0 == {-30.6571}}]
 
 
+def check_nakagami(td: Path) -> dict[str, object]:
+    exe = ns3_root() / "build" / "scratch" / "ns3.48-authbc-links-audit-optimized"
+    env = {**os.environ, "LD_LIBRARY_PATH": str(ns3_root() / "build" / "lib")}
+    subprocess.run([str(exe), *[a for a in BASE if not a.startswith("--simTime")], "--simTime=20",
+                    f"--outPrefix={td / 'nk'}", "--frameSize=173", "--rxPowerDbm=-60",
+                    "--nakagamiM=1", "--traceRx=2"], check=True, env=env, capture_output=True)
+    with (td / "nk_rx.csv").open() as fh:
+        dbm = [float(ln.split(",")[4].split(";")[0]) for ln in fh if ln.startswith("PWR,")]
+    mean_nw = sum(10 ** (d / 10) for d in dbm) / len(dbm) * 1e6
+    return {"check": "nakagamiM 1 at -60 dBm", "frames": len(dbm),
+            "expected": f"varying; linear mean {mean_nw:.3f} nW within 10 % of 1 nW",
+            "passed": len(set(dbm)) > len(dbm) // 2 and abs(mean_nw - 1.0) <= 0.10}
+
+
 def check_verification() -> list[dict[str, object]]:
     rows = []
     for cell in ("DK1", "DU1"):
@@ -115,7 +132,7 @@ def main() -> None:
     with tempfile.TemporaryDirectory() as tdir:
         td = Path(tdir)
         rows = [check_size_pattern(td), check_burst(td), *check_rx_power(td),
-                *check_verification()]
+                check_nakagami(td), *check_verification()]
     buf = io.StringIO()
     for k, v in {**provenance.env_block(), "run": "twin_options_check",
                  "config_hash": provenance.config_hash({"base": BASE})}.items():

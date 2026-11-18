@@ -14,6 +14,8 @@
 //   --sizePattern=a,b,…  frame sizes in bytes, cycled frame by frame (key/dependent frames)
 //   --burst=n         n frames handed to the MAC together at each instant (fragments of a unit)
 //   --rxPowerDbm=x    every link received at x dBm (FixedRssLossModel after the usual loss)
+//   --nakagamiM=m     Nakagami-m fading after all of that: a fresh draw per frame and link,
+//                     mean power unchanged (m = 1: Rayleigh); 0 = off (C5, setting D2)
 //   (the last three need the jittered source; at their defaults nothing changes)
 //
 // (The text below is authbc-links.cc's, unchanged.)
@@ -354,6 +356,7 @@ main(int argc, char* argv[])
     std::string sizePattern;
     uint32_t burst = 1;
     double rxPowerDbm = 0.0;                        // 0 = the usual loss (an rx power is < 0 dBm)
+    double nakagamiM = 0.0;                         // 0 = no fading
 
     CommandLine cmd(__FILE__);
     cmd.AddValue("nNodes", "number of nodes in the collision domain", nNodes);
@@ -390,12 +393,15 @@ main(int argc, char* argv[])
     cmd.AddValue("burst", "frames handed to the MAC together at each instant", burst);
     cmd.AddValue("rxPowerDbm", "fixed received power on every link, dBm; 0 = usual loss",
                  rxPowerDbm);
+    cmd.AddValue("nakagamiM", "Nakagami-m fading per frame and link after the loss; 0 = off",
+                 nakagamiM);
     cmd.Parse(argc, argv);
     NS_ABORT_MSG_IF(traceAllRx && txJitterMs <= 0.0,
                     "traceAllRx numbers frames at the jittered source: needs txJitterMs > 0");
     NS_ABORT_MSG_IF((!sizePattern.empty() || burst != 1) && txJitterMs <= 0.0,
                     "sizePattern and burst act on the jittered source: need txJitterMs > 0");
     NS_ABORT_MSG_IF(burst < 1 || rxPowerDbm > 0.0, "burst >= 1; rxPowerDbm < 0 (or 0 = off)");
+    NS_ABORT_MSG_IF(nakagamiM < 0.0, "nakagamiM >= 0 (0 = off)");
     for (size_t at = 0; !sizePattern.empty() && at != std::string::npos;)
     {
         const size_t comma = sizePattern.find(',', at);
@@ -442,6 +448,10 @@ main(int argc, char* argv[])
                                "Exponent", DoubleValue(pathLossExp));
     if (rxPowerDbm < 0.0)       // replaces whatever the chain before it computed
         channel.AddPropagationLoss("ns3::FixedRssLossModel", "Rss", DoubleValue(rxPowerDbm));
+    if (nakagamiM > 0.0)        // last in the chain, so the mean stays what came before it
+        channel.AddPropagationLoss("ns3::NakagamiPropagationLossModel", "m0",
+                                   DoubleValue(nakagamiM), "m1", DoubleValue(nakagamiM), "m2",
+                                   DoubleValue(nakagamiM));
     YansWifiPhyHelper phy;
     phy.SetChannel(channel.Create());
 

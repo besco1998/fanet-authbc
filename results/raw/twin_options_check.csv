@@ -13,5 +13,6 @@ check,frames,expected,passed
 burst 3 x 73 B,213,"enqueued in threes at one instant, 172000 ns each",True
 rxPowerDbm -80,,every PWR at -80 dBm,True
 rxPowerDbm off,,every PWR at -30.6571 dBm,True
+nakagamiM 1 at -60 dBm,1485,varying; linear mean 1.018 nW within 10 % of 1 nW,True
 "verified == delivered (DK1, N = 40)",9939,delivered 0.994164,True
 "verified == delivered (DU1, N = 40)",9939,delivered 0.994164,True

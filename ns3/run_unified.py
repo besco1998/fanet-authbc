@@ -37,7 +37,14 @@ from ns3_paths import ns3_root  # noqa: E402
 
 from authbc.bench import provenance  # noqa: E402
 from authbc.bench.stats import interpolated_crossing, interpolated_crossing_ci  # noqa: E402
-from authbc.sim.verified import read_allrx, verified_key_chain, verified_units  # noqa: E402
+from authbc.sim.verified import (  # noqa: E402
+    read_allrx,
+    unit_completion_ns,
+    units_sent,
+    untimed,
+    verified_key_chain,
+    verified_units,
+)
 
 RAW = REPO / "results" / "raw"
 SIM_TIME = 20.0
@@ -100,6 +107,14 @@ CELLS["F3"] = Cell(73, 12.5, extra=("--burst=3",), verify="unit:3")
 for _b in (1, 2, 4, 8, 16, 32):
     CELLS[f"W48B{_b}"] = Cell(137 + 9 * _b, 200.0 / _b, "80211a", "OfdmRate48Mbps",
                               extra=("--rxPowerDbm=-77.17",))
+# U-C4S (predictions/UC4S.md): U-C4's units with each frame on its own jittered slot ("spread"),
+# per-source send counts (--perNode) so that only whole units count.
+CELLS["F2P"] = Cell(98, 25.0, extra=("--perNode=1",), verify="unit:2")
+CELLS["F3P"] = Cell(73, 37.5, extra=("--perNode=1",), verify="unit:3")
+# U-C4B (predictions/UC4B.md): the burst correction's new cells, units sent as a burst.
+CELLS["BB2"] = Cell(98, 12.5, "80211b", "DsssRate1Mbps", extra=("--burst=2",), verify="unit:2")
+CELLS["BB3"] = Cell(73, 12.5, "80211b", "DsssRate1Mbps", extra=("--burst=3",), verify="unit:3")
+CELLS["AB120"] = Cell(72, 12.5, extra=("--burst=2", "--sizePattern=72,71"), verify="unit:2")
 # Diagnostics for U-C4's failure, not registered: the same frames at the same frame rate, but
 # each sent on its own jittered slot instead of in a burst. Only the per-frame loss is compared.
 CELLS["F2S"] = Cell(98, 25.0)
@@ -146,7 +161,8 @@ def run_one(cell: str, n: int, seed: int, trace_dir: Path | None,
 FIELDS = ["cell", "frame_bytes", "frames_per_s", "standard", "mode", "extra", "n_nodes", "seed",
           "sim_time_s", "tx_frames", "rx_frames", "delivered_frac", "delay_mean_ms",
           "delay_p99_ms"]
-VERIFIED_FIELDS = [*FIELDS, "verified", "verified_of", "verified_frac"]
+VERIFIED_FIELDS = [*FIELDS, "verified", "verified_of", "verified_frac", "unit_wait_mean_ms",
+                   "unit_wait_p99_ms"]
 
 
 def verified(cell: str, n: int, tx_frames: int, allrx: Path) -> dict[str, str]:
@@ -156,17 +172,37 @@ def verified(cell: str, n: int, tx_frames: int, allrx: Path) -> dict[str, str]:
     rule = CELLS[cell].verify
     if not rule:
         return {}
-    kind, k = rule.split(":")
-    got = read_allrx(str(allrx))
+    kind, ks = rule.split(":")
+    k = int(ks)
+    timed = read_allrx(str(allrx))
+    got = untimed(timed)
+    wait = {"unit_wait_mean_ms": "", "unit_wait_p99_ms": ""}
     if kind == "key":
-        ok, of = verified_key_chain(got, int(k)), tx_frames * (n - 1)
+        ok, of = verified_key_chain(got, k), tx_frames * (n - 1)
     elif kind == "unit":
-        if tx_frames % int(k):
-            raise ValueError(f"{cell}: {tx_frames} frames sent is not whole units of {k}")
-        ok, of = verified_units(got, int(k)), tx_frames // int(k) * (n - 1)
+        nodes = allrx.with_name(allrx.name.replace("_allrx.csv", "_nodes.csv"))
+        if nodes.exists():          # frames sent one by one (--perNode): whole units per source
+            sent = per_source_sent(nodes)
+            ok, of = verified_units(got, k, sent), units_sent(sent, k) * (n - 1)
+        else:                       # a burst: every unit is sent whole
+            if tx_frames % k:
+                raise ValueError(f"{cell}: {tx_frames} frames sent is not whole units of {k}")
+            ok, of = verified_units(got, k), tx_frames // k * (n - 1)
+        waits = sorted(unit_completion_ns(timed, k))
+        if waits:
+            p99 = waits[min(len(waits) - 1, int(0.99 * len(waits)))]
+            wait = {"unit_wait_mean_ms": f"{st.mean(waits) / 1e6:.6f}",
+                    "unit_wait_p99_ms": f"{p99 / 1e6:.6f}"}
     else:
         raise ValueError(f"{cell}: unknown verification rule {rule!r}")
-    return {"verified": str(ok), "verified_of": str(of), "verified_frac": f"{ok / of:.6f}"}
+    return {"verified": str(ok), "verified_of": str(of), "verified_frac": f"{ok / of:.6f}",
+            **wait}
+
+
+def per_source_sent(nodes: Path) -> dict[int, int]:
+    """Frames each source sent, from the twin's `<out>_nodes.csv` (--perNode)."""
+    with nodes.open(encoding="utf-8") as fh:
+        return {int(r["node"]): int(r["tx_frames"]) for r in csv.DictReader(fh)}
 
 
 def read_runs(path: Path) -> list[dict[str, str]]:

@@ -504,7 +504,7 @@ NOT_YET_IN_THE_THESIS: frozenset[str] = frozenset(
     {"prereg-W1l", "prereg-W1m", "prereg-W1n", "prereg-W1o",
      # the unified-model task (2026-11-17): ns-3 and analysis only, not yet in the thesis
      "prereg-UC1", "prereg-UC2", "prereg-UD", "prereg-UC3", "prereg-UC4",
-     "prereg-UC5D1"})
+     "prereg-UC5D1", "prereg-UC4S", "prereg-UC4B"})
 
 
 class TestTheRegistrationsOfAppendixB:

@@ -17,6 +17,7 @@ from collections import defaultdict
 from collections.abc import Iterable
 
 Reception = tuple[int, int, int]
+TimedReception = tuple[int, int, int, int]      # (receiver, source, seq, t_ns)
 
 
 def _received(receptions: Iterable[Reception]) -> dict[tuple[int, int], set[int]]:
@@ -38,25 +39,53 @@ def verified_key_chain(receptions: Iterable[Reception], r: int) -> int:
     return count
 
 
-def verified_units(receptions: Iterable[Reception], n: int) -> int:
-    """(receiver, unit) pairs whose n frames all arrived."""
+def verified_units(receptions: Iterable[Reception], n: int,
+                   sent_by_src: dict[int, int] | None = None) -> int:
+    """(receiver, unit) pairs whose n frames all arrived. With `sent_by_src`, a source's last
+    unit counts only if all of its n frames were sent: frames sent one by one (not in a burst)
+    can end a run part-way through a unit."""
     if n < 1:
         raise ValueError("n ≥ 1")
     count = 0
-    for seqs in _received(receptions).values():
+    for (_rx, src), seqs in _received(receptions).items():
+        limit = None if sent_by_src is None else sent_by_src[src] // n
         per_unit: dict[int, int] = defaultdict(int)
         for s in seqs:
-            per_unit[s // n] += 1
+            if limit is None or s // n < limit:
+                per_unit[s // n] += 1
         count += sum(1 for k in per_unit.values() if k == n)
     return count
 
 
-def read_allrx(path: str) -> list[Reception]:
-    """The twin's `<out>_allrx.csv` (rx,src,seq,t_ns) as receptions."""
-    out: list[Reception] = []
+def units_sent(sent_by_src: dict[int, int], n: int) -> int:
+    """Complete units sent, over all sources."""
+    return sum(v // n for v in sent_by_src.values())
+
+
+def unit_completion_ns(receptions: Iterable[TimedReception], n: int) -> list[int]:
+    """For every verified (receiver, unit): its last frame's arrival minus its first frame's —
+    how much longer the receiver waits to verify a unit than to receive its first frame."""
+    first: dict[tuple[int, int, int], int] = {}
+    last: dict[tuple[int, int, int], int] = {}
+    count: dict[tuple[int, int, int], int] = defaultdict(int)
+    for rx, src, seq, t in receptions:
+        key = (rx, src, seq // n)
+        first[key] = min(first.get(key, t), t)
+        last[key] = max(last.get(key, t), t)
+        count[key] += 1
+    return [last[k] - first[k] for k, c in count.items() if c == n]
+
+
+def read_allrx(path: str) -> list[TimedReception]:
+    """The twin's `<out>_allrx.csv` (rx,src,seq,t_ns) as timed receptions."""
+    out: list[TimedReception] = []
     with open(path, encoding="utf-8") as fh:
         next(fh)
         for line in fh:
-            rx, src, seq, _t = line.split(",")
-            out.append((int(rx), int(src), int(seq)))
+            rx, src, seq, t = line.split(",")
+            out.append((int(rx), int(src), int(seq), int(t)))
     return out
+
+
+def untimed(receptions: Iterable[TimedReception]) -> list[Reception]:
+    return [(rx, src, seq) for rx, src, seq, _t in receptions]

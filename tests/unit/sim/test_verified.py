@@ -13,7 +13,12 @@ import random
 
 import pytest
 
-from authbc.sim.verified import verified_key_chain, verified_units
+from authbc.sim.verified import (
+    unit_completion_ns,
+    units_sent,
+    verified_key_chain,
+    verified_units,
+)
 
 
 def test_key_chain_by_hand() -> None:
@@ -58,3 +63,16 @@ def test_rejects_r_or_n_below_one(bad: int) -> None:
 def test_no_double_count_on_repeated_reception() -> None:
     got = list(itertools.repeat((1, 7, 0), 3))
     assert verified_key_chain(got, 2) == 1 and verified_units(got, 1) == 1
+
+
+def test_a_part_sent_last_unit_does_not_count() -> None:
+    # source 7 sent 5 frames one by one, n = 2: units 0 and 1 are whole, unit 2 is half-sent
+    got = [(1, 7, s) for s in range(5)]
+    assert verified_units(got, 2, {7: 5}) == 2
+    assert units_sent({7: 5, 8: 4}, 2) == 2 + 2
+
+
+def test_completion_time_of_a_unit() -> None:
+    got = [(1, 7, 0, 100), (1, 7, 1, 40_100), (1, 7, 2, 80_000), (2, 7, 0, 105)]
+    # n = 2: unit 0 complete at receiver 1 (40 000 ns); unit 1 has one frame; receiver 2 one frame
+    assert unit_completion_ns(got, 2) == [40_000]
