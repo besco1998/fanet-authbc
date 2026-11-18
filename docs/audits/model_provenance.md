@@ -5797,3 +5797,38 @@ Validate-Results comparison against the outcome's own table.
   2026-11-18):
   * D1 at 48 Mb/s with constant power (`predictions/UC5D1.md`);
   * D2 at 6 Mb/s with per-frame Nakagami fading.
+
+## F136 — C5's setting D2: with per-frame fading at 6 Mb/s, ns-3 still receives a frame perfectly or not at all; the length dependence measured on hardware cannot come from ns-3's channel (2026-11-18)
+
+`ns3/c5_d2_probe.py` → `results/raw/c5_d2_probe.csv`.
+* **The runs:** two stations, 802.11a 6 Mb/s, the published PHY and detection model, and
+  Nakagami m = 1 (Rayleigh) fading on every link (the twin's `--nakagamiM=1`). Mean powers −70,
+  −66.84 and −64 dBm; frames of 146, 173, 281 and 425 B; 3 seeds × 100 s each, about 30 000
+  frames per cell.
+
+**What it found:**
+* **zero bit errors** in every cell;
+* **all loss is frames faded below the −82 dBm detection floor,** plus the 0.04 % faded below the
+  −101 dBm receiver sensitivity, which ns-3 drops without any trace;
+* **the loss is the same at every length:** at −66.84 dBm, 2.81 % for every size.
+* It is 2.81 % against 3.00 % for an exact exponential tail (−1.9 σ; −2.3 σ pooled over 13
+  seeds). That is borderline and not established. The draw is an exact exponential in the source
+  (`ErlangRandomVariable`, k = 1; `random-variable-stream.cc`:1146–1159).
+
+**The reason.**
+* **ns-3 draws the fading once per frame and link,** and holds it over the frame
+  (`NakagamiPropagationLossModel::DoCalcRxPower`, `propagation-loss-model.cc`:687–735).
+* **So each frame has a single SNR.** Above the floor that SNR is at least 12 dB, where a 6 Mb/s
+  frame has no bit errors (F135). Below the floor the frame is not detected.
+* **A frame is either error-free or undetected, at any mean power,** and no length dependence can
+  arise.
+
+**What it changes.**
+* **Rule R5 has no length-dependent loss to act on in ns-3 at 6 Mb/s,** with fading or without.
+  D2 is recorded with this probe and has no capacity runs (Mohamed, 2026-11-18).
+* **The length dependence measured on hardware must come from something else.** W3a measured
+  long frames losing 2.0 times the one-record frame at 802.11b 1 Mb/s (F134). That has to come
+  from variation within a frame, such as interference or fading over the frame's duration, which
+  ns-3's channel does not model.
+* **The best batch for the hardware is therefore predicted from W3a's measured loss, not from
+  ns-3** (`analysis/c5_hardware_link.py` → `results/raw/c5_hardware_bestbatch.csv`).
