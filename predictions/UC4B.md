@@ -83,3 +83,58 @@ A signed unit is sent as n frames handed to the MAC together.
   * U-D's 802.11b results;
   * the correction's values on U-C4's cells, above.
 * **No U-C4B run has been made.**
+
+---
+
+## Outcome — added 2026-11-18, after the runs; nothing above this line was changed
+
+**The runs.** As registered, through the audit twin rebuilt on 2026-11-18:
+* pilots of 5 seeds (`results/raw/unified_c4b_pilot_{bb2,bb3,ab120}{,_runs}.csv`): crossings
+  13.51, 7.97 and 45.20;
+* then 30 seeds on seven node counts by U-C2's rule: BB2 at N = 11 … 17, BB3 at 5 … 11, AB120 at
+  42 … 48 (`unified_c4b_*{,_runs}.csv`, 210 runs each).
+
+**Checked before scoring.** An independent script on the raw counts reproduces all three
+crossings:
+* every node count has seeds 1–30;
+* the frames sent are whole units.
+
+The AB120 curve is flat. Its 30-seed mean crosses 0.95 three times (44.96, 45.34 and 46.09); the
+registered crossing is the first.
+
+**Scored** by `analysis/unified_c4sb.py` → `results/raw/unified_c4sb_scored.csv`. Its model values
+are the registered ones.
+
+**Scored: the correction failed at both cells it was scored on, on the optimistic side.**
+
+| cell | PHY, unit | ns-3 crossing (95 % CI) | the correction | error | band | held | original root, error |
+|---|---|---|---|---|---|---|---|
+| BB2 | 802.11b, 2 × 98 B | **13.576** (13.368–13.811) | 14.77 | +8.79 % | −9 … +5 % | **no** | 16.99, +25.16 % |
+| BB3 | 802.11b, 3 × 73 B | **7.494** (7.351–7.666) | 8.96 | +19.57 % | none (below 8) | not scored | 11.50, +53.44 % |
+| AB120 | 802.11a, 72 + 71 B | **44.957** (44.700–46.320) | 48.97 | +8.93 % | ±5 % | **no** | 60.83, +35.32 % |
+
+At AB120 the correction is still +6.26 % above the last crossing (46.09).
+
+**Reported, not scored.**
+* **The correction takes up most of the burst's effect, but not all.** It removes 63–75 % of the
+  original root's excess: from +25 / +53 / +35 % to +9 / +20 / +9 %. That matches what it gave on
+  U-C4's own cells, disclosed at registration: +7.9 % and +17.0 %.
+* **The verification wait in a burst** is a frame or two: 0.31 ms at 802.11a and 2.3–3.6 ms at
+  802.11b, with a 99th percentile of 0.9–8.8 ms.
+
+**What it means.**
+* **Frames 2 … n of a burst lose more than "always busy at the tie" accounts for.** The correction
+  changes only their tie term. Something else in the burst still raises the loss.
+  * **A reading, not tested:** the unit's frames also raise the number of stations holding a frame
+    at the end of a busy period (K), and the correction keeps K as for independent starts.
+* **A burst correction that holds within ±5 % is not established.** The registered one is
+  optimistic by about 9 % where scored.
+* **For design:** send fragments spread out. That case matches the model (U-C4S). The price is a
+  verification wait of (n − 1)/n of a unit period.
+* **Whether to pursue a better burst model** is Mohamed's decision.
+
+**Expectations:**
+* "The correction closes most of the gap, but stays optimistic; AB120 likely to fail on the
+  optimistic side": held;
+* "at 802.11b near ns-3's crossing": missed. It is +8.79 % at BB2, and the PHY's Poisson
+  pessimism did not offset the burst's optimism enough.

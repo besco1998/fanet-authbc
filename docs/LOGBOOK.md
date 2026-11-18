@@ -201,6 +201,30 @@ excecute the plan and give me the results". The plan was approved in plan mode. 
   application stopped. That is an end-of-run artefact, now excluded with its reason;
 * a probe path was cut by `with_suffix` at "-70.0".
 
+**Later the same day: results, and Mohamed's decisions on them.**
+* **U-C3 held 4 / 4:** the key record at r = 2 and 4. The law is +0.10 / +2.80 % from ns-3, the
+  root −2.73 / −1.71 %.
+* **U-C4 failed.** For the unit over 2 and 3 frames, the root is +35 / +62 %, optimistic.
+  * The unit rule holds. The frames sent together lose 1.7–2.3 times the expression's per-frame
+    share.
+  * An unregistered diagnostic, with the same frames spread out, loses 0.94–0.95 times.
+  * Mohamed: record it; register the spread case (U-C4S, new seeds) and a burst correction
+    (U-C4B, new cells). Both are registered and running.
+* **U-C5-D1 held:** at 48 Mb/s the measured best batch is the predicted 8 (52.78 against 51.70).
+  * R5 holds in ns-3.
+  * The 8-record curve crosses 0.95 three times; the scorer reports all three.
+* **D2 met the stop condition (F136):** with fading at 6 Mb/s there is still no length-dependent
+  loss.
+  * Mohamed: record it with the reason, no capacity runs, and predict the hardware's best batch
+    from W3a's measured loss. Done: 67 / 35 / 3 records on three links.
+* **Slips:**
+  * D2's first count missed frames faded below the −101 dBm sensitivity. ns-3 drops them without
+    a trace, which made the loss look 7 % below the exponential tail; with them it is −1.9 σ.
+  * A spread-frame diagnostic stopped on the unit guard (frames sent one by one need not be whole
+    units). That needed per-source counting, now in `verified_units(sent_by_src=…)`.
+  * A typed loss, 4.46 %, should have read 4.45 % (196 / 4 400). This is the double rounding the
+    W3a note warns of, caught by checking every table entry against its counts.
+
 # 2026-11-17 — the unified closed-form model: stored runs scored, ns-3 audited, C1/C2 registered
 
 **Asked:** Mohamed's task: validate the unified closed-form model in ns-3, audit the ns-3 arm, and

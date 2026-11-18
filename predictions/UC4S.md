@@ -69,3 +69,54 @@ burst correction is registered separately, in `predictions/UC4B.md`.*
     computed;
   * the twin's option checks.
 * **No U-C4S run has been made,** and no run on seeds 31–60 of these cells.
+
+---
+
+## Outcome — added 2026-11-18, after the runs; nothing above this line was changed
+
+**The runs.** As registered, through the audit twin rebuilt on 2026-11-18. Every run used new
+seeds:
+* pilots on seeds 31–35 (`results/raw/unified_c4s_pilot_n{2,3}{,_runs}.csv`): crossings 56.81 and
+  32.89;
+* then 30 seeds, 31–60, on seven node counts by U-C2's rule: F2P at N = 54 … 60, F3P at
+  30 … 36 (`unified_c4s_n{2,3}{,_runs}.csv`, 210 runs each).
+
+**Checked before scoring.** An independent script on the raw counts reproduces both crossings to
+the digit:
+* every node count has seeds 31–60;
+* each verified share equals verified / (whole units sent × (N − 1));
+* both curves fall monotonically and cross 0.95 once.
+
+**Scored** by `analysis/unified_c4sb.py` → `results/raw/unified_c4sb_scored.csv`. Its model values
+are the registered ones (`tests/test_unified_c4sb.py`).
+
+**Scored: 2 of 2 held, and the law held its stated direction at both.**
+
+| cell | n | ns-3 crossing (95 % CI) | root | error | held | law | above ns-3? |
+|---|---|---|---|---|---|---|---|
+| F2P | 2 | **56.957** (56.587–57.231) | 55.37 | −2.79 % | **yes** | 58.97 | yes |
+| F3P | 3 | **32.617** (32.148–33.072) | 31.70 | −2.81 % | **yes** | 35.06 | yes |
+
+**The verification wait** (reported, not scored): for every verified unit at every receiver, its
+last frame's arrival minus its first's, averaged per run.
+
+| cell | predicted (n − 1)/(n·f) | measured mean (range over runs) | 99th percentile |
+|---|---|---|---|
+| F2P | 40.0 ms | **39.99 ms** (39.70–40.34) | 74.3 ms |
+| F3P | 53.3 ms | **53.32 ms** (52.98–53.74) | 76.2 ms |
+
+**What it means.**
+* **Sent spread out, the split unit is what the fragmentation rule and the loss expression
+  predict:** the root lies 2.8 % below ns-3. The unsplit 173 B frame is 3.1 % below (cell D).
+* **The price is the wait.** A receiver verifies a unit (n − 1)/n of a unit period after its first
+  frame arrives: 40 ms for two frames and 53 ms for three, at 12.5 units per second. The 99th
+  percentile is 74–76 ms.
+* **Against the burst** (U-C4, the same units handed to the MAC together): the capacity is 26–38 %
+  below the rule there.
+  * U-C4's runs did not record the wait.
+  * The one 802.11a burst that did, U-C4B's 120 B unit as 72 + 71 B, waits 0.31 ms on average.
+
+**Expectations:**
+* "The roots within ±5 %": held;
+* "uncertain at n = 3": held anyway, at −2.81 %;
+* "the mean wait near 40 and 53 ms": held, at 39.99 and 53.32 ms.
