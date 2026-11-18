@@ -95,6 +95,11 @@ CELLS["K4"] = Cell(173, 12.5, extra=("--sizePattern=173,158,158,158",), verify="
 # header (98 B, 73 B); frames_per_s is the unit rate, the frame rate is n times it.
 CELLS["F2"] = Cell(98, 12.5, extra=("--burst=2",), verify="unit:2")
 CELLS["F3"] = Cell(73, 12.5, extra=("--burst=3",), verify="unit:3")
+# C5, setting D1 (predictions/UC5D1.md): 802.11a at 48 Mb/s, every link received at −77.17 dBm
+# (FixedRssLossModel), the lean format at 200 records/s.
+for _b in (1, 2, 4, 8, 16, 32):
+    CELLS[f"W48B{_b}"] = Cell(137 + 9 * _b, 200.0 / _b, "80211a", "OfdmRate48Mbps",
+                              extra=("--rxPowerDbm=-77.17",))
 # Tooling checks, not registered: cell D with r = 1 and n = 1 must give the delivered fraction.
 CELLS["DK1"] = Cell(173, 12.5, verify="key:1")
 CELLS["DU1"] = Cell(173, 12.5, verify="unit:1")

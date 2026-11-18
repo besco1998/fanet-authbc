@@ -5751,3 +5751,49 @@ Validate-Results comparison against the outcome's own table.
   * The interval of the length penalty is re-drawn exactly (1.242, 1.062–1.448) from
     `results/raw/w3a_w3a_2026-11-06_cycles.csv` by `w3a_loss.length_penalty_bootstrap`. That is
     reporting added after the outcome, tested in `tests/test_w3a_loss.py::TestTheReport`.
+
+## F135 — C5 as first specified cannot run: at 802.11a 6 Mb/s with constant received power, ns-3 receives a frame perfectly or not at all (2026-11-18)
+
+`ns3/probe_noise_loss.py` → `results/raw/c5_noise_probe.csv` and `c5_noise_probe_rates.csv`.
+* **The runs:** two stations, 50 frames/s, 20 simulated seconds, through the audit twin. Every
+  link is fixed at one received power (`--rxPowerDbm`, FixedRssLossModel), with no fading, in the
+  published PHY.
+* **Every lost frame is counted by cause** (`--traceRx=1`): a decode error after a detected
+  preamble, or a drop with its ns-3 reason.
+
+**What the probe found, at 6 Mb/s, for 173 B and 425 B frames (1 998 frames each):**
+* **from −70.0 to −81.9 dBm: zero decode errors.** The only losses are the 4 per run from the two
+  stations' own collisions (ns-3 reasons 4, TXING, and 24, SIGNAL_DETECTION_ABORTED_BY_TX);
+* **at −82.0 dBm and below: every frame lost** to reason 9, PREAMBLE_DETECT_FAILURE.
+
+**Why, from the source** (ns-3.48):
+* **Detection** (`threshold-preamble-detection-model.cc`:31–40): a preamble is detected only if
+  its SNR is at least 4 dB and its RSSI at least −82 dBm.
+* **Noise** (`interference-helper.cc`:408–413; `wifi-phy.cc`:186–197): F·k·290 K·B with
+  RxNoiseFigure F = 7 dB and B = 20 MHz, that is −93.966 dBm. The PHY reports the same value
+  (`--traceRx=2`).
+* **So the weakest frame the PHY detects has an SNR of at least 12.0 dB.**
+* **The error model**, `TableBasedErrorRateModel` (`yans-wifi-helper.cc`:76;
+  `table-based-error-rate-model.cc`:139–240), gives a 6 Mb/s (BPSK ½) frame at 12 dB a loss below
+  its precision floor, which it sets to 0. `ns3/authbc-per.cc` calls that model and gives exactly
+  0 at −81.9 dBm for both sizes.
+* **At 6 Mb/s the decoding threshold therefore sits below the detection floor.**
+* **Also from the source:** the model takes its loss from a 32 B table below 400 B and a 1 458 B
+  table from 400 B on (`SizeThreshold`), then scales it by 1 − (1 − PER)^(size/table size)
+  (lines 226–233). "Size" is the payload chunk's bits over 8, including service, tail and pad.
+
+**At the higher 802.11a rates** (`c5_noise_probe_rates.csv`, −82 … −64 dBm in 1 dB steps):
+* **24 Mb/s:** no decode errors;
+* **36 Mb/s:** decode errors only at −81 dBm (173 B: 15 of 1 998);
+* **48 Mb/s:** 1.6 % (173 B) and 3.7 % (425 B) at −77 dBm;
+* **54 Mb/s:** 3.25 % and 8.1 % at −76 dBm.
+
+**What it changes.**
+* **Rule R5 (an interior best batch) needs a range of received power in which loss grows with
+  frame length.** With constant power at 6 Mb/s, ns-3 has no such range. The batch is then bounded
+  only by the deadline and the payload, and R5 does not apply.
+* **This is a statement about the conditions of R5, not a failure of it.**
+* **C5 is respecified** by work package D of `docs/prompts/CAPTURE_PROMPT.md` (Mohamed,
+  2026-11-18):
+  * D1 at 48 Mb/s with constant power (`predictions/UC5D1.md`);
+  * D2 at 6 Mb/s with per-frame Nakagami fading.

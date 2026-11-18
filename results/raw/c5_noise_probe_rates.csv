@@ -1,0 +1,163 @@
+# python=3.12.3
+# platform=Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=c5_noise_probe_rates (not registered)
+# config_hash=3140ff792b272ddb
+mode,frame_bytes,rx_power_dbm,tx_frames,delivered_frac,decode_errors,drops
+OfdmRate24Mbps,173,-82.0,1998,0,0,DROP reason 24: 2; DROP reason 4: 2; DROP reason 9: 1994
+OfdmRate24Mbps,425,-82.0,1998,0,0,DROP reason 24: 2; DROP reason 4: 2; DROP reason 9: 1994
+OfdmRate24Mbps,173,-81.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate24Mbps,425,-81.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate24Mbps,173,-80.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate24Mbps,425,-80.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate24Mbps,173,-79.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate24Mbps,425,-79.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate24Mbps,173,-78.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate24Mbps,425,-78.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate24Mbps,173,-77.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate24Mbps,425,-77.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate24Mbps,173,-76.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate24Mbps,425,-76.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate24Mbps,173,-75.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate24Mbps,425,-75.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate24Mbps,173,-74.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate24Mbps,425,-74.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate24Mbps,173,-73.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate24Mbps,425,-73.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate24Mbps,173,-72.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate24Mbps,425,-72.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate24Mbps,173,-71.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate24Mbps,425,-71.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate24Mbps,173,-70.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate24Mbps,425,-70.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate24Mbps,173,-69.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate24Mbps,425,-69.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate24Mbps,173,-68.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate24Mbps,425,-68.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate24Mbps,173,-67.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate24Mbps,425,-67.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate24Mbps,173,-66.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate24Mbps,425,-66.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate24Mbps,173,-65.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate24Mbps,425,-65.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate24Mbps,173,-64.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate24Mbps,425,-64.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate36Mbps,173,-82.0,1998,0,0,DROP reason 24: 2; DROP reason 4: 2; DROP reason 9: 1994
+OfdmRate36Mbps,425,-82.0,1998,0,0,DROP reason 24: 2; DROP reason 4: 2; DROP reason 9: 1994
+OfdmRate36Mbps,173,-81.0,1998,0.99049,15,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate36Mbps,425,-81.0,1998,0.981481,33,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate36Mbps,173,-80.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate36Mbps,425,-80.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate36Mbps,173,-79.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate36Mbps,425,-79.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate36Mbps,173,-78.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate36Mbps,425,-78.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate36Mbps,173,-77.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate36Mbps,425,-77.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate36Mbps,173,-76.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate36Mbps,425,-76.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate36Mbps,173,-75.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate36Mbps,425,-75.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate36Mbps,173,-74.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate36Mbps,425,-74.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate36Mbps,173,-73.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate36Mbps,425,-73.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate36Mbps,173,-72.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate36Mbps,425,-72.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate36Mbps,173,-71.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate36Mbps,425,-71.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate36Mbps,173,-70.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate36Mbps,425,-70.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate36Mbps,173,-69.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate36Mbps,425,-69.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate36Mbps,173,-68.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate36Mbps,425,-68.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate36Mbps,173,-67.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate36Mbps,425,-67.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate36Mbps,173,-66.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate36Mbps,425,-66.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate36Mbps,173,-65.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate36Mbps,425,-65.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate36Mbps,173,-64.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate36Mbps,425,-64.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate48Mbps,173,-82.0,1998,0,0,DROP reason 24: 2; DROP reason 4: 2; DROP reason 9: 1994
+OfdmRate48Mbps,425,-82.0,1998,0,0,DROP reason 24: 2; DROP reason 4: 2; DROP reason 9: 1994
+OfdmRate48Mbps,173,-81.0,1998,0,1994,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate48Mbps,425,-81.0,1998,0,1994,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate48Mbps,173,-80.0,1998,0.0045045,1985,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate48Mbps,425,-80.0,1998,0,1994,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate48Mbps,173,-79.0,1998,0.307808,1379,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate48Mbps,425,-79.0,1998,0.101101,1792,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate48Mbps,173,-78.0,1998,0.827327,341,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate48Mbps,425,-78.0,1998,0.694695,606,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate48Mbps,173,-77.0,1998,0.981982,32,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate48Mbps,425,-77.0,1998,0.960961,74,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate48Mbps,173,-76.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate48Mbps,425,-76.0,1998,0.997497,1,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate48Mbps,173,-75.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate48Mbps,425,-75.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate48Mbps,173,-74.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate48Mbps,425,-74.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate48Mbps,173,-73.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate48Mbps,425,-73.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate48Mbps,173,-72.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate48Mbps,425,-72.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate48Mbps,173,-71.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate48Mbps,425,-71.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate48Mbps,173,-70.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate48Mbps,425,-70.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate48Mbps,173,-69.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate48Mbps,425,-69.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate48Mbps,173,-68.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate48Mbps,425,-68.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate48Mbps,173,-67.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate48Mbps,425,-67.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate48Mbps,173,-66.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate48Mbps,425,-66.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate48Mbps,173,-65.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate48Mbps,425,-65.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate48Mbps,173,-64.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate48Mbps,425,-64.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate54Mbps,173,-82.0,1998,0,0,DROP reason 24: 2; DROP reason 4: 2; DROP reason 9: 1994
+OfdmRate54Mbps,425,-82.0,1998,0,0,DROP reason 24: 2; DROP reason 4: 2; DROP reason 9: 1994
+OfdmRate54Mbps,173,-81.0,1998,0,1994,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate54Mbps,425,-81.0,1998,0,1994,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate54Mbps,173,-80.0,1998,0,1994,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate54Mbps,425,-80.0,1998,0,1994,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate54Mbps,173,-79.0,1998,0,1994,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate54Mbps,425,-79.0,1998,0,1994,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate54Mbps,173,-78.0,1998,0.124625,1745,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate54Mbps,425,-78.0,1998,0,1994,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate54Mbps,173,-77.0,1998,0.711211,573,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate54Mbps,425,-77.0,1998,0.48999,1015,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate54Mbps,173,-76.0,1998,0.965465,65,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate54Mbps,425,-76.0,1998,0.917417,161,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate54Mbps,173,-75.0,1998,0.997497,1,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate54Mbps,425,-75.0,1998,0.991491,13,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate54Mbps,173,-74.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate54Mbps,425,-74.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate54Mbps,173,-73.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate54Mbps,425,-73.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate54Mbps,173,-72.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate54Mbps,425,-72.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate54Mbps,173,-71.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate54Mbps,425,-71.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate54Mbps,173,-70.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate54Mbps,425,-70.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate54Mbps,173,-69.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate54Mbps,425,-69.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate54Mbps,173,-68.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate54Mbps,425,-68.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate54Mbps,173,-67.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate54Mbps,425,-67.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate54Mbps,173,-66.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate54Mbps,425,-66.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate54Mbps,173,-65.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate54Mbps,425,-65.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate54Mbps,173,-64.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
+OfdmRate54Mbps,425,-64.0,1998,0.997998,0,DROP reason 24: 2; DROP reason 4: 2
