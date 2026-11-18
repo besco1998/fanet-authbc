@@ -105,6 +105,15 @@ CELLS["DK1"] = Cell(173, 12.5, verify="key:1")
 CELLS["DU1"] = Cell(173, 12.5, verify="unit:1")
 
 
+def run_checked(args: list[str], env: dict[str, str]) -> None:
+    """Run one ns-3 process; on failure say how, with its stderr. On 2026-11-18 a launch exited
+    127 (the loader) once and could not be explained afterwards: the stderr was not kept."""
+    proc = subprocess.run(args, env=env, capture_output=True)
+    if proc.returncode != 0:
+        tail = proc.stderr.decode(errors="replace")[-2000:]
+        raise RuntimeError(f"exit {proc.returncode}: {' '.join(args[:3])} …\nstderr: {tail}")
+
+
 def run_one(cell: str, n: int, seed: int, trace_dir: Path | None,
             trace_opts: tuple[str, ...]) -> dict[str, str]:
     exe = ns3_root() / "build" / "scratch" / "ns3.48-authbc-links-audit-optimized"
@@ -118,7 +127,7 @@ def run_one(cell: str, n: int, seed: int, trace_dir: Path | None,
             args += list(trace_opts)
         if CELLS[cell].verify:
             args.append("--traceAllRx=1")
-        subprocess.run(args, check=True, env=env, capture_output=True)
+        run_checked(args, env)
         kv = dict(csv.reader(prefix.with_suffix(".csv").read_text().splitlines()[1:]))
         extra = verified(cell, n, int(kv["tx_frames"]), Path(f"{prefix}_allrx.csv"))
     c = CELLS[cell]
