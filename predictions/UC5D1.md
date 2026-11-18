@@ -128,3 +128,57 @@ The integer optimum is b = 12 (61.12). It is not in the sweep, and the sweep's b
   * the stored campaign;
   * U-C2 and U-D.
 * **No D1 capacity run has been made.**
+
+---
+
+## Outcome — added 2026-11-18, after the runs; nothing above this line was changed
+
+**The runs.** As registered, through the audit twin:
+* pilots of 5 seeds at ±5 % steps around each prediction (`results/raw/c5_d1_pilot_b*`):
+  11.44, 18.97, 37.51, 53.63 and 36.12 for b = 1 … 16;
+* then 30 seeds on seven node counts per batch, by U-C2's rule (`results/raw/c5_d1_b{1..16}`);
+* b = 32 at N = 2, 3 and 4 with 30 seeds (`c5_d1_b32`).
+
+That is 210 runs per batch and 90 at b = 32.
+
+**Checked before scoring.** An independent script on the raw counts reproduces all five
+crossings to the digit:
+* every node count has seeds 1–30;
+* each delivered fraction equals rx / (tx (N − 1)).
+
+**Scored** by `analysis/c5_d1.py --score` → `results/raw/c5_d1_scored.csv`.
+
+**Scored: held.** The measured best batch in the sweep is **b = 8**, the registered one. Its
+capacity is **52.78 stations**, against the registered 51.70 (−2.04 %).
+
+| b | ns-3 crossing (95 % CI) | every crossing of the mean | predicted (root) | error |
+|---|---|---|---|---|
+| 1 | 11.50 (11.43–11.58) | 11.50 | 10.96 | −4.73 % |
+| 2 | 19.16 (18.92–19.39) | 19.16 | 18.59 | −2.99 % |
+| 4 | 37.39 (36.91–37.70) | 37.39 | 36.17 | −3.25 % |
+| **8** | **52.78** (52.57–54.17) | 52.78, 53.70, 54.16 | **51.70** | **−2.04 %** (−4.53 % at the last) |
+| 16 | 35.10 (33.32–35.48; 94.9 % of resamples bracket) | 35.10 | 32.40 | −7.69 % |
+| 32 | none: 93.4–93.5 % delivered at N = 2, 3, 4 | — | none (alone it loses 6.42 %) | as predicted |
+
+**About the b = 8 row.** The noise takes 3.68 % of the 5 % budget, so the mean curve falls only
+0.002 between N = 51 and 57: 0.95072 at N = 51 and 0.94894 at N = 57. Within that span, seed noise
+makes it cross 0.95 three times.
+* The registered crossing is the first one, as the driver computes for every cell.
+* The prediction is within 5 % of every one of them: −2.04 % at the first, −4.53 % at the last.
+
+**R5 holds in ns-3.** With constant power at 48 Mb/s, capacity rises with the batch to b = 8, then
+falls, and is zero at b = 32. This is the interior best batch the rule predicts, at the batch it
+predicts.
+
+**Reported, not scored.**
+* The model is below ns-3 at every batch: 2–5 % from b = 1 to 8, and 7.7 % at the fragile b = 16
+  (a collision budget of 0.35 %).
+* (G19)'s b_opt = 17.6 lies a sweep step above the measured best (8), as registered.
+
+**Expectations:**
+* "the best batch b = 8": held;
+* "capacity at b = 8 within ±5 %, ns-3 above the root": held;
+* "at b = 1 ns-3 above the prediction by more": held, the largest error among b ≤ 8, but
+  4.73 %, below the 7–9 % the Poisson limit states;
+* "b = 16 the most fragile": held, with the largest error and a crossing bracketed by 94.9 % of
+  resamples.

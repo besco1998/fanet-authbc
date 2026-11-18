@@ -49,3 +49,11 @@ def test_g19_inputs_follow_the_definitions() -> None:
     assert g["s"] == pytest.approx(0.0302 - 0.0269)
     assert g["per0"] == pytest.approx(0.0269 - (0.0302 - 0.0269))
     assert g["beta"] == pytest.approx((g["phi_t_us"] + g["tau_hat_us"]) / g["psi_t_us"])
+
+
+def test_every_crossing_of_a_flat_curve() -> None:
+    means = {51: 0.95072, 52: 0.95075, 53: 0.94979, 54: 0.95009, 55: 0.94953}
+    got = d1.all_crossings(means)
+    assert len(got) == 3
+    assert got[0] == pytest.approx(52 + 0.00075 / 0.00096)
+    assert got[-1] == pytest.approx(54 + 0.00009 / 0.00056)

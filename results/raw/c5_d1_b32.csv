@@ -1,0 +1,7 @@
+cell,n_nodes,seeds,delivered_mean,delivered_min,delivered_max,delivered_stdev
+W48B32,2,30,0.934959,0.906883,0.959514,0.014894
+W48B32,3,30,0.934252,0.915094,0.951613,0.009663
+W48B32,4,30,0.934606,0.924426,0.946586,0.005455
+W48B32,CROSSING@0.95,30,,,,
+.48 (authbc-links-audit)
+# config_hash=b8c48a0496c45531
