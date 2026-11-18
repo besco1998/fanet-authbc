@@ -72,3 +72,56 @@ separately the root, is within **±5 %** of ns-3's.
   * the two N = 3 option checks;
   * the r = 1 control at cell D, N = 40, seed 1 (delivered 0.994164).
 * **No U-C3 run has been made.**
+
+---
+
+## Outcome — added 2026-11-18, after the runs; nothing above this line was changed
+
+**The runs.** As registered, through the audit twin:
+* pilots of 5 seeds (`results/raw/unified_c3_pilot_r{2,4}{,_runs}.csv`): crossings 105.59 and
+  79.76;
+* then 30 seeds on seven node counts each: K2 at N = 100 … 112 (step 2), K4 at N = 74 … 86 (step
+  2), 210 runs per cell (`results/raw/unified_c3_r{2,4}{,_runs}.csv`).
+
+**One launch failed and was re-run.** At 07:54 one ns-3 process (K2, N = 104, seed 3) exited 127
+at launch, before it ran, and the driver stopped with 53 runs on file.
+* The cause is undetermined (`docs/LOGBOOK.md`, 2026-11-18, failure report).
+* The driver was resumed at 07:58. It re-ran that launch in full and skipped the completed runs.
+* A completed run reproduced identically, so no data was affected.
+* **Also:** ns-3's libraries were relinked at 07:34 under this job, when a new program was added.
+  Afterwards the twin gate held, 9 / 9 and byte-identical, and the same completed run reproduced.
+
+**Checked before scoring.** An independent script on the raw counts reproduces both crossings to
+the digit:
+* every node count has seeds 1–30;
+* each verified share equals verified / (frames sent × (N − 1));
+* both curves fall monotonically and cross 0.95 once.
+
+**Scored** by `analysis/unified_c34.py` → `results/raw/unified_c34_scored.csv`. Its model values
+are the registered ones (`tests/test_unified_c34.py`).
+
+**Scored: 4 of 4 held.**
+
+| cell | r | ns-3 crossing (95 % CI) | law | error | root | error |
+|---|---|---|---|---|---|---|
+| K2 | 2 | **105.567** (104.364–106.492) | 105.67 | +0.10 % | 102.68 | −2.73 % |
+| K4 | 4 | **81.440** (79.783–82.671) | 83.72 | +2.80 % | 80.05 | −1.71 % |
+
+**Reported, not scored.**
+* **The ratio to r = 1.** ns-3 gives 0.848 (r = 2) and 0.654 (r = 4), with N(1) = 124.55. The law
+  gives 0.860 and 0.681, and the root 0.851 and 0.664.
+* **The frame-to-record step on its own.** At every node count, the verified share lies within
+  −0.0005 … +0.0005 of the rule's formula (1/r)·Σ(1 − p)^j applied to the measured per-frame
+  delivered fraction. The dependency the formula encodes is what ns-3 shows: a source's losses at
+  one receiver are close to independent.
+
+**What it means.** The key-record rule holds in ns-3 at r = 2 and 4: both the per-frame target
+ε_r and the capacity at the mean airtime. The law lies slightly above ns-3, the root slightly
+below, and both within 3 %.
+
+**Expectations:**
+* "Both laws within ±5 %, below ns-3 by 1–4 %": within ±5 % held; **below ns-3 missed**, at
+  +0.10 % and +2.80 %;
+* "the roots 3–6 % below; the K4 root the likeliest miss": missed, at −2.73 % and −1.71 %, both
+  held;
+* "the frame-to-record step close": held.

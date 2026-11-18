@@ -1,0 +1,11 @@
+cell,n_nodes,seeds,delivered_mean,delivered_min,delivered_max,delivered_stdev
+F2S,41,10,0.98544,0.98415,0.987571,0.001153
+F2S,CROSSING@0.95,10,,,,
+ uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=unified_c4_diag_spread_n2
+# ns3=3.48 (authbc-links-audit)
+# config_hash=021778d4a52551cc

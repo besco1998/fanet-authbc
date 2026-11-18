@@ -1,0 +1,22 @@
+# python=3.12.3
+# platform=Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=unified_c4_diag_spread_n3_runs
+# ns3=3.48 (authbc-links-audit)
+# config_hash=34c00a7a52724289
+cell,frame_bytes,frames_per_s,standard,mode,extra,n_nodes,seed,sim_time_s,tx_frames,rx_frames,delivered_frac,delay_mean_ms,delay_p99_ms
+F3S,73,37.5,80211a,OfdmRate6Mbps,,20,7,20.0,14970,281998,0.99145,0.231315,0.558387
+F3S,73,37.5,80211a,OfdmRate6Mbps,,20,2,20.0,14970,281789,0.990715,0.232164,0.566573
+F3S,73,37.5,80211a,OfdmRate6Mbps,,20,5,20.0,14972,282283,0.992319,0.231455,0.565017
+F3S,73,37.5,80211a,OfdmRate6Mbps,,20,8,20.0,14972,282112,0.991718,0.231817,0.541851
+F3S,73,37.5,80211a,OfdmRate6Mbps,,20,10,20.0,14971,281827,0.990782,0.231273,0.547485
+F3S,73,37.5,80211a,OfdmRate6Mbps,,20,9,20.0,14969,282435,0.993052,0.231679,0.554424
+F3S,73,37.5,80211a,OfdmRate6Mbps,,20,6,20.0,14965,282473,0.993451,0.231228,0.541802
+F3S,73,37.5,80211a,OfdmRate6Mbps,,20,1,20.0,14968,282036,0.991716,0.231179,0.537001
+F3S,73,37.5,80211a,OfdmRate6Mbps,,20,3,20.0,14972,282279,0.992305,0.231789,0.562747
+F3S,73,37.5,80211a,OfdmRate6Mbps,,20,4,20.0,14970,282264,0.992385,0.232411,0.547882

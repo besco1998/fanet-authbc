@@ -100,6 +100,10 @@ CELLS["F3"] = Cell(73, 12.5, extra=("--burst=3",), verify="unit:3")
 for _b in (1, 2, 4, 8, 16, 32):
     CELLS[f"W48B{_b}"] = Cell(137 + 9 * _b, 200.0 / _b, "80211a", "OfdmRate48Mbps",
                               extra=("--rxPowerDbm=-77.17",))
+# Diagnostics for U-C4's failure, not registered: the same frames at the same frame rate, but
+# each sent on its own jittered slot instead of in a burst. Only the per-frame loss is compared.
+CELLS["F2S"] = Cell(98, 25.0)
+CELLS["F3S"] = Cell(73, 37.5)
 # Tooling checks, not registered: cell D with r = 1 and n = 1 must give the delivered fraction.
 CELLS["DK1"] = Cell(173, 12.5, verify="key:1")
 CELLS["DU1"] = Cell(173, 12.5, verify="unit:1")

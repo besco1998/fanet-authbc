@@ -66,3 +66,77 @@ rules to test"), and in `src/authbc/models/unified_capacity.py` (`eps_fragment`)
   * the two N = 3 option checks;
   * the n = 1 control at cell D, N = 40, seed 1.
 * **No U-C4 run has been made.**
+
+---
+
+## Outcome — added 2026-11-18, after the runs; nothing above this line was changed
+
+**The runs:**
+* **the registered pilot** (5 seeds, ±15 % around the root: F2 at N = 46 … 64, F3 at 26 … 38;
+  `results/raw/unified_c4_pilot_n{2,3}{,_runs}.csv`) **did not bracket 0.95.** ns-3 lies below it
+  everywhere: F2 delivered 94.3 % of units at N = 46, and F3 92.7 % at N = 26;
+* **a second pilot,** 5 seeds further down (F2 at N = 36 … 48, F3 at 16 … 22;
+  `unified_c4_pilot2_n{2,3}`), put the crossings at 42.21 and 18.45. This step was not
+  registered. It is disclosed here, and it changes no prediction;
+* **then 30 seeds on seven node counts,** by U-C2's rule: F2 at N = 39 … 45, F3 at 15 … 21
+  (`unified_c4_n{2,3}{,_runs}.csv`, 210 runs each).
+
+**Checked before scoring.** An independent script on the raw counts reproduces both crossings to
+the digit:
+* every node count has seeds 1–30;
+* the frames sent are whole units;
+* each verified share equals verified / (units sent × (N − 1));
+* both curves fall monotonically and cross 0.95 once.
+
+**Scored** by `analysis/unified_c34.py` → `results/raw/unified_c34_scored.csv`. Its model values
+are the registered ones.
+
+**Scored: the root failed at both n; the law held only for its stated direction.**
+
+| cell | n | ns-3 crossing (95 % CI) | root | error | held | law | error | above ns-3? |
+|---|---|---|---|---|---|---|---|---|
+| F2 | 2 | **40.937** (39.996–41.393) | 55.37 | +35.25 % | **no** | 58.97 | +44.04 % | yes |
+| F3 | 3 | **19.584** (18.907–20.156) | 31.70 | +61.87 % | **no** | 35.06 | +79.04 % | yes |
+
+**Reported, not scored.**
+
+* **The unit rule on its own holds.** At every node count the verified share lies within
+  +0.0006 … +0.0022 of (1 − p)^n on the measured per-frame delivered fraction. It is slightly
+  above independence, as expected for frames sent together.
+* **The failure is in the per-frame loss.** At the crossings ns-3 loses 1.7 times the loss
+  expression's share per frame at n = 2 (2.58 % against 1.53 % at N = 41), and 2.1–2.3 times at
+  n = 3 (1.80 % against 0.85 % at N = 20).
+
+**A diagnostic, not registered and not scored** (cells F2S and F3S in `ns3/run_unified.py`;
+`results/raw/unified_c4_diag_spread_n{2,3}{,_runs}.csv`, 10 seeds):
+* the same frames at the same frame rate, but each sent on its own jittered slot instead of all
+  n at the unit's instant;
+* the per-frame loss then falls to the model's: **1.46 % against 1.53 % at n = 2, N = 41
+  (0.95×), and 0.80 % against 0.85 % at n = 3, N = 20 (0.94×).**
+
+| n, N | the model | frames spread | frames in a burst (registered) |
+|---|---|---|---|
+| 2, 41 | 1.53 % | 1.46 % | 2.58 % |
+| 3, 20 | 0.85 % | 0.80 % | 1.80 % |
+
+**What it means.**
+* **The fragmentation rule ε_n = 1 − (1 − ε)^(1/n) is right** about how per-frame loss becomes unit
+  loss.
+* **What fails is the capacity at frame rate n·f, as soon as a unit's frames leave together.**
+  * **The evidence:** with the frames spread out, the expression's per-frame loss holds within
+    6 %; in a burst it is 1.7–2.3 times too low.
+  * **The likely reason,** read from the source and not measured: ns-3 sends a unit's frames one
+    after another, each after its own backoff. The station's second and third frames therefore
+    always contend at the end of a busy period. None of them finds the medium idle, as the
+    expression's independent starts assume.
+* **The capacity is 26 % (n = 2) and 38 % (n = 3) below the registered root.** The root is
+  optimistic here; in every other new case it lies below ns-3.
+* **The registration's reading** of "sent as n frames" as a burst was stated before the runs.
+  It is the case that fails.
+* **Whether the spread case should be registered and tested as its own prediction** is Mohamed's
+  decision. Nothing is adopted after the fact.
+
+**Expectations:**
+* "The roots within ±5 %": missed by far;
+* "the laws above ns-3": held;
+* "the unit share above (1 − p)^n": held, by up to 0.002.

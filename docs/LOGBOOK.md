@@ -150,6 +150,57 @@ excecute the plan and give me the results". The plan was approved in plan mode. 
 * A `pgrep` check matched its own command line, twice. A pattern only a running session can
   match is now used.
 
+# 2026-11-18 — U-D recorded as failed; C3, C4 and C5-D1 registered; F135
+
+**Decided (Mohamed):**
+* the Pb1D failure is recorded as failed, on the conservative side; go on with C3–C5, then the
+  validation document; open item U1 (a periodic-source loss expression) waits for him;
+* C5 follows work package D of `docs/prompts/CAPTURE_PROMPT.md` (plan approved; (G19) defined in
+  the prompt the same morning).
+
+**Done:**
+* **Tooling, tested before use** (`ns3/check_twin_options.py`, 6 / 6 on real runs):
+  * the twin's `--sizePattern`, `--burst` and `--rxPowerDbm`;
+  * the driver's verified share (`src/authbc/sim/verified.py`).
+* **U-C3 and U-C4 registered and tagged.**
+  * **The C4 pilot missed:** ns-3's crossing lies below its ±15 % grid. The unit rule holds:
+    verified ≈ (1 − p)^n on the measured per-frame loss, +0.001 … +0.006. The per-frame loss is
+    above the model's, so the burst of a unit's frames is the suspect. A second pilot runs
+    further down.
+* **F135:** at 6 Mb/s with constant power, ns-3 receives a frame perfectly or not at all. A PER
+  calculator on ns-3's own error model (`ns3/authbc-per.cc`) matches the PHY over 23 seeds.
+* **U-C5-D1 registered:** 48 Mb/s at −77.17 dBm; best batch b = 8 at 51.70; (G19) 17.6.
+
+**Failure report — a launch that exited 127 (U-C3 measurement, 07:54).**
+* **What failed.** One ns-3 process (K2, N = 104, seed 3) exited 127 at launch, and the driver
+  stopped as designed. 53 of 210 runs were on file.
+* **The evidence:**
+  * 127 comes from the dynamic loader after exec. An ns-3 abort would be SIGABRT; a missing
+    executable would raise in Python;
+  * the same command ran cleanly at 07:55;
+  * nothing in `build/lib` or `build/scratch` changed after 07:40;
+  * the slice never reached its limit (`memory.events` max 0, peak 6.76 GB of 8 GB). There was
+    no OOM and no swap in use.
+* **Root cause: undetermined.** The stderr was not kept.
+* **Fix:** `run_checked()` now raises with the exit code and the child's stderr
+  (`tests/test_run_unified_driver.py`). There is no automatic retry, which would hide a
+  recurrence.
+* **Continued** by resuming the driver. It re-runs the failed launch in full and skips the
+  completed runs. Those completed runs are sound: one reproduced identically.
+
+**Also checked:**
+* **Adding a scratch program re-ran ns-3's configure and relinked every library** (1 007
+  objects, through ccache) at 07:34, under the running U-C3 job. Afterwards:
+  * a completed U-C3 run reproduced identically;
+  * the twin gate held, 9 / 9 and byte-identical.
+* **Rule for later:** build new programs only when no run is in flight.
+
+**Slips, caught before they mattered:**
+* the board said findings run to F134 after F135 was added, caught by the clean-worktree suite;
+* a pilot script's strict count stopped on a frame received 63 µs after its receiver
+  application stopped. That is an end-of-run artefact, now excluded with its reason;
+* a probe path was cut by `with_suffix` at "-70.0".
+
 # 2026-11-17 — the unified closed-form model: stored runs scored, ns-3 audited, C1/C2 registered
 
 **Asked:** Mohamed's task: validate the unified closed-form model in ns-3, audit the ns-3 arm, and
