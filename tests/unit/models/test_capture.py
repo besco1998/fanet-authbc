@@ -67,3 +67,9 @@ class TestClosedFormsForQ:
         hit = float(np.mean(draws[:, 0] > th * draws[:, 1:].sum(axis=1)))
         q = cp.q_rayleigh_equal(th, k)
         assert abs(hit - q) < 4 * np.sqrt(q * (1 - q) / n)
+
+
+def test_ns3s_threshold_is_4_db() -> None:
+    assert cp.THETA_NS3 == pytest.approx(cp.db_to_ratio(4.0))
+    # Rayleigh at equal mean power, two frames: q = 1/(1 + 10^0.4) under ns-3's rule
+    assert cp.q_rayleigh_equal(cp.THETA_NS3) == pytest.approx(0.2847, abs=1e-4)

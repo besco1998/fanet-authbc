@@ -16,9 +16,17 @@ receiver decodes whichever frame is stronger by θ:
 * Rayleigh with path loss: the mean over interferers of 1/(1 + θ(d_ij/d_im)^α);
 * no fading: the share of interferers with d_im > θ^(1/α)·d_ij.
 
-**ns-3's own rule** is work package D. There, collisions start within the 4 µs
-preamble-detection window, the strongest preamble is kept if its SINR is at least 4 dB, and θ is
-that threshold. The rewrite for ns-3 lives with D's results, not here.
+**ns-3's own rule** (work package D: `predictions/UCAP.md`, `UCAP2.md`):
+* ns-3's DCF collisions start within the 4 µs preamble-detection window;
+* there the strongest preamble is kept if its SINR, counting every frame that arrived in the
+  window, is at least 4 dB (`threshold-preamble-detection-model.cc:31–40`);
+* the frame-capture model is never consulted inside the window. It acts only for a later frame
+  that is stronger by its margin and arrives within 16 µs of the first frame's *start*
+  (`simple-frame-capture-model.cc:71–72`), which DCF ties never do;
+* a decoded frame then passes the error model at that SINR. At 6 Mb/s and 1 Mb/s, ns-3's models
+  give success 1 at SINR ≥ 4 dB (U-CAP: 184 of 184 window points).
+
+So for ns-3 the closed forms below hold with **θ = THETA_NS3 = 10^0.4**.
 """
 from __future__ import annotations
 
@@ -27,6 +35,9 @@ from collections.abc import Sequence
 
 def db_to_ratio(db: float) -> float:
     return 10 ** (db / 10)
+
+
+THETA_NS3 = 10 ** 0.4   # ns-3.48's preamble-detection threshold, 4 dB, as a power ratio
 
 
 def loss_with_capture(p_c: float, q: float, link_loss: float) -> float:
