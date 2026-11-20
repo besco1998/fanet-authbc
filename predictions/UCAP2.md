@@ -66,3 +66,31 @@ The intermediate values come from ns-3's own error models:
   (`results/raw/ucap_posthoc_corrected.csv`), at offsets 0, 2, 19, 20, 21 and 200 µs, 173 B,
   seed 1.
 * **No run at any U-CAP2 offset, at 97 B, or with seed 2.**
+
+---
+
+## Outcome — added 2026-11-20, after the runs; nothing above this line was changed
+
+**The runs.** As registered: `ns3/authbc-capture.cc`, 24 processes (2 PHYs × model on/off × six
+offsets), a 97 B payload, seed 2, 2 000 trials a point (`results/raw/ucap2_runs/`). No process
+failed.
+
+**Scored** by `analysis/ucap.py --score-check` → `results/raw/ucap2_scored.csv`.
+
+**Held: 552 of 552 points.**
+* **Capture with the model on:** X is received at SIR ≥ 6 dB at Δ = 12, 15 and **16 µs**, the
+  edge included, and never at 17, 20 or 30 µs, at both PHYs.
+* **Without the model, or past the window:** X is never received.
+* **The 57 points between 0 and 1** (Y decoded through X) lie within **0.017** of ns-3's own
+  error models.
+
+**What it means.** The corrected reading is ns-3's rule:
+* capture by the model only for a later, stronger frame (margin 5 dB) arriving at most 16 µs
+  after the first frame's start;
+* otherwise the 4 µs preamble window, where the strongest frame wins at SINR ≥ 4 dB.
+
+**Per Mohamed's decision, it may now be used for F and H.**
+
+**Expectations:**
+* "all 552 hold": held;
+* "the point most at risk is 16 µs": it held, capture inclusive at the edge.
