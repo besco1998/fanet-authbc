@@ -59,6 +59,7 @@ class Cell:
     mode: str = "OfdmRate6Mbps"
     extra: tuple[str, ...] = ()           # further audit-twin options
     verify: str = ""                      # "key:r" or "unit:n": score verified records (C3, C4)
+    sim_s: float = SIM_TIME               # simulated seconds (U-FS: 100 s, for losses of 0.2–1 %)
 
     def args(self) -> list[str]:
         a = [f"--frameSize={self.frame_bytes}", f"--framesPerSec={self.fps!r}",
@@ -128,6 +129,15 @@ for _bytes, _fps in ((120, 15.0), (120, 20.0), (240, 15.0), (240, 20.0)):
     CELLS[f"GB{_bytes}F{_fps:g}"] = Cell(_bytes, _fps, **_B)
 for _bytes, _fps in ((640, 20.0), (640, 30.0), (900, 20.0), (900, 30.0)):
     CELLS[f"GA{_bytes}F{_fps:g}"] = Cell(_bytes, _fps)
+# U-FS (predictions/UFS.md): the finite-station form at N = 3–5, u ≤ 0.5, 100 s runs; the cells
+# are analysis/ufs.py's, imported so that the two cannot drift apart.
+sys.path.insert(0, str(REPO / "analysis"))
+from ufs import CELLS as _FS_CELLS  # noqa: E402
+
+for _c in _FS_CELLS:
+    CELLS[_c.name] = Cell(_c.frame_bytes, _c.fps, _c.standard,
+                          "DsssRate1Mbps" if _c.standard == "80211b" else "OfdmRate6Mbps",
+                          sim_s=100.0)
 
 
 def run_checked(args: list[str], env: dict[str, str]) -> None:
@@ -146,7 +156,7 @@ def run_one(cell: str, n: int, seed: int, trace_dir: Path | None,
     with tempfile.TemporaryDirectory() as td:
         out = trace_dir if trace_dir is not None else Path(td)
         prefix = out / f"{cell}_n{n}_s{seed}"
-        args = [str(exe), f"--nNodes={n}", f"--simTime={SIM_TIME}", f"--seed={seed}",
+        args = [str(exe), f"--nNodes={n}", f"--simTime={CELLS[cell].sim_s}", f"--seed={seed}",
                 f"--outPrefix={prefix}", *CELLS[cell].args()]
         if trace_dir is not None:
             args += list(trace_opts)
@@ -158,7 +168,7 @@ def run_one(cell: str, n: int, seed: int, trace_dir: Path | None,
     c = CELLS[cell]
     return {**extra, "cell": cell, "frame_bytes": str(c.frame_bytes), "frames_per_s": repr(c.fps),
             "standard": c.standard, "mode": c.mode, "extra": " ".join(c.extra),
-            "n_nodes": str(n), "seed": str(seed), "sim_time_s": repr(SIM_TIME),
+            "n_nodes": str(n), "seed": str(seed), "sim_time_s": repr(CELLS[cell].sim_s),
             "tx_frames": kv["tx_frames"], "rx_frames": kv["rx_frames"],
             "delivered_frac": kv["delivered_frac"], "delay_mean_ms": kv["delay_mean_ms"],
             "delay_p99_ms": kv["delay_p99_ms"]}
