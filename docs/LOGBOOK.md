@@ -186,6 +186,9 @@ waits).
   * **U-FS held 12 of 12, against my expectation of N = 3 failures.** That expectation came
     from `dcf_ns3rule`, which an unregistered ns-3 diagnostic then showed loses 0.14–0.79 of
     ns-3's loss at N = 2–3, while rule A tracks ns-3 (F137).
+  * **Malone–Duffy–Leith's unsaturated model, adapted to broadcast, does not hold at N = 2**
+    (0.49–2.96 at 802.11b, 0.65–1.04 at 802.11a, against rule A; criterion committed first).
+    So no closed form is claimed at N = 2 (U6).
   * **The PC powered off at 13:37** (a clean shutdown, not an out-of-memory kill) and `/tmp`
     went with it. Only run scripts and traces were lost; every result had been committed.
     The orchestration now lives in the repo (`ns3/run_uc7b.py`).

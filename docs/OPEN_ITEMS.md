@@ -49,7 +49,7 @@ Every document: [`README.md`](README.md).
 * The documents were tidied on 2026-11-01: about 70 became about 25, nothing lost
   ([`README.md`](README.md) has the map of where each old file went).
 
-**The gate.** `make all` = lint + mypy + 2948 fast tests + the 43-test frozen gate. The paper has
+**The gate.** `make all` = lint + mypy + 2954 fast tests + the 43-test frozen gate. The paper has
 References **55** rendered (85 in the shared bibliography).
 
 **How to edit the paper.** Edit `paper/main.tex` directly. Every number is a macro from
@@ -84,6 +84,7 @@ index in `predictions/README.md`).
 | U3 | **A 2.4 GHz session with frame burst off,** and a measurement that separates the contention window from slot and DIFS (one saturated sender's gap distribution, and a saturated pair). Plans to be written for his approval; every plan logs per-sender signal strength (Mohamed, 2026-11-19) | Mohamed (approval, boards) | `docs/DECISIONS.md` 2026-11-19 |
 | U4 | **C6, stations hidden from part of the swarm: left as a stated, untested limitation** (Mohamed, 2026-11-19). C7 (LoRa duty cycle) is run as work package E | — (limitation) | `docs/DECISIONS.md` 2026-11-19 |
 | U5 | **The frozen LoRa arm, two module behaviours found on 2026-11-20 (not touched):** (a) its network server answers each device's ADRACKReq (set after 64 uplinks without a downlink, whatever ADR is, `end-device-lorawan-mac.cc:585`) with a downlink during which the half-duplex gateway hears nothing; (b) `lora.frame_time_on_air_s` counts a 4 B MIC the module does not send, so the 1 % period was set for 118.0 ms where 112.9 ms is on air (50 B, SF7): about 0.96 % duty. Size of either effect on the published LoRa numbers: not yet measured | Mohamed (whether to quantify) | `docs/LOGBOOK.md` 2026-11-20 |
+| U6 | **No closed form at N = 2.** The finite-station form fails there (C), and Malone–Duffy–Leith's unsaturated model, adapted to broadcast, does not hold within ±15 % of rule A at N = 2 (0.49–2.96 at 802.11b, 0.65–1.04 at 802.11a; `results/raw/mdl_check.csv`). By Mohamed's rule (2026-11-20), the 5 GHz anchor sessions are compared with ns-3 and rule A's event simulation only | — (decided) | `docs/revision/2026-11-20_finite_station_derivation.md` (notes); `docs/DECISIONS.md` 2026-11-20 |
 
 ## 2a. The main open items: the work's weaknesses (set by Mohamed, 2026-11-04)
 

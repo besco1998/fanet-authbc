@@ -176,3 +176,23 @@ period come only from the m bystanders.
   (`predictions/UFS.md`).
 * **At N = 2 and at high load it still fails against ns-3,** 0.14–0.75 of ns-3's loss
   (F137's table). That is why it is not used there (Mohamed, 2026-11-20).
+
+## Note added 2026-11-20: the unsaturated fixed-point model at N = 2, as Mohamed asked (not proposed)
+
+**What was tested.** Malone, Duffy and Leith's unsaturated model (IEEE/ACM ToN 15(1), 2007),
+adapted to broadcast (`src/authbc/models/unsat_broadcast.py`):
+* their equations (5)–(6) with p = 0 in the transitions;
+* the closed form equals the numerically solved chain;
+* tested against rule A's simulation at N = 2, occupancy 0.3–0.9, both PHYs
+  (`analysis/mdl_check.py` → `results/raw/mdl_check.csv`).
+* **The criterion,** committed before the comparison ran: within ±15 % at every load.
+
+**It does not hold:**
+* **802.11b:** 0.49–2.96 of rule A's loss. About 2–3 times too high at low load: a slotted model
+  makes two idle-medium arrivals collide when they share a 20 µs slot, where ns-3 and rule A need
+  them within the 4 µs detection time. At u = 0.9 it is half rule A's loss;
+* **802.11a:** 0.65–1.04. Close at u = 0.3, where the 9 µs slot is near 2δ, then 26–35 % low as
+  the load rises.
+
+**So, by Mohamed's rule, no closed form is claimed at N = 2.** The 5 GHz anchor sessions are
+compared with ns-3 and the event simulation only: rule A's, which tracks ns-3 there (F137).
