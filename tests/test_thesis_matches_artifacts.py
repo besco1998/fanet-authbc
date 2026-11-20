@@ -507,7 +507,8 @@ NOT_YET_IN_THE_THESIS: frozenset[str] = frozenset(
      "prereg-UC5D1", "prereg-UC4S", "prereg-UC4B",
      # the next phase (2026-11-19, docs/prompts/NEXT_PHASE_PROMPT.md): not yet in the thesis
      "prereg-UG25", "prereg-UCAP", "prereg-UC7", "prereg-UCAP2",
-     "prereg-UC7B", "prereg-UFS", "prereg-UF"})
+     "prereg-UC7B", "prereg-UFS", "prereg-UF",
+     "prereg-UH"})
 
 
 class TestTheRegistrationsOfAppendixB:
