@@ -84,7 +84,48 @@ def w1f_table() -> str:
             f"{fs.loss(4, W1F_RATE, tf, acc):.5f} | the standard's W = 32 in all three |")
 
 
+def anchor_rule_a(seeds: int = 30) -> list[dict[str, float]]:
+    """Rule A's simulation (F137: it tracks ns-3 at small N) at the anchor's rates, N = 2.
+
+    Not the saturated pair: rule A's loop does not tie frames to stations, so a station holding
+    two frames cannot be represented there.
+    """
+    import random
+    import statistics as st
+    sys.path.insert(0, str(REPO / "analysis"))
+    import finite_station_check as fsc
+
+    tf = uc.airtime_s(phy.OFDM_20MHZ_6M, ANCHOR_FRAME)
+    out = []
+    for w in ANCHOR_W:
+        acc = uc.Access(9e-6, 34e-6, w)
+        for f in ANCHOR_RATES:
+            ps = []
+            for seed in range(1, seeds + 1):
+                rng = random.Random(1000 * seed + 2)
+                ps.append(fsc.rule_a(fsc.arrivals(2, f, "jitter", rng), tf, acc, rng))
+            out.append({"w": w, "fps": f, "rule_a_loss": st.mean(ps),
+                        "rule_a_se": st.stdev(ps) / seeds ** 0.5})
+    return out
+
+
 def main() -> None:
+    if "--rule-a" in sys.argv:
+        import csv
+        import io
+
+        from authbc.bench import provenance
+        rows = anchor_rule_a()
+        buf = io.StringIO()
+        for k, v in {**provenance.env_block(), "run": "uh_anchor_rule_a"}.items():
+            buf.write(f"# {k}={v}\n")
+        w = csv.DictWriter(buf, fieldnames=list(rows[0]), lineterminator="\n")
+        w.writeheader()
+        w.writerows(rows)
+        (REPO / "results" / "raw" / "uh_anchor_rule_a.csv").write_text(buf.getvalue())
+        for r in rows:
+            print(r)
+        return
     print(anchor_table())
     print()
     print(w1f_table())
