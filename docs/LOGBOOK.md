@@ -150,6 +150,55 @@ excecute the plan and give me the results". The plan was approved in plan mode. 
 * A `pgrep` check matched its own command line, twice. A pattern only a running session can
   match is now used.
 
+# 2026-11-20 — the next phase: (G25) held 16/16; the capture curve failed by my misreading; C proposed; C7 met a module limit
+
+**Asked:** `docs/prompts/NEXT_PHASE_PROMPT.md`, with Mohamed's answers of 2026-11-19 (D4 → H, no
+guessed values; F116 is literature; the capture end is an assumed channel; D, E and F go on while C
+waits).
+
+**Done, in order:**
+* **A.** The (G25) and capture modules, with every §3 vector.
+  * **A thesis guard failed** in the clean worktree: ch. 5's "about nine thousand lines" against
+    9 569.
+  * **Mohamed:** remove the line count and the rule. Done (`d145586a`).
+* **Tooling.** Twin options for F; the PHY-level capture program; the LoRa twin with `--channels`.
+  One relink, then the gates: 9/9 and 8/8.
+* **B (`prereg-UG25`): held, 16 of 16.**
+  * The (G25) roots lie −3.45 … +0.31 % from ns-3, against the Poisson root's −3.6 … −7.8 %.
+  * Recomputed independently from the raw runs, to the digit.
+* **D (`prereg-UCAP`): failed as registered, 430 of 460.**
+  * Every failure is one case: no capture at Δ = 19 µs.
+  * `SimpleFrameCaptureModel::CaptureNewFrame` also requires the current frame's *start* + 16 µs.
+    I had read the window from detection alone. With that line, 552 of 552 points agree (post
+    hoc).
+  * **A stop:** the corrected reading waits for Mohamed.
+* **C: the finite-station form,** derived and tested against rule A and ns-3's rule. It works for
+  N = 3–5 at u ≤ 0.5. It fails at N = 2 and at high load, where the transmitter's own next frame
+  co-waits. **Proposed to Mohamed with three options; not registered.**
+* **E (`prereg-UC7`): running.**
+  * **A module limit:** Class A receive windows (RX1 1 s, RX2 2 s) hold each uplink back. At
+    d = 10 % with 20 B (period 0.67 s) the devices reach 2.4 % duty, not 9.1 %. **A stop (§7)
+    for those cells.**
+
+**Slips, caught before anything was recorded:**
+* `authbc-capture` first sent at power level 0. ns-3.48 numbers levels from 1, so the run aborted
+  at once with no result.
+* The LoRa twin's `--channels`:
+  * segfaulted: the gateway MAC lacked the RX2 sub-band;
+  * then capped at three channels: the network server's ADR LinkAdrReq masks devices back to
+    0–2;
+  * and ADRACKReq, set whatever ADR is, drew downlinks that made the gateway deaf.
+  * The `--channels` path now builds no network server. Every check of it was at an unregistered
+    setting.
+* Section 4 of C's document stated two ranges wrongly against its own table. Corrected from the
+  table before commit.
+
+**Found about the frozen LoRa arm (not touched; questions for Mohamed):**
+* the original scenario has a network server. So each device's ADRACKReq, from the 65th uplink,
+  draws a downlink, and the gateway hears nothing while it sends;
+* `lora.frame_time_on_air_s` counts a 4 B MIC that the module does not send. The period was set
+  for 118.0 ms where the module sends 112.9 ms (50 B, SF7): about 0.96 % duty, not 1 %.
+
 # 2026-11-18 — U-D recorded as failed; C3, C4 and C5-D1 registered; F135
 
 **Decided (Mohamed):**
