@@ -186,8 +186,10 @@ main(int argc, char* argv[])
     rx->GetState()->TraceConnectWithoutContext("RxError", MakeCallback(&RxError));
     rx->TraceConnectWithoutContext("PhyRxDrop", MakeCallback(&RxDrop));
 
-    WifiTxVector tv(WifiMode(mode), 0, WIFI_PREAMBLE_LONG, NanoSeconds(800), 1, 1, 0,
-                    phyOf(0)->GetChannelWidth(), false);
+    // Power levels start at WIFI_MIN_TX_PWR_LEVEL (1) in ns-3.48 (wifi-standard-constants.h:69);
+    // with TxPowerStart = TxPowerEnd there is one level, 0 dBm.
+    WifiTxVector tv(WifiMode(mode), WIFI_MIN_TX_PWR_LEVEL, WIFI_PREAMBLE_LONG, NanoSeconds(800), 1,
+                    1, 0, phyOf(0)->GetChannelWidth(), false);
     const uint32_t bytes = payload + 8;      // + LLC/SNAP; WifiPsdu adds MAC header and FCS
     // A trial lasts two frames, the offset and a wide margin, so the receiver is idle at the
     // start of the next.
