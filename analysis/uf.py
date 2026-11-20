@@ -212,7 +212,102 @@ def markdown() -> str:
     return "\n".join(lines)
 
 
+TRACES = Path.home() / ".cache" / "authbc_uf_traces"
+OUT_SCORE = REPO / "results" / "raw" / "uf_scored.csv"
+TOL, TOL_OUTLIER = 0.05, 0.20
+
+
+def registered() -> dict[str, dict[str, float]]:
+    """The registered values, read from predictions/UF.md's table (never recomputed)."""
+    text = (REPO / "predictions" / "UF.md").read_text()
+    out = {}
+    for line in text.splitlines():
+        cells = [x.strip().strip("*") for x in line.strip().strip("|").split("|")]
+        if len(cells) == 16 and cells[0].startswith("F") and cells[0] != "config":
+            out[cells[0]] = {"g23_g25": float(cells[11]), "g23_poisson": float(cells[12]),
+                             "g24_g25": float(cells[13]), "g24_poisson": float(cells[14]),
+                             "no_capture_g25": float(cells[15]), "q_bar": float(cells[7]),
+                             "eps_prime": float(cells[9]), "eps_w": float(cells[10])}
+    return out
+
+
+def _per_n(cell: str) -> tuple[dict[int, float], dict[int, float], int]:
+    path = REPO / "results" / "raw" / f"uf_{cell.lower()}_runs.csv"
+    rows = [r for r in csv.DictReader(ln for ln in path.open() if not ln.startswith("#"))]
+    by: dict[int, list[dict[str, str]]] = {}
+    for r in rows:
+        by.setdefault(int(r["n_nodes"]), []).append(r)
+    by = {n: v for n, v in by.items() if len(v) >= 30}
+    avg = {n: sum(float(r["delivered_frac"]) for r in v) / len(v) for n, v in by.items()}
+    worst = {}
+    for n, v in by.items():
+        ws = []
+        for r in v:
+            with (TRACES / f"{cell}_n{n}_s{r['seed']}_nodes.csv").open() as fh:
+                ws.append(min(float(x["delivered_frac"]) for x in csv.DictReader(fh)))
+        worst[n] = sum(ws) / len(ws)
+    return avg, worst, min(len(v) for v in by.values())
+
+
+def score() -> list[dict[str, object]]:
+    from authbc.bench.stats import interpolated_crossing
+    reg = registered()
+    rows = []
+    for c in CONFIGS:
+        r = reg[c.name]
+        avg, worst, seeds = _per_n(c.name)
+        a, w = interpolated_crossing(avg, 0.95), interpolated_crossing(worst, 0.95)
+        e23 = (r["g23_g25"] - a) / a if a else float("nan")
+        e24 = (r["g24_g25"] - w) / w if w else float("nan")
+        rows.append({"config": c.name, "seeds": seeds,
+                     "ns3_average_crossing": a if a is not None else "",
+                     "g23_g25": r["g23_g25"], "g23_err_pct": 100 * e23,
+                     "g23_held": int(a is not None and abs(e23) <= TOL),
+                     "g23_poisson_err_pct": 100 * (r["g23_poisson"] - a) / a if a else "",
+                     "no_capture_err_pct": 100 * (r["no_capture_g25"] - a) / a if a else "",
+                     "ns3_every_sender_crossing": w if w is not None else "",
+                     "g24_g25": r["g24_g25"], "g24_err_pct": 100 * e24,
+                     "g24_held": int(w is not None and abs(e24) <= TOL),
+                     "g24_poisson_err_pct": 100 * (r["g24_poisson"] - w) / w if w else ""})
+    return rows
+
+
+def score_outlier() -> dict[str, object]:
+    n = round(predict(OUTLIER, n_ref_for(OUTLIER))["g23_g25"])
+    path = REPO / "results" / "raw" / "uf_fout_runs.csv"
+    runs = [r for r in csv.DictReader(ln for ln in path.open() if not ln.startswith("#"))]
+    losses, others = [], []
+    for r in runs:
+        with (TRACES / f"FOUT_n{n}_s{r['seed']}_nodes.csv").open() as fh:
+            nodes = list(csv.DictReader(fh))
+        losses.append(1 - float(nodes[0]["delivered_frac"]))
+        others.append(sum(1 - float(x["delivered_frac"]) for x in nodes[1:]) / (len(nodes) - 1))
+    pred = outlier_prediction(n)
+    meas = sum(losses) / len(losses)
+    return {"n": n, "seeds": len(losses), "node0_loss_measured": meas,
+            "node0_loss_predicted": pred["loss_0"],
+            "err_pct": 100 * (pred["loss_0"] - meas) / meas,
+            "held": int(abs(pred["loss_0"] - meas) / meas <= TOL_OUTLIER),
+            "others_mean_loss": sum(others) / len(others)}
+
+
 def main() -> None:
+    if "--score" in sys.argv:
+        import io
+
+        from authbc.bench import provenance
+        rows = score()
+        buf = io.StringIO()
+        for k, v in {**provenance.env_block(), "run": "uf_scored"}.items():
+            buf.write(f"# {k}={v}\n")
+        wr = csv.DictWriter(buf, fieldnames=list(rows[0]), lineterminator="\n")
+        wr.writeheader()
+        wr.writerows(rows)
+        OUT_SCORE.write_text(buf.getvalue())
+        for r in rows:
+            print(r)
+        print("outlier:", score_outlier())
+        return
     if "--markdown" in sys.argv:
         print(markdown())
         return

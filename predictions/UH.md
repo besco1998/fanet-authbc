@@ -92,3 +92,42 @@ named with evidence. Nothing is tuned.
   * G1;
   * the flags above, computed from rates and airtimes alone.
 * **No ns-3 run at any H configuration has been made.**
+
+---
+
+## Outcome, group (a) — added 2026-11-21, after the runs; nothing above this line was changed
+
+**The runs:** ns-3 30 × 100 s per rate and W (`results/raw/uh_ha<f>w<W>{,_runs}.csv`); rule A
+30 × 100 s (`results/raw/uh_anchor_rule_a.csv`). The saturated pair was counted again on air from
+`--traceMac`, 10 × 20 s (`results/raw/uh_satpair_onair.csv`). The driver's own figure at
+400 frames/s offered counts frames the MAC queue discarded, which S1 never counted.
+
+| frames/s | hardware (burst off) | ns-3, W = 10 | ns-3, W = 16 | rule A, W = 10 / 16 | hardware ÷ ns-3, W = 10 / 16 |
+|---|---|---|---|---|---|
+| 124 | 0.00321 (0.00257–0.00422) | 0.00302 | 0.00228 | 0.00375 / 0.00279 | 1.06 / 1.41 |
+| 174 | 0.00516 (0.00353–0.00666) | 0.00768 | 0.00557 | 0.01018 / 0.00708 | 0.67 / 0.93 |
+| 211 | 0.00837 (0.00668–0.00970) | 0.01785 | 0.01269 | 0.02286 / 0.01638 | 0.47 / 0.66 |
+
+| the saturated pair (S1) | lost on air | frames/s on air per board |
+|---|---|---|
+| hardware, burst off | 12.4 % (11.4–13.1) | 259–266 |
+| ns-3, W = 10 | 20.1 % | 277.2 |
+| ns-3, W = 16 | **13.8 %** | **265.9** |
+
+**What it shows:**
+* **The two window candidates conflict, now inside ns-3 itself.**
+  * The one-sender cycle (2 050 µs) gives W ≈ 10.
+  * The saturated pair is matched only by W = 16: 13.8 % lost and 265.9 frames/s, against 12.4 %
+    and 259–266. At W = 10 ns-3 gives 20.1 % and 277 frames/s.
+  * This is F115's open conflict, now shown without a formula.
+* **The hardware departs from ns-3 in one direction with load, at either W:**
+  * more loss than ns-3 at 124 frames/s (1.06–1.41);
+  * less at 211 (0.47–0.66).
+  * A smaller window moves the high-load gap further away, so **W within its measured candidates
+    does not account for it.**
+  * The low-load excess matches the one-sender loss that "nothing explains" (0.5–0.9 % lost by
+    one saturated sender alone, `results/hw/channel/CONTENTION_RESULTS.md`). The high-load
+    deficit matches F115: no tested rule for the radio's own queued frames fits.
+  * With frame burst off, these departures cannot be blamed on frame burst.
+* **No closed form is claimed at N = 2** (Mohamed, 2026-11-20). Rule A lies 1.24–1.29 times
+  above ns-3 here, inside F137's range.

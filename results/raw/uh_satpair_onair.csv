@@ -1,0 +1,5 @@
+# run=uh_satpair_onair
+# ns-3 audit twin, N = 2, frameSize 1428, 400 frames/s offered, txJitterMs 2.5, 20 s, seeds 1-10, --traceMac (on-air = PHY TX begin events)
+w,on_air_loss_mean,on_air_loss_sd,on_air_fps_per_node,hardware_s1_loss,hardware_s1_fps
+10,0.2011,0.0031,277.2,0.124,259-266
+16,0.1380,0.0047,265.9,0.124,259-266
