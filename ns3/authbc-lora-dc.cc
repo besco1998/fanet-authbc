@@ -14,6 +14,8 @@
 //                  0 = the preset's own channels and ADR as it was (the default).
 //   --perNode      <out>_nodes.csv: each end device's frames sent and received at the gateway
 //                  (trace sinks only; off by default).
+//   --noServer     no network server or forwarder at any --channels, so no ADRACKReq downlinks
+//                  (U5: to measure what they do to the frozen LoRa results; off by default).
 //
 // (The text below is authbc-lora-capacity.cc's, unchanged.)
 // authbc-lora-capacity.cc — how many UAVs can share one LoRa channel? (item D2, docs/02 §9)
@@ -235,6 +237,7 @@ main(int argc, char* argv[])
     double txJitterS = 0.0;
     uint32_t channels = 0;        // C7: 0 = the preset's channels (the original, bit for bit)
     bool perNode = false;         // C7: <outPrefix>_nodes.csv, per end device sent and received
+    bool noServer = false;        // U5: no network server or forwarder, at any --channels
 
     CommandLine cmd(__FILE__);
     cmd.AddValue("nDevices", "Number of end devices to include in the simulation", nDevices);
@@ -262,6 +265,7 @@ main(int argc, char* argv[])
                  gwRegion);
     cmd.AddValue("perNode", "C7: also write per-device sent and received to <outPrefix>_nodes.csv",
                  perNode);
+    cmd.AddValue("noServer", "U5: build no network server or forwarder (no downlinks)", noServer);
     cmd.AddValue("channels",
                  "C7: random channel per frame among C channels, MAC duty off, gateway on all C "
                  "with 8 paths (0 = the preset's channels, the default)",
@@ -546,7 +550,7 @@ main(int argc, char* argv[])
     // ADRACKReq after 64 uplinks without a downlink, ADR or not (end-device-lorawan-mac.cc:585),
     // which the server answers (network-controller-components.cc:97-106) while the half-duplex
     // gateway hears nothing. The gateway still receives, and counts, every uplink.
-    if (channels == 0)
+    if (channels == 0 && !noServer)
     {
         /**************************
          *  Create network server  *
