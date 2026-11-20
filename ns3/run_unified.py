@@ -122,6 +122,12 @@ CELLS["F3S"] = Cell(73, 37.5)
 # Tooling checks, not registered: cell D with r = 1 and n = 1 must give the delivered fraction.
 CELLS["DK1"] = Cell(173, 12.5, verify="key:1")
 CELLS["DU1"] = Cell(173, 12.5, verify="unit:1")
+# U-G25 (predictions/UG25.md, work package B of docs/prompts/NEXT_PHASE_PROMPT.md): (G25) on new
+# cells, the same as analysis/ug25.py's (tests/test_ug25.py holds them equal).
+for _bytes, _fps in ((120, 15.0), (120, 20.0), (240, 15.0), (240, 20.0)):
+    CELLS[f"GB{_bytes}F{_fps:g}"] = Cell(_bytes, _fps, **_B)
+for _bytes, _fps in ((640, 20.0), (640, 30.0), (900, 20.0), (900, 30.0)):
+    CELLS[f"GA{_bytes}F{_fps:g}"] = Cell(_bytes, _fps)
 
 
 def run_checked(args: list[str], env: dict[str, str]) -> None:
