@@ -80,29 +80,37 @@ def dsss_success(sinr: float, bits: int) -> float:
 
 
 @cache
-def ofdm_payload_success(sinr: float) -> float:
-    """csr_payload of the whole 209 B MPDU at 6 Mb/s, from ns-3's own table (authbc-per)."""
+def ofdm_payload_success(sinr: float, payload: int = 173) -> float:
+    """csr_payload of the MPDU (payload + 36 B) at 6 Mb/s, from ns-3's table (authbc-per)."""
     exe = ns3_root() / "build" / "scratch" / "ns3.48-authbc-per-optimized"
     env = {**os.environ, "LD_LIBRARY_PATH": str(ns3_root() / "build" / "lib")}
     out = subprocess.run([str(exe), "--mode=OfdmRate6Mbps", f"--rxPowerDbm={NOISE_DBM + sinr!r}",
-                          "--sizes=173"], env=env, capture_output=True, text=True, check=True)
+                          f"--sizes={payload}"], env=env, capture_output=True, text=True,
+                         check=True)
     row = next(csv.DictReader(io.StringIO(out.stdout)))
     return float(row["csr_payload"])
 
 
-OFDM_PAYLOAD_US = (20.0, 304.0)
-OFDM_PAYLOAD_BITS = 1704
-DSSS_BITS_US = (144.0, 1864.0)
+def ofdm_payload_us(payload: int) -> tuple[float, float]:
+    """The 6 Mb/s payload field: from 20 µs (preamble + SIG) for N_sym 4 µs symbols,
+    N_sym = ceil((16 + 8·MPDU + 6)/24), MPDU = payload + 36 B."""
+    n_sym = math.ceil((16 + 8 * (payload + 36) + 6) / 24)
+    return 20.0, 20.0 + 4.0 * n_sym
 
 
-def decode(standard: str, sinr: float, from_us: float) -> float:
+def dsss_bits_us(payload: int) -> tuple[float, float]:
+    """The 1 Mb/s PLCP header and PSDU, 1 bit per µs: from 144 µs (long preamble) to its end."""
+    return 144.0, 192.0 + 8.0 * (payload + 36)
+
+
+def decode(standard: str, sinr: float, from_us: float, payload: int = 173) -> float:
     """Success of a frame whose decoded fields are interfered at `sinr` from `from_us` on."""
     if standard == "80211b":
-        start, end = DSSS_BITS_US
+        start, end = dsss_bits_us(payload)
         return dsss_success(sinr, round(end - max(from_us, start)))
-    start, end = OFDM_PAYLOAD_US
+    start, end = ofdm_payload_us(payload)
     share = (end - max(from_us, start)) / (end - start)
-    return ofdm_payload_success(round(sinr, 6)) ** share
+    return ofdm_payload_success(round(sinr, 6), payload) ** share
 
 
 # Post hoc (2026-11-20, after the runs; the registered reading is the one above, and it failed at
@@ -113,7 +121,7 @@ CORRECTED_WINDOW_END_US = 16.0
 
 
 def predict(standard: str, capture: bool, offset_us: float, sir_db: float,
-            window_end_us: float = WINDOW_END_US) -> tuple[float, float]:
+            window_end_us: float = WINDOW_END_US, payload: int = 173) -> tuple[float, float]:
     """(P[X received], P[Y received]) by the rule as read in ns-3.48's source.
 
     `window_end_us` is the capture window's end: 20 µs as registered, 16 µs as corrected.
@@ -122,13 +130,13 @@ def predict(standard: str, capture: bool, offset_us: float, sir_db: float,
     if offset_us < DETECT_US:                              # one detection window
         if px_dbm > PY_DBM:
             x_ok = sinr_db(px_dbm, PY_DBM) >= DETECT_DB
-            return (decode(standard, sinr_db(px_dbm, PY_DBM), 0.0) if x_ok else 0.0), 0.0
+            return (decode(standard, sinr_db(px_dbm, PY_DBM), 0.0, payload) if x_ok else 0.0), 0.0
         y_ok = sinr_db(PY_DBM, px_dbm) >= DETECT_DB      # ties go to Y, the first (lower UID)
-        return 0.0, (decode(standard, sinr_db(PY_DBM, px_dbm), 0.0) if y_ok else 0.0)
+        return 0.0, (decode(standard, sinr_db(PY_DBM, px_dbm), 0.0, payload) if y_ok else 0.0)
     if capture and offset_us <= window_end_us and px_dbm > PY_DBM + MARGIN_DB:
         x_sinr = sinr_db(px_dbm, PY_DBM)
-        return (decode(standard, x_sinr, 0.0) if x_sinr >= DETECT_DB else 0.0), 0.0
-    return 0.0, decode(standard, sinr_db(PY_DBM, px_dbm), offset_us)
+        return (decode(standard, x_sinr, 0.0, payload) if x_sinr >= DETECT_DB else 0.0), 0.0
+    return 0.0, decode(standard, sinr_db(PY_DBM, px_dbm), offset_us, payload)
 
 
 def predictions(window_end_us: float = WINDOW_END_US) -> list[dict[str, object]]:
@@ -141,6 +149,48 @@ def predictions(window_end_us: float = WINDOW_END_US) -> list[dict[str, object]]
                     rows.append({"standard": standard, "capture": int(capture),
                                  "offset_us": off, "sir_db": sir, "p_x": px, "p_y": py,
                                  "scored": int(off in SCORED_OFFSETS)})
+    return rows
+
+
+# U-CAP2 (predictions/UCAP2.md, Mohamed 2026-11-20): the corrected reading checked afresh, on
+# offsets around the 16 µs edge and a frame size this program has not sent (97 B), every point
+# scored; any disagreement is a stop.
+CHECK_OFFSETS = (12.0, 15.0, 16.0, 17.0, 20.0, 30.0)
+CHECK_PAYLOAD = 97
+OUT_PRED2 = REPO / "results" / "raw" / "ucap2_predictions.csv"
+OUT_SCORE2 = REPO / "results" / "raw" / "ucap2_scored.csv"
+
+
+def predictions_check() -> list[dict[str, object]]:
+    rows = []
+    for standard in ("80211a", "80211b"):
+        for capture in (False, True):
+            for off in CHECK_OFFSETS:
+                for sir in SIRS:
+                    px, py = predict(standard, capture, off, float(sir),
+                                     CORRECTED_WINDOW_END_US, CHECK_PAYLOAD)
+                    rows.append({"standard": standard, "capture": int(capture),
+                                 "offset_us": off, "sir_db": sir, "payload": CHECK_PAYLOAD,
+                                 "p_x": px, "p_y": py, "scored": 1})
+    return rows
+
+
+def score_check(run_dir: Path) -> list[dict[str, object]]:
+    pred = {(r["standard"], r["capture"], r["offset_us"], r["sir_db"]): r
+            for r in predictions_check()}
+    rows = []
+    for f in sorted(run_dir.glob("*.csv")):
+        if f.name.endswith("_drops.csv"):
+            continue
+        for r in csv.DictReader(f.open()):
+            key = (r["standard"], int(r["capture"]), float(r["offset_us"]),
+                   int(float(r["sir_db"])))
+            p, n = pred[key], int(r["trials"])
+            xo, yo = int(r["x_ok"]), int(r["y_ok"])
+            rows.append({**{k: p[k] for k in ("standard", "capture", "offset_us", "sir_db")},
+                         "trials": n, "x_measured": xo / n, "x_predicted": p["p_x"],
+                         "y_measured": yo / n, "y_predicted": p["p_y"],
+                         "held": int(_held(p["p_x"], xo, n) and _held(p["p_y"], yo, n))})
     return rows
 
 
@@ -184,6 +234,15 @@ def _write(path: Path, rows: list[dict[str, object]], run: str) -> None:
 
 
 def main() -> None:
+    if "--predict-check" in sys.argv:
+        _write(OUT_PRED2, predictions_check(), "ucap2_predictions")
+        print(f"wrote {OUT_PRED2.relative_to(REPO)}")
+        return
+    if "--score-check" in sys.argv:
+        rows = score_check(Path(sys.argv[sys.argv.index("--score-check") + 1]))
+        _write(OUT_SCORE2, rows, "ucap2_scored")
+        print(f"{sum(r['held'] for r in rows)} of {len(rows)} points held")
+        return
     if "--predict" in sys.argv:
         _write(OUT_PRED, predictions(), "ucap_predictions")
         print(f"wrote {OUT_PRED.relative_to(REPO)}")

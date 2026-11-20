@@ -53,3 +53,13 @@ def test_a_detected_dsss_frame_survives_down_to_minus_3_6_db(ucap) -> None:
     assert ucap.dsss_success(-3.0, 1720) > 0.98
     assert ucap.dsss_success(-5.0, 1720) < 0.5
     assert ucap.decode("80211b", 0.0, 19.0) == pytest.approx(1.0, abs=1e-6)
+
+
+def test_the_check_uses_the_corrected_window_and_new_points(ucap) -> None:
+    # 802.11b only: its decode is a closed form; 802.11a calls ns-3's table, absent in CI
+    assert ucap.CHECK_PAYLOAD == 97 and ucap.CORRECTED_WINDOW_END_US == 16.0
+    assert ucap.CHECK_OFFSETS == (12.0, 15.0, 16.0, 17.0, 20.0, 30.0)
+    w, pl = ucap.CORRECTED_WINDOW_END_US, ucap.CHECK_PAYLOAD
+    assert ucap.predict("80211b", True, 16.0, 6.0, w, pl)[0] == pytest.approx(1.0)  # the edge
+    assert ucap.predict("80211b", True, 17.0, 20.0, w, pl)[0] == 0.0                # past it
+    assert ucap.dsss_bits_us(97) == (144.0, 1256.0)

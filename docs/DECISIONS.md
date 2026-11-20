@@ -265,6 +265,15 @@ to the four questions raised while planning the next phase. Branch `p13-sending-
 | **While C waits for him** | D, E and F go on. **F's capacities are registered under both the Poisson model and (G25),** so F stays valid whatever B shows | — |
 | **The branch** | He merges `p12-unified-model` once CI passes; new work starts from `main` if merged, otherwise from `p12-unified-model`. Nothing is merged by the agent | — |
 
+## Decided by Mohamed, 2026-11-20 — the stops of the next phase (D, C, E) and the frozen LoRa arm
+
+| decision | chosen | what it costs, or leaves open |
+|---|---|---|
+| **D: the capture curve failed as registered** (430/460; my reading missed `CaptureNewFrame`'s start-time window) | D stays recorded as failed. The corrected reading (`simple-frame-capture-model.cc:71–72`) may be used for F and H **after one fresh registered check**: offsets 12, 15, 16, 17, 20 and 30 µs around the 16 µs edge, one frame size not used before, at 802.11a 6 Mb/s and 802.11b 1 Mb/s. **If any point disagrees, stop** | F and H wait for that check |
+| **C: the finite-station form** | **Accepted for N = 3–5 at occupancy ≤ 0.5 only, and registered there.** Not patched for N = 2 or high occupancy. Instead, test the unsaturated fixed-point model (the family of `dcf_unsaturated.py`, Malone–Duffy–Leith type, with each station's own queue, tending to the saturated broadcast model) against the event simulation at N = 2, occupancy 0.3–0.9. **Propose it only if it holds there.** If it does not, the 5 GHz anchor sessions are compared with ns-3 and the event simulation only, and no closed form is claimed at N = 2 | A closed form at N = 2 may not exist in this work |
+| **E: C7** | (a) d = 10 % with 20 B recorded as **not applicable**: the Class A receive windows prevent the duty limit. Register one new 10 % cell whose period exceeds 2.5 s (larger payload or higher SF), and run it. (b) The two 1 % failures stay failed as registered, with their bootstrap intervals reported. (c) Report the per-node loss distribution and the worst node for every cell, and state whether loss is bimodal under frozen phases. **If it is, that is a finding for the ledger's every-sender criterion** | — |
+| **U5: the frozen LoRa arm** | In a twin, measure how much (a) the ADRACKReq downlinks and (b) the missing 4 B MIC each move every published LoRa number. Keep the analytic payload-exclusion results, which neither touches, apart from the simulated ones. **A decision request only if a number moves beyond its stated precision** | — |
+
 > **Open items live in [`OPEN_ITEMS.md`](OPEN_ITEMS.md)** — the single tracked list of
 > everything assumed, deferred, unvalidated or accepted-as-a-limitation. Decisions live here.
 > **What each decision COST is in the trade-off register at the end of this file** (formerly
