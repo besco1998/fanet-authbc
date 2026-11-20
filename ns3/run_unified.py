@@ -138,6 +138,26 @@ for _c in _FS_CELLS:
     CELLS[_c.name] = Cell(_c.frame_bytes, _c.fps, _c.standard,
                           "DsssRate1Mbps" if _c.standard == "80211b" else "OfdmRate6Mbps",
                           sim_s=100.0)
+# U-F (predictions/UF.md): capture and geometry; the configurations are analysis/uf.py's.
+# Per-source and per-pair files are kept only when the driver is given --trace DIR.
+from uf import CONFIGS as _F_CONFIGS  # noqa: E402
+from uf import OUTLIER as _F_OUTLIER  # noqa: E402
+from uf import OUTLIER_M as _F_OUTLIER_M  # noqa: E402
+from uf import TX_DBM as _F_TX_DBM  # noqa: E402
+
+
+def _f_cell(c, extra: tuple[str, ...] = ()) -> Cell:
+    return Cell(c.frame_bytes, c.fps, c.standard,
+                "DsssRate1Mbps" if c.standard == "80211b" else "OfdmRate6Mbps",
+                extra=(f"--radiusM={c.radius_m!r}", f"--pathLossExp={c.alpha}",
+                       f"--txPowerDbm={_F_TX_DBM!r}", "--perNode=1", "--perPair=1",
+                       *(("--nakagamiM=1",) if c.fading else ()), *extra))
+
+
+for _c in _F_CONFIGS:
+    CELLS[_c.name] = _f_cell(_c)
+CELLS["FOUT"] = _f_cell(_F_OUTLIER, (f"--outlierM={_F_OUTLIER_M!r}",))
+
 # Diagnostic, not registered (2026-11-20): ns-3 at the event comparison's own cells
 # (analysis/finite_station_check.py), N = 2 and 3, to see which event simulation ns-3 follows at
 # small N after U-FS's expectation missed. 10 seeds of 100 s each, as the comparison ran.

@@ -189,6 +189,11 @@ waits).
   * **Malone–Duffy–Leith's unsaturated model, adapted to broadcast, does not hold at N = 2**
     (0.49–2.96 at 802.11b, 0.65–1.04 at 802.11a, against rule A; criterion committed first).
     So no closed form is claimed at N = 2 (U6).
+  * **A clean-worktree run failed one test:** `test_contention_hw.py::…on_the_loopback`, 99 of 100
+    datagrams. It overlapped ten LoRa workers. Run alone it passed 5 of 5. The test sleeps 0.7 s
+    before sending and assumes the receiver has bound its socket by then; under load it had
+    not. A timing race in the test, recorded here, not hidden. The next clean run decides the
+    push.
   * **The PC powered off at 13:37** (a clean shutdown, not an out-of-memory kill) and `/tmp`
     went with it. Only run scripts and traces were lost; every result had been committed.
     The orchestration now lives in the repo (`ns3/run_uc7b.py`).
