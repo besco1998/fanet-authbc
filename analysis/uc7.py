@@ -113,6 +113,8 @@ def score(stem_dir: Path) -> list[dict[str, object]]:
         by_n: dict[int, list[float]] = {}
         for r in runs:
             by_n.setdefault(int(r["n_devices"]), []).append(float(r["delivered_frac"]))
+        # the measurement is the 30-seed grid; a pilot's 5-seed node counts share the file
+        by_n = {n: v for n, v in by_n.items() if len(v) >= 30}
         ns = sorted(by_n)
         means = [sum(by_n[n]) / len(by_n[n]) for n in ns]
         ok = [n for n, m in zip(ns, means, strict=True) if m >= 1 - EPS]
