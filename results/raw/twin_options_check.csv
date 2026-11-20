@@ -16,3 +16,8 @@ rxPowerDbm off,,every PWR at -30.6571 dBm,True
 nakagamiM 1 at -60 dBm,1485,varying; linear mean 1.018 nW within 10 % of 1 nW,True
 "verified == delivered (DK1, N = 40)",9939,delivered 0.994164,True
 "verified == delivered (DU1, N = 40)",9939,delivered 0.994164,True
+placementOnly == the run's placement,,"same positions, all in the disc, no result file",True
+outlierM 7 on a 2 m disc,,"node 0 at (7, 0); the others unmoved",True
+perPair sums to perNode,140,per source: receptions and frames sent agree,True
+txPowerDbm 10,,every PWR at -36.6777 dBm,True
+captureMarginDb 5,,live model SimpleFrameCaptureModel (ns3::SimpleFrameCaptureModel); none without (none),True

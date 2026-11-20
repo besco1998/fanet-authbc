@@ -14,6 +14,17 @@
 * the driver's verification (`authbc.sim.verified`, `ns3/run_unified.py`): with r = 1 and n = 1
   the verified fraction equals the delivered fraction, on a real run of cell D.
 
+Added for work package F of `docs/prompts/NEXT_PHASE_PROMPT.md` (2026-11-20):
+* `--placementOnly`: writes the positions and no result. They equal those a full run of the same
+  seed and radius writes (`--perPair`), and all lie in the disc;
+* `--outlierM=7` on a 2 m disc: node 0 at (7, 0), every other node where it was without the
+  option;
+* `--perPair`: per source, the receptions summed over receivers equal `--perNode`'s copies, and
+  the frames sent agree;
+* `--txPowerDbm=10`: every frame received 6.0206 dB below the published −30.6571 dBm (ns-3's
+  default power is 16.0206 dBm);
+* `--captureMarginDb=5`: the live PHY holds a SimpleFrameCaptureModel, and none without it.
+
     python ns3/check_twin_options.py   -> results/raw/twin_options_check.csv
 """
 from __future__ import annotations
@@ -118,6 +129,67 @@ def check_nakagami(td: Path) -> dict[str, object]:
             "passed": len(set(dbm)) > len(dbm) // 2 and abs(mean_nw - 1.0) <= 0.10}
 
 
+def _positions(path: Path) -> dict[int, tuple[float, float]]:
+    with path.open() as fh:
+        next(fh)
+        return {int(n): (float(x), float(y)) for n, x, y in (ln.strip().split(",") for ln in fh)}
+
+
+def check_placement(td: Path) -> list[dict[str, object]]:
+    disc = ["--radiusM=10", "--pathLossExp=2"]
+    _run(td / "po", *disc, "--placementOnly=1")
+    _run(td / "pp", *disc, "--perPair=1", "--perNode=1")
+    only, full = _positions(td / "po_positions.csv"), _positions(td / "pp_positions.csv")
+    inside = all(x * x + y * y <= 100.0 for x, y in only.values())
+    _run(td / "ol", "--radiusM=2", "--pathLossExp=2", "--outlierM=7", "--placementOnly=1")
+    _run(td / "nl", "--radiusM=2", "--pathLossExp=2", "--placementOnly=1")
+    ol, nl = _positions(td / "ol_positions.csv"), _positions(td / "nl_positions.csv")
+    return [{"check": "placementOnly == the run's placement", "frames": "",
+             "expected": "same positions, all in the disc, no result file",
+             "passed": only == full and inside and not (td / "po.csv").exists()},
+            {"check": "outlierM 7 on a 2 m disc", "frames": "",
+             "expected": "node 0 at (7, 0); the others unmoved",
+             "passed": ol[0] == (7.0, 0.0) and all(ol[i] == nl[i] for i in nl if i != 0)}]
+
+
+def check_per_pair(td: Path) -> dict[str, object]:
+    # td / "pp" was run by check_placement with --perPair and --perNode together
+    with (td / "pp_nodes.csv").open() as fh:
+        nodes = {int(r["node"]): r for r in csv.DictReader(fh)}
+    rx_by_src: dict[int, int] = defaultdict(int)
+    tx_by_src: dict[int, set[int]] = defaultdict(set)
+    with (td / "pp_pairs.csv").open() as fh:
+        for r in csv.DictReader(fh):
+            rx_by_src[int(r["src"])] += int(r["rx_frames"])
+            tx_by_src[int(r["src"])].add(int(r["tx_frames"]))
+    ok = all(rx_by_src[i] == int(nodes[i]["rx_copies"])
+             and tx_by_src[i] == {int(nodes[i]["tx_frames"])} for i in nodes)
+    return {"check": "perPair sums to perNode", "frames": sum(rx_by_src.values()),
+            "expected": "per source: receptions and frames sent agree", "passed": ok}
+
+
+def check_tx_power(td: Path) -> dict[str, object]:
+    _run(td / "tx10", "--frameSize=173", "--txPowerDbm=10", "--traceRx=2")
+    got = _powers(td / "tx10_rx.csv")
+    return {"check": "txPowerDbm 10", "frames": "", "expected": "every PWR at -36.6777 dBm",
+            "passed": got == {-36.6777}}
+
+
+def _capture_model(path: Path) -> str:
+    with path.open() as fh:
+        return next(ln.strip().split(",", 1)[1] for ln in fh
+                    if ln.startswith("frame_capture_model,"))
+
+
+def check_capture_model(td: Path) -> dict[str, object]:
+    _run(td / "cm5", "--captureMarginDb=5", "--constants=1")
+    _run(td / "cm0", "--constants=1")
+    on, off = _capture_model(td / "cm5_constants.csv"), _capture_model(td / "cm0_constants.csv")
+    return {"check": "captureMarginDb 5", "frames": "",
+            "expected": f"live model SimpleFrameCaptureModel ({on}); none without ({off})",
+            "passed": "SimpleFrameCaptureModel" in on and "SimpleFrameCaptureModel" not in off}
+
+
 def check_verification() -> list[dict[str, object]]:
     rows = []
     for cell in ("DK1", "DU1"):
@@ -132,7 +204,8 @@ def main() -> None:
     with tempfile.TemporaryDirectory() as tdir:
         td = Path(tdir)
         rows = [check_size_pattern(td), check_burst(td), *check_rx_power(td),
-                check_nakagami(td), *check_verification()]
+                check_nakagami(td), *check_verification(), *check_placement(td),
+                check_per_pair(td), check_tx_power(td), check_capture_model(td)]
     buf = io.StringIO()
     for k, v in {**provenance.env_block(), "run": "twin_options_check",
                  "config_hash": provenance.config_hash({"base": BASE})}.items():

@@ -17,6 +17,13 @@
 //   --nakagamiM=m     Nakagami-m fading after all of that: a fresh draw per frame and link,
 //                     mean power unchanged (m = 1: Rayleigh); 0 = off (C5, setting D2)
 //   (the last three need the jittered source; at their defaults nothing changes)
+//   Added for work package F of docs/prompts/NEXT_PHASE_PROMPT.md (2026-11-20), all off by default:
+//   --captureMarginDb=x  ns-3's SimpleFrameCaptureModel at margin x dB (< 0 = none, the default)
+//   --perPair         <out>_pairs.csv (receptions per source × receiver) and <out>_positions.csv;
+//                     needs the jittered source
+//   --placementOnly   write <out>_positions.csv and stop: the placement a seed's run will use
+//   --txPowerDbm=x    every node's transmit power (0 = ns-3's default)
+//   --outlierM=d      node 0 moved to (d, 0) after the usual placement (no random stream moves)
 //
 // (The text below is authbc-links.cc's, unchanged.)
 // authbc-links.cc — the published scenario (authbc-delay.cc) with three options, absent by
@@ -80,6 +87,7 @@ static uint64_t g_rxCount = 0;
 static std::map<uint64_t, uint32_t> g_srcOf;      // packet UID -> source node
 static std::vector<uint64_t> g_txBySrc;
 static std::vector<uint64_t> g_rxBySrc;           // receptions of that source's frames, all sinks
+static std::vector<std::vector<uint64_t>> g_pairRx;  // --perPair: [source][receiver] receptions
 
 // --traceLinks: per (source, receiver) pair, its source's frames in order, got or not.
 static std::vector<std::pair<uint32_t, uint32_t>> g_tracePairs;
@@ -211,6 +219,14 @@ AuditAllRx(uint32_t rx, Ptr<const Packet> p, const Address&)
     auto seq = g_seqOf.find(p->GetUid());
     if (src != g_srcOf.end() && seq != g_seqOf.end())
         g_allRxOut << rx << "," << src->second << "," << seq->second << "," << NowNs() << "\n";
+}
+
+// --perPair: receptions by (source, receiver). Bound per sink; reads the source map only.
+void
+PairRx(uint32_t rx, Ptr<const Packet> p, const Address&)
+{
+    auto src = g_srcOf.find(p->GetUid());
+    if (src != g_srcOf.end()) ++g_pairRx[src->second][rx];
 }
 
 void
@@ -357,6 +373,12 @@ main(int argc, char* argv[])
     uint32_t burst = 1;
     double rxPowerDbm = 0.0;                        // 0 = the usual loss (an rx power is < 0 dBm)
     double nakagamiM = 0.0;                         // 0 = no fading
+    // Capture and geometry (work package F, 2026-11-20). All off by default.
+    double captureMarginDb = -1.0;                  // < 0 = no frame-capture model
+    bool perPair = false;                           // <outPrefix>_pairs.csv
+    bool placementOnly = false;                     // write positions and stop
+    double txPowerDbm = 0.0;                        // 0 = ns-3's default power
+    double outlierM = 0.0;                          // > 0: node 0 moved to (outlierM, 0)
 
     CommandLine cmd(__FILE__);
     cmd.AddValue("nNodes", "number of nodes in the collision domain", nNodes);
@@ -395,6 +417,15 @@ main(int argc, char* argv[])
                  rxPowerDbm);
     cmd.AddValue("nakagamiM", "Nakagami-m fading per frame and link after the loss; 0 = off",
                  nakagamiM);
+    cmd.AddValue("captureMarginDb", "SimpleFrameCaptureModel margin in dB; < 0 = none (default)",
+                 captureMarginDb);
+    cmd.AddValue("perPair", "also write receptions per (source, receiver) to <outPrefix>_pairs.csv",
+                 perPair);
+    cmd.AddValue("placementOnly", "write <outPrefix>_positions.csv and stop (needs radiusM > 0)",
+                 placementOnly);
+    cmd.AddValue("txPowerDbm", "transmit power of every node in dBm; 0 = ns-3's default",
+                 txPowerDbm);
+    cmd.AddValue("outlierM", "move node 0 to (outlierM, 0) after placement; 0 = off", outlierM);
     cmd.Parse(argc, argv);
     NS_ABORT_MSG_IF(traceAllRx && txJitterMs <= 0.0,
                     "traceAllRx numbers frames at the jittered source: needs txJitterMs > 0");
@@ -402,6 +433,11 @@ main(int argc, char* argv[])
                     "sizePattern and burst act on the jittered source: need txJitterMs > 0");
     NS_ABORT_MSG_IF(burst < 1 || rxPowerDbm > 0.0, "burst >= 1; rxPowerDbm < 0 (or 0 = off)");
     NS_ABORT_MSG_IF(nakagamiM < 0.0, "nakagamiM >= 0 (0 = off)");
+    NS_ABORT_MSG_IF(perPair && txJitterMs <= 0.0,
+                    "perPair counts by source at the jittered source: needs txJitterMs > 0");
+    NS_ABORT_MSG_IF((placementOnly || outlierM > 0.0) && radiusM <= 0.0,
+                    "placementOnly and outlierM act on the disc: need radiusM > 0");
+    NS_ABORT_MSG_IF(outlierM < 0.0, "outlierM >= 0 (0 = off)");
     for (size_t at = 0; !sizePattern.empty() && at != std::string::npos;)
     {
         const size_t comma = sizePattern.find(',', at);
@@ -439,6 +475,7 @@ main(int argc, char* argv[])
     }
     g_txBySrc.assign(nNodes, 0);
     g_rxBySrc.assign(nNodes, 0);
+    if (perPair) g_pairRx.assign(nNodes, std::vector<uint64_t>(nNodes, 0));
 
     // Same equal-power single collision domain as the Bianchi scenario, for the same reason:
     // every node must contend with every other, with no capture and no spatial reuse.
@@ -454,6 +491,14 @@ main(int argc, char* argv[])
                                    DoubleValue(nakagamiM));
     YansWifiPhyHelper phy;
     phy.SetChannel(channel.Create());
+    if (captureMarginDb >= 0.0)    // ns-3's capture of a stronger later frame (work package D)
+        phy.SetFrameCaptureModel("ns3::SimpleFrameCaptureModel", "Margin",
+                                 DoubleValue(captureMarginDb));
+    if (txPowerDbm != 0.0)
+    {
+        phy.Set("TxPowerStart", DoubleValue(txPowerDbm));
+        phy.Set("TxPowerEnd", DoubleValue(txPowerDbm));
+    }
 
     WifiHelper wifi;
     NS_ABORT_MSG_IF(standard != "80211a" && standard != "80211p" && standard != "80211b",
@@ -518,6 +563,24 @@ main(int argc, char* argv[])
     mobility.SetPositionAllocator(posAlloc);
     mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel");
     mobility.Install(nodes);
+    // Every node is placed as usual first, so the outlier moves no random stream.
+    if (outlierM > 0.0)
+        nodes.Get(0)->GetObject<MobilityModel>()->SetPosition(Vector(outlierM, 0.0, 0.0));
+    if (placementOnly || perPair)
+    {
+        std::ofstream posOut(outPrefix + "_positions.csv");
+        posOut << "node,x_m,y_m\n" << std::setprecision(17);
+        for (uint32_t i = 0; i < nNodes; ++i)
+        {
+            const Vector v = nodes.Get(i)->GetObject<MobilityModel>()->GetPosition();
+            posOut << i << "," << v.x << "," << v.y << "\n";
+        }
+    }
+    if (placementOnly)
+    {
+        Simulator::Destroy();
+        return 0;
+    }
 
     PacketSocketHelper packetSocket;
     packetSocket.Install(nodes);
@@ -595,6 +658,8 @@ main(int argc, char* argv[])
     for (uint32_t i = 0; i < sinkApps.GetN(); ++i)
     {
         sinkApps.Get(i)->TraceConnectWithoutContext("Rx", MakeCallback(&SinkRxTrace));
+        if (perPair)
+            sinkApps.Get(i)->TraceConnectWithoutContext("Rx", MakeBoundCallback(&PairRx, i));
         if (traceLinks > 0)
             sinkApps.Get(i)->TraceConnectWithoutContext("Rx",
                                                         MakeBoundCallback(&SinkRxTraceAt, i));
@@ -751,6 +816,15 @@ main(int argc, char* argv[])
             nodesOut << i << "," << g_txBySrc[i] << "," << g_rxBySrc[i] << ","
                      << (want > 0 ? g_rxBySrc[i] / want : 0.0) << "\n";
         }
+    }
+    if (perPair)
+    {
+        std::ofstream pairsOut(outPrefix + "_pairs.csv");
+        pairsOut << "src,rx,tx_frames,rx_frames\n";
+        for (uint32_t a = 0; a < nNodes; ++a)
+            for (uint32_t b = 0; b < nNodes; ++b)
+                if (a != b) pairsOut << a << "," << b << "," << g_txBySrc[a] << ","
+                                     << g_pairRx[a][b] << "\n";
     }
     if (g_macOut.is_open()) g_macOut.close();
     if (g_rxOut.is_open()) g_rxOut.close();
