@@ -158,6 +158,12 @@ for _c in _F_CONFIGS:
     CELLS[_c.name] = _f_cell(_c)
 CELLS["FOUT"] = _f_cell(_F_OUTLIER, (f"--outlierM={_F_OUTLIER_M!r}",))
 
+# U-H (predictions/UH.md), group (a): the 5 GHz burst-off anchor, N = 2, the 1 464 B MPDU
+# (frameSize 1 428), W = 10 and 16; and the saturated pair at 400 frames/s offered.
+for _w in (10, 16):
+    for _f in (124.0, 174.0, 211.0, 400.0):
+        CELLS[f"HA{_f:g}W{_w}"] = Cell(1428, _f, extra=(f"--cwMin={_w - 1}",), sim_s=100.0)
+
 # Diagnostic, not registered (2026-11-20): ns-3 at the event comparison's own cells
 # (analysis/finite_station_check.py), N = 2 and 3, to see which event simulation ns-3 follows at
 # small N after U-FS's expectation missed. 10 seeds of 100 s each, as the comparison ran.
