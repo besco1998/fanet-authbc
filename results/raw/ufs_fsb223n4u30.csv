@@ -1,0 +1,10 @@
+cell,n_nodes,seeds,delivered_mean,delivered_min,delivered_max,delivered_stdev
+FSB223N4U30,4,30,0.997722,0.996527,0.999094,0.000557
+FSB223N4U30,CROSSING@0.95,30,,,,
+ryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=ufs_fsb223n4u30
+# ns3=3.48 (authbc-links-audit)
+# config_hash=b8c48a0496c45531

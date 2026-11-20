@@ -85,3 +85,48 @@ for what follows. There, the form against **ns-3's rule** at the same N and u:
   * C's derivation and event comparison, in full, including the ns-3-rule ratios above;
   * Mohamed's decision.
 * **No ns-3 run has been made** at any of these cells.
+
+
+---
+
+## Outcome — added 2026-11-20, after the runs; nothing above this line was changed
+
+**The runs.** As registered: the audit twin, `ns3/run_unified.py`, 100 s runs, seeds 1–30 at each
+cell's N (`results/raw/ufs_<cell>{,_runs}.csv`).
+
+**Scored** by `analysis/ufs.py --score` → `results/raw/ufs_scored.csv`. The intervals are a
+bootstrap over seeds.
+
+**Scored: 12 of 12 held.**
+
+| cell | ns-3 loss (95 % CI) | finite-station | error | held | (G5) error | (G25) error |
+|---|---|---|---|---|---|---|
+| FSB223N3U30 | **0.00166** (0.00151–0.00183) | 0.00158 | -5.2 % | **yes** | +54.0 % | +23.9 % |
+| FSB223N3U50 | **0.00417** (0.00399–0.00434) | 0.00378 | -9.3 % | **yes** | +77.1 % | +28.7 % |
+| FSB223N4U30 | **0.00228** (0.00208–0.00246) | 0.00229 | +0.4 % | **yes** | +41.4 % | +17.2 % |
+| FSB223N4U50 | **0.00594** (0.00567–0.00624) | 0.00603 | +1.4 % | **yes** | +63.2 % | +22.7 % |
+| FSB223N5U30 | **0.00269** (0.00248–0.00289) | 0.00280 | +4.1 % | **yes** | +36.2 % | +15.5 % |
+| FSB223N5U50 | **0.00765** (0.00739–0.00795) | 0.00778 | +1.7 % | **yes** | +48.1 % | +14.4 % |
+| FSA1031N3U30 | **0.00292** (0.00269–0.00316) | 0.00271 | -7.1 % | **yes** | +57.5 % | +24.9 % |
+| FSA1031N3U50 | **0.00750** (0.00730–0.00772) | 0.00661 | -11.9 % | **yes** | +75.9 % | +26.9 % |
+| FSA1031N4U30 | **0.00402** (0.00382–0.00421) | 0.00399 | -0.8 % | **yes** | +43.9 % | +18.1 % |
+| FSA1031N4U50 | **0.01085** (0.01058–0.01110) | 0.01058 | -2.5 % | **yes** | +58.9 % | +19.1 % |
+| FSA1031N5U30 | **0.00486** (0.00456–0.00512) | 0.00491 | +1.0 % | **yes** | +35.4 % | +14.0 % |
+| FSA1031N5U50 | **0.01383** (0.01345–0.01424) | 0.01363 | -1.4 % | **yes** | +45.0 % | +11.9 % |
+
+* **The finite-station form lies -11.9 … +4.1 % from ns-3** at N = 3–5,
+  u ≤ 0.5.
+* **(G5) lies +35.4 … +77.1 %** and **(G25) +11.9 … +28.7 %**,
+  both pessimistic everywhere. That is the known range limit of each: (G25) below 8 stations, and
+  (G5)'s Poisson starts.
+
+**Expectations:**
+* "N = 3 likely to fail, pessimistic (+60 % at u = 0.3)": **wrong.** N = 3 held at −5.2 % and
+  −7.1 % (u = 0.3), and −9.3 % and −11.9 % (u = 0.5).
+  * The expectation came from the form against `authbc.sim.dcf_ns3rule`, the event model of
+    ns-3's rule. ns-3 itself lies near rule A's simulation here, not near that model.
+  * **So at small N and low load, `dcf_ns3rule` departs from ns-3.** It is examined in an
+    unregistered diagnostic (`docs/LOGBOOK.md`, 2026-11-20), because C's next test and the 5 GHz
+    anchor both rest on an event simulation at N = 2.
+* "N = 4–5 mostly hold": held, all six;
+* "(G5) pessimistic everywhere, (G25) between": held.

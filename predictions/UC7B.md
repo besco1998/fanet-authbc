@@ -70,3 +70,78 @@ plus the new cell.
 * **Known before this registration:** U-C7's outcome, totals only (`predictions/UC7.md`), and the
   per-node accounting's check on two stored runs (totals reproduced, per-node sums equal).
 * **No per-node count of any C7 cell has been looked at, and no SF8 run has been made.**
+
+
+---
+
+## Outcome — added 2026-11-20, after the runs; nothing above this line was changed
+
+**The runs.** `ns3/run_uc7b.py` (in the repo; the first orchestration copies were lost in a
+restart, after their results were committed):
+* the new cell at N = 2 … 7, seeds 1–30;
+* every U-C7 cell again on its stored 30-seed grid, with `--per-node`
+  (`results/raw/uc7_<cell>_pn_{runs,nodes}.csv`).
+
+**The identity check held:** every rerun reproduced its stored totals, sent and received, run by
+run (0 differences in 18 cells).
+
+### Part 1 — the new cell: held
+
+* **The duty used,** 0.0899–0.0924 in every run, so the cell ran at its limit (≥ 0.089). No
+  gateway transmission.
+* **The 30-seed mean delivery:** 0.9734 / **0.9595** / **0.9333** / 0.9203 / 0.8864 / 0.8796 at
+  N = 2 … 7. **N_max = 3, as predicted.**
+* The crossing is 3.363 (bootstrap 3.024–3.670), against N* = 3.257.
+* **Seen after scoring:** the cell reproduces D10C8L200 (SF7, 200 B) to the last digit, per node
+  included. Both run past the Class A windows, and every time in them scales by one factor. In
+  this module, SF and length cannot change the result once the duty limit is kept.
+
+### Part 2 — per-node loss in every C7 cell (reported)
+
+At the grid node count nearest N* (N = 2 where N* < 2), over all devices and seeds
+(`analysis/uc7.py --per-node` → `results/raw/uc7_per_node.csv`):
+
+| cell | N | node-runs | mean loss | median | 90th pct | **worst node** (seed, node) | share at zero | BC | bimodal |
+|---|---|---|---|---|---|---|---|---|---|
+| D0.1C1L20 | 27 | 810 | 0.0516 | 0.0000 | 0.2000 | **0.7167** (4, 17) | 0.74 | 0.796 | **yes** |
+| D0.1C1L200 | 27 | 810 | 0.0516 | 0.0000 | 0.2000 | **0.7167** (4, 17) | 0.74 | 0.796 | **yes** |
+| D0.1C3L20 | 76 | 2280 | 0.0507 | 0.0167 | 0.1667 | **0.4667** (2, 7) | 0.48 | 0.660 | **yes** |
+| D0.1C3L200 | 76 | 2280 | 0.0507 | 0.0167 | 0.1667 | **0.4667** (2, 7) | 0.48 | 0.660 | **yes** |
+| D0.1C8L20 | 206 | 6180 | 0.0497 | 0.0333 | 0.1167 | **0.3667** (25, 38) | 0.23 | 0.501 | no |
+| D0.1C8L200 | 206 | 6180 | 0.0497 | 0.0333 | 0.1167 | **0.3667** (25, 38) | 0.23 | 0.501 | no |
+| D1C1L20 | 4 | 120 | 0.0756 | 0.0000 | 0.3167 | **0.6667** (10, 1) | 0.65 | 0.766 | **yes** |
+| D1C1L200 | 4 | 120 | 0.0756 | 0.0000 | 0.3167 | **0.6667** (10, 1) | 0.65 | 0.766 | **yes** |
+| D1C3L20 | 9 | 270 | 0.0571 | 0.0333 | 0.1500 | **0.2833** (20, 3) | 0.42 | 0.619 | **yes** |
+| D1C3L200 | 9 | 270 | 0.0571 | 0.0333 | 0.1500 | **0.2833** (20, 3) | 0.42 | 0.619 | **yes** |
+| D1C8L20 | 22 | 660 | 0.0481 | 0.0333 | 0.1167 | **0.2500** (15, 1) | 0.24 | 0.578 | no |
+| D1C8L200 | 22 | 660 | 0.0481 | 0.0333 | 0.1167 | **0.2500** (15, 1) | 0.24 | 0.578 | no |
+| D10C1L20 (not applicable: not at the limit) | 2 | 60 | 0.1123 | 0.0625 | 0.2500 | **0.3750** (6, 0) | 0.33 | 0.583 | **yes** |
+| D10C1L200 | 2 | 60 | 0.1915 | 0.2000 | 0.3500 | **0.5833** (4, 1) | 0.17 | 0.417 | no |
+| D10C3L20 (not applicable: not at the limit) | 2 | 60 | 0.0373 | 0.0000 | 0.0625 | **0.1875** (9, 0) | 0.57 | 0.662 | **yes** |
+| D10C3L200 | 2 | 60 | 0.0681 | 0.0667 | 0.1500 | **0.1833** (17, 0) | 0.23 | 0.535 | no |
+| D10C8L20 (not applicable: not at the limit) | 3 | 90 | 0.0222 | 0.0000 | 0.0625 | **0.1875** (28, 0) | 0.77 | 0.792 | **yes** |
+| D10C8L200 | 3 | 90 | 0.0405 | 0.0333 | 0.0833 | **0.1333** (5, 0) | 0.16 | 0.483 | no |
+| D10C8L120SF8 | 3 | 90 | 0.0405 | 0.0333 | 0.0833 | **0.1333** (5, 0) | 0.16 | 0.483 | no |
+
+**What it shows:**
+* **With one or three channels, loss is bimodal under frozen phases.** Most nodes lose nothing
+  in a run, and a few lose much:
+  * at **d = 0.1 %, C = 1**, the mean is 0.0516, but 74 % of node-runs lose nothing, the 90th
+    percentile loses 0.20 and the worst node 0.72;
+  * at **d = 1 %, C = 1**, 65 % lose nothing and the worst loses 0.67;
+  * C = 3 is bimodal at both duties (42–48 % at zero, worst 0.28–0.47).
+* **With eight channels it is not bimodal** (BC 0.50–0.58, 23–24 % at zero). Each frame draws a
+  new channel, which breaks up the frozen pairs.
+* **This is the finding Mohamed named for the ledger's every-sender criterion.** At the formula's
+  N_max, the mean meets ε = 5 % while individual senders lose 20–72 % in a run. With one or
+  three channels and these timings, (G24) and not (G23) is the relevant test: the worst sender
+  decides.
+* **The d = 10 % cells at 20 B are not applicable**, as recorded. Their sent rate was capped by
+  the Class A windows.
+
+**Expectations:**
+* "Part 1 holds": held;
+* "bimodal at d = 1 %, C = 1 and 3": held;
+* "**not** bimodal at d = 0.1 % with many nodes": **wrong for C = 1 and 3.** With 27 or 76 nodes
+  each node still meets few others per channel at this duty, and phases freeze for the run. Only
+  eight channels broke it.
