@@ -175,7 +175,7 @@ waits).
 * **C: the finite-station form,** derived and tested against rule A and ns-3's rule. It works for
   N = 3–5 at u ≤ 0.5. It fails at N = 2 and at high load, where the transmitter's own next frame
   co-waits. **Proposed to Mohamed with three options; not registered.**
-* **E (`prereg-UC7`): running.**
+* **E (`prereg-UC7`): 12 of 18 held.** d = 0.1 %: all six. The d = 1 % misses lie inside their bootstrap intervals (nearly frozen phases).
   * **A module limit:** Class A receive windows (RX1 1 s, RX2 2 s) hold each uplink back. At
     d = 10 % with 20 B (period 0.67 s) the devices reach 2.4 % duty, not 9.1 %. **A stop (§7)
     for those cells.**

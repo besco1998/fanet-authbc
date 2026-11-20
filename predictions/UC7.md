@@ -117,3 +117,79 @@ It is explained with evidence, or raised with Mohamed.
   * the frozen LoRa arm's results (N_max = 3 at 1 %, one channel, F19–F38);
   * the twin's checks at d = 5 %, 50 B, N = 10, which is not a registered cell.
 * **No run has been made** at any registered cell.
+
+
+---
+
+## Outcome — added 2026-11-20, after the runs; nothing above this line was changed
+
+**The runs.** As registered: `ns3/run_c7.py` through the twin, 30 seeds per node count
+(`results/raw/uc7_<cell>_runs.csv`). A first scoring fix, committed before any run, scores only
+the 30-seed node counts.
+
+**Checked before scoring:**
+* **no gateway transmission** in any run;
+* **the duty each node actually used,** sent × ToA/(N × run length), given in the table;
+* **the bootstrap interval** of each crossing over seeds (1 000 resamples), given in the table.
+  It was computed after scoring and is reported, not scored.
+
+**Scored** by `analysis/uc7.py --score` → `results/raw/uc7_scored.csv`.
+
+**Scored: 12 of 18 held.**
+
+| cell | measured duty | scored by | predicted | ns-3 | 95 % CI over seeds | held |
+|---|---|---|---|---|---|---|
+| D0.1C1L20 | 0.000998-0.001000 | crossing ±5 % (N_max reported) | N* 26.67 | 25.76 (+3.5 %), N_max 25 | 24.46-27.89 (850/1000 bracketed) | **yes** |
+| D0.1C1L200 | 0.000998-0.001000 | crossing ±5 % (N_max reported) | N* 26.67 | 25.76 (+3.5 %), N_max 25 | 24.37-27.93 (864/1000 bracketed) | **yes** |
+| D0.1C3L20 | 0.000999-0.000999 | crossing ±5 % (N_max reported) | N* 78.02 | 75.77 (+3.0 %), N_max 75 | 70.61-75.97 (532/1000 bracketed) | **yes** |
+| D0.1C3L200 | 0.000999-0.000999 | crossing ±5 % (N_max reported) | N* 78.02 | 75.77 (+3.0 %), N_max 75 | 70.90-75.97 (520/1000 bracketed) | **yes** |
+| D0.1C8L20 | 0.000999-0.000999 | crossing ±5 % (N_max reported) | N* 206.38 | 201.37 (+2.5 %), N_max 206 | 199.86-208.63 (998/1000 bracketed) | **yes** |
+| D0.1C8L200 | 0.000999-0.000999 | crossing ±5 % (N_max reported) | N* 206.38 | 201.37 (+2.5 %), N_max 206 | 199.86-208.42 (998/1000 bracketed) | **yes** |
+| D1C1L20 | 0.009818-0.009983 | N_max exact | N_max 3 | N_max 2 (crossing 2.91) | 2.11-4.01 (667/1000 bracketed) | **no** |
+| D1C1L200 | 0.009818-0.009983 | N_max exact | N_max 3 | N_max 2 (crossing 2.91) | 2.10-4.00 (696/1000 bracketed) | **no** |
+| D1C3L20 | 0.009873-0.009942 | crossing ±5 % (N_max reported) | N* 8.77 | 8.05 (+9.0 %), N_max 8 | 8.03-10.69 (519/1000 bracketed) | **no** |
+| D1C3L200 | 0.009873-0.009942 | crossing ±5 % (N_max reported) | N* 8.77 | 8.05 (+9.0 %), N_max 8 | 8.02-10.37 (533/1000 bracketed) | **no** |
+| D1C8L20 | 0.009878-0.009919 | crossing ±5 % (N_max reported) | N* 21.72 | 20.78 (+4.6 %), N_max 22 | 19.98-22.74 (987/1000 bracketed) | **yes** |
+| D1C8L200 | 0.009878-0.009919 | crossing ±5 % (N_max reported) | N* 21.72 | 20.78 (+4.6 %), N_max 22 | 20.03-22.73 (984/1000 bracketed) | **yes** |
+| D10C1L20 | 0.024242-0.025758 | loss at N = 2 above eps | loss at N = 2 > 0.05 (0.1662) | 0.1123 | unbracketed (0) | **yes** |
+| D10C1L200 | 0.089899-0.092424 | loss at N = 2 above eps | loss at N = 2 > 0.05 (0.1662) | 0.1915 | unbracketed (0) | **yes** |
+| D10C3L20 | 0.024242-0.025758 | loss at N = 2 above eps | loss at N = 2 > 0.05 (0.0588) | 0.0373 | 2.06-3.23 (917/1000 bracketed) | **no** |
+| D10C3L200 | 0.089899-0.092424 | loss at N = 2 above eps | loss at N = 2 > 0.05 (0.0588) | 0.0681 | unbracketed (36) | **yes** |
+| D10C8L20 | 0.024242-0.025758 | N_max exact | N_max 3 | N_max 5 (crossing 5.44) | 4.89-5.93 (1000/1000 bracketed) | **no** |
+| D10C8L200 | 0.089899-0.092424 | N_max exact | N_max 3 | N_max 3 (crossing 3.36) | 3.00-3.68 (1000/1000 bracketed) | **yes** |
+
+**What it shows:**
+* **d = 0.1 % (N* 27–206): all six held.** The formula lies +2.5 … +3.5 % above ns-3's crossing
+  (model − ns-3 over ns-3, as in the table), so it is slightly optimistic.
+* **d = 1 %, C = 8: held** (+4.6 %).
+* **d = 1 %, C = 3 (+9.0 %) and C = 1 (N_max 2 against 3): failed as registered,** on the
+  optimistic side.
+  * Both bootstrap intervals contain N* (8.02–10.69; 2.10–4.01).
+  * At several cells the seven-point grid is unbracketed in about half the resamples.
+  * With the jitter at 2·ToA, the phases stay nearly frozen (a random walk of about 0.4 s against
+    a 6.7 s period), so the spread over seeds is large. These two misses lie inside it: the
+    small-sample pattern, not shown to be a model error.
+* **d = 10 %, 200 B: all three held.**
+* **d = 10 %, 20 B: these cells did not run at their duty-cycle limit.** The nodes sent at
+  2.4–2.6 %, not 9.1 %.
+  * A Class A device holds its next uplink until its two receive windows (RX1 at 1 s, RX2 at
+    2 s) have closed, so a period of 0.67 s cannot be kept.
+  * Two of the three were scored as failed and one as held. None is a test of the formula.
+  * **This meets the prompt's stop condition, "the LoRa module cannot run the duty-cycle limit as
+    specified."**
+* **Length independence:**
+  * at d ≤ 1 %, the 20 B and 200 B runs give the same delivery to the last digit, because every
+    time in the run scales by the same factor (ToA, period, jitter, length) and no other time
+    constant enters. Independence holds there by construction, and the test cannot fail;
+  * at d = 10 % the two lengths differ only through the Class A limit.
+
+**Expectations:**
+* "most cells hold": 12 of 18;
+* "the likeliest misses at small N": held (the d = 1 % misses);
+* "length should not matter": held, trivially at d ≤ 1 %;
+* I did not foresee the Class A limit.
+
+**For Mohamed:**
+* the d = 10 % cells at 20 B: the module cannot keep the limit with Class A timing;
+* the d = 1 % misses: whether to measure them again with more seeds or a longer jitter. That
+  would be a new registration.
