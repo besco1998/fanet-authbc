@@ -42,3 +42,10 @@ def test_length_does_not_enter_the_prediction(uc7) -> None:
     for c in uc7.CELLS:
         by[(c.duty, c.channels)].add(round(c.n_star(), 9))
     assert all(len(v) == 1 for v in by.values())
+
+
+def test_the_new_cell_runs_past_the_class_a_windows(uc7) -> None:
+    (c,) = uc7.CELLS_B
+    assert c.name == "D10C8L120SF8" and c.dr == 4 and c.period_s > 2.5
+    assert c.n_max() == 3 and round(c.n_star(), 3) == 3.257
+    assert c.name not in {x.name for x in uc7.CELLS}

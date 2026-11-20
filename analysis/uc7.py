@@ -37,7 +37,8 @@ from authbc.models import unified_capacity as uc  # noqa: E402
 
 EPS = 0.05
 TOL = 0.05
-TOA_S = {20: 0.066816, 200: 0.333056}            # the module's SF7 time on air (durations.txt)
+# The module's own time on air (its durations.txt), by (payload, DR): DR5 = SF7, DR4 = SF8.
+TOA_S = {(20, 5): 0.066816, (200, 5): 0.333056, (120, 4): 0.379392}
 DUTIES = (0.001, 0.01, 0.1)
 CHANNELS = (1, 3, 8)
 FRAMES_PER_NODE = 60
@@ -49,14 +50,16 @@ class C7Cell:
     duty: float
     channels: int
     payload: int
+    dr: int = 5                     # LoRaWAN data rate: 5 = SF7 (U-C7), 4 = SF8 (U-C7B)
 
     @property
     def name(self) -> str:
-        return f"D{self.duty * 100:g}C{self.channels}L{self.payload}"
+        sf = "" if self.dr == 5 else f"SF{12 - self.dr}"
+        return f"D{self.duty * 100:g}C{self.channels}L{self.payload}{sf}"
 
     @property
     def toa_s(self) -> float:
-        return TOA_S[self.payload]
+        return TOA_S[(self.payload, self.dr)]
 
     @property
     def period_s(self) -> float:
@@ -91,7 +94,10 @@ class C7Cell:
         return "crossing ±5 % (N_max reported)" if self.n_star() >= 5 else "N_max exact"
 
 
-CELLS = [C7Cell(d, c, pl) for d in DUTIES for c in CHANNELS for pl in TOA_S]
+CELLS = [C7Cell(d, c, pl) for d in DUTIES for c in CHANNELS for pl in (20, 200)]
+# U-C7B (predictions/UC7B.md, Mohamed 2026-11-20): one new 10 % cell whose period exceeds 2.5 s,
+# so that the Class A receive windows (RX2 at 2 s) cannot hold the uplinks back.
+CELLS_B = [C7Cell(0.1, 8, 120, dr=4)]
 
 
 def markdown() -> str:
@@ -137,7 +143,62 @@ def score(stem_dir: Path) -> list[dict[str, object]]:
     return rows
 
 
+OUT_NODES = REPO / "results" / "raw" / "uc7_per_node.csv"
+
+
+def _moments(xs: list[float]) -> tuple[float, float]:
+    """Sample skewness g and excess kurtosis κ (bias-adjusted, as Sarle's coefficient takes)."""
+    n = len(xs)
+    m = sum(xs) / n
+    m2 = sum((x - m) ** 2 for x in xs) / n
+    if m2 == 0 or n < 4:
+        return 0.0, 0.0
+    m3 = sum((x - m) ** 3 for x in xs) / n
+    m4 = sum((x - m) ** 4 for x in xs) / n
+    g1, g2 = m3 / m2 ** 1.5, m4 / m2 ** 2 - 3
+    g = g1 * math.sqrt(n * (n - 1)) / (n - 2)
+    k = ((n + 1) * g2 + 6) * (n - 1) / ((n - 2) * (n - 3))
+    return g, k
+
+
+def per_node(c: C7Cell) -> dict[str, object]:
+    """UC7B Part 2: per-node loss at the grid node count nearest N* (N = 2 when N* < 2)."""
+    path = REPO / "results" / "raw" / f"uc7_{c.name.lower()}_pn_nodes.csv"
+    rows = [r for r in csv.DictReader(ln for ln in path.open() if not ln.startswith("#"))]
+    ns = sorted({int(r["n_devices"]) for r in rows})
+    target = 2 if c.n_star() < 2 else min(ns, key=lambda n: (abs(n - c.n_star()), n))
+    sel = [r for r in rows if int(r["n_devices"]) == target]
+    loss = [1 - int(r["received"]) / int(r["sent"]) for r in sel if int(r["sent"]) > 0]
+    srt = sorted(loss)
+    mean = sum(loss) / len(loss)
+    worst = max(sel, key=lambda r: 1 - int(r["received"]) / max(1, int(r["sent"])))
+    g, k = _moments(loss)
+    n = len(loss)
+    bc = (g * g + 1) / (k + 3 * (n - 1) ** 2 / ((n - 2) * (n - 3))) if n > 3 else float("nan")
+    zero = sum(x == 0 for x in loss) / n
+    return {"cell": c.name, "n_devices": target, "node_runs": n, "mean": mean,
+            "median": srt[n // 2], "p90": srt[int(0.9 * (n - 1))], "max": srt[-1],
+            "worst_seed": worst["seed"], "worst_node": worst["node"],
+            "share_zero": zero, "share_over_2x_mean": sum(x > 2 * mean for x in loss) / n,
+            "bimodality_coef": bc, "bimodal": int(bc > 5 / 9 and zero >= 0.25)}
+
+
 def main() -> None:
+    if "--per-node" in sys.argv:
+        rows = [per_node(c) for c in [*CELLS, *CELLS_B]]
+        buf = io.StringIO()
+        for k, v in {**provenance.env_block(), "run": "uc7_per_node"}.items():
+            buf.write(f"# {k}={v}\n")
+        w = csv.DictWriter(buf, fieldnames=list(rows[0]), lineterminator="\n")
+        w.writeheader()
+        w.writerows(rows)
+        OUT_NODES.write_text(buf.getvalue())
+        for r in rows:
+            print(f"{r['cell']:13s} N {r['n_devices']:3d} mean {r['mean']:.4f} "
+                  f"med {r['median']:.4f} p90 {r['p90']:.4f} max {r['max']:.4f} "
+                  f"zero {r['share_zero']:.2f} "
+                  f"BC {r['bimodality_coef']:.3f} bimodal {r['bimodal']}")
+        return
     if "--markdown" in sys.argv:
         print(markdown())
     elif "--score" in sys.argv:

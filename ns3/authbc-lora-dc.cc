@@ -12,6 +12,8 @@
 //                  channels 0-2, and ADRACKReq replies make the gateway deaf while it sends).
 //                  <out>_freq.csv adds the gateway's transmissions and the uplinks lost to them.
 //                  0 = the preset's own channels and ADR as it was (the default).
+//   --perNode      <out>_nodes.csv: each end device's frames sent and received at the gateway
+//                  (trace sinks only; off by default).
 //
 // (The text below is authbc-lora-capacity.cc's, unchanged.)
 // authbc-lora-capacity.cc — how many UAVs can share one LoRa channel? (item D2, docs/02 §9)
@@ -75,6 +77,11 @@ std::map<uint32_t, long> g_rxByFrequency;
 /** C7 diagnostics: gateway transmissions and uplinks lost to them. */
 long g_gwTx = 0;
 long g_gwBusyDrops = 0;
+/** C7 per-node accounting (--perNode): the sender of each packet UID, sends and receptions. */
+bool g_perNode = false;
+std::map<uint64_t, uint32_t> g_srcOfUid;
+std::map<uint32_t, long> g_sentByNode;
+std::map<uint32_t, long> g_rxByNode;
 
 /**
  * Record the beginning of a transmission by an end device.
@@ -89,6 +96,11 @@ OnTransmissionCallback(Ptr<const Packet> packet, uint32_t senderNodeId)
     LoraTag tag;
     packet->PeekPacketTag(tag);
     packetsSent.at(tag.GetSpreadingFactor() - 7)++;
+    if (g_perNode)          // a trace sink observes; it changes nothing in the run
+    {
+        g_srcOfUid[packet->GetUid()] = senderNodeId;
+        ++g_sentByNode[senderNodeId];
+    }
 }
 
 /**
@@ -105,6 +117,11 @@ OnPacketReceptionCallback(Ptr<const Packet> packet, uint32_t receiverNodeId)
     packet->PeekPacketTag(tag);
     packetsReceived.at(tag.GetSpreadingFactor() - 7)++;
     ++g_rxByFrequency[tag.GetFrequency()];   // C7: written only with --channels > 0
+    if (g_perNode)
+    {
+        auto src = g_srcOfUid.find(packet->GetUid());
+        if (src != g_srcOfUid.end()) ++g_rxByNode[src->second];
+    }
 }
 
 
@@ -217,6 +234,7 @@ main(int argc, char* argv[])
     // Only ever DELAYS a transmission, so the 1 % duty cycle is preserved. See JitteredSender.
     double txJitterS = 0.0;
     uint32_t channels = 0;        // C7: 0 = the preset's channels (the original, bit for bit)
+    bool perNode = false;         // C7: <outPrefix>_nodes.csv, per end device sent and received
 
     CommandLine cmd(__FILE__);
     cmd.AddValue("nDevices", "Number of end devices to include in the simulation", nDevices);
@@ -242,12 +260,15 @@ main(int argc, char* argv[])
     cmd.AddValue("gwRegion",
                  "gateway provisioning [aloha = 1 channel/1 demod path, eu = 3 channels/8 paths]",
                  gwRegion);
+    cmd.AddValue("perNode", "C7: also write per-device sent and received to <outPrefix>_nodes.csv",
+                 perNode);
     cmd.AddValue("channels",
                  "C7: random channel per frame among C channels, MAC duty off, gateway on all C "
                  "with 8 paths (0 = the preset's channels, the default)",
                  channels);
     cmd.Parse(argc, argv);
     NS_ABORT_MSG_IF(channels > 8, "channels: 0 (preset) or 1 .. 8");
+    g_perNode = perNode;
     // C7: devices built without ADR, so they never set ADRACKReq (end-device-lorawan-mac.cc:180)
     // and never run the ADR back-off. Set before any device exists; the default path is untouched.
     if (channels > 0)
@@ -641,6 +662,13 @@ main(int argc, char* argv[])
         freq << "frequency_hz,received\n";
         for (const auto& [f, n] : g_rxByFrequency) freq << f << "," << n << "\n";
         freq << "gateway_tx," << g_gwTx << "\ngateway_busy_drops," << g_gwBusyDrops << "\n";
+    }
+    if (perNode)
+    {
+        std::ofstream nodes(outPrefix + "_nodes.csv");
+        nodes << "node,sent,received\n";
+        for (const auto& [node, n] : g_sentByNode)
+            nodes << node << "," << n << "," << g_rxByNode[node] << "\n";
     }
     return 0;
 }
