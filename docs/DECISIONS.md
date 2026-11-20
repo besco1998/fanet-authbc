@@ -248,6 +248,23 @@ model 4.97–6.34 % below ns-3, outside the registered ±5 % (`predictions/UD.md
 | **U-C4 failed (a unit's frames sent together)** | Recorded as failed, as registered. Register the spread case with the same roots on new seeds (U-C4S), and a burst correction (frames 2 … n: tie term K/(W + K); unit loss 1 − (1 − p₁)(1 − p₂)^(n−1)) tested on new cells only (U-C4B). The report states the design consequence: back-to-back fragments cost more than (G18); spread fragments match it but wait up to (n − 1)/n of a unit period | The burst correction is a proposal under test, not adopted |
 | **D2 met the stop condition** (F136) | Record it with its reason (one fading draw per frame, so a frame is error-free or undetected); no D2 capacity runs; the hardware best batch from W3a's measured loss, not from ns-3 | R5 is untested under fading in ns-3; the hardware's length dependence is outside ns-3's channel |
 
+## Decided by Mohamed, 2026-11-19 — the validation report's open questions (`docs/prompts/NEXT_PHASE_PROMPT.md`)
+
+The five open decisions of `docs/revision/2026-11-18_unified_model_validation.md`, and his answers
+to the four questions raised while planning the next phase. Branch `p13-sending-pattern`, from
+`p12-unified-model` (not merged; merging is his).
+
+| decision | chosen | what it costs, or leaves open |
+|---|---|---|
+| **U1** (finite-station, periodic-source loss) | Go ahead, redefined as two work packages: (G25), the periodic-source correction, tested on new ns-3 cells (B); a finite-station form for 2–5 stations, derived and checked against an event simulation (C). **C is proposed to him before any registration** | C's form is not registered against ns-3 or hardware until he agrees |
+| **D4** (hardware-matched 802.11b) | **No guessed values.** It becomes work package H, done after the receiver rule (D) and capture on hardware (G). It reproduces two groups, reported separately: (a) the 5 GHz two-Pi-4 sessions of 2026-10-09, frame burst off, as the fully specified anchor, also used for C's form once accepted; (b) the 2.4 GHz sessions W1e–W1n at the driver default (frame burst on, F75), each judged from its offered rate and frame airtime: reproduced where a station could not hold more than one frame in its queue, flagged as affected by frame burst where it could. Then a short 2.4 GHz session plan with frame burst off, for his approval | The 2.4 GHz sessions where a queue can build up are not reproduced until a burst-off session exists |
+| **The contention window for H** | **F116 is a literature value (Bianchi et al. 2007), not a measurement, and is not used as one.** The one-sender cycle (F121/F123) fits several settings: W ≈ 4 with the standard slot and DIFS, or W = 16 with a 9 µs slot and a 28 µs DIFS, within about 15 µs. If a 2.4 GHz session has two saturated senders, W is inferred from its loss (about 2/(W + 1) at N = 2), marked model-dependent, and from no session H reproduces; otherwise H runs at each candidate setting and reports the spread. G's session plan adds a measurement that separates W from slot and DIFS | H's 2.4 GHz rows carry a spread over window settings, not one value |
+| **The capture margin for H** | A bracket. The no-capture end: equal power. The capture end, **labelled an assumed channel**: equal mean received power, Nakagami m = 1 fading per frame, ns-3's frame-capture model on, with q from its closed form. No per-pair powers are invented. **Every future session plan logs per-sender signal strength** | The capture end is an assumption, not a measurement of the room |
+| **Fragmented units** | **Spread fragments are the design rule,** with the verification wait (n − 1)/n of a unit period counted in the freshness budget. Burst sending stays a stated limitation. A real implementation bursts by default, so pacing is an explicit requirement. No further burst modelling in this task | The registered burst correction (U-C4B, +9 % optimistic) is not pursued |
+| **C7 and C6** | **C7 (LoRa duty cycle): run it** (work package E). **C6 (hidden stations): leave it** as a stated, untested limitation | C6's added term 2h·ν·T_f stays untested |
+| **While C waits for him** | D, E and F go on. **F's capacities are registered under both the Poisson model and (G25),** so F stays valid whatever B shows | — |
+| **The branch** | He merges `p12-unified-model` once CI passes; new work starts from `main` if merged, otherwise from `p12-unified-model`. Nothing is merged by the agent | — |
+
 > **Open items live in [`OPEN_ITEMS.md`](OPEN_ITEMS.md)** — the single tracked list of
 > everything assumed, deferred, unvalidated or accepted-as-a-limitation. Decisions live here.
 > **What each decision COST is in the trade-off register at the end of this file** (formerly

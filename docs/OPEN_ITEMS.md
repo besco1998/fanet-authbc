@@ -49,7 +49,7 @@ Every document: [`README.md`](README.md).
 * The documents were tidied on 2026-11-01: about 70 became about 25, nothing lost
   ([`README.md`](README.md) has the map of where each old file went).
 
-**The gate.** `make all` = lint + mypy + 2868 fast tests + the 43-test frozen gate. The paper has
+**The gate.** `make all` = lint + mypy + 2924 fast tests + the 43-test frozen gate. The paper has
 References **55** rendered (85 in the shared bibliography).
 
 **How to edit the paper.** Edit `paper/main.tex` directly. Every number is a macro from
@@ -79,7 +79,10 @@ index in `predictions/README.md`).
 | G15 | Crypto timing on the Pi 3B+ and BeagleBone | optional | register §G |
 | G37 | Why four cores give 3.36 times one | optional | register §G |
 | Q1–Q14 | Questions below (Q8–Q10 from G27, 2026-11-03; Q11–Q14 from the desk work) | Mohamed | §3 |
-| U1 | **A finite-station, periodic-source version of the loss expression.** It is to serve both the ns-3 small-swarm cells (802.11b Pb1B/Pb1D, where the Poisson form errs 5–11 % low, `predictions/UD.md`) and the 2–5-station hardware sessions. To be registered and tested on new cells only. **Not started: waits for Mohamed's go-ahead after C3–C5** (decided 2026-11-18) | Mohamed (go-ahead) | `predictions/UD.md` outcome; `docs/DECISIONS.md` 2026-11-18 |
+| U1 | **A finite-station, periodic-source version of the loss expression.** It is to serve both the ns-3 small-swarm cells (802.11b Pb1B/Pb1D, where the Poisson form errs 5–11 % low, `predictions/UD.md`) and the 2–5-station hardware sessions. To be registered and tested on new cells only. ~~Not started: waits for Mohamed's go-ahead after C3–C5~~ (decided 2026-11-18). **2026-11-19, Mohamed: go ahead, redefined as (G25) on new ns-3 cells (work package B) and a finite-station form for 2–5 stations (C), which is proposed to him before any registration** | agent (B); Mohamed (C's acceptance) | `docs/prompts/NEXT_PHASE_PROMPT.md` §3–4; `docs/DECISIONS.md` 2026-11-19 |
+| U2 | **The hardware-matched 802.11b configuration (D4 of the 2026-11-18 report), now work package H.** No guessed values. Two groups reported apart: the 5 GHz frame-burst-off sessions of 2026-10-09 (the anchor), and the 2.4 GHz sessions W1e–W1n at the driver default, reproduced only where a station's queue cannot build up. The window: F116 is a literature value, not used as a measurement; candidate settings from the measured cycle, with the spread reported. Capture: a bracket, its capture end an assumed channel (equal mean power, Nakagami m = 1, ns-3's capture model) (Mohamed, 2026-11-19) | agent, after D and G | `docs/DECISIONS.md` 2026-11-19 |
+| U3 | **A 2.4 GHz session with frame burst off,** and a measurement that separates the contention window from slot and DIFS (one saturated sender's gap distribution, and a saturated pair). Plans to be written for his approval; every plan logs per-sender signal strength (Mohamed, 2026-11-19) | Mohamed (approval, boards) | `docs/DECISIONS.md` 2026-11-19 |
+| U4 | **C6, stations hidden from part of the swarm: left as a stated, untested limitation** (Mohamed, 2026-11-19). C7 (LoRa duty cycle) is run as work package E | — (limitation) | `docs/DECISIONS.md` 2026-11-19 |
 
 ## 2a. The main open items: the work's weaknesses (set by Mohamed, 2026-11-04)
 

@@ -14,6 +14,7 @@ constant is the standard's (or ns-3's, where ns-3 states it); nothing is fitted 
 from __future__ import annotations
 
 import math
+from collections.abc import Callable
 from dataclasses import dataclass
 
 from authbc.models import bianchi
@@ -54,26 +55,34 @@ def affine_airtime(phy: OfdmPhy | DsssPhy, fixed_bytes: float,
     return phi, psi
 
 
-def _terms(nu: float, tf_s: float, acc: Access, p: float) -> dict[str, float] | None:
+KRatio = Callable[[float], float]
+"""A scale on K as a function of the load a + γ: (G25) passes the periodic-source ratio R."""
+
+
+def _terms(nu: float, tf_s: float, acc: Access, p: float,
+           k_ratio: KRatio | None = None) -> dict[str, float] | None:
     a = nu * (tf_s - acc.delta_s) * (1 - p / 2)
     gam, eta = nu * acc.difs_s, nu * acc.slot_s * (acc.w - 1) / 2
     if 1 - gam - a <= 0:
         return None                                   # the medium never empties: saturated
     k = a * (1 + gam + 2 * eta) / (1 - gam - a)       # (G4)
+    if k_ratio is not None:
+        k *= k_ratio(a + gam)                         # (G25): co-waiting frames of periodic sources
     return {"tie": a * k / (acc.w + k),
             "zero_backoff_after_busy": gam * (2 * a / acc.w + gam),
             "detection_window": 2 * acc.delta_s * nu * (1 + a)}
 
 
-def loss(nu: float, tf_s: float, acc: Access = A80211A, p_fixed: float | None = None) -> float:
+def loss(nu: float, tf_s: float, acc: Access = A80211A, p_fixed: float | None = None,
+         k_ratio: KRatio | None = None) -> float:
     """Loss of one frame at start rate ν = (N − 1)f and airtime T_f, Eq. (G5).
 
     With `p_fixed`, p inside a is held at that value (one evaluation); otherwise p is the damped
-    fixed point. 1.0 where the expression saturates.
+    fixed point. 1.0 where the expression saturates. `k_ratio` scales K (None: Poisson, as G5).
     """
     p = 0.0 if p_fixed is None else p_fixed
     for _ in range(300):
-        terms = _terms(nu, tf_s, acc, p)
+        terms = _terms(nu, tf_s, acc, p, k_ratio)
         if terms is None:
             return 1.0
         pn = min(1.0, sum(terms.values()))

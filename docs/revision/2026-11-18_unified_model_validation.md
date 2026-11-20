@@ -400,6 +400,27 @@ The other eleven have no effect:
    exact exponential gives 3.00 % (−2.3 σ pooled). This is borderline, and it is not
    established.
 
+### Decided by Mohamed, 2026-11-19 (added after the report; nothing above was changed)
+
+The next phase is specified in `docs/prompts/NEXT_PHASE_PROMPT.md`. The full record, with what each
+choice costs, is in `docs/DECISIONS.md` (2026-11-19).
+1. **U1: go ahead,** redefined as (G25) on new ns-3 cells and a finite-station form for 2–5
+   stations. The form is proposed to him before any registration.
+2. **D4: no guessed values.** It becomes work package H, after the receiver rule and capture on
+   hardware.
+   * **Two groups:** the 5 GHz sessions recorded with frame burst off, and the 2.4 GHz sessions
+     where no station's queue can build up.
+   * **The window:** F116 is a literature value, not a measurement; candidate settings from the
+     measured cycle, with the spread reported.
+   * **Capture:** a bracket. Its capture end is an assumed channel.
+3. **Fragmented units: spread fragments are the design rule.** The verification wait of
+   (n − 1)/n of a unit period counts in the freshness budget. Burst sending stays a stated
+   limitation. **A real implementation bursts by default, so pacing is an explicit requirement.**
+   No further burst modelling.
+4. **C7: run. C6: left as a stated, untested limitation.**
+5. **The branch:** Mohamed merges `p12-unified-model` once CI passes. New work is on
+   `p13-sending-pattern`.
+
 ## Handoff 2026-11-18 — the unified-model task (serial)
 
 * **Green baseline:** branch `p12-unified-model` (not merged), at the commit that adds this
