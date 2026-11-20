@@ -21,7 +21,7 @@ R·K and K at four loads per cell.
     python analysis/ug25.py              -> the predictions, printed (what the registration holds)
     python analysis/ug25.py --scan       -> every stored CSV row at a cell's (bytes, frames/s)
     python analysis/ug25.py --markdown   -> the registration's table
-    python analysis/ug25.py --score STEM -> results/raw/ug25_scored.csv
+    python analysis/ug25.py --score      -> results/raw/ug25_scored.csv
 """
 from __future__ import annotations
 
@@ -121,6 +121,74 @@ def scan_prior(root: Path = REPO / "results") -> list[tuple[str, str, int, float
     return hits
 
 
+def score() -> list[dict[str, object]]:
+    """Each (cell, ε): ns-3's 30-seed crossing and interval against the registered roots."""
+    pred = {(r["cell"], r["eps"]): r for r in predictions()}
+    rows = []
+    for name in CELLS:
+        summary = REPO / "results" / "raw" / f"ug25_{name.lower()}.csv"
+        lines = [ln for ln in summary.read_text().splitlines() if not ln.startswith("#")]
+        for r in csv.DictReader(lines):
+            if not r["n_nodes"].startswith("CROSSING@"):
+                continue
+            eps = round(1 - float(r["n_nodes"].split("@")[1]), 2)
+            p = pred[(name, eps)]
+            ns3 = float(r["delivered_mean"])
+            g25_err = (p["g25_root"] - ns3) / ns3
+            rows.append({"cell": name, "standard": p["standard"], "eps": eps,
+                         "ns3_crossing": ns3, "ci_lo": float(r["delivered_min"]),
+                         "ci_hi": float(r["delivered_max"]), "seeds": int(r["seeds"]),
+                         "g25_root": p["g25_root"], "g25_err_pct": 100 * g25_err,
+                         "held": int(abs(g25_err) <= TOL),
+                         "side": "" if abs(g25_err) <= TOL else
+                                 ("optimistic" if g25_err > 0 else "conservative"),
+                         "poisson_root": p["poisson_root"],
+                         "poisson_err_pct": 100 * (p["poisson_root"] - ns3) / ns3})
+    return rows
+
+
+LOADS = (0.5, 0.75, 1.0, 1.25)
+COWAIT_SEEDS = 10
+OUT_K = REPO / "results" / "raw" / "ug25_cowaiting.csv"
+
+
+def cowait_grid() -> dict[str, list[int]]:
+    """Per cell, the four registered node counts: round(load × the ε = 0.05 (G25) root)."""
+    roots = {r["cell"]: r["g25_root"] for r in predictions() if r["eps"] == 0.05}
+    return {name: [max(2, round(u * float(roots[name]))) for u in LOADS] for name in CELLS}
+
+
+def cowaiting(trace_dir: Path) -> list[dict[str, object]]:
+    """Measured K per run (U-C1's rule) against R·K and K, each at its own model's fixed point."""
+    import re
+    import statistics as st
+
+    sys.path.insert(0, str(REPO / "analysis"))
+    import unified_c1
+
+    per: dict[tuple[str, int], list[float]] = {}
+    for path in sorted(trace_dir.glob("*_mac.csv")):
+        m = re.fullmatch(r"(\w+?)_n(\d+)_s(\d+)_mac\.csv", path.name)
+        if not m or m.group(1) not in CELLS:
+            continue
+        k = unified_c1.classify(*unified_c1.read_trace(path))["K"]
+        per.setdefault((m.group(1), int(m.group(2))), []).append(k)
+    rows = []
+    for (name, n), ks in sorted(per.items()):
+        c = CELLS[name]
+        p_poisson = uc.loss((n - 1) * c.fps, c.tf_s, c.access)
+        p_g25 = pc.loss_periodic(n, c.fps, c.tf_s, c.access)
+        k_poisson, _ = predicted_k(c, n, p_poisson)
+        _, rk = predicted_k(c, n, p_g25)
+        mean = st.mean(ks)
+        rows.append({"cell": name, "n_nodes": n, "seeds": len(ks), "k_measured": mean,
+                     "k_measured_sd": st.stdev(ks) if len(ks) > 1 else 0.0,
+                     "rk_g25": rk, "k_poisson": k_poisson,
+                     "measured_over_rk": mean / rk if rk > 0 else float("nan"),
+                     "measured_over_k": mean / k_poisson if k_poisson > 0 else float("nan")})
+    return rows
+
+
 def markdown() -> str:
     """The registration's prediction table, generated (never typed)."""
     lines = ["| cell | PHY | frame | frames/s | T_f (µs) | ε | **(G25) root** | Poisson root | "
@@ -135,6 +203,42 @@ def markdown() -> str:
 def main() -> None:
     if "--markdown" in sys.argv:
         print(markdown())
+        return
+    if "--cowait-grid" in sys.argv:
+        for name, ns in cowait_grid().items():
+            print(name, *ns)
+        return
+    if "--cowait" in sys.argv:
+        rows = cowaiting(Path(sys.argv[sys.argv.index("--cowait") + 1]))
+        buf = io.StringIO()
+        from authbc.bench import provenance
+        for k, v in {**provenance.env_block(), "run": "ug25_cowaiting"}.items():
+            buf.write(f"# {k}={v}\n")
+        w = csv.DictWriter(buf, fieldnames=list(rows[0]), lineterminator="\n")
+        w.writeheader()
+        w.writerows(rows)
+        OUT_K.write_text(buf.getvalue())
+        for r in rows:
+            print(f"  {r['cell']} N {r['n_nodes']}: K measured {r['k_measured']:.4f} "
+                  f"(sd {r['k_measured_sd']:.4f}), R·K {r['rk_g25']:.4f}, K {r['k_poisson']:.4f}"
+                  f" -> {r['measured_over_rk']:.3f} / {r['measured_over_k']:.3f}")
+        return
+    if "--score" in sys.argv:
+        rows = score()
+        buf = io.StringIO()
+        from authbc.bench import provenance
+        for k, v in {**provenance.env_block(), "run": "ug25_scored"}.items():
+            buf.write(f"# {k}={v}\n")
+        w = csv.DictWriter(buf, fieldnames=list(rows[0]), lineterminator="\n")
+        w.writeheader()
+        w.writerows(rows)
+        OUT.write_text(buf.getvalue())
+        print(f"{sum(int(r['held']) for r in rows)} of {len(rows)} held")
+        for r in rows:
+            print(f"  {r['cell']} eps {r['eps']}: ns-3 {r['ns3_crossing']:.3f} "
+                  f"({r['ci_lo']:.3f}-{r['ci_hi']:.3f})  G25 {r['g25_root']:.2f} "
+                  f"{r['g25_err_pct']:+.2f} %  Poisson {r['poisson_err_pct']:+.2f} %  "
+                  f"{'held' if r['held'] else 'FAILED ' + str(r['side'])}")
         return
     if "--scan" in sys.argv:
         hits = scan_prior()
