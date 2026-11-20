@@ -117,3 +117,66 @@ one:
 * **Known before this registration:** ns-3.48's source as cited; the audit of 2026-11-17; F135's
   PER probe; the authbc-per values above, computed while writing this file.
 * **No run of `authbc-capture` has been made.**
+
+---
+
+## Outcome — added 2026-11-20, after the runs; nothing above this line was changed
+
+**The runs.** As registered: `ns3/authbc-capture.cc`, 24 processes, 2 000 trials a point, seed 1
+(`results/raw/ucap_runs/`).
+* The first launch aborted at once in `WifiTxVector::SetTxPowerLevel`: level 0 is below ns-3.48's
+  `WIFI_MIN_TX_PWR_LEVEL = 1`. No result was written.
+* The fix (`9dba23bb`, level 1), a 3-trial smoke test, then the runs.
+
+**Scored** by `analysis/ucap.py --score` → `results/raw/ucap_scored.csv`.
+
+**The rule as registered failed: 430 of 460 scored points held.**
+* **All 30 failures are one case:** the capture model on, Δ = 19 µs, SIR ≥ 6 dB, at both PHYs.
+  * Predicted: X takes over and is received.
+  * Measured: X is never received (2 000 of 2 000 BUSY_DECODING_PREAMBLE), and Y is lost to its
+    L-SIG or decoded at its SINR.
+  * **No capture switch ever happened at 19 µs.**
+* **Everything else held:**
+  * **the 4 µs window** (Δ = 0, 2 µs, model on or off): X received from SIR = 5 dB and never below,
+    Y never — 184 of 184;
+  * **equal power** (SIR = 0, Δ < 4 µs): neither frame received, 8 of 8. **q = 0 in the
+    equal-power scenario, as assumed;**
+  * **a locked frame decoded at its SINR,** every intermediate point within about 0.01 of ns-3's
+    own error models:
+
+| frame Y decoded | SIR (dB) | measured | predicted |
+|---|---|---|---|
+| 802.11b, Δ = 19 µs, model off | 3 / 4 / 5 / 6 | 0.9905 / 0.8775 / 0.4355 / 0.0425 | 0.9861 / 0.8734 / 0.4406 / 0.0324 |
+| 802.11a, Δ = 19 µs, model off | −2 / −1 / 0 / 1 | 0.9995 / 0.9885 / 0.8020 / 0.0875 | 0.9994 / 0.9901 / 0.7921 / 0.0860 |
+| 802.11a, Δ = 200 µs, model off | −2 / −1 / 0 / 1 / 2 | 0.9995 / 0.9970 / 0.9275 / 0.3960 / 0.0080 | 0.9998 / 0.9963 / 0.9182 / 0.4072 / 0.0141 |
+
+**The cause, shown in the source: my reading missed one of two window conditions.**
+* Capture needs both:
+  * `PhyEntity` checks the last detection + 16 µs ≥ now (`phy-entity.cc:439–442`, `:472–475`);
+  * **`SimpleFrameCaptureModel::CaptureNewFrame` also checks the current frame's start + 16 µs ≥
+    now** (`simple-frame-capture-model.cc:71–72`).
+* The registration cites the second line but reads the window from detection alone.
+* **The binding window ends 16 µs after the first frame starts, not 20 µs.** At Δ = 19 µs there is
+  no capture.
+* **ns-3 does what its source says. The error is mine.**
+
+**The corrected reading, post hoc, not a score:** the same predictions with the window ending at
+16 µs agree with **552 of 552 points**, the 20 µs edge included (`analysis/ucap.py --score` →
+`results/raw/ucap_posthoc_corrected.csv`).
+
+**What it means for the rest of the phase.**
+* **ns-3's DCF collisions are same-slot ties inside 4 µs, where no capture model is consulted.**
+  The narrower window (≤ 16 µs from the first start) strengthens the registered implication: in
+  the capacity scenarios the capture model should never act.
+* **The capture that ns-3 does have** is the preamble-window rule: the strongest frame wins if its
+  SINR is at least 4 dB. With it, the q closed forms hold with θ = 4 dB.
+
+**Expectations:**
+* "every scored point holds": missed, by my misreading, at 30 points;
+* "the likeliest surprise at 802.11a, 19 µs, near SIR 0–1": held there (within 0.01). The
+  surprise was elsewhere;
+* "the 20 µs points follow the 19 µs or the 21 µs rule": they follow both, which under the
+  corrected reading are the same.
+
+**Per the registration and the prompt §7 this is a stop.** The corrected reading is not used
+until Mohamed decides.

@@ -7,8 +7,11 @@
 //                  channels (868.1 + 0.2k MHz, k = 0 … C−1), in one sub-band whose duty cycle
 //                  is 1, so the MAC enforces none: the duty cycle is set by --appPeriod, as
 //                  E11 states for the original. The gateway listens on all C channels with 8
-//                  reception paths, so no frame is lost for want of a path. 0 = the preset's
-//                  own channels (the default).
+//                  reception paths, so no frame is lost for want of a path. ADR is switched off
+//                  on the server and every device (else LinkAdrReq masks the devices back to
+//                  channels 0-2, and ADRACKReq replies make the gateway deaf while it sends).
+//                  <out>_freq.csv adds the gateway's transmissions and the uplinks lost to them.
+//                  0 = the preset's own channels and ADR as it was (the default).
 //
 // (The text below is authbc-lora-capacity.cc's, unchanged.)
 // authbc-lora-capacity.cc — how many UAVs can share one LoRa channel? (item D2, docs/02 §9)
@@ -36,6 +39,8 @@
 #include "ns3/mobility-helper.h"
 #include "ns3/point-to-point-helper.h"
 #include "ns3/log.h"
+
+#include <map>
 
 using namespace ns3;
 using namespace lorawan;
@@ -65,6 +70,11 @@ bool realisticChannelModel = false; //!< Whether to use a more realistic channel
 auto packetsSent = std::vector<int>(6, 0);
 /** Record received pkts by Data Rate (DR) [index 0 -> DR5, index 5 -> DR0]. */
 auto packetsReceived = std::vector<int>(6, 0);
+/** C7: receptions at the gateway by carrier frequency (Hz). */
+std::map<uint32_t, long> g_rxByFrequency;
+/** C7 diagnostics: gateway transmissions and uplinks lost to them. */
+long g_gwTx = 0;
+long g_gwBusyDrops = 0;
 
 /**
  * Record the beginning of a transmission by an end device.
@@ -94,6 +104,7 @@ OnPacketReceptionCallback(Ptr<const Packet> packet, uint32_t receiverNodeId)
     LoraTag tag;
     packet->PeekPacketTag(tag);
     packetsReceived.at(tag.GetSpreadingFactor() - 7)++;
+    ++g_rxByFrequency[tag.GetFrequency()];   // C7: written only with --channels > 0
 }
 
 
@@ -237,6 +248,10 @@ main(int argc, char* argv[])
                  channels);
     cmd.Parse(argc, argv);
     NS_ABORT_MSG_IF(channels > 8, "channels: 0 (preset) or 1 .. 8");
+    // C7: devices built without ADR, so they never set ADRACKReq (end-device-lorawan-mac.cc:180)
+    // and never run the ADR back-off. Set before any device exists; the default path is untouched.
+    if (channels > 0)
+        Config::SetDefault("ns3::EndDeviceLorawanMac::ADR", BooleanValue(false));
 
     NS_ABORT_MSG_IF(dataRate > 5, "DR must be 0..5 (LoRa modulation only)");
     // Fail early and legibly rather than as a mystifying zero-send run 3600 simulated seconds
@@ -393,21 +408,28 @@ main(int argc, char* argv[])
 
     if (channels > 0)
     {
-        // The end devices: C channels in one sub-band of duty 1. Every channel is enabled, so the
-        // MAC's pick among the channels free of duty-cycle wait is uniform over all C.
-        for (auto j = endDevices.Begin(); j != endDevices.End(); ++j)
-        {
-            auto edMac = DynamicCast<LoraNetDevice>((*j)->GetDevice(0))->GetMac();
+        // One channel table for every MAC: C channels in one sub-band of duty 1, 868.0-870.0 MHz.
+        // Every channel is enabled, so an end device's pick among the channels free of
+        // duty-cycle wait is uniform over all C. The gateway MAC gets the same table: the network
+        // server asks it for the wait time on a device's uplink frequency and on the RX2
+        // frequency (869.525 MHz), which the preset's 868.0-868.6 MHz sub-band does not hold
+        // (an optimized build then dereferences a null sub-band).
+        auto table = [channels]() {
             auto chHelper = Create<LogicalLoraChannelHelper>(static_cast<uint8_t>(channels));
             chHelper->AddSubBand(Create<SubBand>(868000000, 870000000, 1, 14));
             for (uint32_t k = 0; k < channels; ++k)
                 chHelper->SetChannel(static_cast<uint8_t>(k),
                                      Create<LogicalLoraChannel>(868100000 + 200000 * k, 0, 5));
-            edMac->SetLogicalLoraChannelHelper(chHelper);
-        }
+            return chHelper;
+        };
+        for (auto j = endDevices.Begin(); j != endDevices.End(); ++j)
+            DynamicCast<LoraNetDevice>((*j)->GetDevice(0))->GetMac()->SetLogicalLoraChannelHelper(
+                table());
         // The gateway: every channel heard, and paths enough that none is ever the limit.
         for (auto g = gateways.Begin(); g != gateways.End(); ++g)
         {
+            DynamicCast<LoraNetDevice>((*g)->GetDevice(0))->GetMac()->SetLogicalLoraChannelHelper(
+                table());
             auto gwPhy = DynamicCast<GatewayLoraPhy>(
                 DynamicCast<LoraNetDevice>((*g)->GetDevice(0))->GetPhy());
             NS_ABORT_MSG_IF(!gwPhy, "expected a GatewayLoraPhy");
@@ -497,33 +519,43 @@ main(int argc, char* argv[])
     }
     outputFile.close();
 
-    /**************************
-     *  Create network server  *
-     ***************************/
-
-    // Create the network server node
-    Ptr<Node> networkServer = CreateObject<Node>();
-
-    // PointToPoint links between gateways and server
-    PointToPointHelper p2p;
-    p2p.SetDeviceAttribute("DataRate", StringValue("5Mbps"));
-    p2p.SetChannelAttribute("Delay", StringValue("2ms"));
-    // Store network server app registration details for later
-    P2PGwRegistration_t gwRegistration;
-    for (auto gw = gateways.Begin(); gw != gateways.End(); ++gw)
+    // C7 is uplink ALOHA, as its formula is: no network server and no forwarder with --channels.
+    // With a server, two module behaviours the formula omits enter: the ADR component's LinkAdrReq
+    // re-enables channels {0, 1, 2} only (adr-component.cc:133-143), and every device sets
+    // ADRACKReq after 64 uplinks without a downlink, ADR or not (end-device-lorawan-mac.cc:585),
+    // which the server answers (network-controller-components.cc:97-106) while the half-duplex
+    // gateway hears nothing. The gateway still receives, and counts, every uplink.
+    if (channels == 0)
     {
-        auto container = p2p.Install(networkServer, *gw);
-        auto serverP2PNetDev = DynamicCast<PointToPointNetDevice>(container.Get(0));
-        gwRegistration.emplace_back(serverP2PNetDev, *gw);
+        /**************************
+         *  Create network server  *
+         ***************************/
+
+        // Create the network server node
+        Ptr<Node> networkServer = CreateObject<Node>();
+
+        // PointToPoint links between gateways and server
+        PointToPointHelper p2p;
+        p2p.SetDeviceAttribute("DataRate", StringValue("5Mbps"));
+        p2p.SetChannelAttribute("Delay", StringValue("2ms"));
+        // Store network server app registration details for later
+        P2PGwRegistration_t gwRegistration;
+        for (auto gw = gateways.Begin(); gw != gateways.End(); ++gw)
+        {
+            auto container = p2p.Install(networkServer, *gw);
+            auto serverP2PNetDev = DynamicCast<PointToPointNetDevice>(container.Get(0));
+            gwRegistration.emplace_back(serverP2PNetDev, *gw);
+        }
+
+        // Create a network server for the network
+        nsHelper.SetGatewaysP2P(gwRegistration);
+        nsHelper.SetEndDevices(endDevices);
+        nsHelper.Install(networkServer);
+
+        // Create a forwarder for each gateway
+        forHelper.Install(gateways);
+
     }
-
-    // Create a network server for the network
-    nsHelper.SetGatewaysP2P(gwRegistration);
-    nsHelper.SetEndDevices(endDevices);
-    nsHelper.Install(networkServer);
-
-    // Create a forwarder for each gateway
-    forHelper.Install(gateways);
 
     // Install trace sources
     for (auto node = gateways.Begin(); node != gateways.End(); node++)
@@ -531,6 +563,15 @@ main(int argc, char* argv[])
         DynamicCast<LoraNetDevice>((*node)->GetDevice(0))
             ->GetPhy()
             ->TraceConnectWithoutContext("ReceivedPacket", MakeCallback(OnPacketReceptionCallback));
+        if (channels > 0)       // C7 diagnostics; trace sinks observe only
+        {
+            auto gwPhy = DynamicCast<LoraNetDevice>((*node)->GetDevice(0))->GetPhy();
+            gwPhy->TraceConnectWithoutContext(
+                "StartSending", MakeCallback(+[](Ptr<const Packet>, uint32_t) { ++g_gwTx; }));
+            gwPhy->TraceConnectWithoutContext(
+                "NoReceptionBecauseTransmitting",
+                MakeCallback(+[](Ptr<const Packet>, uint32_t) { ++g_gwBusyDrops; }));
+        }
     }
 
     // Install trace sources
@@ -594,5 +635,12 @@ main(int argc, char* argv[])
         << "received," << received << "\n"
         << "delivered_frac," << (static_cast<double>(received) / sent) << "\n";
     out.close();
+    if (channels > 0)
+    {
+        std::ofstream freq(outPrefix + "_freq.csv");
+        freq << "frequency_hz,received\n";
+        for (const auto& [f, n] : g_rxByFrequency) freq << f << "," << n << "\n";
+        freq << "gateway_tx," << g_gwTx << "\ngateway_busy_drops," << g_gwBusyDrops << "\n";
+    }
     return 0;
 }

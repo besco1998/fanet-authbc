@@ -63,6 +63,7 @@ SCORED_OFFSETS = (0.0, 2.0, 19.0, 21.0, 200.0)     # 20 µs is the window's edge
 ALLOWANCE = 0.05
 OUT_PRED = REPO / "results" / "raw" / "ucap_predictions.csv"
 OUT_SCORE = REPO / "results" / "raw" / "ucap_scored.csv"
+OUT_POSTHOC = REPO / "results" / "raw" / "ucap_posthoc_corrected.csv"
 
 
 def _w(dbm: float) -> float:
@@ -104,8 +105,19 @@ def decode(standard: str, sinr: float, from_us: float) -> float:
     return ofdm_payload_success(round(sinr, 6)) ** share
 
 
-def predict(standard: str, capture: bool, offset_us: float, sir_db: float) -> tuple[float, float]:
-    """(P[X received], P[Y received]) by the rule as read in ns-3.48's source."""
+# Post hoc (2026-11-20, after the runs; the registered reading is the one above, and it failed at
+# 30 points): SimpleFrameCaptureModel::CaptureNewFrame ALSO requires the current frame's START
+# + 16 µs ≥ now (simple-frame-capture-model.cc:71-72), besides PhyEntity's detection time + 16 µs
+# (phy-entity.cc:439-442). The binding window therefore ends 16 µs after Y starts.
+CORRECTED_WINDOW_END_US = 16.0
+
+
+def predict(standard: str, capture: bool, offset_us: float, sir_db: float,
+            window_end_us: float = WINDOW_END_US) -> tuple[float, float]:
+    """(P[X received], P[Y received]) by the rule as read in ns-3.48's source.
+
+    `window_end_us` is the capture window's end: 20 µs as registered, 16 µs as corrected.
+    """
     px_dbm = PY_DBM + sir_db
     if offset_us < DETECT_US:                              # one detection window
         if px_dbm > PY_DBM:
@@ -113,19 +125,19 @@ def predict(standard: str, capture: bool, offset_us: float, sir_db: float) -> tu
             return (decode(standard, sinr_db(px_dbm, PY_DBM), 0.0) if x_ok else 0.0), 0.0
         y_ok = sinr_db(PY_DBM, px_dbm) >= DETECT_DB      # ties go to Y, the first (lower UID)
         return 0.0, (decode(standard, sinr_db(PY_DBM, px_dbm), 0.0) if y_ok else 0.0)
-    if capture and offset_us <= WINDOW_END_US and px_dbm > PY_DBM + MARGIN_DB:
+    if capture and offset_us <= window_end_us and px_dbm > PY_DBM + MARGIN_DB:
         x_sinr = sinr_db(px_dbm, PY_DBM)
         return (decode(standard, x_sinr, 0.0) if x_sinr >= DETECT_DB else 0.0), 0.0
     return 0.0, decode(standard, sinr_db(PY_DBM, px_dbm), offset_us)
 
 
-def predictions() -> list[dict[str, object]]:
+def predictions(window_end_us: float = WINDOW_END_US) -> list[dict[str, object]]:
     rows = []
     for standard in ("80211a", "80211b"):
         for capture in (False, True):
             for off in OFFSETS:
                 for sir in SIRS:
-                    px, py = predict(standard, capture, off, float(sir))
+                    px, py = predict(standard, capture, off, float(sir), window_end_us)
                     rows.append({"standard": standard, "capture": int(capture),
                                  "offset_us": off, "sir_db": sir, "p_x": px, "p_y": py,
                                  "scored": int(off in SCORED_OFFSETS)})
@@ -140,8 +152,9 @@ def _held(pred: float, got: int, trials: int) -> bool:
     return abs(got / trials - pred) <= ALLOWANCE
 
 
-def score(run_dir: Path) -> list[dict[str, object]]:
-    pred = {(r["standard"], r["capture"], r["offset_us"], r["sir_db"]): r for r in predictions()}
+def score(run_dir: Path, window_end_us: float = WINDOW_END_US) -> list[dict[str, object]]:
+    pred = {(r["standard"], r["capture"], r["offset_us"], r["sir_db"]): r
+            for r in predictions(window_end_us)}
     rows = []
     for f in sorted(run_dir.glob("*.csv")):
         if f.name.endswith("_drops.csv"):
@@ -175,10 +188,16 @@ def main() -> None:
         _write(OUT_PRED, predictions(), "ucap_predictions")
         print(f"wrote {OUT_PRED.relative_to(REPO)}")
     elif "--score" in sys.argv:
-        rows = score(Path(sys.argv[sys.argv.index("--score") + 1]))
+        run_dir = Path(sys.argv[sys.argv.index("--score") + 1])
+        rows = score(run_dir)
         _write(OUT_SCORE, rows, "ucap_scored")
         scored = [r for r in rows if r["scored"]]
-        print(f"{sum(r['held'] for r in scored)} of {len(scored)} scored points held")
+        print(f"registered reading: {sum(r['held'] for r in scored)} of {len(scored)} held")
+        post = score(run_dir, CORRECTED_WINDOW_END_US)
+        _write(OUT_POSTHOC, post, "ucap_posthoc_corrected_window")
+        agree = sum(r["held"] for r in post)
+        print(f"corrected reading (post hoc, not a score): {agree} of {len(post)} points "
+              "agree, the 20 µs edge included")
 
 
 if __name__ == "__main__":
