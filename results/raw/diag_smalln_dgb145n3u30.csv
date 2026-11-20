@@ -1,0 +1,10 @@
+cell,n_nodes,seeds,delivered_mean,delivered_min,delivered_max,delivered_stdev
+DGB145N3U30,3,10,0.998168,0.997375,0.998797,0.000415
+DGB145N3U30,CROSSING@0.95,10,,,,
+ryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=diag_smalln_dgb145n3u30
+# ns3=3.48 (authbc-links-audit)
+# config_hash=021778d4a52551cc

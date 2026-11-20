@@ -166,3 +166,13 @@ period come only from the m bystanders.
 * **(c) Use the event simulation itself as the small-N model:** ns-3's rule, at the session's own
   rates. It is exact for the access rule and needs no closed form.
 * For the fixed-phase case, whichever is chosen: more seeds or drifting clocks.
+
+## Note added 2026-11-20, after U-FS and F137 (the text above is unchanged)
+
+* **"ns-3's rule" in §§3–4 means the event model `authbc.sim.dcf_ns3rule`, not ns-3.** At N = 2–3
+  that model loses 0.14–0.79 of ns-3's loss, while rule A's simulation tracks ns-3 within
+  0.79–1.31 (F137).
+* **Against ns-3 itself, the form held 12 of 12 at N = 3–5, u ≤ 0.5:** −11.9 … +4.1 %
+  (`predictions/UFS.md`).
+* **At N = 2 and at high load it still fails against ns-3,** 0.14–0.75 of ns-3's loss
+  (F137's table). That is why it is not used there (Mohamed, 2026-11-20).

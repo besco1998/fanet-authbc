@@ -1,0 +1,10 @@
+cell,n_nodes,seeds,delivered_mean,delivered_min,delivered_max,delivered_stdev
+DGA1400N2U85,2,10,0.985894,0.984411,0.988314,0.001155
+DGA1400N2U85,CROSSING@0.95,10,,,,
+ptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=diag_smalln_dga1400n2u85
+# ns3=3.48 (authbc-links-audit)
+# config_hash=021778d4a52551cc

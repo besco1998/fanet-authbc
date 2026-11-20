@@ -138,6 +138,17 @@ for _c in _FS_CELLS:
     CELLS[_c.name] = Cell(_c.frame_bytes, _c.fps, _c.standard,
                           "DsssRate1Mbps" if _c.standard == "80211b" else "OfdmRate6Mbps",
                           sim_s=100.0)
+# Diagnostic, not registered (2026-11-20): ns-3 at the event comparison's own cells
+# (analysis/finite_station_check.py), N = 2 and 3, to see which event simulation ns-3 follows at
+# small N after U-FS's expectation missed. 10 seeds of 100 s each, as the comparison ran.
+for _std, _size, _ph in (("80211b", 145, "DsssRate1Mbps"), ("80211a", 1400, "OfdmRate6Mbps")):
+    from authbc.models import phy as _phy
+    from authbc.models import unified_capacity as _uc
+    _tf = _uc.airtime_s(_phy.DSSS_1M if _std == "80211b" else _phy.OFDM_20MHZ_6M, _size)
+    for _n in (2, 3):
+        for _u in (0.3, 0.5, 0.7, 0.85):
+            CELLS[f"DG{_std[-1].upper()}{_size}N{_n}U{round(_u * 100)}"] = Cell(
+                _size, _u / (_n * _tf), _std, _ph, sim_s=100.0)
 
 
 def run_checked(args: list[str], env: dict[str, str]) -> None:

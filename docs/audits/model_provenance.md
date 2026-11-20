@@ -5832,3 +5832,53 @@ Validate-Results comparison against the outcome's own table.
   ns-3's channel does not model.
 * **The best batch for the hardware is therefore predicted from W3a's measured loss, not from
   ns-3** (`analysis/c5_hardware_link.py` → `results/raw/c5_hardware_bestbatch.csv`).
+
+
+## F137 — the event model of ns-3's rule (`dcf_ns3rule`) loses far less than ns-3 at 2–3 stations; rule A's simulation tracks ns-3 there (2026-11-20)
+
+**Found by a missed expectation.** U-FS expected the finite-station form to fail at N = 3, because
+against `authbc.sim.dcf_ns3rule` it lay 1.57–1.62 times too high. It held 12 of 12 against ns-3
+itself (`predictions/UFS.md`). An unregistered diagnostic then ran ns-3 at the event comparison's
+own cells:
+* 802.11b 145 B and 802.11a 1 400 B;
+* N = 2, 3; u = 0.3–0.85;
+* 10 seeds of 100 s, as the comparison ran;
+* `results/raw/diag_smalln_*`.
+
+| PHY, frame | N | u | ns-3 loss | rule A ÷ ns-3 | `dcf_ns3rule` ÷ ns-3 | finite-station ÷ ns-3 |
+|---|---|---|---|---|---|---|
+| 802.11b, 145 B | 2 | 0.3 | 0.00112 | 0.79 | 0.14 | 0.75 |
+| 802.11b, 145 B | 2 | 0.5 | 0.00235 | 1.10 | 0.33 | 0.65 |
+| 802.11b, 145 B | 2 | 0.7 | 0.00587 | 1.21 | 0.42 | 0.39 |
+| 802.11b, 145 B | 2 | 0.85 | 0.02124 | 1.17 | 0.73 | 0.14 |
+| 802.11b, 145 B | 3 | 0.3 | 0.00183 | 1.09 | 0.65 | 1.05 |
+| 802.11b, 145 B | 3 | 0.5 | 0.00512 | 1.03 | 0.72 | 0.87 |
+| 802.11b, 145 B | 3 | 0.7 | 0.01267 | 0.97 | 0.65 | 0.66 |
+| 802.11b, 145 B | 3 | 0.85 | 0.03215 | 1.05 | 0.79 | 0.38 |
+| 802.11a, 1400 B | 2 | 0.3 | 0.00110 | 0.87 | 0.22 | 0.65 |
+| 802.11a, 1400 B | 2 | 0.5 | 0.00240 | 1.31 | 0.47 | 0.54 |
+| 802.11a, 1400 B | 2 | 0.7 | 0.00587 | 1.29 | 0.52 | 0.33 |
+| 802.11a, 1400 B | 2 | 0.85 | 0.01411 | 1.26 | 0.52 | 0.18 |
+| 802.11a, 1400 B | 3 | 0.3 | 0.00263 | 0.95 | 0.57 | 0.90 |
+| 802.11a, 1400 B | 3 | 0.5 | 0.00670 | 1.06 | 0.74 | 0.88 |
+| 802.11a, 1400 B | 3 | 0.7 | 0.01551 | 1.11 | 0.76 | 0.74 |
+| 802.11a, 1400 B | 3 | 0.85 | 0.03207 | 1.04 | 0.73 | 0.54 |
+
+* **Rule A's simulation** (the loop of Mohamed's `closed_form_model.simulate`) lies
+  **0.79–1.31** of ns-3's loss.
+* **`dcf_ns3rule` lies 0.14–0.79.** It is up to seven times too low at N = 2 and
+  low load, where the detection window is nearly the only mechanism.
+* **The 2026-11-17 audit's equivalence** (both rules give 18 capacities within 0.40 %) was found
+  at the crossings, with many stations. **It does not extend to small N.**
+* **Cause: not established.** The likeliest place is how `dcf_ns3rule` treats an arrival to an
+  idle medium, which ns-3 sends DIFS after it arrives. In rule A, and apparently in ns-3, that
+  arrival is exposed for 2δ to another station's start; in `dcf_ns3rule` it is exposed for much
+  less. Not tested.
+
+**What it changes:**
+* **For small-N comparisons, rule A's simulation and ns-3 are the references.** `dcf_ns3rule` is
+  not, until its small-N behaviour is explained.
+* **C's derivation document compared the form with both models.** Its statements against rule A
+  stand; those against "ns-3's rule" (the 1.05–1.22 range and the N = 3 exception) are statements
+  about `dcf_ns3rule`, not about ns-3.
+* **No published number used `dcf_ns3rule` at small N.**

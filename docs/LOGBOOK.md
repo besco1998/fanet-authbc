@@ -180,6 +180,16 @@ waits).
     d = 10 % with 20 B (period 0.67 s) the devices reach 2.4 % duty, not 9.1 %. **A stop (§7)
     for those cells.**
 
+* **Later the same day:**
+  * U-CAP2 held, 552 of 552, so the corrected capture rule is used for F and H;
+  * U-C7B: the SF8 cell held, and per-node LoRa loss is bimodal at C = 1 and 3;
+  * **U-FS held 12 of 12, against my expectation of N = 3 failures.** That expectation came
+    from `dcf_ns3rule`, which an unregistered ns-3 diagnostic then showed loses 0.14–0.79 of
+    ns-3's loss at N = 2–3, while rule A tracks ns-3 (F137).
+  * **The PC powered off at 13:37** (a clean shutdown, not an out-of-memory kill) and `/tmp`
+    went with it. Only run scripts and traces were lost; every result had been committed.
+    The orchestration now lives in the repo (`ns3/run_uc7b.py`).
+
 **Slips, caught before anything was recorded:**
 * `authbc-capture` first sent at power level 0. ns-3.48 numbers levels from 1, so the run aborted
   at once with no result.
