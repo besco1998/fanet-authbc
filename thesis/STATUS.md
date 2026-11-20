@@ -13,7 +13,13 @@ Every chapter is written and was read end to end in the built PDF on 2026-10-08.
 are yours:** the declaration and the acknowledgements — with the degree and the department on the
 title page. The statement on generative AI was removed on your decision of 2026-10-24.
 
-**2026-11-17: no thesis text changed; one guard moved, by your decision.** Ch. 5 says "a Python
+**2026-11-20: ch. 5's line count removed, and its guard test, by your decision.** The library
+had grown past the guard (9 569 lines after the first commit of the next phase). You chose:
+"remove this from the thesis and also remove that rule for further development capability". Ch. 5
+now opens "The system is a Python library, the scripts that run it, …", with no line count, and
+`test_about_nine_thousand_lines` is gone. Nothing else in the thesis changed.
+
+**2026-11-17 (superseded on 2026-11-20): no thesis text changed; one guard moved, by your decision.** Ch. 5 says "a Python
 library of about nine thousand lines". The unified-model task added its model module and an
 event model with ns-3's access rule, so the library is now 9 263 lines. You chose to keep the
 wording, since that is within 3 % of nine thousand. The guard test
