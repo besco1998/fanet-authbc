@@ -1,0 +1,64 @@
+# U-G25H — (G25) at 802.11b past occupancy 0.78, without capture: the error, quantified once
+
+*Registered 2026-11-21, before any run. Mohamed's decision of 2026-11-21, F (c)
+(`docs/DECISIONS.md`): (G25) above occupancy 0.78 at 802.11b is stated as a limit, and one
+registered test at 0.80–0.90 without capture quantifies the error; no new model. Code:
+`analysis/ug25h.py`, `ns3/run_ug25h.py`.*
+
+## Why
+
+* **U-G25** held at 802.11b up to occupancy 0.78 (−1.9 … +0.3 %).
+* **F140:** in U-F's capture runs, at occupancy 0.84–0.87 and loss 6.4–7.9 % with about ten
+  stations, (G25)'s loss curve was 3.6–5.5 % optimistic. That number came from a split of misses
+  with capture present. **This test measures the error directly,** with no capture and on new
+  cells.
+
+## The cells (none simulated before: `python analysis/ug25h.py --scan` finds no stored row)
+
+| cell | frame (B) | frames/s | ε | T_f (µs) | **(G25) root** | occupancy at that root | Poisson (G5) root |
+|---|---|---|---|---|---|---|---|
+| LB200F40 | 200 | 40 | 0.05 | 2 080 | **10.02** | 0.834 | 9.03 |
+| LB300F30 | 300 | 30 | 0.05 | 2 880 | **9.94** | 0.859 | 8.91 |
+| LB120F30 | 120 | 30 | 0.08 | 1 440 | **19.61** | 0.847 | 18.12 |
+| LB173F30 | 173 | 30 | 0.08 | 1 864 | **15.96** | 0.892 | 14.51 |
+
+* 802.11b 1 Mb/s, long preamble, the standard's W = 32, equal power (no capture).
+* Two loss targets, as F140's regime had losses of 6.4–7.9 %, at N ≈ 10 and 16–20 (N − 1 ≥ 8,
+  (G25)'s stated range).
+
+## What is run
+
+* **The scenario:** the audit twin (gate 9/9 identical, rebuilt 2026-11-21 for `--positionsFile`,
+  which these runs do not use); the designated periodic source with a jitter of one period;
+  20 simulated seconds.
+* **The pilot:** 5 seeds (1–5) on seven node counts at ±5 % steps around each (G25) root.
+* **The measurement:** 30 seeds (1–30) on seven node counts by U-C2's rule around the pilot's
+  crossing of 1 − ε. The centre is the crossing rounded; the step is max(1, round(2 % of the
+  centre)).
+* **The crossing:** the node count at which the 30-seed mean delivered fraction crosses 1 − ε,
+  interpolated linearly, with its bootstrap 95 % interval over seeds (`ns3/run_unified.py`).
+
+## What is reported (no tolerance: its purpose is to quantify)
+
+* **Per cell:**
+  * ns-3's crossing and its interval;
+  * the occupancy N·f·T_f at ns-3's crossing (was the regime reached?);
+  * (G25)'s error, model − ns-3 over ns-3, with its side;
+  * the Poisson root's error.
+* **The expectation stated now (F140's band):** (G25) is optimistic by 3.6–5.5 %. Whether each
+  cell's error lies in it is recorded (`in_f140_band`).
+* **Then (G25)'s stated range at 802.11b** is written from this result: checked to occupancy 0.78,
+  and past it optimistic by the measured amount.
+
+## My expectations `[agent]`
+
+* All four optimistic, by 2–6 %, with the larger errors at the higher occupancy (LB173F30, 0.89).
+* F140's split mixed a linear and a quadratic estimate. This direct measurement may fall at the
+  band's lower end.
+
+## Disclosure
+
+* **Known before this registration:**
+  * U-G25 and U-F's outcomes;
+  * F138–F141.
+* **No run at any of these cells has been made.**

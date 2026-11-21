@@ -129,6 +129,10 @@ for _bytes, _fps in ((120, 15.0), (120, 20.0), (240, 15.0), (240, 20.0)):
     CELLS[f"GB{_bytes}F{_fps:g}"] = Cell(_bytes, _fps, **_B)
 for _bytes, _fps in ((640, 20.0), (640, 30.0), (900, 20.0), (900, 30.0)):
     CELLS[f"GA{_bytes}F{_fps:g}"] = Cell(_bytes, _fps)
+# U-G25H (predictions/UG25H.md, Mohamed 2026-11-21): (G25) at 802.11b past occupancy 0.78, no
+# capture; the cells are analysis/ug25h.py's, written out here as U-G25's are.
+for _bytes, _fps in ((200, 40.0), (300, 30.0), (120, 30.0), (173, 30.0)):
+    CELLS[f"LB{_bytes}F{_fps:g}"] = Cell(_bytes, _fps, **_B)
 # U-FS (predictions/UFS.md): the finite-station form at N = 3–5, u ≤ 0.5, 100 s runs; the cells
 # are analysis/ufs.py's, imported so that the two cannot drift apart.
 sys.path.insert(0, str(REPO / "analysis"))
