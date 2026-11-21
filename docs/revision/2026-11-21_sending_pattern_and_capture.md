@@ -275,7 +275,7 @@ runs or the scoring.
 
 ## Open questions
 
-**Decisions for Mohamed:**
+**Decisions for Mohamed** — *all three answered on 2026-11-21* (`docs/DECISIONS.md`): F (a) a fresh check of (G22a) at occupancy ≤ 0.78; (b) two labelled every-sender statistics, (G24) pooled and (G24a) per window; (c) (G25) past 0.78 at 802.11b a stated limit, quantified once; (d) **the model is limited to swarms where every station hears every other** (F141). U5: values kept with a note in ch. 10; the drift rebuilt once from a clean tree. The session plans approved in the order 3, 1, 2. *The questions as they were put:*
 1. **F's next step** (U-F stays failed as registered):
    * **(a)** whether to register the corrected q, with the half-duplex factor (N − k)/(N − 1)
      (F138), for a fresh check on unseen configurations, as your rule of 2026-11-20 requires;

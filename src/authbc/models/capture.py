@@ -10,6 +10,13 @@ The inputs:
 
 The capacity laws are then used with ε′ or ε_w in place of ε.
 
+**The scope** (Mohamed, 2026-11-21): one collision domain in which every station senses every
+other reliably. A station whose links fade below the detection floor is a partially hidden
+station. ns-3 uses one −82 dBm threshold for reception and for carrier sense, so such a station's
+collision probability is its own, not the swarm's p_c (F141: U-F's outlier lost 0.681 against
+the 0.448 predicted, its link term right within 0.009). The model does not cover it, and has no
+hidden-station term.
+
 **The closed forms for q,** with one interferer, threshold θ and path-loss exponent α, assume the
 receiver decodes whichever frame is stronger by θ:
 * Rayleigh, equal mean power: 1/(1 + θ), and (1 + θ)^−(k−1) for k frames;
