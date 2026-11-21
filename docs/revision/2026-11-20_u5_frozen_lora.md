@@ -143,3 +143,38 @@ appears in the paper or thesis text. A "1.0000" match may be coincidental.
    interval do not change in any case.
 2. **Whether the N ≥ 20 reproduction drift needs more than this record,** for example a rebuild
    from a clean tree to see whether it disappears.
+
+## Decided 2026-11-21, and the drift closed
+
+**Mohamed's decisions** (`docs/DECISIONS.md`, 2026-11-21):
+* **The printed values in ch. 10 are kept,** with a stated note: the measured shifts of both
+  behaviours, no N_max moving, the headline interval unchanged, and the EU interval [5, 8]
+  becoming [5, 10] under (a). The wording goes to Mohamed before it goes in.
+* **The ADRACKReq reply is realistic behaviour; the missing MIC is the module's omission.** A
+  later rerun, if asked for, keeps the server and adds 4 B of payload in place of the MIC.
+* **The drift:** one rebuild from a clean tree, recorded, then closed.
+
+**The rebuild** (`ns3/u5_clean_rebuild_check.py`, `results/raw/u5_clean_rebuild_check.csv`):
+* a fresh copy of `ns3/ns-3.48`: sources, the lorawan module with its patch, the scratch
+  programs, and no `build/` or `cmake-cache/`;
+* configured as the original (optimized, examples on, tests off, native optimisations on) and
+  compiled with ccache disabled, so every object is new;
+* the frozen `authbc-lora-capacity` rerun from it at every published configuration and N ≥ 20,
+  seeds 1–30: 480 runs.
+
+**The result:**
+* **all 480 runs are identical to today's main build,** in frames sent and received;
+* against the stored July files the means still differ, at the fifth decimal, at 12 of 16 node
+  counts (by at most 6 × 10⁻⁵, as found on 2026-11-20).
+* **So the build tree is not the cause.** A clean build of the same sources gives today's numbers.
+
+**What did change since July** (the package log, `/var/log/dpkg.log*`):
+* the compiler did not (gcc 13.3.0-6ubuntu2~24.04.1 since 2026-04-02);
+* the C library, which carries `libm`, did: 2.39-0ubuntu8.8 when the July runs were made, then
+  8.9 (2026-10-06) and 8.12 (2026-11-18). ns-3's libraries link it dynamically.
+* A last-bit change in a `libm` function can move a rare frame across a reception threshold,
+  which fits "one or two runs per node count, at N ≥ 20".
+* **It is not tested,** because July's library cannot be restored here.
+
+**Closed.** Every printed value reproduces at four decimals, no N_max or interval moves, and the
+stored files remain the record.

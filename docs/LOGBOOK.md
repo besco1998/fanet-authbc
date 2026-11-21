@@ -150,6 +150,39 @@ excecute the plan and give me the results". The plan was approved in plan mode. 
 * A `pgrep` check matched its own command line, twice. A pattern only a running session can
   match is now used.
 
+# 2026-11-21 — U-F's outcome and its three causes; Mohamed's decisions; the kit and registrations for three sessions
+
+**U-F scored:** (G23) 12 of 16, (G24) 2 of 16, the outlier failed, every miss optimistic. The
+unregistered diagnostics found three causes, none a bug in the runs:
+* F138: q omits the half-duplex partner;
+* F139: the every-sender statistic was a sample minimum, a registration error of mine;
+* F141: a station at the edge of reception is also at the edge of carrier sense.
+* And one limit: F140, (G25) at 802.11b past occupancy 0.78.
+
+**G1 needed a null too.** Its range across receivers is itself a sample extreme; it survives a
+count-noise null (6.6–8.8 times it in the 1 m square, 2.3–3.1 times side by side).
+
+**Mohamed decided** F (a)–(d), U5 and the three session plans (`DECISIONS.md` 2026-11-21).
+
+**Planning found three things the approved plans could not do as written:**
+* **`iw station dump` is empty in ad-hoc mode on brcmfmac** (driver source, rpi-6.12.y): station
+  queries ignore the address. Mohamed's choice is a per-peer firmware query (`rssi.sh`, through
+  the vendor command), checked at the boards, with single-sender RSSI as the fallback.
+* **"pi-A at its default power" has no value:** `auto` reads back 31.00 dBm, the driver's cap.
+  W1q registers a fixed 15 dBm instead, for Mohamed to confirm.
+* **The twin drew each placement from the run's seed,** so (G24)'s pooled statistic needed
+  `--positionsFile` (gated 9/9; 18/18 option checks).
+
+**A test caught an estimator's limit, and the test was kept as written.** W1p's jitter estimator
+recovered a 5 µs jitter as −1.5 µs beside 12 and 25 µs. Each J² is a difference of pair variances,
+so the smallest is lost in their sampling error. The fix was the standard error and 60 s windows,
+not a wider tolerance; the test now checks recovery within three standard errors.
+
+**U5's drift, closed:**
+* a clean-tree rebuild with ccache off equals today's main build in all 480 runs, so the build
+  tree is not the cause;
+* the C library (libm) was upgraded twice since the July runs; that is untested.
+
 # 2026-11-20 — the next phase: (G25) held 16/16; the capture curve failed by my misreading; C proposed; C7 met a module limit
 
 **Asked:** `docs/prompts/NEXT_PHASE_PROMPT.md`, with Mohamed's answers of 2026-11-19 (D4 → H, no
