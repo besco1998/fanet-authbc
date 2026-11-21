@@ -15,9 +15,11 @@ Everything else in (G5) is unchanged.
 The stated limit, before any test: R holds for about 8 or more other stations. Against a queue
 simulation it is wrong at 1–4 (R 0.30–0.75 against simulated 0.07–0.62).
 
-The limit found since, at 802.11b: checked up to occupancy 0.78 (U-G25, −1.9 … +0.3 %). At
-occupancy 0.84–0.87 and loss 6.4–7.9 % it was 3.6–5.5 % optimistic (F140). Beyond 0.78 at
-802.11b it is stated as a limit (Mohamed, 2026-11-21), its error quantified once (`UG25H`).
+The limit found since, at 802.11b, stated as a limit past occupancy 0.78 (Mohamed, 2026-11-21):
+* checked up to occupancy 0.78 (U-G25, −1.9 … +0.3 %);
+* at occupancy 0.82–0.87 without capture, optimistic by 1.2–2.4 % (U-G25H, four new cells);
+* at N ≈ 10 with loss 6.4–7.9 %, inside U-F's capture runs, 3.6–5.5 % optimistic (F140), a regime
+  U-G25H did not include.
 """
 from __future__ import annotations
 

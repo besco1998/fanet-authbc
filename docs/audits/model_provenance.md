@@ -6058,6 +6058,15 @@ N − 1 receivers: the quantity (G22) needs.*
 At occupancy ≈ 0.85 and loss 6.4–7.9 % it is optimistic by about 3.6–5.5 %, depending on the
 interpolation.
 
+**Addendum, 2026-11-21: measured directly, without capture (`predictions/UG25H.md`).**
+* **The test:** four new 802.11b cells whose (G25) root lies at occupancy 0.82–0.87. (G25) is
+  optimistic there by **+1.16 … +2.41 %**, so this finding's band (+3.6 … +5.5 %) held at none of
+  them.
+* **The regime differs in one respect:** the cells near N = 10 are at loss 5 %, and those at loss
+  8 % have 16–19 stations.
+* **So occupancy alone does not produce this finding's size.** The larger error is recorded for
+  N ≈ 10 with loss 6.4–7.9 % only. Its cause is still not established.
+
 ## F141 — a station at the edge of reception is also at the edge of carrier sense: its collision probability is its own, not the swarm's p_c, and (G22) under-predicted its loss by a third (2026-11-21)
 
 **Found by U-F's outlier configuration** `FOUT` (`predictions/UF.md`): FCAP3R (802.11a cell C,
