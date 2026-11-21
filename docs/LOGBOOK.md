@@ -150,6 +150,20 @@ excecute the plan and give me the results". The plan was approved in plan mode. 
 * A `pgrep` check matched its own command line, twice. A pattern only a running session can
   match is now used.
 
+# 2026-11-22 — W1q tagged; U5's note in ch. 10, narrowed on insertion
+
+**Mohamed confirmed W1q's fixed 15 dBm** and approved the note's wording; W1q is tagged.
+
+**The approved note, checked before it went in, was true only for the values beside it.**
+* It said the downlinks raise "the printed deliveries" by 0.0021–0.0134, and the true duty
+  lowers them by 0.0004–0.0053.
+* Recomputed from the runs, those ranges are exactly the five deliveries its own subsection
+  prints. But the chapter prints three more: 0.960 and 0.917 (the peer cliff) and 0.871 (the
+  cross-check). Those move by at most +0.0006 under (a) and −0.0016 under (b), outside the
+  stated ranges.
+* So the note now says "the deliveries printed in this subsection". No number changed. The change
+  was reported to Mohamed, and a guard test ties every figure in the note to `u5_lora{,_runs}.csv`.
+
 # 2026-11-21 — U-F's outcome and its three causes; Mohamed's decisions; the kit and registrations for three sessions
 
 **U-F scored:** (G23) 12 of 16, (G24) 2 of 16, the outlier failed, every miss optimistic. The

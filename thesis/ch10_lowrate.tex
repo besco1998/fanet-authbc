@@ -435,6 +435,18 @@ quoted). The $V \geq 0.95$ criterion sits on a near-vertical part of the deliver
 gateway passes at $N{=}8$ with $0.9526$ and fails at $N{=}10$ with $0.9398$ --- so a threefold
 reduction in offered load per channel moves the threshold barely at all.
 
+\paragraph{Two properties of the simulated configuration.} The values above come from ns-3's
+LoRaWAN module as configured, and two of its behaviours belong to that configuration. Its network
+server answers each device's ADRACKReq, which a device sets after 64 uplinks without a downlink,
+with a downlink during which the half-duplex gateway hears nothing; a deployed network does the
+same. The module also sends no 4\,B message integrity code, so a frame is on air for 358.7\,ms
+rather than 363.8\,ms, and the simulated duty cycle lies about 1.4\,\% below 1\,\%. Measured in a
+copy of the scenario, removing the downlinks raises the deliveries printed in this subsection by
+0.0021 to 0.0134, and the true 1\,\% duty lowers them by 0.0004 to 0.0053. No $\Nmax$ moves
+under either, and the
+headline interval $[2,3]$ does not; the infrastructure gateway's interval $[5,8]$ becomes
+$[5,10]$ without the downlinks and stays $[5,8]$ at the true duty.
+
 \subsection{External corroboration, quoted as a curve}
 
 Haxhibeqiri \emph{et al.}~\cite{haxhibeqiri2017lora} publish a capacity result in closed form

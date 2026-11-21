@@ -81,6 +81,57 @@ class TestTheLoRaPassagesMatchTheArtifacts:
         assert "moves only from 3 to 8" in LOWRATE
 
 
+
+class TestTheNoteOnTwoModuleBehaviours:
+    """U5's note in ch. 10 (Mohamed, 2026-11-21; wording approved 2026-11-22;
+    `docs/revision/2026-11-20_u5_frozen_lora.md`). Its ranges are over the five deliveries the
+    infrastructure subsection prints, each variant's 30-seed mean from the runs, rounded once."""
+
+    PRINTED = (("headline", "aloha", 50), ("eu", "eu", 8), ("eu", "eu", 10), ("eu", "eu", 50),
+               ("eu", "eu", 100))
+
+    @staticmethod
+    def _means() -> dict[tuple[str, str, int], float]:
+        acc: dict[tuple[str, str, int], list[float]] = {}
+        for r in _rows("u5_lora_runs.csv"):
+            acc.setdefault((r["config"], r["variant"], int(r["n_devices"])), []).append(
+                int(r["received"]) / int(r["sent"]))
+        assert all(len(v) == 30 for v in acc.values())
+        return {k: sum(v) / len(v) for k, v in acc.items()}
+
+    def test_the_five_values_are_the_ones_the_subsection_prints(self) -> None:
+        m = self._means()
+        for config, arm, n in self.PRINTED:
+            assert f"{m[(config, 'base', n)]:.4f}" == f"{_d(arm, n):.4f}"
+            assert f"{_d(arm, n):.4f}" in LOWRATE
+
+    @pytest.mark.parametrize(("variant", "sign", "phrase"), [
+        ("noserver", 1,
+         "removing the downlinks raises the deliveries printed in this subsection by"),
+        ("nomic", -1, r"the true 1\,\% duty lowers them by")])
+    def test_the_shift_ranges(self, variant: str, sign: int, phrase: str) -> None:
+        m = self._means()
+        shifts = [sign * (m[(c, variant, n)] - m[(c, "base", n)]) for c, _a, n in self.PRINTED]
+        assert min(shifts) > 0
+        assert f"{phrase} {min(shifts):.4f} to {max(shifts):.4f}" in LOWRATE
+
+    def test_no_n_max_moves_and_the_intervals_are_as_stated(self) -> None:
+        rows = {(r["config"], r["variant"]): r for r in _rows("u5_lora.csv")}
+        for config in {c for c, _v in rows}:
+            assert len({rows[(config, v)]["n_max"] for v in ("base", "noserver", "nomic")}) == 1
+        assert {rows[("headline", v)]["n_max_ci95"] for v in ("base", "noserver", "nomic")} == {
+            "[2,3]"}
+        eu = {v: rows[("eu", v)]["n_max_ci95"] for v in ("base", "noserver", "nomic")}
+        assert (f"${eu['base']}$ becomes ${eu['noserver']}$ without the downlinks and stays "
+                f"${eu['nomic']}$ at the true duty") in LOWRATE
+
+    def test_the_frame_time_and_the_duty(self) -> None:
+        period = {r["variant"]: float(r["app_period_s"]) for r in _rows("u5_lora_runs.csv")}
+        on_air_ms, counted_ms = 10 * period["nomic"], 10 * period["base"]
+        below = 100 * (1 - on_air_ms / counted_ms)
+        assert (rf"on air for {on_air_ms:.1f}\,ms rather than {counted_ms:.1f}\,ms, and the "
+                rf"simulated duty cycle lies about {below:.1f}\,\% below 1\,\%") in LOWRATE
+
 class TestLoraExternalTable:
     """The comparison table once outlived the three-seed run it was built on, and revived a
     retracted claim in one of its rows."""
@@ -510,7 +561,7 @@ NOT_YET_IN_THE_THESIS: frozenset[str] = frozenset(
      "prereg-UC7B", "prereg-UFS", "prereg-UF",
      "prereg-UH",
      # Mohamed's decisions of 2026-11-21: F (c) and the three hardware sessions
-     "prereg-UG25H", "prereg-W1p", "prereg-W1r", "prereg-UF2"})
+     "prereg-UG25H", "prereg-W1p", "prereg-W1r", "prereg-UF2", "prereg-W1q"})
 
 
 class TestTheRegistrationsOfAppendixB:

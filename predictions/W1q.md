@@ -35,7 +35,8 @@ Code: `analysis/w1q.py` (`tests/test_w1q.py`). Kit: `hw/channel/run_window_plan2
     step "3 dB below the default" has no defined value.
   * A fixed 15 dBm has been set and read back exactly before (W1g: `set txpower fixed 1500`, read
     back 15.00 dBm).
-  * **Mohamed to confirm before the tag.**
+  * **Confirmed by Mohamed on 2026-11-22, before the tag:** pi-A starts at a fixed 15 dBm,
+    pi-B is fixed at 15 dBm.
 * **Per step:**
   * A_d: pi-A alone at 50 frames/s, 25 s;
   * B_d: pi-B alone, 25 s;
