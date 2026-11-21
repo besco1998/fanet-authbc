@@ -211,6 +211,12 @@ def run_checked(args: list[str], env: dict[str, str]) -> None:
         raise RuntimeError(f"exit {proc.returncode}: {' '.join(args[:3])} …\nstderr: {tail}")
 
 
+def result_path(prefix: Path) -> Path:
+    """The twin's summary file, <outPrefix>.csv. Not Path.with_suffix: a cell name with a dot
+    (U-F2's EB100F12.5P3R) would lose everything after it (2026-11-21)."""
+    return Path(f"{prefix}.csv")
+
+
 def run_one(cell: str, n: int, seed: int, trace_dir: Path | None,
             trace_opts: tuple[str, ...]) -> dict[str, str]:
     exe = ns3_root() / "build" / "scratch" / "ns3.48-authbc-links-audit-optimized"
@@ -225,7 +231,7 @@ def run_one(cell: str, n: int, seed: int, trace_dir: Path | None,
         if CELLS[cell].verify:
             args.append("--traceAllRx=1")
         run_checked(args, env)
-        kv = dict(csv.reader(prefix.with_suffix(".csv").read_text().splitlines()[1:]))
+        kv = dict(csv.reader(result_path(prefix).read_text().splitlines()[1:]))
         extra = verified(cell, n, int(kv["tx_frames"]), Path(f"{prefix}_allrx.csv"))
     c = CELLS[cell]
     return {**extra, "cell": cell, "frame_bytes": str(c.frame_bytes), "frames_per_s": repr(c.fps),
