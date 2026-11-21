@@ -1,0 +1,11 @@
+cell,n_nodes,seeds,delivered_mean,delivered_min,delivered_max,delivered_stdev
+FOUT,42,30,0.927127,0.92463,0.930523,0.001144
+FOUT,CROSSING@0.95,30,,,,
+controlled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=uf_fout
+# ns3=3.48 (authbc-links-audit)
+# config_hash=b8c48a0496c45531

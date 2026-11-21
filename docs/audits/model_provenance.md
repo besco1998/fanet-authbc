@@ -5882,3 +5882,231 @@ own cells:
   stand; those against "ns-3's rule" (the 1.05–1.22 range and the N = 3 exception) are statements
   about `dcf_ns3rule`, not about ns-3.
 * **No published number used `dcf_ns3rule` at small N.**
+
+## F138 — the capture share q in (G22) omits that the colliding partner cannot receive; on ns-3's actual collisions the two-frame closed form is right, and the registered mean was too high by the factor (N − 2)/(N − 1) (2026-11-21)
+
+**Found after U-F's outcome, by an unregistered diagnostic** (`analysis/uf_diagnose.py`,
+`results/raw/uf_diagnose_{q,events}.csv`).
+* **First sign, without a model:** without fading, the MAC does not depend on received power, so
+  the stored equal-power runs at the same cell, PHY and N give the share of frames that collide.
+  ns-3's capture share is then q̂ = 1 − L_capture/L_no-capture.
+  * At 802.11b cell C it was 0.19–0.22 against the registered mean q of 0.253 (α = 2), and
+    0.24–0.28 against 0.322 (α = 3).
+  * At 802.11a it was 0.241 against 0.253.
+* **Then the events:** twenty F runs at six configurations without fading were rerun with
+  `--traceMac=1 --traceRx=2`.
+  * Each rerun's delivered fraction equals its stored run's, so the traces only observe.
+  * The sniffer's received power equals the model's on every frame that did not collide
+    (0.0 dB deviation, 8.2 M checks).
+
+| config | N | runs | collided frames | with two or more others | **ns-3 measured** | ns-3's rule on the actual groups | two-frame closed form on the same events | registered q̄ × (N − 2)/(N − 1) | registered q̄ |
+|---|---|---|---|---|---|---|---|---|---|
+| FCBP2N | 10 | 5 | 2 860 | 3.6 % | **0.2105** | 0.2092 | 0.2169 | 0.2251 | 0.2532 |
+| FCBP3N | 10 | 5 | 2 883 | 3.9 % | **0.2705** | 0.2703 | 0.2771 | 0.2862 | 0.3220 |
+| FDBP2N | 33 | 3 | 1 514 | 4.6 % | **0.2440** | 0.2433 | 0.2484 | 0.2452 | 0.2531 |
+| FDBP3N | 34 | 3 | 1 686 | 5.8 % | **0.3027** | 0.3020 | 0.3086 | 0.3121 | 0.3219 |
+| FCAP2N | 39 | 2 | 5 038 | 4.3 % | **0.2454** | 0.2432 | 0.2466 | 0.2465 | 0.2532 |
+| FCAP3N | 41 | 2 | 5 916 | 5.2 % | **0.3078** | 0.3076 | 0.3111 | 0.3138 | 0.3218 |
+
+*q here is the share of (collided frame, receiver ≠ sender) pairs that were decoded, over all
+N − 1 receivers: the quantity (G22) needs.*
+
+**What it shows:**
+* **ns-3's rule, as U-CAP2 read it, describes ns-3 exactly here.** A receiver that is not
+  transmitting decodes frame j if j's power is at least θ = 4 dB over the sum of the overlapping
+  frames' powers. That reproduces the measured share within 0.003 in every one of the twenty runs.
+* **The two-frame closed form is right per event.** Applied to the same collisions, it lies
+  0.001–0.007 above the measured share. Collisions with three or more frames are 3.6–5.8 % of
+  collided frames, and account for the small rest.
+* **The registered mean q was not.** `analysis/uf.py` averaged the closed form over receivers
+  i ∉ {j, m}. But one of a collided frame's N − 1 receivers is its partner m. m is transmitting
+  and decodes nothing (half-duplex). Over all receivers, the share is smaller by **(N − 2)/(N − 1)**
+  for a two-frame collision, and by (N − k)/(N − 1) for k frames.
+* **The omission is in (G22)'s definition as given, not only in my code.** Mohamed's reference
+  `analysis/capture_check.py` charges tx·(1 − q) to each collided frame, as if every receiver
+  could decode. It stays unchanged.
+* **The factor's size:**
+  * 0.89 at N = 10, 0.97 at N = 40, 0.99 at N = 140;
+  * **2/3 at N = 4**, the hardware's scale;
+  * 0 at N = 2, which agrees with capture being impossible there (U-H).
+* **The remaining gap to the measured share at N = 10** (0.2251 against 0.2105) is the
+  placements: the registered q̄ is the mean over 30 placements at N_ref = 13, and the reruns are
+  5 placements at N = 10. On the reruns' own placements the closed form gives 0.2169.
+
+**What it changes:**
+* **U-F stays scored as registered** (`predictions/UF.md`).
+* **Every future q** is the unconditional share, with the factor.
+* **A corrected (G23)** is not a prediction until a fresh registered check on unseen points
+  (Mohamed's rule of 2026-11-20). Its effect on U-F's roots is in UF's outcome.
+* **No published number used (G22).**
+
+## F139 — U-F's every-sender statistic was the minimum of finite samples: it carries the noise of that minimum, which (G24)'s ε_w, a population quantity, does not; a registration error of mine (2026-11-21)
+
+**Found after U-F's outcome, by an unregistered diagnostic** (`analysis/uf_diagnose.py`,
+`results/raw/uf_diagnose_worst.csv`).
+* **What was registered** (`predictions/UF.md`): (G24)'s root against ns-3's crossing of "the
+  30-seed mean of each seed's worst sender's delivered fraction".
+* **What (G24) models:** the worst sender's *expected* delivery, min_j (ε − ℓ_j)/(1 − q_j), from
+  the geometry alone.
+* **What the statistic measures:** in each 20 s run, each sender's delivered fraction is a
+  sample of 250 frames (cell D) or 1 000 (cell C). The minimum over N such samples lies below the
+  minimum of their expectations, by roughly the sample sd times the expected maximum of N
+  standard normals. Averaging 30 seeds does not remove it: every seed's minimum has the same
+  downward bias.
+
+**The test, per run, at the two grid N nearest each every-sender crossing:**
+* each sender's expected delivery from (G22), with q_j, ℓ_j from its placement and p_c the run's
+  own (so the mean is matched by construction);
+* the binomial noise of a sender's delivered fraction: (1 − q_j)·√(p_c(1 − p_c)/n_j);
+* the worst sender from 200 Monte Carlo draws of geometry plus noise.
+
+| config | N | sd across senders: measured | geometry alone | binomial noise | geometry + noise | worst sender: measured | geometry alone (what ε_w models) | geometry + noise |
+|---|---|---|---|---|---|---|---|---|
+| FCAP2N | 34 | 0.0059 | 0.0037 | 0.0051 | 0.0063 | **0.9497** | 0.9576 | **0.9505** |
+| FCAP2N | 33 | 0.0061 | 0.0035 | 0.0049 | 0.0060 | **0.9525** | 0.9602 | **0.9534** |
+| FCAP2R | 36 | 0.0057 | 0.0031 | 0.0048 | 0.0057 | **0.9506** | 0.9575 | **0.9509** |
+| FCAP2R | 37 | 0.0057 | 0.0034 | 0.0049 | 0.0060 | **0.9488** | 0.9543 | **0.9476** |
+| FCAP3N | 35 | 0.0064 | 0.0051 | 0.0048 | 0.0070 | **0.9508** | 0.9569 | **0.9504** |
+| FCAP3N | 36 | 0.0069 | 0.0054 | 0.0049 | 0.0073 | **0.9475** | 0.9545 | **0.9479** |
+| FCAP3R | 37 | 0.0060 | 0.0042 | 0.0047 | 0.0063 | **0.9498** | 0.9555 | **0.9493** |
+| FCAP3R | 36 | 0.0057 | 0.0040 | 0.0045 | 0.0061 | **0.9529** | 0.9580 | **0.9520** |
+| FCBP2N | 10 | 0.0066 | 0.0058 | 0.0056 | 0.0080 | **0.9460** | 0.9473 | **0.9431** |
+| FCBP2N | 9 | 0.0058 | 0.0041 | 0.0046 | 0.0062 | **0.9606** | 0.9648 | **0.9610** |
+| FCBP2R | 10 | 0.0058 | 0.0047 | 0.0050 | 0.0069 | **0.9506** | 0.9523 | **0.9484** |
+| FCBP2R | 11 | 0.0080 | 0.0069 | 0.0062 | 0.0093 | **0.9222** | 0.9246 | **0.9204** |
+| FCBP3N | 10 | 0.0079 | 0.0071 | 0.0051 | 0.0087 | **0.9466** | 0.9495 | **0.9456** |
+| FCBP3N | 9 | 0.0059 | 0.0049 | 0.0042 | 0.0065 | **0.9630** | 0.9662 | **0.9630** |
+| FCBP3R | 10 | 0.0067 | 0.0057 | 0.0048 | 0.0075 | **0.9499** | 0.9524 | **0.9492** |
+| FCBP3R | 9 | 0.0049 | 0.0040 | 0.0039 | 0.0056 | **0.9670** | 0.9690 | **0.9660** |
+| FDAP2N | 121 | 0.0107 | 0.0034 | 0.0102 | 0.0108 | **0.9316** | 0.9579 | **0.9345** |
+| FDAP2N | 124 | 0.0113 | 0.0036 | 0.0105 | 0.0111 | **0.9290** | 0.9556 | **0.9316** |
+| FDAP2R | 128 | 0.0100 | 0.0028 | 0.0096 | 0.0100 | **0.9331** | 0.9579 | **0.9362** |
+| FDAP2R | 131 | 0.0103 | 0.0029 | 0.0098 | 0.0102 | **0.9327** | 0.9562 | **0.9339** |
+| FDAP3N | 124 | 0.0108 | 0.0047 | 0.0095 | 0.0106 | **0.9345** | 0.9585 | **0.9366** |
+| FDAP3N | 127 | 0.0111 | 0.0050 | 0.0098 | 0.0110 | **0.9309** | 0.9559 | **0.9333** |
+| FDAP3R | 129 | 0.0102 | 0.0037 | 0.0092 | 0.0099 | **0.9337** | 0.9584 | **0.9376** |
+| FDAP3R | 132 | 0.0103 | 0.0039 | 0.0094 | 0.0102 | **0.9327** | 0.9558 | **0.9345** |
+| FDBP2N | 28 | 0.0093 | 0.0029 | 0.0090 | 0.0095 | **0.9516** | 0.9671 | **0.9524** |
+| FDBP2N | 29 | 0.0098 | 0.0031 | 0.0093 | 0.0098 | **0.9469** | 0.9647 | **0.9493** |
+| FDBP2R | 30 | 0.0090 | 0.0027 | 0.0088 | 0.0092 | **0.9493** | 0.9640 | **0.9495** |
+| FDBP2R | 29 | 0.0084 | 0.0024 | 0.0083 | 0.0086 | **0.9552** | 0.9682 | **0.9545** |
+| FDBP3N | 29 | 0.0091 | 0.0040 | 0.0085 | 0.0094 | **0.9515** | 0.9665 | **0.9526** |
+| FDBP3N | 30 | 0.0101 | 0.0046 | 0.0091 | 0.0102 | **0.9462** | 0.9615 | **0.9467** |
+| FDBP3R | 30 | 0.0089 | 0.0034 | 0.0084 | 0.0091 | **0.9498** | 0.9648 | **0.9515** |
+| FDBP3R | 29 | 0.0084 | 0.0030 | 0.0079 | 0.0085 | **0.9550** | 0.9686 | **0.9558** |
+
+**What it shows:**
+* **The spread across senders is geometry plus count noise:** the measured sd equals the two
+  added in quadrature within 0.0014 at every point.
+* **The measured worst sender equals geometry plus noise** within 0.004 at every point, while
+  geometry alone, what ε_w models, lies 0.001–0.027 higher.
+* **The size of the gap follows the noise of the minimum** (geometry alone minus measured, per
+  family, computed from the file):
+  * 802.11a cell D, 121–132 senders of 250 frames: 0.023–0.027;
+  * 802.11b cell D, 28–30 senders of 250: 0.013–0.018;
+  * 802.11a cell C, 33–37 senders of 1 000: 0.005–0.008;
+  * 802.11b cell C, 9–11 senders of 1 000: 0.001–0.004. There the (G24) misses are mostly the
+    (G23) causes, F138 and F140.
+* **The pattern of `small-sample means against thresholds`, now built into a registration** (the
+  fifth instance; the first four are in the status board of `CLAUDE.md`).
+
+**What it changes:**
+* **U-F's (G24) results stay failed as registered.** They are not a test of ε_w.
+* **For the ledger's every-sender criterion:** a criterion read over a finite window must name
+  the window. Over n frames per sender, the worst of N senders reads below its true rate by about
+  z_N·(1 − q)·√(p_c(1 − p_c)/n), with z_N the expected maximum of N standard normals (≈ 2.5 at
+  N = 120). Either the criterion is a long-run rate, measured so that this term is below the
+  tolerance, or it is a finite-window probability with that term in it. Mohamed's decision.
+* **Before scoring any extreme** (a minimum, a maximum, a worst node), a registration states
+  whether the model's quantity is a population or a sample extreme, and sizes the sample noise
+  against the tolerance.
+
+## F140 — (G25)'s loss curve is about 4–5 % optimistic at 802.11b with about ten stations, occupancy ≈ 0.85 and loss targets of 6.4–7.9 % (2026-11-21)
+
+**Found by the split of U-F's four 802.11b cell-C misses** (`analysis/uf_diagnose.py`,
+`results/raw/uf_diagnose_split.csv`).
+* **Each miss is split into two terms:**
+  * **the loss curve:** (G25)'s root at the model's ε′ against ns-3's stored no-capture curve
+    (U-D's `Pb1B`, 30 seeds) crossed at the same ε′;
+  * **q:** that crossing against the same curve at ε/(1 − q̂), q̂ measured.
+* **The closure:** that last crossing against ns-3's capture crossing.
+
+| config | total (G23) error | loss-curve term (linear; quadratic) | q term | closure |
+|---|---|---|---|---|
+| FCBP2N | +5.02 % | +4.11 %; +3.61 % | +0.90 % | +0.01 % |
+| FCBP2R | +6.90 % | +5.21 %; +4.28 % | +1.85 % | −0.16 % |
+| FCBP3N | +6.16 % | +4.96 %; +3.95 % | +1.29 % | −0.09 % |
+| FCBP3R | +7.24 % | +5.51 %; +4.76 % | +1.65 % | +0.09 % |
+
+**What it shows:**
+* **(G22) closes:** fed ns-3's own q̂ and ns-3's own no-capture curve, it gives ns-3's capture
+  crossing within ±0.16 %.
+* **Most of each miss is (G25)'s curve, not capture.**
+  * The crossings are linear between whole N, as the score's. The loss curve is convex, so the
+    quadratic column is the better estimate of this term.
+  * At ε = 0.05 without capture, the same comparison gives (G25) 9.89 against ns-3 9.72 (+1.8 %).
+  * The term grows with the loss target, here ε′ = 0.064–0.079.
+* **The regime:**
+  * N ≈ 10.2–10.5: 9.2–9.5 other stations, inside (G25)'s stated range of 8 or more;
+  * occupancy N·f·T_f = 0.84–0.87 at ns-3's crossings;
+  * the no-capture curve read at loss 6.4–7.9 % (ε′ from q̂ or from the model).
+  * U-G25's 802.11b cells (occupancy 0.51–0.78 at their crossings, ε = 0.02 and 0.05) held
+    within −1.9 … +0.3 %.
+* **Cause: not established.** Not tested.
+
+**What it changes:** (G25) is stated as checked at 802.11b up to occupancy 0.78 and loss 5 %.
+At occupancy ≈ 0.85 and loss 6.4–7.9 % it is optimistic by about 3.6–5.5 %, depending on the
+interpolation.
+
+## F141 — a station at the edge of reception is also at the edge of carrier sense: its collision probability is its own, not the swarm's p_c, and (G22) under-predicted its loss by a third (2026-11-21)
+
+**Found by U-F's outlier configuration** `FOUT` (`predictions/UF.md`): FCAP3R (802.11a cell C,
+α = 3, Rayleigh) at N = 42, node 0 moved to 250 m, where every one of its links averages
+−79 dBm, 3 dB above the −82 dBm detection floor.
+* **Registered:** node 0's loss p_c(1 − q_0) + ℓ_0 = **0.448** (p_c = 0.0795 from (G25),
+  q_0 ≈ 0, ℓ_0 = 0.368 from the placement), held within ±20 %.
+* **Measured** (30 seeds): **0.681**. **Failed, optimistic** (−34.2 %).
+
+**The diagnostic** (unregistered; `analysis/uf_diagnose.py --outlier`,
+`results/raw/uf_diagnose_outlier.csv`): seeds 1–5 rerun with the MAC and reception traces,
+each delivered fraction identical to the stored run's. Every one of node 0's frames is classed by
+the frames whose airtime overlaps it. What each class should show was written into the function
+before the traces were read.
+
+| quantity, seeds 1–5 | measured | the model's value |
+|---|---|---|
+| loss of node 0's frames that overlap no other frame | 0.360–0.368 | ℓ_0 0.364–0.371 (per placement) |
+| share of node 0's frames that overlap another | 0.48–0.53 | p_c 0.0795 |
+| share of the other stations' frames that overlap another | 0.084–0.087 | p_c 0.0795 |
+| loss of node 0's overlapped frames, at every receiver | 0.996–1.000 | 1 − q_0 ≈ 1 |
+| share where the other frame started > 25 µs into node 0's, or node 0 > 25 µs into it | 0.31–0.37 | 0 under carrier sense |
+
+**What it shows:**
+* **The link term is right:** frames with no overlap lose what the placement predicts, within
+  0.009.
+* **The collision term is not:** node 0's frames overlap six times as often as the swarm's
+  p_c. A start more than 25 µs into another frame, a slot plus the CCA reaction time, means the
+  starter did not sense the frame on air.
+* **The cause: ns-3 uses one threshold for both.** The −82 dBm preamble detection that a frame
+  needs to be received is also what the other stations' carrier sense needs to defer to it
+  (`threshold-preamble-detection-model.cc:31–40`). A link that loses a fraction ℓ to fading also
+  fails carrier sense at about that rate, in both directions.
+* **The size agrees** (an order-of-magnitude check, not a model): with the others' occupancy
+  ν = (N − 1)·f·T_f = 0.549 and a miss rate s = 0.367 in each direction:
+  * another station starts blind during node 0's frame with probability 1 − e^(−sν) = 0.183;
+  * node 0 starts blind into another's frame with probability about sν = 0.201;
+  * together 1 − e^(−sν)·(1 − sν) = 0.35 of node 0's frames. Measured: 0.31–0.37.
+* **The others are barely affected,** as registered (their mean loss 0.058, their overlap share
+  0.084–0.087).
+* **(G24)'s registered verdict stands, more strongly:** ε_w,0 < 0 at any N, so no swarm containing
+  node 0 meets the every-sender criterion.
+
+**What it changes:**
+* **(G22) holds only where every pair senses every other reliably,** the condition U-F's main
+  configurations were built to meet (every pair ≥ 32 dB over the floor). A sender whose links
+  are lossy is a partially hidden station. Its p_c is its own, and it grows with its link loss.
+* **For the ledger:** a node at the edge of range loses more than its link loss and the swarm's
+  collision rate together. A deployment rule that admits a node by its link loss alone
+  under-counts its loss.
+* **No corrected term is used.** A hidden-station p_c would need its own registration, on
+  configurations not seen here (Mohamed's rule of 2026-11-20).

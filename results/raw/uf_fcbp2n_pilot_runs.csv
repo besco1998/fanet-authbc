@@ -1,0 +1,47 @@
+# python=3.12.3
+# platform=Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=uf_fcbp2n_pilot_runs
+# ns3=3.48 (authbc-links-audit)
+# config_hash=dbe02de1bb08b367
+cell,frame_bytes,frames_per_s,standard,mode,extra,n_nodes,seed,sim_time_s,tx_frames,rx_frames,delivered_frac,delay_mean_ms,delay_p99_ms
+FCBP2N,146,50.0,80211b,DsssRate1Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,8,4,20.0,7989,54799,0.979901,2.99479,8.78746
+FCBP2N,146,50.0,80211b,DsssRate1Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,8,5,20.0,7987,54771,0.979645,2.98122,8.8769
+FCBP2N,146,50.0,80211b,DsssRate1Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,8,3,20.0,7990,54911,0.981781,3.01896,8.72167
+FCBP2N,146,50.0,80211b,DsssRate1Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,8,1,20.0,7990,54586,0.97597,2.95782,8.66267
+FCBP2N,146,50.0,80211b,DsssRate1Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,8,2,20.0,7990,54961,0.982675,2.99222,8.72996
+FCBP2N,146,50.0,80211b,DsssRate1Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,9,1,20.0,8983,69957,0.973464,3.46325,10.4177
+FCBP2N,146,50.0,80211b,DsssRate1Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,9,4,20.0,8986,69766,0.970482,3.40454,10.4446
+FCBP2N,146,50.0,80211b,DsssRate1Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,9,2,20.0,8988,69810,0.970878,3.4522,10.2846
+FCBP2N,146,50.0,80211b,DsssRate1Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,9,3,20.0,8986,69755,0.970329,3.44817,10.2576
+FCBP2N,146,50.0,80211b,DsssRate1Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,9,5,20.0,8983,69671,0.969484,3.39011,10.1223
+FCBP2N,146,50.0,80211b,DsssRate1Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,10,1,20.0,9985,85548,0.951961,3.99498,12.0658
+FCBP2N,146,50.0,80211b,DsssRate1Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,10,3,20.0,9986,85904,0.955827,4.0379,12.1579
+FCBP2N,146,50.0,80211b,DsssRate1Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,10,2,20.0,9985,85765,0.954376,4.00921,12.2097
+FCBP2N,146,50.0,80211b,DsssRate1Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,10,5,20.0,9984,85800,0.954861,4.10672,12.2112
+FCBP2N,146,50.0,80211b,DsssRate1Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,10,4,20.0,9985,85905,0.955934,4.10431,12.133
+FCBP2N,146,50.0,80211b,DsssRate1Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,11,2,20.0,10982,102359,0.932062,5.16044,15.2191
+FCBP2N,146,50.0,80211b,DsssRate1Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,11,3,20.0,10984,102720,0.935178,5.0405,14.5196
+FCBP2N,146,50.0,80211b,DsssRate1Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,11,1,20.0,10982,101889,0.927782,4.99638,14.8103
+FCBP2N,146,50.0,80211b,DsssRate1Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,11,5,20.0,10985,101887,0.92751,4.99888,14.8113
+FCBP2N,146,50.0,80211b,DsssRate1Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,11,4,20.0,10985,102206,0.930414,5.07064,14.274
+FCBP2N,146,50.0,80211b,DsssRate1Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,12,2,20.0,11979,115262,0.874728,6.74246,20.0738
+FCBP2N,146,50.0,80211b,DsssRate1Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,12,5,20.0,11981,115475,0.876198,6.7149,19.5081
+FCBP2N,146,50.0,80211b,DsssRate1Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,12,4,20.0,11979,115607,0.877346,6.53322,19.0654
+FCBP2N,146,50.0,80211b,DsssRate1Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,12,1,20.0,11981,115687,0.877807,6.72625,19.1846
+FCBP2N,146,50.0,80211b,DsssRate1Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,12,3,20.0,11981,115969,0.879946,6.68998,19.1497
+FCBP2N,146,50.0,80211b,DsssRate1Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,13,2,20.0,12980,125018,0.802632,9.2444,26.8877
+FCBP2N,146,50.0,80211b,DsssRate1Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,13,1,20.0,12980,124753,0.800931,9.04992,25.5151
+FCBP2N,146,50.0,80211b,DsssRate1Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,13,4,20.0,12980,125185,0.803704,9.02625,26.2646
+FCBP2N,146,50.0,80211b,DsssRate1Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,13,3,20.0,12979,126040,0.809256,9.08764,26.2187
+FCBP2N,146,50.0,80211b,DsssRate1Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,13,5,20.0,12981,125241,0.804002,9.42612,27.393
+FCBP2N,146,50.0,80211b,DsssRate1Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,14,1,20.0,13976,131283,0.722574,12.1874,35.2485
+FCBP2N,146,50.0,80211b,DsssRate1Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,14,4,20.0,13977,132470,0.729055,12.226,35.7081
+FCBP2N,146,50.0,80211b,DsssRate1Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,14,3,20.0,13980,133432,0.734192,11.8692,35.2616
+FCBP2N,146,50.0,80211b,DsssRate1Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,14,2,20.0,13980,131966,0.726125,12.0731,35.012
+FCBP2N,146,50.0,80211b,DsssRate1Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,14,5,20.0,13980,131623,0.724238,11.896,33.8241

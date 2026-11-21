@@ -1,0 +1,47 @@
+# python=3.12.3
+# platform=Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=uf_fcap2r_pilot_runs
+# ns3=3.48 (authbc-links-audit)
+# config_hash=9f2372d47c72f7c1
+cell,frame_bytes,frames_per_s,standard,mode,extra,n_nodes,seed,sim_time_s,tx_frames,rx_frames,delivered_frac,delay_mean_ms,delay_p99_ms
+FCAP2R,146,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,35,4,20.0,34946,1145935,0.964459,0.479077,1.58441
+FCAP2R,146,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,35,1,20.0,34950,1148614,0.966603,0.481804,1.56287
+FCAP2R,146,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,35,3,20.0,34945,1147280,0.965618,0.477675,1.53232
+FCAP2R,146,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,35,2,20.0,34949,1149770,0.967603,0.480273,1.57548
+FCAP2R,146,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,35,5,20.0,34950,1146973,0.965222,0.483593,1.59012
+FCAP2R,146,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,37,4,20.0,36945,1275939,0.959338,0.499088,1.67587
+FCAP2R,146,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,37,1,20.0,36948,1278895,0.961483,0.497793,1.6845
+FCAP2R,146,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,37,5,20.0,36944,1279054,0.961706,0.496924,1.67923
+FCAP2R,146,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,37,3,20.0,36940,1278226,0.961188,0.504618,1.73977
+FCAP2R,146,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,37,2,20.0,36944,1276881,0.960072,0.49969,1.66726
+FCAP2R,146,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,39,1,20.0,38943,1417537,0.957903,0.521218,1.80013
+FCAP2R,146,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,39,5,20.0,38944,1415466,0.956479,0.519386,1.79809
+FCAP2R,146,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,39,2,20.0,38942,1415121,0.956295,0.518639,1.79834
+FCAP2R,146,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,39,4,20.0,38943,1416052,0.956899,0.519963,1.77587
+FCAP2R,146,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,39,3,20.0,38938,1414963,0.956286,0.518568,1.77396
+FCAP2R,146,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,41,1,20.0,40940,1553157,0.948435,0.543343,1.86225
+FCAP2R,146,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,41,3,20.0,40936,1562151,0.95402,0.53761,1.84404
+FCAP2R,146,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,41,2,20.0,40942,1560234,0.95271,0.53601,1.81058
+FCAP2R,146,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,41,4,20.0,40941,1555935,0.950108,0.538497,1.83664
+FCAP2R,146,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,41,5,20.0,40938,1555399,0.94985,0.538336,1.84197
+FCAP2R,146,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,43,1,20.0,42935,1703340,0.944584,0.564154,2.02827
+FCAP2R,146,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,43,2,20.0,42936,1706618,0.94638,0.560168,1.9701
+FCAP2R,146,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,43,4,20.0,42936,1706784,0.946472,0.559686,1.95629
+FCAP2R,146,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,43,5,20.0,42937,1701201,0.943354,0.566154,1.98149
+FCAP2R,146,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,43,3,20.0,42928,1704240,0.945237,0.561665,1.95192
+FCAP2R,146,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,45,1,20.0,44931,1857929,0.939789,0.586974,2.10955
+FCAP2R,146,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,45,3,20.0,44928,1855030,0.938385,0.586228,2.07644
+FCAP2R,146,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,45,4,20.0,44934,1857514,0.939516,0.585682,2.07475
+FCAP2R,146,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,45,2,20.0,44941,1857298,0.939261,0.590792,2.10351
+FCAP2R,146,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,45,5,20.0,44926,1858831,0.94035,0.588408,2.12683
+FCAP2R,146,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,47,2,20.0,46930,2016053,0.933885,0.61099,2.15033
+FCAP2R,146,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,47,4,20.0,46927,2015054,0.933482,0.61327,2.17005
+FCAP2R,146,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,47,1,20.0,46926,2014388,0.933194,0.612244,2.14464
+FCAP2R,146,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,47,3,20.0,46931,2011971,0.931975,0.613722,2.16961
+FCAP2R,146,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,47,5,20.0,46931,2011075,0.93156,0.60706,2.13322

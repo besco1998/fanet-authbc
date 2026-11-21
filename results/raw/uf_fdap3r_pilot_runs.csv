@@ -1,0 +1,47 @@
+# python=3.12.3
+# platform=Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=uf_fdap3r_pilot_runs
+# ns3=3.48 (authbc-links-audit)
+# config_hash=9f2372d47c72f7c1
+cell,frame_bytes,frames_per_s,standard,mode,extra,n_nodes,seed,sim_time_s,tx_frames,rx_frames,delivered_frac,delay_mean_ms,delay_p99_ms
+FDAP3R,173,12.5,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,127,3,20.0,31566,3839255,0.965288,0.546933,1.78099
+FDAP3R,173,12.5,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,127,2,20.0,31569,3848886,0.967617,0.551139,1.87948
+FDAP3R,173,12.5,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,127,5,20.0,31550,3838698,0.965637,0.553852,1.91946
+FDAP3R,173,12.5,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,127,4,20.0,31560,3838771,0.96535,0.544283,1.77114
+FDAP3R,173,12.5,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,127,1,20.0,31557,3849506,0.968141,0.547739,1.86393
+FDAP3R,173,12.5,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,134,4,20.0,33302,4252038,0.960009,0.565931,1.96058
+FDAP3R,173,12.5,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,134,5,20.0,33298,4265870,0.963247,0.569282,1.96074
+FDAP3R,173,12.5,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,134,2,20.0,33300,4263271,0.962603,0.570443,1.98198
+FDAP3R,173,12.5,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,134,3,20.0,33306,4262573,0.962272,0.574896,2.02279
+FDAP3R,173,12.5,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,134,1,20.0,33300,4262830,0.962503,0.570584,1.98697
+FDAP3R,173,12.5,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,141,2,20.0,35041,4698413,0.957738,0.589978,2.07084
+FDAP3R,173,12.5,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,141,5,20.0,35039,4697976,0.957703,0.597751,2.10454
+FDAP3R,173,12.5,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,141,1,20.0,35038,4704845,0.959131,0.595219,2.07647
+FDAP3R,173,12.5,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,141,3,20.0,35051,4697229,0.957223,0.594797,2.06609
+FDAP3R,173,12.5,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,141,4,20.0,35038,4690907,0.95629,0.595114,2.06556
+FDAP3R,173,12.5,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,148,2,20.0,36778,5149077,0.95241,0.616839,2.19344
+FDAP3R,173,12.5,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,148,1,20.0,36776,5159324,0.954357,0.614209,2.20628
+FDAP3R,173,12.5,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,148,4,20.0,36772,5135012,0.949963,0.618083,2.23625
+FDAP3R,173,12.5,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,148,5,20.0,36775,5137827,0.950407,0.61687,2.19404
+FDAP3R,173,12.5,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,148,3,20.0,36778,5154622,0.953436,0.618817,2.24179
+FDAP3R,173,12.5,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,155,2,20.0,38518,5619214,0.947308,0.644948,2.32897
+FDAP3R,173,12.5,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,155,1,20.0,38515,5620155,0.94754,0.634592,2.25689
+FDAP3R,173,12.5,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,155,5,20.0,38516,5613543,0.946401,0.639754,2.33219
+FDAP3R,173,12.5,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,155,4,20.0,38514,5608624,0.945621,0.64134,2.32098
+FDAP3R,173,12.5,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,155,3,20.0,38506,5605290,0.945255,0.647393,2.34112
+FDAP3R,173,12.5,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,162,1,20.0,40242,6078902,0.938252,0.66612,2.37106
+FDAP3R,173,12.5,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,162,2,20.0,40269,6101091,0.941046,0.671379,2.43964
+FDAP3R,173,12.5,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,162,3,20.0,40263,6091037,0.939635,0.665137,2.39733
+FDAP3R,173,12.5,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,162,5,20.0,40251,6085046,0.938991,0.668882,2.38119
+FDAP3R,173,12.5,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,162,4,20.0,40252,6111248,0.943011,0.664573,2.3867
+FDAP3R,173,12.5,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,169,4,20.0,41998,6572905,0.931579,0.70591,2.6398
+FDAP3R,173,12.5,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,169,2,20.0,41997,6579249,0.9325,0.699373,2.56665
+FDAP3R,173,12.5,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,169,1,20.0,41981,6579493,0.93289,0.693606,2.54729
+FDAP3R,173,12.5,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,169,3,20.0,42002,6582457,0.932843,0.697925,2.58344
+FDAP3R,173,12.5,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,169,5,20.0,41994,6589635,0.934039,0.697289,2.52804

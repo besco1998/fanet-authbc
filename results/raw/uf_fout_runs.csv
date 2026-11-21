@@ -1,0 +1,42 @@
+# python=3.12.3
+# platform=Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=uf_fout_runs
+# ns3=3.48 (authbc-links-audit)
+# config_hash=b4aeebabc6c556d9
+cell,frame_bytes,frames_per_s,standard,mode,extra,n_nodes,seed,sim_time_s,tx_frames,rx_frames,delivered_frac,delay_mean_ms,delay_p99_ms
+FOUT,146,50.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1 --outlierM=250.0,42,10,20.0,41935,1595102,0.927744,0.544616,1.85668
+FOUT,146,50.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1 --outlierM=250.0,42,7,20.0,41935,1592754,0.926378,0.54859,1.87014
+FOUT,146,50.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1 --outlierM=250.0,42,2,20.0,41942,1593001,0.926367,0.545737,1.86431
+FOUT,146,50.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1 --outlierM=250.0,42,6,20.0,41936,1594290,0.927249,0.547689,1.87068
+FOUT,146,50.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1 --outlierM=250.0,42,8,20.0,41931,1599729,0.930523,0.545919,1.85576
+FOUT,146,50.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1 --outlierM=250.0,42,9,20.0,41935,1594211,0.927225,0.548334,1.88853
+FOUT,146,50.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1 --outlierM=250.0,42,3,20.0,41936,1594789,0.927539,0.543227,1.84987
+FOUT,146,50.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1 --outlierM=250.0,42,1,20.0,41936,1593097,0.926555,0.542216,1.86401
+FOUT,146,50.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1 --outlierM=250.0,42,4,20.0,41937,1594397,0.927289,0.541526,1.88759
+FOUT,146,50.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1 --outlierM=250.0,42,5,20.0,41934,1591976,0.925948,0.546215,1.86966
+FOUT,146,50.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1 --outlierM=250.0,42,12,20.0,41936,1593919,0.927033,0.544467,1.89549
+FOUT,146,50.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1 --outlierM=250.0,42,11,20.0,41934,1591775,0.925831,0.547322,1.89117
+FOUT,146,50.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1 --outlierM=250.0,42,18,20.0,41932,1594057,0.927202,0.547331,1.88093
+FOUT,146,50.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1 --outlierM=250.0,42,13,20.0,41937,1590958,0.925289,0.547149,1.90496
+FOUT,146,50.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1 --outlierM=250.0,42,16,20.0,41938,1596118,0.928268,0.543171,1.88319
+FOUT,146,50.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1 --outlierM=250.0,42,15,20.0,41943,1593693,0.926747,0.542553,1.85705
+FOUT,146,50.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1 --outlierM=250.0,42,17,20.0,41936,1594489,0.927365,0.544568,1.86436
+FOUT,146,50.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1 --outlierM=250.0,42,14,20.0,41937,1597302,0.928979,0.543348,1.87788
+FOUT,146,50.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1 --outlierM=250.0,42,19,20.0,41937,1594359,0.927267,0.542707,1.87679
+FOUT,146,50.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1 --outlierM=250.0,42,20,20.0,41938,1593654,0.926835,0.543248,1.88443
+FOUT,146,50.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1 --outlierM=250.0,42,28,20.0,41931,1595036,0.927794,0.542164,1.84916
+FOUT,146,50.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1 --outlierM=250.0,42,27,20.0,41937,1594974,0.927625,0.541653,1.8559
+FOUT,146,50.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1 --outlierM=250.0,42,22,20.0,41932,1594505,0.927463,0.54788,1.92316
+FOUT,146,50.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1 --outlierM=250.0,42,21,20.0,41935,1595231,0.927819,0.541736,1.87061
+FOUT,146,50.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1 --outlierM=250.0,42,23,20.0,41942,1592199,0.925901,0.549229,1.89059
+FOUT,146,50.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1 --outlierM=250.0,42,29,20.0,41937,1592389,0.926121,0.5417,1.84625
+FOUT,146,50.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1 --outlierM=250.0,42,24,20.0,41934,1596283,0.928453,0.545131,1.87698
+FOUT,146,50.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1 --outlierM=250.0,42,25,20.0,41936,1595456,0.927927,0.541174,1.8795
+FOUT,146,50.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1 --outlierM=250.0,42,26,20.0,41936,1592925,0.926455,0.548195,1.87473
+FOUT,146,50.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1 --outlierM=250.0,42,30,20.0,41942,1590014,0.92463,0.545242,1.86728

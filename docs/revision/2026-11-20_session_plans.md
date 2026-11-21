@@ -65,7 +65,10 @@ collisions):
 * at a power difference large enough that the stronger frame always wins (q_strong + q_weak = 1),
   p_c = (loss_A − ℓ_A) + (loss_B − ℓ_B), and q of each sender follows;
 * at small differences only q_A + q_B ≤ 1 is identified, and the bound is reported;
-* the saturated-pair loss also gives F75's p_c at equal power, for comparison.
+* the saturated-pair loss also gives F75's p_c at equal power, for comparison;
+* *(added 2026-11-21, F138)* the Pi 3 never transmits here, so this q is the share given that the
+  receiver is not one of the colliding senders. A swarm's (G22) needs the share over all N − 1
+  receivers, smaller by (N − k)/(N − 1) for a k-frame collision (2/3 at N = 4, k = 2).
 
 **Predictions** (registered before the session, from U-CAP's curve for 802.11b):
 * q_weak = 0 at every step;
