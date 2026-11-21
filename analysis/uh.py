@@ -31,12 +31,14 @@ reproduced only where no station could hold two frames.
 **The closed forms** (reported beside ns-3, none scored): (G5) Poisson, (G25), and the
 finite-station form where accepted (N = 3–5, u ≤ 0.5, so at W1f only).
 
-    python analysis/uh.py   -> the registration's tables
+    python analysis/uh.py           -> the registration's tables
+    python analysis/uh.py --flags   -> results/raw/uh_flags.csv: the rule on every window
 """
 from __future__ import annotations
 
 import sys
 from pathlib import Path
+from typing import Any
 
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "src"))
@@ -84,6 +86,58 @@ def w1f_table() -> str:
             f"{fs.loss(4, W1F_RATE, tf, acc):.5f} | the standard's W = 32 in all three |")
 
 
+QUEUE_SLOT, QUEUE_DIFS, QUEUE_BACKOFF_SLOTS = 20e-6, 50e-6, 1.5   # the fastest board alone, W = 4
+QUEUE_FLAG = 0.01
+UDP_IP_BYTES = 28
+
+
+def flags() -> list[dict[str, Any]]:
+    """The frame-burst rule on every multi-sender window of the registered sessions, from the
+    logs: each window's UDP payload from a sender's transmit record, its frames/s from the plan.
+
+    S = T_f + DIFS + 1.5σ; P(next frame within S) = S²f²/2 for the redrawn source; flagged at 1 %.
+    The rule and its threshold were fixed in `predictions/UH.md` before this code was written; the
+    registration's 0.80 % and 1.4–9.3 % came from the same rule computed by hand.
+    """
+    import csv
+    import json
+    sys.path.insert(0, str(REPO / "analysis"))
+    import g1_capture as g1
+    out = []
+    for name, (run_dir, wfile) in g1.SESSIONS.items():
+        run = g1.HW / run_dir
+        wins = [r for r in csv.DictReader(ln for ln in (g1.HW / wfile).open()
+                                          if not ln.startswith("#"))]
+        for w in wins:
+            senders = [int(x) for x in w["senders"].split(",")]
+            if len(senders) < 2 or w.get("usable", "") == "False":
+                continue
+            tx = run / f"node{senders[0]}" / f"tx_node{senders[0]}_{w['window']}.json"
+            udp = json.loads(tx.read_text())["bytes"]
+            f = float(w["rate_fps"])
+            tf = uc.airtime_s(phy.DSSS_1M, udp + UDP_IP_BYTES)
+            s = tf + QUEUE_DIFS + QUEUE_BACKOFF_SLOTS * QUEUE_SLOT
+            p = (s * f) ** 2 / 2
+            out.append({"session": name, "window": w["window"], "label": w["label"],
+                        "n": len(senders), "fps": f, "udp_bytes": udp, "tf_us": tf * 1e6,
+                        "p_two_queued": p, "reproduced": int(p < QUEUE_FLAG)})
+    return out
+
+
+def flags_table(rows: list[dict[str, Any]]) -> str:
+    """One line per (session, N, frames/s, payload), from the per-window rows."""
+    groups: dict[tuple[Any, ...], list[dict[str, Any]]] = {}
+    for r in rows:
+        groups.setdefault((r["session"], r["n"], r["fps"], r["udp_bytes"]), []).append(r)
+    lines = ["| session | N | frames/s per board | UDP payload | windows | S²f²/2 | |",
+             "|---|---|---|---|---|---|---|"]
+    for (s, n, f, b), v in groups.items():
+        p = float(v[0]["p_two_queued"])
+        lines.append(f"| {s} | {n} | {f:g} | {b} B | {len(v)} | {100 * p:.2f} % | "
+                     f"{'**reproduced**' if p < QUEUE_FLAG else 'flagged'} |")
+    return "\n".join(lines)
+
+
 def anchor_rule_a(seeds: int = 30) -> list[dict[str, float]]:
     """Rule A's simulation (F137: it tracks ns-3 at small N) at the anchor's rates, N = 2.
 
@@ -110,6 +164,21 @@ def anchor_rule_a(seeds: int = 30) -> list[dict[str, float]]:
 
 
 def main() -> None:
+    if "--flags" in sys.argv:
+        import csv
+        import io
+
+        from authbc.bench import provenance
+        rows = flags()
+        buf = io.StringIO()
+        for k, v in {**provenance.env_block(), "run": "uh_flags"}.items():
+            buf.write(f"# {k}={v}\n")
+        w = csv.DictWriter(buf, fieldnames=list(rows[0]), lineterminator="\n")
+        w.writeheader()
+        w.writerows(rows)
+        (REPO / "results" / "raw" / "uh_flags.csv").write_text(buf.getvalue())
+        print(flags_table(rows))
+        return
     if "--rule-a" in sys.argv:
         import csv
         import io
