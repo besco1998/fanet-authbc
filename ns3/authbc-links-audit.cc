@@ -27,6 +27,9 @@
 //   Added for work package H (2026-11-20), both off by default:
 //   --cwMinList=a,b,…  CWmin per node, cycled (the hardware-matched windows)
 //   --slotUs=x        every PHY's slot after install; DIFS = SIFS + 2x follows (ns-3 reads it live)
+//   Added for the pooled every-sender statistic (Mohamed, 2026-11-21; predictions/UF2.md), off by default:
+//   --positionsFile=p  each node moved to the position p gives (a --placementOnly file), after the
+//                     usual placement: one placement over many run seeds, and no random stream moves
 //
 // (The text below is authbc-links.cc's, unchanged.)
 // authbc-links.cc — the published scenario (authbc-delay.cc) with three options, absent by
@@ -74,6 +77,7 @@
 #include <iomanip>
 #include <map>
 #include <numeric>
+#include <sstream>
 #include <vector>
 
 using namespace ns3;
@@ -382,6 +386,7 @@ main(int argc, char* argv[])
     bool placementOnly = false;                     // write positions and stop
     double txPowerDbm = 0.0;                        // 0 = ns-3's default power
     double outlierM = 0.0;                          // > 0: node 0 moved to (outlierM, 0)
+    std::string positionsFile;                      // non-empty: positions read from this file
     // The hardware-matched configuration (work package H, 2026-11-20). Both off by default.
     std::string cwMinList;                          // CWmin per node, cycled, e.g. 3,3,50,5
     double slotUs = 0.0;                            // > 0: every PHY's slot (DIFS = SIFS + 2 slot)
@@ -432,6 +437,9 @@ main(int argc, char* argv[])
     cmd.AddValue("txPowerDbm", "transmit power of every node in dBm; 0 = ns-3's default",
                  txPowerDbm);
     cmd.AddValue("outlierM", "move node 0 to (outlierM, 0) after placement; 0 = off", outlierM);
+    cmd.AddValue("positionsFile",
+                 "move every node to the position this node,x_m,y_m file gives; empty = off",
+                 positionsFile);
     cmd.AddValue("cwMinList", "CWmin per node, cycled (e.g. 3,3,50,5); empty = off", cwMinList);
     cmd.AddValue("slotUs", "slot of every PHY in us, set after install; 0 = the standard's",
                  slotUs);
@@ -447,6 +455,9 @@ main(int argc, char* argv[])
     NS_ABORT_MSG_IF((placementOnly || outlierM > 0.0) && radiusM <= 0.0,
                     "placementOnly and outlierM act on the disc: need radiusM > 0");
     NS_ABORT_MSG_IF(outlierM < 0.0, "outlierM >= 0 (0 = off)");
+    NS_ABORT_MSG_IF(!positionsFile.empty() && (radiusM <= 0.0 || outlierM > 0.0 || placementOnly),
+                    "positionsFile replaces a disc placement: needs radiusM > 0, no outlierM, "
+                    "no placementOnly");
     for (size_t at = 0; !sizePattern.empty() && at != std::string::npos;)
     {
         const size_t comma = sizePattern.find(',', at);
@@ -602,6 +613,32 @@ main(int argc, char* argv[])
     // Every node is placed as usual first, so the outlier moves no random stream.
     if (outlierM > 0.0)
         nodes.Get(0)->GetObject<MobilityModel>()->SetPosition(Vector(outlierM, 0.0, 0.0));
+    if (!positionsFile.empty())
+    {
+        // Every node is placed as usual first (above), so reading a placement moves no stream.
+        std::ifstream posIn(positionsFile);
+        NS_ABORT_MSG_IF(!posIn, "positionsFile: cannot open " << positionsFile);
+        std::string line;
+        std::getline(posIn, line);
+        NS_ABORT_MSG_IF(line != "node,x_m,y_m", "positionsFile: header must be node,x_m,y_m");
+        std::vector<bool> seen(nNodes, false);
+        while (std::getline(posIn, line))
+        {
+            if (line.empty()) continue;
+            std::istringstream row(line);
+            std::string f;
+            std::vector<std::string> cols;
+            while (std::getline(row, f, ',')) cols.push_back(f);
+            NS_ABORT_MSG_IF(cols.size() != 3, "positionsFile: bad row " << line);
+            const uint32_t i = std::stoul(cols[0]);
+            NS_ABORT_MSG_IF(i >= nNodes || seen[i], "positionsFile: node " << i << " out of range or twice");
+            seen[i] = true;
+            nodes.Get(i)->GetObject<MobilityModel>()->SetPosition(
+                Vector(std::stod(cols[1]), std::stod(cols[2]), 0.0));
+        }
+        NS_ABORT_MSG_IF(std::find(seen.begin(), seen.end(), false) != seen.end(),
+                        "positionsFile: every node 0 .. nNodes - 1 needs a row");
+    }
     if (placementOnly || perPair)
     {
         std::ofstream posOut(outPrefix + "_positions.csv");

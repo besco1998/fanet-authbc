@@ -158,6 +158,28 @@ def check_placement(td: Path) -> list[dict[str, object]]:
              "passed": ol[0] == (7.0, 0.0) and all(ol[i] == nl[i] for i in nl if i != 0)}]
 
 
+def check_positions_file(td: Path) -> list[dict[str, object]]:
+    """--positionsFile (UF2): a run reading back its own placement equals the run without the
+    option, so no random stream moves; a placement from elsewhere is used exactly."""
+    disc = ["--radiusM=10", "--pathLossExp=2"]
+    # td / "pp" was run by check_placement: the same disc, --perPair and --perNode, no file
+    _run(td / "pf0", *disc, "--placementOnly=1")
+    _run(td / "pf1", *disc, "--perPair=1", "--perNode=1",
+         f"--positionsFile={td / 'pf0_positions.csv'}")
+    same = all((td / f"pf1_{s}.csv").read_bytes() == (td / f"pp_{s}.csv").read_bytes()
+               for s in ("nodes", "pairs", "positions"))
+    _run(td / "pf5", "--radiusM=5", "--pathLossExp=2", "--placementOnly=1")
+    _run(td / "pf2", *disc, "--perPair=1", f"--positionsFile={td / 'pf5_positions.csv'}")
+    moved = _positions(td / "pf2_positions.csv")
+    return [{"check": "positionsFile with the run's own placement", "frames": "",
+             "expected": "nodes, pairs and positions files byte-identical to the run without it",
+             "passed": same},
+            {"check": "positionsFile from another placement", "frames": "",
+             "expected": "the file's positions exactly, not the seed's",
+             "passed": moved == _positions(td / "pf5_positions.csv")
+             and moved != _positions(td / "pp_positions.csv")}]
+
+
 def check_per_pair(td: Path) -> dict[str, object]:
     # td / "pp" was run by check_placement with --perPair and --perNode together
     with (td / "pp_nodes.csv").open() as fh:
@@ -271,7 +293,8 @@ def main() -> None:
         td = Path(tdir)
         rows = [check_size_pattern(td), check_burst(td), *check_rx_power(td),
                 check_nakagami(td), *check_verification(), *check_placement(td),
-                check_per_pair(td), check_tx_power(td), check_capture_model(td),
+                check_per_pair(td), *check_positions_file(td), check_tx_power(td),
+                check_capture_model(td),
                 check_slot(td), check_slot_timing(td, 20), check_slot_timing(td, 9),
                 check_cw_list(td)]
     buf = io.StringIO()

@@ -19,6 +19,8 @@ nakagamiM 1 at -60 dBm,1485,varying; linear mean 1.018 nW within 10 % of 1 nW,Tr
 placementOnly == the run's placement,,"same positions, all in the disc, no result file",True
 outlierM 7 on a 2 m disc,,"node 0 at (7, 0); the others unmoved",True
 perPair sums to perNode,140,per source: receptions and frames sent agree,True
+positionsFile with the run's own placement,,"nodes, pairs and positions files byte-identical to the run without it",True
+positionsFile from another placement,,"the file's positions exactly, not the seed's",True
 txPowerDbm 10,,every PWR at -36.6777 dBm,True
 captureMarginDb 5,,live model SimpleFrameCaptureModel (ns3::SimpleFrameCaptureModel); none without (none),True
 slotUs 9 at 802.11b,,"slot 9000 ns, DIFS 28000 ns (got 9000, 28000)",True
