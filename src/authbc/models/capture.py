@@ -1,4 +1,5 @@
-"""Capture in the loss expression, Eqs. (G22)–(G24) of `docs/prompts/NEXT_PHASE_PROMPT.md` §3.
+"""Capture in the loss expression, Eqs. (G22)–(G24) of `docs/prompts/NEXT_PHASE_PROMPT.md` §3,
+with (G22a) and (G24a) of the model document (`docs/revision/unified_closed_form_model.md` §8).
 
 The inputs:
 * q_ij, the probability that receiver i decodes sender j's frame when it collides;
@@ -69,6 +70,48 @@ def eps_every_sender(eps: float, link_loss: Sequence[float], q: Sequence[float])
     if max(q) >= 1:
         raise ValueError("every q must be below 1")
     return min((eps - lj) / (1 - qj) for lj, qj in zip(link_loss, q, strict=True))
+
+
+def half_duplex_factor(n_nodes: float, k: int = 2) -> float:
+    """(G22a), the model document §8.1 (F138): in a collision of k frames the k − 1 other
+    transmitters are among a frame's N − 1 receivers and decode nothing, so the capture share
+    averaged over receivers is q̄·(N − k)/(N − 1)."""
+    if k < 2 or n_nodes < k:
+        raise ValueError("a collision needs k >= 2 frames among N >= k stations")
+    return (n_nodes - k) / (n_nodes - 1)
+
+
+def z_n(n: int) -> float:
+    """The expected maximum of n standard normal draws, ∫ x·n·φ(x)·Φ(x)^(n−1) dx (§8.3's z_N,
+    not its asymptote √(2 ln N))."""
+    import numpy as np
+    from scipy.stats import norm
+    x = np.linspace(-12.0, 12.0, 240_001)
+    f = x * n * norm.pdf(x) * norm.cdf(x) ** (n - 1)
+    return float(np.sum((f[1:] + f[:-1]) / 2) * (x[1] - x[0]))
+
+
+def worst_window_loss(p: Sequence[float], m: int) -> float:
+    """(G24a), left side, §8.3: E[max_j L_j/m] for independent L_j ~ Binomial(m, p_j), m frames
+    per sender in the window, computed exactly: E[max L] = Σ_k (1 − Π_j P(L_j ≤ k)).
+    The senders' losses are in fact positively correlated (shared collisions), which makes the
+    maximum somewhat smaller than this; a test states that assumption with its prediction."""
+    import numpy as np
+    from scipy.stats import binom
+    if m < 1 or not p:
+        raise ValueError("one or more senders and at least one frame")
+    _check_prob(*p)
+    k = np.arange(m + 1)
+    below = np.ones(m + 1)
+    for pj in p:
+        below *= binom.cdf(k, m, pj)
+    return float(np.sum(1.0 - below[:-1]) / m)
+
+
+def worst_window_loss_normal(p_bar: float, n: int, m: int) -> float:
+    """(G24a), right side: p̄ + z_N·√(p̄(1 − p̄)/m), for similar p_j and m·p̄ of about 10 or more."""
+    _check_prob(p_bar)
+    return p_bar + z_n(n) * (p_bar * (1 - p_bar) / m) ** 0.5
 
 
 def q_rayleigh_equal(theta: float, k: int = 2) -> float:

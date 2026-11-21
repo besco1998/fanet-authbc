@@ -73,3 +73,48 @@ def test_ns3s_threshold_is_4_db() -> None:
     assert cp.THETA_NS3 == pytest.approx(cp.db_to_ratio(4.0))
     # Rayleigh at equal mean power, two frames: q = 1/(1 + 10^0.4) under ns-3's rule
     assert cp.q_rayleigh_equal(cp.THETA_NS3) == pytest.approx(0.2847, abs=1e-4)
+
+
+class TestHalfDuplex:
+    """(G22a), the model document §8.1 (F138): a transmitting station cannot receive."""
+
+    @pytest.mark.parametrize("n, factor", [(140, 0.99), (10, 0.89), (4, 2 / 3), (2, 0.0)])
+    def test_the_factor_at_the_documents_sizes(self, n, factor) -> None:
+        assert cp.half_duplex_factor(n) == pytest.approx(factor, abs=0.005)
+
+    def test_k_frames(self) -> None:
+        assert cp.half_duplex_factor(10, k=3) == pytest.approx(7 / 9)
+
+    def test_rejects_too_few_stations(self) -> None:
+        with pytest.raises(ValueError):
+            cp.half_duplex_factor(1.5)
+
+
+class TestWorstWindow:
+    """(G24a), §8.3: the expected worst observed loss over a window, exact and approximate."""
+
+    @pytest.mark.parametrize("n, z", [(2, 0.564), (3, 0.846), (4, 1.029), (5, 1.163),
+                                      (10, 1.539), (20, 1.867), (50, 2.249), (100, 2.508),
+                                      (200, 2.746)])
+    def test_z_n_is_the_documents_table(self, n, z) -> None:
+        assert cp.z_n(n) == pytest.approx(z, abs=0.0006)
+
+    def test_one_sender_is_its_own_loss(self) -> None:
+        assert cp.worst_window_loss([0.05], 400) == pytest.approx(0.05, abs=1e-12)
+
+    def test_the_exact_sum_against_a_seeded_draw(self) -> None:
+        rng = np.random.default_rng(3)
+        p = [0.03, 0.05, 0.04, 0.06, 0.05]
+        m = 250
+        draws = np.max(rng.binomial(m, p, size=(200_000, len(p))) / m, axis=1)
+        assert cp.worst_window_loss(p, m) == pytest.approx(draws.mean(), abs=3e-4)
+
+    def test_the_closed_form_approaches_the_exact_value(self) -> None:
+        p = [0.05] * 30
+        exact = cp.worst_window_loss(p, 1000)
+        approx = cp.worst_window_loss_normal(0.05, 30, 1000)
+        assert approx == pytest.approx(exact, rel=0.03)
+
+    def test_more_frames_shrink_the_excess(self) -> None:
+        p = [0.05] * 20
+        assert (cp.worst_window_loss(p, 250) - 0.05) > (cp.worst_window_loss(p, 1000) - 0.05)
