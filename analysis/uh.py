@@ -33,6 +33,7 @@ finite-station form where accepted (N = 3–5, u ≤ 0.5, so at W1f only).
 
     python analysis/uh.py           -> the registration's tables
     python analysis/uh.py --flags   -> results/raw/uh_flags.csv: the rule on every window
+    python analysis/uh.py --hb      -> group (b)'s table, from results/raw/uh_hb_runs.csv
 """
 from __future__ import annotations
 
@@ -138,6 +139,55 @@ def flags_table(rows: list[dict[str, Any]]) -> str:
     return "\n".join(lines)
 
 
+W1F_SCORED = REPO / "results" / "raw" / "w1f_w1f_2026-11-05.csv"
+W1F_WINDOWS = REPO / "results" / "hw" / "channel24" / "w1f_2026-11-05_windows.csv"
+
+
+def w1f_hardware_65() -> dict[str, float]:
+    """W1f's four-board windows at 65 frames/s as W1f scored them: each window's loss less the
+    session's background b. Returns the mean (W1f's scored value) and the windows' range."""
+    import csv
+    with W1F_SCORED.open() as fh:
+        rows = list(csv.DictReader(ln for ln in fh if not ln.startswith("#")))
+    b = float(next(r["measured"] for r in rows if r["what"] == "background"))
+    scored = float(next(r["measured"] for r in rows
+                        if r["what"] == "contention" and r["group"] == f"ABCD at {W1F_RATE:g}/s"))
+    with W1F_WINDOWS.open() as fh:
+        wins = [r for r in csv.DictReader(ln for ln in fh if not ln.startswith("#"))
+                if r["label"] == "ABCD" and float(r["rate_fps"]) == W1F_RATE
+                and r["usable"] == "True"]
+    losses = [1 - float(w["delivered_frac"]) - b for w in wins]
+    mean = sum(losses) / len(losses)
+    if abs(mean - scored) > 1e-6:
+        raise SystemExit(f"W1f at 65/s: {mean} against W1f's scored {scored}")
+    return {"mean": mean, "lo": min(losses), "hi": max(losses), "windows": len(losses), "b": b}
+
+
+def hb_table() -> str:
+    """Group (b): ns-3 at both window families and both capture ends, against W1f's hardware."""
+    import csv
+    import statistics as st
+    hw = w1f_hardware_65()
+    with (REPO / "results" / "raw" / "uh_hb_runs.csv").open() as fh:
+        runs = list(csv.DictReader(ln for ln in fh if not ln.startswith("#")))
+    by: dict[str, list[float]] = {}
+    for r in runs:
+        by.setdefault(r["cell"], []).append(1 - float(r["delivered_frac"]))
+    lines = [f"Hardware, W1f at 65 frames/s: **{hw['mean']:.5f}** (windows {hw['lo']:.5f}–"
+             f"{hw['hi']:.5f}, {hw['windows']:.0f} windows, less b = {hw['b']:.6f}).", "",
+             "| family | capture end | ns-3 loss (± 1.96 SE) | seeds | hardware ÷ ns-3 |",
+             "|---|---|---|---|---|"]
+    for fam in FAMILIES:
+        for end, label in (("E", "equal power"), ("C", "assumed channel: Rayleigh, capture model")):
+            v = by.get(f"HB{fam}{end}", [])
+            if not v:
+                continue
+            m, se = st.mean(v), st.stdev(v) / len(v) ** 0.5
+            lines.append(f"| {fam} | {label} | {m:.5f} (± {1.96 * se:.5f}) | {len(v)} | "
+                         f"{hw['mean'] / m:.2f} |")
+    return "\n".join(lines)
+
+
 def anchor_rule_a(seeds: int = 30) -> list[dict[str, float]]:
     """Rule A's simulation (F137: it tracks ns-3 at small N) at the anchor's rates, N = 2.
 
@@ -178,6 +228,11 @@ def main() -> None:
         w.writerows(rows)
         (REPO / "results" / "raw" / "uh_flags.csv").write_text(buf.getvalue())
         print(flags_table(rows))
+        return
+    if "--hb" in sys.argv:
+        print(hb_table())
+        print()
+        print(w1f_table())
         return
     if "--rule-a" in sys.argv:
         import csv

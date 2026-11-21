@@ -25,6 +25,12 @@ Added for work package F of `docs/prompts/NEXT_PHASE_PROMPT.md` (2026-11-20):
   default power is 16.0206 dBm);
 * `--captureMarginDb=5`: the live PHY holds a SimpleFrameCaptureModel, and none without it.
 
+Added for work package H (2026-11-20):
+* `--slotUs=9` at 802.11b: the live slot is 9 µs and DIFS 28 µs (SIFS 10 + 2 × 9), read back;
+  and in the timing of two saturated senders, every gap after a frame on DIFS + k·slot
+  (the standard's 20 µs as the control): the read-back is taken before the run starts;
+* `--cwMinList=3,63`: node 0's backoff draws stay within 0 … 3, and node 1's go above 3.
+
     python ns3/check_twin_options.py   -> results/raw/twin_options_check.csv
 """
 from __future__ import annotations
@@ -190,6 +196,66 @@ def check_capture_model(td: Path) -> dict[str, object]:
             "passed": "SimpleFrameCaptureModel" in on and "SimpleFrameCaptureModel" not in off}
 
 
+def _constant(path: Path, key: str) -> str:
+    with path.open() as fh:
+        return next(ln.strip().split(",", 1)[1] for ln in fh if ln.startswith(key + ","))
+
+
+def check_slot(td: Path) -> dict[str, object]:
+    _run(td / "sl", "--standard=80211b", "--dataMode=DsssRate1Mbps", "--slotUs=9",
+         "--constants=1")
+    slot, difs = _constant(td / "sl_constants.csv", "slot_ns"), _constant(td / "sl_constants.csv",
+                                                                         "difs_ns")
+    return {"check": "slotUs 9 at 802.11b", "frames": "",
+            "expected": f"slot 9000 ns, DIFS 28000 ns (got {slot}, {difs})",
+            "passed": (slot, difs) == ("9000", "28000")}
+
+
+def _gaps_ns(path: Path) -> list[int]:
+    """Every gap from a frame's TX end to the next TX begin of any node, from the MAC trace."""
+    ev = []
+    with path.open() as fh:
+        next(fh)
+        for line in fh:
+            kind, _node, _uid, t, _v = line.rstrip("\n").split(",")
+            if kind in ("B", "F"):
+                ev.append((int(t), kind))
+    ev.sort()
+    return [b[0] - a[0] for a, b in zip(ev, ev[1:], strict=False) if a[1] == "F" and b[1] == "B"]
+
+
+def check_slot_timing(td: Path, slot_us: int) -> dict[str, object]:
+    """The constants file is written before the simulation starts, so a slot reset at
+    initialisation would not show there. Two saturated senders show it in their timing: every gap
+    after a frame (not after a collision, which uses EIFS) is DIFS + k·slot."""
+    difs_ns, slot_ns = (10 + 2 * slot_us) * 1000, slot_us * 1000
+    _run(td / f"st{slot_us}", "--nNodes=2", "--framesPerSec=2000", "--txJitterMs=0.4",
+         "--frameSize=173", "--standard=80211b", "--dataMode=DsssRate1Mbps", "--traceMac=1",
+         *((f"--slotUs={slot_us}",) if slot_us != 20 else ()))
+    gaps = _gaps_ns(td / f"st{slot_us}_mac.csv")
+    on = [g for g in gaps if g >= difs_ns and (g - difs_ns) % slot_ns == 0]
+    return {"check": f"slot {slot_us} us in the timing (802.11b, 2 saturated)",
+            "frames": len(gaps),
+            "expected": f"min gap {difs_ns} ns (got {min(gaps)}); >= 95 % on DIFS + k*{slot_ns} "
+                        f"(got {100 * len(on) / len(gaps):.1f} %)",
+            "passed": min(gaps) == difs_ns and len(on) >= 0.95 * len(gaps)}
+
+
+def check_cw_list(td: Path) -> dict[str, object]:
+    _run(td / "cw", "--frameSize=173", "--cwMinList=3,63", "--traceMac=1")
+    draws: dict[int, list[int]] = defaultdict(list)
+    with (td / "cw_mac.csv").open() as fh:
+        next(fh)
+        for line in fh:
+            kind, node, _uid, _t, value = line.rstrip("\n").split(",")
+            if kind == "K":
+                draws[int(node)].append(int(value))
+    ok = bool(draws[0]) and max(draws[0]) <= 3 and max(draws[1], default=0) > 3
+    return {"check": "cwMinList 3,63", "frames": sum(map(len, draws.values())),
+            "expected": f"node 0 draws <= 3 (max {max(draws[0], default=-1)}), node 1 above 3 "
+                        f"(max {max(draws[1], default=-1)})", "passed": ok}
+
+
 def check_verification() -> list[dict[str, object]]:
     rows = []
     for cell in ("DK1", "DU1"):
@@ -205,7 +271,9 @@ def main() -> None:
         td = Path(tdir)
         rows = [check_size_pattern(td), check_burst(td), *check_rx_power(td),
                 check_nakagami(td), *check_verification(), *check_placement(td),
-                check_per_pair(td), check_tx_power(td), check_capture_model(td)]
+                check_per_pair(td), check_tx_power(td), check_capture_model(td),
+                check_slot(td), check_slot_timing(td, 20), check_slot_timing(td, 9),
+                check_cw_list(td)]
     buf = io.StringIO()
     for k, v in {**provenance.env_block(), "run": "twin_options_check",
                  "config_hash": provenance.config_hash({"base": BASE})}.items():

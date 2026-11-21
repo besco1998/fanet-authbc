@@ -163,6 +163,22 @@ CELLS["FOUT"] = _f_cell(_F_OUTLIER, (f"--outlierM={_F_OUTLIER_M!r}",))
 for _w in (10, 16):
     for _f in (124.0, 174.0, 211.0, 400.0):
         CELLS[f"HA{_f:g}W{_w}"] = Cell(1428, _f, extra=(f"--cwMin={_w - 1}",), sim_s=100.0)
+# U-H group (b): W1f's four boards at 65 frames/s, 802.11b 1 Mb/s, ns-3 frameSize 173; each
+# board's window from its one-sender cycle under two slot/DIFS families (analysis/uh.py), as
+# CWmin = W − 1 per node; two capture ends: equal power (E), and equal mean power with Rayleigh
+# per frame and ns-3's frame-capture model at its 5 dB margin (C), the assumed channel.
+from uh import FAMILIES as _H_FAMILIES  # noqa: E402
+from uh import W1F_FRAME as _H_FRAME  # noqa: E402
+from uh import W1F_RATE as _H_RATE  # noqa: E402
+from uh import board_windows as _h_windows  # noqa: E402
+
+for _fam, (_slot, _difs) in _H_FAMILIES.items():
+    _cw = ",".join(str(w - 1) for w in _h_windows(_fam))
+    _slot_opt = () if _slot == 20e-6 else (f"--slotUs={round(_slot * 1e6)}",)
+    for _end, _cap in (("E", ()), ("C", ("--nakagamiM=1", "--captureMarginDb=5"))):
+        CELLS[f"HB{_fam}{_end}"] = Cell(_H_FRAME, _H_RATE, "80211b", "DsssRate1Mbps",
+                                        extra=(f"--cwMinList={_cw}", *_slot_opt, *_cap),
+                                        sim_s=100.0)
 
 # Diagnostic, not registered (2026-11-20): ns-3 at the event comparison's own cells
 # (analysis/finite_station_check.py), N = 2 and 3, to see which event simulation ns-3 follows at

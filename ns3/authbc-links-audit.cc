@@ -24,6 +24,9 @@
 //   --placementOnly   write <out>_positions.csv and stop: the placement a seed's run will use
 //   --txPowerDbm=x    every node's transmit power (0 = ns-3's default)
 //   --outlierM=d      node 0 moved to (d, 0) after the usual placement (no random stream moves)
+//   Added for work package H (2026-11-20), both off by default:
+//   --cwMinList=a,b,…  CWmin per node, cycled (the hardware-matched windows)
+//   --slotUs=x        every PHY's slot after install; DIFS = SIFS + 2x follows (ns-3 reads it live)
 //
 // (The text below is authbc-links.cc's, unchanged.)
 // authbc-links.cc — the published scenario (authbc-delay.cc) with three options, absent by
@@ -379,6 +382,9 @@ main(int argc, char* argv[])
     bool placementOnly = false;                     // write positions and stop
     double txPowerDbm = 0.0;                        // 0 = ns-3's default power
     double outlierM = 0.0;                          // > 0: node 0 moved to (outlierM, 0)
+    // The hardware-matched configuration (work package H, 2026-11-20). Both off by default.
+    std::string cwMinList;                          // CWmin per node, cycled, e.g. 3,3,50,5
+    double slotUs = 0.0;                            // > 0: every PHY's slot (DIFS = SIFS + 2 slot)
 
     CommandLine cmd(__FILE__);
     cmd.AddValue("nNodes", "number of nodes in the collision domain", nNodes);
@@ -426,6 +432,9 @@ main(int argc, char* argv[])
     cmd.AddValue("txPowerDbm", "transmit power of every node in dBm; 0 = ns-3's default",
                  txPowerDbm);
     cmd.AddValue("outlierM", "move node 0 to (outlierM, 0) after placement; 0 = off", outlierM);
+    cmd.AddValue("cwMinList", "CWmin per node, cycled (e.g. 3,3,50,5); empty = off", cwMinList);
+    cmd.AddValue("slotUs", "slot of every PHY in us, set after install; 0 = the standard's",
+                 slotUs);
     cmd.Parse(argc, argv);
     NS_ABORT_MSG_IF(traceAllRx && txJitterMs <= 0.0,
                     "traceAllRx numbers frames at the jittered source: needs txJitterMs > 0");
@@ -539,6 +548,33 @@ main(int argc, char* argv[])
             txop->SetMinCw(cwMin);
             txop->SetMaxCw(std::max(cwMin, txop->GetMaxCw()));
         }
+    }
+
+    if (!cwMinList.empty())
+    {
+        // Broadcast frames are never retransmitted, so each node's window stays at its minimum.
+        std::vector<uint32_t> cws;
+        for (size_t at = 0; at != std::string::npos;)
+        {
+            const size_t comma = cwMinList.find(',', at);
+            cws.push_back(static_cast<uint32_t>(std::stoul(
+                cwMinList.substr(at, comma == std::string::npos ? comma : comma - at))));
+            at = comma == std::string::npos ? comma : comma + 1;
+        }
+        for (uint32_t i = 0; i < nNodes; ++i)
+        {
+            Ptr<Txop> txop = DynamicCast<WifiNetDevice>(devices.Get(i))->GetMac()->GetTxop();
+            NS_ABORT_MSG_IF(!txop, "the scenario's MAC has no DCF Txop");
+            txop->SetMinCw(cws[i % cws.size()]);
+            txop->SetMaxCw(std::max(cws[i % cws.size()], txop->GetMaxCw()));
+        }
+    }
+    if (slotUs > 0.0)
+    {
+        // The standard sets the slot at install (WifiPhy "Slot": set it after the PHY is
+        // initialised); the channel-access manager reads it live, DIFS = SIFS + 2 slot.
+        for (uint32_t i = 0; i < nNodes; ++i)
+            DynamicCast<WifiNetDevice>(devices.Get(i))->GetPhy()->SetSlot(MicroSeconds(slotUs));
     }
 
     MobilityHelper mobility;
