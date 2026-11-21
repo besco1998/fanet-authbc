@@ -9,7 +9,22 @@ this node's address so that its own broadcasts, which the kernel hands back to i
 import argparse
 import json
 import socket
+import struct
 import time
+
+# SO_TIMESTAMPNS (asm-generic/socket.h: 35, = SCM_TIMESTAMPNS): the kernel's software receive time
+# as a struct timespec, two 64-bit fields on the boards' 64-bit kernel. Python does not always
+# name it.
+SO_TIMESTAMPNS = getattr(socket, "SO_TIMESTAMPNS", 35)
+
+
+def stamp_ns(ancillary: list[tuple[int, int, bytes]]) -> int:
+    """The receive time in ns from recvmsg's ancillary data, or -1 if the kernel gave none."""
+    for level, kind, data in ancillary:
+        if level == socket.SOL_SOCKET and kind == SO_TIMESTAMPNS and len(data) >= 16:
+            sec, nsec = struct.unpack("qq", data[:16])
+            return sec * 1_000_000_000 + nsec
+    return -1
 
 
 def main() -> None:
@@ -18,6 +33,9 @@ def main() -> None:
     ap.add_argument("--seconds", type=float, default=60.0)
     ap.add_argument("--out", default="rx.json")
     ap.add_argument("--self", dest="own", default="", help="this node's address; not counted")
+    ap.add_argument("--timestamps", default="",
+                    help="also write each frame's kernel receive time (SO_TIMESTAMPNS) to this "
+                         "CSV: src, seq, t_ns. Off by default, and then nothing else changes")
     a = ap.parse_args()
 
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -34,8 +52,11 @@ def main() -> None:
         pass
     rcvbuf = s.getsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF)
 
+    if a.timestamps:
+        s.setsockopt(socket.SOL_SOCKET, SO_TIMESTAMPNS, 1)
     s.bind(("", a.port))
     s.settimeout(1.0)
+    stamps: list[tuple[str, int, int]] = []
 
     seen: dict[str, set[int]] = {}
     dups: dict[str, int] = {}
@@ -44,7 +65,10 @@ def main() -> None:
     deadline = time.monotonic() + a.seconds
     while time.monotonic() < deadline:
         try:
-            d, (src, _port) = s.recvfrom(2048)
+            if a.timestamps:
+                d, anc, _flags, (src, _port) = s.recvmsg(2048, socket.CMSG_SPACE(16))
+            else:
+                d, (src, _port) = s.recvfrom(2048)
         except TimeoutError:
             continue
         if src == a.own:
@@ -53,6 +77,8 @@ def main() -> None:
             seq = int(d[:10].decode().strip())
         except Exception:
             continue
+        if a.timestamps:
+            stamps.append((src, seq, stamp_ns(anc)))
         got = seen.setdefault(src, set())
         if seq in got:
             dups[src] = dups.get(src, 0) + 1
@@ -63,6 +89,10 @@ def main() -> None:
         heard.setdefault(src, [now, now])[1] = now
 
     s.close()
+    if a.timestamps:
+        with open(a.timestamps, "w") as fh:
+            fh.write("src,seq,t_ns\n")
+            fh.writelines(f"{src},{seq},{t}\n" for src, seq, t in stamps)
     # `seqs`: every sequence number received, in order, so that a session's loss can be traced
     # frame by frame and replayed (W3a, 2026-11-06). The counts above it are unchanged.
     by_source = {src: {"received_unique": len(got), "duplicates": dups.get(src, 0),
