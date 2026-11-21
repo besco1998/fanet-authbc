@@ -510,7 +510,7 @@ NOT_YET_IN_THE_THESIS: frozenset[str] = frozenset(
      "prereg-UC7B", "prereg-UFS", "prereg-UF",
      "prereg-UH",
      # Mohamed's decisions of 2026-11-21: F (c) and the three hardware sessions
-     "prereg-UG25H", "prereg-W1p", "prereg-W1r"})
+     "prereg-UG25H", "prereg-W1p", "prereg-W1r", "prereg-UF2"})
 
 
 class TestTheRegistrationsOfAppendixB:

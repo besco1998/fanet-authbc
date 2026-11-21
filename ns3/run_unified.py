@@ -161,6 +161,11 @@ def _f_cell(c, extra: tuple[str, ...] = ()) -> Cell:
 for _c in _F_CONFIGS:
     CELLS[_c.name] = _f_cell(_c)
 CELLS["FOUT"] = _f_cell(_F_OUTLIER, (f"--outlierM={_F_OUTLIER_M!r}",))
+# U-F2 (predictions/UF2.md, Mohamed 2026-11-21): the same channel as U-F, on four new cells.
+from uf2 import CONFIGS as _UF2_CONFIGS  # noqa: E402
+
+for _c in _UF2_CONFIGS:
+    CELLS[_c.name] = _f_cell(_c)
 
 # U-H (predictions/UH.md), group (a): the 5 GHz burst-off anchor, N = 2, the 1 464 B MPDU
 # (frameSize 1 428), W = 10 and 16; and the saturated pair at 400 frames/s offered.
