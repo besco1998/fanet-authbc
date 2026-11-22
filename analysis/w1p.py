@@ -265,6 +265,12 @@ def score(session: Path) -> list[dict[str, Any]]:
     """W1p as registered: validity, step 0's jitter, the kit check, the pair rule, the gaps."""
     import dsss_three as w1d
     import hw_session as hs
+    # Every quantity pairs boards (partner loss, receiver-pair jitter), so a partial session has
+    # no score; name the missing board instead of failing deep inside on a node number.
+    missing = [f"node{n}" for n in NODES if not (session / f"node{n}" / "session.log").is_file()]
+    if missing:
+        raise FileNotFoundError(f"{session}: no session.log for {', '.join(missing)}; W1p is "
+                                "scored only with every board's files")
     out: list[dict[str, Any]] = []
     windows = w1d.window_rows(session)
     files = w1d._files(session)

@@ -211,6 +211,15 @@ class TestTheSessionScore:
         kit = {r["item"]: r["measured"] for r in rows if r["what"] == "kit check: per-peer RSSI"}
         assert kit == {"at node 1": "accepted", "at node 2": "accepted", "at node 3": "not shown"}
 
+    def test_a_board_without_its_files_is_named_not_a_key_error(self, tmp_path: Path) -> None:
+        """2026-11-22: pi-B left the LAN after W1p and its folder stayed empty; the scorer fell
+        over with ``KeyError: 2``. A partial session is not scored, and the message says why."""
+        session = self._session(tmp_path)
+        for f in (session / "node2").iterdir():
+            f.unlink()
+        with pytest.raises(FileNotFoundError, match=r"node2"):
+            w1p.score(session)
+
     def test_the_gap_spread_is_the_families_after_the_jitter(self, tmp_path: Path) -> None:
         rows = w1p.score(self._session(tmp_path))
         gap = next(r for r in rows if r["item"] == "node 1 at node 2")["measured"]
