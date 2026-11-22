@@ -1,0 +1,7 @@
+# nodes: 1,2,3
+# W1q, the optional step: 0 dB, pi-B receives
+X1 50 145 1 25 1:1500,3:1500
+X3 50 145 3 25
+XP 600 145 1,3 25
+XP 600 145 1,3 25
+XP 600 145 1,3 25

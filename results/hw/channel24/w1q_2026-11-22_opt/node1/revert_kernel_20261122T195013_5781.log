@@ -1,0 +1,162 @@
+== at start 2026-11-22T19:50:13+02:00
+[    6.039997] Bluetooth: HCI device and connection manager initialized
+[    6.040011] Bluetooth: HCI socket layer initialized
+[    6.040026] Bluetooth: L2CAP socket layer initialized
+[    6.040046] Bluetooth: SCO socket layer initialized
+[    6.040823] cfg80211: Loading compiled-in X.509 certificates for regulatory database
+[    6.055142] Loaded X.509 cert 'benh@debian.org: 577e021cb980e0e820821ba7b54b4961b8b4fadf'
+[    6.060637] Loaded X.509 cert 'romain.perier@gmail.com: 3abbc6ec146e09d1b6016ab9d6cf71dd233f0328'
+[    6.061048] Loaded X.509 cert 'sforshee: 00b28ddf47aef9cea7'
+[    6.061431] Loaded X.509 cert 'wens: 61c038651aabdcf94bd0ac7ff06c7248db18c600'
+[    6.066400] bcm2835-codec bcm2835-codec: Device registered as /dev/video18
+[    6.066439] bcm2835-codec bcm2835-codec: Loaded V4L2 image_fx
+[    6.084830] bcm2835-codec bcm2835-codec: Device registered as /dev/video31
+[    6.084859] bcm2835-codec bcm2835-codec: Loaded V4L2 encode_image
+[    6.135522] /soc/dsi@7e700000: Fixed dependency cycle(s) with /soc/dsi@7e700000/bridge@0
+[    6.135670] /soc/dsi@7e700000/bridge@0: Fixed dependency cycle(s) with /soc/dsi@7e700000
+[    6.161240] Console: switching to colour dummy device 80x25
+[    6.204361] vc4-drm gpu: bound fe400000.hvs (ops vc4_hvs_ops [vc4])
+[    6.205223] Registered IR keymap rc-cec
+[    6.205316] rc rc0: vc4-hdmi-0 as /devices/platform/soc/fef00700.hdmi/rc/rc0
+[    6.205397] input: vc4-hdmi-0 as /devices/platform/soc/fef00700.hdmi/rc/rc0/input0
+[    6.209154] input: vc4-hdmi-0 HDMI Jack as /devices/platform/soc/fef00700.hdmi/sound/card1/input1
+[    6.209411] vc4-drm gpu: bound fef00700.hdmi (ops vc4_hdmi_ops [vc4])
+[    6.211710] Registered IR keymap rc-cec
+[    6.212380] rc rc1: vc4-hdmi-1 as /devices/platform/soc/fef05700.hdmi/rc/rc1
+[    6.214080] input: vc4-hdmi-1 as /devices/platform/soc/fef05700.hdmi/rc/rc1/input2
+[    6.220893] input: vc4-hdmi-1 HDMI Jack as /devices/platform/soc/fef05700.hdmi/sound/card2/input3
+[    6.224050] vc4-drm gpu: bound fef05700.hdmi (ops vc4_hdmi_ops [vc4])
+[    6.226231] vc4-drm gpu: bound fe700000.dsi (ops vc4_dsi_ops [vc4])
+[    6.226548] vc4-drm gpu: bound fe004000.txp (ops vc4_txp_ops [vc4])
+[    6.226765] vc4-drm gpu: bound fe206000.pixelvalve (ops vc4_crtc_ops [vc4])
+[    6.226928] vc4-drm gpu: bound fe207000.pixelvalve (ops vc4_crtc_ops [vc4])
+[    6.227096] vc4-drm gpu: bound fe20a000.pixelvalve (ops vc4_crtc_ops [vc4])
+[    6.227181] vc4-drm gpu: bound fe216000.pixelvalve (ops vc4_crtc_ops [vc4])
+[    6.227322] vc4-drm gpu: bound fec12000.pixelvalve (ops vc4_crtc_ops [vc4])
+[    6.237909] [drm] Initialized vc4 0.0.0 for gpu on minor 1
+[    6.376592] input: 10-0038 generic ft5x06 (00) as /devices/platform/soc/fe205000.i2c/i2c-22/i2c-10/10-0038/input/input4
+[    6.386343] Bluetooth: HCI UART driver ver 2.3
+[    6.386359] Bluetooth: HCI UART protocol H4 registered
+[    6.386411] Bluetooth: HCI UART protocol Three-wire (H5) registered
+[    6.388412] hci_uart_bcm serial0-0: supply vbat not found, using dummy regulator
+[    6.388547] hci_uart_bcm serial0-0: supply vddio not found, using dummy regulator
+[    6.395682] Bluetooth: HCI UART protocol Broadcom registered
+[    6.431846] brcmfmac: F1 signature read @0x18000000=0x15264345
+[    6.435195] brcmfmac: brcmf_fw_alloc_request: using brcm/brcmfmac43455-sdio for chip BCM4345/6
+[    6.435613] usbcore: registered new interface driver brcmfmac
+[    6.600691] Console: switching to colour frame buffer device 100x30
+[    6.617711] vc4-drm gpu: [drm] fb0: vc4drmfb frame buffer device
+[    6.652544] brcmfmac: brcmf_c_process_txcap_blob: no txcap_blob available (err=-2)
+[    6.655638] brcmfmac: brcmf_c_preinit_dcmds: Firmware: BCM4345/6 wl0: Aug 29 2023 01:47:08 version 7.45.265 (28bca26 CY) FWID 01-b677b91b
+[    6.672799] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+[    6.752283] Bluetooth: hci0: BCM: chip id 107
+[    6.752670] Bluetooth: hci0: BCM: features 0x2f
+[    6.753802] Bluetooth: hci0: BCM4345C0
+[    6.753824] Bluetooth: hci0: BCM4345C0 (003.001.025) build 0000
+[    6.756538] Bluetooth: hci0: BCM4345C0 'brcm/BCM4345C0.raspberrypi,4-model-b.hcd' Patch
+[    7.168776] Adding 524284k swap on /var/swap.  Priority:-2 extents:3 across:770044k SS
+[    7.294880] Bluetooth: BNEP (Ethernet Emulation) ver 1.3
+[    7.294897] Bluetooth: BNEP filters: protocol multicast
+[    7.294909] Bluetooth: BNEP socket layer initialized
+[    7.468258] Bluetooth: hci0: BCM: features 0x2f
+[    7.469538] Bluetooth: hci0: BCM43455 37.4MHz Raspberry Pi 3+-0190
+[    7.469543] Bluetooth: hci0: BCM4345C0 (003.001.025) build 0382
+[    7.488758] Bluetooth: MGMT ver 1.23
+[    7.505260] NET: Registered PF_ALG protocol family
+[    8.102119] bcmgenet fd580000.ethernet: configuring instance for external RGMII (RX delay)
+[    8.105356] bcmgenet fd580000.ethernet eth0: Link is Down
+[    8.138676] brcmfmac: brcmf_cfg80211_set_power_mgmt: power save enabled
+[  944.006306] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+[  944.041063] ieee80211 phy0: brcmf_cfg80211_get_tx_power: error (-512)
+[  944.041695] brcmfmac: brcmf_sdio_read_control: last control frame is being processed.
+[  946.041172] warning: `iwconfig' uses wireless extensions which will stop working for Wi-Fi 7 hardware; use nl80211
+[ 1148.646658] brcmfmac: brcmf_cfg80211_set_power_mgmt: power save enabled
+[ 1151.926222] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+[ 1785.479837] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+[ 1991.270439] brcmfmac: brcmf_cfg80211_set_power_mgmt: power save enabled
+[ 1994.500507] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+[ 2037.954722] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+[ 3083.434186] brcmfmac: brcmf_cfg80211_set_power_mgmt: power save enabled
+[ 3086.681701] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+[13623.027839] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+== at end 2026-11-22T19:50:22+02:00
+[    6.040026] Bluetooth: L2CAP socket layer initialized
+[    6.040046] Bluetooth: SCO socket layer initialized
+[    6.040823] cfg80211: Loading compiled-in X.509 certificates for regulatory database
+[    6.055142] Loaded X.509 cert 'benh@debian.org: 577e021cb980e0e820821ba7b54b4961b8b4fadf'
+[    6.060637] Loaded X.509 cert 'romain.perier@gmail.com: 3abbc6ec146e09d1b6016ab9d6cf71dd233f0328'
+[    6.061048] Loaded X.509 cert 'sforshee: 00b28ddf47aef9cea7'
+[    6.061431] Loaded X.509 cert 'wens: 61c038651aabdcf94bd0ac7ff06c7248db18c600'
+[    6.066400] bcm2835-codec bcm2835-codec: Device registered as /dev/video18
+[    6.066439] bcm2835-codec bcm2835-codec: Loaded V4L2 image_fx
+[    6.084830] bcm2835-codec bcm2835-codec: Device registered as /dev/video31
+[    6.084859] bcm2835-codec bcm2835-codec: Loaded V4L2 encode_image
+[    6.135522] /soc/dsi@7e700000: Fixed dependency cycle(s) with /soc/dsi@7e700000/bridge@0
+[    6.135670] /soc/dsi@7e700000/bridge@0: Fixed dependency cycle(s) with /soc/dsi@7e700000
+[    6.161240] Console: switching to colour dummy device 80x25
+[    6.204361] vc4-drm gpu: bound fe400000.hvs (ops vc4_hvs_ops [vc4])
+[    6.205223] Registered IR keymap rc-cec
+[    6.205316] rc rc0: vc4-hdmi-0 as /devices/platform/soc/fef00700.hdmi/rc/rc0
+[    6.205397] input: vc4-hdmi-0 as /devices/platform/soc/fef00700.hdmi/rc/rc0/input0
+[    6.209154] input: vc4-hdmi-0 HDMI Jack as /devices/platform/soc/fef00700.hdmi/sound/card1/input1
+[    6.209411] vc4-drm gpu: bound fef00700.hdmi (ops vc4_hdmi_ops [vc4])
+[    6.211710] Registered IR keymap rc-cec
+[    6.212380] rc rc1: vc4-hdmi-1 as /devices/platform/soc/fef05700.hdmi/rc/rc1
+[    6.214080] input: vc4-hdmi-1 as /devices/platform/soc/fef05700.hdmi/rc/rc1/input2
+[    6.220893] input: vc4-hdmi-1 HDMI Jack as /devices/platform/soc/fef05700.hdmi/sound/card2/input3
+[    6.224050] vc4-drm gpu: bound fef05700.hdmi (ops vc4_hdmi_ops [vc4])
+[    6.226231] vc4-drm gpu: bound fe700000.dsi (ops vc4_dsi_ops [vc4])
+[    6.226548] vc4-drm gpu: bound fe004000.txp (ops vc4_txp_ops [vc4])
+[    6.226765] vc4-drm gpu: bound fe206000.pixelvalve (ops vc4_crtc_ops [vc4])
+[    6.226928] vc4-drm gpu: bound fe207000.pixelvalve (ops vc4_crtc_ops [vc4])
+[    6.227096] vc4-drm gpu: bound fe20a000.pixelvalve (ops vc4_crtc_ops [vc4])
+[    6.227181] vc4-drm gpu: bound fe216000.pixelvalve (ops vc4_crtc_ops [vc4])
+[    6.227322] vc4-drm gpu: bound fec12000.pixelvalve (ops vc4_crtc_ops [vc4])
+[    6.237909] [drm] Initialized vc4 0.0.0 for gpu on minor 1
+[    6.376592] input: 10-0038 generic ft5x06 (00) as /devices/platform/soc/fe205000.i2c/i2c-22/i2c-10/10-0038/input/input4
+[    6.386343] Bluetooth: HCI UART driver ver 2.3
+[    6.386359] Bluetooth: HCI UART protocol H4 registered
+[    6.386411] Bluetooth: HCI UART protocol Three-wire (H5) registered
+[    6.388412] hci_uart_bcm serial0-0: supply vbat not found, using dummy regulator
+[    6.388547] hci_uart_bcm serial0-0: supply vddio not found, using dummy regulator
+[    6.395682] Bluetooth: HCI UART protocol Broadcom registered
+[    6.431846] brcmfmac: F1 signature read @0x18000000=0x15264345
+[    6.435195] brcmfmac: brcmf_fw_alloc_request: using brcm/brcmfmac43455-sdio for chip BCM4345/6
+[    6.435613] usbcore: registered new interface driver brcmfmac
+[    6.600691] Console: switching to colour frame buffer device 100x30
+[    6.617711] vc4-drm gpu: [drm] fb0: vc4drmfb frame buffer device
+[    6.652544] brcmfmac: brcmf_c_process_txcap_blob: no txcap_blob available (err=-2)
+[    6.655638] brcmfmac: brcmf_c_preinit_dcmds: Firmware: BCM4345/6 wl0: Aug 29 2023 01:47:08 version 7.45.265 (28bca26 CY) FWID 01-b677b91b
+[    6.672799] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+[    6.752283] Bluetooth: hci0: BCM: chip id 107
+[    6.752670] Bluetooth: hci0: BCM: features 0x2f
+[    6.753802] Bluetooth: hci0: BCM4345C0
+[    6.753824] Bluetooth: hci0: BCM4345C0 (003.001.025) build 0000
+[    6.756538] Bluetooth: hci0: BCM4345C0 'brcm/BCM4345C0.raspberrypi,4-model-b.hcd' Patch
+[    7.168776] Adding 524284k swap on /var/swap.  Priority:-2 extents:3 across:770044k SS
+[    7.294880] Bluetooth: BNEP (Ethernet Emulation) ver 1.3
+[    7.294897] Bluetooth: BNEP filters: protocol multicast
+[    7.294909] Bluetooth: BNEP socket layer initialized
+[    7.468258] Bluetooth: hci0: BCM: features 0x2f
+[    7.469538] Bluetooth: hci0: BCM43455 37.4MHz Raspberry Pi 3+-0190
+[    7.469543] Bluetooth: hci0: BCM4345C0 (003.001.025) build 0382
+[    7.488758] Bluetooth: MGMT ver 1.23
+[    7.505260] NET: Registered PF_ALG protocol family
+[    8.102119] bcmgenet fd580000.ethernet: configuring instance for external RGMII (RX delay)
+[    8.105356] bcmgenet fd580000.ethernet eth0: Link is Down
+[    8.138676] brcmfmac: brcmf_cfg80211_set_power_mgmt: power save enabled
+[  944.006306] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+[  944.041063] ieee80211 phy0: brcmf_cfg80211_get_tx_power: error (-512)
+[  944.041695] brcmfmac: brcmf_sdio_read_control: last control frame is being processed.
+[  946.041172] warning: `iwconfig' uses wireless extensions which will stop working for Wi-Fi 7 hardware; use nl80211
+[ 1148.646658] brcmfmac: brcmf_cfg80211_set_power_mgmt: power save enabled
+[ 1151.926222] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+[ 1785.479837] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+[ 1991.270439] brcmfmac: brcmf_cfg80211_set_power_mgmt: power save enabled
+[ 1994.500507] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+[ 2037.954722] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+[ 3083.434186] brcmfmac: brcmf_cfg80211_set_power_mgmt: power save enabled
+[ 3086.681701] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+[13623.027839] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+[13888.350619] brcmfmac: brcmf_cfg80211_set_power_mgmt: power save enabled
+[13891.594963] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting

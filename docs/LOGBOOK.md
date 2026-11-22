@@ -206,6 +206,17 @@ re-derived from them would need a fresh registered check.
 first preflight after the power cut came back RETRY (every cycle 1 666 µs, the offered rate: F129's
 fresh-boot fast rate); the second, warm, said GO (2 047 / 2 131 / 2 317 µs). W1q launched 16:34.
 
+**W1q scored, 5 of 6 held** (outcome in `predictions/W1q.md`). The Pi 3 heard pi-A 5.0 dB louder at
+equal set power and kept its frame 98.5 % of the time; at the 3 dB step (ΔRSSI 1.5 dB) it still
+kept it 93.7 %, where ns-3's 4 dB rule keeps none. Steps 6, 10 and 15 were void. Looking at why,
+after scoring: the fallback averages a reading taken after each single-sender window, when the
+sender has stopped, and at pi-A's low powers that reading is 5–6 dB above the halfway one. The
+halfway readings alone give pi-A's falls as 0, 4, 7, 10, 13 dB. A fresh registered check would be
+needed to use them. At pi-A's lowest powers its link to pi-B, the partner the method uses,
+weakens (5.7 % and 2.0 % lost alone), consistent with q_A < 0 at 10 dB and q_A + q_B > 1 at 15 dB.
+The optional step (pi-B receiving, 19:47, Mohamed's answer came about three hours after the
+question) held.
+
 # 2026-11-21 — U-F's outcome and its three causes; Mohamed's decisions; the kit and registrations for three sessions
 
 **U-F scored:** (G23) 12 of 16, (G24) 2 of 16, the outlier failed, every miss optimistic. The

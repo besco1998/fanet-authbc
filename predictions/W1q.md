@@ -115,3 +115,91 @@ Code: `analysis/w1q.py` (`tests/test_w1q.py`). Kit: `hw/channel/run_window_plan2
   * U-CAP and U-CAP2;
   * every earlier read-back of the transmit power.
 * **No capture session has been run.**
+
+## Outcome — added 2026-11-22, after the session; nothing above this line was changed
+
+* **The session:** `results/hw/channel24/w1q_2026-11-22`, 16:34–16:50, in the 1 m triangle
+  (`LAYOUT.md`). All 31 windows ran on every board. Scored with `python analysis/w1q.py --score`.
+  Before it, a preflight came back RETRY (the fresh-boot fast rate of F129, after the power cut),
+  then GO.
+* **The optional step:** `w1q_2026-11-22_opt`, 19:47–19:50.
+  * Same triangle (Mohamed: untouched). Plan `experiments/channel24/plan_w1q_opt.txt`, written
+    by `w1q.optional_plan(0)`.
+  * It ran as its own session, so it was scored on a view that links both folders' files and
+    joins the two signal-strength logs. In every other row, the view's score equals the main
+    session's.
+
+### Validity — held
+
+* **Frame burst** read 0 before and after on all three boards, in both sessions.
+* **The rate checks** were all in band:
+  * pi-A 2 059.9 and 2 048.3 µs;
+  * pi-B 2 127.0 and 2 098.4 µs;
+  * the Pi 3 2 411.7 and 2 336.8 µs.
+* **pi-A's power read back exactly as set:** 15.00, 12.00, 9.00, 5.00 and 0.00 dBm.
+
+### The kit check at the Pi 3 — rejected, so the fallback is used
+
+### The steps (q is the Pi 3 receiver's: the mean of three capture windows, and their range)
+
+| step | pi-A | ΔRSSI | q_A | q_B | p_A | p_B | q_A + q_B | scored |
+|---|---|---|---|---|---|---|---|---|
+| 0 dB | 15 dBm | +5.0 dB | 0.985 (0.980–0.988) | 0.030 (0.024–0.043) | 0.1070 | 0.0904 | 1.015 | weak held, strong held |
+| 3 dB | 12 dBm | +1.5 dB | 0.937 (0.929–0.948) | −0.001 (−0.019–0.009) | 0.0995 | 0.0834 | 0.936 | weak held, **strong failed** |
+| 6 dB | 9 dBm | +1.5 dB | 0.311 (0.273–0.352) | 0.515 (0.487–0.539) | 0.1095 | 0.0836 | 0.826 | void: pi-A fell 3.5 dB, not 6 ± 1.5 |
+| 10 dB | 5 dBm | 0.0 dB | −0.123 | 0.856 | 0.0961 | 0.0840 | 0.732 | void: fell 5.5 dB, not 10 ± 1.5 |
+| 15 dB | 0 dBm | −4.5 dB | 0.277 | 0.896 | 0.1475 | 0.0914 | 1.172 | void: fell 9.0 dB, not 15 ± 1.5 |
+| optional, pi-B receives | 15 dBm; the Pi 3 15 dBm | −10.0 dB | q_A −0.063 | q_Pi3 1.000 | | | | weak held, strong held |
+
+* **Six predictions were scored, and five held.** Two steps were valid at the Pi 3 and one at
+  pi-B, each with a weak and a strong prediction.
+* **The failure:** at the 3 dB step, with a measured ΔRSSI of 1.5 dB, the Pi 3 kept the stronger
+  frame 93.7 % of the time. ns-3's 4 dB rule keeps none below 3 dB.
+* **Stated in advance:** a gradual curve is a finding, not a failure of the method.
+
+### Also reported (registered)
+
+* **p_j:**
+  * p_A was 0.0961–0.1095 at steps 0–10 and 0.1475 at step 15;
+  * p_B was 0.0834–0.0914;
+  * so p_A moved with power at 0 dBm, which the MAC alone would not do.
+* **q_A + q_B ≤ 1:**
+  * held at 3, 6 and 10 dB;
+  * 1.015 at 0 dB, inside the windows' ranges;
+  * **1.172 at 15 dB: failed.**
+* **q_A < 0 at 10 dB:** the Pi 3 lost more of pi-A's frames than its collisions and link loss
+  account for.
+* **The share of the Pi 3's losses that is collisions:** 1.000 for both senders at every step,
+  except pi-A at 0 dB, where it lost only 0.26 % and 0.636 of that was collisions. The link lost
+  ≤ 0.09 % at 50 frames/s. The scorer does not print this; it was computed afterwards with
+  `w1q.losses`.
+
+### My expectations, against the outcome
+
+* **"At 0 dB nominal, ΔRSSI is small": wrong.** At equal set power the Pi 3 heard pi-A 5.0 dB
+  louder, and pi-A dominated.
+* **"Capture may be more gradual than ns-3's step":** the 3 dB step's failure points that way.
+* **"The fallback is good to about ±1 dB": wrong.** See below.
+
+### Seen after scoring — not a result
+
+* **The fallback's second reading is not the sender's.**
+  * It averages the reading taken halfway through each single-sender window with the one taken
+    after the window ends.
+  * After the window the sender has stopped. At pi-A's low powers that reading is 5–6 dB above
+    the halfway one (A10: −51 and −45 dBm; A15: −54 and −49 dBm), so it is some other frame.
+  * Averaging the two pulls pi-A's fall toward zero, which is how steps 6–15 were voided.
+* **From the halfway readings alone:**
+  * pi-A falls 0, 4, 7, 10 and 13 dB, against the 0, 3, 6, 10 and 15 asked;
+  * ΔRSSI is +7, +3, 0, −3 and −6 dB;
+  * steps 3–10 would be valid, and 15 not.
+  * Under that reading, the stronger frame is kept 94 % of the time at +3 dB and 86 % at −3 dB,
+    where the 4 dB rule keeps none; at 0 dB, both senders' frames are partly kept (0.31, 0.52).
+* **At pi-A's lowest powers the partner link weakens.**
+  * Alone, pi-A lost 5.7 % and 2.0 % of its frames at pi-B at 5 and 0 dBm, against 0.2–0.9 %
+    above.
+  * pi-B read pi-A at −69 and −71 dBm.
+  * That breaks the identification's stated assumption at those steps, consistent with q_A < 0 at
+    10 dB and q_A + q_B > 1 at 15 dB.
+* **By Mohamed's rule,** a reading corrected this way is used only after a fresh registered check
+  on unseen points.
