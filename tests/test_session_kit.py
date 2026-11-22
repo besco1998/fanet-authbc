@@ -163,3 +163,51 @@ class TestTheSessionRunner:
         restore = text[text.index("restore() {"):text.index("rssi_line() {")]
         assert "set txpower auto" in restore and "revert_adhoc.sh" in restore
         assert 'frameburst.sh" set 1' in (CHANNEL / "revert_adhoc.sh").read_text()
+
+
+class TestTheWayOutLeavesATrace:
+    """2026-11-22: pi-B's revert after W1p took 159 s, twice, and ended with no LAN address; its
+    journal is volatile, so nothing said which step hung. The revert now logs each step's exit
+    code and duration and keeps the kernel log in the session folder (on the SD card)."""
+
+    STUBS = {"ip": "", "systemctl": "", "dmesg": 'echo "[  1.0] brcmfmac: stub line"',
+             "sync": "", "iw": "",
+             # the AP join fails slowly, as on 2026-11-22, so the fallback must run and be timed
+             "nmcli": '[ "$1 $2" = "con up" ] && { sleep 0.3; exit 1; }; exit 0'}
+
+    def _run(self, tmp_path: Path) -> tuple[str, list[Path]]:
+        stub_dir = tmp_path / "bin"
+        stub_dir.mkdir()
+        for name, body in self.STUBS.items():
+            (stub_dir / name).write_text(f'#!/bin/bash\necho "{name} $*" >>"{tmp_path}/calls"\n'
+                                         f"{body}\n")
+            (stub_dir / name).chmod(0o755)
+        out = tmp_path / "session"
+        out.mkdir()
+        script = (CHANNEL / "revert_adhoc.sh").read_text().replace("/usr/sbin/iw", "iw")
+        (out / "revert_adhoc.sh").write_text(script.replace("sleep 3", "sleep 0").replace(
+            "sleep 5", "sleep 0"))
+        (out / "revert_adhoc.sh").chmod(0o755)
+        (out / "frameburst.sh").write_text(
+            f'#!/bin/bash\necho "frameburst $*" >>"{tmp_path}/calls"\n')
+        (out / "frameburst.sh").chmod(0o755)
+        env = {"PATH": f"{stub_dir}:/usr/bin:/bin"}
+        subprocess.run(["bash", str(out / "revert_adhoc.sh")], env=env, check=True, timeout=30)
+        return (out / "session.log").read_text(), sorted(out.glob("revert_kernel_*.log"))
+
+    def test_every_step_is_logged_with_its_code_and_duration(self, tmp_path: Path) -> None:
+        log, _ = self._run(tmp_path)
+        steps = [ln.split("step ")[1].split()[0] for ln in log.splitlines() if " step " in ln]
+        assert steps == ["frameburst_on", "ibss_leave", "addr_flush", "link_down",
+                         "type_managed", "link_up", "wpa_start", "nm_managed", "con_up",
+                         "dev_connect"]
+        con_up = next(ln for ln in log.splitlines() if "step con_up" in ln)
+        assert "rc=1" in con_up and int(con_up.split("rc=1 ")[1].split(" ms")[0]) >= 300
+
+    def test_the_kernel_log_is_kept_at_the_start_and_the_end(self, tmp_path: Path) -> None:
+        log, klogs = self._run(tmp_path)
+        assert len(klogs) == 1
+        text = klogs[0].read_text()
+        assert text.index("== at start") < text.index("== at end")
+        assert text.count("brcmfmac: stub line") == 2
+        assert log.splitlines()[-1].endswith("finished, wlan0 = NONE")
