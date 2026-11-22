@@ -1,0 +1,47 @@
+# python=3.12.3
+# platform=Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=uf2_ea700f50p2n_pilot_runs
+# ns3=3.48 (authbc-links-audit)
+# config_hash=e09f1f268c21d2f0
+cell,frame_bytes,frames_per_s,standard,mode,extra,n_nodes,seed,sim_time_s,tx_frames,rx_frames,delivered_frac,delay_mean_ms,delay_p99_ms
+EA700F50P2N,700,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,11,31,20.0,10982,106952,0.973885,1.54495,4.63892
+EA700F50P2N,700,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,11,34,20.0,10984,107188,0.975856,1.5451,4.31384
+EA700F50P2N,700,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,11,33,20.0,10985,107167,0.975576,1.53319,4.49117
+EA700F50P2N,700,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,11,32,20.0,10984,107294,0.976821,1.55618,4.69432
+EA700F50P2N,700,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,11,35,20.0,10984,107129,0.975319,1.5429,4.5459
+EA700F50P2N,700,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,12,34,20.0,11982,127893,0.970342,1.62665,4.92637
+EA700F50P2N,700,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,12,35,20.0,11983,127868,0.970071,1.63878,4.93799
+EA700F50P2N,700,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,12,31,20.0,11981,127528,0.967653,1.63025,4.88858
+EA700F50P2N,700,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,12,33,20.0,11982,128247,0.973028,1.62868,4.92916
+EA700F50P2N,700,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,12,32,20.0,11983,128199,0.972582,1.64941,5.02932
+EA700F50P2N,700,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,13,32,20.0,12979,149888,0.962375,1.72153,5.12701
+EA700F50P2N,700,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,13,31,20.0,12980,149833,0.961948,1.74443,5.3616
+EA700F50P2N,700,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,13,34,20.0,12983,150355,0.965076,1.75319,5.39198
+EA700F50P2N,700,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,13,33,20.0,12979,149820,0.961939,1.74291,5.26035
+EA700F50P2N,700,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,13,35,20.0,12980,149435,0.959393,1.74684,5.25991
+EA700F50P2N,700,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,14,31,20.0,13975,173203,0.953367,1.85665,5.83607
+EA700F50P2N,700,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,14,32,20.0,13977,173742,0.956197,1.86284,5.91168
+EA700F50P2N,700,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,14,33,20.0,13978,173040,0.952266,1.86388,5.83764
+EA700F50P2N,700,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,14,34,20.0,13978,172470,0.949129,1.85537,5.7538
+EA700F50P2N,700,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,14,35,20.0,13975,172531,0.949668,1.86182,6.02635
+EA700F50P2N,700,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,15,31,20.0,14978,197537,0.942034,1.94954,6.15238
+EA700F50P2N,700,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,15,32,20.0,14980,198143,0.944798,1.98452,6.28696
+EA700F50P2N,700,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,15,33,20.0,14978,197993,0.944209,1.99491,6.23766
+EA700F50P2N,700,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,15,34,20.0,14978,197070,0.939807,1.99626,6.30258
+EA700F50P2N,700,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,15,35,20.0,14976,197384,0.94143,1.99041,6.17819
+EA700F50P2N,700,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,16,31,20.0,15978,220412,0.919648,2.13962,6.74703
+EA700F50P2N,700,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,16,32,20.0,15980,221507,0.924101,2.12569,6.82278
+EA700F50P2N,700,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,16,33,20.0,15980,222264,0.927259,2.11235,6.68867
+EA700F50P2N,700,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,16,34,20.0,15974,222319,0.927837,2.14193,6.73431
+EA700F50P2N,700,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,16,35,20.0,15972,222146,0.927231,2.12752,6.73009
+EA700F50P2N,700,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,17,31,20.0,16975,246554,0.907784,2.32044,7.33301
+EA700F50P2N,700,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,17,32,20.0,16972,247684,0.912105,2.32652,7.33206
+EA700F50P2N,700,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,17,33,20.0,16977,248733,0.915698,2.32425,7.29781
+EA700F50P2N,700,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,17,34,20.0,16975,246820,0.908763,2.32075,7.28036
+EA700F50P2N,700,50.0,80211a,OfdmRate6Mbps,--radiusM=73.0 --pathLossExp=2 --txPowerDbm=40.0 --perNode=1 --perPair=1,17,35,20.0,16976,247279,0.910399,2.34491,7.44455

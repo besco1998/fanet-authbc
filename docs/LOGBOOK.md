@@ -164,6 +164,22 @@ excecute the plan and give me the results". The plan was approved in plan mode. 
 * So the note now says "the deliveries printed in this subsection". No number changed. The change
   was reported to Mohamed, and a guard test ties every figure in the note to `u5_lora{,_runs}.csv`.
 
+**U-F2 scored: 24 of 24 held, every one conservative.** The largest error is (G24a)'s, −4.79 %
+at 802.11b with fading, and an independent recomputation from the traces agrees to 6 × 10⁻⁵ of N.
+Two readings were kept from going further than the result:
+* the half-duplex factor is not separated from its absence (both hold; it helps only where N is
+  small);
+* the z_N closed form lands nearer ns-3 than the exact form, because it drops the spread of p_j
+  over senders, which pushes against the independence error. Two approximations offset, so this
+  is not evidence of independence.
+
+**At the boards.** The preflight said GO on the boards' first ad-hoc session after their 08:10
+boot (all three at 1 Mb/s, unlike F129's first sessions). W1p ran all 15 windows. pi-A and the
+Pi 3 reverted at 09:44, but **pi-B never rejoined the LAN**, and its own deadmen (revert at
+≈ 09:49, reboot at ≈ 09:54) did not bring it back either. The other two boards' files show it sent
+in every window it had, so the fault came after its windows. W1p is unscored until pi-B's card is
+collected. W1q and W1r wait for pi-B.
+
 # 2026-11-21 — U-F's outcome and its three causes; Mohamed's decisions; the kit and registrations for three sessions
 
 **U-F scored:** (G23) 12 of 16, (G24) 2 of 16, the outlier failed, every miss optimistic. The

@@ -1,0 +1,47 @@
+# python=3.12.3
+# platform=Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=uf2_ea400f100p3r_pilot_runs
+# ns3=3.48 (authbc-links-audit)
+# config_hash=e09f1f268c21d2f0
+cell,frame_bytes,frames_per_s,standard,mode,extra,n_nodes,seed,sim_time_s,tx_frames,rx_frames,delivered_frac,delay_mean_ms,delay_p99_ms
+EA400F100P3R,400,100.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,9,35,20.0,17983,141000,0.980092,0.957982,2.71644
+EA400F100P3R,400,100.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,9,32,20.0,17987,140422,0.975858,0.958235,2.75085
+EA400F100P3R,400,100.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,9,33,20.0,17987,140285,0.974905,0.961684,2.75063
+EA400F100P3R,400,100.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,9,31,20.0,17985,140743,0.978197,0.959238,2.66174
+EA400F100P3R,400,100.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,9,34,20.0,17987,140579,0.976949,0.957903,2.73475
+EA400F100P3R,400,100.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,10,35,20.0,19986,174489,0.970062,1.0383,3.11384
+EA400F100P3R,400,100.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,10,34,20.0,19986,174047,0.967605,1.03476,3.09108
+EA400F100P3R,400,100.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,10,31,20.0,19984,174167,0.968369,1.02548,3.05297
+EA400F100P3R,400,100.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,10,33,20.0,19985,175076,0.973374,1.03098,3.07486
+EA400F100P3R,400,100.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,10,32,20.0,19983,174655,0.971131,1.0295,3.12232
+EA400F100P3R,400,100.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,11,32,20.0,21981,211397,0.961726,1.11335,3.40984
+EA400F100P3R,400,100.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,11,31,20.0,21982,211851,0.963748,1.12206,3.45423
+EA400F100P3R,400,100.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,11,33,20.0,21983,211780,0.963381,1.11858,3.41526
+EA400F100P3R,400,100.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,11,34,20.0,21987,211763,0.963128,1.11293,3.36439
+EA400F100P3R,400,100.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,11,35,20.0,21983,210975,0.959719,1.10567,3.2652
+EA400F100P3R,400,100.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,12,31,20.0,23982,250203,0.94845,1.22419,3.78232
+EA400F100P3R,400,100.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,12,32,20.0,23982,251490,0.953329,1.21909,3.79339
+EA400F100P3R,400,100.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,12,33,20.0,23982,249853,0.947123,1.22346,3.74803
+EA400F100P3R,400,100.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,12,34,20.0,23983,250930,0.951166,1.20551,3.73948
+EA400F100P3R,400,100.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,12,35,20.0,23985,250498,0.949449,1.21667,3.76157
+EA400F100P3R,400,100.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,13,31,20.0,25983,291914,0.936234,1.3241,4.08168
+EA400F100P3R,400,100.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,13,32,20.0,25983,291828,0.935958,1.34042,4.22094
+EA400F100P3R,400,100.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,13,33,20.0,25981,291399,0.934654,1.33947,4.18166
+EA400F100P3R,400,100.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,13,34,20.0,25981,292496,0.938173,1.35718,4.32765
+EA400F100P3R,400,100.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,13,35,20.0,25983,292142,0.936965,1.33836,4.27616
+EA400F100P3R,400,100.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,14,31,20.0,27978,332976,0.915489,1.50556,4.69116
+EA400F100P3R,400,100.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,14,32,20.0,27980,333081,0.915712,1.48544,4.62228
+EA400F100P3R,400,100.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,14,33,20.0,27981,333330,0.916364,1.48545,4.67805
+EA400F100P3R,400,100.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,14,34,20.0,27980,333446,0.916715,1.49465,4.69807
+EA400F100P3R,400,100.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,14,35,20.0,27978,333149,0.915964,1.48709,4.66538
+EA400F100P3R,400,100.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,15,31,20.0,29978,374392,0.892064,1.6714,5.14441
+EA400F100P3R,400,100.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,15,32,20.0,29978,375615,0.894978,1.6758,5.19984
+EA400F100P3R,400,100.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,15,33,20.0,29980,374553,0.892388,1.67017,5.17842
+EA400F100P3R,400,100.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,15,34,20.0,29979,373473,0.889844,1.67406,5.14984
+EA400F100P3R,400,100.0,80211a,OfdmRate6Mbps,--radiusM=13.0 --pathLossExp=3 --txPowerDbm=40.0 --perNode=1 --perPair=1 --nakagamiM=1,15,35,20.0,29974,373244,0.889447,1.66381,5.11033
