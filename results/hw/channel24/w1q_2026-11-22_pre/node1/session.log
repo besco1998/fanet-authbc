@@ -1,0 +1,32 @@
+Running timer as unit: authbc-revert.timer
+Will run service as unit: authbc-revert.service
+Running timer as unit: authbc-reboot.timer
+Will run service as unit: authbc-reboot.service
+[2026-11-22T16:14:29+02:00] deadmen armed: revert 510 s, reboot 810 s | node=1 nodes=1,2,3 freq=2462 windows=3 plan=plan_w1pqr_preflight.txt sha=fba686a702ce
+[2026-11-22T16:14:29+02:00] governor: ondemand -> performance; throttled 0x0
+[2026-11-22T16:14:48+02:00] type:  	type IBSS 	channel 11 (2462 MHz), width: 20 MHz, center1: 2462 MHz 
+[2026-11-22T16:14:51+02:00] peer 10.0.0.2 reachable, mac e4:5f:01:67:5f:43
+[2026-11-22T16:14:53+02:00] peer 10.0.0.3 reachable, mac b8:27:eb:7f:96:4b
+[2026-11-22T16:14:53+02:00] frameburst before the windows: 0 (asked: 0)
+{"sent": 13200, "achieved_fps": 600.0, "late": 0}
+{"received_unique": 0, "senders": 0, "duplicates": 0}
+[2026-11-22T16:16:54+02:00] window 00_R1_600fps done (senders 1, 25 s)
+{"received_unique": 6611, "senders": 1, "duplicates": 0}
+[2026-11-22T16:17:24+02:00] window 01_R2_600fps done (senders 2, 25 s)
+{"received_unique": 13154, "senders": 1, "duplicates": 0}
+[2026-11-22T16:17:53+02:00] window 02_R3_600fps done (senders 3, 25 s)
+[2026-11-22T16:17:53+02:00] frameburst after the windows: 0
+[2026-11-22T16:17:53+02:00] revert: starting
+1
+[2026-11-22T16:17:53+02:00] revert: step frameburst_on rc=0 25 ms
+[2026-11-22T16:17:53+02:00] revert: step ibss_leave rc=0 7 ms
+[2026-11-22T16:17:53+02:00] revert: step addr_flush rc=0 10 ms
+[2026-11-22T16:17:54+02:00] revert: step link_down rc=0 533 ms
+[2026-11-22T16:17:54+02:00] revert: step type_managed rc=0 9 ms
+[2026-11-22T16:17:54+02:00] revert: step link_up rc=0 11 ms
+[2026-11-22T16:17:54+02:00] revert: step wpa_start rc=0 65 ms
+[2026-11-22T16:17:54+02:00] revert: step nm_managed rc=0 48 ms
+Connection successfully activated (D-Bus active path: /org/freedesktop/NetworkManager/ActiveConnection/4)
+[2026-11-22T16:18:00+02:00] revert: step con_up rc=0 3180 ms
+[2026-11-22T16:18:05+02:00] revert: finished, wlan0 = inet 192.168.1.25
+[2026-11-22T16:18:10+02:00] reverted OK, both deadmen disarmed

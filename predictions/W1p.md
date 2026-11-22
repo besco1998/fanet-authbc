@@ -144,3 +144,93 @@ Code: `analysis/w1p.py`. Kit: `hw/channel/run_window_plan2.sh`, `rssi.sh`, `bcas
   * the ns-3 predictions in the table.
 * **No session of this kind has been run.** No 2.4 GHz saturated pair has ever been recorded with
   frame burst logged.
+
+## Outcome — added 2026-11-22, after the session; nothing above this line was changed
+
+* **The session:** `results/hw/channel24/w1p_2026-11-22`, 09:32–09:44, side by side, all 15
+  windows done on every board. Scored with `python analysis/w1p.py --score` on the three boards'
+  files. pi-B's were collected at 15:59: its chip locked during the revert after the last window,
+  and only a power cut recovered it (`docs/LOGBOOK.md`). The windows were complete by then.
+
+### Validity — held
+
+* **Frame burst** read 0 before the first window and after the last, on all three.
+* **The rate checks,** all inside 1.9–2.6 ms per frame:
+  * pi-A 2 032.1 and 2 033.9 µs;
+  * pi-B 2 096.7 and 2 098.6 µs;
+  * the Pi 3 2 309.4 and 2 278.1 µs.
+* **No board throttled.** **6 of 6 pair windows usable** (the fewest frames on air was 5 556).
+
+### Step 0 — the receive-timestamp jitter (reported)
+
+| board | J, least squares (µs) | J, robust (µs) |
+|---|---|---|
+| pi-A | 161.65 | −24.87 (its square is negative: not resolved) |
+| pi-B | 307.59 | 25.69 |
+| the Pi 3 | 447.61 | 30.18 |
+
+* The standard error of each J² is 5 187 µs², so a jitter below about 72 µs is not resolved by
+  the least-squares form.
+* **The two forms disagree by an order of magnitude.** The least-squares residuals are dominated
+  by rare long delays; the robust form gives the tens of µs expected. Both are reported, as
+  registered; neither is adopted here.
+
+### The kit check — rejected at all three boards
+
+* `per_mac_accepted` rejected the per-peer reading at pi-A, pi-B and the Pi 3. A per-peer reading
+  equalled the zero-address reading in 19, 21 and 14 of the 30 reads.
+* **The registered fallback applies to W1q and W1r:** the zero-address reading in each
+  single-sender window.
+
+### Primary — the saturated pair
+
+| | measured, 6 windows (95 % interval) | σ 20 / DIFS 50, W 4, 4 | σ 9 / DIFS 28, W 12, 13 |
+|---|---|---|---|
+| loss at the partner | **0.1029** (0.0979–0.1079) | 0.4128 | 0.1686 |
+| frames/s on air per board | **262.7** (261.7–263.8) | 331.0 | 288.2 |
+| consistent (both inside) | | **no** | **no** |
+
+* **By the registered rule, W is not identified within these two families.** The nearer by loss
+  is σ 9 µs / DIFS 28 µs (0.169 against a measured 0.103); it is reported and not adopted. W1r
+  reports both families.
+* **Model-dependent, not used:** 2/(W + 1) gives 0.400 at W = 4 and 0.154 / 0.143 at W = 12 / 13.
+  Under it, the measured 0.103 corresponds to W ≈ 18.4.
+* **Checked independently:** a separate script read the raw receive files without the project's
+  code and gave the same loss and rate to four places.
+  * At the partner, frames on air equal the sender's own count within 2 frames in every window.
+  * The two directions lose 567–662 frames per window and differ by 2.5–5.1 %; in every window
+    15–31 more of pi-A's frames are lost than of pi-B's.
+  * At 50 frames/s the link lost 5 and 4 of 2 850, so the loss at saturation is collisions.
+
+### Supporting — the gaps (reported)
+
+* **The gap means** agree with this session's own first rate checks less T_f:
+  * pi-A 166.5 and 165.8 µs (rate check: 168.1);
+  * pi-B 231.9 and 230.1 µs (232.7);
+  * the Pi 3 447.5 and 448.0 µs (445.4).
+* **Against the families:** their gap means are 80–82 µs for the Pi 4s and 550 µs for the Pi 3.
+* **The spreads** are 291–790 µs, against the families' 22–34 µs (Pi 4s) and 294–304 µs (Pi 3).
+* The jitter correction gives negative variances (shown signed), so the gaps do not separate the
+  families. The registered caveat for a large J applies.
+
+### My expectations, against the outcome
+
+* **"The 9 µs family is consistent and the 20 µs family is not": wrong.** The 20 µs family's
+  rejection held. The 9 µs family failed too, on both loss and rate.
+* **"The jitter will be tens of µs":** right for the robust form (25–30 µs), wrong for the
+  least-squares form (162–448 µs).
+
+### Seen after scoring — not a result
+
+* **Both families' W were fitted to W1f's single-sender cycle,** 1 941–1 945 µs for the Pi 4s.
+  W1f ran with frame burst at the driver's setting, on; it did not log it.
+* **With frame burst off, this session's cycles are longer:**
+  * pi-A 2 032 µs, 4.7 % longer;
+  * pi-B 2 097 µs, 7.8 % longer;
+  * the Pi 3 2 309 / 2 278 µs, against W1f's 2 413.
+* **So both families assumed a shorter backoff than these boards had.** That predicts more frames
+  on air and more collisions than measured, the direction of both misses.
+* **F76** (2026-10-09, a saturated pair with frame burst off) measured 12.40 % (sd 0.70) and
+  262.7 frames/s per sender. Today's rate is the same; the loss is 2.1 points lower.
+* **By Mohamed's rule,** a W re-derived from today's cycles needs a fresh registered check on unseen
+  points before it is used. It is not used here, and W1r runs as registered.

@@ -180,6 +180,32 @@ Pi 3 reverted at 09:44, but **pi-B never rejoined the LAN**, and its own deadmen
 in every window it had, so the fault came after its windows. W1p is unscored until pi-B's card is
 collected. W1q and W1r wait for pi-B.
 
+**pi-B's lock-up, found from what survived.** From the LAN it was gone at every address (its MAC
+in no ARP entry after a sweep) and from the air (no ad-hoc cell in pi-A's or the Pi 3's scans).
+Its journal is volatile, so the evidence is its session log and `last -x` (wtmp):
+* the revert took 159 s and ended with no address, twice (09:44 and the deadman's 09:49); pi-B's
+  earlier reverts took 9–13 s, and this morning's preflight took 31 s;
+* **the reboot deadman did fire** (shutdown and boot at 09:54:44), and the board then ran until
+  about 15:57 without a LAN address (fake-hwclock saved 15:17);
+* only a power cut recovered it (Mohamed powered all three at about 15:57; no shutdown record).
+  Its LAN signal after that was −54 dBm, joined at once.
+* **So the chip locked in a way a soft reboot does not clear.** Today's sessions are the first in
+  which pi-B ran the frame-burst switch and the per-peer RSSI query in-session; pi-A ran both and
+  reverted in 9 s. The cause is not established. **The revert now logs each step and keeps the
+  kernel log on the card** (approved by Mohamed, DECISIONS); a locked chip needs a power cut.
+
+**W1p scored** (outcome in `predictions/W1p.md`). Validity held. **Neither family is consistent:**
+the pair lost 0.1029 (0.0979–0.1079) at 262.7 frames/s, against 0.413 / 331 and 0.169 / 288. W is
+not identified within the two families; σ 9 µs is the nearer by loss, reported and not adopted. The
+per-peer RSSI was rejected at all three boards, so W1q and W1r use the fallback. My independent
+recompute matched to four places. Seen after scoring: both families were fitted to W1f's cycle,
+taken with frame burst on; with it off today's Pi 4 cycles are 4.7 % and 7.8 % longer. A W
+re-derived from them would need a fresh registered check.
+
+**W1q.** The triangle, 1 m on every side (`results/hw/channel24/w1q_2026-11-22/LAYOUT.md`). The
+first preflight after the power cut came back RETRY (every cycle 1 666 µs, the offered rate: F129's
+fresh-boot fast rate); the second, warm, said GO (2 047 / 2 131 / 2 317 µs). W1q launched 16:34.
+
 # 2026-11-21 — U-F's outcome and its three causes; Mohamed's decisions; the kit and registrations for three sessions
 
 **U-F scored:** (G23) 12 of 16, (G24) 2 of 16, the outlier failed, every miss optimistic. The

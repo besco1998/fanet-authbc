@@ -1,0 +1,7 @@
+# nodes: 1,2,3
+# Preflight and F129 warm-up before W1p, W1q, W1r (hw/channel/README.md; never scored): each
+# Pi's rate check at 600 frames/s offered, frame burst off (run_window_plan2.sh). GO needs every
+# cycle in 1.9-2.6 ms, every board unthrottled and frame burst read back 0.
+R1 600 145 1 25
+R2 600 145 2 25
+R3 600 145 3 25

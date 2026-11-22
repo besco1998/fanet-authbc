@@ -1,0 +1,21 @@
+Running timer as unit: authbc-revert.timer
+Will run service as unit: authbc-revert.service
+Running timer as unit: authbc-reboot.timer
+Will run service as unit: authbc-reboot.service
+[2026-11-22T09:18:46+02:00] deadmen armed: revert 510 s, reboot 810 s | node=3 nodes=1,2,3 freq=2462 windows=3 plan=plan_w1pqr_preflight.txt sha=fba686a702ce
+[2026-11-22T09:18:46+02:00] governor: ondemand -> performance; throttled 0x0
+[2026-11-22T09:19:03+02:00] type:  	type IBSS 	channel 11 (2462 MHz), width: 20 MHz, center1: 2462 MHz 
+[2026-11-22T09:19:05+02:00] peer 10.0.0.1 reachable, mac d8:3a:dd:16:a7:33
+[2026-11-22T09:19:07+02:00] peer 10.0.0.2 reachable, mac e4:5f:01:67:5f:43
+[2026-11-22T09:19:07+02:00] frameburst before the windows: 0 (asked: 0)
+{"received_unique": 11095, "senders": 1, "duplicates": 0}
+[2026-11-22T09:21:11+02:00] window 00_R1_600fps done (senders 1, 25 s)
+{"received_unique": 10641, "senders": 1, "duplicates": 0}
+[2026-11-22T09:21:41+02:00] window 01_R2_600fps done (senders 2, 25 s)
+{"sent": 9743, "achieved_fps": 439.9, "late": 8857}
+{"received_unique": 0, "senders": 0, "duplicates": 0}
+[2026-11-22T09:22:11+02:00] window 02_R3_600fps done (senders 3, 25 s)
+[2026-11-22T09:22:11+02:00] frameburst after the windows: 0
+[2026-11-22T09:22:11+02:00] revert: starting
+[2026-11-22T09:22:21+02:00] revert: finished, wlan0 = inet 192.168.1.22
+[2026-11-22T09:22:26+02:00] reverted OK, both deadmen disarmed
