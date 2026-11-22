@@ -1,0 +1,35 @@
+# python=3.12.3
+# platform=Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=w1p_w1p_2026-11-22
+what,item,measured,predicted,held
+frame burst off on every board,,,0 before and after,True
+rate check,03_R1_600fps,2032.1,1900-2600 us,True
+rate check,12_R1_600fps,2033.9,1900-2600 us,True
+rate check,04_R2_600fps,2096.7,1900-2600 us,True
+rate check,13_R2_600fps,2098.6,1900-2600 us,True
+rate check,05_R3_600fps,2309.4,1900-2600 us,True
+rate check,14_R3_600fps,2278.1,1900-2600 us,True
+timestamp jitter (us),node 1,161.65,robust -24.87; SE of J^2 5187.04 us^2,reported
+timestamp jitter (us),node 2,307.59,robust 25.69; SE of J^2 5187.04 us^2,reported
+timestamp jitter (us),node 3,447.61,robust 30.18; SE of J^2 5187.04 us^2,reported
+kit check: per-peer RSSI,at node 1,rejected,"accepted, or the fallback",reported
+kit check: per-peer RSSI,at node 2,rejected,"accepted, or the fallback",reported
+kit check: per-peer RSSI,at node 3,rejected,"accepted, or the fallback",reported
+usable pair windows,,6,>= 5,True
+pair loss (95 % interval),,0.1029 (0.0979-0.1079),,
+pair frames/s on air (95 % interval),,262.7 (261.7-263.8),,
+family consistent,s20d50,"0.1029, 262.7/s","0.4128, 331.0/s",False
+family consistent,s9d28,"0.1029, 262.7/s","0.1686, 288.2/s",False
+family for W1r,,none (both reported),,reported
+gap after a frame (us),node 1 at node 2,"mean 166.5, sd 291.0, corrected -323.3, p05 45.5","s20d50: 80.0, 22.4; s9d28: 77.5, 31.1",reported
+gap after a frame (us),node 1 at node 3,"mean 165.8, sd 303.4, corrected -555.6, p05 40.9","s20d50: 80.0, 22.4; s9d28: 77.5, 31.1",reported
+gap after a frame (us),node 2 at node 1,"mean 231.9, sd 589.0, corrected 542.9, p05 45.8","s20d50: 80.0, 22.4; s9d28: 82.0, 33.7",reported
+gap after a frame (us),node 2 at node 3,"mean 230.1, sd 590.2, corrected -228.9, p05 40.1","s20d50: 80.0, 22.4; s9d28: 82.0, 33.7",reported
+gap after a frame (us),node 3 at node 1,"mean 447.5, sd 765.8, corrected 730.9, p05 98.4","s20d50: 550.0, 294.4; s9d28: 550.0, 304.0",reported
+gap after a frame (us),node 3 at node 2,"mean 448.0, sd 790.2, corrected 659.7, p05 98.8","s20d50: 550.0, 294.4; s9d28: 550.0, 304.0",reported

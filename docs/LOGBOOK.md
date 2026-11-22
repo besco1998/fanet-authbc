@@ -217,6 +217,23 @@ weakens (5.7 % and 2.0 % lost alone), consistent with q_A < 0 at 10 dB and q_A +
 The optional step (pi-B receiving, 19:47, Mohamed's answer came about three hours after the
 question) held.
 
+**W1r.** Mohamed set the boards side by side 20 cm apart; the registration says 10–15 cm. Asked
+before the preflight, he chose to keep 20 cm and record it (`LAYOUT.md`, DECISIONS). The preflight
+said GO (2 022.5 / 2 158.6 / 2 572.0 µs); W1r ran 22:09:47–23:19:07, all 66 windows, every board
+reverted.
+
+**W1r reported** (outcome in `predictions/W1r.md`). Valid: frame burst 0 before and after, the six
+rate checks in band, background 0.0009, 48 of 48 contention windows usable, every sender at least
+26 lost frames per window. W1p chose no family, so as registered nothing was scored. σ 20/DIFS 50
+lies inside the hardware's interval at 2 of 12 points and σ 9/DIFS 28 at 1; the hardware lies
+between them, as in W1p. My independent recompute, importing no project code, gave the same
+values, and the receivers' JSON counts equal their timestamp files in every window. Seen after
+scoring: the pairs with the Pi 3 lose 1.01–1.63× what AB loses, where ns-3 gives 0.20–0.52×,
+because ns-3 gives the Pi 3 a large window inferred from its longer cycle. Both directions of
+every pair lose about equally. A hypothesis, untested: the Pi 3's extra time per frame is not
+spent in a wider backoff. Against W1e the loss is higher at 11 of 12 points, but frame burst,
+spacing and day all changed, so no cause is assigned.
+
 # 2026-11-21 — U-F's outcome and its three causes; Mohamed's decisions; the kit and registrations for three sessions
 
 **U-F scored:** (G23) 12 of 16, (G24) 2 of 16, the outlier failed, every miss optimistic. The

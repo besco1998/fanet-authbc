@@ -1,0 +1,24 @@
+# python=3.12.3
+# platform=Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=w1q_w1q_2026-11-22
+what,item,measured,predicted,held
+frame burst off on every board,,,0 before and after,True
+rate check,00_R1_600fps,2059.9,1900-2600 us,True
+rate check,01_R2_600fps,2127.0,1900-2600 us,True
+rate check,02_R3_600fps,2411.7,1900-2600 us,True
+rate check,28_R1_600fps,2048.3,1900-2600 us,True
+rate check,29_R2_600fps,2098.4,1900-2600 us,True
+rate check,30_R3_600fps,2336.8,1900-2600 us,True
+kit check at the Pi 3 (step 0),,rejected,"accepted, or the fallback",reported
+step,0 dB (pi-A 15 dBm),"ΔRSSI +5.0 dB; q_A 0.985 (0.980-0.988), q_B 0.030 (0.024-0.043); p_A 0.1070, p_B 0.0904; q_A + q_B 1.015","q_weak 0; q_strong 1 at |ΔRSSI| >= 4 dB, else 0","weak True, strong True"
+step,3 dB (pi-A 12 dBm),"ΔRSSI +1.5 dB; q_A 0.937 (0.929-0.948), q_B -0.001 (-0.019-0.009); p_A 0.0995, p_B 0.0834; q_A + q_B 0.936","q_weak 0; q_strong 1 at |ΔRSSI| >= 4 dB, else 0","weak True, strong False"
+step,6 dB (pi-A 9 dBm),"ΔRSSI +1.5 dB; q_A 0.311 (0.273-0.352), q_B 0.515 (0.487-0.539); p_A 0.1095, p_B 0.0836; q_A + q_B 0.826","q_weak 0; q_strong 1 at |ΔRSSI| >= 4 dB, else 0","void (pi-A fell 3.5 dB, not 6 ± 1.5)"
+step,10 dB (pi-A 5 dBm),"ΔRSSI +0.0 dB; q_A -0.123 (-0.143--0.096), q_B 0.856 (0.813-0.882); p_A 0.0961, p_B 0.0840; q_A + q_B 0.732","q_weak 0; q_strong 1 at |ΔRSSI| >= 4 dB, else 0","void (pi-A fell 5.5 dB, not 10 ± 1.5)"
+step,15 dB (pi-A 0 dBm),"ΔRSSI -4.5 dB; q_A 0.277 (0.255-0.290), q_B 0.896 (0.888-0.906); p_A 0.1475, p_B 0.0914; q_A + q_B 1.172","q_weak 0; q_strong 1 at |ΔRSSI| >= 4 dB, else 0","void (pi-A fell 9.0 dB, not 15 ± 1.5)"
+"the optional step, by the rule",,0,the valid step nearest 4 dB,reported

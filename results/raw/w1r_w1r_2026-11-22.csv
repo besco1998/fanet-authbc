@@ -1,0 +1,32 @@
+# python=3.12.3
+# platform=Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
+# cpu=Intel(R) Core(TM) i5-14400F
+# governor=WSL, governor uncontrolled
+# cryptography=45.0.7
+# blspy=2.0.3
+# cbor2=5.8.0
+# msgpack=1.2.1
+# run=w1r_w1r_2026-11-22
+# family=none
+what,item,measured,predicted,held
+frame burst off on every board,,,0 before and after,True
+rate check,00_R1_600fps,2196.0,1900-2600 us,True
+rate check,01_R2_600fps,2144.2,1900-2600 us,True
+rate check,02_R3_600fps,2344.5,1900-2600 us,True
+rate check,63_R1_600fps,2046.2,1900-2600 us,True
+rate check,64_R2_600fps,2121.9,1900-2600 us,True
+rate check,65_R3_600fps,2360.2,1900-2600 us,True
+background b,12 controls,0.000909,<= 0.01,True
+point,AB at 131/s (u = 0.5),0.00369 (0.00328-0.00410); fewest lost frames per sender per window 40,s20d50: 0.00605 (hardware ÷ ns-3 0.61); s9d28: 0.00254 (hardware ÷ ns-3 1.45),reported (W1p chose no single family)
+point,AC at 131/s (u = 0.5),0.00408 (0.00349-0.00467); fewest lost frames per sender per window 81,s20d50: 0.00156 (hardware ÷ ns-3 2.62); s9d28: 0.00129 (hardware ÷ ns-3 3.16),reported (W1p chose no single family)
+point,BC at 131/s (u = 0.5),0.00495 (0.00456-0.00534); fewest lost frames per sender per window 98,s20d50: 0.00156 (hardware ÷ ns-3 3.18); s9d28: 0.00131 (hardware ÷ ns-3 3.77),reported (W1p chose no single family)
+point,ABC at 87/s (u = 0.5),0.00662 (0.00562-0.00761); fewest lost frames per sender per window 66,s20d50: 0.00923 to 0.00753 (hardware ÷ ns-3 0.72 / 0.88); s9d28: 0.00421 to 0.00349 (hardware ÷ ns-3 1.57 / 1.89),reported (W1p chose no single family)
+point,AB at 183/s (u = 0.7),0.00813 (0.00728-0.00897); fewest lost frames per sender per window 26,s20d50: 0.01730 (hardware ÷ ns-3 0.47); s9d28: 0.00668 (hardware ÷ ns-3 1.22),reported (W1p chose no single family)
+point,AC at 183/s (u = 0.7),0.00821 (0.00687-0.00955); fewest lost frames per sender per window 82,s20d50: 0.00341 (hardware ÷ ns-3 2.41); s9d28: 0.00250 (hardware ÷ ns-3 3.28),reported (W1p chose no single family)
+point,BC at 183/s (u = 0.7),0.00941 (0.00817-0.01064); fewest lost frames per sender per window 89,s20d50: 0.00341 (hardware ÷ ns-3 2.76); s9d28: 0.00244 (hardware ÷ ns-3 3.86),reported (W1p chose no single family)
+point,ABC at 122/s (u = 0.7),0.01242 (0.01010-0.01474); fewest lost frames per sender per window 60,s20d50: 0.02053 to 0.01742 (hardware ÷ ns-3 0.61 / 0.71); s9d28: 0.00845 to 0.00728 (hardware ÷ ns-3 1.47 / 1.71),reported (W1p chose no single family)
+point,AB at 222/s (u = 0.85),0.01619 (0.00951-0.02286); fewest lost frames per sender per window 53,s20d50: 0.04071 (hardware ÷ ns-3 0.40); s9d28: 0.01436 (hardware ÷ ns-3 1.13),reported (W1p chose no single family)
+point,AC at 222/s (u = 0.85),0.02215 (0.01465-0.02965); fewest lost frames per sender per window 90,s20d50: 0.00874 (hardware ÷ ns-3 2.53); s9d28: 0.00530 (hardware ÷ ns-3 4.18),reported (W1p chose no single family)
+point,BC at 222/s (u = 0.85),0.02640 (0.02443-0.02837); fewest lost frames per sender per window 114,s20d50: 0.00874 (hardware ÷ ns-3 3.02); s9d28: 0.00532 (hardware ÷ ns-3 4.96),reported (W1p chose no single family)
+point,ABC at 148/s (u = 0.85),0.02951 (0.02448-0.03453); fewest lost frames per sender per window 76,s20d50: 0.03882 to 0.03344 (hardware ÷ ns-3 0.76 / 0.88); s9d28: 0.01566 to 0.01326 (hardware ÷ ns-3 1.88 / 2.23),reported (W1p chose no single family)
+points consistent,none,0 of 0,,reported
