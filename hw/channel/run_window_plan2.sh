@@ -11,7 +11,9 @@
 #     only its own, which then holds until changed);
 #   * signal strength: halfway through and after every window, the firmware's RSSI for every peer
 #     address and for the zero address (rssi.sh), one JSON line per reading;
-#   * every received frame's kernel receive time (bcast_rx.py --timestamps).
+#   * every received frame's kernel receive time (bcast_rx.py --timestamps);
+#   * before each window, chip_check.sh: a board no longer in the cell, or a sender whose
+#     previous window sent nothing, stops its own windows and reverts (2026-11-23).
 #
 # ⚠️ SSH arrives over wlan0. Joining the cell drops it; run unattended under nohup/systemd-run.
 #
@@ -137,9 +139,17 @@ rssi_line() {   # $1 tag, $2 when: one JSON line with the zero-address and every
 }
 
 # ---- 3. The windows, on the shared clock: every node receives, the named nodes send --------
+# Before each window chip_check.sh asks whether this board is still in the cell and, if it sent in
+# the previous window, whether frames left it. If not, this board runs no more windows and goes
+# straight to the revert (Mohamed, 2026-11-23); the other boards carry on.
+PREV_SENT=-
 for k in "${!WINDOWS[@]}"; do
     read -r label rate bytes senders _ <<<"${WINDOWS[$k]}"
     sec="${SECS[$k]}"
+    if ! why=$("$OUT/chip_check.sh" "$FREQ" "$PREV_SENT"); then
+        log "chip down before window $k: $why; this board runs no more windows"
+        break
+    fi
     want=$(my_power "${POWERS[$k]}")
     if [ -n "$want" ]; then
         if [ "$want" = auto ]; then sudo -n /usr/sbin/iw dev wlan0 set txpower auto
@@ -170,6 +180,7 @@ for k in "${!WINDOWS[@]}"; do
          "\"rx_packets\":$(( $(ctr rx_packets) - rp0 )),\"throttled_before\":\"$th0\"," \
          "\"throttled_after\":\"$(thr)\"}" >"$OUT/ctr_node${NODE}_$tag.json"
     log "window $tag done (senders $senders, $sec s)"
+    if [[ ",$senders," == *",$NODE,"* ]]; then PREV_SENT=$(( $(ctr tx_packets) - tp0 )); else PREV_SENT=-; fi
 done
 
 log "frameburst after the windows: $(sudo -n "$OUT/frameburst.sh" get 2>&1)"

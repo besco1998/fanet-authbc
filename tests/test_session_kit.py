@@ -211,3 +211,51 @@ class TestTheWayOutLeavesATrace:
         assert text.index("== at start") < text.index("== at end")
         assert text.count("brcmfmac: stub line") == 2
         assert log.splitlines()[-1].endswith("finished, wlan0 = NONE")
+
+
+class TestAStoppedChipStopsItsBoard:
+    """Mohamed, 2026-11-23: if a board's chip locks during the session, that board stops its own
+    windows and the stop is recorded. `chip_check.sh` runs before every window."""
+
+    IBSS = "Interface wlan0\n\tifindex 3\n\ttype IBSS\n\tchannel 11 (2462 MHz), width: 20 MHz\n"
+
+    @staticmethod
+    def _check(tmp_path: Path, info: str, sent: str) -> tuple[int, str]:
+        fake = tmp_path / "iw"
+        fake.write_text(f"#!/bin/bash\nprintf '%s' '{info}'\n")
+        fake.chmod(0o755)
+        run = subprocess.run(["bash", str(CHANNEL / "chip_check.sh"), "2462", sent],
+                             env={"IW": str(fake), "PATH": "/usr/bin:/bin"},
+                             capture_output=True, text=True, check=False)
+        return run.returncode, run.stdout.strip()
+
+    @pytest.mark.parametrize("sent", ["-", "10513"])
+    def test_a_board_in_the_cell_that_sent_carries_on(self, tmp_path: Path, sent: str) -> None:
+        assert self._check(tmp_path, self.IBSS, sent) == (0, "")
+
+    def test_a_board_out_of_the_cell_stops(self, tmp_path: Path) -> None:
+        rc, why = self._check(tmp_path, self.IBSS.replace("IBSS", "managed"), "-")
+        assert rc == 1 and why.startswith("not in the ad-hoc cell")
+
+    def test_a_board_on_another_channel_stops(self, tmp_path: Path) -> None:
+        rc, why = self._check(tmp_path, self.IBSS.replace("11 (2462", "6 (2437"), "-")
+        assert rc == 1 and why.startswith("not on 2462 MHz")
+
+    def test_a_sender_whose_last_window_sent_nothing_stops(self, tmp_path: Path) -> None:
+        rc, why = self._check(tmp_path, self.IBSS, "0")
+        assert rc == 1 and "sent nothing" in why
+
+    def test_a_dead_interface_stops(self, tmp_path: Path) -> None:
+        rc, why = self._check(tmp_path, "command failed: No such device (-19)", "-")
+        assert rc == 1 and why.startswith("not in the ad-hoc cell")
+
+    def test_the_runner_checks_before_every_window_and_then_reverts(self) -> None:
+        text = (CHANNEL / "run_window_plan2.sh").read_text()
+        loop = text[text.index('for k in "${!WINDOWS[@]}"; do\n    read -r label'):
+                    text.index("frameburst after the windows")]
+        check = loop.index('chip_check.sh" "$FREQ" "$PREV_SENT"')
+        assert check < loop.index("bcast_rx.py")
+        assert "chip down before window $k" in loop and "break" in loop[check:loop.index("fi\n")]
+        # only a sender's own count is carried to the next check
+        assert 'PREV_SENT=$(( $(ctr tx_packets) - tp0 )); else PREV_SENT=-' in loop
+        assert text.index("frameburst after the windows") < text.rindex("\nrestore")
