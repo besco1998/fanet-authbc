@@ -359,3 +359,35 @@ class TestTheSentLog:
         env = text.index('log "env: kernel $(uname -r)')
         assert env < text.index('for k in "${!WINDOWS[@]}"; do\n    read -r label')
         assert "brcmf_c_preinit_dcmds: Firmware:" in text
+
+
+class TestTheWl18xxRetest:
+    """`wl18xx_retest.sh`, the gate's one WL18xx retest (2026-11-23), with stub tools: the deadman
+    first, the AP role before the monitor interface, the capture, and iwd back at the end."""
+
+    def test_the_order_and_the_way_back(self, tmp_path: Path) -> None:
+        stub = tmp_path / "bin"
+        stub.mkdir()
+        calls = tmp_path / "calls"
+        for name in ("iw", "ip", "systemd-run", "systemctl", "pkill", "sync", "hostapd"):
+            (stub / name).write_text(f'#!/bin/bash\necho "{name} $*" >>"{calls}"\n')
+            (stub / name).chmod(0o755)
+        (stub / "tcpdump").write_text(
+            f'#!/bin/bash\necho "tcpdump $*" >>"{calls}"\n'
+            'for a in "$@"; do [ "$p" = -w ] && printf x > "$a"; p=$a; done\n')
+        (stub / "tcpdump").chmod(0o755)
+        out = tmp_path / "s"
+        out.mkdir()
+        script = out / "wl18xx_retest.sh"
+        script.write_text((CHANNEL / "wl18xx_retest.sh").read_text())
+        script.chmod(0o755)
+        subprocess.run(["bash", str(script), str(int(time.time())), "1"],
+                       env={"PATH": f"{stub}:/usr/bin:/bin", "IW": "iw"}, check=True, timeout=30)
+        c = calls.read_text()
+        order = [c.index(x) for x in ("systemd-run --on-active=", "systemctl stop iwd",
+                                      "hostapd -B", "iw phy phy0 interface add mon0 type monitor",
+                                      "tcpdump -i mon0 -s 256 -w", "iw dev mon0 del",
+                                      "systemctl start iwd")]
+        assert order == sorted(order)
+        assert "channel=11" in (out / "wl18xx_ap.conf").read_text()
+        assert "reverted: hostapd and mon0 gone" in (out / "wl18xx.log").read_text()
