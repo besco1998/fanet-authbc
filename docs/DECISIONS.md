@@ -290,6 +290,21 @@ to the four questions raised while planning the next phase. Branch `p13-sending-
 | **The revert logs each step (2026-11-22)** | **Approved before W1q.** After W1p, pi-B's revert took 159 s twice and ended without a LAN address; a soft reboot (09:54, `last -x`) did not clear it, a power cut did, and its volatile journal kept nothing. `revert_adhoc.sh` now logs each step's exit code and duration and keeps the kernel log in the session folder, then syncs. Same commands, same order | It runs after the last window, so no measured quantity changes; the kit differs from the tagged one in this logging only. A locked chip needs a 10 s power cut, not a reboot |
 | **W1r's spacing (2026-11-22)** | **20 cm, recorded as a deviation** (Mohamed's choice, asked before the preflight). The registration fixes W1e's 10–15 cm; the boards were set side by side 20 cm apart, and the choice was move them to about 12 cm or keep 20 cm and record it | About 2.5 dB more free-space loss per link than at 15 cm, so capture differences could be a little larger than in W1e; no prediction changed. Layout: `results/hw/channel24/w1r_2026-11-22/LAYOUT.md` |
 
+## Decided by Mohamed, 2026-11-23 — the last board session, U3, the merges and the thesis
+
+The six open questions of `docs/revision/2026-11-22_decisions_of_2026-11-21_carried_out.md`. Plan
+approved the same day, including the thesis placement.
+
+| decision | chosen | what it costs, or leaves open |
+|---|---|---|
+| **1. W1q's gradual capture curve** | **A new registered check on power steps W1q did not use,** with the halfway RSSI reading alone. The curve is used only if it holds | If it fails, the thesis states W1q's scored result alone (5 of 6) |
+| **2. The contention window** | **Re-derived once** from 2026-11-22's frame-burst-off rate checks, both families, and **one registered test.** If neither family fits, the window is recorded as **not identifiable without a frame sniffer**, and the hardware as bracketed by the two settings | No further window tests in this phase |
+| **3. The Pi 3's extra time per frame** | **Registered only if it fits the same session** (it does, about 3 minutes). Otherwise, or if unresolved, recorded as an unexplained property of the BCM43430 | — |
+| **4. One session, fixed end; U3** | Items 1–3 form **one board session (W1s) with a fixed end.** **U3 closes after it, whatever the outcomes.** No further hardware sessions in this phase | Nothing is extended or re-run; a void part is recorded as void |
+| **5. Thesis and paper** | **Thesis: all five results** (UF2, UG25H, W1p, W1q, W1r), negative ones and stated limits included. **Paper:** (G25) and capture as validated, the one-collision-domain scope, the hardware capture finding; the window and the Pi 3's timing one line each as limitations. **Placement approved:** a new chapter, "A closed-form model of the channel", between ch. 8 and ch. 9 (the model, its scope and limits, then its validation); ch. 8's eq:line and eq:why kept as the path taken; the hardware sessions in ch. 9; the paper's capacity derivation rebased on (G5) | Drafting starts only after this branch is merged into `main`; chapters 9–12 renumber |
+| **6. The merges** | **`p12-unified-model` into `main` now** — done by the agent on his instruction (fast-forward to the CI-green `2713629e`, no merge commit, no force; PRs #1 and #2 then showed as merged, their heads being in p12). **This branch once its report is final and CI is green.** All thesis and paper edits on `main` after that. Supersedes the 2026-11-19 row "nothing is merged by the agent" | — |
+| **pi-B in W1s** | Keep the step logging. **If a board's chip locks during the session, it stops its own windows and the stop is recorded** (a check before each window in the runner) | — |
+
 > **Open items live in [`OPEN_ITEMS.md`](OPEN_ITEMS.md)** — the single tracked list of
 > everything assumed, deferred, unvalidated or accepted-as-a-limitation. Decisions live here.
 > **What each decision COST is in the trade-off register at the end of this file** (formerly
