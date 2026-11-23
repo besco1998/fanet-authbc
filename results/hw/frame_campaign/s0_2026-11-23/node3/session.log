@@ -1,0 +1,60 @@
+Running timer as unit: authbc-revert.timer
+Will run service as unit: authbc-revert.service
+Running timer as unit: authbc-reboot.timer
+Will run service as unit: authbc-reboot.service
+[2026-11-23T15:30:27+02:00] deadmen armed: revert 899 s, reboot 1199 s | node=3 nodes=1,2,3 freq=2462 windows=15 plan=plan_s0.txt sha=7540fff5caa2
+[2026-11-23T15:30:27+02:00] env: kernel 6.12.109+rpt-rpi-v8 | brcmfmac  | firmware brcmf_c_preinit_dcmds: Firmware: BCM43430/1 wl0: Jul 19 2021 03:24:18 version 7.45.98 (TOB) (56df937 CY) FWID 01-8e14b89
+[2026-11-23T15:30:27+02:00] governor: ondemand -> performance; throttled 0x0
+[2026-11-23T15:30:44+02:00] type:  	type IBSS 	channel 11 (2462 MHz), width: 20 MHz, center1: 2462 MHz 
+[2026-11-23T15:30:46+02:00] peer 10.0.0.1 reachable, mac d8:3a:dd:16:a7:33
+[2026-11-23T15:30:48+02:00] peer 10.0.0.2 reachable, mac e4:5f:01:67:5f:43
+[2026-11-23T15:30:48+02:00] frameburst before the windows: 0 (asked: 0)
+{"received_unique": 10872, "senders": 1, "duplicates": 0}
+[2026-11-23T15:33:36+02:00] window 00_R1_600fps done (senders 1, 25 s)
+{"received_unique": 10629, "senders": 1, "duplicates": 0}
+[2026-11-23T15:34:06+02:00] window 01_R2_600fps done (senders 2, 25 s)
+{"sent": 8994, "achieved_fps": 408.4, "late": 8150}
+{"received_unique": 0, "senders": 0, "duplicates": 0}
+[2026-11-23T15:34:36+02:00] window 02_R3_600fps done (senders 3, 25 s)
+{"received_unique": 1000, "senders": 1, "duplicates": 0}
+[2026-11-23T15:35:03+02:00] window 03_G1_50fps done (senders 1, 23 s)
+{"received_unique": 999, "senders": 1, "duplicates": 0}
+[2026-11-23T15:35:33+02:00] window 04_G2_50fps done (senders 2, 23 s)
+[2026-11-23T15:35:33+02:00] txpower asked 1500:  txpower 15.00 dBm
+{"sent": 1000, "achieved_fps": 50.0, "late": 0}
+{"received_unique": 0, "senders": 0, "duplicates": 0}
+[2026-11-23T15:35:59+02:00] window 05_G3_50fps done (senders 3, 23 s)
+{"received_unique": 1100, "senders": 1, "duplicates": 0}
+[2026-11-23T15:36:30+02:00] window 06_P15_50fps done (senders 1, 25 s)
+{"received_unique": 1100, "senders": 1, "duplicates": 0}
+[2026-11-23T15:37:01+02:00] window 07_P12_50fps done (senders 1, 25 s)
+{"received_unique": 1100, "senders": 1, "duplicates": 0}
+[2026-11-23T15:37:30+02:00] window 08_P9_50fps done (senders 1, 25 s)
+{"received_unique": 1100, "senders": 1, "duplicates": 0}
+[2026-11-23T15:38:00+02:00] window 09_P6_50fps done (senders 1, 25 s)
+{"received_unique": 11220, "senders": 2, "duplicates": 0}
+[2026-11-23T15:38:30+02:00] window 10_X_600fps done (senders 1,2, 25 s)
+{"received_unique": 2850, "senders": 1, "duplicates": 0}
+[2026-11-23T15:39:35+02:00] window 11_W_50fps done (senders 1, 60 s)
+{"received_unique": 10946, "senders": 1, "duplicates": 0}
+[2026-11-23T15:40:05+02:00] window 12_R1_600fps done (senders 1, 25 s)
+{"received_unique": 10684, "senders": 1, "duplicates": 0}
+[2026-11-23T15:40:35+02:00] window 13_R2_600fps done (senders 2, 25 s)
+{"sent": 9108, "achieved_fps": 412.9, "late": 8422}
+{"received_unique": 0, "senders": 0, "duplicates": 0}
+[2026-11-23T15:41:04+02:00] window 14_R3_600fps done (senders 3, 25 s)
+[2026-11-23T15:41:04+02:00] frameburst after the windows: 0
+[2026-11-23T15:41:04+02:00] revert: starting
+1
+[2026-11-23T15:41:05+02:00] revert: step frameburst_on rc=0 41 ms
+[2026-11-23T15:41:05+02:00] revert: step ibss_leave rc=0 17 ms
+[2026-11-23T15:41:05+02:00] revert: step addr_flush rc=0 16 ms
+[2026-11-23T15:41:05+02:00] revert: step link_down rc=0 535 ms
+[2026-11-23T15:41:05+02:00] revert: step type_managed rc=0 14 ms
+[2026-11-23T15:41:05+02:00] revert: step link_up rc=0 16 ms
+[2026-11-23T15:41:05+02:00] revert: step wpa_start rc=0 99 ms
+[2026-11-23T15:41:05+02:00] revert: step nm_managed rc=0 95 ms
+Connection successfully activated (D-Bus active path: /org/freedesktop/NetworkManager/ActiveConnection/22)
+[2026-11-23T15:41:09+02:00] revert: step con_up rc=0 865 ms
+[2026-11-23T15:41:14+02:00] revert: finished, wlan0 = inet 192.168.1.22
+[2026-11-23T15:41:19+02:00] reverted OK, both deadmen disarmed

@@ -1,0 +1,9 @@
+# nodes: 1,2,3
+# D1a (2026-11-23, disclosed, not scored): after S0's completeness failure, each board alone at 145 B again, then pi-A and pi-B at 40 B and 1000 B; positions as in S0
+DA 50 145 1 23 1:1500,2:1500,3:1500
+DB 50 145 2 23
+DC 50 145 3 23
+SA 50 40 1 23
+LA 50 1000 1 23
+SB 50 40 2 23
+LB 50 1000 2 23

@@ -1,0 +1,5 @@
+# nodes: 1,2,3
+# D1b (2026-11-23, disclosed, not scored): pi-A and pi-B swapped in place; each board alone at 145 B
+DA 50 145 1 23 1:1500,2:1500,3:1500
+DB 50 145 2 23
+DC 50 145 3 23

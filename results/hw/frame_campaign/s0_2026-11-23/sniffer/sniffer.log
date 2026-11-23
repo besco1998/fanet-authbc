@@ -1,0 +1,21 @@
+Running timer as unit: authbc-sniff2-revert.timer
+Will run service as unit: authbc-sniff2-revert.service
+[2026-11-23T15:30:20+02:00] deadman armed | iface=tplink0 channel=11 begin=1795440730 span_s=599 boot 4fbfbd0c-d76e-4ef2-9866-8f8d58139358
+[2026-11-23T15:30:20+02:00] env: kernel 5.10.168-ti-r84 | module 491D54E918431E9A9FE8B7F | ko sha256 6bcd2b32b78be456
+[2026-11-23T15:30:20+02:00] monitor:  type monitor 
+tcpdump: listening on tplink0, link-type IEEE802_11_RADIO (802.11 plus radiotap header), snapshot length 256 bytes
+[2026-11-23T15:33:10+02:00] heartbeat: boot 4fbfbd0c-d76e-4ef2-9866-8f8d58139358 |  type monitor | pcap 489850 B
+[2026-11-23T15:34:10+02:00] heartbeat: boot 4fbfbd0c-d76e-4ef2-9866-8f8d58139358 |  type monitor | pcap 6063425 B
+[2026-11-23T15:35:11+02:00] heartbeat: boot 4fbfbd0c-d76e-4ef2-9866-8f8d58139358 |  type monitor | pcap 9000298 B
+[2026-11-23T15:36:11+02:00] heartbeat: boot 4fbfbd0c-d76e-4ef2-9866-8f8d58139358 |  type monitor | pcap 9956271 B
+[2026-11-23T15:37:11+02:00] heartbeat: boot 4fbfbd0c-d76e-4ef2-9866-8f8d58139358 |  type monitor | pcap 10842195 B
+[2026-11-23T15:38:11+02:00] heartbeat: boot 4fbfbd0c-d76e-4ef2-9866-8f8d58139358 |  type monitor | pcap 12313847 B
+[2026-11-23T15:39:11+02:00] heartbeat: boot 4fbfbd0c-d76e-4ef2-9866-8f8d58139358 |  type monitor | pcap 15073289 B
+[2026-11-23T15:40:11+02:00] heartbeat: boot 4fbfbd0c-d76e-4ef2-9866-8f8d58139358 |  type monitor | pcap 18279887 B
+[2026-11-23T15:41:11+02:00] heartbeat: boot 4fbfbd0c-d76e-4ef2-9866-8f8d58139358 |  type monitor | pcap 23430396 B
+95860 packets captured
+95875 packets received by filter
+0 packets dropped by kernel
+[2026-11-23T15:42:12+02:00] heartbeat: boot 4fbfbd0c-d76e-4ef2-9866-8f8d58139358 |  type monitor | pcap 23648746 B
+[2026-11-23T15:42:12+02:00] capture done: 23648746 bytes; boot 4fbfbd0c-d76e-4ef2-9866-8f8d58139358
+[2026-11-23T15:42:12+02:00] reverted: tplink0 down and managed ( type managed ); boot 4fbfbd0c-d76e-4ef2-9866-8f8d58139358; deadman disarmed

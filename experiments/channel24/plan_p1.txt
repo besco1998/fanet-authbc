@@ -1,0 +1,6 @@
+# nodes: 1,2,3
+# P1 (2026-11-23): the overload probe, run once per sniffer placement; each board alone at 50 frames/s, 145 B, then the saturated pair (predictions/P1.md)
+DA 50 145 1 23 1:1500,2:1500,3:1500
+DB 50 145 2 23
+DC 50 145 3 23
+X 600 145 1,2 25

@@ -1,0 +1,33 @@
+Running timer as unit: authbc-revert.timer
+Will run service as unit: authbc-revert.service
+Running timer as unit: authbc-reboot.timer
+Will run service as unit: authbc-reboot.service
+[2026-11-23T15:24:15+02:00] deadmen armed: revert 510 s, reboot 810 s | node=2 nodes=1,2,3 freq=2462 windows=3 plan=plan_w1pqr_preflight.txt sha=fba686a702ce
+[2026-11-23T15:24:15+02:00] env: kernel 6.12.93+rpt-rpi-v8 | brcmfmac  | firmware brcmf_c_preinit_dcmds: Firmware: BCM4345/6 wl0: Aug 29 2023 01:47:08 version 7.45.265 (28bca26 CY) FWID 01-b677b91b
+[2026-11-23T15:24:15+02:00] governor: performance -> performance; throttled 0x0
+[2026-11-23T15:24:32+02:00] type:  	type IBSS 	channel 11 (2462 MHz), width: 20 MHz, center1: 2462 MHz 
+[2026-11-23T15:24:34+02:00] peer 10.0.0.1 reachable, mac d8:3a:dd:16:a7:33
+[2026-11-23T15:24:36+02:00] peer 10.0.0.3 reachable, mac b8:27:eb:7f:96:4b
+[2026-11-23T15:24:36+02:00] frameburst before the windows: 0 (asked: 0)
+{"received_unique": 10783, "senders": 1, "duplicates": 0}
+[2026-11-23T15:26:41+02:00] window 00_R1_600fps done (senders 1, 25 s)
+{"sent": 10543, "achieved_fps": 478.6, "late": 9472}
+{"received_unique": 0, "senders": 0, "duplicates": 0}
+[2026-11-23T15:27:11+02:00] window 01_R2_600fps done (senders 2, 25 s)
+{"received_unique": 8803, "senders": 1, "duplicates": 0}
+[2026-11-23T15:27:40+02:00] window 02_R3_600fps done (senders 3, 25 s)
+[2026-11-23T15:27:40+02:00] frameburst after the windows: 0
+[2026-11-23T15:27:40+02:00] revert: starting
+1
+[2026-11-23T15:27:40+02:00] revert: step frameburst_on rc=0 21 ms
+[2026-11-23T15:27:40+02:00] revert: step ibss_leave rc=0 6 ms
+[2026-11-23T15:27:40+02:00] revert: step addr_flush rc=0 7 ms
+[2026-11-23T15:27:41+02:00] revert: step link_down rc=0 507 ms
+[2026-11-23T15:27:41+02:00] revert: step type_managed rc=0 7 ms
+[2026-11-23T15:27:41+02:00] revert: step link_up rc=0 7 ms
+[2026-11-23T15:27:41+02:00] revert: step wpa_start rc=0 60 ms
+[2026-11-23T15:27:41+02:00] revert: step nm_managed rc=0 40 ms
+Connection successfully activated (D-Bus active path: /org/freedesktop/NetworkManager/ActiveConnection/19)
+[2026-11-23T15:27:48+02:00] revert: step con_up rc=0 3676 ms
+[2026-11-23T15:27:53+02:00] revert: finished, wlan0 = inet 192.168.1.20
+[2026-11-23T15:27:59+02:00] reverted OK, both deadmen disarmed

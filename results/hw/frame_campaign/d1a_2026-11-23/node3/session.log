@@ -1,0 +1,42 @@
+Running timer as unit: authbc-revert.timer
+Will run service as unit: authbc-revert.service
+Running timer as unit: authbc-reboot.timer
+Will run service as unit: authbc-reboot.service
+[2026-11-23T19:33:02+02:00] deadmen armed: revert 616 s, reboot 916 s | node=3 nodes=1,2,3 freq=2462 windows=7 plan=plan_d1a.txt sha=dbb15549bdbf
+[2026-11-23T19:33:02+02:00] env: kernel 6.12.109+rpt-rpi-v8 | brcmfmac  | firmware brcmf_c_preinit_dcmds: Firmware: BCM43430/1 wl0: Jul 19 2021 03:24:18 version 7.45.98 (TOB) (56df937 CY) FWID 01-8e14b89
+[2026-11-23T19:33:02+02:00] governor: ondemand -> performance; throttled 0x0
+[2026-11-23T19:33:19+02:00] type:  	type IBSS 	channel 11 (2462 MHz), width: 20 MHz, center1: 2462 MHz 
+[2026-11-23T19:33:21+02:00] peer 10.0.0.1 reachable, mac d8:3a:dd:16:a7:33
+[2026-11-23T19:33:23+02:00] peer 10.0.0.2 reachable, mac e4:5f:01:67:5f:43
+[2026-11-23T19:33:23+02:00] frameburst before the windows: 0 (asked: 0)
+[2026-11-23T19:33:23+02:00] txpower asked 1500:  txpower 15.00 dBm
+{"received_unique": 1000, "senders": 1, "duplicates": 0}
+[2026-11-23T19:36:09+02:00] window 00_DA_50fps done (senders 1, 23 s)
+{"received_unique": 999, "senders": 1, "duplicates": 0}
+[2026-11-23T19:36:37+02:00] window 01_DB_50fps done (senders 2, 23 s)
+{"sent": 1000, "achieved_fps": 50.0, "late": 0}
+{"received_unique": 0, "senders": 0, "duplicates": 0}
+[2026-11-23T19:37:05+02:00] window 02_DC_50fps done (senders 3, 23 s)
+{"received_unique": 1000, "senders": 1, "duplicates": 0}
+[2026-11-23T19:37:33+02:00] window 03_SA_50fps done (senders 1, 23 s)
+{"received_unique": 995, "senders": 1, "duplicates": 0}
+[2026-11-23T19:38:01+02:00] window 04_LA_50fps done (senders 1, 23 s)
+{"received_unique": 999, "senders": 1, "duplicates": 0}
+[2026-11-23T19:38:29+02:00] window 05_SB_50fps done (senders 2, 23 s)
+{"received_unique": 996, "senders": 1, "duplicates": 0}
+[2026-11-23T19:38:58+02:00] window 06_LB_50fps done (senders 2, 23 s)
+[2026-11-23T19:38:58+02:00] frameburst after the windows: 0
+[2026-11-23T19:38:58+02:00] revert: starting
+1
+[2026-11-23T19:38:58+02:00] revert: step frameburst_on rc=0 41 ms
+[2026-11-23T19:38:58+02:00] revert: step ibss_leave rc=0 12 ms
+[2026-11-23T19:38:58+02:00] revert: step addr_flush rc=0 16 ms
+[2026-11-23T19:38:58+02:00] revert: step link_down rc=0 520 ms
+[2026-11-23T19:38:58+02:00] revert: step type_managed rc=0 14 ms
+[2026-11-23T19:38:58+02:00] revert: step link_up rc=0 15 ms
+[2026-11-23T19:38:58+02:00] revert: step wpa_start rc=0 97 ms
+[2026-11-23T19:38:59+02:00] revert: step nm_managed rc=0 94 ms
+Connection successfully activated (D-Bus active path: /org/freedesktop/NetworkManager/ActiveConnection/24)
+[2026-11-23T19:39:03+02:00] revert: step con_up rc=0 939 ms
+[2026-11-23T19:39:08+02:00] revert: finished, wlan0 = inet 192.168.1.22
+[2026-11-23T19:39:13+02:00] reverted OK, both deadmen disarmed
