@@ -307,6 +307,22 @@ approved the same day, including the thesis placement.
 | **W1s's part A, Mohamed's answer while registering** | **A step enters the curve, or is scored, only if each sender's single-sender loss at every receiver is ≤ 1 %** (W1q's steps 10 and 15 fail it: 5.73 %, 2.00 %). Whole-dBm steps, pi-A at 13, 11, 10 dBm; one negative-side step, pi-B at 18 dBm with pi-A at 15, kept only if 18 dBm reads back exactly, else the curve covers Δ ≥ 0 only | The negative step was registered on the mirrored curve (the agent's reading, stated to him before the session) |
 | **U3 closed (2026-11-23)** | **Closed after W1s, whatever the outcome**, as decided. W1s: the curve not used; the window not identifiable without a frame sniffer; the Pi 3's timing an unexplained property of the BCM43430. No further hardware session in this phase | The thesis states W1q's scored capture result alone; the window and the Pi 3's timing are one-line limitations in the paper |
 
+## Decided by Mohamed, 2026-11-23 (later) — U3 reopened for a frame-level campaign with a sniffer
+
+Prompt: the frame-level hardware campaign (raw data for every comparison with the model and ns-3).
+Plan approved the same day (`docs/revision/` report to follow), with his answers to four questions.
+Branch `p14-frame-level-campaign`, from `main`.
+
+| decision | chosen | what it costs, or leaves open |
+|---|---|---|
+| **U3 reopened** (supersedes "U3 closed", above) | One campaign with a sniffer. (a) W1q ran in a triangle with two 1 m sides, W1s in an equilateral 1 m triangle, so W1s did not repeat W1q's radio geometry; (b) a BeagleBone sniffer can give frame-level data that no session so far had; (c) the goal is a complete set of raw data for comparing hardware, model and ns-3 | 4–5 evenings at the boards (the plan's estimate) |
+| **Two kinds of session, kept apart** | **Calibration** (C1–C3: airtime, gaps, backoff, power, capture) sets the **inputs** of the hardware-matched ns-3 twin and of the model; **validation** (V1–V4) tests predictions from those inputs. **No session both sets a parameter and scores a prediction that depends on it.** The parameter file is shown to Mohamed before any validation registration | — |
+| **The sniffer radio** | **The TP-Link TL-WN722N on Blue 2 in monitor mode, with the community driver build he approved on 2026-11-05 (rtl8188eus `af3bf004`, F125), unchanged.** His answer: that approval covers monitor mode. Fallback if the gate fails: an Atheros AR9271 (mainline `ath9k_htc`), a purchase, his call | The gate S0 (capture ≥ 99 %, TSFT, signal ±1.5 dB, 1 Mb/s DSSS, bad-checksum frames) decides before any scored result |
+| **W1q's layout, L1** | Rebuilt from **his photographs or the third side's length**, which he has; accepted only if the Pi 3 reproduces W1q's fingerprint (pi-A −41, pi-B −48 dBm at 15 dBm, ±3 dB). Otherwise stated as new, and he is asked | — |
+| **The merges** | `main` **fast-forwarded to `p13-sending-pattern`** (`f476d2a3`, CI green; no merge commit, no force). The campaign runs on `p14-frame-level-campaign` | — |
+| **U8 paused** | **No thesis or paper edits until the campaign reports,** so that every hardware number comes from its data | The approved placement (2026-11-23) stands |
+| **Hard limits** | No edit to `paper/`, `thesis/`, frozen result files or their scenarios; registration before every scored session; out-of-tree code as root only for an approved build; the safety kit in every session (deadman, frame burst and power set and read back, step logs, `chip_check.sh`) | — |
+
 > **Open items live in [`OPEN_ITEMS.md`](OPEN_ITEMS.md)** — the single tracked list of
 > everything assumed, deferred, unvalidated or accepted-as-a-limitation. Decisions live here.
 > **What each decision COST is in the trade-off register at the end of this file** (formerly
