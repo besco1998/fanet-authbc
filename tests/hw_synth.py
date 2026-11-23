@@ -26,9 +26,11 @@ class Window:
 def write_session(root: Path, nodes: tuple[int, ...], windows: list[Window],
                   stamp: Callable[[int, float], int],
                   rssi: Callable[[int, Window], dict[str, object]],
-                  frameburst: tuple[str, str] = ("0", "0")) -> Path:
+                  frameburst: tuple[str, str] = ("0", "0"),
+                  rssi_after: Callable[[int, Window], dict[str, object]] | None = None) -> Path:
     """`stamp(receiver, t_ns)` gives a receiver's timestamp of a frame received at true time t;
-    `rssi(receiver, window)` gives {"any": text, "peers": {node: text}} for that window."""
+    `rssi(receiver, window)` gives {"any": text, "peers": {node: text}} for that window, read
+    halfway and, unless `rssi_after` gives another, after it."""
     for n in nodes:
         d = root / f"node{n}"
         d.mkdir(parents=True, exist_ok=True)
@@ -67,9 +69,9 @@ def write_session(root: Path, nodes: tuple[int, ...], windows: list[Window],
                 sent = w.sent.get(r, n_air)
                 (d / f"tx_node{r}_{tag}.json").write_text(json.dumps(
                     {"sent": sent, "rate": w.rate, "achieved_fps": w.rate, "late": 0}))
-            reading = rssi(r, w)
+            readings = {"mid": rssi(r, w), "after": (rssi_after or rssi)(r, w)}
             with (d / f"rssi_node{r}.jsonl").open("a") as fh:
-                for when in ("mid", "after"):
+                for when, reading in readings.items():
                     fh.write(json.dumps({
                         "tag": tag, "when": when, "t": "0", "node": r, "any": reading["any"],
                         "peers": {f"10.0.0.{p}": {"mac": f"02:00:00:00:00:0{p}", "rssi": v}
