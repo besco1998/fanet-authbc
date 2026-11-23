@@ -1,0 +1,162 @@
+== at start 2026-11-23T05:27:22+02:00
+[   10.013755] vc4-drm gpu: [drm] Cannot find any crtc or sizes
+[   10.019872] vc4-drm gpu: [drm] Cannot find any crtc or sizes
+[   10.020117] vc4-drm gpu: [drm] Cannot find any crtc or sizes
+[   10.309980] Bluetooth: hci0: BCM: chip id 107
+[   10.310205] Bluetooth: hci0: BCM: features 0x2f
+[   10.311219] Bluetooth: hci0: BCM4345C0
+[   10.311224] Bluetooth: hci0: BCM4345C0 (003.001.025) build 0000
+[   10.409330] Bluetooth: hci0: BCM4345C0 'brcm/BCM4345C0.raspberrypi,4-model-b.hcd' Patch
+[   10.420364] brcmfmac: F1 signature read @0x18000000=0x15264345
+[   10.423581] brcmfmac: brcmf_fw_alloc_request: using brcm/brcmfmac43455-sdio for chip BCM4345/6
+[   10.423853] usbcore: registered new interface driver brcmfmac
+[   10.661082] brcmfmac: brcmf_c_process_txcap_blob: no txcap_blob available (err=-2)
+[   10.661455] brcmfmac: brcmf_c_preinit_dcmds: Firmware: BCM4345/6 wl0: Aug 29 2023 01:47:08 version 7.45.265 (28bca26 CY) FWID 01-b677b91b
+[   10.669707] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+[   11.122162] Bluetooth: hci0: BCM: features 0x2f
+[   11.123420] Bluetooth: hci0: BCM43455 37.4MHz Raspberry Pi 3+-0190
+[   11.123425] Bluetooth: hci0: BCM4345C0 (003.001.025) build 0382
+[   11.176785] Adding 524284k swap on /var/swap.  Priority:-2 extents:4 across:1327100k SS
+[   11.445863] Bluetooth: BNEP (Ethernet Emulation) ver 1.3
+[   11.445880] Bluetooth: BNEP filters: protocol multicast
+[   11.445891] Bluetooth: BNEP socket layer initialized
+[   11.449161] Bluetooth: MGMT ver 1.23
+[   11.462614] NET: Registered PF_ALG protocol family
+[   12.562033] bcmgenet fd580000.ethernet: configuring instance for external RGMII (RX delay)
+[   12.562776] bcmgenet fd580000.ethernet eth0: Link is Down
+[   12.598244] brcmfmac: brcmf_cfg80211_set_power_mgmt: power save enabled
+[  943.146444] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+[  943.220428] warning: `iwconfig' uses wireless extensions which will stop working for Wi-Fi 7 hardware; use nl80211
+[ 1148.082333] brcmfmac: brcmf_cfg80211_set_power_mgmt: power save enabled
+[ 1151.329682] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+[ 1784.571489] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+[ 1989.745641] brcmfmac: brcmf_cfg80211_set_power_mgmt: power save enabled
+[ 1992.937141] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+[ 2037.058297] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+[ 3082.904033] brcmfmac: brcmf_cfg80211_set_power_mgmt: power save enabled
+[ 3086.103213] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+[13622.008524] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+[13887.735344] brcmfmac: brcmf_cfg80211_set_power_mgmt: power save enabled
+[13890.945924] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+[21787.259817] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+[21992.601127] brcmfmac: brcmf_cfg80211_set_power_mgmt: power save enabled
+[21995.821010] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+[22141.559908] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+[26417.490723] brcmfmac: brcmf_cfg80211_set_power_mgmt: power save enabled
+[26420.678576] ------------[ cut here ]------------
+[26420.678590] WARNING: CPU: 1 PID: 214 at net/wireless/sme.c:848 __cfg80211_connect_result+0x718/0x748 [cfg80211]
+[26420.678735] Modules linked in: cmac algif_hash aes_arm64 aes_generic algif_skcipher af_alg bnep brcmfmac_wcc binfmt_misc brcmfmac vc4 hci_uart btbcm brcmutil snd_soc_hdmi_codec bluetooth drm_display_helper cec drm_dma_helper cfg80211 bcm2835_v4l2(C) ecdh_generic bcm2835_isp(C) bcm2835_codec(C) v3d snd_soc_core bcm2835_mmal_vchiq(C) rpi_hevc_dec ecc vc_sm_cma(C) v4l2_mem2mem gpu_sched videobuf2_vmalloc videobuf2_dma_contig snd_bcm2835(C) snd_compress videobuf2_memops drm_shmem_helper snd_pcm_dmaengine videobuf2_v4l2 rfkill videodev snd_pcm libaes drm_kms_helper videobuf2_common raspberrypi_hwmon snd_timer mc raspberrypi_gpiomem snd nvmem_rmem uio_pdrv_genirq uio drm fuse drm_panel_orientation_quirks backlight dm_mod ip_tables x_tables ipv6 i2c_brcmstb
+[26420.678863] CPU: 1 UID: 0 PID: 214 Comm: kworker/u16:1 Tainted: G         C         6.12.93+rpt-rpi-v8 #1  Debian 1:6.12.93-1+rpt1
+[26420.678871] Tainted: [C]=CRAP
+[26420.678874] Hardware name: Raspberry Pi 4 Model B Rev 1.4 (DT)
+[26420.678878] Workqueue: cfg80211 cfg80211_event_work [cfg80211]
+[26420.678956] pstate: 40000005 (nZcv daif -PAN -UAO -TCO -DIT -SSBS BTYPE=--)
+[26420.678961] pc : __cfg80211_connect_result+0x718/0x748 [cfg80211]
+[26420.679036] lr : __cfg80211_connect_result+0x710/0x748 [cfg80211]
+[26420.679108] sp : ffffffc0812cbcc0
+[26420.679111] x29: ffffffc0812cbce0 x28: 0000000000000000 x27: 0000000000000000
+[26420.679120] x26: 0000000000000000 x25: 0000000000000000 x24: dead000000000100
+[26420.679128] x23: ffffff8082bf9018 x22: ffffff8082bf9379 x21: 0000000000000000
+[26420.679136] x20: ffffff804254a008 x19: ffffff8082bf9018 x18: 0000000000000000
+[26420.679144] x17: 0000000000000000 x16: ffffffd525dd4eb8 x15: 0808163d00000000
+[26420.679152] x14: 0000000000000000 x13: 0000000000000000 x12: f6baa07102620001
+[26420.679160] x11: a4270000a4030088 x10: 010102f2500018dd x9 : ffffffd50a76c208
+[26420.679168] x8 : ffffff804105f8e9 x7 : 000000000000f6ba x6 : 000000000000ce75
+[26420.679175] x5 : ffffff80456ad370 x4 : fffffffeff9c7902 x3 : 0000000000000000
+[26420.679183] x2 : 0000000000000000 x1 : 0000000000000000 x0 : 0000000000000000
+[26420.679191] Call trace:
+[26420.679195]  __cfg80211_connect_result+0x718/0x748 [cfg80211]
+[26420.679269]  cfg80211_process_wdev_events+0x174/0x198 [cfg80211]
+[26420.679341]  cfg80211_process_rdev_events+0x38/0x60 [cfg80211]
+[26420.679415]  cfg80211_event_work+0x30/0x50 [cfg80211]
+[26420.679491]  process_one_work+0x158/0x3d0
+[26420.679502]  worker_thread+0x190/0x318
+[26420.679508]  kthread+0x11c/0x128
+[26420.679513]  ret_from_fork+0x10/0x20
+[26420.679519] ---[ end trace 0000000000000000 ]---
+[26420.681191] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+[26420.682365] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+[46791.307550] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+[46996.790977] brcmfmac: brcmf_cfg80211_set_power_mgmt: power save enabled
+[47141.001732] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+== at end 2026-11-23T05:27:31+02:00
+[   10.020117] vc4-drm gpu: [drm] Cannot find any crtc or sizes
+[   10.309980] Bluetooth: hci0: BCM: chip id 107
+[   10.310205] Bluetooth: hci0: BCM: features 0x2f
+[   10.311219] Bluetooth: hci0: BCM4345C0
+[   10.311224] Bluetooth: hci0: BCM4345C0 (003.001.025) build 0000
+[   10.409330] Bluetooth: hci0: BCM4345C0 'brcm/BCM4345C0.raspberrypi,4-model-b.hcd' Patch
+[   10.420364] brcmfmac: F1 signature read @0x18000000=0x15264345
+[   10.423581] brcmfmac: brcmf_fw_alloc_request: using brcm/brcmfmac43455-sdio for chip BCM4345/6
+[   10.423853] usbcore: registered new interface driver brcmfmac
+[   10.661082] brcmfmac: brcmf_c_process_txcap_blob: no txcap_blob available (err=-2)
+[   10.661455] brcmfmac: brcmf_c_preinit_dcmds: Firmware: BCM4345/6 wl0: Aug 29 2023 01:47:08 version 7.45.265 (28bca26 CY) FWID 01-b677b91b
+[   10.669707] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+[   11.122162] Bluetooth: hci0: BCM: features 0x2f
+[   11.123420] Bluetooth: hci0: BCM43455 37.4MHz Raspberry Pi 3+-0190
+[   11.123425] Bluetooth: hci0: BCM4345C0 (003.001.025) build 0382
+[   11.176785] Adding 524284k swap on /var/swap.  Priority:-2 extents:4 across:1327100k SS
+[   11.445863] Bluetooth: BNEP (Ethernet Emulation) ver 1.3
+[   11.445880] Bluetooth: BNEP filters: protocol multicast
+[   11.445891] Bluetooth: BNEP socket layer initialized
+[   11.449161] Bluetooth: MGMT ver 1.23
+[   11.462614] NET: Registered PF_ALG protocol family
+[   12.562033] bcmgenet fd580000.ethernet: configuring instance for external RGMII (RX delay)
+[   12.562776] bcmgenet fd580000.ethernet eth0: Link is Down
+[   12.598244] brcmfmac: brcmf_cfg80211_set_power_mgmt: power save enabled
+[  943.146444] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+[  943.220428] warning: `iwconfig' uses wireless extensions which will stop working for Wi-Fi 7 hardware; use nl80211
+[ 1148.082333] brcmfmac: brcmf_cfg80211_set_power_mgmt: power save enabled
+[ 1151.329682] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+[ 1784.571489] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+[ 1989.745641] brcmfmac: brcmf_cfg80211_set_power_mgmt: power save enabled
+[ 1992.937141] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+[ 2037.058297] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+[ 3082.904033] brcmfmac: brcmf_cfg80211_set_power_mgmt: power save enabled
+[ 3086.103213] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+[13622.008524] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+[13887.735344] brcmfmac: brcmf_cfg80211_set_power_mgmt: power save enabled
+[13890.945924] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+[21787.259817] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+[21992.601127] brcmfmac: brcmf_cfg80211_set_power_mgmt: power save enabled
+[21995.821010] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+[22141.559908] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+[26417.490723] brcmfmac: brcmf_cfg80211_set_power_mgmt: power save enabled
+[26420.678576] ------------[ cut here ]------------
+[26420.678590] WARNING: CPU: 1 PID: 214 at net/wireless/sme.c:848 __cfg80211_connect_result+0x718/0x748 [cfg80211]
+[26420.678735] Modules linked in: cmac algif_hash aes_arm64 aes_generic algif_skcipher af_alg bnep brcmfmac_wcc binfmt_misc brcmfmac vc4 hci_uart btbcm brcmutil snd_soc_hdmi_codec bluetooth drm_display_helper cec drm_dma_helper cfg80211 bcm2835_v4l2(C) ecdh_generic bcm2835_isp(C) bcm2835_codec(C) v3d snd_soc_core bcm2835_mmal_vchiq(C) rpi_hevc_dec ecc vc_sm_cma(C) v4l2_mem2mem gpu_sched videobuf2_vmalloc videobuf2_dma_contig snd_bcm2835(C) snd_compress videobuf2_memops drm_shmem_helper snd_pcm_dmaengine videobuf2_v4l2 rfkill videodev snd_pcm libaes drm_kms_helper videobuf2_common raspberrypi_hwmon snd_timer mc raspberrypi_gpiomem snd nvmem_rmem uio_pdrv_genirq uio drm fuse drm_panel_orientation_quirks backlight dm_mod ip_tables x_tables ipv6 i2c_brcmstb
+[26420.678863] CPU: 1 UID: 0 PID: 214 Comm: kworker/u16:1 Tainted: G         C         6.12.93+rpt-rpi-v8 #1  Debian 1:6.12.93-1+rpt1
+[26420.678871] Tainted: [C]=CRAP
+[26420.678874] Hardware name: Raspberry Pi 4 Model B Rev 1.4 (DT)
+[26420.678878] Workqueue: cfg80211 cfg80211_event_work [cfg80211]
+[26420.678956] pstate: 40000005 (nZcv daif -PAN -UAO -TCO -DIT -SSBS BTYPE=--)
+[26420.678961] pc : __cfg80211_connect_result+0x718/0x748 [cfg80211]
+[26420.679036] lr : __cfg80211_connect_result+0x710/0x748 [cfg80211]
+[26420.679108] sp : ffffffc0812cbcc0
+[26420.679111] x29: ffffffc0812cbce0 x28: 0000000000000000 x27: 0000000000000000
+[26420.679120] x26: 0000000000000000 x25: 0000000000000000 x24: dead000000000100
+[26420.679128] x23: ffffff8082bf9018 x22: ffffff8082bf9379 x21: 0000000000000000
+[26420.679136] x20: ffffff804254a008 x19: ffffff8082bf9018 x18: 0000000000000000
+[26420.679144] x17: 0000000000000000 x16: ffffffd525dd4eb8 x15: 0808163d00000000
+[26420.679152] x14: 0000000000000000 x13: 0000000000000000 x12: f6baa07102620001
+[26420.679160] x11: a4270000a4030088 x10: 010102f2500018dd x9 : ffffffd50a76c208
+[26420.679168] x8 : ffffff804105f8e9 x7 : 000000000000f6ba x6 : 000000000000ce75
+[26420.679175] x5 : ffffff80456ad370 x4 : fffffffeff9c7902 x3 : 0000000000000000
+[26420.679183] x2 : 0000000000000000 x1 : 0000000000000000 x0 : 0000000000000000
+[26420.679191] Call trace:
+[26420.679195]  __cfg80211_connect_result+0x718/0x748 [cfg80211]
+[26420.679269]  cfg80211_process_wdev_events+0x174/0x198 [cfg80211]
+[26420.679341]  cfg80211_process_rdev_events+0x38/0x60 [cfg80211]
+[26420.679415]  cfg80211_event_work+0x30/0x50 [cfg80211]
+[26420.679491]  process_one_work+0x158/0x3d0
+[26420.679502]  worker_thread+0x190/0x318
+[26420.679508]  kthread+0x11c/0x128
+[26420.679513]  ret_from_fork+0x10/0x20
+[26420.679519] ---[ end trace 0000000000000000 ]---
+[26420.681191] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+[26420.682365] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+[46791.307550] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+[46996.790977] brcmfmac: brcmf_cfg80211_set_power_mgmt: power save enabled
+[47141.001732] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+[48517.579843] brcmfmac: brcmf_cfg80211_set_power_mgmt: power save enabled
+[48520.765834] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting

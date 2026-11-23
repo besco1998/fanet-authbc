@@ -150,6 +150,31 @@ excecute the plan and give me the results". The plan was approved in plan mode. 
 * A `pgrep` check matched its own command line, twice. A pattern only a running session can
   match is now used.
 
+# 2026-11-23 — Mohamed's last decisions of the phase; p12 into main; W1s, and U3 closed
+
+**Decisions** (DECISIONS 2026-11-23): one last session, W1s, with a fixed end; U3 closes after it
+whatever the outcome; the thesis gets all five results and a new chapter for the unified model
+(placement approved, drafting on `main` only, U8); `p12-unified-model` merged into `main` now. I
+fast-forwarded `main` to p12's CI-green `2713629e` on his instruction; PRs #1 and #2 then showed as
+merged. While registering, the curve's step 10 turned out to fail the same test as step 15 (pi-A's
+link 5.73 %); asked, Mohamed made it a rule for every step (≤ 1 % single-sender loss) and added a
+negative-side step with pi-B at 18 dBm.
+
+**The kit:** `chip_check.sh` before every window (a board out of the cell, or a sender whose last
+window sent nothing, stops its own windows). **Known before the session, and disclosed:** the
+re-derived windows already fail W1p's 145 B point, and the predicted loss does not depend on the
+frame length, so part B's loss nearly repeated that test.
+
+**W1s** (1 m triangle, 05:06–05:27, valid, no chip stop). A: the curve not used, 2 of 3 scored
+steps held. Δ was negative at every step (−4 to −7 dB; W1q's +7 at equal power reversed in the
+same 1 m legs), so only the mirror was tested; q_A was negative at pi-A 10 dBm. B: neither family;
+the window is not identifiable without a frame sniffer; the loss lies between the families, the
+rate just below both. C: d/c = 0.60, unresolved, recorded as an unexplained property of the
+BCM43430. My independent recompute, importing no project code, matched every value. Seen after
+scoring: 37–46 % of the Pi 4s' gaps sit at DIFS with no backoff, so no board's gaps fit DIFS + a
+uniform backoff, the model both the part C statistic and the cycle-to-W step assumed. **U3 is
+closed.**
+
 # 2026-11-22 — W1q tagged; U5's note in ch. 10, narrowed on insertion
 
 **Mohamed confirmed W1q's fixed 15 dBm** and approved the note's wording; W1q is tagged.

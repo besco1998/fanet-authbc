@@ -190,3 +190,119 @@ random backoff.
 * **W1p has saturated single-sender gaps for every board.** Their medians and IQRs were not computed
   before this registration.
 * No session has used 345 B, pi-B at 18 dBm, or pi-A at 13, 11 or 10 dBm.
+
+## Outcome — added 2026-11-23, after the session; nothing above this line was changed
+
+* **The session:** `results/hw/channel24/w1s_2026-11-23`, windows 05:06:26–05:27:22, in the 1 m
+  triangle (`LAYOUT.md`). All 42 windows ran on every board, and every board reverted. Scored with
+  `python analysis/w1s.py --score results/hw/channel24/w1s_2026-11-23`
+  (`results/raw/w1s_w1s_2026-11-23.csv`).
+* **The preflight:** `w1s_2026-11-23_pre` came back GO, with cycles of 2 054.9, 2 090.7 and
+  2 309.2 µs.
+
+### Validity — held
+
+* Frame burst read 0 before and after on all three boards.
+* **No chip stop.**
+* No board throttled.
+* **The six rate checks** were all in band:
+  * pi-A 2 053.5 and 2 068.9 µs;
+  * pi-B 2 130.5 and 2 091.9 µs;
+  * the Pi 3 2 325.2 and 2 327.2 µs.
+* **Every power read back exactly:** pi-A at 15, 13, 11 and 10 dBm; pi-B at 15, **18** and 15 dBm.
+
+### Part A — the curve is not used
+
+| step | pi-A / pi-B | Δ (halfway) | q_A | q_B | worst single-sender loss | band (mirrored) | held |
+|---|---|---|---|---|---|---|---|
+| anchor | 15 / 15 dBm | **−5 dB** (W1q: +7) | 0.055 | 0.966 | 0.27 % | — | reported (drift) |
+| 13 | 13 / 15 dBm | −4 dB | 0.008 | 0.978 | 0.64 % | q_A −0.021…0.105, q_B 0.813…0.987 | **yes** |
+| 11 | 11 / 15 dBm | −5 dB | 0.040 | 0.986 | 0.27 % | q_A −0.017…0.046, q_B 0.923…0.999 | **yes** |
+| 10 | 10 / 15 dBm | −7 dB | **−0.106** | 0.980 | 0.27 % | q_A −0.002…0.050, q_B 0.947…1.005 | **no** (q_A) |
+| negative | 15 / 18 dBm | −4 dB | 0.018 | 0.978 | **1.09 %** (pi-A at pi-B) | — | not scored (link) |
+
+* **2 of the 3 scored steps held, so the curve is not used.** As registered, the thesis states
+  W1q's scored result alone (5 of 6).
+* **The failure:** at pi-A 10 dBm, q_A was negative in all three windows (−0.08 to −0.12), with
+  every link at or below 0.27 %. The Pi 3 lost more of pi-A's frames than collisions and link loss
+  account for, as in W1q's step 10.
+* **Every scored step had Δ < 0, so only the mirrored curve was tested.** The direct curve, Δ ≥ 0,
+  was not tested at all, because pi-B was the louder sender at every step, including at equal
+  power.
+* **The negative step:** pi-B read back 18.00 dBm, but pi-A's link alone (1.09 %) failed
+  Mohamed's ≤ 1 % criterion, so the step was not scored.
+
+### Part B — neither family; the window is not identifiable without a frame sniffer
+
+| | measured, 6 windows (95 % interval) | σ 20/DIFS 50, W 17, 21 | σ 9/DIFS 28, W 40, 50 |
+|---|---|---|---|
+| pair loss | **0.1019** (0.0873–0.1166) | 0.1227: outside | 0.0686: outside |
+| frames/s on air per sender | **145.6** (144.2–147.0) | 149.5: outside | 145.9: inside |
+| consistent | | **no** | **no** (loss) |
+
+* **The window is recorded as not identifiable without a frame sniffer** (Mohamed, 2026-11-23).
+* **Bracketed? No, by the registered definition.** The loss lies between the two families
+  (0.0686 < 0.1019 < 0.1227), but the mean rate, 145.6, lies just below both (145.9, 149.5). The
+  rate is 0.3 frames/s below σ 9's, inside the measured interval.
+* **The links alone at 345 B,** 50 frames/s: pi-A lost 0.36 % at pi-B and 0.09 % at the Pi 3; pi-B
+  lost 0.00 % at pi-A and 0.09 % at the Pi 3.
+* All 6 pair windows were usable.
+
+### Part C — unresolved: recorded as an unexplained property of the BCM43430
+
+| comparison (at the common receiver) | Pi 3 median / IQR (µs) | other median / IQR (µs) | d (µs) | c (µs) | d/c | verdict |
+|---|---|---|---|---|---|---|
+| **against pi-A, at pi-B (primary)** | 308.3 / 226.7 | 107.7 / 184.1 | **158.1** | **265.0** | **0.60** | **unresolved** (between ⅓ and ⅔) |
+| against pi-B, at pi-A (reported) | 309.0 / 227.1 | 73.6 / 157.7 | 166.0 | 215.0 | 0.77 | reported |
+
+* Validity held: 0.06–0.11 % of gaps negative, against a 5 % limit.
+* **As registered, the Pi 3's extra time per frame is recorded as an unexplained property of the
+  BCM43430** (Mohamed, 2026-11-23).
+
+### The independent check
+
+* A separate script recomputed every part from the raw files, importing no project code. It counts
+  sequence lists, reads the halfway readings itself, and takes the gaps from the per-frame
+  timestamp files.
+* It gave the same values to the printed precision: every step's Δ, q_A, q_B and worst link; the
+  pair's loss and rate with their intervals; and each board's median, IQR and d.
+* The same script reproduces W1q's five steps and W1p's pair exactly.
+
+### My expectations, against the outcome
+
+* **A, "the steps at +5 and +2 dB hold":** not testable as stated. Δ came out negative at every
+  step. Two of the three mirrored steps held, and the one at −7 dB failed.
+* **B, "neither family is consistent; the loss lies between them; the rate is open":** right. The
+  rate fell just below both, as at 145 B.
+* **C, "d is a large part of c":** partly. d/c = 0.60, just short of ⅔.
+
+### Seen after scoring — not a result
+
+* **The triangle was not the same radio geometry as W1q's.**
+  * At 15 dBm, pi-A read −59 dBm at the Pi 3 (W1q: −41) and pi-B read −54 (W1q: −48), so Δ at
+    equal power turned from +7 to −5 dB.
+  * Mohamed set the same 1 m legs. The boards' orientation or exact placement differs, and was not
+    recorded.
+* **The halfway reading barely followed the set power.**
+  * pi-A's reading fell 0, 0, 2 dB as its power fell 2, 4, 5 dB. pi-B's did not move when raised
+    from 15 to 18 dBm (−54 in both).
+  * The "after" readings (−53 to −58 dBm) show another source on the channel at a similar level.
+  * So the one reading per window is a weak measure of a sender's level here.
+* **No board's gaps fit "DIFS + a uniform backoff"**, the model behind both part C's statistic and
+  part B's windows:
+  * pi-A: 37 % of its gaps lie in the 40–60 µs bin, and pi-B: 46 %. Both have a sharp minimum at
+    44–47 µs, about DIFS with no backoff, and a tail to about 2 ms (99th percentile 2.0–2.3 ms).
+  * A sender drawing a backoff from 17 or more slots would put about 6 % or less in that bin.
+  * The Pi 3 has no such peak: its 1st percentile is 89 µs and its distribution is broad.
+  * Their sharp minimum, 44–47 µs, lies nearer σ 20's DIFS (50 µs) than σ 9's (28 µs). The gap's
+    absolute level rests on the assumed airtime (1 864 µs, long preamble), so this is noted, not
+    used.
+  * So median − IQR is negative for the Pi 4s (−76, −84 µs) and does not equal DIFS. d mixes the
+    shape of the distribution with any fixed time, and is not the clean estimate the registration
+    assumed.
+  * **A hypothesis, untested:** with the redrawn sender at 600 frames/s offered, many frames reach
+    an idle medium after the previous frame's post-backoff and are sent at once. The one-sender
+    cycle then reflects the sending pattern as well as W, and the cycle-to-W step that part B (and
+    U-H, W1p, W1r) relied on would be biased.
+* **The loss does not depend on the frame length, on the hardware either:** 0.1019 at 345 B,
+  against W1p's 0.1029 at 145 B, as ns-3 predicted for a fixed W.
