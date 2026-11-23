@@ -259,3 +259,103 @@ class TestAStoppedChipStopsItsBoard:
         # only a sender's own count is carried to the next check
         assert 'PREV_SENT=$(( $(ctr tx_packets) - tp0 )); else PREV_SENT=-' in loop
         assert text.index("frameburst after the windows") < text.rindex("\nrestore")
+
+
+class TestTheSniffer:
+    """`run_sniffer2.sh` (the frame-level campaign, 2026-11-23) with stub tools: the deadman before
+    the radio is touched, monitor mode read back, the capture's span and snap length, the
+    heartbeat, and the way back."""
+
+    def _run(self, tmp_path: Path, monitor_ok: bool = True) -> tuple[str, str]:
+        stub = tmp_path / "bin"
+        stub.mkdir()
+        calls = tmp_path / "calls"
+        state = tmp_path / "type"
+        state.write_text("managed")
+        kept = "monitor" if monitor_ok else "managed"
+        bodies = {
+            "iw": (f'[ "$3 $4" = "set type" ] && {{ [ "$5" = monitor ] && echo {kept} > {state} '
+                   f'|| echo "$5" > {state}; }}; [ "$3" = info ] && printf '
+                   f'"\\ttype %s\\n\\tchannel 11 (2462 MHz)\\n" "$(cat {state})"; exit 0'),
+            "ip": "exit 0", "systemd-run": "exit 0", "systemctl": "exit 0", "pkill": "exit 0",
+            "sync": "exit 0", "modinfo": 'echo "AB12CD"',
+            "tcpdump": 'for a in "$@"; do [ "$prev" = -w ] && printf "pcap" > "$a"; prev=$a; done',
+        }
+        for name, body in bodies.items():
+            (stub / name).write_text(f'#!/bin/bash\necho "{name} $*" >>"{calls}"\n{body}\n')
+            (stub / name).chmod(0o755)
+        out = tmp_path / "s"
+        out.mkdir()
+        script = out / "run_sniffer2.sh"
+        script.write_text((CHANNEL / "run_sniffer2.sh").read_text())
+        script.chmod(0o755)
+        start = int(time.time()) + 1
+        env = {"PATH": f"{stub}:/usr/bin:/bin", "IW": "iw", "HEARTBEAT_S": "1", "MARGIN_S": "0"}
+        subprocess.run(["bash", str(script), str(start), "2"], env=env, check=False, timeout=30)
+        return (out / "sniffer.log").read_text(), calls.read_text()
+
+    def test_the_deadman_is_armed_before_the_radio_is_touched(self, tmp_path: Path) -> None:
+        _, calls = self._run(tmp_path)
+        armed = calls.index("systemd-run --on-active=")
+        assert armed < calls.index("iw dev tplink0 set type monitor")
+
+    def test_the_capture_keeps_256_bytes_and_writes_a_pcap(self, tmp_path: Path) -> None:
+        log, calls = self._run(tmp_path)
+        line = next(ln for ln in calls.splitlines() if ln.startswith("tcpdump"))
+        assert "-i tplink0 -s 256 -U -w" in line and line.split()[-1].endswith(".pcap")
+        assert "capture done: 4 bytes" in log
+
+    def test_the_heartbeat_logs_the_boot_and_the_state(self, tmp_path: Path) -> None:
+        log, _ = self._run(tmp_path)
+        beat = next(ln for ln in log.splitlines() if "heartbeat:" in ln)
+        assert "boot " in beat and "type monitor" in beat and "pcap " in beat
+
+    def test_it_ends_managed_and_logs_the_driver(self, tmp_path: Path) -> None:
+        log, calls = self._run(tmp_path)
+        assert calls.rstrip().splitlines()[-1].startswith("sync") or "set type managed" in calls
+        assert "reverted: tplink0 down and managed" in log and "module AB12CD" in log
+
+    def test_no_monitor_mode_no_capture(self, tmp_path: Path) -> None:
+        log, calls = self._run(tmp_path, monitor_ok=False)
+        assert "not in monitor mode; no capture" in log
+        assert not [ln for ln in calls.splitlines() if ln.startswith("tcpdump")]
+
+
+class TestTheSentLog:
+    """`bcast_tx.py --sendlog` (2026-11-23): one row per frame, its number and the time just before
+    `sendto`, on loopback; without the option, no file and the same summary."""
+
+    @staticmethod
+    def _send(tmp_path: Path, sendlog: bool) -> tuple[dict, Path]:
+        out, log = tmp_path / "tx.json", tmp_path / "txlog.csv"
+        cmd = [sys.executable, str(CHANNEL / "bcast_tx.py"), "--dest", "127.0.0.1",
+               "--port", "9", "--rate", "100", "--seconds", "0.3", "--bytes", "40",
+               "--out", str(out)]
+        if sendlog:
+            cmd += ["--sendlog", str(log)]
+        subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, timeout=20)
+        return json.loads(out.read_text()), log
+
+    def test_every_frame_has_its_number_and_a_rising_time(self, tmp_path: Path) -> None:
+        got, log = self._send(tmp_path, True)
+        rows = list(csv.DictReader(log.open()))
+        assert [int(r["seq"]) for r in rows] == list(range(got["sent"]))
+        t = [int(r["t_ns"]) for r in rows]
+        assert all(b > a for a, b in zip(t, t[1:], strict=False))
+        assert {r["bytes"] for r in rows} == {"40"}
+        # 100 frames/s: the median spacing is 10 ms within the sleep's jitter
+        gaps = sorted(b - a for a, b in zip(t, t[1:], strict=False))
+        assert 0.005e9 < gaps[len(gaps) // 2] < 0.02e9
+
+    def test_without_the_option_no_file_and_the_same_summary(self, tmp_path: Path) -> None:
+        got, log = self._send(tmp_path, False)
+        assert not log.exists()
+        assert set(got) == {"sent", "elapsed_s", "achieved_fps", "bytes", "rate", "redraw",
+                            "seed", "late"}
+
+    def test_the_runner_keeps_a_sent_log_and_the_boards_versions(self) -> None:
+        text = (CHANNEL / "run_window_plan2.sh").read_text()
+        assert '--sendlog "$OUT/txlog_node${NODE}_$tag.csv"' in text
+        env = text.index('log "env: kernel $(uname -r)')
+        assert env < text.index('for k in "${!WINDOWS[@]}"; do\n    read -r label')
+        assert "brcmf_c_preinit_dcmds: Firmware:" in text

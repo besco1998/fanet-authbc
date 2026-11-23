@@ -8,6 +8,10 @@ transmitters the strictly periodic schedule freezes their relative phases for a 
 two radios' clocks drift by microseconds per second, so a window would sample one phase
 configuration and say little about the mean. The contention experiment therefore uses
 `--redraw` (predictions/CONTENTION_HW_EXPECTATIONS.md).
+
+`--sendlog PATH` (the frame-level campaign, 2026-11-23) writes one row per frame: its sequence
+number, the wall-clock time in ns just before `sendto`, and its size. Off by default, so the JSON
+summary is unchanged.
 """
 import argparse
 import json
@@ -35,6 +39,7 @@ def main() -> None:
     ap.add_argument("--redraw", action="store_true",
                     help="one frame per period at a uniformly drawn instant within it")
     ap.add_argument("--seed", type=int, default=1, help="seed of the drawn instants")
+    ap.add_argument("--sendlog", default=None, help="CSV: seq, t_ns before sendto, bytes")
     a = ap.parse_args()
 
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -43,6 +48,7 @@ def main() -> None:
     period = 1.0 / a.rate
     offsets = send_offsets(int(a.seconds * a.rate), period, a.redraw, a.seed)
     sent = late = 0
+    log: list[tuple[int, int]] = []
     t0 = time.monotonic()
     deadline = t0 + a.seconds
     for offset in offsets:
@@ -53,10 +59,15 @@ def main() -> None:
             late += 1                      # the schedule fell a whole period behind
         if time.monotonic() >= deadline:
             break
+        if a.sendlog:
+            log.append((sent, time.time_ns()))
         s.sendto(f"{sent:<10}".encode() + pad, (a.dest, a.port))
         sent += 1
     elapsed = time.monotonic() - t0
     s.close()
+    if a.sendlog:
+        with open(a.sendlog, "w") as fh:
+            fh.write("seq,t_ns,bytes\n" + "".join(f"{q},{t},{a.bytes}\n" for q, t in log))
     with open(a.out, "w") as fh:
         json.dump({"sent": sent, "elapsed_s": elapsed, "achieved_fps": sent / elapsed,
                    "bytes": a.bytes, "rate": a.rate, "redraw": a.redraw, "seed": a.seed,

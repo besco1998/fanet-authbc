@@ -13,7 +13,9 @@
 #     address and for the zero address (rssi.sh), one JSON line per reading;
 #   * every received frame's kernel receive time (bcast_rx.py --timestamps);
 #   * before each window, chip_check.sh: a board no longer in the cell, or a sender whose
-#     previous window sent nothing, stops its own windows and reverts (2026-11-23).
+#     previous window sent nothing, stops its own windows and reverts (2026-11-23);
+#   * a per-frame sent log per window (bcast_tx.py --sendlog), and the board's kernel, driver
+#     and firmware at the start (the frame-level campaign, 2026-11-23).
 #
 # ⚠️ SSH arrives over wlan0. Joining the cell drops it; run unattended under nohup/systemd-run.
 #
@@ -77,6 +79,7 @@ sudo -n systemd-run --on-active=$((SESSION_S + 300)) --unit=authbc-revert \
 sudo -n systemd-run --on-active=$((SESSION_S + 600)) --unit=authbc-reboot \
     /sbin/reboot >>"$OUT/session.log" 2>&1
 log "deadmen armed: revert $((SESSION_S + 300)) s, reboot $((SESSION_S + 600)) s | node=$NODE nodes=$NODES freq=$FREQ windows=${#WINDOWS[@]} plan=$(basename "$PLAN") sha=$(sha256sum "$PLAN" | cut -c1-12)"
+log "env: kernel $(uname -r) | brcmfmac $(modinfo -F version brcmfmac 2>/dev/null) | firmware $(sudo -n dmesg 2>/dev/null | grep -m1 -oE 'brcmf_c_preinit_dcmds: Firmware: .*' | cut -c1-120)"
 
 # ---- 2. Governor, then join the cell (as run_window_plan.sh) -------------------------------
 GOV0=$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor 2>/dev/null)
@@ -170,7 +173,8 @@ for k in "${!WINDOWS[@]}"; do
     if [[ ",$senders," == *",$NODE,"* ]]; then
         python3 "$OUT/bcast_tx.py" --rate "$rate" --bytes "$bytes" --redraw \
             --seed "$((NODE * 1000 + k))" --seconds "$((sec - 3))" \
-            --out "$OUT/tx_node${NODE}_$tag.json" >>"$OUT/session.log" 2>&1
+            --out "$OUT/tx_node${NODE}_$tag.json" \
+            --sendlog "$OUT/txlog_node${NODE}_$tag.csv" >>"$OUT/session.log" 2>&1
     fi
     wait "$rx_pid"
     wait "$mid_pid"
