@@ -20,6 +20,7 @@ OUT="$(dirname "$(readlink -f "$0")")"
 IW="${IW:-/usr/sbin/iw}"
 HEARTBEAT_S="${HEARTBEAT_S:-60}"
 MARGIN_S="${MARGIN_S:-60}"
+MODULE="${MODULE:-8188eu}"       # the sniffer's driver, logged: 8188eu (the TP-Link), ath9k_htc (an AR9271)
 log() { echo "[$(date -Is)] $*" >>"$OUT/sniffer.log"; }
 boot_id() { cat /proc/sys/kernel/random/boot_id 2>/dev/null || echo unknown; }
 
@@ -48,7 +49,7 @@ lead=$((BEGIN - $(date +%s))); [ $lead -lt 0 ] && lead=0
 systemd-run --on-active=$((lead + SPAN_S + 300)) --unit=authbc-sniff2-revert \
     "$0" revert "$IFACE" >>"$OUT/sniffer.log" 2>&1
 log "deadman armed | iface=$IFACE channel=$CHANNEL begin=$BEGIN span_s=$SPAN_S boot $(boot_id)"
-log "env: kernel $(uname -r) | module $(modinfo -F srcversion 8188eu 2>/dev/null) | ko sha256 $(sha256sum "$(modinfo -n 8188eu 2>/dev/null)" 2>/dev/null | cut -c1-16)"
+log "env: kernel $(uname -r) | module $MODULE $(modinfo -F srcversion "$MODULE" 2>/dev/null) | ko sha256 $(sha256sum "$(modinfo -n "$MODULE" 2>/dev/null)" 2>/dev/null | cut -c1-16)"
 
 # ---- 2. Monitor mode, read back -------------------------------------------------------------
 ip link set "$IFACE" down

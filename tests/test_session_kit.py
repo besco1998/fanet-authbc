@@ -313,7 +313,7 @@ class TestTheSniffer:
     def test_it_ends_managed_and_logs_the_driver(self, tmp_path: Path) -> None:
         log, calls = self._run(tmp_path)
         assert calls.rstrip().splitlines()[-1].startswith("sync") or "set type managed" in calls
-        assert "reverted: tplink0 down and managed" in log and "module AB12CD" in log
+        assert "reverted: tplink0 down and managed" in log and "module 8188eu AB12CD" in log
 
     def test_no_monitor_mode_no_capture(self, tmp_path: Path) -> None:
         log, calls = self._run(tmp_path, monitor_ok=False)
