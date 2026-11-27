@@ -1,0 +1,7 @@
+# LaTeX by-products of build.sh; the sources, the generated inputs and both PDFs are tracked.
+*.aux
+*.log
+*.bbl
+*.blg
+*.out
+*.toc

@@ -1,0 +1,203 @@
+macro,value,source,where
+scRows,74,unified_model_vs_ns3.csv,analysis/score_unified_model.py
+scLawRows,67,unified_model_vs_ns3.csv,law_valid rows
+scLawIn,62,unified_model_vs_ns3.csv,|err| <= 5 %
+scRootIn,64,unified_model_vs_ns3.csv,|err| <= 5 %
+scLawMeanAbs,2.3,unified_model_vs_ns3.csv,mean |err|
+scRootMeanAbs,3.6,unified_model_vs_ns3.csv,mean |err|
+scLawSafe,60,unified_model_vs_ns3.csv,err <= 0 (model below ns-3)
+scRootSafe,72,unified_model_vs_ns3.csv,err <= 0
+scRootOut,10,unified_model_vs_ns3.csv,|err| > 5 %
+scRootOutSafe,10,unified_model_vs_ns3.csv,err < -5 % (conservative)
+scLawOut,5,unified_model_vs_ns3.csv,law: |err| > 5 %
+scLawOutSafe,4,unified_model_vs_ns3.csv,law: err < -5 %
+scLawOptN,1,unified_model_vs_ns3.csv,law: err > +5 % (optimistic)
+scLawOptErr,+6.4,unified_model_vs_ns3.csv,"law: worst optimistic miss, cell C jitter 0/0ppm"
+scARows,66,unified_model_vs_ns3.csv,80211a
+scARootIn,60,unified_model_vs_ns3.csv,80211a
+scARootMin,\textminus{}7.9,unified_model_vs_ns3.csv,80211a
+scARootMax,+4.0,unified_model_vs_ns3.csv,80211a
+scPRows,6,unified_model_vs_ns3.csv,80211p
+scPRootIn,4,unified_model_vs_ns3.csv,80211p
+scPRootMin,\textminus{}5.9,unified_model_vs_ns3.csv,80211p
+scPRootMax,\textminus{}3.3,unified_model_vs_ns3.csv,80211p
+scBRows,2,unified_model_vs_ns3.csv,80211b
+scBRootIn,0,unified_model_vs_ns3.csv,80211b
+scBRootMin,\textminus{}7.9,unified_model_vs_ns3.csv,80211b
+scBRootMax,\textminus{}5.2,unified_model_vs_ns3.csv,80211b
+ugCells,16,ug25_scored.csv,prereg-UG25
+ugHeld,16,ug25_scored.csv,prereg-UG25
+ugMin,\textminus{}3.4,ug25_scored.csv,(G25) error
+ugMax,+0.3,ug25_scored.csv,(G25) error
+ugPoiMin,\textminus{}7.8,ug25_scored.csv,Poisson error
+ugPoiMax,\textminus{}3.6,ug25_scored.csv,Poisson error
+uhCells,4,ug25h_scored.csv,prereg-UG25H
+uhMin,+1.16,ug25h_scored.csv,(G25) error
+uhMax,+2.41,ug25h_scored.csv,(G25) error
+uhOccMin,0.82,ug25h_scored.csv,occupancy at ns-3's crossing
+uhOccMax,0.87,ug25h_scored.csv,occupancy at ns-3's crossing
+capTrials,552,ucap2_scored.csv,prereg-UCAP2
+capHeld,552,ucap2_scored.csv,prereg-UCAP2
+ufConfigs,16,uf_scored.csv,prereg-UF
+ufAvgHeld,12,uf_scored.csv,(G23)
+ufWorstHeld,2,uf_scored.csv,(G24)
+ufTwoClaims,24,uf2_scored.csv,prereg-UF2
+ufTwoHeld,24,uf2_scored.csv,prereg-UF2
+ufTwoAMin,\textminus{}0.86,uf2_scored.csv,(a)
+ufTwoAMax,\textminus{}0.12,uf2_scored.csv,(a)
+ufTwoWinMin,\textminus{}4.79,uf2_scored.csv,statistic 2
+ufTwoWinMax,\textminus{}1.30,uf2_scored.csv,statistic 2
+ufTwoPoolMin,\textminus{}1.41,uf2_scored.csv,statistic 1
+ufTwoPoolMax,\textminus{}0.15,uf2_scored.csv,statistic 1
+fsCells,12,ufs_scored.csv,prereg-UFS
+fsHeld,12,ufs_scored.csv,prereg-UFS
+lrCells,18,uc7_scored.csv,prereg-UC7
+lrHeld,12,uc7_scored.csv,prereg-UC7
+gainMaxAbs,0.9,unified_c2_scored.csv,"batching gain (G12), reported, not scored"
+ucTwoClaims,6,unified_c2_scored.csv,"prereg-UC2, law and root"
+ucTwoHeld,6,unified_c2_scored.csv,"prereg-UC2, law and root"
+udBScored,5,unified_d_scored.csv,"prereg-UD, Pb1B root"
+udBHeld,5,unified_d_scored.csv,"prereg-UD, Pb1B root"
+udDCells,9,unified_d_scored.csv,"prereg-UD, Pb1D"
+udDRootFailed,8,unified_d_scored.csv,"prereg-UD, Pb1D root"
+udDLawFailed,9,unified_d_scored.csv,"prereg-UD, Pb1D law"
+udDRootMin,\textminus{}6.3,unified_d_scored.csv,Pb1D root error
+udDRootMax,\textminus{}5.0,unified_d_scored.csv,Pb1D root error
+udBelow,18,unified_d_scored.csv,D1 crossings with the model below ns-3
+udDOneAll,18,unified_d_scored.csv,D1 crossings
+udTwoCells,6,unified_d_scored.csv,"prereg-UD, D2"
+udTwoHeld,6,unified_d_scored.csv,"prereg-UD, D2 law and root"
+gainBMaxAbs,1.9,unified_d_scored.csv,"802.11b gain (G12), reported"
+ucOneHeld,17,unified_c1_scored.csv,"terms, a, K, p"
+ucOneCases,48,unified_c1_scored.csv,"terms, a, K, p"
+ucOnePHeld,7,unified_c1_scored.csv,the total p
+ucOnePCases,8,unified_c1_scored.csv,the total p
+ucOnePMin,+2.5,unified_c1_scored.csv,the total p: model against ns-3 (%)
+ucOnePMax,+13.2,unified_c1_scored.csv,the total p: model against ns-3 (%)
+udThreeHeld,18,unified_d3_scored.csv,"terms, a, K, p"
+udThreeCases,48,unified_d3_scored.csv,"terms, a, K, p"
+udThreePHeld,0,unified_d3_scored.csv,the total p
+udThreePCases,8,unified_d3_scored.csv,the total p
+udThreePMin,+13.9,unified_d3_scored.csv,the total p: model against ns-3 (%)
+udThreePMax,+44.3,unified_d3_scored.csv,the total p: model against ns-3 (%)
+ucThreeHeld,2,unified_c34_scored.csv,prereg-UC3
+ucThreeCells,2,unified_c34_scored.csv,prereg-UC3
+ucFourRootFailed,2,unified_c34_scored.csv,"prereg-UC4, back-to-back fragments"
+ucFourCells,2,unified_c34_scored.csv,prereg-UC4
+ucFourSHeld,2,unified_c4sb_scored.csv,"prereg-UC4S, spread fragments"
+ucFourSCells,2,unified_c4sb_scored.csv,prereg-UC4S
+ucFiveBest,8,c5_d1_scored.csv,prereg-UC5D1: ns-3's best batch
+ucFivePred,8,c5_d1_scored.csv,prereg-UC5D1: the model's best batch
+wtHeld,3,w3a_w3a_2026-11-06.csv,prereg-W3a
+wtClaims,3,w3a_w3a_2026-11-06.csv,prereg-W3a
+weHeld,11,w1e_w1e_2026-11-05.csv,prereg-W1e
+wePoints,12,w1e_w1e_2026-11-05.csv,prereg-W1e
+ratioJ,3.28,w1i_w1j_2026-11-06_run.csv,"AUTHBC / per-record, hardware"
+ratioModel,3.30,w1i_w1j_2026-11-06_run.csv,"AUTHBC / per-record, model"
+ratioLo,2.97,w1i_w1j_2026-11-06_run.csv,registered band
+ratioHi,3.63,w1i_w1j_2026-11-06_run.csv,registered band
+crossAuthJ,30.5,w1i_w1j_2026-11-06_run.csv,"AUTHBC crossing, hardware"
+crossAuthModel,29.5,w1i_w1j_2026-11-06_run.csv,"AUTHBC crossing, model"
+crossPerJ,9.3,w1i_w1j_2026-11-06_run.csv,"per-record crossing, hardware"
+crossPerModel,8.9,w1i_w1j_2026-11-06_run.csv,"per-record crossing, model"
+ratioK,3.27,w1i_w1k_2026-11-06_run.csv,"AUTHBC / per-record, hardware"
+crossAuthK,30.7,w1i_w1k_2026-11-06_run.csv,"AUTHBC crossing, hardware"
+crossPerK,9.4,w1i_w1k_2026-11-06_run.csv,"per-record crossing, hardware"
+wpLoss,0.1029,w1p_w1p_2026-11-22.csv,prereg-W1p
+wpFps,262.7,w1p_w1p_2026-11-22.csv,prereg-W1p
+wpTwentyLoss,0.413,w1p_w1p_2026-11-22.csv,ns-3 prediction
+wpTwentyFps,331,w1p_w1p_2026-11-22.csv,ns-3 prediction
+wpNineLoss,0.169,w1p_w1p_2026-11-22.csv,ns-3 prediction
+wpNineFps,288,w1p_w1p_2026-11-22.csv,ns-3 prediction
+wqHeld,5,w1q_w1q_2026-11-22.csv + w1q_w1q_view.csv,prereg-W1q
+wqScored,6,w1q_w1q_2026-11-22.csv + w1q_w1q_view.csv,prereg-W1q
+wqThreeDelta,1.5,w1q_w1q_2026-11-22.csv,the 3 dB step
+wqThreeQ,0.937,w1q_w1q_2026-11-22.csv,the 3 dB step
+wrPoints,12,w1r_w1r_2026-11-22.csv,prereg-W1r
+wrInTwenty,2,w1r_w1r_2026-11-22.csv,slot 20 / DIFS 50
+wrInNine,1,w1r_w1r_2026-11-22.csv,slot 9 / DIFS 28
+wsCurveHeld,2,w1s_w1s_2026-11-23.csv,"prereg-W1s, part A"
+wsCurveScored,3,w1s_w1s_2026-11-23.csv,"prereg-W1s, part A"
+wsPairLoss,0.1019,w1s_w1s_2026-11-23.csv,"prereg-W1s, part B"
+wsPairFps,145.6,w1s_w1s_2026-11-23.csv,"prereg-W1s, part B"
+wsTwentyLoss,0.1227,w1s_w1s_2026-11-23.csv,"ns-3, re-derived windows"
+wsTwentyFps,149.5,w1s_w1s_2026-11-23.csv,"ns-3, re-derived windows"
+wsNineLoss,0.0686,w1s_w1s_2026-11-23.csv,"ns-3, re-derived windows"
+wsNineFps,145.9,w1s_w1s_2026-11-23.csv,"ns-3, re-derived windows"
+wsD,158,w1s_w1s_2026-11-23.csv,"prereg-W1s, part C"
+wsC,265,w1s_w1s_2026-11-23.csv,"prereg-W1s, part C"
+sgA,0.890,s0_s0_2026-11-23.csv,prereg-S0
+sgB,0.967,s0_s0_2026-11-23.csv,prereg-S0
+sgC,0.987,s0_s0_2026-11-23.csv,prereg-S0
+sgFalls,"2.1, 4.0, 6.5",s0_s0_2026-11-23.csv,prereg-S0
+cFloorA,50,c1_c1_2026-11-27.csv,prereg-C1 (calibration)
+cShareMinA,0.45,c1_c1_2026-11-27.csv,prereg-C1
+cShareMaxA,0.47,c1_c1_2026-11-27.csv,prereg-C1
+cShareKA,0.47,c1_c1_2026-11-27.csv,"prereg-C1, back-to-back"
+cWminA,13,c1_c1_2026-11-27.csv,prereg-C1
+cWmaxA,13,c1_c1_2026-11-27.csv,prereg-C1
+cFloorB,50,c1_c1_2026-11-27.csv,prereg-C1 (calibration)
+cShareMinB,0.45,c1_c1_2026-11-27.csv,prereg-C1
+cShareMaxB,0.49,c1_c1_2026-11-27.csv,prereg-C1
+cShareKB,0.48,c1_c1_2026-11-27.csv,"prereg-C1, back-to-back"
+cWminB,13,c1_c1_2026-11-27.csv,prereg-C1
+cWmaxB,13,c1_c1_2026-11-27.csv,prereg-C1
+cFloorC,93,c1_c1_2026-11-27.csv,prereg-C1 (calibration)
+cShareMinC,0.03,c1_c1_2026-11-27.csv,prereg-C1
+cShareMaxC,0.04,c1_c1_2026-11-27.csv,prereg-C1
+cShareKC,0.03,c1_c1_2026-11-27.csv,"prereg-C1, back-to-back"
+cWminC,22,c1_c1_2026-11-27.csv,prereg-C1
+cWmaxC,25,c1_c1_2026-11-27.csv,prereg-C1
+cSlope,8.00,c1_c1_2026-11-27.csv,airtime fit
+cInterA,242,c1_c1_2026-11-27.csv,airtime fit
+cInterC,285,c1_c1_2026-11-27.csv,airtime fit
+fsGFiveMin,35,ufs_scored.csv,"(G5) over ns-3's loss, 3-5 stations (%)"
+fsGFiveMax,77,ufs_scored.csv,"(G5) over ns-3's loss, 3-5 stations (%)"
+weMissRatio,1.44,w1e_w1e_2026-11-05.csv,"the miss, AB at 131/s: measured over predicted"
+weMissTop,1.40,w1e_w1e_2026-11-05.csv,the band's top over predicted
+crossAuthErr,+3.3,w1i_w1j_2026-11-06_run.csv,AUTHBC: hardware over the model (%)
+crossPerErr,+4.1,w1i_w1j_2026-11-06_run.csv,per-record: hardware over the model (%)
+ratioErr,\textminus{}0.7,w1i_w1j_2026-11-06_run.csv,ratio: hardware over the model (%)
+twPiThreeLo,2.4,w1r_w1r_2026-11-22.csv,"AC, BC: hardware / ns-3, min"
+twPiThreeHi,5.0,w1r_w1r_2026-11-22.csv,"AC, BC: hardware / ns-3, max"
+twSessMax,2.0,w1r + w1e scored files,"AC, BC: W1r over W1e, max"
+twTrioLo,0.40,w1r_predictions + w1e/w1r,"trio, u 0.5: min (%)"
+twTrioHi,0.66,w1r_predictions + w1e/w1r,"trio, u 0.5: max (%)"
+wkRatioLaw,3.6,unified_model_vs_ns3.csv,"capacity of D over C, law"
+wkRatioNs,3.5,unified_model_vs_ns3.csv,"capacity of D over C, ns3"
+snifMissMin,0.7,session folders + c1_c1_2026-11-27.csv,"the sniffer's smallest miss, any window (%)"
+snifMissMax,11.0,session folders + c1_c1_2026-11-27.csv,"the sniffer's largest miss, any window (%)"
+kRhoA,0.595,authbc.models.unified_capacity,"rho* at 802.11a, eps 0.05"
+kTauA,98,authbc.models.unified_capacity,tau0 at 802.11a (us)
+cExtraC,43,c1_c1_2026-11-27.csv,the Pi 3's floor less the Pi 4s'
+evRootWorst,6.5,docs/revision/unified_closed_form_model.md,"§6: the root of (G5), N ≥ 19, worst error (%)"
+evRootSmall,9,docs/revision/unified_closed_form_model.md,"§6: the root of (G5), N ≈ 8–14, worst error (%)"
+evSafe,44,docs/revision/unified_closed_form_model.md,§6: cases on the conservative side
+evCases,45,docs/revision/unified_closed_form_model.md,§6: cases
+evSatErr,3,docs/revision/unified_closed_form_model.md,"§6: the saturation law (G11) against the event simulation, worst (%)"
+evGainErr,2,docs/revision/unified_closed_form_model.md,"§6: the gain (G12) against the event simulation, worst (%)"
+evCapErr,3.1,docs/revision/unified_closed_form_model.md,§8.4: the law with the capture target against the event simulation (%)
+evRuleVar,5,docs/revision/unified_closed_form_model.md,§6: capacity moves by up to this with the reading of the access rule (%)
+evRatioVar,2,docs/revision/unified_closed_form_model.md,§6: the design ratio moves by up to this with the rule (%)
+evVarS,1,docs/revision/unified_closed_form_model.md,"§7: ns-3's rule (variant S) against rule A, capacity (%)"
+fragBurstMin,1.7,docs/revision/unified_closed_form_model.md,"§5 R4: back-to-back fragments' loss over (G5), ns-3 (times)"
+fragBurstMax,2.3,docs/revision/unified_closed_form_model.md,"§5 R4: back-to-back fragments' loss over (G5), ns-3 (times)"
+fragCapMin,35,docs/revision/unified_closed_form_model.md,"§5 R4: capacity below (G18), back to back (%)"
+fragCapMax,62,docs/revision/unified_closed_form_model.md,"§5 R4: capacity below (G18), back to back (%)"
+fragSpread,3,docs/revision/unified_closed_form_model.md,"§5 R4: spread fragments against (G18), ns-3 (%)"
+burstFixMin,63,docs/revision/unified_closed_form_model.md,§5 R4 / §10.2: share of the excess removed by the burst correction (%)
+burstFixMax,75,docs/revision/unified_closed_form_model.md,§5 R4 / §10.2: share of the excess removed by the burst correction (%)
+keyRatio,0.88,docs/revision/unified_closed_form_model.md,"§5 R3: B(eps_r)/B(eps) for DCF at eps 0.05, r = 2"
+keyShare,12,docs/revision/unified_closed_form_model.md,§5 R3: the share of channel cost a key record must exceed (%)
+capGain,15,docs/revision/unified_closed_form_model.md,"§8.4: capacity gain from capture at 4 dB, event simulation (%)"
+smallMin,5,docs/revision/unified_closed_form_model.md,"§7: the Poisson model's deficit, periodic, 5-11 stations (%)"
+smallMax,11,docs/revision/unified_closed_form_model.md,"§7: the same, upper end (%)"
+fOneFortyMin,3.6,docs/revision/unified_closed_form_model.md,"§10.3 (F140): (G25)'s error with capture, occupancy 0.84-0.87 (%)"
+fOneFortyMax,5.5,docs/revision/unified_closed_form_model.md,"§10.3 (F140): the same, upper end (%)"
+evTwoFrame,95,docs/revision/unified_closed_form_model.md,§8.1: collided frames in two-frame collisions at capacity (%)
+rQueueErr,0.07,docs/revision/unified_closed_form_model.md,"§10.1: R against a queue simulation, 8 or more others"
+wrWinPi,4,predictions/W1r.md,predictions/W1r.md: W of pi-A and pi-B inferred at slot 20 us
+wrWinPiThree,51,predictions/W1r.md,predictions/W1r.md: W of the Pi 3 inferred at slot 20 us
+sZeroMeanMin,0.03,predictions/S0.md,sniffer's mean interval against the cycle (%)
+sZeroMeanMax,0.25,predictions/S0.md,sniffer's mean interval against the cycle (%)
+wOneBErr,1,analysis/dsss_hardware.py,W1b: the event model against ns-3 (%)

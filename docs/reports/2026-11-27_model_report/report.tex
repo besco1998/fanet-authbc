@@ -1,0 +1,1377 @@
+% The model report: one source, two versions.
+%   supervisor version (default):  pdflatex -jobname=report_supervisor report
+%   full version:                  pdflatex -jobname=report_full "\def\FULL{1}\input{report}"
+% build.sh builds both. Every result comes from numbers.tex or tables/ (analysis/report_numbers.py);
+% every figure from analysis/report_figures.py; every symbol from notation.tex.
+\documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{textcomp}
+\usepackage[margin=2.3cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs,tabularx,array,longtable}
+\usepackage{graphicx}
+\usepackage[table]{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning}
+\usepackage{enumitem}
+\usepackage[font=small,labelfont=bf]{caption}
+\usepackage[hidelinks]{hyperref}
+\usepackage{cleveref}
+\usepackage{placeins}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.5em}
+\setlist{itemsep=0.15em,topsep=0.3em}
+\newif\iffull
+\ifdefined\FULL\fulltrue\fi
+\input{notation}
+\input{numbers}
+\graphicspath{{figures/}}
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}
+\newcommand{\plain}[1]{\par\smallskip\noindent\fcolorbox{black!20}{black!3}{\parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule}{\small\textbf{In plain words.} #1}}\par\smallskip}
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.8}
+\renewcommand{\textfraction}{0.07}
+\renewcommand{\floatpagefraction}{0.8}
+\crefname{equation}{}{}
+
+\title{\textbf{A Closed-Form Capacity Model for Authenticated, Batched UAV Telemetry over 802.11}\\[0.4em]
+\large The model, its sources, and its validation in simulation and on hardware\\[0.2em]
+\normalsize\iffull Full version\else Report for the supervisor\fi}
+\author{Mohamed A. Farouk}
+\date{27 November 2026}
+
+\begin{document}
+\maketitle
+
+\iffull\tableofcontents\newpage\fi
+
+% ==================================================================================================
+\section{Summary}
+% ==================================================================================================
+
+\textbf{The question.} A swarm of UAVs shares one 802.11 channel. Each UAV sends telemetry
+\emph{records} at a rate $\Lam$, packs $b$ of them into one \emph{frame}, signs the frame once, and
+must deliver it before a freshness deadline $\Dmax$. How many UAVs, $\Nmax$, can share the channel
+before the share of frames lost exceeds a target $\eps$ (for example 5\,\%)?
+
+\textbf{The model in one paragraph.} Every shared resource is charged a fixed cost per frame, $\Phi$,
+and a cost per record, $\Psi$, against a budget $\Bud$. For the 802.11 channel, the budget and the
+per-frame cost are computed, not fitted, from the standard's timing (slot, DIFS, contention window)
+and the loss target. The capacity is then one closed form, \eqref{eq:G1}. Three extensions bring it
+closer to real swarms: \emph{capture} (a receiver can still decode the stronger of two overlapping
+frames), the \emph{sending pattern} (telemetry timers are periodic, not random), and the
+\emph{half-duplex} effect (a station that is sending cannot receive).
+
+\textbf{What is validated, and what is not.} Every test below was registered before it ran: the
+prediction and its tolerance were committed and tagged first (\cref{sec:method}).
+
+\begin{table}[htbp]
+\centering\small
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3.3cm}LL}
+\toprule
+Part of the model & In simulation (ns-3) & On hardware (Raspberry Pis, 802.11b) \\
+\midrule
+Loss \eqref{eq:G5} and capacity \eqref{eq:G9} &
+\textbf{held}: the root of \eqref{eq:G5} within $\pm5\,\%$ at \scRootIn{} of \scRows{} stored
+capacities; all \scRootOut{} misses on the safe side &
+\textbf{not yet tested directly} (test V1). The event simulation of the same access rule held at
+\weHeld{} of \wePoints{} contention points (W1e) \\
+Small swarms at 802.11b &
+\textbf{failed} $\pm5\,\%$ at \udDRootFailed{} of \udDCells{} cells (\udDRootMax{} to \udDRootMin\,\%,
+safe side); corrected by \eqref{eq:G25}, then tested on new cells & -- \\
+Gain of batching \eqref{eq:G12} &
+\textbf{matched} ns-3 within \gainMaxAbs\,\% (802.11a) and \gainBMaxAbs\,\% (802.11b), reported beside capacity tests that held &
+capacity ratio of the design over per-record signing \ratioJ{} and \ratioK{} against
+\ratioModel{} (W1j, W1k) \\
+Sending pattern \eqref{eq:G25} and the few-station form &
+\textbf{held}: \ugHeld{} of \ugCells{} and \fsHeld{} of \fsCells{} new cells; optimistic by \uhMin{}
+to \uhMax\,\% past occupancy 0.78 & not separately tested \\
+Capture \eqref{eq:G22}--\eqref{eq:G24a} &
+first test \textbf{failed}; the corrected test \textbf{held} \ufTwoHeld{} of \ufTwoClaims, all on
+the safe side &
+\textbf{partly}: \wqHeld{} of \wqScored{} held; the radio captures gradually, not at ns-3's 4\,dB
+step (W1q) \\
+The radios' access timing (inputs) & the standard's values &
+\textbf{measured} (C1, calibration): slot 20\,\us, DIFS 50\,\us; about half the Pi 4s' frames are
+sent with no backoff, which the model does not include \\
+\bottomrule
+\end{tabularx}
+\caption{The validation status in one table. \Cref{sec:sim,sec:hw} explain each entry;
+\cref{tab:coverage} gives the full map.}
+\label{tab:status}
+\end{table}
+
+\textbf{What remains.} The closed form has not yet been tested against hardware directly: the
+hardware tests so far checked the access-rule model it is built on, the capacity ratio and capture.
+A direct test needs the radios' own access rule as an input, and C1 shows that the Pi 4s do not
+follow the standard's rule. The one sniffer available misses \snifMissMin--\snifMissMax\,\% of frames, so the collision
+sessions wait for a better one (on order). The model holds only where every station hears every
+other (one collision domain). \Cref{sec:next} lists every open test.
+
+\iffull\else
+\textbf{How to read this report.} \Cref{sec:system} defines the terms; \cref{sec:model} states the
+model, each equation followed by its source; \cref{sec:refs} lists the sources with their dates;
+\cref{sec:method} says how the tests were run; \cref{sec:sim,sec:hw} give the results in simulation
+and on hardware; \cref{sec:side} puts model, simulation and hardware side by side;
+\cref{sec:next} lists what remains. A full version adds the derivations, every test's table and the
+source of every number.
+\fi
+
+% ==================================================================================================
+\section{The system and the terms used}\label{sec:system}
+% ==================================================================================================
+
+A \emph{station} is one UAV's radio. It produces telemetry \emph{records} at $\Lam$ records per
+second. A \emph{frame} carries a batch of $b$ records, one header, one hash link to the previous
+frame, and one signature, so the authenticator is paid once per frame, not once per record. The
+frame must arrive within the deadline $\Dmax$, which caps the batch.
+
+All stations share one channel and use the 802.11 distributed coordination function (DCF) in
+broadcast mode: no acknowledgements and no retransmissions \cite{ieee80211std2020}. Before sending,
+a station senses the channel; if it is busy, the station waits a random number of \emph{slots}
+(its \emph{backoff}) drawn from its \emph{contention window}. Two stations whose backoffs end in the
+same slot send at the same time, and both frames are lost unless the receiver \emph{captures} the
+stronger one.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[node distance=0.55cm and 0.9cm, font=\small,
+  box/.style={draw, rounded corners=2pt, align=center, minimum height=1.05cm, text width=2.55cm, fill=black!3},
+  inp/.style={align=center, text width=2.7cm, font=\footnotesize},
+  >={Stealth[length=2mm]}]
+\node[box] (bytes) {Frame bytes\\ $\Phi_B+\Psi_B b$};
+\node[box, right=of bytes] (air) {Airtime\\ $\Tf=\Phi_T+\Psi_T b$};
+\node[box, right=of air] (loss) {Loss on the channel\\ $p(\nu)$, \eqref{eq:G5}};
+\node[box, right=of loss] (cap) {Capacity\\ $\Nmax$, \eqref{eq:G1}};
+\draw[->] (bytes) -- (air); \draw[->] (air) -- (loss); \draw[->] (loss) -- (cap);
+\node[inp, above=of bytes] (i1) {encoding, signature,\\ batch $b$};
+\node[inp, above=of air] (i2) {bit rate, preamble};
+\node[inp, above=of loss] (i3) {slot, DIFS, window $\Wnd$;\\ capture $q$; sending pattern};
+\node[inp, above=of cap] (i4) {loss target $\eps$;\\ deadline $\Dmax$, rate $\Lam$};
+\draw[->, black!50] (i1) -- (bytes); \draw[->, black!50] (i2) -- (air);
+\draw[->, black!50] (i3) -- (loss); \draw[->, black!50] (i4) -- (cap);
+\end{tikzpicture}
+\caption{The model's structure. Each box is a closed form; the inputs above it are the only
+quantities it needs.}
+\label{fig:structure}
+\end{figure}
+
+\begin{table}[htbp]
+\centering\small
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3.4cm}L}
+\toprule
+Term & Meaning in this report \\
+\midrule
+station & one UAV's radio; on the hardware, one board \\
+record, frame, batch $b$ & one telemetry sample; one 802.11 transmission; the number of records in a frame \\
+loss $p$ & the share of a sender's frames that a receiver does not receive (delivery is $1-p$) \\
+collision loss $\pcoll$ & the part of the loss caused by overlapping frames: \eqref{eq:G5} \\
+link loss $\ell$ & the loss on a link when no other station sends \\
+capture $q$ & the share of collided frames a receiver still decodes \\
+capacity $\Nmax$ & the largest number of stations at which the loss stays at or below $\eps$ \\
+occupancy $\occ=Nf\Tf$ & the share of time the swarm's frames are on air ($f$ frames per second per station) \\
+event simulation & one of the project's own simulations of the access rule, sharing no code with ns-3 \\
+registered test & a test whose prediction, tolerance and stop rules were committed and tagged before it ran \\
+held, failed & inside, outside the registered tolerance \\
+safe side & the model's capacity is below the measured one (the model is conservative) \\
+calibration, validation & a calibration measures inputs; a validation tests predictions made from them; no session does both \\
+\bottomrule
+\end{tabularx}
+\caption{The terms used throughout.}
+\label{tab:terms}
+\end{table}
+
+% ==================================================================================================
+\section{The model}\label{sec:model}
+% ==================================================================================================
+
+The equations keep the numbers (G1)--(G25) of the model's working document, so that the two can be
+read side by side. After each equation, \emph{Source} names the published work it comes from, or
+says that it is derived in this project and names the closest prior work.
+
+\subsection{The result}
+
+For every shared resource $j$ (the channel, the receiver's processor), a frame of $b$ records costs
+$\Phi_j+\Psi_j b$ against a budget $\Bud_j$. The largest swarm is
+\begin{equation}
+\Nmax = 1+\min_j \frac{\Bud_j\,\bstar}{\Lam\,(\Phi_j+\Psi_j\bstar)}, \qquad
+\bstar=\min\bigl\{\lfloor \Lam(\Dmax-\Sq)\rfloor,\ \bM\bigr\}. \tag{G1}\label{eq:G1}
+\end{equation}
+\src{derived in this project. The batch rule $\bstar$ is the deadline and frame-size cap of the
+thesis (chapter 4); the per-resource form is an accounting identity.}
+The batch is the largest one the deadline allows ($\Sq$ is the channel and verification delay), or
+the largest that fits a frame, $\bM$. Everything below defines $\Bud$, $\Phi$ and $\Psi$ for a given
+link and design.
+
+\plain{Each station needs a share of the channel. A frame has a fixed price (its header, its
+signature, the time the protocol spends around it) and a price per record. The capacity is the
+budget divided by what one station spends per second; batching spreads the fixed price over more
+records.}
+
+\subsection{Fixed cost per frame, cost per record}
+
+Every resource has the same shape: a frame of $b$ records costs $\Phi+\Psi b$, so one record costs
+\begin{equation}
+C(b)=\frac{\Phi}{b}+\Psi. \tag{G2}\label{eq:G2}
+\end{equation}
+\src{derived in this project (an accounting identity).}
+A frame's airtime is affine in the batch, $\Tf(b)=\Phi_T+\Psi_T b$, and the frame rate is
+$f=\Lam/b$. The design choices only move a cost between the two columns: one signature per frame
+moves the signature from $\Psi$ to $\Phi$; the batch then decides how much a per-frame cost weighs
+per record ($1/b$ of it).
+
+\iffull
+\begin{table}[htbp]
+\centering\small
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3.1cm}LLL}
+\toprule
+Resource & Per frame, $\Phi$ & Per record, $\Psi$ & Budget $\Bud$ \\
+\midrule
+Bytes on air & header, link, signature, key-record difference & record bytes & (accounting) \\
+Airtime & $T_{\mathrm{pre}}+8(\ell_o+\Phi_B)/\Rx$ & $8\Psi_B/\Rx$ & (accounting) \\
+Channel & $\Phi_T+\tauhat$ & $\Psi_T$ & set by the access protocol, \eqref{eq:G3} \\
+Receiver processor & decode + verify & decode + hash & utilisation $\times$ cores \\
+Duty cycle (LoRa) & $\Phi_T$ & $\Psi_T$ & the duty cycle $d$ per station \\
+\bottomrule
+\end{tabularx}
+\caption{The resources and their two costs ($T_{\mathrm{pre}}$: preamble; $\ell_o$: lower-layer
+overhead in bytes; $\Rx$: bit rate).}
+\end{table}
+\fi
+
+\subsection{The channel as a budget}
+
+Let $\nu=(N-1)f$ be the rate at which the other stations start frames. The channel is at capacity
+when its loss $p(\nu)$ reaches $\eps$. For every access protocol in \cref{tab:protocols} this
+condition takes one form:
+\begin{equation}
+\nu^{\ast}=\frac{\Bud}{\Phi_X+\Psi_X b}. \tag{G3}\label{eq:G3}
+\end{equation}
+\src{derived in this project; the rows of \cref{tab:protocols} come from
+\cite{abramson1970aloha} (ALOHA), \cite{roberts1975aloha} (slotted ALOHA),
+\cite{kleinrock1975csma} (CSMA), and \eqref{eq:G5} (802.11 DCF).}
+
+\begin{table}[htbp]
+\centering\small
+\begin{tabular}{lllll}
+\toprule
+Access protocol & Loss $p(\nu)$ & $\Bud$ & $\Phi_X$ & $\Psi_X$ \\
+\midrule
+Pure ALOHA \cite{abramson1970aloha} & $1-e^{-2\nu\Tf}$ & $\ell_\eps/2$ & $\Phi_T$ & $\Psi_T$ \\
+Slotted ALOHA \cite{roberts1975aloha} & $1-e^{-\nu\Tf}$ & $\ell_\eps$ & $\Phi_T$ & $\Psi_T$ \\
+Ideal CSMA, detection time $\delta$ \cite{kleinrock1975csma} & $1-e^{-2\delta\nu}$ & $\ell_\eps$ & $2\delta$ & $0$ \\
+802.11 broadcast DCF & \eqref{eq:G5} & $\rhostar/\kappa$ & $\Phi_T+\tauhat$ & $\Psi_T$ \\
+\bottomrule
+\end{tabular}
+\caption{One law, four protocols; $\ell_\eps=\ln\bigl(1/(1-\eps)\bigr)$. Under ALOHA only airtime
+matters; under ideal CSMA only the number of frames matters; 802.11 lies between.}
+\label{tab:protocols}
+\end{table}
+
+\plain{Whatever the protocol, the channel tolerates a fixed number of frame starts per second at
+the loss target. What differs between protocols is how much a frame's length counts against that
+number: fully under ALOHA, not at all under ideal carrier sensing, partly under 802.11.}
+
+\subsection{The loss of broadcast 802.11 DCF}
+
+\textbf{The access rules assumed} (rule set A): a frame that finds the medium idle for DIFS is sent
+at once; a frame that arrives in the DIFS after a busy period is sent at its end; a frame that
+arrives to a busy medium draws a backoff uniformly from $0\ldots\Wnd-1$ slots; a start cannot be
+sensed during its first $\delta$ (the preamble-detection time). One collision domain, no capture,
+Poisson starts. These are the standard's rules for broadcast \cite{ieee80211std2020,bianchi2000}.
+
+Three loads describe the channel: $a=\nu(\Tf-\delta)(1-p/2)$, the probability that a frame arrives
+to a busy medium; $\gamma=\nu\,\Difs$, the probability that it arrives in a DIFS gap; and
+$\eta=\nu\slot(\Wnd-1)/2$, the number of frames sent by immediate access while a deferred frame
+counts down. The mean number of frames a deferred frame contends with is
+\begin{equation}
+\Kbar=\frac{a\,(1+\gamma+2\eta)}{1-\gamma-a}, \tag{G4}\label{eq:G4}
+\end{equation}
+\src{derived in this project (a busy-period count; with $\gamma=\eta=0$ it reduces to the M/D/1
+value $a/(1-a)$). Counting the frames that wait together is the approach of \cite{cao2021dsrc} for
+periodic 802.11p broadcast.}
+and the collision loss is the sum of three mechanisms:
+\begin{equation}
+\pcoll(\nu)=\underbrace{\frac{a\Kbar}{\Wnd+\Kbar}}_{\text{same-slot tie}}
++\underbrace{\gamma\Bigl(\frac{2a}{\Wnd}+\gamma\Bigr)}_{\text{start in a DIFS gap}}
++\underbrace{2\delta\nu(1+a)}_{\text{detection window}}. \tag{G5}\label{eq:G5}
+\end{equation}
+\src{the same-slot tie of stations that found the medium busy is counted in
+\cite{machen2008,ma2009dsrc,bazzi2016beaconing,cao2021dsrc}; the busy-medium share follows
+\cite{sepulcre2022analytical}; the DIFS-gap and detection-window terms are added in this project
+(none of the four has a counterpart of the detection window).}
+Without capture or link loss, the loss is $p=\pcoll$.
+
+\textbf{What ns-3 showed.} The total of \eqref{eq:G5} holds, but its split into three causes does
+not: ns-3 counts each station's backoff from its own start, so two counters that expire in the same
+slot can start a few microseconds apart and are then lost as a detection-window collision rather
+than a tie. \eqref{eq:G5} is validated as a total, not as a breakdown of causes (test UC1:
+\ucOnePHeld{} of \ucOnePCases{} totals held, \ucOneHeld{} of \ucOneCases{} quantities overall).
+
+\plain{A frame is lost in three ways: two stations that both waited pick the same backoff slot; a
+frame that arrives just as the channel frees up goes out at once and meets another doing the same;
+or a station starts before it could hear a start a few microseconds earlier.}
+
+\iffull
+\textbf{Derivation of \eqref{eq:G4}.} Let $M$ be the number of busy periods between a deferred
+frame's arrival and its transmission, counting the one it arrived in. Each brings $a$ new deferred
+frames on average and, by symmetry, the frame meets as many that arrived before it as after it, so
+$\Kbar=a(2\,\mathbb{E}[M]-1)$. The frame is delayed by immediate-access frames during its countdown
+($\eta$), by gap frames ($\gamma$ per busy period) and by half of the frames it meets:
+\[
+\mathbb{E}[M]=1+\eta+\gamma\,\mathbb{E}[M]+\tfrac12\Kbar
+\quad\Longrightarrow\quad
+\mathbb{E}[M]=\frac{1+\eta-a/2}{1-\gamma-a},
+\]
+which gives \eqref{eq:G4}. The number of co-waiting frames is geometric rather than Poisson, so the
+probability of at least one tie is $\Kbar/(\Wnd+\Kbar)$, not $1-e^{-\Kbar/\Wnd}$. The DIFS-gap term
+pairs a gap frame with a newly deferred frame that drew counter 0 ($a/\Wnd$) or with another gap
+frame ($\gamma$); the window term counts any start followed within $\delta$ by another ($2\delta\nu$)
+and an immediate start falling within $\delta$ of a backoff expiry ($2\delta\nu a$).
+\textit{Source:} derived in this project; the busy-period argument is that of the M/G/1 queue,
+and the tie counting follows \cite{cao2021dsrc}.
+
+\textbf{Which reading of the rules ns-3 uses.} In ns-3.48 a non-QoS station sends a frame queued to
+an idle medium DIFS after its arrival (variant S of the model document), and it raises the
+carrier-sense indication only at the end of the 4\,\us{} preamble-detection window. Variant S and
+rule set A give the same capacity within \evVarS\,\% in the event simulation; across five readings
+of the standard the capacity moves by up to \evRuleVar\,\% and the ratio between two designs by up
+to \evRatioVar\,\%. A real radio's reading must be measured (\cref{sec:window}).
+\fi
+
+\subsection{The two constants: an explicit capacity law}
+
+For frames long beside the protocol times, \eqref{eq:G5} is $p_0(a)=a^2/(\Wnd-(\Wnd-1)a)$ plus a
+correction linear in $\nu$. Setting $p=\eps$ and expanding to first order gives two constants, an
+occupancy ceiling $\rhostar$ and a protocol time $\tauzero$:
+\begin{equation}
+\rhostar=\frac{-\eps(\Wnd-1)+\sqrt{\eps^2(\Wnd-1)^2+4\eps\Wnd}}{2}, \tag{G6}\label{eq:G6}
+\end{equation}
+\src{derived in this project (the root of $p_0(\rhostar)=\eps$).}
+\begin{equation}
+c_{\mathrm{eff}}=\frac{\rhostar{}^2\Wnd\bigl[(\Difs+\slot(\Wnd-1))(1-\rhostar)+\Difs\bigr]}
+{\bigl(\Wnd-(\Wnd-1)\rhostar\bigr)^2}+\frac{2\rhostar\,\Difs}{\Wnd}+2\delta(1+\rhostar), \tag{G7}\label{eq:G7}
+\end{equation}
+\src{derived in this project (the first-order part of \eqref{eq:G5} at $a=\rhostar$).}
+\begin{equation}
+\tauzero=\frac{c_{\mathrm{eff}}}{p_0'(\rhostar)},\qquad
+p_0'(\rhostar)=\frac{2\rhostar\bigl(\Wnd-(\Wnd-1)\rhostar\bigr)+(\Wnd-1)\rhostar{}^2}
+{\bigl(\Wnd-(\Wnd-1)\rhostar\bigr)^2}, \tag{G8}\label{eq:G8}
+\end{equation}
+\src{derived in this project.}
+\begin{equation}
+\Nmax-1=\frac{\rhostar}{f\bigl[\kappa(\Tf-\delta)+\tauzero\bigr]},\qquad \kappa=1-\frac{\eps}{2}. \tag{G9}\label{eq:G9}
+\end{equation}
+\src{derived in this project. The form ``capacity $\propto 1/(f(aT+c))$'' is that of the beacon-rate
+bound of \cite{bazzi2016beaconing}, solved there numerically; here both constants come from $\Wnd$,
+the slot, DIFS, $\delta$ and $\eps$, with nothing fitted.}
+
+\Cref{tab:constants} gives the two constants for three standards and three loss targets. At
+802.11a and $\eps=0.05$, every frame effectively occupies the channel for about \kTauA\,\us{} beyond
+its own airtime: the cost that binds is the frame, not its bytes.
+
+\begin{table}[htbp]
+\centering\small
+\input{tables/constants}
+\caption{The two constants $\rhostar$ / $\tauzero$ (\textmu s) of \eqref{eq:G6}--\eqref{eq:G8},
+computed from each standard's slot, DIFS and window and ns-3's preamble-detection time $\delta$.
+Nothing is fitted.}
+\label{tab:constants}
+\end{table}
+
+\plain{The channel can be kept busy only up to a ceiling $\rhostar$ ($\rhostar=\kRhoA$ at a
+5\,\% loss target with 802.11a's window) before ties become too frequent. On top of its own airtime,
+every frame costs a fixed protocol time $\tauzero$. The capacity is the ceiling divided by what one
+station's frames take per second.}
+
+\iffull
+\textbf{Derivation of \eqref{eq:G6}--\eqref{eq:G9}.} With $\gamma=\eta=\delta=0$, \eqref{eq:G4}
+gives $\Kbar=a/(1-a)$ and the tie term becomes
+$p_0(a)=\dfrac{a\cdot a/(1-a)}{\Wnd+a/(1-a)}=\dfrac{a^2}{\Wnd-(\Wnd-1)a}$; $p_0(\rhostar)=\eps$ is a
+quadratic in $\rhostar$ whose positive root is \eqref{eq:G6}. The protocol times enter
+\eqref{eq:G5} through $\gamma=\nu\Difs$, $\eta=\nu\slot(\Wnd-1)/2$ and $\delta$, all proportional to
+$\nu$. To first order, $p\approx p_0(a)+\nu\,c(a)$ with $c(a)=\partial p/\partial\nu$ at fixed $a$.
+For the tie term, with $D_0=\Wnd-(\Wnd-1)a$,
+\[
+\frac{\partial}{\partial\Kbar}\frac{a\Kbar}{\Wnd+\Kbar}=\frac{a\Wnd(1-a)^2}{D_0^2},\qquad
+\frac{\partial\Kbar}{\partial\gamma}=\frac{a(2-a)}{(1-a)^2},\qquad
+\frac{\partial\Kbar}{\partial\eta}=\frac{2a}{1-a},
+\]
+so that the tie term contributes $\dfrac{a^2\Wnd}{D_0^2}\bigl[(\Difs+\slot(\Wnd-1))(1-a)+\Difs\bigr]$
+per unit $\nu$; the gap term contributes $2a\Difs/\Wnd$ and the window term $2\delta(1+a)$. At
+$a=\rhostar$ this is $c_{\mathrm{eff}}$, \eqref{eq:G7}. Setting $p=\eps$ with
+$a=\rhostar+\Delta a$: $p_0'(\rhostar)\Delta a+\nu c_{\mathrm{eff}}=0$, so $a=\rhostar-\nu\tauzero$
+with $\tauzero$ of \eqref{eq:G8}. Since $a=\nu(\Tf-\delta)\kappa$ at $p=\eps$,
+$\nu\bigl[\kappa(\Tf-\delta)+\tauzero\bigr]=\rhostar$, and $\nu=(\Nmax-1)f$ gives \eqref{eq:G9}.
+\textit{Source:} derived in this project from \eqref{eq:G4}--\eqref{eq:G5}.
+\fi
+
+\subsection{A worked example}\label{sec:worked}
+
+\Cref{tab:worked} follows two of the project's 802.11a configurations through \eqref{eq:G6}--\eqref{eq:G9}
+step by step: C sends one record per 146\,B frame at 50 frames per second; D sends four records per
+173\,B frame at 12.5 frames per second. The airtimes are the ns-3 scenario's (36\,B of lower-layer
+overhead, 6\,Mb/s). The last rows compare with ns-3's crossing over 30 seeds.
+
+\begin{table}[htbp]
+\centering\small
+\input{tables/worked}
+\caption{The capacity law step by step, 802.11a at 6\,Mb/s, $\eps=0.05$. D carries the same records
+per second as C in a quarter of the frames, and its capacity is \wkRatioLaw{} times C's by the law
+and \wkRatioNs{} times in ns-3. Errors are the model's against ns-3; negative is the safe side.}
+\label{tab:worked}
+\end{table}
+
+\subsection{The capacity law, and the gain of batching}
+
+With $f=\Lam/b$, the capacity on one resource is a saturating hyperbola in the batch:
+\begin{equation}
+\Nmax(b)=1+\frac{\Bud\,b}{\Lam(\Phi+\Psi b)}, \tag{G10}\label{eq:G10}
+\end{equation}
+\src{derived in this project, from \eqref{eq:G3}.}
+\begin{equation}
+\Nmax(b)-1=\Ninf\frac{b}{b+\beta},\qquad \Ninf=\frac{\Bud}{\Lam\Psi},\qquad \beta=\frac{\Phi}{\Psi}. \tag{G11}\label{eq:G11}
+\end{equation}
+\src{derived in this project.}
+$\Ninf$ is the capacity if only the per-record cost existed; $\beta$, the fixed cost of a frame
+measured in records, is the batch at which half of $\Ninf$ is reached. For the channel,
+$\beta=(\Phi_T+\tauhat)/\Psi_T$. The gain over one record per frame is
+\begin{equation}
+\Gain(b)=\frac{\Nmax(b)-1}{\Nmax(1)-1}=\frac{b(1+\beta)}{b+\beta},\qquad 1\le\Gain(b)<\min\{b,\,1+\beta\}. \tag{G12}\label{eq:G12}
+\end{equation}
+\src{derived in this project.}
+With the deadline cap $b=\Lam\Dnet$ ($\Dnet=\Dmax-\Sq$):
+\begin{equation}
+\Nmax-1=\frac{\Bud\,\Dnet}{\Phi+\Psi\Lam\Dnet}. \tag{G13}\label{eq:G13}
+\end{equation}
+\src{derived in this project.}
+
+\begin{table}[htbp]
+\centering\small
+\begin{tabularx}{\textwidth}{lllLL}
+\toprule
+Regime & Condition & Capacity $\Nmax-1$ & Depends on & Does not depend on \\
+\midrule
+frame-limited & $\Lam\Dnet\ll\beta$ & $\Bud\Dnet/\Phi$ & deadline, header, link, signature, PHY overhead & record rate, record size \\
+record-limited & $\Lam\Dnet\gg\beta$ & $\Bud/(\Psi\Lam)$ & record rate, record size & deadline, authenticator \\
+\bottomrule
+\end{tabularx}
+\caption{The two regimes of \eqref{eq:G13}, separated by $\Lam\Dnet=\beta$.}
+\label{tab:regimes}
+\end{table}
+
+\plain{Batching helps until the fixed price per frame is small beside the price of the records it
+carries. The batch at which half the possible gain is reached, $\beta$, is the fixed price measured
+in records. When the deadline allows batches far larger than $\beta$, the signature costs nothing;
+when it forces batches far smaller, it is paid in full.}
+
+\iffull
+\textbf{Derivation of \eqref{eq:G10}--\eqref{eq:G13}.} \eqref{eq:G3} with $\nu=(N-1)\Lam/b$ gives
+\eqref{eq:G10}. Dividing numerator and denominator by $\Psi$ gives \eqref{eq:G11}. At $b=1$,
+$\Nmax(1)-1=\Ninf/(1+\beta)$, and the ratio is \eqref{eq:G12}; $\Gain<b$ because $b+\beta>1+\beta$
+for $b>1$, and $\Gain<1+\beta$ because $b/(b+\beta)<1$. Inserting $b=\Lam\Dnet$ (ignoring the integer
+rounding) in \eqref{eq:G10} gives \eqref{eq:G13}. For the channel, \eqref{eq:G9} is \eqref{eq:G3}
+with $\Bud=\rhostar/\kappa$ and $\tauhat=\tauzero/\kappa-\delta$. \textit{Source:} derived in this
+project.
+\fi
+
+The inverse of \eqref{eq:G13} gives the deadline a swarm of $N$ needs, and the two edges of
+feasibility:
+\begin{equation}
+\Dnet=\frac{\Phi(N-1)}{\Bud-\Psi\Lam(N-1)}, \tag{G14}\label{eq:G14}
+\end{equation}
+\src{derived in this project.}
+\begin{equation}
+\begin{gathered}
+\Lam\Dnet\ge1\ \text{(a frame meets the deadline)},\qquad \Lam\Dnet\ge2\ \text{(a batch does)},\\
+M\ge\ell_{\min}=H_{\min}+L+g+s_{\min}\ \text{(a frame fits)}.
+\end{gathered} \tag{G15}\label{eq:G15}
+\end{equation}
+\src{derived in this project ($M$: the largest frame; $H_{\min}$, $L$, $g$, $s_{\min}$: the smallest
+header, the link, the signature and the smallest record).}
+
+\subsection{Design rules in closed form}
+
+Each rule follows from \eqref{eq:G10}; none needs a simulation to state.
+\begin{itemize}
+\item \textbf{Placement.} Signing every record instead of every frame puts the signature in $\Psi$
+and divides $\Ninf$ by $(s_\delta+g)/s_\delta$ (record bytes $s_\delta$, signature $g$).
+\item \textbf{Key records.} With one self-contained key record in $r$ frames, the loss target
+tightens to about $2\eps/(r+1)$; a key record in every frame is optimal unless dropping it removes
+more than about \keyShare\,\% of a frame's channel cost.
+\item \textbf{Fragments.} A signed unit split over $n$ frames needs all $n$ to arrive; fragments
+must be \emph{spread} over the period, not sent back to back (in ns-3, back-to-back fragments lose
+\fragBurstMin--\fragBurstMax{} times what \eqref{eq:G5} gives).
+\item \textbf{Duty-cycled links (LoRa).} A duty cycle $d$ bounds the batch from below and the
+deadline from below: $\Dnet\ge\Phi_T/(d-\Lam\Psi_T)$.
+\end{itemize}
+In closed form:
+\begin{equation}
+\pi(b)=\frac{\Phi_{\mathrm{auth}}}{\Phi+\Psi b}, \tag{G16}\label{eq:G16}
+\end{equation}
+\src{derived in this project (the share of capacity the authenticator costs; $\Phi_{\mathrm{auth}}=8(L+g)/\Rx$).}
+\begin{equation}
+\frac{\Bud(\eps_r)}{\Bud(\eps)}>\frac{\Phi_r+\Psi b}{\Phi+\Psi b}, \tag{G17}\label{eq:G17}
+\end{equation}
+\src{derived in this project (a key record in one frame of $r$ raises capacity only if this holds;
+for DCF at $\eps=0.05$ and $r=2$ the left side is \keyRatio{} before the change of $\tauzero$).}
+\begin{equation}
+\Nmax-1=\frac{\Bud(\eps_n)\,b}{\Lam\bigl(n\Phi_0+(\Phi-\Phi_0)+\Psi b\bigr)},\qquad
+\eps_n=1-(1-\eps)^{1/n}, \tag{G18}\label{eq:G18}
+\end{equation}
+\src{derived in this project ($\Phi_0$: the per-transmission part of $\Phi$; $\Bud(\eps_n)=\Bud(\eps)/n$
+exactly for ALOHA-type channels).}
+\begin{equation}
+b_{\mathrm{opt}}=\beta\Bigl[\sqrt{1+\Bud_0/(e_1\beta)}-1\Bigr], \tag{G19}\label{eq:G19}
+\end{equation}
+\src{derived in this project (the best batch when bit errors shrink the budget linearly,
+$\Bud(b)=\Bud_0-e_1b$).}
+\begin{equation}
+\frac{\Lam\Phi_T}{d-\Lam\Psi_T}\le b\le\Lam\Dnet\ \Longrightarrow\ \Dnet\ge D_{\min}=\frac{\Phi_T}{d-\Lam\Psi_T},\quad \Lam<\frac{d}{\Psi_T}, \tag{G20}\label{eq:G20}
+\end{equation}
+\src{derived in this project; the LoRa setting is that of \cite{haxhibeqiri2017lora,zirak2021swarm}.}
+\begin{equation}
+\frac{\Bud_X}{\Phi_X+\Psi_X b}<\frac{\Bud_C}{\Phi_C+\Psi_C b}\quad\text{(the channel binds before the processor)}. \tag{G21}\label{eq:G21}
+\end{equation}
+\src{derived in this project.}
+In ns-3 the unit rule of \eqref{eq:G18} holds exactly on the measured frame loss; what breaks with
+back-to-back fragments is the frame loss itself, which puts capacity \fragCapMin--\fragCapMax\,\%
+below \eqref{eq:G18}. Spread fragments match \eqref{eq:G18} within \fragSpread\,\%.
+
+\subsection{Capture}
+
+When frames overlap, a receiver can still decode the strongest. Let $q_{ij}$ be the probability that
+receiver $i$ decodes sender $j$'s frame although it collided, and $\ell_{ij}$ the loss on that link
+with no other sender. Then
+\begin{equation}
+p_{ij}=\pcoll(\nu)\,(1-q_{ij})+\ell_{ij}, \tag{G22}\label{eq:G22}
+\end{equation}
+\src{derived in this project; the decomposition is the standard capture model
+\cite{arnbak1987capture,roberts1975aloha}.}
+with $\pcoll$ the collision loss \eqref{eq:G5}. A station that is sending cannot receive, so in a
+two-frame collision one of the $N-1$ receivers decodes nothing, and the capture probability
+averaged over receivers is
+\begin{equation}
+\qeff=\qbar\,\frac{N-2}{N-1}. \tag{G22a}\label{eq:G22a}
+\end{equation}
+\src{derived in this project (the half-duplex factor, found when an earlier version without it
+failed in ns-3).}
+For Rayleigh fading at equal mean power and threshold $\theta$, $q=1/(1+\theta)$
+\cite{arnbak1987capture}; ns-3 keeps the stronger of two frames that start within the
+preamble-detection time if its signal-to-interference ratio is at least 4\,dB \cite{nsnam}. Two
+capacity criteria follow, for the average and for every sender:
+\begin{equation}
+\pcoll(\nu^{\ast})=\eps',\qquad \eps'=\frac{\eps-\ellbar}{1-\qeff}, \tag{G23}\label{eq:G23}
+\end{equation}
+\src{derived in this project.}
+\begin{equation}
+\epsw=\min_j\frac{\eps-\ell_j}{1-q_j}, \tag{G24}\label{eq:G24}
+\end{equation}
+\src{derived in this project.}
+and \eqref{eq:G6}--\eqref{eq:G9} apply with $\eps'$ or $\epsw$ in place of $\eps$. Over a finite
+window of $m=f\tau$ frames, the worst sender observed is worse than \eqref{eq:G24} by the noise of a
+maximum over $N$ senders:
+\begin{equation}
+p_{\mathrm{worst}}(\tau)=\mathbb{E}\Bigl[\max_j\phat_j\Bigr]\approx\bar p+z_N\sqrt{\frac{\bar p(1-\bar p)}{f\tau}}, \tag{G24a}\label{eq:G24a}
+\end{equation}
+\src{derived in this project; $z_N$, the expected maximum of $N$ standard normal draws, is
+tabulated in \cite{tippett1925extreme} ($z_4=1.029$, $z_{10}=1.539$).}
+
+\plain{Capture lets some collided frames through, so the channel can carry more stations before the
+loss target is reached: the model simply replaces the target $\eps$ by a looser one. A sender that
+is far away captures less and loses more, so a ledger that needs every sender to meet the target
+must use the worst sender's value. Over a short window, chance alone makes the worst sender look
+worse still, by a known amount.}
+
+\iffull
+\begin{table}[htbp]
+\centering\small
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{4.2cm}>{\raggedright\arraybackslash}p{4.4cm}L}
+\toprule
+Channel & $q_{ij}$, one interferer & Notes \\
+\midrule
+Rayleigh fading, equal mean power & $1/(1+\theta)$; $(1+\theta)^{-(k-1)}$ for $k$ overlapping frames & 0.285 at $\theta=4$\dB, 0.091 at 10\dB \\
+Rayleigh fading with path loss & $\mathbb{E}_m\bigl[1/(1+\theta(d_{ij}/d_{im})^{\alpha})\bigr]$ & averaged over interferer positions \\
+No fading (line of sight) & $P\bigl(d_{im}>\theta^{1/\alpha}d_{ij}\bigr)$ & a step in the distance ratio \\
+Rician fading & between the two rows above & air-to-air links sit here \\
+\bottomrule
+\end{tabularx}
+\caption{Closed forms for $q$ ($\theta$: capture threshold; $\alpha$: path-loss exponent; $d$:
+distances). Source: \cite{arnbak1987capture} for Rayleigh fading with one interferer; the product
+over $k-1$ independent interferers follows from the same exponential law.}
+\end{table}
+
+\textbf{Derivation of \eqref{eq:G22a}.} In a collision of $k$ frames, the $k-1$ other senders are
+among the tagged frame's $N-1$ receivers and decode nothing. Averaged over receivers the capture
+probability is $\qbar(N-k)/(N-1)$; about \evTwoFrame\,\% of collided frames at capacity are in two-frame
+collisions in the event simulation, which gives $k=2$. The factor is 0.99 at 140 stations and 2/3
+at 4. \textit{Source:} derived in this project.
+
+\textbf{Derivation of \eqref{eq:G23}--\eqref{eq:G24a}.} Averaging \eqref{eq:G22} over links and
+setting $p=\eps$ gives $\pcoll(\nu^\ast)(1-\qeff)+\ellbar=\eps$, which is \eqref{eq:G23}; requiring it
+for every sender gives \eqref{eq:G24}. For \eqref{eq:G24a}: sender $j$'s observed loss in a window
+is $\phat_j=L_j/m$ with $L_j\sim\mathrm{Binomial}(m,p_j)$. For similar $p_j$ and enough lost frames
+per window ($m\bar p\gtrsim10$), $\phat_j$ is close to normal with mean $\bar p$ and variance
+$\bar p(1-\bar p)/m$, and the expected maximum of $N$ such draws is $\bar p+z_N$ standard deviations.
+$z_N$ is not the large-$N$ asymptote $\sqrt{2\ln N}$, which overstates it by 60\,\% at $N=4$. The
+senders' losses are treated as independent; shared collisions correlate them positively, which
+makes the maximum somewhat smaller. \textit{Source:} derived in this project; $z_N$ from
+\cite{tippett1925extreme}.
+\fi
+
+\subsection{The sending pattern}
+
+\eqref{eq:G5} assumes that the other stations' starts form a Poisson process. Telemetry timers are
+periodic, which is less clustered: fewer frames wait together, and the Poisson model is
+pessimistic. For $n$ periodic stations with random phases, the queue of waiting frames is the
+$n\!\cdot\!D/D/1$ queue; its Brownian-bridge approximation \cite{roberts1991superposition} gives the
+ratio $\Rper$ by which the co-waiting frames of \eqref{eq:G4} shrink:
+\begin{equation}
+\Rper(n,\rho)=2(1-\rho)\sqrt{\frac{\pi n}{8}}\,e^{c^2}\operatorname{erfc}(c),\quad
+c=(1-\rho)\sqrt{\frac{n}{2}},\qquad \Kbar_{\mathrm{per}}=\Rper(N-1,\,a+\gamma)\,\Kbar. \tag{G25}\label{eq:G25}
+\end{equation}
+\src{the queue approximation is from \cite{roberts1991superposition}; its use in the DCF loss is
+derived in this project.}
+$\Rper\to1$ for many stations and falls as stations become fewer. It is accurate for 8 or more
+other stations. For 3--5 stations a \emph{finite-station form} is used instead. With $m=N-2$
+bystanders (neither the tagged station nor the one sending), each co-waiting independently with
+probability $\pi=K_N/m$, where $K_N$ is \eqref{eq:G4} evaluated with the bystanders' share $m/n$ of
+$a$, $\gamma$ and $\eta$ ($n=N-1$), the count $M$ of co-waiting frames is binomial and
+\begin{equation}
+p=a\,\mathbb{E}\Bigl[\frac{M}{\Wnd+M}\Bigr]+\gamma\Bigl(\frac{2a'}{\Wnd}+\gamma'\Bigr)+2\delta\nu(1+a),
+\qquad M\sim\mathrm{Binomial}(m,\pi), \tag{FS}\label{eq:FS}
+\end{equation}
+\src{derived in this project; the closest prior work on few unsaturated stations is
+\cite{malone2007nonsat}, whose model, adapted to broadcast, does not hold at two stations (it makes
+two idle-medium arrivals collide when they share a slot, where the radio needs them within $\delta$).}
+with $a'=(m/n)a$ and $\gamma'=(m/n)\gamma$. It reduces to \eqref{eq:G5} to first order as the swarm
+grows. At $N=2$ it leaves only the detection-window term, and it fails there against ns-3; no
+closed form is claimed for two stations.
+
+\plain{A drone's telemetry timer sends at regular intervals, so frames from different drones rarely
+pile up the way random arrivals do. The model's random-arrival assumption therefore overstates the
+loss. \eqref{eq:G25} corrects it for larger swarms; \eqref{eq:FS} counts the few other stations
+one by one for swarms of three to five.}
+
+\iffull
+\textbf{Derivation of \eqref{eq:G25}, in outline.} For $n$ periodic sources served at a constant
+rate at load $\rho$, the Brownian-bridge approximation of \cite{roberts1991superposition} gives
+the queue tail $P(Q>x)\approx\exp\bigl(-2x(x/n+1-\rho)\bigr)$. Its mean,
+$\int_0^\infty P(Q>x)\,dx$, has the closed form $\sqrt{\pi n/8}\,e^{c^2}\operatorname{erfc}(c)$ with $c$
+as in \eqref{eq:G25}; dividing by its limit as $n\to\infty$, $1/(2(1-\rho))$ (the heavy-traffic form of the Poisson
+queue), gives $\Rper$. It scales $\Kbar$ only; the event simulation confirms that periodic sending changes mainly
+the tie term. Against a queue simulation, $\Rper$ is good for 8 or more other stations (within about
+\rQueueErr) and wrong for 1--4. \textit{Source:} \cite{roberts1991superposition} for the queue; its use in
+\eqref{eq:G4} is derived in this project.
+\fi
+
+\iffull
+\subsection{The assumptions of each equation}
+
+\begin{table}[htbp]
+\centering\small
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3.0cm}L}
+\toprule
+Equations & Assumptions \\
+\midrule
+\eqref{eq:G1}--\eqref{eq:G3}, \eqref{eq:G10}--\eqref{eq:G21} & each resource's cost is affine in the batch; the binding resource is the one with the smallest quotient; integer rounding of the batch ignored in \eqref{eq:G13} \\
+\eqref{eq:G4}--\eqref{eq:G5} & rule set A; one collision domain; no capture; Poisson starts; broadcast (no retransmission); loss below about 15\,\% (the gap and window terms are first order) \\
+\eqref{eq:G6}--\eqref{eq:G9} & as \eqref{eq:G5}, and frames long beside the protocol times (airtime above about $2\tauzero$); otherwise the root of \eqref{eq:G5} \\
+\eqref{eq:G22}--\eqref{eq:G24} & capture and link loss independent of the load; mostly two-frame collisions; $q$ and $\ell$ measured or computed per link \\
+\eqref{eq:G24a} & senders' losses independent; about 10 or more lost frames per sender per window \\
+\eqref{eq:G25} & periodic sources with random phases; 8 or more other stations; checked to occupancy 0.78 at 802.11b \\
+\eqref{eq:FS} & 3--5 stations; occupancy at most 0.5; the designated source (a frame at a random instant in each period) \\
+\bottomrule
+\end{tabularx}
+\caption{The assumptions of each part of the model.}
+\label{tab:assumptions}
+\end{table}
+\fi
+
+\subsection{Limits}
+
+\begin{itemize}
+\item \textbf{One collision domain:} every station hears every other. Hidden stations would add an
+ALOHA-type term $2h\nu\Tf$ (with $h$ the hidden share, from ALOHA's vulnerable period
+\cite{abramson1970aloha}); stated, not tested.
+\item \textbf{The access rules are a property of each radio.} The constants are those of rule set
+A; a real radio's rules must be measured (\cref{sec:window}).
+\item \textbf{Short frames:} \eqref{eq:G9} is first order in $\tauzero/\Tf$; below about $2\tauzero$
+the root of \eqref{eq:G5} is used.
+\item \textbf{High occupancy:} \eqref{eq:G25} is checked to occupancy 0.78 at 802.11b; above it, it
+is optimistic by \uhMin{} to \uhMax\,\%.
+\item \textbf{No closed form for two stations;} fragments sent back to back are outside the model.
+\end{itemize}
+
+% ==================================================================================================
+\section{The references and their dates}\label{sec:refs}
+% ==================================================================================================
+
+Every reference was checked against its publisher's record by DOI (Crossref); the dates are those
+records' publication dates. Two have no DOI (an arXiv preprint and the ns-3 release).
+
+\begin{table}[htbp]
+\centering\small
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{4.6cm}>{\raggedright\arraybackslash}p{2.9cm}L}
+\toprule
+Reference & Published & Used for \\
+\midrule
+Tippett \cite{tippett1925extreme}, \emph{Biometrika} & December 1925 & $z_N$ in \eqref{eq:G24a} \\
+Abramson \cite{abramson1970aloha}, AFIPS & November 1970 & pure ALOHA, \cref{tab:protocols}; hidden-station term \\
+Roberts \cite{roberts1975aloha}, \emph{SIGCOMM CCR} & April 1975 & slotted ALOHA, capture \\
+Kleinrock \& Tobagi \cite{kleinrock1975csma}, \emph{IEEE Trans.\ Commun.} & December 1975 & CSMA, \cref{tab:protocols} \\
+Arnbak \& van Blitterswijk \cite{arnbak1987capture}, \emph{IEEE JSAC} & February 1987 & capture under Rayleigh fading, \eqref{eq:G22} \\
+Roberts \& Virtamo \cite{roberts1991superposition}, \emph{IEEE Trans.\ Commun.} & 1991 & periodic sources, \eqref{eq:G25} \\
+Bianchi \cite{bianchi2000}, \emph{IEEE JSAC} & March 2000 & the DCF and its analysis \\
+Malone, Duffy \& Leith \cite{malone2007nonsat}, \emph{IEEE/ACM ToN} & February 2007 & few unsaturated stations, \eqref{eq:FS} \\
+Bianchi et al.\ \cite{bianchi2007cards}, INFOCOM & 2007 & real cards' backoff, \cref{sec:window} \\
+Ma \& Chen \cite{machen2007}, \emph{IEEE Commun.\ Lett.} & August 2007 & broadcast DCF \\
+Ma \& Chen \cite{machen2008}, \emph{IEEE Trans.\ Veh.\ Technol.} & November 2008 & broadcast DCF loss, \eqref{eq:G5} \\
+Ma, Chen \& Refai \cite{ma2009dsrc}, \emph{EURASIP JWCN} & January 2009 (online) & concurrent transmissions, \eqref{eq:G5} \\
+Tinnirello, Bianchi \& Xiao \cite{tinnirello2010}, \emph{IEEE Trans.\ Veh.\ Technol.} & March 2010 & refinements of DCF models \\
+Bazzi et al.\ \cite{bazzi2016beaconing}, PIMRC & September 2016 & beacon-rate bound, \eqref{eq:G5}, \eqref{eq:G9} \\
+Haxhibeqiri et al.\ \cite{haxhibeqiri2017lora}, \emph{Sensors} & May 2017 (online) & LoRa duty cycle, \eqref{eq:G20} \\
+IEEE Std 802.11-2020 \cite{ieee80211std2020} & 2020 (designation) & the access rules and timing \\
+Cao et al.\ \cite{cao2021dsrc}, arXiv:2102.07023 & February 2021 & periodic broadcast, ties, \eqref{eq:G4} \\
+Zirak et al.\ \cite{zirak2021swarm}, ICIT & July 2021 & LoRa flying ad-hoc networks, \eqref{eq:G20} \\
+Sepulcre et al.\ \cite{sepulcre2022analytical}, \emph{IEEE Trans.\ Veh.\ Technol.} & January 2022 & busy-medium share, \eqref{eq:G5} \\
+ns-3 \cite{nsnam} & release 3.48, 2026 & the simulator \\
+\bottomrule
+\end{tabularx}
+\caption{The references, in order of publication. For IEEE Std 802.11-2020 the publisher's record
+gives no date; its designation year is shown.}
+\label{tab:refs}
+\end{table}
+
+\textbf{What is new here, and what is not.} The loss of broadcast DCF counted through the frames that
+wait together is prior work \cite{machen2008,ma2009dsrc,cao2021dsrc}, as is the airtime form of a
+broadcast capacity bound \cite{bazzi2016beaconing} and the periodic-source queue
+\cite{roberts1991superposition}. Added in this project: the DIFS-gap and detection-window terms of
+\eqref{eq:G5}; the two constants that make the capacity explicit, \eqref{eq:G6}--\eqref{eq:G9}; the
+cost-per-frame and cost-per-record accounting that turns the capacity into design rules,
+\eqref{eq:G10}--\eqref{eq:G21}; the half-duplex capture factor and the every-sender statistics,
+\eqref{eq:G22a}--\eqref{eq:G24a}; and the use of the periodic-source queue inside the DCF loss.
+
+% ==================================================================================================
+\section{How the tests were run}\label{sec:method}
+% ==================================================================================================
+
+\textbf{Registration.} Before a test ran, its prediction, its tolerance and its stop rules were
+written into a file in \texttt{predictions/}, committed and tagged (\texttt{prereg-<test>}). The
+outcome was then added below a line that marks the registration as unchanged. A failed test stays
+failed; a corrected reading is used only after a new registered check on cells it has not seen.
+
+\textbf{ns-3.} ns-3 version 3.48 \cite{nsnam} ran through an audit copy of the project's scenario,
+which reproduces the original runs bit for bit at its defaults. Each capacity is the station count
+at which the mean delivery over 30 seeds crosses $1-\eps$, interpolated between the bracketing
+counts, with a 95\,\% confidence interval from the seeds.
+
+\textbf{Hardware.} \Cref{tab:hwsetup} lists the radios. Every session was registered first, checked
+each radio's sending rate alone before and after (a session counts only if all lie in the
+registered band), read back each transmit power and the frame-burst setting, and measured a
+background loss in control windows.
+
+\begin{table}[htbp]
+\centering\small
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{2.6cm}>{\raggedright\arraybackslash}p{3.8cm}L}
+\toprule
+Station & Radio & Role \\
+\midrule
+pi-A, pi-B & Raspberry Pi 4, Broadcom BCM4345/6 & senders and receivers \\
+the Pi 3 & Raspberry Pi 3 Model B, Broadcom BCM43430/1 & sender and receiver \\
+TP-Link on a BeagleBone & TL-WN722N, Realtek RTL8188EUS & a fourth station (W1j, W1k); later a monitor-mode sniffer with the chip's per-frame timestamp exported \\
+\midrule
+\multicolumn{3}{l}{One ad-hoc cell, 2.4\,GHz channel 11, 802.11b at 1\,Mb/s; frame burst off from W1p on (read back).} \\
+\multicolumn{3}{l}{Broadcast UDP frames (145\,B of payload in the contention sessions), each sent at an instant} \\
+\multicolumn{3}{l}{drawn anew in its period; the long preamble, from C1's airtime fit.} \\
+\bottomrule
+\end{tabularx}
+\caption{The hardware.}
+\label{tab:hwsetup}
+\end{table}
+
+\Cref{tab:registered} lists every registered test this report uses, in the order it was
+registered.
+
+\begin{table}[htbp]
+\centering\footnotesize
+\input{tables/registered}
+\caption{The registered tests. Each result is read from the test's scored file; ``held'' and
+``failed'' are against the tolerance registered with it. UG25H and W1r were registered as
+measurements (reported, not scored); C1 is a calibration.}
+\label{tab:registered}
+\end{table}
+
+% ==================================================================================================
+\section{Validation in simulation}\label{sec:sim}
+% ==================================================================================================
+
+\subsection{Against an independent event simulation}
+
+An event simulation of rule set A, sharing no code with ns-3, gave the root of \eqref{eq:G5} within
+\evRootWorst\,\% for $N\ge19$ and within \evRootSmall\,\% for the smallest swarms, on the safe side
+in \evSafe{} of \evCases{} cases. The saturation law \eqref{eq:G11} matched within \evSatErr\,\% and
+the gain \eqref{eq:G12} within \evGainErr\,\%; with capture at 4\,dB, the law with $\eps'$ matched
+within \evCapErr\,\%. (These numbers are quoted from the model's working document; the event
+simulation's script is not in the project repository.)
+
+\subsection{Against ns-3: every stored capacity}
+
+\Cref{fig:scorecard} compares the model with \scRows{} capacities stored in the repository, at
+802.11a (\scARows), 802.11p (\scPRows) and 802.11b (\scBRows). The root of \eqref{eq:G5} is within
+$\pm5\,\%$ at \scRootIn{} of them and below ns-3 (the safe side) at \scRootSafe; all \scRootOut{}
+outside the band are on the safe side. The law \eqref{eq:G9}, where valid (\scLawRows{} cases), is
+within $\pm5\,\%$ at \scLawIn, with a mean error of \scLawMeanAbs\,\%; of its \scLawOut{} misses,
+\scLawOutSafe{} are on the safe side and \scLawOptN{} is optimistic (\scLawOptErr\,\%, configuration
+C with perfectly regular timers, no jitter).
+
+\begin{figure}[htbp]
+\centering\includegraphics[width=\textwidth]{fig_scorecard}
+\caption{The root of \eqref{eq:G5} against \scRows{} capacities stored from ns-3. Below zero, the
+model under-predicts the capacity (the safe side).}
+\label{fig:scorecard}
+\end{figure}
+
+\subsection{The 802.11b arm, and why the sending pattern matters}
+
+At the hardware's own PHY (802.11b, 1\,Mb/s), test UD found the Poisson model low at \udBelow{} of
+its \udDOneAll{} small-swarm crossings. At 15--37 stations the root of \eqref{eq:G5} failed the
+$\pm5\,\%$ band at \udDRootFailed{} of \udDCells{} cells, all on the safe side (\udDRootMax{} to
+\udDRootMin\,\%); at 8--14 stations, with a band widened to $-9\ldots+5\,\%$ at registration, it held
+at \udBHeld{} of \udBScored. Term by term, the loss itself was pessimistic by \udThreePMin{} to
+\udThreePMax\,\% (D3); a capacity error is far smaller than a loss error because the loss rises
+steeply with the load. The cause was the Poisson assumption: ns-3's telemetry source is periodic.
+This failure is what \eqref{eq:G25} was written for.
+
+\subsection{The sending pattern}
+
+With Poisson sources the model is \ugPoiMin{} to \ugPoiMax\,\% low on the new cells of UG25.
+\eqref{eq:G25} was registered on those \ugCells{} cells and held at all \ugHeld{} (\ugMin{} to
+\ugMax\,\%). Past occupancy 0.78 (\uhCells{} further cells at occupancy \uhOccMin--\uhOccMax) it is
+optimistic by \uhMin{} to \uhMax\,\%, which is now a stated limit (\cref{fig:g25}).
+
+\begin{figure}[htbp]
+\centering\includegraphics[width=\textwidth]{fig_g25}
+\caption{The model's error against ns-3, with Poisson sources, \eqref{eq:G5}, and with periodic
+sources, \eqref{eq:G25}, against the occupancy at which ns-3 reaches the loss target.}
+\label{fig:g25}
+\end{figure}
+
+\subsection{Few stations}
+
+For three to five stations the finite-station form \eqref{eq:FS} held at all \fsHeld{} of \fsCells{}
+registered cells, with a tolerance of $\pm15\,\%$ on the loss (\cref{fig:fewstations}). The Poisson
+loss \eqref{eq:G5} overstates the loss there by \fsGFiveMin--\fsGFiveMax\,\%.
+
+\begin{figure}[htbp]
+\centering\includegraphics[width=\textwidth]{fig_fewstations}
+\caption{UFS: the loss at three to five stations and occupancy 0.3 and 0.5, in ns-3 (30 seeds, 95\,\%
+interval), by the finite-station form \eqref{eq:FS} and by the Poisson loss \eqref{eq:G5}.}
+\label{fig:fewstations}
+\end{figure}
+
+\subsection{Batching}
+
+The gain of batching \eqref{eq:G12} matched ns-3 within \gainMaxAbs\,\% at 802.11a up to 64 records
+per frame, and within \gainBMaxAbs\,\% at 802.11b up to 32 (\cref{fig:batching}; reported beside
+registered capacity tests UC2 and UD, whose capacities held \ucTwoHeld{} of \ucTwoClaims{} and
+\udTwoHeld{} of \udTwoCells).
+
+\begin{figure}[htbp]
+\centering\includegraphics[width=\textwidth]{fig_batching}
+\caption{The gain of batching: capacity at $b$ records per frame over capacity at one, less one
+station each, \eqref{eq:G12} against ns-3.}
+\label{fig:batching}
+\end{figure}
+
+\subsection{Capture}
+
+ns-3's capture rule, read from its source and predicted per collision, held at \capHeld{} of
+\capTrials{} offsets and power differences (UCAP2). A first capacity test with capture (UF) held
+\ufAvgHeld{} of \ufConfigs{} average-delivery claims and only \ufWorstHeld{} of \ufConfigs{}
+every-sender claims. Its three causes were found: the half-duplex factor \eqref{eq:G22a} was missing,
+the every-sender claim had been scored on a sample minimum rather than on \eqref{eq:G24} or
+\eqref{eq:G24a}, and one configuration had a station at the edge of carrier sense. The corrected
+test UF2, on new placements and seeds, held all \ufTwoHeld{} of its \ufTwoClaims{} claims, every one
+on the safe side: \eqref{eq:G23} within \ufTwoAMin{} to \ufTwoAMax\,\%, the pooled \eqref{eq:G24}
+within \ufTwoPoolMin{} to \ufTwoPoolMax\,\%, the window statistic \eqref{eq:G24a} within
+\ufTwoWinMin{} to \ufTwoWinMax\,\% (\cref{fig:uf2}).
+
+\begin{figure}[htbp]
+\centering\includegraphics[width=\textwidth]{fig_uf2}
+\caption{UF2: the capture laws against ns-3, per configuration (EB: 802.11b, EA: 802.11a; F: frames
+per second; P3R: path-loss exponent 3 with Rayleigh fading; P2N: exponent 2, no fading).}
+\label{fig:uf2}
+\end{figure}
+
+\subsection{Design rules and LoRa}
+
+A key record once in $r=2$ or 4 frames held \ucThreeHeld{} of \ucThreeCells{} (UC3). Fragments spread
+over the period held \ucFourSHeld{} of \ucFourSCells{} (UC4S); fragments sent back to back failed
+(UC4), and a correction for them removed \burstFixMin--\burstFixMax\,\% of the excess but failed its
+own test (UC4B), so the design forbids back-to-back fragments. The best batch under bit errors
+\eqref{eq:G19} was predicted as \ucFivePred{} and ns-3's best was \ucFiveBest{} (UC5D1). The LoRa
+duty-cycle law held at \lrHeld{} of \lrCells{} cells (UC7).
+
+\subsection{What failed in simulation}
+
+\begin{itemize}
+\item \textbf{The split of \eqref{eq:G5} into its three causes} (UC1, D3): the totals hold, the
+breakdown does not; ns-3 counts a near-simultaneous start as a detection-window loss.
+\item \textbf{Poisson starts at 802.11b} (UD): the capacity \udDRootMax{} to \udDRootMin\,\% low at
+15--37 stations; corrected by \eqref{eq:G25}, which then held on new cells.
+\item \textbf{The first capture test} (UF): failed for three identified reasons; the corrected test
+held on new cells.
+\item \textbf{Fragments sent back to back} (UC4, UC4B): outside the model; ruled out by design.
+\item \textbf{\eqref{eq:G25} past occupancy 0.78 at 802.11b}: optimistic by \uhMin{} to \uhMax\,\%;
+a stated limit.
+\item \textbf{The law \eqref{eq:G9} with perfectly regular timers}: one optimistic miss
+(\scLawOptErr\,\%).
+\end{itemize}
+
+% ==================================================================================================
+\section{Validation on hardware}\label{sec:hw}
+% ==================================================================================================
+
+\textbf{What the hardware tests checked.} W1e, W1j and W1k were registered before the closed form
+existed. Their predictions came from the project's event simulation of the DCF access rule
+(registered at W1c), which had matched ns-3's capacities at 802.11b within \wOneBErr\,\% (W1b). They test
+the access-rule model the closed form is built on, not the closed form's own numbers. W1r's
+registration also recorded the closed form's values beside ns-3's; they are compared in
+\cref{sec:side}.
+
+\subsection{Contention}
+
+\Cref{fig:hw} shows the loss of two and three radios at occupancy 0.50, 0.70 and 0.85. In W1e (frame
+burst on) \weHeld{} of \wePoints{} points lay inside the bands registered from the event
+simulation; the miss was pi-A with pi-B at the lowest load, \weMissRatio{} times the prediction against a band
+top of \weMissTop. In W1r (frame burst off) the hardware lies between two ns-3 settings of slot and
+DIFS: inside the 95\,\% interval at \wrInTwenty{} of \wrPoints{} points for slot 20\,\us/DIFS
+50\,\us, and \wrInNine{} for slot 9\,\us/DIFS 28\,\us. The pairs with the Pi 3 lose more than ns-3
+predicts; ns-3 had been given windows inferred from each radio's sending rate, $\Wnd=\wrWinPi$ for
+the Pi 4s and \wrWinPiThree{} for the Pi 3, and C1 later showed both to be wrong in kind
+(\cref{sec:window}).
+
+\begin{figure}[htbp]
+\centering\includegraphics[width=\textwidth]{fig_hw_contention}
+\caption{Hardware contention. Top: W1e against its registered prediction (the event simulation of
+W1c). Bottom: W1r against ns-3 with two settings of slot and DIFS (the contention window was not
+known; \cref{sec:window}).}
+\label{fig:hw}
+\end{figure}
+
+\subsection{The capacity ratio}
+
+On four radios (pi-A, pi-B, the Pi 3 and the TP-Link), the capacity of the design (one signature per
+frame of four records) divided by that of per-record signing was \ratioJ{} in W1j and \ratioK{} in
+W1k, against the registered \ratioModel{} (band \ratioLo--\ratioHi; \cref{fig:ratio}). The capacities
+themselves were \crossAuthJ{} and \crossPerJ{} capacity-equivalent stations in W1j, against
+\crossAuthModel{} and \crossPerModel{} (\crossAuthErr{} and \crossPerErr\,\%), attributed in W1j
+to capture at the receivers, while the ratio moved by \ratioErr\,\%.
+
+\begin{figure}[htbp]
+\centering\includegraphics[width=0.5\textwidth]{fig_ratio}
+\caption{The capacity ratio on four radios against the registered value.}
+\label{fig:ratio}
+\end{figure}
+
+\subsection{Loss on air}
+
+W3a traced every frame on air at 802.11b and replayed the traces through the project's real
+decoder. All \wtHeld{} of \wtClaims{} registered claims held: real loss hurts the frames that depend
+on a key record no more than independent loss would; the design loses only its own frames; and the
+loss grows with frame length less steeply than a bit-error model predicts.
+
+\subsection{Capture}
+
+In W1q (the Pi 3 receiving, pi-A's power stepped) \wqHeld{} of \wqScored{} registered predictions
+held. The one that failed is the finding: at a measured difference of only \wqThreeDelta\,dB the Pi
+3 kept the stronger frame in \wqThreeQ{} of collisions, where ns-3's rule keeps none below 4\,dB.
+Capture on this radio is gradual, not a step. Three of W1q's five power steps were void because the
+received signal fell by less than the set power (\cref{sec:window}). W1s then tested the gradual
+curve on new power steps: \wsCurveHeld{} of \wsCurveScored{} held, so the curve is not used; the
+boards' radio geometry had changed between the sessions (\cref{fig:capture}).
+
+\begin{figure}[htbp]
+\centering\includegraphics[width=\textwidth]{fig_capture_hw}
+\caption{The share of collided frames the receiver kept, against the signal difference. Dashed:
+ns-3's 4\,dB rule. W1q's points are from its valid steps; W1s's from its new steps.}
+\label{fig:capture}
+\end{figure}
+
+\subsection{The contention window, and the radios' own timing}\label{sec:window}
+
+The model needs each radio's contention window $\Wnd$, slot and DIFS; radios do not report them.
+\textbf{W1p} tested two settings derived from each radio's sending rate: a saturated pair lost
+\wpLoss{} at \wpFps{} frames/s, against ns-3's \wpTwentyLoss{} and \wpNineLoss: neither fits.
+\textbf{W1s} re-derived both settings once and tested them at a new frame length: the pair lost
+\wsPairLoss{} at \wsPairFps{} frames/s, against \wsTwentyLoss{} and \wsNineLoss: neither fits again,
+so the window is recorded as not identifiable without a frame sniffer.
+
+A sniffer was therefore added (the TP-Link in monitor mode, with a one-line driver change that
+exports the chip's per-frame hardware timestamp). Its gate S0 \textbf{failed}: it recorded \sgA,
+\sgB{} and \sgC{} of the three radios' frames, against the 0.99 required, though the radios
+themselves received almost all of them; the misses follow neither the board nor its place, and a
+probe at another placement (P1) did not reach 0.99 either; its planned placements 3\,m and 5\,m
+away have not run. The same gate showed that the received signal
+falls by \sgFalls\,dB when pi-A's set power falls by 3, 6 and 9\,dB; the Pi 3 registered a similar
+compression, so the transmitter is the more likely cause, but this is not established. The sniffer
+is used for timing only, under a stated rule, until a better adapter arrives.
+
+\textbf{C1 (calibration, not validation)} measured each radio alone with the sniffer's microsecond
+timestamps (\cref{fig:c1}). For both Pi 4s the gap after a frame has a floor of \cFloorA\,\us{} (the
+standard's DIFS) and a 20\,\us{} lattice (the standard's slot); \cShareMinA--\cShareMaxB{} of their
+frames are sent at DIFS with no backoff, and the rest spread over \cWminA{} slots. Under the
+standard's rule a saturated sender draws its backoff from $0\ldots\Wnd-1$ after every frame, so only
+about $1/\Wnd$ of frames (3\,\% at $\Wnd=32$) would go out at DIFS. Departures of commercial 802.11b cards from the standard's backoff have been
+measured before \cite{bianchi2007cards}. The share did not change with a
+back-to-back sender (\cShareKA), so it is the radio's own behaviour, not the sending pattern. The
+Pi 3's floor is \cFloorC\,\us{} (\cExtraC\,\us{} more than DIFS) and \cShareMinC--\cShareMaxC{} of its
+frames skip the backoff, close to the standard's $1/\Wnd$, with \cWminC--\cWmaxC{} slots. Across
+frame sizes the airtime grows by \cSlope\,\us{} per byte (1\,Mb/s), with an intercept of
+\cInterA\,\us{} (the long preamble, 192\,\us, plus DIFS). These are inputs for a hardware-matched
+model; nothing has yet been validated with them.
+
+\begin{figure}[htbp]
+\centering\includegraphics[width=\textwidth]{fig_c1_gaps}
+\caption{C1: the gap after each frame, for each radio sending alone (145\,B frames). One bin per
+backoff slot.}
+\label{fig:c1}
+\end{figure}
+
+\iffull
+\begin{figure}[htbp]
+\centering\includegraphics[width=\textwidth]{fig_sniffer}
+\caption{The share of each radio's frames the sniffer recorded, session by session (S0: the gate;
+D1a, D1b: diagnostics, pi-A and pi-B swapped in D1b; P1: the probe). The misses follow neither the
+board nor its place.}
+\label{fig:sniffer}
+\end{figure}
+\fi
+
+\subsection{What failed on hardware}
+
+\begin{itemize}
+\item \textbf{The window, from sending rates} (W1p, W1s): neither setting of slot and DIFS fits; the
+window was not identifiable that way. C1 shows why: the Pi 4s skip the backoff for about half their
+frames, which no single window describes.
+\item \textbf{ns-3's 4\,dB capture step} (W1q): the radio captures at 1.5\,dB; the gradual curve
+then failed its own check on new steps (W1s) after the geometry changed.
+\item \textbf{The sniffer's gate} (S0, P1): the adapter misses \snifMissMin--\snifMissMax\,\% of frames, drifting between
+sessions.
+\item \textbf{Power steps}: the received signal falls by less than the set power, most likely at the
+transmitter.
+\end{itemize}
+
+% ==================================================================================================
+\section{Model, simulation and hardware side by side}\label{sec:side}
+% ==================================================================================================
+
+\Cref{tab:threeway} puts every source of a prediction beside the two hardware sessions, for the same
+radios and rates: the closed forms (as recorded in W1r's registration, at the standard's
+$\Wnd=32$), W1c's event simulation (W1e's registered prediction), ns-3 with two settings of slot and
+DIFS, and the hardware with frame burst on (W1e) and off (W1r).
+
+\begin{table}[htbp]
+\centering\footnotesize
+\input{tables/threeway}
+\caption{Loss (\%) of two and three radios, 802.11b at 1\,Mb/s, $f$ frames per second per radio.
+For the pairs, \eqref{eq:G5} and \eqref{eq:G25} lie outside their stated range (two stations;
+\eqref{eq:G25} needs 8 or more others); the finite-station form is shown only where it was accepted
+(three stations, occupancy 0.5). The ns-3 values for the pairs with the Pi 3 use its inferred window
+of \wrWinPiThree{} slots.}
+\label{tab:threeway}
+\end{table}
+
+\textbf{What the comparison shows.}
+\begin{itemize}
+\item \textbf{The trio at occupancy 0.5}, the one point inside every model's range: \eqref{eq:FS},
+the event simulation, ns-3 at slot 9\,\us{} and both hardware sessions lie between \twTrioLo{} and
+\twTrioHi\,\%; \eqref{eq:G5} and ns-3 at slot 20\,\us{} lie above them.
+\item \textbf{The pairs:} no closed form is claimed for two stations. ns-3's values for the pairs
+with the Pi 3 are \twPiThreeLo--\twPiThreeHi{} times below the hardware, because ns-3 was given a window of
+\wrWinPiThree{} slots for the Pi 3; C1 measured \cWminC--\cWmaxC{} plus a fixed \cExtraC\,\us.
+\item \textbf{The same radios, two sessions} (W1e and W1r) differ by up to a factor of \twSessMax{} for the
+pairs with the Pi 3: frame burst, placement and day all changed between them. A hardware number is a
+property of a session, not only of the radios.
+\end{itemize}
+
+\begin{table}[htbp]
+\centering\small
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3.9cm}>{\raggedright\arraybackslash}p{2.4cm}>{\raggedright\arraybackslash}p{2.4cm}L}
+\toprule
+Quantity & Model & ns-3 & Hardware \\
+\midrule
+capacity ratio, design over per-record signing (4 radios) & \ratioModel{} (event simulation) & -- & \ratioJ, \ratioK{} (W1j, W1k) \\
+gain of batching, 802.11a, $b$ up to 64 & \eqref{eq:G12} & within \gainMaxAbs\,\% & not tested (V2) \\
+capture at a signal difference of \wqThreeDelta\,dB & \eqref{eq:G22} with the input $q$ & $q=0$ (4\,dB rule) & $q=\wqThreeQ$ (W1q) \\
+slot, DIFS & 20\,\us, 50\,\us{} (standard) & the same & 20\,\us, \cFloorA\,\us{} (Pi 4s); 20\,\us, \cFloorC\,\us{} floor (Pi 3) \\
+frames sent at DIFS with no backoff, saturated & about $1/\Wnd$ (the standard's backoff after every frame) & not measured & \cShareMinA--\cShareMaxB{} (Pi 4s); \cShareMinC--\cShareMaxC{} (Pi 3) \\
+airtime per byte at 1\,Mb/s & 8\,\us & 8\,\us & \cSlope\,\us{} (C1) \\
+\bottomrule
+\end{tabularx}
+\caption{One quantity at a time: what the model assumes or predicts, what ns-3 does, what the radios
+do.}
+\label{tab:side}
+\end{table}
+
+% ==================================================================================================
+\section{What remains to be tested}\label{sec:next}
+% ==================================================================================================
+
+\Cref{tab:coverage} maps each part of the model against where it has been tested.
+\Cref{tab:next} lists the open tests, in the order they can run.
+
+\begin{table}[htbp]
+\centering\small
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{4.2cm}LL}
+\toprule
+Part of the model & ns-3 & Hardware \\
+\midrule
+accounting and batching, \eqref{eq:G1}--\eqref{eq:G3}, \eqref{eq:G10}--\eqref{eq:G13} & held (UC2, UD) & ratio held (W1j, W1k, event simulation); gain on air not tested (V2) \\
+loss \eqref{eq:G4}--\eqref{eq:G5} & total held; split into causes failed (UC1) & not tested directly (V1); access rule measured (C1) \\
+two-constant law \eqref{eq:G6}--\eqref{eq:G9} & held where valid, \scLawIn{} of \scLawRows & not tested \\
+design rules \eqref{eq:G16}--\eqref{eq:G21} & held (UC3, UC4S, UC5D1, UC7); back-to-back fragments failed & not tested \\
+capture \eqref{eq:G22}--\eqref{eq:G24a} & held after correction (UCAP2, UF2) & the input $q$ measured, partly (W1q); in contention not tested (V3, V4) \\
+sending pattern \eqref{eq:G25}, \eqref{eq:FS} & held to occupancy 0.78; 3--5 stations held & not tested (V1) \\
+hidden stations; two stations & not tested; no closed form & not tested \\
+\bottomrule
+\end{tabularx}
+\caption{The coverage map: where each part of the model has been tested, and how it came out.}
+\label{tab:coverage}
+\end{table}
+
+\begin{table}[htbp]
+\centering\small
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3.6cm}>{\raggedright\arraybackslash}p{1.9cm}L>{\raggedright\arraybackslash}p{2.9cm}}
+\toprule
+Test & Where & What it would show & Waits on \\
+\midrule
+S0b: the AR9271 sniffer's gate, beside the TP-Link & hardware & whether a second sniffer records $\ge99\,\%$ of frames; whether the power steps compress at the sender & the adapter (by 30 November 2026) \\
+C1 in W1q's layout (L1); P1 at 3\,m and 5\,m & hardware & the timing of C1 where the capture sessions ran; whether distance lets the TP-Link reach 0.99 & Mohamed at the boards \\
+C2: saturated pairs with the sniffer & hardware & the access rule two radios use under contention: who skips the backoff, and when & S0b \\
+C3: the capture curve, both signs of the signal difference & hardware & $q$ against the signal difference for the real receiver & S0b \\
+The parameter file & -- & the measured slot, DIFS, access rule, airtime and link losses, as one input set & C1--C3; Mohamed's review \\
+V1: contention at telemetry rates, ns-3 matched to the hardware, beside the model & hardware + ns-3 & \eqref{eq:G5}, \eqref{eq:G25} and \eqref{eq:FS} with measured inputs: the first direct hardware test of the closed form & the parameter file \\
+V2: batching on air & hardware & the gain \eqref{eq:G12} on real radios & the parameter file \\
+V3, V4: capture in contention; every-sender statistics & hardware & \eqref{eq:G22}--\eqref{eq:G24a} on real radios & C3 \\
+Transmitter or receiver: does pi-A's output follow its set power? & hardware & where the power steps compress & an external receiver (HackRF) if S0b cannot separate them \\
+Hidden stations & ns-3 & the term $2h\nu\Tf$ & outside the current scope \\
+Two stations; fragments sent back to back & model & a closed form (none exists) & a derivation \\
+\bottomrule
+\end{tabularx}
+\caption{The open tests. Calibration (C) sets the inputs; validation (V) tests predictions made from
+them; no session does both.}
+\label{tab:next}
+\end{table}
+
+If no suitable adapter is available by 30 November 2026, C2 and C3 use the receivers' logs, as W1p
+and W1q did, with the sniffer for timing only, and the report of those sessions states the
+limitation.
+
+% ==================================================================================================
+\section{Conclusions}
+% ==================================================================================================
+
+\begin{itemize}
+\item \textbf{What can be claimed now.} The closed form predicts ns-3's capacity within $\pm5\,\%$ in
+\scRootIn{} of \scRows{} stored cases, and on the safe side whenever its root misses. Its extensions
+for the sending pattern and for capture hold in registered ns-3 tests on new cells. On hardware, the
+capacity ratio of the design over per-record signing matches the registered value (\ratioJ{}
+against \ratioModel), and the access-rule model behind the closed form fell inside the registered
+bands at \weHeld{} of \wePoints{} contention points.
+\item \textbf{What cannot be claimed yet.} That the closed form predicts the hardware's loss: it has
+not been tested there directly. That the model's access rule is the radios': the Pi 4s send about
+half their frames with no backoff, which the standard's rule does not include. That ns-3's 4\,dB
+capture step describes the real receiver: it captures gradually.
+\item \textbf{Next.} A sniffer that passes its gate, the calibration sessions C2 and C3, the parameter
+file for review, then the validation sessions V1--V4 against a hardware-matched model and ns-3.
+\end{itemize}
+
+\iffull
+\appendix
+% ==================================================================================================
+\section{Notation}
+% ==================================================================================================
+\begin{table}[htbp]
+\centering\small
+\begin{tabular}{ll}
+\toprule
+Symbol & Meaning \\
+\midrule
+$\Lam$ & records per second per station \\
+$b$, $\bstar$, $\bM$ & batch (records per frame); the batch used; the largest that fits \\
+$\Dmax$, $\Dnet$, $\Sq$ & deadline; deadline net of the delay $\Sq$ \\
+$\Phi$, $\Psi$, $\Bud$ & cost per frame, cost per record, budget of a resource \\
+$\Tf$ & a frame's airtime \\
+$f$, $\nu$ & frames per second per station; start rate of the other stations, $(N-1)f$ \\
+$\occ$ & occupancy, $N f\Tf$ \\
+$\slot$, $\Difs$, $\Wnd$, $\delta$ & slot, DIFS, contention window, preamble-detection time \\
+$\eps$, $\eps'$, $\epsw$ & loss target; with capture, average; with capture, every sender \\
+$\rhostar$, $\tauzero$, $\tauhat$, $\kappa$ & the two constants of \eqref{eq:G9}; per-frame channel cost; $1-\eps/2$ \\
+$\Kbar$, $a$, $\gamma$, $\eta$ & co-waiting frames; busy, gap and immediate-access loads \\
+$\pcoll$, $q$, $\qeff$, $\ell$, $\ellbar$ & collision loss; capture probability; with the half-duplex factor; link loss; its average \\
+$\Ninf$, $\beta$, $\Gain$ & capacity limit, half-gain batch, gain of batching \\
+$\Rper$ & periodic-source ratio of \eqref{eq:G25} \\
+$m$, $M$, $\pi$ & bystanders, co-waiting count and co-waiting probability of \eqref{eq:FS} \\
+$z_N$ & expected maximum of $N$ standard normal draws \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ==================================================================================================
+\section{Failed attempts and corrections, kept visible}
+% ==================================================================================================
+
+\begin{itemize}
+\item \textbf{UF (capture, first test).} \ufAvgHeld{} of \ufConfigs{} and \ufWorstHeld{} of
+\ufConfigs{} held. Three causes, each found from logged state, not assumed: the half-duplex factor
+\eqref{eq:G22a} had been omitted from both the law and its check script, so their agreement could not
+reveal it; the every-sender claim had been scored on a sample minimum, an extreme that grows with
+the number of senders, rather than on \eqref{eq:G24} or \eqref{eq:G24a}; one configuration placed a
+station at the edge of carrier sense, outside one collision domain. UF stays failed; UF2 tested the
+corrections on new placements and seeds.
+\item \textbf{UC4B (a burst correction for back-to-back fragments).} Removed
+\burstFixMin--\burstFixMax\,\% of the excess but failed on both scored cells, on the optimistic
+side. Not used; the design rule forbids the case.
+\item \textbf{UG25H: \eqref{eq:G25} at high occupancy.} An earlier estimate from capture runs put
+the error at \fOneFortyMin--\fOneFortyMax\,\%; measured once without capture it is \uhMin{} to \uhMax\,\%. The band of
+the earlier estimate held at none of the four cells.
+\item \textbf{W1p and W1s (the window from sending rates).} Two re-derivations, two failures; by
+Mohamed's rule no third attempt was made, and the window was recorded as not identifiable without a
+sniffer.
+\item \textbf{W1q's gradual capture curve.} Fitted after W1q's failure, then checked on new steps in
+W1s: \wsCurveHeld{} of \wsCurveScored{}; not used.
+\item \textbf{S0's timing criterion.} The registration compared the median of the sniffer's
+start-to-start intervals with the receivers' mean cycle; with half the gaps at DIFS the median was
+bound to fall below the mean. The means agree within \sZeroMeanMin--\sZeroMeanMax\,\%. A corrected gate (S0b) compares
+mean with mean on new windows.
+\item \textbf{C1's estimators.} Two estimators were revised after the gate's rate checks and before
+C1 ran (the lattice had picked a harmonic; $\Wnd-1$ from a percentile read the long tail); both were
+tested on synthetic gaps of known slot and window first, and the revision is disclosed in C1's
+registration.
+\end{itemize}
+
+\FloatBarrier
+% ==================================================================================================
+\section{Every test, in full}
+% ==================================================================================================
+
+Each table is generated from the test's scored file in \texttt{results/raw/}.
+
+\subsection{Simulation}
+
+{\footnotesize\setlength{\tabcolsep}{3pt}
+\renewcommand{\longcap}{Every stored ns-3 capacity against the law \eqref{eq:G9} and the root of
+\eqref{eq:G5} (errors in \%; negative is the safe side; ``--'': the law is not valid for that
+frame).\label{tab:scorecard}}
+\input{tables/scorecard}
+}
+
+\begin{table}[htbp]
+\centering\footnotesize
+\input{tables/ud}
+\caption{UD, the 802.11b arm: D1, small swarms at three windows and loss targets (Pb1B: 8--14
+stations, band $-9\ldots+5\,\%$, not scored below 8 stations; Pb1D: 15--37 stations, band
+$\pm5\,\%$); D2, batches of 1--32 records.}
+\end{table}
+
+\begin{table}[htbp]
+\centering\footnotesize
+\input{tables/ug25}
+\caption{UG25: \eqref{eq:G25} on new cells, $\pm5\,\%$; last four rows, UG25H: 802.11b past
+occupancy 0.78, measured, not scored.}
+\end{table}
+
+\begin{table}[htbp]
+\centering\footnotesize
+\input{tables/uf2}
+\caption{UF2: capacities (stations) with capture; (a) the average criterion \eqref{eq:G23} with
+\eqref{eq:G22a}; statistic 1, the pooled every-sender loss \eqref{eq:G24}; statistic 2, the window
+statistic \eqref{eq:G24a}. Tolerance $\pm5\,\%$.}
+\end{table}
+
+\begin{table}[htbp]
+\centering\footnotesize
+\input{tables/ufs}
+\caption{UFS: the finite-station form \eqref{eq:FS} against ns-3's loss, tolerance $\pm15\,\%$; the
+last two columns are the errors of \eqref{eq:G5} and \eqref{eq:G25}, reported.}
+\end{table}
+
+\begin{table}[htbp]
+\centering\footnotesize
+\input{tables/uc7}
+\caption{UC7: the LoRa duty-cycle law against ns-3's LoRaWAN module (D: duty cycle in \%; C:
+channels; L: payload in bytes).}
+\end{table}
+
+\FloatBarrier
+\subsection{Hardware}
+
+\begin{table}[htbp]
+\centering\footnotesize
+\input{tables/w1e}
+\caption{W1e: contention, frame burst on; measured loss less the background, against the event
+simulation registered at W1c.}
+\end{table}
+
+\begin{table}[htbp]
+\centering\footnotesize
+\input{tables/w1r}
+\caption{W1r: contention, frame burst off, against ns-3 with the windows inferred from sending
+rates (for the trio, equal power to Rayleigh with capture).}
+\end{table}
+
+\begin{table}[htbp]
+\centering\footnotesize
+\input{tables/w1q}
+\caption{W1q: the capture steps as recorded (the Pi 3 receives; $q_A$, $q_B$: the share of
+collided frames kept from pi-A and pi-B).}
+\end{table}
+
+\begin{table}[htbp]
+\centering\footnotesize
+\input{tables/w1s}
+\caption{W1s, part A: the capture curve's new steps, as recorded.}
+\end{table}
+
+\begin{table}[htbp]
+\centering\footnotesize
+\input{tables/s0}
+\caption{S0: the sniffer's gate, as recorded.}
+\end{table}
+
+\begin{table}[htbp]
+\centering\footnotesize\setlength{\tabcolsep}{3.5pt}
+\input{tables/c1}
+\caption{C1 (calibration): each radio alone, saturated (R: rate checks; Q: redrawn sender at 600
+frames/s; K: back-to-back). ``Recorded'': the sniffer's share of the frames sent; ``strict'': pairs
+whose neighbours were also recorded. The 50 frames/s windows give link losses, not timing, and are
+left out.}
+\end{table}
+
+\FloatBarrier
+% ==================================================================================================
+\section{Where every number comes from}
+% ==================================================================================================
+Every result in this report is a macro written by \texttt{analysis/report\_numbers.py} from the
+project's stored results, or a cell of a table it generates. \Cref{tab:provenance} names each
+macro's file and registration; \texttt{provenance.csv} beside this report holds the same list. The
+figures are drawn by \texttt{analysis/report\_figures.py} from the same files. To rebuild:
+\begin{verbatim}
+python analysis/report_numbers.py
+python analysis/report_figures.py
+cd docs/reports/2026-11-27_model_report && ./build.sh
+\end{verbatim}
+
+{\footnotesize\setlength{\tabcolsep}{3pt}
+\renewcommand{\longcap}{Every macro, its value, its file and its registration or meaning.\label{tab:provenance}}
+\input{tables/provenance}
+}
+\fi
+
+\bibliographystyle{unsrt}
+\bibliography{refs}
+
+\end{document}

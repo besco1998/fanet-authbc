@@ -1,0 +1,36 @@
+% Notation of the model report: one macro per symbol, used in every equation and in the
+% notation table, so that a symbol cannot drift between sections or between the two versions.
+% The symbols are those of docs/revision/unified_closed_form_model.md.
+\newcommand{\Nmax}{N_{\max}}                 % capacity: the largest swarm meeting the loss target
+\newcommand{\Lam}{\Lambda}                   % records per second per station
+\newcommand{\Dmax}{D_{\max}}                 % freshness deadline
+\newcommand{\Dnet}{D'}                       % the deadline net of channel and verification delay
+\newcommand{\Sq}{S_q}                        % channel and verification delay
+\newcommand{\bstar}{b^{\ast}}                % the batch used
+\newcommand{\bM}{b_M}                        % the largest batch that fits a frame
+\newcommand{\Bud}{\mathrm{B}}                % a resource's budget
+\newcommand{\Tf}{T_f}                        % a frame's airtime
+\newcommand{\Difs}{\mathrm{DIFS}}            % DCF interframe space
+\newcommand{\slot}{\sigma}                   % backoff slot time
+\newcommand{\Wnd}{W}                         % contention window: backoff drawn from 0 ... W-1
+\newcommand{\eps}{\varepsilon}               % loss target
+\newcommand{\rhostar}{\rho^{\ast}}           % occupancy ceiling of the two-constant law
+\newcommand{\tauzero}{\tau_0}                % protocol time of the two-constant law
+\newcommand{\tauhat}{\hat\tau}               % per-frame channel cost beyond the airtime
+\newcommand{\Kbar}{\bar K}                   % mean number of co-waiting frames
+\newcommand{\pcoll}{p_c}                     % collision loss: the loss expression (G5)
+\newcommand{\occ}{u}                         % occupancy, N f T_f
+\newcommand{\qbar}{\bar q}                   % capture probability averaged over senders/receivers
+\newcommand{\qeff}{\bar q_{\mathrm{eff}}}    % with the half-duplex factor
+\newcommand{\epsw}{\eps_{w}}                 % the every-sender loss target
+\newcommand{\Ninf}{N_{\infty}}               % capacity if only the per-record cost existed
+\newcommand{\Gain}{\Gamma}                   % the gain of batching
+\newcommand{\phat}{\hat p}                   % an observed loss in a window
+\newcommand{\Rper}{R}                        % the periodic-source ratio of (G25)
+\newcommand{\Rx}{\mathrm{R}}                 % a radio's bit rate
+\newcommand{\dB}{\ensuremath{\,\mathrm{dB}}}
+\newcommand{\us}{\ensuremath{\,\mu\mathrm{s}}}
+% equation sources: every numbered equation is followed by one \src line
+\newcommand{\ellbar}{\bar\ell}               % link loss averaged over links
+\newcommand{\longcap}{}                      % the caption of the next generated long table
+\newcommand{\src}[1]{\par\noindent{\small\textit{Source:} #1}\par\smallskip}
