@@ -1,0 +1,30 @@
+Running timer as unit: authbc-sniff2-revert.timer
+Will run service as unit: authbc-sniff2-revert.service
+[2026-11-27T02:55:05+02:00] deadman armed | iface=tplink0 channel=11 begin=1795741016 span_s=1110 boot 649371ad-964b-46bb-a722-3fd4cd1e2013
+[2026-11-27T02:55:05+02:00] env: kernel 5.10.168-ti-r84 | module 8188eu 491D54E918431E9A9FE8B7F | ko sha256 6bcd2b32b78be456
+[2026-11-27T02:55:06+02:00] monitor:  type monitor 
+tcpdump: listening on tplink0, link-type IEEE802_11_RADIO (802.11 plus radiotap header), snapshot length 256 bytes
+[2026-11-27T02:57:56+02:00] heartbeat: boot 649371ad-964b-46bb-a722-3fd4cd1e2013 |  type monitor | pcap 275494 B
+[2026-11-27T02:58:56+02:00] heartbeat: boot 649371ad-964b-46bb-a722-3fd4cd1e2013 |  type monitor | pcap 5835960 B
+[2026-11-27T02:59:56+02:00] heartbeat: boot 649371ad-964b-46bb-a722-3fd4cd1e2013 |  type monitor | pcap 11078780 B
+[2026-11-27T03:00:56+02:00] heartbeat: boot 649371ad-964b-46bb-a722-3fd4cd1e2013 |  type monitor | pcap 14068010 B
+[2026-11-27T03:01:56+02:00] heartbeat: boot 649371ad-964b-46bb-a722-3fd4cd1e2013 |  type monitor | pcap 15220418 B
+[2026-11-27T03:02:56+02:00] heartbeat: boot 649371ad-964b-46bb-a722-3fd4cd1e2013 |  type monitor | pcap 16047846 B
+[2026-11-27T03:03:56+02:00] heartbeat: boot 649371ad-964b-46bb-a722-3fd4cd1e2013 |  type monitor | pcap 19219743 B
+[2026-11-27T03:04:57+02:00] heartbeat: boot 649371ad-964b-46bb-a722-3fd4cd1e2013 |  type monitor | pcap 23943637 B
+[2026-11-27T03:05:57+02:00] heartbeat: boot 649371ad-964b-46bb-a722-3fd4cd1e2013 |  type monitor | pcap 25823225 B
+[2026-11-27T03:06:57+02:00] heartbeat: boot 649371ad-964b-46bb-a722-3fd4cd1e2013 |  type monitor | pcap 26653426 B
+[2026-11-27T03:07:57+02:00] heartbeat: boot 649371ad-964b-46bb-a722-3fd4cd1e2013 |  type monitor | pcap 27454026 B
+[2026-11-27T03:08:57+02:00] heartbeat: boot 649371ad-964b-46bb-a722-3fd4cd1e2013 |  type monitor | pcap 32768311 B
+[2026-11-27T03:09:57+02:00] heartbeat: boot 649371ad-964b-46bb-a722-3fd4cd1e2013 |  type monitor | pcap 35544328 B
+[2026-11-27T03:10:57+02:00] heartbeat: boot 649371ad-964b-46bb-a722-3fd4cd1e2013 |  type monitor | pcap 36653952 B
+[2026-11-27T03:11:57+02:00] heartbeat: boot 649371ad-964b-46bb-a722-3fd4cd1e2013 |  type monitor | pcap 37489812 B
+[2026-11-27T03:12:58+02:00] heartbeat: boot 649371ad-964b-46bb-a722-3fd4cd1e2013 |  type monitor | pcap 40346931 B
+[2026-11-27T03:13:58+02:00] heartbeat: boot 649371ad-964b-46bb-a722-3fd4cd1e2013 |  type monitor | pcap 45827070 B
+[2026-11-27T03:14:58+02:00] heartbeat: boot 649371ad-964b-46bb-a722-3fd4cd1e2013 |  type monitor | pcap 48320803 B
+190519 packets captured
+190532 packets received by filter
+0 packets dropped by kernel
+[2026-11-27T03:15:58+02:00] heartbeat: boot 649371ad-964b-46bb-a722-3fd4cd1e2013 |  type monitor | pcap 48391650 B
+[2026-11-27T03:15:58+02:00] capture done: 48391650 bytes; boot 649371ad-964b-46bb-a722-3fd4cd1e2013
+[2026-11-27T03:15:58+02:00] reverted: tplink0 down and managed ( type managed ); boot 649371ad-964b-46bb-a722-3fd4cd1e2013; deadman disarmed

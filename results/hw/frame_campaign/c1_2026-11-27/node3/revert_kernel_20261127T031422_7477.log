@@ -1,0 +1,162 @@
+== at start 2026-11-27T03:14:22+02:00
+[   10.134835] bcm2835-isp bcm2835-isp: Device node output[0] registered as /dev/video13
+[   10.137642] bcm2835-isp bcm2835-isp: Device node capture[0] registered as /dev/video14
+[   10.138865] bcm2835-isp bcm2835-isp: Device node capture[1] registered as /dev/video15
+[   10.139405] bcm2835-isp bcm2835-isp: Device node stats[2] registered as /dev/video16
+[   10.139435] bcm2835-isp bcm2835-isp: Register output node 0 with media controller
+[   10.139449] bcm2835-isp bcm2835-isp: Register capture node 1 with media controller
+[   10.139458] bcm2835-isp bcm2835-isp: Register capture node 2 with media controller
+[   10.139466] bcm2835-isp bcm2835-isp: Register capture node 3 with media controller
+[   10.146641] bcm2835-isp bcm2835-isp: Device node output[0] registered as /dev/video20
+[   10.147197] bcm2835-isp bcm2835-isp: Device node capture[0] registered as /dev/video21
+[   10.147699] bcm2835-isp bcm2835-isp: Device node capture[1] registered as /dev/video22
+[   10.148077] bcm2835-isp bcm2835-isp: Device node stats[2] registered as /dev/video23
+[   10.148117] bcm2835-isp bcm2835-isp: Register output node 0 with media controller
+[   10.148130] bcm2835-isp bcm2835-isp: Register capture node 1 with media controller
+[   10.148140] bcm2835-isp bcm2835-isp: Register capture node 2 with media controller
+[   10.148148] bcm2835-isp bcm2835-isp: Register capture node 3 with media controller
+[   10.148452] bcm2835-isp bcm2835-isp: Loaded V4L2 bcm2835-isp
+[   10.167409] bcm2835_codec: module is from the staging directory, the quality is unknown, you have been warned.
+[   10.171857] bcm2835-codec bcm2835-codec: Device registered as /dev/video10
+[   10.171901] bcm2835-codec bcm2835-codec: Loaded V4L2 decode
+[   10.178319] bcm2835-codec bcm2835-codec: Device registered as /dev/video11
+[   10.178363] bcm2835-codec bcm2835-codec: Loaded V4L2 encode
+[   10.188561] bcm2835-codec bcm2835-codec: Device registered as /dev/video12
+[   10.188621] bcm2835-codec bcm2835-codec: Loaded V4L2 isp
+[   10.192511] bcm2835-codec bcm2835-codec: Device registered as /dev/video18
+[   10.192566] bcm2835-codec bcm2835-codec: Loaded V4L2 image_fx
+[   10.195375] bcm2835-codec bcm2835-codec: Device registered as /dev/video31
+[   10.195416] bcm2835-codec bcm2835-codec: Loaded V4L2 encode_image
+[   10.202738] cfg80211: Loading compiled-in X.509 certificates for regulatory database
+[   10.213015] Bluetooth: HCI UART driver ver 2.3
+[   10.213046] Bluetooth: HCI UART protocol H4 registered
+[   10.213159] Bluetooth: HCI UART protocol Three-wire (H5) registered
+[   10.213742] Bluetooth: HCI UART protocol Broadcom registered
+[   10.214504] hci_uart_bcm serial0-0: supply vbat not found, using dummy regulator
+[   10.214728] hci_uart_bcm serial0-0: supply vddio not found, using dummy regulator
+[   10.275017] Loaded X.509 cert 'benh@debian.org: 577e021cb980e0e820821ba7b54b4961b8b4fadf'
+[   10.275848] Loaded X.509 cert 'romain.perier@gmail.com: 3abbc6ec146e09d1b6016ab9d6cf71dd233f0328'
+[   10.276641] Loaded X.509 cert 'sforshee: 00b28ddf47aef9cea7'
+[   10.277462] Loaded X.509 cert 'wens: 61c038651aabdcf94bd0ac7ff06c7248db18c600'
+[   10.572099] Bluetooth: hci0: BCM: chip id 94
+[   10.572658] Bluetooth: hci0: BCM: features 0x2e
+[   10.575875] Bluetooth: hci0: BCM43430A1
+[   10.575905] Bluetooth: hci0: BCM43430A1 (001.002.009) build 0000
+[   10.595191] Bluetooth: hci0: BCM43430A1 'brcm/BCM43430A1.raspberrypi,3-model-b.hcd' Patch
+[   10.638742] brcmfmac: F1 signature read @0x18000000=0x1541a9a6
+[   10.646528] brcmfmac: brcmf_fw_alloc_request: using brcm/brcmfmac43430-sdio for chip BCM43430/1
+[   10.647249] usbcore: registered new interface driver brcmfmac
+[   10.746489] Console: switching to colour dummy device 80x25
+[   10.759717] vc4-drm soc:gpu: bound 3f400000.hvs (ops vc4_hvs_ops [vc4])
+[   10.761946] Registered IR keymap rc-cec
+[   10.762213] rc rc0: vc4-hdmi as /devices/platform/soc/3f902000.hdmi/rc/rc0
+[   10.762431] input: vc4-hdmi as /devices/platform/soc/3f902000.hdmi/rc/rc0/input0
+[   10.768855] input: vc4-hdmi HDMI Jack as /devices/platform/soc/3f902000.hdmi/sound/card1/input1
+[   10.769711] vc4-drm soc:gpu: bound 3f902000.hdmi (ops vc4_hdmi_ops [vc4])
+[   10.770042] vc4-drm soc:gpu: bound 3f004000.txp (ops vc4_txp_ops [vc4])
+[   10.770390] vc4-drm soc:gpu: bound 3f206000.pixelvalve (ops vc4_crtc_ops [vc4])
+[   10.770616] vc4-drm soc:gpu: bound 3f207000.pixelvalve (ops vc4_crtc_ops [vc4])
+[   10.770809] vc4-drm soc:gpu: bound 3f807000.pixelvalve (ops vc4_crtc_ops [vc4])
+[   10.770974] vc4-drm soc:gpu: bound 3fc00000.v3d (ops vc4_v3d_ops [vc4])
+[   10.777310] [drm] Initialized vc4 0.0.0 for soc:gpu on minor 0
+[   10.778328] vc4-drm soc:gpu: [drm] Cannot find any crtc or sizes
+[   10.780817] vc4-drm soc:gpu: [drm] Cannot find any crtc or sizes
+[   10.904233] brcmfmac: brcmf_c_process_txcap_blob: no txcap_blob available (err=-2)
+[   10.904966] brcmfmac: brcmf_c_preinit_dcmds: Firmware: BCM43430/1 wl0: Jul 19 2021 03:24:18 version 7.45.98 (TOB) (56df937 CY) FWID 01-8e14b897
+[   11.435576] Bluetooth: hci0: BCM: features 0x2e
+[   11.438816] Bluetooth: hci0: BCM43438A1 37.4MHz Raspberry Pi 3-0141
+[   11.438845] Bluetooth: hci0: BCM43430A1 (001.002.009) build 0508
+[   11.769095] Adding 524284k swap on /var/swap.  Priority:-2 extents:17 across:2072576k SS
+[   12.279577] Bluetooth: BNEP (Ethernet Emulation) ver 1.3
+[   12.279603] Bluetooth: BNEP filters: protocol multicast
+[   12.279623] Bluetooth: BNEP socket layer initialized
+[   12.292190] Bluetooth: MGMT ver 1.23
+[   12.316506] NET: Registered PF_ALG protocol family
+[   13.548424] smsc95xx 1-1.1:1.0 eth0: hardware isn't capable of remote wakeup
+[   13.551226] smsc95xx 1-1.1:1.0 eth0: Link is Down
+[   13.579531] brcmfmac: brcmf_cfg80211_set_power_mgmt: power save enabled
+[101362.834769] warning: `iwconfig' uses wireless extensions which will stop working for Wi-Fi 7 hardware; use nl80211
+[101568.003472] brcmfmac: brcmf_cfg80211_set_power_mgmt: power save enabled
+[101921.192274] brcmfmac: brcmf_cfg80211_set_power_mgmt: power save enabled
+[102360.870897] brcmfmac: brcmf_cfg80211_set_power_mgmt: power save enabled
+== at end 2026-11-27T03:14:32+02:00
+[   10.137642] bcm2835-isp bcm2835-isp: Device node capture[0] registered as /dev/video14
+[   10.138865] bcm2835-isp bcm2835-isp: Device node capture[1] registered as /dev/video15
+[   10.139405] bcm2835-isp bcm2835-isp: Device node stats[2] registered as /dev/video16
+[   10.139435] bcm2835-isp bcm2835-isp: Register output node 0 with media controller
+[   10.139449] bcm2835-isp bcm2835-isp: Register capture node 1 with media controller
+[   10.139458] bcm2835-isp bcm2835-isp: Register capture node 2 with media controller
+[   10.139466] bcm2835-isp bcm2835-isp: Register capture node 3 with media controller
+[   10.146641] bcm2835-isp bcm2835-isp: Device node output[0] registered as /dev/video20
+[   10.147197] bcm2835-isp bcm2835-isp: Device node capture[0] registered as /dev/video21
+[   10.147699] bcm2835-isp bcm2835-isp: Device node capture[1] registered as /dev/video22
+[   10.148077] bcm2835-isp bcm2835-isp: Device node stats[2] registered as /dev/video23
+[   10.148117] bcm2835-isp bcm2835-isp: Register output node 0 with media controller
+[   10.148130] bcm2835-isp bcm2835-isp: Register capture node 1 with media controller
+[   10.148140] bcm2835-isp bcm2835-isp: Register capture node 2 with media controller
+[   10.148148] bcm2835-isp bcm2835-isp: Register capture node 3 with media controller
+[   10.148452] bcm2835-isp bcm2835-isp: Loaded V4L2 bcm2835-isp
+[   10.167409] bcm2835_codec: module is from the staging directory, the quality is unknown, you have been warned.
+[   10.171857] bcm2835-codec bcm2835-codec: Device registered as /dev/video10
+[   10.171901] bcm2835-codec bcm2835-codec: Loaded V4L2 decode
+[   10.178319] bcm2835-codec bcm2835-codec: Device registered as /dev/video11
+[   10.178363] bcm2835-codec bcm2835-codec: Loaded V4L2 encode
+[   10.188561] bcm2835-codec bcm2835-codec: Device registered as /dev/video12
+[   10.188621] bcm2835-codec bcm2835-codec: Loaded V4L2 isp
+[   10.192511] bcm2835-codec bcm2835-codec: Device registered as /dev/video18
+[   10.192566] bcm2835-codec bcm2835-codec: Loaded V4L2 image_fx
+[   10.195375] bcm2835-codec bcm2835-codec: Device registered as /dev/video31
+[   10.195416] bcm2835-codec bcm2835-codec: Loaded V4L2 encode_image
+[   10.202738] cfg80211: Loading compiled-in X.509 certificates for regulatory database
+[   10.213015] Bluetooth: HCI UART driver ver 2.3
+[   10.213046] Bluetooth: HCI UART protocol H4 registered
+[   10.213159] Bluetooth: HCI UART protocol Three-wire (H5) registered
+[   10.213742] Bluetooth: HCI UART protocol Broadcom registered
+[   10.214504] hci_uart_bcm serial0-0: supply vbat not found, using dummy regulator
+[   10.214728] hci_uart_bcm serial0-0: supply vddio not found, using dummy regulator
+[   10.275017] Loaded X.509 cert 'benh@debian.org: 577e021cb980e0e820821ba7b54b4961b8b4fadf'
+[   10.275848] Loaded X.509 cert 'romain.perier@gmail.com: 3abbc6ec146e09d1b6016ab9d6cf71dd233f0328'
+[   10.276641] Loaded X.509 cert 'sforshee: 00b28ddf47aef9cea7'
+[   10.277462] Loaded X.509 cert 'wens: 61c038651aabdcf94bd0ac7ff06c7248db18c600'
+[   10.572099] Bluetooth: hci0: BCM: chip id 94
+[   10.572658] Bluetooth: hci0: BCM: features 0x2e
+[   10.575875] Bluetooth: hci0: BCM43430A1
+[   10.575905] Bluetooth: hci0: BCM43430A1 (001.002.009) build 0000
+[   10.595191] Bluetooth: hci0: BCM43430A1 'brcm/BCM43430A1.raspberrypi,3-model-b.hcd' Patch
+[   10.638742] brcmfmac: F1 signature read @0x18000000=0x1541a9a6
+[   10.646528] brcmfmac: brcmf_fw_alloc_request: using brcm/brcmfmac43430-sdio for chip BCM43430/1
+[   10.647249] usbcore: registered new interface driver brcmfmac
+[   10.746489] Console: switching to colour dummy device 80x25
+[   10.759717] vc4-drm soc:gpu: bound 3f400000.hvs (ops vc4_hvs_ops [vc4])
+[   10.761946] Registered IR keymap rc-cec
+[   10.762213] rc rc0: vc4-hdmi as /devices/platform/soc/3f902000.hdmi/rc/rc0
+[   10.762431] input: vc4-hdmi as /devices/platform/soc/3f902000.hdmi/rc/rc0/input0
+[   10.768855] input: vc4-hdmi HDMI Jack as /devices/platform/soc/3f902000.hdmi/sound/card1/input1
+[   10.769711] vc4-drm soc:gpu: bound 3f902000.hdmi (ops vc4_hdmi_ops [vc4])
+[   10.770042] vc4-drm soc:gpu: bound 3f004000.txp (ops vc4_txp_ops [vc4])
+[   10.770390] vc4-drm soc:gpu: bound 3f206000.pixelvalve (ops vc4_crtc_ops [vc4])
+[   10.770616] vc4-drm soc:gpu: bound 3f207000.pixelvalve (ops vc4_crtc_ops [vc4])
+[   10.770809] vc4-drm soc:gpu: bound 3f807000.pixelvalve (ops vc4_crtc_ops [vc4])
+[   10.770974] vc4-drm soc:gpu: bound 3fc00000.v3d (ops vc4_v3d_ops [vc4])
+[   10.777310] [drm] Initialized vc4 0.0.0 for soc:gpu on minor 0
+[   10.778328] vc4-drm soc:gpu: [drm] Cannot find any crtc or sizes
+[   10.780817] vc4-drm soc:gpu: [drm] Cannot find any crtc or sizes
+[   10.904233] brcmfmac: brcmf_c_process_txcap_blob: no txcap_blob available (err=-2)
+[   10.904966] brcmfmac: brcmf_c_preinit_dcmds: Firmware: BCM43430/1 wl0: Jul 19 2021 03:24:18 version 7.45.98 (TOB) (56df937 CY) FWID 01-8e14b897
+[   11.435576] Bluetooth: hci0: BCM: features 0x2e
+[   11.438816] Bluetooth: hci0: BCM43438A1 37.4MHz Raspberry Pi 3-0141
+[   11.438845] Bluetooth: hci0: BCM43430A1 (001.002.009) build 0508
+[   11.769095] Adding 524284k swap on /var/swap.  Priority:-2 extents:17 across:2072576k SS
+[   12.279577] Bluetooth: BNEP (Ethernet Emulation) ver 1.3
+[   12.279603] Bluetooth: BNEP filters: protocol multicast
+[   12.279623] Bluetooth: BNEP socket layer initialized
+[   12.292190] Bluetooth: MGMT ver 1.23
+[   12.316506] NET: Registered PF_ALG protocol family
+[   13.548424] smsc95xx 1-1.1:1.0 eth0: hardware isn't capable of remote wakeup
+[   13.551226] smsc95xx 1-1.1:1.0 eth0: Link is Down
+[   13.579531] brcmfmac: brcmf_cfg80211_set_power_mgmt: power save enabled
+[101362.834769] warning: `iwconfig' uses wireless extensions which will stop working for Wi-Fi 7 hardware; use nl80211
+[101568.003472] brcmfmac: brcmf_cfg80211_set_power_mgmt: power save enabled
+[101921.192274] brcmfmac: brcmf_cfg80211_set_power_mgmt: power save enabled
+[102360.870897] brcmfmac: brcmf_cfg80211_set_power_mgmt: power save enabled
+[103641.198167] brcmfmac: brcmf_cfg80211_set_power_mgmt: power save enabled

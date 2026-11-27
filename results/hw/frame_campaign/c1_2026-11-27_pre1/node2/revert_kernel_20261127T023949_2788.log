@@ -1,0 +1,162 @@
+== at start 2026-11-27T02:39:49+02:00
+[    8.264080] bcm2835-isp bcm2835-isp: Register capture node 2 with media controller
+[    8.264088] bcm2835-isp bcm2835-isp: Register capture node 3 with media controller
+[    8.269793] bcm2835-isp bcm2835-isp: Device node output[0] registered as /dev/video20
+[    8.270116] bcm2835-isp bcm2835-isp: Device node capture[0] registered as /dev/video21
+[    8.270381] bcm2835-isp bcm2835-isp: Device node capture[1] registered as /dev/video22
+[    8.270617] bcm2835-isp bcm2835-isp: Device node stats[2] registered as /dev/video23
+[    8.270635] bcm2835-isp bcm2835-isp: Register output node 0 with media controller
+[    8.270643] bcm2835-isp bcm2835-isp: Register capture node 1 with media controller
+[    8.270647] bcm2835-isp bcm2835-isp: Register capture node 2 with media controller
+[    8.270652] bcm2835-isp bcm2835-isp: Register capture node 3 with media controller
+[    8.270792] bcm2835-isp bcm2835-isp: Loaded V4L2 bcm2835-isp
+[    8.287674] Bluetooth: Core ver 2.22
+[    8.287735] NET: Registered PF_BLUETOOTH protocol family
+[    8.287740] Bluetooth: HCI device and connection manager initialized
+[    8.287754] Bluetooth: HCI socket layer initialized
+[    8.287760] Bluetooth: L2CAP socket layer initialized
+[    8.287778] Bluetooth: SCO socket layer initialized
+[    8.288819] bcm2835-codec bcm2835-codec: Device registered as /dev/video10
+[    8.288853] bcm2835-codec bcm2835-codec: Loaded V4L2 decode
+[    8.294474] rpi-hevc-dec feb00000.codec: Device registered as /dev/video19
+[    8.299247] bcm2835-codec bcm2835-codec: Device registered as /dev/video11
+[    8.299280] bcm2835-codec bcm2835-codec: Loaded V4L2 encode
+[    8.302979] bcm2835-codec bcm2835-codec: Device registered as /dev/video12
+[    8.303012] bcm2835-codec bcm2835-codec: Loaded V4L2 isp
+[    8.308883] bcm2835-codec bcm2835-codec: Device registered as /dev/video18
+[    8.308915] bcm2835-codec bcm2835-codec: Loaded V4L2 image_fx
+[    8.313503] Bluetooth: HCI UART driver ver 2.3
+[    8.313520] Bluetooth: HCI UART protocol H4 registered
+[    8.313572] Bluetooth: HCI UART protocol Three-wire (H5) registered
+[    8.313852] Bluetooth: HCI UART protocol Broadcom registered
+[    8.315113] hci_uart_bcm serial0-0: supply vbat not found, using dummy regulator
+[    8.316641] hci_uart_bcm serial0-0: supply vddio not found, using dummy regulator
+[    8.341175] bcm2835-codec bcm2835-codec: Device registered as /dev/video31
+[    8.341207] bcm2835-codec bcm2835-codec: Loaded V4L2 encode_image
+[    8.361222] brcmfmac: F1 signature read @0x18000000=0x15264345
+[    8.367190] brcmfmac: brcmf_fw_alloc_request: using brcm/brcmfmac43455-sdio for chip BCM4345/6
+[    8.381895] usbcore: registered new interface driver brcmfmac
+[    8.599177] brcmfmac: brcmf_c_process_txcap_blob: no txcap_blob available (err=-2)
+[    8.602005] brcmfmac: brcmf_c_preinit_dcmds: Firmware: BCM4345/6 wl0: Aug 29 2023 01:47:08 version 7.45.265 (28bca26 CY) FWID 01-b677b91b
+[    8.611590] vc4-drm gpu: bound fe400000.hvs (ops vc4_hvs_ops [vc4])
+[    8.612809] Registered IR keymap rc-cec
+[    8.612987] rc rc0: vc4-hdmi-0 as /devices/platform/soc/fef00700.hdmi/rc/rc0
+[    8.613239] input: vc4-hdmi-0 as /devices/platform/soc/fef00700.hdmi/rc/rc0/input0
+[    8.613525] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+[    8.618956] input: vc4-hdmi-0 HDMI Jack as /devices/platform/soc/fef00700.hdmi/sound/card1/input1
+[    8.619160] vc4-drm gpu: bound fef00700.hdmi (ops vc4_hdmi_ops [vc4])
+[    8.620109] Registered IR keymap rc-cec
+[    8.620199] rc rc1: vc4-hdmi-1 as /devices/platform/soc/fef05700.hdmi/rc/rc1
+[    8.620322] input: vc4-hdmi-1 as /devices/platform/soc/fef05700.hdmi/rc/rc1/input2
+[    8.630936] input: vc4-hdmi-1 HDMI Jack as /devices/platform/soc/fef05700.hdmi/sound/card2/input3
+[    8.631232] vc4-drm gpu: bound fef05700.hdmi (ops vc4_hdmi_ops [vc4])
+[    8.631582] vc4-drm gpu: bound fe004000.txp (ops vc4_txp_ops [vc4])
+[    8.631794] vc4-drm gpu: bound fe206000.pixelvalve (ops vc4_crtc_ops [vc4])
+[    8.632047] vc4-drm gpu: bound fe207000.pixelvalve (ops vc4_crtc_ops [vc4])
+[    8.632969] vc4-drm gpu: bound fe20a000.pixelvalve (ops vc4_crtc_ops [vc4])
+[    8.633178] vc4-drm gpu: bound fe216000.pixelvalve (ops vc4_crtc_ops [vc4])
+[    8.634752] vc4-drm gpu: bound fec12000.pixelvalve (ops vc4_crtc_ops [vc4])
+[    8.637081] [drm] Initialized vc4 0.0.0 for gpu on minor 1
+[    8.638265] vc4-drm gpu: [drm] Cannot find any crtc or sizes
+[    8.644002] vc4-drm gpu: [drm] Cannot find any crtc or sizes
+[    8.644107] vc4-drm gpu: [drm] Cannot find any crtc or sizes
+[    8.671279] Bluetooth: hci0: BCM: chip id 107
+[    8.671561] Bluetooth: hci0: BCM: features 0x2f
+[    8.672610] Bluetooth: hci0: BCM4345C0
+[    8.672629] Bluetooth: hci0: BCM4345C0 (003.001.025) build 0000
+[    8.680344] Bluetooth: hci0: BCM4345C0 'brcm/BCM4345C0.raspberrypi,4-model-b.hcd' Patch
+[    9.238615] Adding 524284k swap on /var/swap.  Priority:-2 extents:4 across:1327100k SS
+[    9.385822] Bluetooth: hci0: BCM: features 0x2f
+[    9.387078] Bluetooth: hci0: BCM43455 37.4MHz Raspberry Pi 3+-0190
+[    9.387083] Bluetooth: hci0: BCM4345C0 (003.001.025) build 0382
+[    9.495029] Bluetooth: BNEP (Ethernet Emulation) ver 1.3
+[    9.495044] Bluetooth: BNEP filters: protocol multicast
+[    9.495055] Bluetooth: BNEP socket layer initialized
+[    9.499220] Bluetooth: MGMT ver 1.23
+[    9.512843] NET: Registered PF_ALG protocol family
+[   10.601595] bcmgenet fd580000.ethernet: configuring instance for external RGMII (RX delay)
+[   10.602300] bcmgenet fd580000.ethernet eth0: Link is Down
+[   10.635031] brcmfmac: brcmf_cfg80211_set_power_mgmt: power save enabled
+[101358.458330] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+[101358.984732] warning: `iwconfig' uses wireless extensions which will stop working for Wi-Fi 7 hardware; use nl80211
+== at end 2026-11-27T02:39:58+02:00
+[    8.269793] bcm2835-isp bcm2835-isp: Device node output[0] registered as /dev/video20
+[    8.270116] bcm2835-isp bcm2835-isp: Device node capture[0] registered as /dev/video21
+[    8.270381] bcm2835-isp bcm2835-isp: Device node capture[1] registered as /dev/video22
+[    8.270617] bcm2835-isp bcm2835-isp: Device node stats[2] registered as /dev/video23
+[    8.270635] bcm2835-isp bcm2835-isp: Register output node 0 with media controller
+[    8.270643] bcm2835-isp bcm2835-isp: Register capture node 1 with media controller
+[    8.270647] bcm2835-isp bcm2835-isp: Register capture node 2 with media controller
+[    8.270652] bcm2835-isp bcm2835-isp: Register capture node 3 with media controller
+[    8.270792] bcm2835-isp bcm2835-isp: Loaded V4L2 bcm2835-isp
+[    8.287674] Bluetooth: Core ver 2.22
+[    8.287735] NET: Registered PF_BLUETOOTH protocol family
+[    8.287740] Bluetooth: HCI device and connection manager initialized
+[    8.287754] Bluetooth: HCI socket layer initialized
+[    8.287760] Bluetooth: L2CAP socket layer initialized
+[    8.287778] Bluetooth: SCO socket layer initialized
+[    8.288819] bcm2835-codec bcm2835-codec: Device registered as /dev/video10
+[    8.288853] bcm2835-codec bcm2835-codec: Loaded V4L2 decode
+[    8.294474] rpi-hevc-dec feb00000.codec: Device registered as /dev/video19
+[    8.299247] bcm2835-codec bcm2835-codec: Device registered as /dev/video11
+[    8.299280] bcm2835-codec bcm2835-codec: Loaded V4L2 encode
+[    8.302979] bcm2835-codec bcm2835-codec: Device registered as /dev/video12
+[    8.303012] bcm2835-codec bcm2835-codec: Loaded V4L2 isp
+[    8.308883] bcm2835-codec bcm2835-codec: Device registered as /dev/video18
+[    8.308915] bcm2835-codec bcm2835-codec: Loaded V4L2 image_fx
+[    8.313503] Bluetooth: HCI UART driver ver 2.3
+[    8.313520] Bluetooth: HCI UART protocol H4 registered
+[    8.313572] Bluetooth: HCI UART protocol Three-wire (H5) registered
+[    8.313852] Bluetooth: HCI UART protocol Broadcom registered
+[    8.315113] hci_uart_bcm serial0-0: supply vbat not found, using dummy regulator
+[    8.316641] hci_uart_bcm serial0-0: supply vddio not found, using dummy regulator
+[    8.341175] bcm2835-codec bcm2835-codec: Device registered as /dev/video31
+[    8.341207] bcm2835-codec bcm2835-codec: Loaded V4L2 encode_image
+[    8.361222] brcmfmac: F1 signature read @0x18000000=0x15264345
+[    8.367190] brcmfmac: brcmf_fw_alloc_request: using brcm/brcmfmac43455-sdio for chip BCM4345/6
+[    8.381895] usbcore: registered new interface driver brcmfmac
+[    8.599177] brcmfmac: brcmf_c_process_txcap_blob: no txcap_blob available (err=-2)
+[    8.602005] brcmfmac: brcmf_c_preinit_dcmds: Firmware: BCM4345/6 wl0: Aug 29 2023 01:47:08 version 7.45.265 (28bca26 CY) FWID 01-b677b91b
+[    8.611590] vc4-drm gpu: bound fe400000.hvs (ops vc4_hvs_ops [vc4])
+[    8.612809] Registered IR keymap rc-cec
+[    8.612987] rc rc0: vc4-hdmi-0 as /devices/platform/soc/fef00700.hdmi/rc/rc0
+[    8.613239] input: vc4-hdmi-0 as /devices/platform/soc/fef00700.hdmi/rc/rc0/input0
+[    8.613525] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+[    8.618956] input: vc4-hdmi-0 HDMI Jack as /devices/platform/soc/fef00700.hdmi/sound/card1/input1
+[    8.619160] vc4-drm gpu: bound fef00700.hdmi (ops vc4_hdmi_ops [vc4])
+[    8.620109] Registered IR keymap rc-cec
+[    8.620199] rc rc1: vc4-hdmi-1 as /devices/platform/soc/fef05700.hdmi/rc/rc1
+[    8.620322] input: vc4-hdmi-1 as /devices/platform/soc/fef05700.hdmi/rc/rc1/input2
+[    8.630936] input: vc4-hdmi-1 HDMI Jack as /devices/platform/soc/fef05700.hdmi/sound/card2/input3
+[    8.631232] vc4-drm gpu: bound fef05700.hdmi (ops vc4_hdmi_ops [vc4])
+[    8.631582] vc4-drm gpu: bound fe004000.txp (ops vc4_txp_ops [vc4])
+[    8.631794] vc4-drm gpu: bound fe206000.pixelvalve (ops vc4_crtc_ops [vc4])
+[    8.632047] vc4-drm gpu: bound fe207000.pixelvalve (ops vc4_crtc_ops [vc4])
+[    8.632969] vc4-drm gpu: bound fe20a000.pixelvalve (ops vc4_crtc_ops [vc4])
+[    8.633178] vc4-drm gpu: bound fe216000.pixelvalve (ops vc4_crtc_ops [vc4])
+[    8.634752] vc4-drm gpu: bound fec12000.pixelvalve (ops vc4_crtc_ops [vc4])
+[    8.637081] [drm] Initialized vc4 0.0.0 for gpu on minor 1
+[    8.638265] vc4-drm gpu: [drm] Cannot find any crtc or sizes
+[    8.644002] vc4-drm gpu: [drm] Cannot find any crtc or sizes
+[    8.644107] vc4-drm gpu: [drm] Cannot find any crtc or sizes
+[    8.671279] Bluetooth: hci0: BCM: chip id 107
+[    8.671561] Bluetooth: hci0: BCM: features 0x2f
+[    8.672610] Bluetooth: hci0: BCM4345C0
+[    8.672629] Bluetooth: hci0: BCM4345C0 (003.001.025) build 0000
+[    8.680344] Bluetooth: hci0: BCM4345C0 'brcm/BCM4345C0.raspberrypi,4-model-b.hcd' Patch
+[    9.238615] Adding 524284k swap on /var/swap.  Priority:-2 extents:4 across:1327100k SS
+[    9.385822] Bluetooth: hci0: BCM: features 0x2f
+[    9.387078] Bluetooth: hci0: BCM43455 37.4MHz Raspberry Pi 3+-0190
+[    9.387083] Bluetooth: hci0: BCM4345C0 (003.001.025) build 0382
+[    9.495029] Bluetooth: BNEP (Ethernet Emulation) ver 1.3
+[    9.495044] Bluetooth: BNEP filters: protocol multicast
+[    9.495055] Bluetooth: BNEP socket layer initialized
+[    9.499220] Bluetooth: MGMT ver 1.23
+[    9.512843] NET: Registered PF_ALG protocol family
+[   10.601595] bcmgenet fd580000.ethernet: configuring instance for external RGMII (RX delay)
+[   10.602300] bcmgenet fd580000.ethernet eth0: Link is Down
+[   10.635031] brcmfmac: brcmf_cfg80211_set_power_mgmt: power save enabled
+[101358.458330] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
+[101358.984732] warning: `iwconfig' uses wireless extensions which will stop working for Wi-Fi 7 hardware; use nl80211
+[101564.550998] brcmfmac: brcmf_cfg80211_set_power_mgmt: power save enabled
+[101567.740705] ieee80211 phy0: brcmf_cfg80211_reg_notifier: Firmware rejected country setting
