@@ -169,6 +169,53 @@ snifMissMin,0.7,session folders + c1_c1_2026-11-27.csv,"the sniffer's smallest m
 snifMissMax,11.0,session folders + c1_c1_2026-11-27.csv,"the sniffer's largest miss, any window (%)"
 kRhoA,0.595,authbc.models.unified_capacity,"rho* at 802.11a, eps 0.05"
 kTauA,98,authbc.models.unified_capacity,tau0 at 802.11a (us)
+vaPoints,3,v1a_v1a_2026-11-28.csv + v1a_predictions.csv,prereg-V1a
+vaHeld,0,v1a_v1a_2026-11-28.csv + v1a_predictions.csv,"prereg-V1a, finite-station form at 15 %"
+vaLossA,0.294,v1a_v1a_2026-11-28.csv + v1a_predictions.csv,"measured loss less b, u = 0.3"
+vaLoA,0.198,v1a_v1a_2026-11-28.csv + v1a_predictions.csv,"95 % interval, u = 0.3"
+vaHiA,0.391,v1a_v1a_2026-11-28.csv + v1a_predictions.csv,"95 % interval, u = 0.3"
+vaFinA,0.169,v1a_v1a_2026-11-28.csv + v1a_predictions.csv,"finite-station form, u = 0.3"
+vaNsA,0.188,v1a_v1a_2026-11-28.csv + v1a_predictions.csv,"ns-3, standard rule, u = 0.3"
+vaErrA,\textminus{}42.7,v1a_v1a_2026-11-28.csv + v1a_predictions.csv,"finite-station error, u = 0.3"
+vaLossB,0.501,v1a_v1a_2026-11-28.csv + v1a_predictions.csv,"measured loss less b, u = 0.4"
+vaLoB,0.378,v1a_v1a_2026-11-28.csv + v1a_predictions.csv,"95 % interval, u = 0.4"
+vaHiB,0.625,v1a_v1a_2026-11-28.csv + v1a_predictions.csv,"95 % interval, u = 0.4"
+vaFinB,0.273,v1a_v1a_2026-11-28.csv + v1a_predictions.csv,"finite-station form, u = 0.4"
+vaNsB,0.306,v1a_v1a_2026-11-28.csv + v1a_predictions.csv,"ns-3, standard rule, u = 0.4"
+vaErrB,\textminus{}45.5,v1a_v1a_2026-11-28.csv + v1a_predictions.csv,"finite-station error, u = 0.4"
+vaLossC,0.697,v1a_v1a_2026-11-28.csv + v1a_predictions.csv,"measured loss less b, u = 0.5"
+vaLoC,0.597,v1a_v1a_2026-11-28.csv + v1a_predictions.csv,"95 % interval, u = 0.5"
+vaHiC,0.798,v1a_v1a_2026-11-28.csv + v1a_predictions.csv,"95 % interval, u = 0.5"
+vaFinC,0.397,v1a_v1a_2026-11-28.csv + v1a_predictions.csv,"finite-station form, u = 0.5"
+vaNsC,0.452,v1a_v1a_2026-11-28.csv + v1a_predictions.csv,"ns-3, standard rule, u = 0.5"
+vaErrC,\textminus{}43.0,v1a_v1a_2026-11-28.csv + v1a_predictions.csv,"finite-station error, u = 0.5"
+vaFacMin,1.74,v1a_v1a_2026-11-28.csv + v1a_predictions.csv,"radios over the finite-station form, min"
+vaFacMax,1.84,v1a_v1a_2026-11-28.csv + v1a_predictions.csv,"radios over the finite-station form, max"
+vaSimMin,1.52,v1a_v1a_2026-11-28.csv + v1a_predictions.csv,"radios over ns-3 / event simulation (standard), min"
+vaSimMax,1.64,v1a_v1a_2026-11-28.csv + v1a_predictions.csv,"radios over ns-3 / event simulation (standard), max"
+vaGfiveMin,\textminus{}11,v1a_v1a_2026-11-28.csv + v1a_predictions.csv,"(G5) against the radios, outside its range, min (%)"
+vaGfiveMax,+6,v1a_v1a_2026-11-28.csv + v1a_predictions.csv,"(G5) against the radios, max (%)"
+vaBg,0.11,v1a_v1a_2026-11-28.csv + v1a_predictions.csv,background b (%)
+vaLinkMax,0.18,v1a_v1a_2026-11-28.csv + v1a_predictions.csv,worst link loss alone (%)
+udQCrossings,18,ud2_scored.csv,prereg-UD2
+udQHeld,18,ud2_scored.csv,"prereg-UD2, (G25) at 5 %"
+udQMin,\textminus{}3.16,ud2_scored.csv,"(G25) error, min (%)"
+udQMax,+0.56,ud2_scored.csv,"(G25) error, max (%)"
+udQPoiMin,\textminus{}7.2,ud2_scored.csv,"Poisson error, min (%)"
+udQPoiMax,\textminus{}3.6,ud2_scored.csv,"Poisson error, max (%)"
+udQPoiOut,15,ud2_scored.csv,Poisson outside 5 %
+udQPast,3,ud2_scored.csv,crossings past occupancy 0.78
+udQPastHeld,3,ud2_scored.csv,of them held
+ujScored,5,uj_scored.csv,"prereg-UJ, non-frozen cells"
+ujSHeld,5,uj_scored.csv,"prereg-UJ, claim S"
+ujAHeld,3,uj_scored.csv,"prereg-UJ, claim A"
+ujRootMin,\textminus{}6.1,uj_scored.csv,"root error, non-frozen (%)"
+ujRootMax,\textminus{}3.8,uj_scored.csv,"root error, non-frozen (%)"
+ujFzRootMin,\textminus{}0.30,uj_scored.csv,"root error, frozen (%)"
+ujFzRootMax,\textminus{}0.07,uj_scored.csv,"root error, frozen (%)"
+ujFzLawMin,+0.70,uj_scored.csv,"law error, frozen (%)"
+ujFzLawMax,+1.13,uj_scored.csv,"law error, frozen (%)"
+ujFzDrop,4.3,uj_scored.csv,"frozen against designated, ns-3 capacity (%)"
 cExtraC,43,c1_c1_2026-11-27.csv,the Pi 3's floor less the Pi 4s'
 evRootWorst,6.5,docs/revision/unified_closed_form_model.md,"§6: the root of (G5), N ≥ 19, worst error (%)"
 evRootSmall,9,docs/revision/unified_closed_form_model.md,"§6: the root of (G5), N ≈ 8–14, worst error (%)"

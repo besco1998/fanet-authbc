@@ -380,6 +380,79 @@ def comparisons() -> list[tuple[str, str, str, str]]:
     rho, tau0 = uc.dcf_constants(0.05, uc.A80211A)
     put("kRhoA", f"{rho:.3f}", "authbc.models.unified_capacity", "rho* at 802.11a, eps 0.05")
     put("kTauA", f"{tau0 * 1e6:.0f}", "authbc.models.unified_capacity", "tau0 at 802.11a (us)")
+    # V1a: the closed form as stated against the radios (predictions/V1a.md)
+    src = "v1a_v1a_2026-11-28.csv + v1a_predictions.csv"
+    pts = v1a_points()
+    put("vaPoints", str(len(pts)), src, "prereg-V1a")
+    va = rows("v1a_v1a_2026-11-28.csv")
+    put(
+        "vaHeld",
+        str(sum(r["held"] == "True" for r in va if r["what"] == "point")),
+        src,
+        "prereg-V1a, finite-station form at 15 %",
+    )
+    for p, tag in zip(pts, "ABC", strict=True):
+        put(f"vaLoss{tag}", f"{100 * p['loss']:.3f}", src, f"measured loss less b, u = {p['u']}")
+        put(f"vaLo{tag}", f"{100 * p['lo']:.3f}", src, f"95 % interval, u = {p['u']}")
+        put(f"vaHi{tag}", f"{100 * p['hi']:.3f}", src, f"95 % interval, u = {p['u']}")
+        put(f"vaFin{tag}", f"{100 * p['finite']:.3f}", src, f"finite-station form, u = {p['u']}")
+        put(f"vaNs{tag}", f"{100 * p['ns3']:.3f}", src, f"ns-3, standard rule, u = {p['u']}")
+        put(
+            f"vaErr{tag}",
+            signed(100 * (p["finite"] / p["loss"] - 1)),
+            src,
+            f"finite-station error, u = {p['u']}",
+        )
+    fac = [p["loss"] / p["finite"] for p in pts]
+    put("vaFacMin", f2(min(fac)), src, "radios over the finite-station form, min")
+    put("vaFacMax", f2(max(fac)), src, "radios over the finite-station form, max")
+    sim = [p["loss"] / p[k] for p in pts for k in ("ns3", "event")]
+    put("vaSimMin", f2(min(sim)), src, "radios over ns-3 / event simulation (standard), min")
+    put("vaSimMax", f2(max(sim)), src, "radios over ns-3 / event simulation (standard), max")
+    g5 = [100 * (p["g5"] / p["loss"] - 1) for p in pts]
+    put(
+        "vaGfiveMin", signed(min(g5), 0), src, "(G5) against the radios, outside its range, min (%)"
+    )
+    put("vaGfiveMax", signed(max(g5), 0), src, "(G5) against the radios, max (%)")
+    bg = next(r for r in va if r["what"] == "background b")
+    put("vaBg", f2(100 * float(bg["measured"])), src, "background b (%)")
+    links = [float(r["measured"]) for r in va if r["what"] == "link loss alone"]
+    put("vaLinkMax", f2(100 * max(links)), src, "worst link loss alone (%)")
+    # UD2: (G25) where UD failed (predictions/UD2.md); macro names hold no digits, so "udQ"
+    q = rows("ud2_scored.csv")
+    src = "ud2_scored.csv"
+    put("udQCrossings", str(len(q)), src, "prereg-UD2")
+    put("udQHeld", str(sum(r["held"] == "1" for r in q)), src, "prereg-UD2, (G25) at 5 %")
+    e = [float(r["g25_err_pct"]) for r in q]
+    put("udQMin", signed(min(e), 2), src, "(G25) error, min (%)")
+    put("udQMax", signed(max(e), 2), src, "(G25) error, max (%)")
+    pe = [float(r["poisson_err_pct"]) for r in q]
+    put("udQPoiMin", signed(min(pe)), src, "Poisson error, min (%)")
+    put("udQPoiMax", signed(max(pe)), src, "Poisson error, max (%)")
+    put("udQPoiOut", str(sum(abs(x) > 5 for x in pe)), src, "Poisson outside 5 %")
+    past = [r for r in q if r["past_range"] == "True"]
+    put("udQPast", str(len(past)), src, "crossings past occupancy 0.78")
+    put("udQPastHeld", str(sum(r["held"] == "1" for r in past)), src, "of them held")
+    # UJ: the safe-side claim by traffic source (predictions/UJ.md)
+    uj = rows("uj_scored.csv")
+    src = "uj_scored.csv"
+    sc = [r for r in uj if r["s_held"] != "reported"]
+    put("ujScored", str(len(sc)), src, "prereg-UJ, non-frozen cells")
+    put("ujSHeld", str(sum(r["s_held"] == "1" for r in sc)), src, "prereg-UJ, claim S")
+    put("ujAHeld", str(sum(r["a_held"] == "1" for r in sc)), src, "prereg-UJ, claim A")
+    e = [float(r["root_err_pct"]) for r in sc]
+    put("ujRootMin", signed(min(e)), src, "root error, non-frozen (%)")
+    put("ujRootMax", signed(max(e)), src, "root error, non-frozen (%)")
+    fz = [r for r in uj if r["s_held"] == "reported"]
+    fe = [float(r["root_err_pct"]) for r in fz]
+    put("ujFzRootMin", signed(min(fe), 2), src, "root error, frozen (%)")
+    put("ujFzRootMax", signed(max(fe), 2), src, "root error, frozen (%)")
+    fl = [float(r["law_err_pct"]) for r in fz]
+    put("ujFzLawMin", signed(min(fl), 2), src, "law error, frozen (%)")
+    put("ujFzLawMax", signed(max(fl), 2), src, "law error, frozen (%)")
+    by = {r["cell"]: float(r["ns3_crossing"]) for r in uj}
+    drops = [100 * (1 - by[f"JA{c}FZ"] / by[f"JA{c}DS"]) for c in ("230F40", "260F30")]
+    put("ujFzDrop", f1(st.mean(drops)), src, "frozen against designated, ns-3 capacity (%)")
     c1 = {x["window"]: x for x in rows("c1_c1_2026-11-27.csv")}
     put(
         "cExtraC",
@@ -389,6 +462,34 @@ def comparisons() -> list[tuple[str, str, str, str]]:
         "c1_c1_2026-11-27.csv",
         "the Pi 3's floor less the Pi 4s'",
     )
+    return out
+
+
+def v1a_points() -> list[dict[str, float]]:
+    """Per occupancy: the measured loss and its interval (V1a's scored file, unrounded columns)
+    beside the stored predictions (results/raw/v1a_predictions.csv)."""
+    pred = {int(r["fps_per_board"]): r for r in rows("v1a_predictions.csv")}
+    out = []
+    for r in rows("v1a_v1a_2026-11-28.csv"):
+        if r["what"] != "point":
+            continue
+        m = re.match(r"ABC at (\d+)/s \(u = ([\d.]+)\)", r["item"])
+        if m is None:
+            raise ValueError(r)
+        p = pred[int(m.group(1))]
+        out.append(
+            {
+                "u": float(m.group(2)),
+                "fps": float(m.group(1)),
+                "loss": float(r["loss"]),  # the unrounded columns, never the text
+                "lo": float(r["ci_lo"]),
+                "hi": float(r["ci_hi"]),
+                "finite": float(p["finite_w32"]),
+                "ns3": float(p["ns3_standard"]),
+                "event": float(p["event_standard"]),
+                "g5": float(p["g5_w32"]),
+            }
+        )
     return out
 
 

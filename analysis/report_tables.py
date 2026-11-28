@@ -326,6 +326,26 @@ def t_registered(v: dict[str, str]) -> str:
             f"{v['cShareMinA']}--{v['cShareMaxB']} of frames",
         ),
         ("S0b", "hardware", "a second sniffer's gate", "registered; waits for the adapter"),
+        (
+            "UJ",
+            "ns-3",
+            "the safe side by traffic source",
+            f"S {v['ujSHeld']} of {v['ujScored']}; A {v['ujAHeld']} of {v['ujScored']} (misses "
+            f"conservative); frozen phases excluded",
+        ),
+        (
+            "UD2",
+            "ns-3",
+            "\\eqref{eq:G25} at 802.11b where UD failed",
+            f"{v['udQHeld']} of {v['udQCrossings']} held ({v['udQMin']} to {v['udQMax']}\\,\\%); "
+            f"Poisson outside 5\\,\\% at {v['udQPoiOut']}",
+        ),
+        (
+            "V1a",
+            "hardware",
+            "the closed form as stated, 3 radios",
+            f"failed: the radios lose {v['vaFacMin']}--{v['vaFacMax']} times the prediction",
+        ),
     ]
     tests.sort(key=lambda t: (registered(t[0]), t[1] != "ns-3"))
     body = [f"{t} & {registered(t)} & {w} & {what} & {res}" for t, w, what, res in tests]
@@ -609,6 +629,98 @@ def _names(s: str) -> str:
     return s
 
 
+def t_v1a() -> str:
+    """V1a: the closed form as stated against the radios, with what was reported beside it."""
+    from report_numbers import v1a_points
+
+    va = {r["item"]: r for r in rows("v1a_v1a_2026-11-28.csv") if r["what"] == "point"}
+    body = []
+    for pt in v1a_points():
+        item = f"ABC at {int(pt['fps'])}/s (u = {pt['u']:g})"
+        held = va[item]["held"] == "True"
+        body.append(
+            " & ".join(
+                [
+                    f"{pt['u']:g}",
+                    f"{pt['fps']:g}",
+                    f"{100 * pt['loss']:.3f} ({100 * pt['lo']:.3f}--{100 * pt['hi']:.3f})",
+                    f"\\textbf{{{100 * pt['finite']:.3f}}}",
+                    pct(100 * (pt["finite"] / pt["loss"] - 1)),
+                    "yes" if held else "\\textbf{no}",
+                    f"{100 * pt['ns3']:.3f}",
+                    f"{100 * pt['event']:.3f}",
+                    f"{100 * pt['g5']:.3f}",
+                ]
+            )
+        )
+    head = (
+        "$\\occ$ & $f$ & Radios, \\% (95\\,\\% CI) & \\eqref{eq:FS}, \\% & Error (\\%) & Held & "
+        "ns-3, \\% & Event sim., \\% & \\eqref{eq:G5}, \\%"
+    )
+    return table("rrlrrlrrr", head, body)
+
+
+def t_ud2() -> str:
+    body = []
+    for r in sorted(
+        rows("ud2_scored.csv"), key=lambda r: (int(r["w"]), r["cell"], float(r["eps"]))
+    ):
+        past = " (past 0.78)" if r["past_range"] == "True" else ""
+        body.append(
+            " & ".join(
+                [
+                    r["cell"],
+                    r["w"],
+                    f"{float(r['eps']):g}",
+                    f"{float(r['ns3_crossing']):.2f} "
+                    f"({float(r['ci_lo']):.2f}--{float(r['ci_hi']):.2f})",
+                    f"{float(r['g25_root']):.2f}",
+                    pct(float(r["g25_err_pct"]), 2) + past,
+                    "yes" if r["held"] == "1" else "\\textbf{no}",
+                    pct(float(r["poisson_err_pct"]), 2),
+                ]
+            )
+        )
+    head = (
+        "Cell & $\\Wnd$ & $\\eps$ & ns-3 $\\Nmax$ (95\\,\\% CI) & \\eqref{eq:G25} & Error (\\%) & "
+        "Held & Poisson (\\%)"
+    )
+    return table("lrllrllr", head, body)
+
+
+def t_uj() -> str:
+    names = {
+        "FZ": "frozen",
+        "DR": "20 ppm drift",
+        "J01": "jitter 0.1 ms",
+        "J1": "jitter 1 ms",
+        "DS": "designated",
+    }
+    body = []
+    for r in rows("uj_scored.csv"):
+        frozen = r["s_held"] == "reported"
+        body.append(
+            " & ".join(
+                [
+                    r["cell"][: -len(r["source"])],
+                    names[r["source"]],
+                    f"{float(r['ns3_crossing']):.2f} "
+                    f"({float(r['ci_lo']):.2f}--{float(r['ci_hi']):.2f})",
+                    pct(float(r["root_err_pct"]), 2),
+                    pct(float(r["law_err_pct"]), 2),
+                    "reported" if frozen else ("yes" if r["s_held"] == "1" else "no"),
+                    "reported" if frozen else ("yes" if r["a_held"] == "1" else "no"),
+                    f"{float(r['seed_sd']):.2f}",
+                ]
+            )
+        )
+    head = (
+        "Cell & Source & ns-3 $\\Nmax$ (95\\,\\% CI) & Root (\\%) & Law (\\%) & S & A & "
+        "Seed $\\sigma$"
+    )
+    return table("lllrrllr", head, body)
+
+
 def t_steps(name: str, what: tuple[str, ...]) -> str:
     """The capture sessions' steps, their stored text cells as written."""
     body = []
@@ -699,6 +811,9 @@ def write_tables(out: Path, found: list[tuple[str, str, str, str]]) -> None:
         "w1e": t_w1e(),
         "w1r": t_w1r(),
         "threeway": t_threeway(),
+        "v1a": t_v1a(),
+        "uj": t_uj(),
+        "ud2": t_ud2(),
         "w1q": t_steps("w1q_w1q_2026-11-22.csv", ("step",)),
         "w1s": t_steps("w1s_w1s_2026-11-23.csv", ("A: anchor (W1q's 0 dB step again)", "A: step")),
         "s0": t_steps(

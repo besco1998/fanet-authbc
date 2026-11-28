@@ -74,12 +74,15 @@ Part of the model & In simulation (ns-3) & On hardware (Raspberry Pis, 802.11b) 
 \midrule
 Loss \eqref{eq:G5} and capacity \eqref{eq:G9} &
 \textbf{held}: the root of \eqref{eq:G5} within $\pm5\,\%$ at \scRootIn{} of \scRows{} stored
-capacities; all \scRootOut{} misses on the safe side &
-\textbf{not yet tested directly} (test V1). The event simulation of the same access rule held at
-\weHeld{} of \wePoints{} contention points (W1e) \\
+capacities; on the safe side for every jittered or drifting timer (UJ: \ujSHeld{} of \ujScored{} new
+cells); frozen phases excluded &
+\textbf{failed as stated} (V1a, 3 radios): the radios lose \vaFacMin--\vaFacMax{} times the
+few-station form's loss; ns-3 with the standard rule misses alike, so the access rule is what differs
+(C1). The event simulation of the standard rule had held at \weHeld{} of \wePoints{} points (W1e) \\
 Small swarms at 802.11b &
-\textbf{failed} $\pm5\,\%$ at \udDRootFailed{} of \udDCells{} cells (\udDRootMax{} to \udDRootMin\,\%,
-safe side); corrected by \eqref{eq:G25}, then tested on new cells & -- \\
+Poisson model \textbf{failed} $\pm5\,\%$ at \udDRootFailed{} of \udDCells{} cells (safe side);
+\eqref{eq:G25} then \textbf{held} at \udQHeld{} of \udQCrossings{} new crossings (UD2, windows 8--32,
+targets 2--10\,\%) & -- \\
 Gain of batching \eqref{eq:G12} &
 \textbf{matched} ns-3 within \gainMaxAbs\,\% (802.11a) and \gainBMaxAbs\,\% (802.11b), reported beside capacity tests that held &
 capacity ratio of the design over per-record signing \ratioJ{} and \ratioK{} against
@@ -102,12 +105,12 @@ sent with no backoff, which the model does not include \\
 \label{tab:status}
 \end{table}
 
-\textbf{What remains.} The closed form has not yet been tested against hardware directly: the
-hardware tests so far checked the access-rule model it is built on, the capacity ratio and capture.
-A direct test needs the radios' own access rule as an input, and C1 shows that the Pi 4s do not
-follow the standard's rule. The one sniffer available misses \snifMissMin--\snifMissMax\,\% of frames, so the collision
-sessions wait for a better one (on order). The model holds only where every station hears every
-other (one collision domain). \Cref{sec:next} lists every open test.
+\textbf{What remains.} The closed form, tested on the radios as stated (V1a), fails because the
+radios do not follow the standard's access rule (C1). The next test gives the model the radios'
+measured rule (a hardware-matched form, V1b). That needs the rule under contention (C2), and the one
+sniffer available misses \snifMissMin--\snifMissMax\,\% of frames, so C2 waits for a better one (on
+order). The model holds only where every station hears every other (one collision domain).
+\Cref{sec:next} lists every open test.
 
 \iffull\else
 \textbf{How to read this report.} \Cref{sec:system} defines the terms; \cref{sec:model} states the
@@ -701,6 +704,9 @@ A; a real radio's rules must be measured (\cref{sec:window}).
 the root of \eqref{eq:G5} is used.
 \item \textbf{High occupancy:} \eqref{eq:G25} is checked to occupancy 0.78 at 802.11b; above it, it
 is optimistic by \uhMin{} to \uhMax\,\%.
+\item \textbf{Frozen phases:} strictly periodic senders with identical clocks lower ns-3's capacity
+by about \ujFzDrop\,\%, to the root of \eqref{eq:G5} or past it, so they are outside the safe-side
+claim (UJ). Real timers jitter or drift, and the radios redraw each frame's instant.
 \item \textbf{No closed form for two stations;} fragments sent back to back are outside the model.
 \end{itemize}
 
@@ -824,7 +830,8 @@ $\pm5\,\%$ at \scRootIn{} of them and below ns-3 (the safe side) at \scRootSafe;
 outside the band are on the safe side. The law \eqref{eq:G9}, where valid (\scLawRows{} cases), is
 within $\pm5\,\%$ at \scLawIn, with a mean error of \scLawMeanAbs\,\%; of its \scLawOut{} misses,
 \scLawOutSafe{} are on the safe side and \scLawOptN{} is optimistic (\scLawOptErr\,\%, configuration
-C with perfectly regular timers, no jitter).
+C with perfectly regular timers, no jitter). Every positive error of the root, and the law's
+optimistic miss, is such a frozen-phase run; \cref{sec:uj} tests that scope on new cells.
 
 \begin{figure}[htbp]
 \centering\includegraphics[width=\textwidth]{fig_scorecard}
@@ -832,6 +839,35 @@ C with perfectly regular timers, no jitter).
 model under-predicts the capacity (the safe side).}
 \label{fig:scorecard}
 \end{figure}
+
+\subsection{The safe side, by traffic source (UJ)}\label{sec:uj}
+
+UJ tested on two new 802.11a cells whether the root of \eqref{eq:G5} stays on the safe side when the
+stations' timers jitter or drift, and what frozen phases do (\cref{fig:uj}). It was registered with
+two claims for the five non-frozen cells: S, the root at or below ns-3; A, the root and the law
+within $\pm5\,\%$. \textbf{S held at all \ujSHeld{}}, the root's error \ujRootMax{} to \ujRootMin\,\%; A held at \ujAHeld, the two misses conservative. With frozen phases (strictly periodic senders,
+identical clocks) ns-3's capacity fell by \ujFzDrop\,\% in both cells, to the root
+(\ujFzRootMin{} and \ujFzRootMax\,\%) but not past it; the law, which lies slightly above the root,
+was optimistic there (\ujFzLawMin{} to \ujFzLawMax\,\%). The registration's outcomes table sent that
+case to Mohamed, who decided: \textbf{frozen phases are outside the safe-side claim}. The claim
+the report makes is therefore: \emph{the root of \eqref{eq:G5} is on the safe side for timers with
+jitter or clock drift} (all new cells, and all stored ones).
+
+\begin{figure}[htbp]
+\centering\includegraphics[width=\textwidth]{fig_uj}
+\caption{UJ: the error of the root of \eqref{eq:G5} and of the law \eqref{eq:G9} against ns-3, by
+traffic source, on two new 802.11a cells. Hatched: frozen phases, reported.}
+\label{fig:uj}
+\end{figure}
+
+\iffull
+\begin{table}[htbp]
+\centering\footnotesize
+\input{tables/uj}
+\caption{UJ in full (S: the root at or below ns-3; A: root and law within $\pm5\,\%$; seed $\sigma$:
+the spread of each seed's own crossing).}
+\end{table}
+\fi
 
 \subsection{The 802.11b arm, and why the sending pattern matters}
 
@@ -843,6 +879,28 @@ at \udBHeld{} of \udBScored. Term by term, the loss itself was pessimistic by \u
 \udThreePMax\,\% (D3); a capacity error is far smaller than a loss error because the loss rises
 steeply with the load. The cause was the Poisson assumption: ns-3's telemetry source is periodic.
 This failure is what \eqref{eq:G25} was written for.
+
+\textbf{UD2 tested \eqref{eq:G25} where UD failed,} on new 802.11b cells at windows 8, 16 and 32 and
+loss targets 2, 5 and 10\,\% (\cref{fig:ud2}). It held at all \udQHeld{} of \udQCrossings{}
+crossings, with errors from \udQMin{} to \udQMax\,\%, including the \udQPast{} crossings past
+occupancy 0.78. The Poisson root beside it erred by \udQPoiMin{} to \udQPoiMax\,\%, outside
+$\pm5\,\%$ at \udQPoiOut: UD's failure, repeated on new cells and corrected by \eqref{eq:G25}. UD
+itself stays failed as registered.
+
+\begin{figure}[htbp]
+\centering\includegraphics[width=\textwidth]{fig_ud2}
+\caption{UD2: \eqref{eq:G25} (scored) and the Poisson root of \eqref{eq:G5} (reported) against
+ns-3, 802.11b at 1\,Mb/s, two new frame sizes, three windows and three loss targets.}
+\label{fig:ud2}
+\end{figure}
+
+\iffull
+\begin{table}[htbp]
+\centering\footnotesize
+\input{tables/ud2}
+\caption{UD2 in full, scored at $\pm5\,\%$.}
+\end{table}
+\fi
 
 \subsection{The sending pattern}
 
@@ -920,14 +978,15 @@ duty-cycle law held at \lrHeld{} of \lrCells{} cells (UC7).
 \item \textbf{The split of \eqref{eq:G5} into its three causes} (UC1, D3): the totals hold, the
 breakdown does not; ns-3 counts a near-simultaneous start as a detection-window loss.
 \item \textbf{Poisson starts at 802.11b} (UD): the capacity \udDRootMax{} to \udDRootMin\,\% low at
-15--37 stations; corrected by \eqref{eq:G25}, which then held on new cells.
+15--37 stations; \eqref{eq:G25} then held at all \udQCrossings{} new crossings of UD2.
 \item \textbf{The first capture test} (UF): failed for three identified reasons; the corrected test
 held on new cells.
 \item \textbf{Fragments sent back to back} (UC4, UC4B): outside the model; ruled out by design.
 \item \textbf{\eqref{eq:G25} past occupancy 0.78 at 802.11b}: optimistic by \uhMin{} to \uhMax\,\%;
 a stated limit.
-\item \textbf{The law \eqref{eq:G9} with perfectly regular timers}: one optimistic miss
-(\scLawOptErr\,\%).
+\item \textbf{Frozen phases} (UJ and the stored cells): ns-3's capacity falls by about
+\ujFzDrop\,\%, to the root or past it, and the law is optimistic there (stored: \scLawOptErr\,\%);
+excluded from the safe-side claim.
 \end{itemize}
 
 % ==================================================================================================
@@ -939,7 +998,45 @@ existed. Their predictions came from the project's event simulation of the DCF a
 (registered at W1c), which had matched ns-3's capacities at 802.11b within \wOneBErr\,\% (W1b). They test
 the access-rule model the closed form is built on, not the closed form's own numbers. W1r's
 registration also recorded the closed form's values beside ns-3's; they are compared in
-\cref{sec:side}.
+\cref{sec:side}. The first test of the closed form itself on the radios is V1a, below.
+
+\subsection{The closed form on the radios (V1a)}\label{sec:v1a}
+
+On three radios the part of the closed form that applies is the few-station form \eqref{eq:FS}
+(three to five stations, occupancy up to 0.5). V1a scored it \emph{as stated}: the standard's window
+$\Wnd=32$, rule set A, nothing measured on the radios. The three radios sent at occupancy 0.3, 0.4
+and 0.5 in five interleaved rounds, with a control window after each; the session ran remotely and
+every validity condition held (background \vaBg\,\%, each radio's link loss alone at most
+\vaLinkMax\,\%). The registered tolerance was $\pm15\,\%$ on the loss.
+
+\textbf{The closed form as stated failed at all \vaPoints{} points, on the optimistic side}
+(\cref{fig:v1a,tab:v1a}). The radios lost \vaFacMin--\vaFacMax{} times what \eqref{eq:FS} predicts,
+and the form lies below the 95\,\% interval of the measurement at every point. ns-3 and the event
+simulation, both with the standard rule, sit near the form: the radios lose \vaSimMin--\vaSimMax{}
+times what they predict. What misses is therefore the access rule the model assumes, not the
+closed form's approximation of that rule. C1 measured the likely cause: the Pi~4s send about half
+their frames at DIFS with no backoff, and the Pi~3 waits a fixed \cExtraC\,\us{} longer. A
+hardware-matched form, with the radios' measured rule as its input, is the next registered test
+(V1b, \cref{sec:next}). The failure was expected and disclosed in the registration; the stored trio
+point of W1e and W1r had already pointed to it.
+
+\begin{figure}[htbp]
+\centering\includegraphics[width=0.66\textwidth]{fig_v1a}
+\caption{V1a: the loss of the three radios against the closed form as stated, \eqref{eq:FS} at
+$\Wnd=32$, and ns-3 with the standard rule.}
+\label{fig:v1a}
+\end{figure}
+
+\begin{table}[htbp]
+\centering\small
+\input{tables/v1a}
+\caption{V1a, scored at $\pm15\,\%$. The last three columns were reported, not scored;
+\eqref{eq:G5} lies outside its stated range at three stations. Its closeness to the radios
+(\vaGfiveMin{} to \vaGfiveMax\,\%) is not evidence for it: periodic sources make it pessimistic for
+three stations, while the radios' rule adds collisions, so two departures act in opposite
+directions; the matched form will separate them.}
+\label{tab:v1a}
+\end{table}
 
 \subsection{Contention}
 
@@ -1053,6 +1150,8 @@ board nor its place.}
 \subsection{What failed on hardware}
 
 \begin{itemize}
+\item \textbf{The closed form as stated} (V1a): \eqref{eq:FS} at $\Wnd=32$ lies \vaErrB{} to
+\vaErrA\,\% from the radios' loss at occupancy 0.3--0.5; the standard access rule is what differs.
 \item \textbf{The window, from sending rates} (W1p, W1s): neither setting of slot and DIFS fits; the
 window was not identifiable that way. C1 shows why: the Pi 4s skip the backoff for about half their
 frames, which no single window describes.
@@ -1103,6 +1202,7 @@ property of a session, not only of the radios.
 \toprule
 Quantity & Model & ns-3 & Hardware \\
 \midrule
+loss of three radios at $\occ=0.5$ (V1a) & \vaFinC\,\% \eqref{eq:FS} & \vaNsC\,\% (standard rule) & \vaLossC\,\% \\
 capacity ratio, design over per-record signing (4 radios) & \ratioModel{} (event simulation) & -- & \ratioJ, \ratioK{} (W1j, W1k) \\
 gain of batching, 802.11a, $b$ up to 64 & \eqref{eq:G12} & within \gainMaxAbs\,\% & not tested (V2) \\
 capture at a signal difference of \wqThreeDelta\,dB & \eqref{eq:G22} with the input $q$ & $q=0$ (4\,dB rule) & $q=\wqThreeQ$ (W1q) \\
@@ -1130,11 +1230,11 @@ do.}
 Part of the model & ns-3 & Hardware \\
 \midrule
 accounting and batching, \eqref{eq:G1}--\eqref{eq:G3}, \eqref{eq:G10}--\eqref{eq:G13} & held (UC2, UD) & ratio held (W1j, W1k, event simulation); gain on air not tested (V2) \\
-loss \eqref{eq:G4}--\eqref{eq:G5} & total held; split into causes failed (UC1) & not tested directly (V1); access rule measured (C1) \\
+loss \eqref{eq:G4}--\eqref{eq:G5} & total held; split into causes failed (UC1) & as stated, \textbf{failed} (V1a, through \eqref{eq:FS}); the radios' access rule differs (C1) \\
 two-constant law \eqref{eq:G6}--\eqref{eq:G9} & held where valid, \scLawIn{} of \scLawRows & not tested \\
 design rules \eqref{eq:G16}--\eqref{eq:G21} & held (UC3, UC4S, UC5D1, UC7); back-to-back fragments failed & not tested \\
 capture \eqref{eq:G22}--\eqref{eq:G24a} & held after correction (UCAP2, UF2) & the input $q$ measured, partly (W1q); in contention not tested (V3, V4) \\
-sending pattern \eqref{eq:G25}, \eqref{eq:FS} & held to occupancy 0.78; 3--5 stations held & not tested (V1) \\
+sending pattern \eqref{eq:G25}, \eqref{eq:FS} & held to occupancy 0.78, and at 802.11b at every window and target (UD2); 3--5 stations held & \eqref{eq:FS} as stated \textbf{failed} (V1a); with the measured rule: V1b \\
 hidden stations; two stations & not tested; no closed form & not tested \\
 \bottomrule
 \end{tabularx}
@@ -1153,7 +1253,8 @@ C1 in W1q's layout (L1); P1 at 3\,m and 5\,m & hardware & the timing of C1 where
 C2: saturated pairs with the sniffer & hardware & the access rule two radios use under contention: who skips the backoff, and when & S0b \\
 C3: the capture curve, both signs of the signal difference & hardware & $q$ against the signal difference for the real receiver & S0b \\
 The parameter file & -- & the measured slot, DIFS, access rule, airtime and link losses, as one input set & C1--C3; Mohamed's review \\
-V1: contention at telemetry rates, ns-3 matched to the hardware, beside the model & hardware + ns-3 & \eqref{eq:G5}, \eqref{eq:G25} and \eqref{eq:FS} with measured inputs: the first direct hardware test of the closed form & the parameter file \\
+The hardware-matched form: \eqref{eq:FS} with each radio's measured backoff and fixed delay, checked against the event simulation & model & the closed form with the radios' own rule, derived and checked before any test & Mohamed's acceptance of the derivation \\
+V1b: the matched form on a new session of the three radios, as V1a & hardware & whether the closed form predicts the radios once it is given their rule & C2; the parameter file \\
 V2: batching on air & hardware & the gain \eqref{eq:G12} on real radios & the parameter file \\
 V3, V4: capture in contention; every-sender statistics & hardware & \eqref{eq:G22}--\eqref{eq:G24a} on real radios & C3 \\
 Transmitter or receiver: does pi-A's output follow its set power? & hardware & where the power steps compress & an external receiver (HackRF) if S0b cannot separate them \\
@@ -1176,17 +1277,21 @@ limitation.
 
 \begin{itemize}
 \item \textbf{What can be claimed now.} The closed form predicts ns-3's capacity within $\pm5\,\%$ in
-\scRootIn{} of \scRows{} stored cases, and on the safe side whenever its root misses. Its extensions
+\scRootIn{} of \scRows{} stored cases, and its root lies on the safe side for every timer with jitter
+or clock drift (UJ); frozen phases are excluded. Its extensions
 for the sending pattern and for capture hold in registered ns-3 tests on new cells. On hardware, the
 capacity ratio of the design over per-record signing matches the registered value (\ratioJ{}
 against \ratioModel), and the access-rule model behind the closed form fell inside the registered
 bands at \weHeld{} of \wePoints{} contention points.
-\item \textbf{What cannot be claimed yet.} That the closed form predicts the hardware's loss: it has
-not been tested there directly. That the model's access rule is the radios': the Pi 4s send about
+\item \textbf{What cannot be claimed yet.} That the closed form predicts the radios' loss: as stated,
+with the standard's access rule, it does not (V1a: the radios lose \vaFacMin--\vaFacMax{} times its
+prediction, and ns-3 with the same rule misses alike); whether it does with the radios' measured
+rule is the next test (V1b). That the model's access rule is the radios': the Pi 4s send about
 half their frames with no backoff, which the standard's rule does not include. That ns-3's 4\,dB
 capture step describes the real receiver: it captures gradually.
-\item \textbf{Next.} A sniffer that passes its gate, the calibration sessions C2 and C3, the parameter
-file for review, then the validation sessions V1--V4 against a hardware-matched model and ns-3.
+\item \textbf{Next.} The hardware-matched form (derived, then checked against the event simulation);
+a sniffer that passes its gate and the calibration sessions C2 and C3; the parameter file for
+review; then V1b and the validation sessions V2--V4 against the matched model and ns-3.
 \end{itemize}
 
 \iffull

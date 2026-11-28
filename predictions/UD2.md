@@ -113,3 +113,55 @@ seven-count grid per cell (driver: `ns3/run_uj_ud2.py ud2`, up to about 4 300 ru
 * **The cells were chosen** by computing (G25)'s roots to fall in U-D's range. No ns-3 run at
   them exists.
 * **None of U-D2's runs has been made.**
+
+## Outcome — added 2026-11-28, after the runs; nothing above this line was changed
+
+* **The runs:** `ns3/run_uj_ud2.py ud2`, through the audit twin (gate 9/9 identical on
+  2026-11-28): 550 pilot runs and 3 720 measurement runs (`results/raw/ud2_*`). Every measured
+  node count has seeds 1–30; every 30-seed mean curve crosses each level once.
+* **Scored** with `python analysis/ud2.py --score` → `results/raw/ud2_scored.csv`.
+
+**Scored: 18 of 18 held.** (G25)'s error lies between −3.16 and +0.56 %, at every window
+(8, 16, 32) and every target (2, 5, 10 %).
+
+| cell | W | ε | ns-3 crossing (95 % interval) | (G25) root | error | held | Poisson error |
+|---|---|---|---|---|---|---|---|
+| QB200F10W16 | 16 | 0.02 | 21.616 (21.328–22.082) | 21.18 | -2.03 % | yes | -5.47 % |
+| QB200F10W16 | 16 | 0.05 | 30.097 (29.846–30.277) | 29.64 | -1.51 % | yes | -5.28 % |
+| QB200F10W16 | 16 | 0.1 | 37.847 (37.686–38.046) | 37.27 | -1.52 % | yes | -5.97 % |
+| QB200F10W32 | 32 | 0.02 | 25.661 (25.440–25.976) | 25.65 | -0.06 % | yes | -3.55 % |
+| QB200F10W32 | 32 | 0.05 | 34.832 (34.640–35.065) | 34.61 | -0.63 % | yes | -4.88 % |
+| QB200F10W32 | 32 | 0.1 | 42.160 (42.074–42.235) | 42.03 | -0.30 % (past 0.78) | yes | -5.72 % |
+| QB200F10W8 | 8 | 0.02 | 17.296 (17.113–17.442) | 16.93 | -2.13 % | yes | -5.71 % |
+| QB200F10W8 | 8 | 0.05 | 24.817 (24.624–25.070) | 24.44 | -1.54 % | yes | -5.06 % |
+| QB200F10W8 | 8 | 0.1 | 32.637 (32.460–32.814) | 31.81 | -2.53 % | yes | -6.29 % |
+| QB320F8W16 | 16 | 0.02 | 18.825 (18.366–19.310) | 18.82 | -0.03 % | yes | -4.07 % |
+| QB320F8W16 | 16 | 0.05 | 26.680 (26.498–26.883) | 26.15 | -2.00 % | yes | -6.31 % |
+| QB320F8W16 | 16 | 0.1 | 33.261 (33.073–33.408) | 32.76 | -1.51 % (past 0.78) | yes | -6.60 % |
+| QB320F8W32 | 32 | 0.02 | 23.213 (22.819–23.452) | 22.96 | -1.07 % | yes | -5.13 % |
+| QB320F8W32 | 32 | 0.05 | 31.073 (30.824–31.256) | 30.71 | -1.16 % | yes | -6.08 % |
+| QB320F8W32 | 32 | 0.1 | 36.920 (36.809–37.076) | 37.13 | +0.56 % (past 0.78) | yes | -5.75 % |
+| QB320F8W8 | 8 | 0.02 | 15.471 (15.156–15.729) | 14.98 | -3.16 % | yes | -7.20 % |
+| QB320F8W8 | 8 | 0.05 | 21.787 (21.600–22.061) | 21.48 | -1.42 % | yes | -5.44 % |
+| QB320F8W8 | 8 | 0.1 | 28.596 (28.406–28.807) | 27.87 | -2.55 % | yes | -6.82 % |
+
+* **The three crossings past occupancy 0.78 held** (−0.30, −1.51, +0.56 %), labelled as
+  registered. By the registration, a pass there does not by itself move (G25)'s stated range.
+* **The Poisson root of (G5), reported:** −3.55 to −7.20 %, outside ±5 % at 15 of 18. It repeats
+  U-D's failure on new cells, on the same (safe) side.
+* **U-D stays failed as registered;** U-D2 shows that (G25), the correction written for its cause,
+  holds where U-D failed.
+
+### The independent check
+
+A separate script, sharing no project code, read the six runs files and recomputed all 18
+crossings: each equals the scored one to three decimals, and each mean curve crosses its level
+once.
+
+### My expectations, against the outcome
+
+* **"(G25) holds at most of the 18, within a few percent":** it held at all 18, within 3.2 %.
+* **"The Poisson root lies 4–6 % below ns-3":** 3.6–7.2 %, close.
+* **"The likeliest failures: ε = 0.02 at W = 8, and past 0.78 on the optimistic side":** none
+  failed. The largest error is at ε = 0.02, W = 8 (QB320F8W8, −3.16 %), as expected in place
+  though not in size. Past 0.78 one of three is optimistic (+0.56 %).

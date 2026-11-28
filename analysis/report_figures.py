@@ -293,7 +293,7 @@ def fig_ratio() -> None:
         )
     fig, ax = plt.subplots(figsize=(3.2, 2.4))
     ax.axhspan(vals[0][3], vals[0][4], color=BAND, label="registered band")
-    ax.axhline(vals[0][2], color=BLUE, lw=1.6, label=f"model, {vals[0][2]:.2f}")
+    ax.axhline(vals[0][2], color=BLUE, lw=1.6, label=f"event simulation (W1c), {vals[0][2]:.2f}")
     ax.scatter(
         [0, 1],
         [v[1] for v in vals],
@@ -544,6 +544,150 @@ def fig_fewstations() -> None:
     save(fig, "fig_fewstations")
 
 
+# ---- figure: V1a, the closed form as stated against the radios
+def fig_v1a() -> None:
+    from report_numbers import v1a_points
+
+    pts = v1a_points()
+    u = [p["u"] for p in pts]
+    fig, ax = plt.subplots(figsize=(WIDTH * 0.62, 2.6))
+    ax.plot(
+        u,
+        [100 * p["finite"] for p in pts],
+        color=BLUE,
+        marker="o",
+        ms=4,
+        label="closed form as stated (FS, W = 32)",
+    )
+    ax.plot(
+        u,
+        [100 * p["ns3"] for p in pts],
+        color=AQUA,
+        marker="s",
+        ms=4,
+        ls="--",
+        label="ns-3, standard rule",
+    )
+    ax.vlines(u, [100 * p["lo"] for p in pts], [100 * p["hi"] for p in pts], color=ORANGE, lw=1.4)
+    ax.scatter(
+        u,
+        [100 * p["loss"] for p in pts],
+        s=34,
+        color=ORANGE,
+        edgecolor="white",
+        zorder=4,
+        label="radios, V1a (95 % interval)",
+    )
+    ax.set_xticks(u)
+    ax.set_xlabel("occupancy of the three radios, $u$")
+    ax.set_ylabel("loss (%)")
+    ax.set_ylim(0, 1.15 * max(100 * p["hi"] for p in pts))
+    ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.0), ncol=2, fontsize=7)
+    save(fig, "fig_v1a")
+
+
+# ---- figure: UJ, the root of (G5) and the law (G9) by traffic source
+UJ_NAMES = {"FZ": "frozen", "DR": "20 ppm", "J01": "0.1 ms", "J1": "1 ms", "DS": "designated"}
+
+
+def fig_uj() -> None:
+    u = rows(RAW / "uj_scored.csv")
+    fig, ax = plt.subplots(figsize=(WIDTH, 2.5))
+    band(ax)
+    x = list(range(len(u)))
+    ax.scatter(
+        x,
+        [float(r["root_err_pct"]) for r in u],
+        s=30,
+        marker="o",
+        color=BLUE,
+        edgecolor="white",
+        zorder=3,
+        label="root of (G5)",
+    )
+    ax.scatter(
+        x,
+        [float(r["law_err_pct"]) for r in u],
+        s=26,
+        marker="s",
+        color=ORANGE,
+        edgecolor="white",
+        zorder=3,
+        label="law (G9)",
+    )
+    labels = []
+    for r in u:
+        cell = "230 B, 40/s" if r["cell"].startswith("JA230") else "260 B, 30/s"
+        labels.append(f"{UJ_NAMES[r['source']]}\n{cell}")
+    for i, r in enumerate(u):
+        if r["source"] == "FZ":
+            ax.axvspan(
+                i - 0.4,
+                i + 0.4,
+                facecolor="none",
+                edgecolor=GREY,
+                hatch="///",
+                lw=0,
+                zorder=0.5,
+                label="frozen: reported, not scored" if i == 0 else None,
+            )
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels, fontsize=6.5)
+    ax.set_ylabel("model − ns-3 (%)")
+    ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.0), ncol=4, fontsize=7)
+    save(fig, "fig_uj")
+
+
+# ---- figure: UD2, (G25) and the Poisson root at 802.11b by window and target
+def fig_ud2() -> None:
+    q = rows(RAW / "ud2_scored.csv")
+    q.sort(key=lambda r: (int(r["w"]), r["cell"], float(r["eps"])))
+    fig, ax = plt.subplots(figsize=(WIDTH, 2.6))
+    band(ax)
+    x = list(range(len(q)))
+    ax.scatter(
+        x,
+        [float(r["poisson_err_pct"]) for r in q],
+        s=24,
+        marker="s",
+        color=ORANGE,
+        edgecolor="white",
+        zorder=3,
+        label="Poisson root of (G5), reported",
+    )
+    ax.scatter(
+        x,
+        [float(r["g25_err_pct"]) for r in q],
+        s=30,
+        marker="o",
+        color=BLUE,
+        edgecolor="white",
+        zorder=4,
+        label="(G25), scored",
+    )
+    for i, r in enumerate(q):
+        if r["past_range"] == "True":
+            ax.annotate(
+                "past 0.78",
+                (i, float(r["g25_err_pct"])),
+                xytext=(0, 9),
+                textcoords="offset points",
+                ha="center",
+                fontsize=6,
+                color=GREY,
+            )
+    for k, w in enumerate((8, 16, 32)):
+        ax.axvline(6 * k - 0.5, color=GREY, lw=0.5) if k else None
+        ax.text(6 * k + 2.5, -8.6, f"W = {w}", ha="center", fontsize=7.5, color=INK)
+    ax.set_xticks(x)
+    ax.set_xticklabels([f"{r['cell'][2:5]}\n{float(r['eps']):g}" for r in q], fontsize=6.5)
+    ax.set_xlabel("frame size (B) and loss target ε, at each window W")
+    ax.set_ylim(-9.2, 5.8)
+    ax.set_ylabel("model − ns-3 (%)")
+    ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.0), ncol=3)
+    save(fig, "fig_ud2")
+
+
 def main() -> None:
     for f in (
         fig_scorecard,
@@ -556,6 +700,9 @@ def main() -> None:
         fig_sniffer,
         fig_batching,
         fig_fewstations,
+        fig_v1a,
+        fig_uj,
+        fig_ud2,
     ):
         f()
         print(f.__name__, "written")
