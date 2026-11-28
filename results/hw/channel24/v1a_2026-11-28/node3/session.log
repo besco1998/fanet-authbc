@@ -1,0 +1,97 @@
+Running timer as unit: authbc-revert.timer
+Will run service as unit: authbc-revert.service
+Running timer as unit: authbc-reboot.timer
+Will run service as unit: authbc-reboot.service
+[2026-11-28T20:46:46+02:00] deadmen armed: revert 2200 s, reboot 2500 s | node=3 nodes=1,2,3 freq=2462 windows=26 plan=plan_v1a.txt sha=f019e909e933
+[2026-11-28T20:46:46+02:00] env: kernel 6.12.109+rpt-rpi-v8 | brcmfmac  | firmware brcmf_c_preinit_dcmds: Firmware: BCM43430/1 wl0: Jul 19 2021 03:24:18 version 7.45.98 (TOB) (56df937 CY) FWID 01-8e14b89
+[2026-11-28T20:46:46+02:00] governor: ondemand -> performance; throttled 0x0
+[2026-11-28T20:47:03+02:00] type:  	type IBSS 	channel 11 (2462 MHz), width: 20 MHz, center1: 2462 MHz 
+[2026-11-28T20:47:05+02:00] peer 10.0.0.1 reachable, mac d8:3a:dd:16:a7:33
+[2026-11-28T20:47:07+02:00] peer 10.0.0.2 reachable, mac e4:5f:01:67:5f:43
+[2026-11-28T20:47:07+02:00] frameburst before the windows: 0 (asked: 0)
+[2026-11-28T20:47:07+02:00] txpower asked 1500:  txpower 15.00 dBm
+{"received_unique": 11028, "senders": 1, "duplicates": 0}
+[2026-11-28T20:49:55+02:00] window 00_R1_600fps done (senders 1, 25 s)
+{"received_unique": 10814, "senders": 1, "duplicates": 0}
+[2026-11-28T20:50:25+02:00] window 01_R2_600fps done (senders 2, 25 s)
+{"sent": 9210, "achieved_fps": 413.4, "late": 8395}
+{"received_unique": 0, "senders": 0, "duplicates": 0}
+[2026-11-28T20:50:55+02:00] window 02_R3_600fps done (senders 3, 25 s)
+{"sent": 7904, "achieved_fps": 52.0, "late": 0}
+{"received_unique": 15728, "senders": 2, "duplicates": 0}
+[2026-11-28T20:53:34+02:00] window 03_ABC_52fps done (senders 1,2,3, 155 s)
+{"sent": 5040, "achieved_fps": 70.0, "late": 0}
+{"received_unique": 10044, "senders": 2, "duplicates": 0}
+[2026-11-28T20:54:55+02:00] window 04_ABC_70fps done (senders 1,2,3, 75 s)
+{"sent": 3654, "achieved_fps": 87.0, "late": 0}
+{"received_unique": 7261, "senders": 2, "duplicates": 0}
+[2026-11-28T20:55:44+02:00] window 05_ABC_87fps done (senders 1,2,3, 45 s)
+{"received_unique": 1098, "senders": 1, "duplicates": 0}
+[2026-11-28T20:56:15+02:00] window 06_B1_50fps done (senders 1, 25 s)
+{"sent": 5040, "achieved_fps": 70.0, "late": 0}
+{"received_unique": 10012, "senders": 2, "duplicates": 0}
+[2026-11-28T20:57:35+02:00] window 07_ABC_70fps done (senders 1,2,3, 75 s)
+{"sent": 3654, "achieved_fps": 87.0, "late": 0}
+{"received_unique": 7252, "senders": 2, "duplicates": 0}
+[2026-11-28T20:58:25+02:00] window 08_ABC_87fps done (senders 1,2,3, 45 s)
+{"sent": 7904, "achieved_fps": 52.0, "late": 0}
+{"received_unique": 15763, "senders": 2, "duplicates": 0}
+[2026-11-28T21:01:05+02:00] window 09_ABC_52fps done (senders 1,2,3, 155 s)
+{"received_unique": 1100, "senders": 1, "duplicates": 0}
+[2026-11-28T21:01:35+02:00] window 10_B2_50fps done (senders 2, 25 s)
+{"sent": 3654, "achieved_fps": 87.0, "late": 0}
+{"received_unique": 7253, "senders": 2, "duplicates": 0}
+[2026-11-28T21:02:25+02:00] window 11_ABC_87fps done (senders 1,2,3, 45 s)
+{"sent": 7904, "achieved_fps": 52.0, "late": 0}
+{"received_unique": 15759, "senders": 2, "duplicates": 0}
+[2026-11-28T21:05:05+02:00] window 12_ABC_52fps done (senders 1,2,3, 155 s)
+{"sent": 5040, "achieved_fps": 70.0, "late": 0}
+{"received_unique": 10022, "senders": 2, "duplicates": 0}
+[2026-11-28T21:06:24+02:00] window 13_ABC_70fps done (senders 1,2,3, 75 s)
+{"sent": 1100, "achieved_fps": 50.0, "late": 0}
+{"received_unique": 0, "senders": 0, "duplicates": 0}
+[2026-11-28T21:06:56+02:00] window 14_B3_50fps done (senders 3, 25 s)
+{"sent": 7904, "achieved_fps": 52.0, "late": 0}
+{"received_unique": 15757, "senders": 2, "duplicates": 0}
+[2026-11-28T21:09:34+02:00] window 15_ABC_52fps done (senders 1,2,3, 155 s)
+{"sent": 5040, "achieved_fps": 70.0, "late": 0}
+{"received_unique": 10026, "senders": 2, "duplicates": 0}
+[2026-11-28T21:10:55+02:00] window 16_ABC_70fps done (senders 1,2,3, 75 s)
+{"sent": 3654, "achieved_fps": 87.0, "late": 0}
+{"received_unique": 7248, "senders": 2, "duplicates": 0}
+[2026-11-28T21:11:45+02:00] window 17_ABC_87fps done (senders 1,2,3, 45 s)
+{"received_unique": 1099, "senders": 1, "duplicates": 0}
+[2026-11-28T21:12:15+02:00] window 18_B1_50fps done (senders 1, 25 s)
+{"sent": 5040, "achieved_fps": 70.0, "late": 0}
+{"received_unique": 10027, "senders": 2, "duplicates": 0}
+[2026-11-28T21:13:34+02:00] window 19_ABC_70fps done (senders 1,2,3, 75 s)
+{"sent": 3654, "achieved_fps": 87.0, "late": 0}
+{"received_unique": 7256, "senders": 2, "duplicates": 0}
+[2026-11-28T21:14:25+02:00] window 20_ABC_87fps done (senders 1,2,3, 45 s)
+{"sent": 7904, "achieved_fps": 52.0, "late": 0}
+{"received_unique": 15768, "senders": 2, "duplicates": 0}
+[2026-11-28T21:17:04+02:00] window 21_ABC_52fps done (senders 1,2,3, 155 s)
+{"received_unique": 1099, "senders": 1, "duplicates": 0}
+[2026-11-28T21:17:36+02:00] window 22_B2_50fps done (senders 2, 25 s)
+{"received_unique": 11078, "senders": 1, "duplicates": 0}
+[2026-11-28T21:18:04+02:00] window 23_R1_600fps done (senders 1, 25 s)
+{"received_unique": 10831, "senders": 1, "duplicates": 0}
+[2026-11-28T21:18:35+02:00] window 24_R2_600fps done (senders 2, 25 s)
+{"sent": 9273, "achieved_fps": 419.8, "late": 8415}
+{"received_unique": 0, "senders": 0, "duplicates": 0}
+[2026-11-28T21:19:05+02:00] window 25_R3_600fps done (senders 3, 25 s)
+[2026-11-28T21:19:05+02:00] frameburst after the windows: 0
+[2026-11-28T21:19:05+02:00] revert: starting
+1
+[2026-11-28T21:19:05+02:00] revert: step frameburst_on rc=0 42 ms
+[2026-11-28T21:19:05+02:00] revert: step ibss_leave rc=0 16 ms
+[2026-11-28T21:19:05+02:00] revert: step addr_flush rc=0 16 ms
+[2026-11-28T21:19:05+02:00] revert: step link_down rc=0 529 ms
+[2026-11-28T21:19:05+02:00] revert: step type_managed rc=0 14 ms
+[2026-11-28T21:19:05+02:00] revert: step link_up rc=0 15 ms
+[2026-11-28T21:19:06+02:00] revert: step wpa_start rc=0 87 ms
+[2026-11-28T21:19:06+02:00] revert: step nm_managed rc=0 91 ms
+Connection successfully activated (D-Bus active path: /org/freedesktop/NetworkManager/ActiveConnection/14)
+[2026-11-28T21:19:10+02:00] revert: step con_up rc=0 960 ms
+[2026-11-28T21:19:15+02:00] revert: finished, wlan0 = inet 192.168.1.22
+[2026-11-28T21:19:20+02:00] reverted OK, both deadmen disarmed
