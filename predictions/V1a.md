@@ -170,8 +170,9 @@ raw JSON files. It gave the same background (0.001091) and the same three losses
 
 ### Seen after scoring — not a result
 
-* **(G5), outside its stated range, lands within −11 to +7 % of the hardware** (0.263 / 0.468 /
-  0.743 against 0.294 / 0.501 / 0.697). This is not evidence for (G5) here. Two departures from
+* **(G5), outside its stated range, lands within −11 to +6 % of the hardware** (0.263 / 0.468 /
+  0.743 against 0.294 / 0.501 / 0.697; −10.8, −6.6, +6.5 % unrounded). *Corrected 2026-11-28, the
+  same evening: first written "+7", computed from the rounded values.* This is not evidence for (G5) here. Two departures from
   the model would act in opposite directions: Poisson starts overstate the loss of three periodic
   stations (U-FS: 1.54–1.77 times ns-3's loss at N = 3), while the radios' own rule (C1) adds
   collisions the standard rule does not have. Their cancelling here is a coincidence to be shown,

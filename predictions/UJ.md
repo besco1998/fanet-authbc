@@ -127,3 +127,58 @@ conservative miss and changes no scope sentence.
 * **Chosen after seeing them:** the sources and the scope sentences. The cells, never simulated,
   are the test.
 * **None of U-J's runs has been made.**
+
+## Outcome — added 2026-11-28, after the runs; nothing above this line was changed
+
+* **The runs:** `ns3/run_uj_ud2.py uj`, through the audit twin (gate 9/9 identical on 2026-11-28),
+  1 715 runs (`results/raw/uj_*`). Every measured node count has seeds 1–30; every 30-seed mean
+  curve crosses 0.95 once.
+* **Scored** with `python analysis/uj.py --score` → `results/raw/uj_scored.csv`.
+
+| cell | source | ns-3 crossing (95 % interval) | root of (G5) | law (G9) | S | A | per-seed crossings: n, min–max (σ) |
+|---|---|---|---|---|---|---|---|
+| JA230F40 | FZ, frozen | 32.64 (30.85–33.77) | −0.07 % | +1.13 % | reported | reported | 28, 29.9–34.8 (1.47) |
+| JA230F40 | DR, 20 ppm | 33.91 (31.64–34.43) | −3.81 % | −2.66 % | **held** | **held** | 30, 30.4–35.6 (1.61) |
+| JA230F40 | J01, 0.1 ms | 34.75 (31.81–35.55) | −6.14 % | −5.02 % | **held** | failed (conservative) | 28, 31.2–35.4 (1.46) |
+| JA230F40 | J1, 1 ms | 34.69 (33.72–35.47) | −5.98 % | −4.86 % | **held** | failed (conservative) | 29, 32.2–37.4 (1.19) |
+| JA230F40 | DS, designated | 34.10 (33.91–34.27) | −4.36 % | −3.21 % | **held** | **held** | 30, 32.9–35.1 (0.54) |
+| JA260F30 | FZ, frozen | 40.09 (39.20–41.28) | −0.30 % | +0.70 % | reported | reported | 27, 36.2–41.0 (1.47) |
+| JA260F30 | DS, designated | 41.88 (41.69–42.09) | −4.56 % | −3.61 % | **held** | **held** | 30, 40.6–42.5 (0.46) |
+
+* **S, the safe side: held at all five non-frozen cells** (the root 3.8–6.1 % below ns-3).
+* **A, the ±5 % band: held at three of five.** The two misses, J01 and J1, are conservative (the
+  root 6.1 and 6.0 % below ns-3); by the registration they change no scope sentence.
+* **Frozen phases lowered ns-3's capacity by 4.3 % in both cells** (32.64 against 34.10; 40.09
+  against 41.88), to the root but not past it: −0.07 and −0.30 %. The law, which lies above the
+  root, was optimistic there (+1.13, +0.70 %).
+
+### The outcomes table: its last row applies
+
+The frozen source came out on the safe side, by 0.07 and 0.30 %, in both cells. The registration
+fixed that case as **"stop and ask Mohamed"**, so no scope sentence is chosen here. His answer is
+recorded in `docs/DECISIONS.md` and below.
+
+### The independent check
+
+A separate script, sharing no project code, read the seven runs files and recomputed every
+crossing: all seven equal the scored ones to three decimals.
+
+### My expectations, against the outcome
+
+* **"S holds at all five non-frozen cells, with the root 2–5 % below ns-3":** S held. The root
+  lay 3.8–6.1 % below, a little lower than expected.
+* **"A holds at most of them":** three of five, with two conservative misses.
+* **"The frozen source: below the jittered sources' crossing, and possibly above the root":**
+  below, yes, by 4.3 % in both cells; above the root, no.
+* **"Its per-seed crossings spread wider than any other source's":** wrong. Drift (σ 1.61) and the
+  small jitters (σ 1.46 and 1.19) spread as widely as frozen phases (σ 1.47). Only the designated
+  source (σ 0.46–0.54) is narrow. Within a 20 s run, 20 ppm or a 0.1–1 ms jitter does not
+  re-mix the phases fully, although the means stay on the safe side.
+
+### Mohamed's answer (2026-11-28, the same evening)
+
+**Frozen phases are excluded from the safe-side claim.** The scope sentence the report states:
+"The root of (G5) is on the safe side for timers with jitter or clock drift (5 of 5 new cells, 68
+of 68 stored). Frozen phases (strictly periodic senders with identical clocks) lower ns-3's
+capacity by about 4 %, to the root or past it (stored cells C and D), so they are outside the
+claim."

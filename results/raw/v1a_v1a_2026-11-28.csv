@@ -7,18 +7,18 @@
 # cbor2=5.8.0
 # msgpack=1.2.1
 # run=v1a_v1a_2026-11-28
-what,item,measured,predicted,held
-frame burst off on every board,,,0 before and after,True
-rate check,00_R1_600fps,2025.9,1900-2600 us,True
-rate check,01_R2_600fps,2055.5,1900-2600 us,True
-rate check,02_R3_600fps,2453.3,1900-2600 us,True
-rate check,23_R1_600fps,2026.0,1900-2600 us,True
-rate check,24_R2_600fps,2061.2,1900-2600 us,True
-rate check,25_R3_600fps,2417.9,1900-2600 us,True
-background b,5 controls,0.001091,<= 0.01,True
-link loss alone,pi-A (BCM4345/6),0.001818,<= 0.01,True
-link loss alone,pi-B (BCM4345/6),0.001364,<= 0.01,True
-link loss alone,Pi 3 (BCM43430/1),0.001364,<= 0.01,True
-point,ABC at 52/s (u = 0.3),0.00294 (0.00198-0.00391); 5 windows,finite 0.00169 (-42.7 %); G5 0.00263; G25 0.00216; ns-3 0.00188; event 0.00193,False
-point,ABC at 70/s (u = 0.4),0.00501 (0.00378-0.00625); 5 windows,finite 0.00273 (-45.5 %); G5 0.00468; G25 0.00366; ns-3 0.00306; event 0.00312,False
-point,ABC at 87/s (u = 0.5),0.00697 (0.00597-0.00798); 5 windows,finite 0.00397 (-43.0 %); G5 0.00743; G25 0.00552; ns-3 0.00452; event 0.00446,False
+what,item,measured,predicted,held,loss,ci_lo,ci_hi,finite
+frame burst off on every board,,,0 before and after,True,,,,
+rate check,00_R1_600fps,2025.9,1900-2600 us,True,,,,
+rate check,01_R2_600fps,2055.5,1900-2600 us,True,,,,
+rate check,02_R3_600fps,2453.3,1900-2600 us,True,,,,
+rate check,23_R1_600fps,2026.0,1900-2600 us,True,,,,
+rate check,24_R2_600fps,2061.2,1900-2600 us,True,,,,
+rate check,25_R3_600fps,2417.9,1900-2600 us,True,,,,
+background b,5 controls,0.001091,<= 0.01,True,,,,
+link loss alone,pi-A (BCM4345/6),0.001818,<= 0.01,True,,,,
+link loss alone,pi-B (BCM4345/6),0.001364,<= 0.01,True,,,,
+link loss alone,Pi 3 (BCM43430/1),0.001364,<= 0.01,True,,,,
+point,ABC at 52/s (u = 0.3),0.00294 (0.00198-0.00391); 5 windows,finite 0.00169 (-42.7 %); G5 0.00263; G25 0.00216; ns-3 0.00188; event 0.00193,False,0.0029448000000000174,0.0019835220639502884,0.0039060779360497464,0.0016879810348819596
+point,ABC at 70/s (u = 0.4),0.00501 (0.00378-0.00625); 5 windows,finite 0.00273 (-45.5 %); G5 0.00468; G25 0.00366; ns-3 0.00306; event 0.00312,False,0.005013400000000015,0.0037783677393988116,0.0062484322606012185,0.0027305731918968886
+point,ABC at 87/s (u = 0.5),0.00697 (0.00597-0.00798); 5 windows,finite 0.00397 (-43.0 %); G5 0.00743; G25 0.00552; ns-3 0.00452; event 0.00446,False,0.00697300000000001,0.005965956345069874,0.007980043654930144,0.003972728103131388

@@ -237,6 +237,8 @@ def score(session: Path) -> list[dict[str, Any]]:
             f"event {float(p['event_standard']):.5f}"
         )
         row["held"] = abs(fin - m) <= TOL * m
+        # unrounded, for anything computed from this file (round once, from the counts)
+        row |= {"loss": m, "ci_lo": m - h, "ci_hi": m + h, "finite": fin}
         out.append(row)
     return out
 
@@ -245,7 +247,8 @@ def _write(rows: list[dict[str, Any]], path: Path, run: str) -> None:
     buf = io.StringIO()
     for k, v in {**provenance.env_block(), "run": run}.items():
         buf.write(f"# {k}={v}\n")
-    wr = csv.DictWriter(buf, fieldnames=list(rows[0]), lineterminator="\n")
+    keys = list(dict.fromkeys(k for r in rows for k in r))  # every column, first-seen order
+    wr = csv.DictWriter(buf, fieldnames=keys, restval="", lineterminator="\n")
     wr.writeheader()
     wr.writerows(rows)
     path.write_text(buf.getvalue())
