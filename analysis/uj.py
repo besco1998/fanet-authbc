@@ -124,7 +124,7 @@ def per_seed(name: str) -> list[float]:
 
 def score() -> list[dict[str, object]]:
     """Each cell: ns-3's 30-seed crossing against the root and the law. Scored for the non-frozen
-    sources: the root within ±5 % and not above ns-3, and the law within ±5 %."""
+    sources as two claims: S, the root at or below ns-3; A, the root and the law within ±5 %."""
     pred = {r["cell"]: r for r in predictions()}
     rows = []
     for c in CELLS:
@@ -137,7 +137,9 @@ def score() -> list[dict[str, object]]:
         law_err = (float(str(p["law"])) - ns3) / ns3
         seeds = per_seed(c.name)
         scored = not SOURCES[c.source].frozen
-        held = abs(root_err) <= TOL and root_err <= 0 and abs(law_err) <= TOL
+        s_held = root_err <= 0  # claim S, the safe side
+        a_held = abs(root_err) <= TOL and abs(law_err) <= TOL  # claim A, the accuracy
+        held = s_held and a_held  # the registration: a cell holds if both hold
         rows.append(
             {
                 "cell": c.name,
@@ -150,6 +152,8 @@ def score() -> list[dict[str, object]]:
                 "root_err_pct": 100 * root_err,
                 "law": p["law"],
                 "law_err_pct": 100 * law_err,
+                "s_held": (int(s_held) if scored else "reported"),
+                "a_held": (int(a_held) if scored else "reported"),
                 "held": (int(held) if scored else "reported"),
                 "seed_crossings": len(seeds),
                 "seed_min": min(seeds) if seeds else "",

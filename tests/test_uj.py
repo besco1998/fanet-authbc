@@ -78,17 +78,20 @@ class TestTheScore:
         curve = {1: {30: 0.96, 34: 0.94}, 2: {30: 0.97, 34: 0.955, 36: 0.93}}
         for c in uj.CELLS:
             # root 2 % below ns-3 everywhere except one jittered cell, where ns-3 is below the root
-            ns3 = pred[c.name] / (1.01 if c.source == "J1" else 0.98)
+            ns3 = pred[c.name] / {"J1": 1.01, "J01": 0.93}.get(c.source, 0.98)
             self._files(tmp_path, c.name, ns3, curve)
         rows = {r["cell"]: r for r in uj.score()}
         for r in rows.values():
             src = uj.SOURCES[r["source"]]
             if src.frozen:
                 assert r["held"] == "reported"
+            elif r["source"] == "J01":
+                assert r["s_held"] == 1 and r["a_held"] == 0 and r["held"] == 0, "7 % below"
             elif r["source"] == "J1":
-                assert r["held"] == 0, "the root above ns-3 is not the safe side"
+                assert r["held"] == 0 and r["s_held"] == 0, "above ns-3 is not the safe side"
+                assert r["a_held"] == 1, "within 5 %, so only S fails"
             else:
-                assert r["held"] == 1
+                assert r["held"] == 1 and r["s_held"] == 1 and r["a_held"] == 1
             assert r["seed_crossings"] == 2
         r = rows["JA230F40DS"]
         assert r["seed_min"] == pytest.approx(32.0) and r["seed_max"] == pytest.approx(34.4)
