@@ -53,7 +53,7 @@ Every document: [`README.md`](README.md).
   `analysis/report_numbers.py` and checked by `tests/test_report_numbers.py`; rebuild with its
   `build.sh`.
 
-**The gate.** `make all` = lint + mypy + 3149 fast tests + the 43-test frozen gate. The paper has
+**The gate.** `make all` = lint + mypy + 3163 fast tests + the 43-test frozen gate. The paper has
 References **55** rendered (85 in the shared bibliography).
 
 **How to edit the paper.** Edit `paper/main.tex` directly. Every number is a macro from

@@ -60,10 +60,13 @@ class Cell:
     extra: tuple[str, ...] = ()           # further audit-twin options
     verify: str = ""                      # "key:r" or "unit:n": score verified records (C3, C4)
     sim_s: float = SIM_TIME               # simulated seconds (U-FS: 100 s, for losses of 0.2–1 %)
+    jitter_ms: float | None = None        # None: one period (the designated source); 0: the
+    #                                       strictly periodic OnOff source, frozen phases (U-J)
 
     def args(self) -> list[str]:
+        jitter = one_period_ms(self.fps) if self.jitter_ms is None else self.jitter_ms
         a = [f"--frameSize={self.frame_bytes}", f"--framesPerSec={self.fps!r}",
-             f"--txJitterMs={one_period_ms(self.fps)!r}", *self.extra]
+             *([f"--txJitterMs={jitter!r}"] if jitter > 0 else []), *self.extra]
         if (self.standard, self.mode) != ("80211a", "OfdmRate6Mbps"):
             a += [f"--standard={self.standard}", f"--dataMode={self.mode}"]
         return a
@@ -166,6 +169,20 @@ from uf2 import CONFIGS as _UF2_CONFIGS  # noqa: E402
 
 for _c in _UF2_CONFIGS:
     CELLS[_c.name] = _f_cell(_c)
+
+# U-J (predictions/UJ.md, Mohamed 2026-11-28): the root of (G5) by traffic source, 802.11a 6 Mb/s;
+# U-D2 (predictions/UD2.md, the same day): (G25) at 802.11b, W = 8, 16, 32. The cells are
+# analysis/uj.py's and analysis/ud2.py's, imported so that the two cannot drift apart.
+from ud2 import CELLS as _D2_CELLS  # noqa: E402
+from uj import CELLS as _J_CELLS  # noqa: E402
+from uj import SOURCES as _J_SOURCES  # noqa: E402
+
+for _j in _J_CELLS:
+    _src = _J_SOURCES[_j.source]
+    CELLS[_j.name] = Cell(_j.frame_bytes, _j.fps, jitter_ms=_src.jitter_ms,
+                          extra=((f"--txSkewPpm={_src.skew_ppm!r}",) if _src.skew_ppm else ()))
+for _d in _D2_CELLS:
+    CELLS[_d.name] = Cell(_d.frame_bytes, _d.fps, extra=(f"--cwMin={_d.w - 1}",), **_B)
 
 # U-H (predictions/UH.md), group (a): the 5 GHz burst-off anchor, N = 2, the 1 464 B MPDU
 # (frameSize 1 428), W = 10 and 16; and the saturated pair at 400 frames/s offered.
